@@ -146,18 +146,50 @@ export function versaoAtualizacao(): number {
  * jogador manda aplicar. Devolve null sem consentimento ou sem rede.
  */
 export async function consultarServidor(): Promise<AtualizacaoElencos | null> {
-  if (typeof window === "undefined") return null
+  const r = await consultarServidorDetalhado()
+  return r.estado === "ok" ? r.pacote : null
+}
+
+/**
+ * POR QUE ESTA VERSAO DETALHADA EXISTE.
+ *
+ * `consultarServidor` devolve `null` por TRES motivos completamente diferentes,
+ * e a tela de Atualizações traduzia os três como **"Não foi possível falar com o
+ * servidor agora"** — culpando a VPS por coisas que não são dela. Relato com
+ * print (04/08/2026): o jogador via essa mensagem com o servidor no ar,
+ * respondendo o manifesto normalmente; o que ele tinha eram os dois canais
+ * DESLIGADOS nas próprias preferências, logo abaixo na mesma tela.
+ *
+ * Cada motivo pede uma ação diferente do jogador — ligar o canal, atualizar o
+ * jogo, ou tentar de novo mais tarde —, então quem chama precisa distingui-los.
+ */
+export type ResultadoDaConsulta =
+  | { estado: "ok"; pacote: AtualizacaoElencos }
+  /** Os dois canais estão desligados: a consulta nem sai da máquina. */
+  | { estado: "canais-desligados" }
+  /** O pacote publicado é ANTERIOR a este build — ver `maisNovoQueOBuild`. */
+  | { estado: "anterior-ao-build"; publicadoEm: number }
+  /** Nenhuma fonte respondeu (VPS e GitHub). Aí sim é rede. */
+  | { estado: "sem-rede" }
+
+export async function consultarServidorDetalhado(): Promise<ResultadoDaConsulta> {
+  if (typeof window === "undefined") return { estado: "sem-rede" }
   // Canal desligado nas preferências: nem a consulta sai da máquina.
-  if (!canalAtivo("elencos") && !canalAtivo("times")) return null
+  if (!canalAtivo("elencos") && !canalAtivo("times")) return { estado: "canais-desligados" }
+  let respondeu: AtualizacaoElencos | null = null
   for (const url of FONTES) {
     const lido = await buscarJson<AtualizacaoElencos>(url, 8000)
     if (!lido || typeof lido.versao !== "number") continue
+    respondeu = lido
     // Um pacote anterior a este build não tem o que acrescentar: oferecê-lo seria
     // um convite para PIORAR o elenco. Ver `maisNovoQueOBuild`.
-    if (!maisNovoQueOBuild(lido)) return null
-    return lido
+    if (!maisNovoQueOBuild(lido)) break
+    return { estado: "ok", pacote: lido }
   }
-  return null
+  // Distinguir "o servidor respondeu, mas o pacote é velho" de "ninguém
+  // respondeu" é justamente o que faltava: o primeiro NÃO é problema de rede.
+  if (respondeu) return { estado: "anterior-ao-build", publicadoEm: respondeu.publicado_em ?? 0 }
+  return { estado: "sem-rede" }
 }
 
 /**

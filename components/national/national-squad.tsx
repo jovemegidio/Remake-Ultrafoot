@@ -16,6 +16,7 @@ import { useMemo, useState } from "react"
 import { Plus, X, Search, RotateCcw, TriangleAlert, Info, Users } from "lucide-react"
 import { useGameState } from "@/lib/save-system"
 import { PlayerAvatar } from "@/components/player-avatar"
+import { clubeCuradoPorNome } from "@/lib/club-identity"
 import { cn } from "@/lib/utils"
 import {
   getNationalSquad,
@@ -267,7 +268,7 @@ export function NationalSquadManager({ nationalTeam }: { nationalTeam: NationalT
                       key={`${nationalPlayerKey(p)}-${i}`}
                       className="flex items-center gap-2.5 rounded-lg bg-white/[0.02] px-2.5 py-2"
                     >
-                      <PlayerAvatar name={p.nome} size="xs" position={p.pos} teamColor={nationalTeam.cor1} />
+                      <PlayerAvatar name={p.nome} size="xs" position={p.pos} fileKey={clubeCuradoPorNome(p.time)?.file_key} teamColor={nationalTeam.cor1} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span className="truncate text-sm font-medium text-white/90">{p.nome}</span>
@@ -341,7 +342,7 @@ export function NationalSquadManager({ nationalTeam }: { nationalTeam: NationalT
                 key={`${nationalPlayerKey(p)}-pool-${i}`}
                 className="flex items-center gap-2.5 rounded-lg bg-white/[0.02] px-2.5 py-2"
               >
-                <PlayerAvatar name={p.nome} size="xs" position={p.pos} teamColor={nationalTeam.cor2} />
+                <PlayerAvatar name={p.nome} size="xs" position={p.pos} fileKey={clubeCuradoPorNome(p.time)?.file_key} teamColor={nationalTeam.cor2} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="truncate text-sm text-white/75">{p.nome}</span>

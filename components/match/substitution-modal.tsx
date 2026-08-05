@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { ArrowDown, ArrowLeftRight, ArrowUp, Check, X, ChevronRight, Zap, HeartPulse } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PlayerAvatar } from "@/components/player-avatar"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/lib/teams-data"
 
@@ -80,11 +81,24 @@ function PlayerRow({
       )}
       style={{ color: selected ? accent : undefined, boxShadow: selected ? `inset 3px 0 0 ${accent}, 0 12px 30px rgba(0,0,0,.22)` : undefined }}
     >
-      <div
-        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/15 text-sm font-black text-white shadow-inner"
-        style={{ background: `linear-gradient(145deg, ${team.cor1}, ${team.cor2 || "#18201f"})` }}
-      >
-        {player.number}
+      {/* ROSTO, e não só o número. Na hora de mexer no time o técnico procura o
+          ATLETA, e esta lista mostrava um quadradinho com o número da camisa —
+          o único lugar do jogo onde escalar era ler número. O `fileKey` é o que
+          faz a foto do canal de atualização aparecer (a chave lá é
+          `fileKey__nome`); sem ele o avatar cai na silhueta por posição, que
+          continua sendo o fallback quando o atleta não tem retrato. */}
+      <div className="relative h-10 w-10 shrink-0">
+        <PlayerAvatar
+          name={player.name}
+          fileKey={team.file_key}
+          position={player.position}
+          teamColor={team.cor1}
+          size="sm"
+          className="h-10 w-10 rounded-lg"
+        />
+        <span className="absolute -left-1 -top-1 min-w-[15px] rounded bg-[#080b0b] px-1 text-center text-[9px] font-black text-white/85 shadow">
+          {player.number}
+        </span>
         <span className="absolute -bottom-1 -right-1 rounded bg-[#080b0b] px-1 py-0.5 text-[8px] font-black text-white/75">
           {player.position}
         </span>
@@ -378,8 +392,11 @@ export function SubstitutionModal({
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {out ? (
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/15 text-red-400 font-bold text-xs flex-shrink-0">
-                    #{out.number}
+                  <div className="relative h-9 w-9 flex-shrink-0">
+                    <PlayerAvatar name={out.name} fileKey={team.file_key} position={out.position} teamColor={team.cor1} size="sm" className="h-9 w-9 rounded-lg" />
+                    <span className="absolute -left-1 -top-1 min-w-[14px] rounded bg-red-500/90 px-1 text-center text-[8px] font-black text-white">
+                      {out.number}
+                    </span>
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-white truncate">{out.name}</div>
@@ -394,8 +411,11 @@ export function SubstitutionModal({
 
               {inPlayer ? (
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand)]/15 text-[var(--brand)] font-bold text-xs flex-shrink-0">
-                    #{inPlayer.number}
+                  <div className="relative h-9 w-9 flex-shrink-0">
+                    <PlayerAvatar name={inPlayer.name} fileKey={team.file_key} position={inPlayer.position} teamColor={team.cor1} size="sm" className="h-9 w-9 rounded-lg" />
+                    <span className="absolute -left-1 -top-1 min-w-[14px] rounded bg-[var(--brand)] px-1 text-center text-[8px] font-black text-[var(--brand-ink)]">
+                      {inPlayer.number}
+                    </span>
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-white truncate">{inPlayer.name}</div>

@@ -186,7 +186,7 @@ export function CentralDeTransferencias({
                   key={`${n.atleta}-${n.para}-${n.temporada ?? 0}-${n.semana ?? 0}-${i}`}
                   className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-[#0c0c10]/75 px-3 py-2.5 backdrop-blur-sm transition-colors hover:border-white/[0.12] hover:bg-[#0c0c10]/95"
                 >
-                  <PlayerAvatar name={n.atleta} teamColor={destino.cor1} size="sm" />
+                  <PlayerAvatar name={n.atleta} teamColor={destino.cor1} fileKey={origem.file_key || destino.file_key} position={n.pos} size="sm" />
                   <div className="min-w-0 flex-[1.2]">
                     <p className="truncate text-sm font-semibold text-white">{n.atleta}</p>
                     <p className="truncate text-[11px] text-white/40">

@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress"
 import { Zap, Target, Footprints, Star, Shield, TrendingUp, Check, Dumbbell } from "lucide-react"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { cn } from "@/lib/utils"
+import { useUserTeam } from "@/lib/save-system"
 
 interface Player {
   id: number
@@ -54,6 +55,10 @@ export function TrainingModal({
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null)
   const [step, setStep] = useState<"select" | "training" | "result">("select")
   const [improvement, setImprovement] = useState(0)
+  // Sem `fileKey` a foto nunca sai do canal de atualizacao nem da pasta
+  // editorial — a chave la e `fileKey__nome`. Aqui e sempre atleta do proprio
+  // elenco.
+  const { team: meuClube } = useUserTeam()
 
   if (!player) return null
 
@@ -111,9 +116,11 @@ export function TrainingModal({
           <div className="space-y-6 py-4">
             {/* Player Stats Overview */}
             <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
-              <PlayerAvatar 
-                name={player.name} 
-                size="md" 
+              <PlayerAvatar
+                name={player.name}
+                fileKey={meuClube.file_key}
+                position={player.position}
+                size="md"
               />
               <div className="flex-1">
                 <div className="flex items-center justify-between">

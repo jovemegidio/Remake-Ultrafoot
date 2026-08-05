@@ -281,11 +281,14 @@ export function aplicarSemanaDeTreino(
 
   for (const a of atletas) {
     // Lesionado não treina: ele se recupera. O Centro Médico manda aqui.
+    // Recupera MENOS que um atleta são de folga (~+20) de propósito: quem está
+    // machucado não faz o trabalho regenerativo completo, e voltar do
+    // departamento médico com o pique intacto tiraria o custo da lesão.
     if (a.lesionado) {
       efeitos.push({
         id: a.id,
-        energia: Math.min(100, a.energia + 6 + medico),
-        fadigaCronica: Math.max(0, a.fadigaCronica - 6),
+        energia: Math.min(100, a.energia + 9 + medico * 1.5),
+        fadigaCronica: Math.max(0, a.fadigaCronica - 8),
         risco: 0,
         rendimentoIndividual: 0,
       })
@@ -293,16 +296,33 @@ export function aplicarSemanaDeTreino(
     }
 
     // DESGASTE: o que o treino cobra + o que o jogo cobrou.
-    const desgaste = carga * 0.16 + a.minutosJogados * 0.075
+    //
+    // ⚠️ O JOGO TEM DE PESAR MAIS QUE A SEMANA DE TREINO. Na calibração antiga
+    // os 90 minutos custavam 6,75 e o treino médio 8,5 — treinar cansava mais
+    // que jogar, o que não é verdade em lugar nenhum. Agora um jogo inteiro
+    // custa ~14 e a semana de treino médio ~7: jogo e o dobro do treino, e uma
+    // semana com DOIS jogos (meio de semana) custa ~29 e derruba o titular, que
+    // é exatamente quando um técnico de verdade roda o elenco.
+    const desgaste = carga * 0.13 + a.minutosJogados * 0.16
 
     // RECUPERAÇÃO: idade, fôlego, estrutura médica e o foco da semana.
+    //
+    // ⚠️ ESTE ERA O NÚMERO DO RELATO "o jogador não descansa de uma semana para
+    // a outra". A base era 13 e mal cobria o desgaste: o titular de 26 anos
+    // subia +2 por semana e o de 32 CAÍA 3, sem volta — uma vez cansado, o
+    // atleta não se recuperava mais em semana nenhuma, nem parado.
+    //
+    // A base agora é 22, dimensionada para que a SEMANA SEM JOGO reponha de
+    // verdade (~+20, o que tira um atleta de 60% para 80% em sete dias) e a
+    // semana com um jogo fique perto do zero a zero para quem é jovem e
+    // rodado — que é o comportamento real de um profissional bem preparado.
     const fatorIdade = a.idade <= 21 ? 3 : a.idade <= 27 ? 1 : a.idade <= 31 ? -1 : -4
     const recuperacao =
-      13
-      + medico * 1.6
+      22
+      + medico * 1.8
       + fatorIdade
-      + (a.resistencia - 70) * 0.06
-      + (plano.foco === "recuperacao" ? 9 : 0)
+      + (a.resistencia - 70) * 0.10
+      + (plano.foco === "recuperacao" ? 10 : 0)
       + (a.emTreinoIndividual ? -3 : 0) // treino extra também cobra
 
     const energia = Math.max(0, Math.min(100, a.energia - desgaste + recuperacao))

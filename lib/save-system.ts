@@ -506,6 +506,31 @@ export interface GameState {
    */
   demissoesMundo?: { curto: string; season: number; week: number; tecnico: string }[]
   /**
+   * HISTÓRICO DE PROPOSTAS QUE VOCÊ ENVIOU (aba "Propostas Enviadas" do Mercado).
+   *
+   * ⚠️ Isto morava num `useState` da própria tela, e era metade do relato "ao
+   * contratar um jogador ele não aparece em propostas enviadas": a lista existia
+   * só enquanto a página estava montada. Bastava ir ao elenco conferir se o
+   * reforço chegou — exatamente o que qualquer um faz depois de fechar um
+   * negócio — para voltar e encontrar "Você não fez nenhuma proposta ainda".
+   *
+   * No save, o histórico sobrevive à navegação, ao F5 e ao fechar o jogo, que é
+   * o que um registro de negociação precisa fazer para servir de registro.
+   */
+  propostasEnviadas?: {
+    id: number
+    playerName: string
+    teamName: string
+    position: string
+    overall: number
+    type: "buy" | "loan"
+    amount: number
+    status: "aceita" | "rejeitada" | "pendente"
+    week: number
+    /** Temporada, para o histórico não misturar semanas de anos diferentes. */
+    season?: number
+  }[]
+  /**
    * Lances DO USUÁRIO em leilões (lib/leilao). Só isto precisa ser salvo: quem
    * está em disputa e quanto a IA ofereceu são derivados da semana, para o leilão
    * não virar um simulador paralelo do mercado.

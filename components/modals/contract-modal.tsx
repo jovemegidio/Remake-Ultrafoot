@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { cn } from "@/lib/utils"
+import { useUserTeam } from "@/lib/save-system"
 import { type Player, formatWeeksToDate, getContractStatus } from "@/lib/game-engine"
 
 interface ContractModalProps {
@@ -48,6 +49,9 @@ export function ContractModal({
   const [contractLength, setContractLength] = useState(104) // 2 anos padrao
   const [step, setStep] = useState<"view" | "negotiate" | "success">("view")
   const [isNegotiating, setIsNegotiating] = useState(false)
+  // Sem `fileKey` a foto publicada pelo canal nunca aparece (a chave la e
+  // `fileKey__nome`). Renovacao e sempre com atleta do proprio elenco.
+  const { team: meuClube } = useUserTeam()
   const currentSalary = player?.contract?.salary || 0
 
   // Reset state quando modal abre
@@ -134,7 +138,7 @@ export function ContractModal({
           <div className="space-y-6 py-4">
             {/* Player Info */}
             <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
-              <PlayerAvatar name={player.name} size="md" />
+              <PlayerAvatar name={player.name} fileKey={meuClube.file_key} position={player.position} size="md" />
               <div className="flex-1">
                 <div className="font-semibold text-white">{player.name}</div>
                 <div className="text-sm text-white/50">{player.position} - {player.age} anos</div>

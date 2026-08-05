@@ -243,7 +243,7 @@ function TeamPanel({
 export default function PartidaPage() {
   const router = useRouter()
   const userTeam = useUserTeam()
-  const { currentMatch, seasonCalendar, standings, league, currentRound, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana, fifaPause } = useGameManager()
+  const { currentMatch, seasonCalendar, standings, league, currentRound, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana, fifaPause, hydrated: saveHidratado } = useGameManager()
 
   const { connected: gamepadConnected } = useGamepadDetection()
   const [hydrated, setHydrated] = useState(false)
@@ -620,7 +620,16 @@ export default function PartidaPage() {
     return () => window.removeEventListener("keydown", onKey)
   }, [showUniformModal])
 
-  if (!hydrated) {
+  // ⚠️ ESPERAR O SAVE, NAO SO O MONTE DO REACT.
+  //
+  // `hydrated` local vira true no primeiro efeito depois de montar, mas o SAVE
+  // (e com ele o calendario) ainda nao chegou: nesse intervalo `currentMatch` e
+  // `nextFixture` sao nulos e os fallbacks logo abaixo caem em `userTeamData` x
+  // `serieATeams[0]`. Como serieATeams[0] e o Botafogo e [1] o Palmeiras, quem
+  // dirigia o Palmeiras via piscar um "Palmeiras x Botafogo" que nao existe no
+  // calendario — a tela mock relatada. Agora a tela so desenha com o save na
+  // mao, e o confronto exibido e sempre o de verdade.
+  if (!hydrated || !saveHidratado) {
     return (
       <div className="h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
         Carregando...
@@ -628,6 +637,29 @@ export default function PartidaPage() {
     )
   }
   
+  // SEM CONFRONTO NENHUM nao se inventa um. Com o save ja carregado, `nulo` aqui
+  // significa que nao ha jogo marcado (temporada encerrada, por exemplo) — e o
+  // fallback de adversario logo acima produziria de novo um confronto que nao
+  // existe no calendario, que e a tela mock relatada.
+  const semConfronto = !ctxDaSelecao && !currentMatch && !nextFixture
+  if (semConfronto) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-[#050508] px-6 text-center">
+        <Trophy className="h-10 w-10 text-white/20" />
+        <p className="text-sm text-white/60">Nenhuma partida marcada no momento.</p>
+        <p className="max-w-sm text-xs text-white/35">
+          Avance a semana no escritorio para o proximo compromisso entrar no calendario.
+        </p>
+        <Link
+          href="/dashboard"
+          className="mt-2 rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
+        >
+          Voltar ao escritorio
+        </Link>
+      </div>
+    )
+  }
+
   const homeLeague = getLeagueName(homeTeam.curto)
   const awayLeague = getLeagueName(awayTeam.curto)
 

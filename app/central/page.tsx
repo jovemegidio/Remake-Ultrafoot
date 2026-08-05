@@ -333,7 +333,7 @@ export default function CentralPage() {
                   )}
                   {playerMorale.map((player, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
-                      <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="sm" />
+                      <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} fileKey={userTeam.file_key} position={player.position} size="sm" />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-white">{player.name}</div>
                         <div className="text-[10px] text-white/40">{player.position}</div>
@@ -466,7 +466,7 @@ export default function CentralPage() {
                 <div className="space-y-2">
                   {contracts.map((contract, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
-                      <PlayerAvatarCircle name={contract.name} teamColor={userTeam.cor1} size="sm" />
+                      <PlayerAvatarCircle name={contract.name} teamColor={userTeam.cor1} fileKey={userTeam.file_key} position={contract.position} size="sm" />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-white">{contract.name}</span>
@@ -525,7 +525,10 @@ export default function CentralPage() {
                   {playerHierarchy.map((player, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
                       <div className="relative">
-                        <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="sm" />
+                        {/* A hierarquia do vestiario nao carrega posicao — so nome,
+                            papel e influencia. Sem `position` o avatar cai nas
+                            iniciais, que aqui e o certo. */}
+                        <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} fileKey={userTeam.file_key} size="sm" />
                         {player.role === "capitao" && (
                           <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 flex items-center justify-center">
                             <span className="text-[8px] font-black text-black">C</span>

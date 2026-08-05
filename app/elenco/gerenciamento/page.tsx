@@ -44,6 +44,7 @@ import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { absoluteWeek, CONTRACT_EPOCH_SEASON, defaultRoleForPosition, getContractStatus, isTransferWindowOpen, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
 import { useUserRoster, resolverIdsDosTitulares } from "@/lib/use-user-roster"
+import { duplasDoGrupo, entrosamentoDoGrupo, MINUTOS_PAR_MADURO } from "@/lib/treino-e-entrosamento"
 import { useRequireClub } from "@/lib/use-require-team"
 import { useNotifications } from "@/components/notifications-system"
 import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
@@ -369,7 +370,7 @@ export default function ElencoPage() {
   useDiscordActivity("Gerenciando o elenco", userTeam.nome)
 
   const [currentView, setCurrentView] = useState<ViewType>("gerenciamento")
-  const [activeTab, setActiveTab] = useState<"elenco" | "taticas" | "atribuicoes">("elenco")
+  const [activeTab, setActiveTab] = useState<"elenco" | "condicao" | "taticas" | "atribuicoes">("elenco")
   const formation = engineFormation ?? "4-3-3"
   const setFormation = engineSetFormation
   const [selectedPlayerId, setSelectedPlayerId] = useState<number>(1)
@@ -402,8 +403,67 @@ export default function ElencoPage() {
   const pitchRef = useRef<HTMLDivElement>(null)
   const positionsHydratedForTeam = useRef("")
 
-  const TABS: Array<"elenco" | "taticas" | "atribuicoes"> = ["elenco", "taticas", "atribuicoes"]
+  const TABS: Array<"elenco" | "condicao" | "taticas" | "atribuicoes"> = ["elenco", "condicao", "taticas", "atribuicoes"]
   const allPlayers = useMemo(() => [...players, ...bench], [players, bench])
+
+  // ─── ABA CONDIÇÃO: energia, fadiga crônica e entrosamento ────────────────────
+  //
+  // Tudo já existia no motor; o que faltava era a tela. A FADIGA CRÔNICA em
+  // especial não aparecia em canto nenhum do jogo, e é ela que explica o atleta
+  // que sustenta os 90 minutos e quebra um mês depois.
+  const fadigaPorId = useGameEngine(s => s.fadigaCronica)
+  const entrosamentoPares = useGameEngine(s => s.entrosamentoPares)
+
+  const condicaoDosAtletas = useMemo(() => {
+    const titularesPorNome = new Set(players.map(p => p.name))
+    return engineSquadPlayers
+      .map(p => ({
+        id: p.id,
+        nome: p.name,
+        posicao: p.position,
+        energia: Math.round(p.energy ?? 100),
+        fadiga: Math.round((fadigaPorId ?? {})[p.id] ?? 0),
+        folego: Math.round(p.physical ?? 70),
+        titular: titularesPorNome.has(p.name),
+        lesionado: Boolean(p.injury),
+      }))
+      // Quem está pior primeiro: a lista serve para DECIDIR quem poupar.
+      .sort((a, b) => (a.energia - a.fadiga) - (b.energia - b.fadiga))
+  }, [engineSquadPlayers, fadigaPorId, players])
+
+  const resumoCondicao = useMemo(() => {
+    const n = Math.max(1, condicaoDosAtletas.length)
+    const idsDoXI = engineSquadPlayers
+      .filter(p => players.some(t => t.name === p.name))
+      .map(p => p.id)
+    return {
+      energiaMedia: Math.round(condicaoDosAtletas.reduce((soma, l) => soma + l.energia, 0) / n),
+      fadigaMedia: Math.round(condicaoDosAtletas.reduce((soma, l) => soma + l.fadiga, 0) / n),
+      entrosamentoXI: entrosamentoDoGrupo(entrosamentoPares ?? {}, idsDoXI),
+      // "Poupar" = energia baixa OU dívida de fadiga alta, mesmo com pique aparente.
+      aPoupar: condicaoDosAtletas.filter(l => !l.lesionado && (l.energia < 65 || l.fadiga >= 45)).length,
+    }
+  }, [condicaoDosAtletas, engineSquadPlayers, players, entrosamentoPares])
+
+  const duplasEntrosadas = useMemo(() => {
+    const doXI = engineSquadPlayers
+      .filter(p => players.some(t => t.name === p.name))
+      .map(p => ({ id: p.id, nome: p.name }))
+    if (doXI.length < 2) return { melhores: [], piores: [] }
+    const todas = duplasDoGrupo(entrosamentoPares ?? {}, doXI) // já vem do mais rodado ao menos
+    // Com um XI incompleto (poucas duplas) as duas pontas se sobrepõem e a mesma
+    // dupla apareceria como "mais rodada" E "não se acham". Metade para cada lado.
+    const quantos = Math.min(5, Math.floor(todas.length / 2))
+    return {
+      melhores: todas.slice(0, quantos),
+      piores: quantos > 0 ? todas.slice(-quantos).reverse() : [],
+    }
+  }, [engineSquadPlayers, players, entrosamentoPares])
+
+  const corDaEnergia = (v: number) => v >= 75 ? "text-[var(--brand)]" : v >= 55 ? "text-white" : v >= 35 ? "text-amber-300" : "text-red-400"
+  const fundoDaEnergia = (v: number) => v >= 75 ? "bg-[var(--brand)]" : v >= 55 ? "bg-white/60" : v >= 35 ? "bg-amber-400" : "bg-red-500"
+  const corDaFadiga = (v: number) => v >= 60 ? "text-red-400" : v >= 35 ? "text-amber-300" : "text-white/60"
+  const fundoDaFadiga = (v: number) => v >= 60 ? "bg-red-500" : v >= 35 ? "bg-amber-400" : "bg-white/35"
 
   // Restaura e salva automaticamente os ajustes manuais do campo. Usamos o nome
   // como chave porque atletas importados/contratados podem receber outro ID interno.
@@ -1482,7 +1542,7 @@ export default function ElencoPage() {
             
             {/* Tabs */}
             <div className="flex items-center gap-1">
-              {(["elenco", "taticas", "atribuicoes"] as const).map((tab) => (
+              {(["elenco", "condicao", "taticas", "atribuicoes"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -1493,7 +1553,7 @@ export default function ElencoPage() {
                       : "text-white/40 hover:text-white/70"
                   )}
                 >
-                  {tab === "elenco" ? t.sidebar.squad : tab === "taticas" ? t.squad.tactics : t.squad.assignments}
+                  {tab === "elenco" ? t.sidebar.squad : tab === "condicao" ? "Condição" : tab === "taticas" ? t.squad.tactics : t.squad.assignments}
                 </button>
               ))}
             </div>
@@ -2058,6 +2118,172 @@ export default function ElencoPage() {
               )}
             </div>
             </>
+            )}
+
+            {/* ─── Tab Content: CONDIÇÃO ────────────────────────────────────
+                Energia, fôlego/fadiga e entrosamento na mesma tela.
+
+                Os três números já existiam no motor e nenhum deles tinha onde
+                aparecer junto: a energia só saía solta no cartão do atleta, a
+                FADIGA CRÔNICA (o cansaço que a semana não repôs — é ela que
+                explica o atleta que "não cansa no jogo mas quebra em abril")
+                não aparecia em lugar nenhum, e o entrosamento era um número
+                único do elenco, sem dizer QUAIS duplas ainda não se acham.
+                Ver lib/treino-e-entrosamento.ts. */}
+            {activeTab === "condicao" && (
+              <div className="flex-1 overflow-auto rounded-xl border border-white/10 bg-[#111111] p-4 md:rounded-2xl md:p-6">
+                <div className="mx-auto max-w-5xl space-y-6">
+                  <div>
+                    <h2 className="mb-1 text-lg font-bold text-white">Condição física e entrosamento</h2>
+                    <p className="text-sm text-white/50">
+                      Energia é o pique de hoje; fadiga é o desgaste acumulado que só sai com semanas leves;
+                      entrosamento são minutos jogados juntos.
+                    </p>
+                  </div>
+
+                  {/* Resumo do elenco */}
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-wider text-white/40">Energia média</p>
+                      <p className={cn("mt-1 text-2xl font-black tabular-nums", corDaEnergia(resumoCondicao.energiaMedia))}>
+                        {resumoCondicao.energiaMedia}%
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-wider text-white/40">Fadiga média</p>
+                      <p className={cn("mt-1 text-2xl font-black tabular-nums", corDaFadiga(resumoCondicao.fadigaMedia))}>
+                        {resumoCondicao.fadigaMedia}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-wider text-white/40">Entrosamento do XI</p>
+                      <p className="mt-1 text-2xl font-black tabular-nums text-[var(--brand)]">
+                        {resumoCondicao.entrosamentoXI}%
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-wider text-white/40">Precisam poupar</p>
+                      <p className="mt-1 text-2xl font-black tabular-nums text-amber-300">
+                        {resumoCondicao.aPoupar}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lista por atleta */}
+                  <div className="overflow-hidden rounded-xl border border-white/[0.06]">
+                    <div className="grid grid-cols-[minmax(0,1fr)_84px_84px_84px] items-center gap-2 border-b border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-white/40 md:grid-cols-[minmax(0,1fr)_1fr_1fr_84px]">
+                      <span>Atleta</span>
+                      <span className="text-center md:text-left">Energia</span>
+                      <span className="text-center md:text-left">Fadiga</span>
+                      <span className="text-center">Fôlego</span>
+                    </div>
+                    <div className="divide-y divide-white/[0.04]">
+                      {condicaoDosAtletas.map((linha) => (
+                        <div
+                          key={linha.id}
+                          className="grid grid-cols-[minmax(0,1fr)_84px_84px_84px] items-center gap-2 px-4 py-2.5 md:grid-cols-[minmax(0,1fr)_1fr_1fr_84px]"
+                        >
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <PlayerAvatarCircle
+                              name={linha.nome}
+                              fileKey={userTeam.file_key}
+                              teamColor={userTeam.cor1}
+                              position={linha.posicao}
+                              size="xs"
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-white">{linha.nome}</p>
+                              <p className="text-[10px] text-white/35">
+                                {linha.posicao} · {linha.titular ? "titular" : "reserva"}
+                                {linha.lesionado ? " · lesionado" : ""}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* ENERGIA */}
+                          <div className="flex items-center gap-2">
+                            <div className="hidden h-1.5 flex-1 overflow-hidden rounded-full bg-white/10 md:block">
+                              <div
+                                className={cn("h-full rounded-full", fundoDaEnergia(linha.energia))}
+                                style={{ width: `${linha.energia}%` }}
+                              />
+                            </div>
+                            <span className={cn("w-full text-center text-xs font-bold tabular-nums md:w-9 md:text-right", corDaEnergia(linha.energia))}>
+                              {linha.energia}%
+                            </span>
+                          </div>
+
+                          {/* FADIGA CRÔNICA */}
+                          <div className="flex items-center gap-2">
+                            <div className="hidden h-1.5 flex-1 overflow-hidden rounded-full bg-white/10 md:block">
+                              <div
+                                className={cn("h-full rounded-full", fundoDaFadiga(linha.fadiga))}
+                                style={{ width: `${Math.min(100, linha.fadiga)}%` }}
+                              />
+                            </div>
+                            <span className={cn("w-full text-center text-xs font-bold tabular-nums md:w-9 md:text-right", corDaFadiga(linha.fadiga))}>
+                              {linha.fadiga}
+                            </span>
+                          </div>
+
+                          <span className="text-center text-xs font-bold tabular-nums text-white/70" title="Resistência física — quem tem fôlego se recupera antes">
+                            {linha.folego}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Duplas do XI: onde o entrosamento ainda falta */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/50">
+                        Duplas mais rodadas
+                      </h3>
+                      {duplasEntrosadas.melhores.length === 0 ? (
+                        <p className="text-xs text-white/35">Ainda não há minutos suficientes registrados.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {duplasEntrosadas.melhores.map((d) => (
+                            <div key={`${d.a}-${d.b}`} className="flex items-center gap-2">
+                              <span className="min-w-0 flex-1 truncate text-xs text-white/70">{d.a} + {d.b}</span>
+                              <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/10">
+                                <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${d.pct}%` }} />
+                              </div>
+                              <span className="w-8 text-right text-[10px] font-bold tabular-nums text-[var(--brand)]">{d.pct}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/50">
+                        Ainda não se acham
+                      </h3>
+                      {duplasEntrosadas.piores.length === 0 ? (
+                        <p className="text-xs text-white/35">O XI inteiro já se conhece bem.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {duplasEntrosadas.piores.map((d) => (
+                            <div key={`${d.a}-${d.b}`} className="flex items-center gap-2">
+                              <span className="min-w-0 flex-1 truncate text-xs text-white/70">{d.a} + {d.b}</span>
+                              <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/10">
+                                <div className="h-full rounded-full bg-amber-400" style={{ width: `${Math.max(3, d.pct)}%` }} />
+                              </div>
+                              <span className="w-8 text-right text-[10px] font-bold tabular-nums text-amber-300">{d.pct}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <p className="mt-3 text-[10px] leading-relaxed text-white/30">
+                        Uma dupla fica totalmente entrosada com {MINUTOS_PAR_MADURO} minutos em campo juntos
+                        (cerca de dez jogos inteiros lado a lado).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Tab Content: Taticas */}

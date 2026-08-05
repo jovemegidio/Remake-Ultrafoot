@@ -21,7 +21,7 @@ import { Download, RefreshCw, ShieldCheck, Users } from "lucide-react"
 import { useVersaoDoJogo } from "@/lib/versao-do-jogo"
 import {
   aplicarAtualizacao,
-  consultarServidor,
+  consultarServidorDetalhado,
   getAtualizacao,
   guardarFotosLocalmente,
   resumir,
@@ -29,7 +29,15 @@ import {
 } from "@/lib/atualizacao-elencos"
 import { canalAtivo, setCanal, EVENTO_PREFERENCIAS } from "@/lib/atualizacoes-preferencias"
 
-type Busca = "parado" | "buscando" | "guardando" | "atualizado" | "aplicado" | "sem-rede"
+// ⚠️ "sem-rede" era o balaio de TUDO que dava errado — inclusive dos casos em
+// que o servidor respondeu perfeitamente. Ver `consultarServidorDetalhado`.
+type Busca =
+  | "parado" | "buscando" | "guardando" | "atualizado" | "aplicado"
+  | "sem-rede"
+  /** Os dois canais estão desligados logo abaixo, nesta mesma tela. */
+  | "canais-desligados"
+  /** O pacote no ar é anterior a este build; quem resolve é atualizar o jogo. */
+  | "anterior-ao-build"
 
 export function AtualizacoesPanel() {
   const versao = useVersaoDoJogo()
@@ -54,10 +62,10 @@ export function AtualizacoesPanel() {
 
   async function buscar() {
     setBusca("buscando")
-    const novo = await consultarServidor()
-    if (!novo) { setBusca("sem-rede"); return }
-    if (novo.versao <= getAtualizacao().versao) { setBusca("atualizado"); return }
-    setEncontrado(novo)
+    const r = await consultarServidorDetalhado()
+    if (r.estado !== "ok") { setBusca(r.estado); return }
+    if (r.pacote.versao <= getAtualizacao().versao) { setBusca("atualizado"); return }
+    setEncontrado(r.pacote)
     setBusca("parado")
   }
 
@@ -160,7 +168,23 @@ export function AtualizacoesPanel() {
               )}
               {busca === "sem-rede" && (
                 <span className="text-xs text-white/50">
-                  Não foi possível falar com o servidor agora.
+                  Não foi possível falar com o servidor agora. Tente de novo mais tarde.
+                </span>
+              )}
+              {/* Não é rede: é escolha do jogador, e ela está logo abaixo nesta
+                  mesma tela. Dizer "o servidor não respondeu" aqui manda ele
+                  procurar defeito onde não há. */}
+              {busca === "canais-desligados" && (
+                <span className="text-xs text-amber-300/90">
+                  Ligue ao menos um canal em &ldquo;O que você quer receber&rdquo;, logo abaixo.
+                </span>
+              )}
+              {/* Também não é rede: o servidor respondeu, mas o pacote no ar é
+                  mais antigo que esta versão do jogo — aplicá-lo PIORARIA o
+                  elenco, então ele é recusado de propósito. */}
+              {busca === "anterior-ao-build" && (
+                <span className="text-xs text-white/50">
+                  O pacote publicado é anterior a esta versão do jogo — seu elenco já está mais novo.
                 </span>
               )}
             </div>

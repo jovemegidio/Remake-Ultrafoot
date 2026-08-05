@@ -4,6 +4,7 @@ import { useState, useContext } from "react"
 import { X, ArrowLeftRight, ChevronLeft, ChevronRight, User, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
+import { PlayerAvatar } from "@/components/player-avatar"
 import { ControllerButton, ControllerToolbar, ControllerTypeContext } from "@/components/controller-buttons"
 import { cn } from "@/lib/utils"
 import { type Team } from "@/lib/teams-data"
@@ -185,11 +186,21 @@ export function SubstitutionPanel({
                         : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-[var(--brand)]/50"
                     )}
                   >
-                    <div
-                      className="h-12 w-12 rounded-lg flex items-center justify-center text-lg font-bold shadow-lg"
-                      style={{ backgroundColor: team.cor1, color: team.cor2 }}
-                    >
-                      {player.number}
+                    {/* Rosto, com o numero em cima. Esta lista mostrava so o
+                        numero da camisa — procurar o atleta pelo numero e o
+                        contrario do que o tecnico faz. */}
+                    <div className="relative h-12 w-12 shrink-0">
+                      <PlayerAvatar
+                        name={player.name}
+                        fileKey={team.file_key}
+                        position={player.position}
+                        teamColor={team.cor1}
+                        size="md"
+                        className="h-12 w-12 rounded-lg"
+                      />
+                      <span className="absolute -left-1 -top-1 min-w-[16px] rounded bg-[#080b0b] px-1 text-center text-[10px] font-black text-white/85 shadow">
+                        {player.number}
+                      </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-white truncate">{player.name}</div>
@@ -239,11 +250,21 @@ export function SubstitutionPanel({
                     onClick={() => handleSelectIn(player)}
                     className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[var(--brand)]/50 transition-all text-left"
                   >
-                    <div
-                      className="h-12 w-12 rounded-lg flex items-center justify-center text-lg font-bold shadow-lg"
-                      style={{ backgroundColor: team.cor1, color: team.cor2 }}
-                    >
-                      {player.number}
+                    {/* Rosto, com o numero em cima. Esta lista mostrava so o
+                        numero da camisa — procurar o atleta pelo numero e o
+                        contrario do que o tecnico faz. */}
+                    <div className="relative h-12 w-12 shrink-0">
+                      <PlayerAvatar
+                        name={player.name}
+                        fileKey={team.file_key}
+                        position={player.position}
+                        teamColor={team.cor1}
+                        size="md"
+                        className="h-12 w-12 rounded-lg"
+                      />
+                      <span className="absolute -left-1 -top-1 min-w-[16px] rounded bg-[#080b0b] px-1 text-center text-[10px] font-black text-white/85 shadow">
+                        {player.number}
+                      </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-white truncate">{player.name}</div>
@@ -271,11 +292,18 @@ export function SubstitutionPanel({
                 {/* Player Out */}
                 <div className="flex flex-col items-center">
                   <div className="text-[10px] text-red-400 uppercase tracking-wider mb-2 font-semibold">Sai</div>
-                  <div
-                    className="h-20 w-20 rounded-xl flex items-center justify-center text-3xl font-black shadow-lg border-2 border-red-500/50"
-                    style={{ backgroundColor: team.cor1, color: team.cor2 }}
-                  >
-                    {selectedOut.number}
+                  <div className="relative h-20 w-20">
+                    <PlayerAvatar
+                      name={selectedOut.name}
+                      fileKey={team.file_key}
+                      position={selectedOut.position}
+                      teamColor={team.cor1}
+                      size="xl"
+                      className="h-20 w-20 rounded-xl border-2 border-red-500/50"
+                    />
+                    <span className="absolute -left-1.5 -top-1.5 min-w-[22px] rounded-md bg-[#080b0b] px-1.5 py-0.5 text-center text-xs font-black text-white/90 shadow">
+                      {selectedOut.number}
+                    </span>
                   </div>
                   <div className="mt-3 text-center">
                     <div className="text-lg font-bold text-white">{selectedOut.name}</div>
@@ -298,11 +326,18 @@ export function SubstitutionPanel({
                 {/* Player In */}
                 <div className="flex flex-col items-center">
                   <div className="text-[10px] text-[var(--brand)] uppercase tracking-wider mb-2 font-semibold">Entra</div>
-                  <div
-                    className="h-20 w-20 rounded-xl flex items-center justify-center text-3xl font-black shadow-lg border-2 border-[var(--brand)]/50"
-                    style={{ backgroundColor: team.cor1, color: team.cor2 }}
-                  >
-                    {selectedIn.number}
+                  <div className="relative h-20 w-20">
+                    <PlayerAvatar
+                      name={selectedIn.name}
+                      fileKey={team.file_key}
+                      position={selectedIn.position}
+                      teamColor={team.cor1}
+                      size="xl"
+                      className="h-20 w-20 rounded-xl border-2 border-[var(--brand)]/50"
+                    />
+                    <span className="absolute -left-1.5 -top-1.5 min-w-[22px] rounded-md bg-[#080b0b] px-1.5 py-0.5 text-center text-xs font-black text-white/90 shadow">
+                      {selectedIn.number}
+                    </span>
                   </div>
                   <div className="mt-3 text-center">
                     <div className="text-lg font-bold text-white">{selectedIn.name}</div>

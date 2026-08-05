@@ -538,10 +538,12 @@ export function NegotiationModal({
             {/* Player Info */}
             <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-white/5 to-transparent border border-white/10">
               <div className="relative">
-                <PlayerAvatar 
-                  name={player.name} 
+                <PlayerAvatar
+                  name={player.name}
                   teamColor={player.team?.cor1}
-                  size="lg" 
+                  fileKey={player.team?.file_key}
+                  position={player.position}
+                  size="lg"
                 />
                 <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#ffd700] flex items-center justify-center border-2 border-[#141414]">
                   <span className="text-xs font-bold text-black">{player.overall}</span>
@@ -1210,7 +1212,7 @@ export function NegotiationModal({
               <div className="mt-6 p-4 rounded-xl bg-white/5 border border-white/10 mx-4 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: "400ms" }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <PlayerAvatar name={player.name} teamColor={player.team?.cor1} size="sm" />
+                    <PlayerAvatar name={player.name} teamColor={player.team?.cor1} fileKey={player.team?.file_key} position={player.position} size="sm" />
                     <div className="text-left">
                       <div className="text-sm font-medium text-white">{player.name}</div>
                       <div className="text-[10px] text-white/40">{player.team?.nome}</div>

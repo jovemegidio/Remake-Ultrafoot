@@ -1966,6 +1966,25 @@ interface GameEngineState {
   entrosamentoSemeado?: boolean
   /** Fadiga CRONICA por atleta (0-100) — o cansaco que a semana nao repos. */
   fadigaCronica: Record<number, number>
+  /**
+   * MINUTOS ACUMULADOS na ultima virada de semana, por atleta.
+   *
+   * ⚠️ E o que permite saber quanto cada um JOGOU na semana que passou, e nao
+   * quanto ele *costuma* jogar. Antes o desgaste usava `isStarter ? 90 : 0`, um
+   * atalho com dois defeitos que se somavam e produziam o relato "o jogador nao
+   * descansa de uma semana para a outra":
+   *
+   *   • `isStarter` e um ESTADO ("esta no XI"), nao um evento ("jogou"). Semana
+   *     sem partida — data FIFA, intervalo, pre-temporada — cobrava os mesmos 90
+   *     minutos de quem passou a semana inteira descansando.
+   *   • quem entrou no segundo tempo nao pagava minuto nenhum.
+   *
+   * Aqui a conta e a diferenca do contador real de minutos (creditado em
+   * `registerMatchResult`), entao semana sem jogo custa ZERO e semana de dois
+   * jogos custa o dobro. Virada de temporada zera `seasonStats`; o `Math.max(0,
+   * ...)` absorve isso sozinho e o retrato e regravado logo em seguida.
+   */
+  minutosNaViradaDaSemana: Record<number, number>
   /** Plano de treino COLETIVO da semana (intensidade x foco). */
   planoDeTreino: PlanoDeTreino
   /** Ultimo resumo do treino semanal, para a tela mostrar carga/fadiga/risco. */
@@ -2699,6 +2718,7 @@ export const useGameEngine = create<GameEngineState>()(
       squadCohesion: PISO_ENTROSAMENTO,
       entrosamentoPares: {},
       fadigaCronica: {},
+      minutosNaViradaDaSemana: {},
       planoDeTreino: { ...PLANO_PADRAO },
       ultimoTreino: null,
       squadMorale: {
@@ -2771,17 +2791,39 @@ export const useGameEngine = create<GameEngineState>()(
           // repoe vira FADIGA CRONICA; e a fadiga realimenta o RISCO DE LESAO.
           // Ver lib/treino-e-entrosamento.ts.
           //
-          // `minutosJogados` e uma aproximacao: titular sadio fez os 90 da semana.
-          // O motor nao guarda minuto a minuto por semana, e errar para mais no
-          // titular e exatamente o lado seguro — e ele que precisa ser poupado.
+          // `minutosJogados` sao os minutos REAIS da semana que passou: a
+          // diferenca do contador acumulado desde a ultima virada. Ver
+          // `minutosNaViradaDaSemana` — semana sem partida custa ZERO, que e o
+          // que devolve o descanso ao jogo.
           const plano = s.planoDeTreino ?? PLANO_PADRAO
           const fadigaAnterior = s.fadigaCronica ?? {}
+          const minutosAntes = s.minutosNaViradaDaSemana ?? {}
+          const minutosDaSemana = new Map<number, number>()
+          for (const p of s.squadPlayers) {
+            const acumulado = p.seasonStats?.minutesPlayed ?? 0
+            // ⚠️ SEM RETRATO ANTERIOR, NAO SE COBRA NADA. Duas situacoes caem
+            // aqui, e nas duas o `?? 0` seria destrutivo:
+            //
+            //  • SAVE ANTERIOR A ESTA VERSAO: o campo inteiro nao existe. Tratar
+            //    ausencia como zero faria a primeira virada cobrar os minutos da
+            //    TEMPORADA INTEIRA de uma vez — 900 minutos viram 144 de
+            //    desgaste e zeram a energia de todo o elenco. Seria uma punicao
+            //    por atualizar o jogo.
+            //  • ATLETA QUE ACABOU DE CHEGAR: ainda nao entrou em nenhum
+            //    retrato.
+            //
+            // Cobrar zero na primeira virada e exato: nao ha semana anterior
+            // medida. Da segunda em diante a conta e a diferenca real.
+            // Virada de temporada zera o acumulado; o clamp evita minuto negativo.
+            const anterior = minutosAntes[p.id] ?? acumulado
+            minutosDaSemana.set(p.id, Math.max(0, acumulado - anterior))
+          }
           const entrada: AtletaNaSemana[] = s.squadPlayers.map(p => ({
             id: p.id,
             idade: p.age,
             energia: p.energy ?? 100,
             fadigaCronica: fadigaAnterior[p.id] ?? 0,
-            minutosJogados: p.isStarter && !p.injury ? 90 : 0,
+            minutosJogados: minutosDaSemana.get(p.id) ?? 0,
             resistencia: p.physical ?? 70,
             lesionado: Boolean(p.injury),
             emTreinoIndividual: Boolean(p.training.currentFocus),
@@ -3152,6 +3194,12 @@ export const useGameEngine = create<GameEngineState>()(
             if (e) fadigaAtualizada[p.id] = Math.round(e.fadigaCronica)
           }
 
+          // NOVO RETRATO DOS MINUTOS. Tem de sair de `playersAfterNT` (o elenco
+          // como ele fica no fim da virada) e nao da entrada: quem chegou agora
+          // parte do proprio acumulado, e nao herda a divida de ninguem.
+          const minutosDepois: Record<number, number> = {}
+          for (const p of playersAfterNT) minutosDepois[p.id] = p.seasonStats?.minutesPlayed ?? 0
+
           return {
             ...s,
             currentWeek: finalWeek,
@@ -3160,6 +3208,7 @@ export const useGameEngine = create<GameEngineState>()(
             entrosamentoPares: paresDaSemana,
             squadCohesion: entrosamentoDaSemana,
             fadigaCronica: fadigaAtualizada,
+            minutosNaViradaDaSemana: minutosDepois,
             ultimoTreino: {
               carga: resumoTreino.carga,
               energiaMedia: resumoTreino.energiaMedia,
@@ -3357,6 +3406,7 @@ export const useGameEngine = create<GameEngineState>()(
           // Entrosamento e minutos JUNTOS: um elenco novo comeca do zero.
           entrosamentoPares: {},
           fadigaCronica: {},
+          minutosNaViradaDaSemana: {},
           squadCohesion: PISO_ENTROSAMENTO,
           ultimoTreino: null,
         })

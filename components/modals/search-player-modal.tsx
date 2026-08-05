@@ -154,10 +154,12 @@ export function SearchPlayerModal({
                 <div className="flex items-center gap-4">
                   {/* Player Avatar */}
                   <div className="relative">
-                    <PlayerAvatar 
-                      name={player.name} 
+                    <PlayerAvatar
+                      name={player.name}
                       teamColor={player.team.cor1}
-                      size="md" 
+                      fileKey={player.team.file_key}
+                      position={player.position}
+                      size="md"
                     />
                     <div className={cn(
                       "absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-md border",

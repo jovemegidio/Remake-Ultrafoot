@@ -200,7 +200,7 @@ export function RedeMundial({
                   key={p.id}
                   className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-[#0c0c10]/75 px-3 py-2.5 backdrop-blur-sm transition-colors hover:border-white/[0.12] hover:bg-[#0c0c10]/95"
                 >
-                  <PlayerAvatar name={p.name} teamColor={p.team?.cor1} size="sm" />
+                  <PlayerAvatar name={p.name} teamColor={p.team?.cor1} fileKey={p.team?.file_key} position={p.position} size="sm" />
 
                   <div className="min-w-0 flex-[1.3]">
                     <div className="flex items-center gap-2">

@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { cn } from "@/lib/utils"
+import { useUserTeam } from "@/lib/save-system"
 import { type Player, type PlayerInjury, INJURY_TYPES, getInjuryRecoveryTime } from "@/lib/game-engine"
 
 interface MedicalModalProps {
@@ -75,6 +76,12 @@ export function MedicalModal({
 }: MedicalModalProps) {
   const [selectedTreatment, setSelectedTreatment] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  // ⚠️ SEM `fileKey` O RETRATO NAO APARECE. `getPlayerPhotoUrls` so consulta a
+  // pasta editorial e o pacote do canal de atualizacao quando sabe o CLUBE — a
+  // chave la e `fileKey__nome`. Sem ele sobra o manifesto embutido, que responde
+  // por `playerId`, e o atleta caia na silhueta mesmo com foto publicada.
+  // Este modal trata sempre de atleta do PROPRIO elenco.
+  const { team: meuClube } = useUserTeam()
 
   if (!player) return null
 
@@ -124,7 +131,7 @@ export function MedicalModal({
         <div className="space-y-6 py-4">
           {/* Player Info */}
           <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
-            <PlayerAvatar name={player.name} size="md" />
+            <PlayerAvatar name={player.name} fileKey={meuClube.file_key} position={player.position} size="md" />
             <div className="flex-1">
               <div className="font-semibold text-white">{player.name}</div>
               <div className="text-sm text-white/50">{player.position} - {player.age} anos</div>

@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Send, X } from "lucide-react"
 import { useGameEngine } from "@/lib/game-engine"
-import { useGameState } from "@/lib/save-system"
+import { useGameState, useUserTeam } from "@/lib/save-system"
 import { useNotifications } from "@/components/notifications-system"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
 import {
@@ -46,6 +46,10 @@ export function BenchTalk() {
   const toggleTransferListed = useGameEngine(s => s.toggleTransferListed)
   const transferListedIds = useGameEngine(s => s.transferListedIds)
   const { state: saveState, setState: setSaveState } = useGameState()
+  // O reserva que reclama e do PROPRIO elenco: sem o `fileKey` do clube, o
+  // avatar nao consulta a pasta editorial nem o pacote do canal (chave
+  // `fileKey__nome`) e cai na silhueta mesmo com retrato publicado.
+  const { team: meuClube } = useUserTeam()
   const { addNotification } = useNotifications()
   const notificar = useRef(addNotification)
   notificar.current = addNotification
@@ -268,7 +272,7 @@ export function BenchTalk() {
           <div className="flex items-center gap-3">
             {/* Sem teamColor: o avatar monta o gradiente com `${teamColor}66`, que
                 so aceita HEX — var(--brand) viraria CSS invalido. */}
-            <PlayerAvatarCircle name={jogador.name} playerId={String(jogador.id)} size="md" />
+            <PlayerAvatarCircle name={jogador.name} playerId={String(jogador.id)} fileKey={meuClube.file_key} position={jogador.position} size="md" />
             <div>
               <h2 className="text-sm font-bold text-white">{jogador.name}</h2>
               <p className="text-[11px] text-white/45">

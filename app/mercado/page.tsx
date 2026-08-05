@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
 import {
   Search,
@@ -44,7 +44,7 @@ import { markRejection, getRejectionCooldown, CARENCIA_POR_MOTIVO } from "@/lib/
 import { confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
 import { formatCurrency, formatCurrencyFor } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
-import { useGameState, useUserTeam, type SquadPlayer } from "@/lib/save-system"
+import { useGameState, useUserTeam, type GameState, type SquadPlayer } from "@/lib/save-system"
 import { useRequireClub } from "@/lib/use-require-team"
 import { markDeparted, hasDeparted } from "@/lib/departed-players"
 import { useNotifications } from "@/components/notifications-system"
@@ -87,7 +87,7 @@ function normalizeClubShort(nome?: string): string {
     .split(" ").filter(w => w && !SIGLA_CLUBE_MERCADO.has(w)).join(" ")
 }
 type MarketTab = "buscar" | "rede" | "olheiros" | "central" | "juniores" | "enviadas" | "recebidas"
-type SentProposalStatus = "aceita" | "rejeitada"
+type SentProposalStatus = "aceita" | "rejeitada" | "pendente"
 
 function scoutedLeadToMarketPlayer(lead: import("@/lib/game-engine").ScoutedLead): Player {
   return {
@@ -137,17 +137,11 @@ function scoutedLeadToMarketPlayer(lead: import("@/lib/game-engine").ScoutedLead
   }
 }
 
-interface SentTransferProposal {
-  id: number
-  playerName: string
-  teamName: string
-  position: string
-  overall: number
-  type: "buy" | "loan"
-  amount: number
-  status: SentProposalStatus
-  week: number
-}
+/**
+ * O histórico de propostas enviadas MORA NO SAVE (`GameState.propostasEnviadas`).
+ * O tipo é derivado de lá para os dois não se separarem em silêncio.
+ */
+type SentTransferProposal = NonNullable<GameState["propostasEnviadas"]>[number]
 
 const MARKET_TABS: MarketTab[] = ["buscar", "rede", "olheiros", "central", "juniores", "enviadas", "recebidas"]
 
@@ -287,7 +281,16 @@ export default function MercadoPage() {
   const [marketPage, setMarketPage] = useState(0)
   const [expandedScoutId, setExpandedScoutId] = useState<number | null>(null)
   const [marketNotice, setMarketNotice] = useState<string | null>(null)
-  const [sentProposals, setSentProposals] = useState<SentTransferProposal[]>([])
+  // ⚠️ NAO e mais `useState`. Ver `propostasEnviadas` em lib/save-system: a
+  // lista vivia so enquanto a pagina estava montada, entao sair para conferir o
+  // elenco (o que todo mundo faz depois de fechar negocio) apagava o historico.
+  const sentProposals = careerState.propostasEnviadas ?? []
+  const setSentProposals = useCallback(
+    (atualizar: (atual: SentTransferProposal[]) => SentTransferProposal[]) => {
+      setCareerState(atual => ({ propostasEnviadas: atualizar(atual.propostasEnviadas ?? []) }))
+    },
+    [setCareerState],
+  )
   /**
    * Reforços já pagos que esperam a janela abrir para serem inscritos.
    *
@@ -864,7 +867,13 @@ export default function MercadoPage() {
       return
     }
 
-    const proposalStatus: SentProposalStatus = accepted ? "aceita" : "rejeitada"
+    // ⚠️ ACEITE NA MESA NAO E CONTRATACAO FECHADA. Depois do "sim" do agente
+    // ainda falta o botao de confirmar (handleConfirm -> onConfirm -> buyPlayer),
+    // e quem fechasse a janela ali ficava com uma proposta marcada "Aceita" sem
+    // reforco nenhum no elenco — a outra metade do relato "contratei e ele nao
+    // veio". Aqui o registro nasce PENDENTE; quem promove para "aceita" e a
+    // compra de verdade, la no `onConfirm`.
+    const proposalStatus: SentProposalStatus = accepted ? "pendente" : "rejeitada"
 
     // Aviso na Central da resposta à MINHA proposta (pedido). A decisão é
     // sincrona aqui, entao notificamos direto — a ponte global cuida das
@@ -888,8 +897,11 @@ export default function MercadoPage() {
         amount: offer,
         status: proposalStatus,
         week: gameEngine.currentWeek,
+        season: gameEngine.currentSeason,
       },
-      ...current,
+      // Uma nova proposta pelo MESMO atleta substitui a anterior, senao o
+      // historico enche de linhas do mesmo nome ao renegociar.
+      ...current.filter(p => p.playerName !== player.name),
     ].slice(0, 12))
   }
 
@@ -1865,28 +1877,38 @@ export default function MercadoPage() {
                   </div>
                 ) : (
                   <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-white/[0.04] scrollbar-thin">
-                    {sentProposals.map((proposal) => (
+                    {sentProposals.map((proposal) => {
+                      // Tres estados agora: PENDENTE e o acordo fechado na mesa
+                      // que ainda nao virou contratacao (faltou confirmar).
+                      const pendente = proposal.status === "pendente"
+                      const aceita = proposal.status === "aceita"
+                      const tom = aceita ? "text-[var(--brand)]" : pendente ? "text-amber-300" : "text-red-300"
+                      const fundo = aceita ? "bg-[var(--brand)]/15 text-[var(--brand)]" : pendente ? "bg-amber-400/15 text-amber-300" : "bg-red-500/15 text-red-300"
+                      return (
                       <div key={proposal.id} className="flex items-center gap-4 px-5 py-4">
-                        <div className={cn(
-                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                          proposal.status === "aceita" ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "bg-red-500/15 text-red-300"
-                        )}>
-                          {proposal.status === "aceita" ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
+                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", fundo)}>
+                          {aceita ? <Check className="h-5 w-5" /> : pendente ? <Clock className="h-5 w-5" /> : <X className="h-5 w-5" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-white">{proposal.playerName}</p>
                           <p className="text-xs text-white/45">
                             {proposal.teamName} - {proposal.type === "loan" ? "Emprestimo" : "Compra"} - Semana {proposal.week}
                           </p>
+                          {pendente && (
+                            <p className="mt-0.5 text-[10px] text-amber-300/80">
+                              Acordo fechado na mesa — reabra a negociacao e confirme para o atleta assinar.
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-white">{formatCurrency(proposal.amount)}</p>
-                          <p className={cn("text-[10px] uppercase", proposal.status === "aceita" ? "text-[var(--brand)]" : "text-red-300")}>
-                            {proposal.status === "aceita" ? "Aceita" : "Rejeitada"}
+                          <p className={cn("text-[10px] uppercase", tom)}>
+                            {aceita ? "Contratado" : pendente ? "A confirmar" : "Rejeitada"}
                           </p>
                         </div>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -2062,6 +2084,12 @@ export default function MercadoPage() {
           // Contrato de 3 anos a partir de AGORA, em semana absoluta.
           const fimContrato = absoluteWeek(gameEngine.currentSeason, gameEngine.currentWeek) + 52 * 3
           const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer, divisaoUsuario, salarioSemanal, fimContrato)
+
+          // Fecha (ou derruba) o registro do historico com o desfecho REAL: e a
+          // compra que decide, nao o aperto de mao com o agente.
+          const registrarDesfecho = (nome: string, status: SentProposalStatus) =>
+            setSentProposals(atual => atual.map(p => (p.playerName === nome ? { ...p, status } : p)))
+
           if (negotiationType === "loan") {
             // DURAÇÃO E SALÁRIO ACERTADOS NA MESA. Antes eram 26 semanas cravadas
             // e `taxa/26` de salário — a negociação de empréstimo não chegava aqui.
@@ -2070,6 +2098,7 @@ export default function MercadoPage() {
             const result = gameEngine.loanPlayer(enginePlayer, semanas, salarioDoEmprestimo, loan?.taxa ?? fee, janelaAberta)
             if (result === "no_cash") {
               setMarketNotice(`Caixa insuficiente para a taxa de ${formatCurrency(loan?.taxa ?? fee)} do empréstimo.`)
+              registrarDesfecho(selectedPlayer.name, "rejeitada")
               setActiveTab("enviadas")
               return
             }
@@ -2078,6 +2107,7 @@ export default function MercadoPage() {
             if ((result === "joined" || result === "pending") && selectedPlayer.team?.nome) {
               markDeparted(selectedPlayer.team.nome, selectedPlayer.name)
             }
+            registrarDesfecho(selectedPlayer.name, result === "failed" ? "rejeitada" : "aceita")
             setMarketNotice(result === "pending"
               ? `${selectedPlayer.name} assinou e será registrado na semana ${nextTransferWindowWeek(gameEngine.currentWeek)}.`
               : result === "joined"
@@ -2092,6 +2122,7 @@ export default function MercadoPage() {
               setMarketNotice(permissao.reason === "frozen"
                 ? "Mercado congelado: a diretoria suspendeu as contratações por causa das parcelas da dívida em atraso. Regularize as finanças primeiro."
                 : "A dívida do clube reduz o teto de gastos com transferências. Esta oferta ultrapassa o limite atual — quite parte da dívida ou reduza o valor.")
+              registrarDesfecho(selectedPlayer.name, "rejeitada")
               setActiveTab("enviadas")
               return
             }
@@ -2102,6 +2133,7 @@ export default function MercadoPage() {
               const capacidade = borrowingCapacity(careerState.debt, gameEngine.weeklyIncome ?? 0)
               if (falta > capacidade) {
                 setMarketNotice(`Saldo insuficiente e o banco não cobre a diferença (falta ${formatCurrency(falta)}, crédito disponível ${formatCurrency(capacidade)}). Venda alguém ou reduza a oferta.`)
+                registrarDesfecho(selectedPlayer.name, "rejeitada")
                 setActiveTab("enviadas")
                 return
               }
@@ -2116,10 +2148,13 @@ export default function MercadoPage() {
               setMarketNotice(
                 "A diretoria vetou: o salário deste atleta estoura o teto da folha. Libere espaço vendendo, rescindindo ou renegociando contratos.",
               )
+              registrarDesfecho(selectedPlayer.name, "rejeitada")
+              setActiveTab("enviadas")
               return
             }
             if (transferResult === "failed") {
               setMarketNotice("A contratação não foi concluída ou o atleta já pertence ao plantel.")
+              registrarDesfecho(selectedPlayer.name, "rejeitada")
               setActiveTab("enviadas")
               return
             }
@@ -2149,6 +2184,7 @@ export default function MercadoPage() {
                 }],
               })
             }
+            registrarDesfecho(selectedPlayer.name, "aceita")
             setMarketNotice(transferResult === "pending"
               ? `${selectedPlayer.name} foi contratado por ${formatCurrency(fee)} e será registrado na semana ${nextTransferWindowWeek(gameEngine.currentWeek)}.`
               : `${selectedPlayer.name} foi contratado por ${formatCurrency(fee)} e já está no elenco.`)
