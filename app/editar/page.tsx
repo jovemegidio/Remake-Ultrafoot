@@ -839,7 +839,7 @@ export default function EditarPage() {
   const stadiumBackground = getTeamStadiumBackground(
     selectedTeam?.nome,
     editDraft.estadio_nome ?? selectedTeam?.estadio_nome,
-  ) ?? "/images/stadium-night.png"
+  ) ?? "/images/stadium-night.webp"
 
   // EDITOR = extra de quem registrou (ver lib/beneficios.ts). O convite fica
   // DEPOIS de todos os hooks, nunca antes: um return condicional no meio da

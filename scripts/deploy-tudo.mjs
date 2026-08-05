@@ -31,6 +31,8 @@ const RAIZ = path.resolve(import.meta.dirname, "..")
 const publicar = process.argv.includes("--publicar")
 const soLauncher = process.argv.includes("--so-launcher")
 const soJogo = process.argv.includes("--so-jogo")
+/** Valvula de escape dos gates de publicacao. Existe para emergencia, nao para rotina. */
+const pularGates = process.argv.includes("--pular-gates")
 
 const VPS = "root@179.198.103.30"
 const SITE = "https://ultrafoot.179-198-103-30.sslip.io"
@@ -189,6 +191,50 @@ if (!publicar) {
   process.exit(0)
 }
 
+// ─── GATES ANTES DE PUBLICAR ────────────────────────────────────────────────
+//
+// Nenhum destes rodava no caminho de publicacao. O `lint` existia no
+// package.json e nunca era chamado; o `qa:features` chamava `rg` e morria com
+// ENOENT antes da primeira verificacao — falha que ninguem lia como reprovacao.
+// Resultado pratico: build subia com gate "passando" sem ter olhado nada.
+//
+// Reprovar aqui custa um commit. Reprovar depois deixa o binario no ar.
+const GATES = [
+  { nome: "type-check", cmd: "npx", args: ["tsc", "--noEmit", "-p", "tsconfig.json"] },
+  { nome: "lint", cmd: "npx", args: ["eslint", "app", "components", "lib", "hooks"] },
+  { nome: "lacunas de funcionalidade", cmd: "node", args: ["scripts/audit-feature-gaps.mjs"] },
+  { nome: "regulamentos das competicoes", cmd: "npx", args: ["tsx", "scripts/qa-competition-regulations.ts"] },
+  { nome: "regras do jogo", cmd: "npx", args: ["tsx", "scripts/test-contrato-base-de-tempo.ts"] },
+  { nome: "piso de elenco", cmd: "npx", args: ["tsx", "scripts/test-piso-de-elenco.ts"] },
+]
+// ⚠️ OS GATES RODAM NO DISCO DE BUILD, NAO NO REPOSITORIO.
+//
+// Com `cwd: RAIZ` (o G:) eles REPROVAVAM SEMPRE, e por um motivo que nao tinha
+// nada a ver com o codigo: o G: e unidade de rede e nao tem `node_modules`,
+// entao `npx tsc` cai num pacote-isca do npm que imprime "This is not the tsc
+// command you are looking for" e sai != 0. Toda publicacao morria em
+// "GATE REPROVADO: type-check", e a unica saida era `--pular-gates` — ou seja,
+// o gate criado para impedir build ruim de subir estava impedindo QUALQUER build
+// de subir, e empurrando todo mundo para o caminho sem verificacao nenhuma.
+//
+// `C:/Ultrafoot` e onde o `npm install` existe e onde o instalador foi
+// compilado: e o unico lugar em que verificar significa alguma coisa.
+// Ver a memoria do projeto sobre type-check falso no G:.
+if (!pularGates) {
+  for (const gate of GATES) {
+    passo(`gate: ${gate.nome}`)
+    try {
+      rodar(gate.cmd, gate.args, { cwd: DISCO, stdio: "inherit" })
+    } catch {
+      console.error(`\nGATE REPROVADO: ${gate.nome}. Nada foi publicado.`)
+      console.error("Se precisar publicar assim mesmo, rode com --pular-gates e assuma o risco.")
+      process.exit(1)
+    }
+  }
+} else {
+  console.log("\n⚠️  GATES PULADOS por --pular-gates. Voce esta publicando sem verificacao.")
+}
+
 // ANTES DE SUBIR QUALQUER COISA: as abas Novidades e Changelog do launcher saem
 // do launcher-config.json, que ninguem lembrava de atualizar — o jogo chegou na
 // 1.0.201 com o launcher anunciando a 1.0.175. Reprovar aqui custa um commit;
@@ -278,6 +324,34 @@ if (!soLauncher) {
   espelharNaVps({ tag, arquivo: nomeRemoto }, `/var/www/ultrafoot/downloads/${nomeRemoto}`, hash)
 
   passo("jogo: manifesto da VPS (depois do binario)")
+
+  // ─── Atualizacao diferencial ───
+  //
+  // O campo `manifesto` e o que LIGA o delta: com ele o launcher baixa so os
+  // arquivos que mudaram; sem ele, o instalador inteiro, como sempre.
+  //
+  // Ele so entra se o manifesto REALMENTE estiver publicado nesta versao.
+  // Anunciar um manifesto que nao existe faria todo launcher perder tempo com um
+  // 404 antes de cair no instalador — e este objeto e montado do zero a cada
+  // publicacao, entao um campo escrito na mao no latest.json se perderia aqui na
+  // proxima versao. Gerar com `node scripts/gerar-manifesto.mjs`.
+  //
+  // So na VPS de proposito: os blobs moram nela. Com a VPS fora do ar o
+  // launcher cai no latest.json do GitHub, e ali o delta NAO pode ser anunciado
+  // — nao haveria de onde baixar os arquivos.
+  const urlDoManifesto = `${SITE}/downloads/manifesto-${VERSAO_JOGO}.json`
+  let manifestoDeArquivos = null
+  try {
+    if (JSON.parse(corpoDe(urlDoManifesto))?.versao === VERSAO_JOGO) {
+      manifestoDeArquivos = urlDoManifesto
+    }
+  } catch {
+    /* sem manifesto publicado: segue no instalador completo */
+  }
+  console.log(manifestoDeArquivos
+    ? `  delta ligado — manifesto-${VERSAO_JOGO}.json publicado`
+    : `  delta desligado — sem manifesto-${VERSAO_JOGO}.json (instalador completo)`)
+
   // A VPS precisa do MESMO manifesto apontando para ela mesma — e do sha256 e do
   // tamanho, que o launcher usa para mostrar o progresso do download.
   const manifestoVps = {
@@ -289,6 +363,7 @@ if (!soLauncher) {
       "windows-x86_64": {
         signature: readFileSync(sigPath, "utf-8").trim(),
         url: `${SITE}/downloads/${nomeRemoto}`,
+        ...(manifestoDeArquivos ? { manifesto: manifestoDeArquivos } : {}),
       },
     },
   }

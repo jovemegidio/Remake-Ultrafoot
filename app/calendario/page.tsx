@@ -491,7 +491,7 @@ export default function CalendarioPage() {
       tela, deixando uma faixa sem fundo na esquerda a partir do breakpoint md. */}
   <div className="absolute inset-0">
   <Image
-  src="/images/pre-jogo/in-game-6.png"
+  src="/images/pre-jogo/in-game-6.webp"
   alt="Calendar Background"
   fill
   className="object-cover"

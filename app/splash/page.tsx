@@ -10,7 +10,7 @@ import { BENEFICIOS } from "@/lib/beneficios"
 import licencasRevogadas from "@/data/seeds/licencas-revogadas.json"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight, FolderOpen } from "lucide-react"
+import { Globe, Save, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, Download, Cloud, FolderOpen, Settings, PersonStanding } from "lucide-react"
 import { openSavesFolder } from "@/lib/save-folder"
 import { activateCareerSave, listCareerSaves, loadGameState, hasSave, clearAllGameData, deleteCareerSave, reconcileCareersWithFolder, useGameState } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
@@ -21,6 +21,7 @@ import { isTauri } from "@/lib/game-asset"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { LegalConsent } from "@/components/legal-consent"
 import { MenuBackground } from "@/components/menu-background"
+import { PainelConfiguracoes, PainelAcessibilidade } from "@/components/menu-preferencias"
 import { downloadSave, getSavedCloudCode } from "@/lib/cloud-save"
 import { contaLogada, listarSavesDaConta, type SaveDaConta } from "@/lib/conta-ultrafoot"
 import {
@@ -64,7 +65,7 @@ const LANGUAGE_COUNTRIES = [
 export default function SplashPage() {
   const t = useTranslation()
   const versaoDoJogo = useVersaoDoJogo()
-  const { state: gameState, setState: setGameState } = useGameState()
+  const { state: gameState, setState: setGameState, hydrated } = useGameState()
   const [phase, setPhase] = useState<SplashPhase>("black")
   // Idioma é a primeira decisão da sessão, antes de qualquer opção de carreira.
   // Selecao de idioma REMOVIDA da splash a pedido do usuario (2026-07-20):
@@ -77,6 +78,9 @@ export default function SplashPage() {
   const [isExiting, setIsExiting] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
   const [showLoadModal, setShowLoadModal] = useState(false)
+  // Painel lateral aberto pelos dois icones do canto superior esquerdo. Um por
+  // vez: sao a mesma gaveta, com conteudos diferentes.
+  const [painel, setPainel] = useState<"config" | "acessibilidade" | null>(null)
   // Confirmacao de exclusao de save. Substitui o window.confirm nativo, que no
   // Tauri abre uma caixa do Windows sem relacao com a identidade do jogo.
   // `um` guarda o save alvo; `todos` limpa a carreira inteira.
@@ -211,26 +215,29 @@ export default function SplashPage() {
   // punha o Editor de Clubes ENTRE "Novo jogo" e "Carregar jogo", separando as
   // duas acoes que todo mundo procura primeiro.
   //
-  // `grupo` so serve para desenhar o divisor: a lista continua sendo UM array,
-  // porque teclado e controle navegam por indice sobre ela.
+  // `grupo` so serve para separar visualmente os blocos: a lista continua sendo
+  // UM array, porque teclado e controle navegam por indice sobre ela.
+  //
+  // Os icones sairam na 1.0.267: o menu virou lista de texto puro (referencia do
+  // eFootball), onde o item ativo se destaca pelo TAMANHO e pelo tracinho da
+  // marca, nao por um quadradinho colorido.
   const mainMenuOptions: {
     id: MenuOption
     label: string
     hint?: string
     grupo: "jogar" | "ferramentas" | "sistema"
-    icon: React.ReactNode
     href?: string
   }[] = useMemo(() => [
-    { id: "novo-jogo", label: t.splash.newGame, hint: "Escolher clube e comecar uma carreira", grupo: "jogar", icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
-    { id: "carregar", label: t.splash.loadGame, hint: hasSaveGame ? "Continuar uma carreira salva" : "Nenhuma carreira salva ainda", grupo: "jogar", icon: <Save className="h-7 w-7" strokeWidth={1.5} /> },
-    { id: "editar", label: t.splash.clubEditor, hint: "Nomes, escudos, uniformes e elencos", grupo: "ferramentas", icon: <FileEdit className="h-7 w-7" strokeWidth={1.5} />, href: "/editar" },
+    { id: "novo-jogo", label: t.splash.newGame, hint: "Escolher clube e comecar uma carreira", grupo: "jogar", href: "/novo-jogo" },
+    { id: "carregar", label: t.splash.loadGame, hint: hasSaveGame ? "Continuar uma carreira salva" : "Nenhuma carreira salva ainda", grupo: "jogar" },
+    { id: "editar", label: t.splash.clubEditor, hint: "Nomes, escudos, uniformes e elencos", grupo: "ferramentas", href: "/editar" },
     // REGISTRAR so aparece para quem AINDA NAO registrou (pedido 30/07/26): depois
     // do codigo aceito o item nao tem mais funcao — o estado ja fica no selo
     // "Registrado" ao lado do titulo. O jogo continua sem travar quem nao registrou.
     ...(!isRegistered
-      ? [{ id: "registrar" as MenuOption, label: t.splash.register, hint: "Liberar os extras com o seu codigo", grupo: "sistema" as const, icon: <Key className="h-7 w-7 text-amber-400" strokeWidth={1.5} /> }]
+      ? [{ id: "registrar" as MenuOption, label: t.splash.register, hint: "Liberar os extras com o seu codigo", grupo: "sistema" as const }]
       : []),
-    { id: "sair", label: t.splash.exit, hint: "Fechar o jogo", grupo: "sistema", icon: <LogOut className="h-7 w-7" strokeWidth={1.5} /> },
+    { id: "sair", label: t.splash.exit, hint: "Fechar o jogo", grupo: "sistema" },
     // Memoizado porque a lista entra nas dependencias do teclado/controle: um
     // array novo a cada render reinstalava os listeners sem parar.
   ], [t, isRegistered, hasSaveGame])
@@ -485,6 +492,16 @@ export default function SplashPage() {
   // Navegacao por teclado e controle
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Painel aberto engole a navegacao: sem isto as setas continuavam movendo
+      // o cursor do menu atras da gaveta e o Enter abria a tela escondida.
+      if (painel) {
+        if (e.key === "Escape") {
+          e.preventDefault()
+          setPainel(null)
+        }
+        return
+      }
+
       if (showRegisterModal) {
         if (e.key === "Escape") {
           setShowRegisterModal(false)
@@ -546,6 +563,11 @@ export default function SplashPage() {
     const handleGamepadButton = (e: Event) => {
       const { button } = (e as CustomEvent<{ button: string }>).detail
 
+      if (painel) {
+        if (button === "B") setPainel(null)
+        return
+      }
+
       if (showRegisterModal) {
         if (button === "B") setShowRegisterModal(false)
         return
@@ -592,7 +614,7 @@ export default function SplashPage() {
       window.removeEventListener("keydown", handleKeyDown)
       window.removeEventListener("gamepad:button", handleGamepadButton)
     }
-  }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions, showRegisterModal, showLoadModal, isRegistered, selectedSaveIndex, savedGames, handleLoadSave, languageSelected, moveLanguage, selectLanguage])
+  }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions, showRegisterModal, showLoadModal, painel, isRegistered, selectedSaveIndex, savedGames, handleLoadSave, languageSelected, moveLanguage, selectLanguage])
 
   return (
     <div
@@ -681,7 +703,7 @@ export default function SplashPage() {
             }}
           >
             <Image
-              src="/images/agencia-do-japa-logo.png"
+              src="/images/agencia-do-japa-logo.webp"
               alt="Agencia do Japa"
               width={180}
               height={90}
@@ -960,12 +982,15 @@ export default function SplashPage() {
             sob os botões, e o rodapé da barra de dicas. Ver components/menu-background. */}
         <div className="absolute inset-0 overflow-hidden">
           <MenuBackground ativo={phase === "main-menu"} className="absolute inset-0" />
-          {/* Vinheta mínima só à esquerda, sob os botões. */}
+          {/* Vinheta à esquerda, sob a lista. Ficou um pouco mais densa na
+              1.0.267: sem a caixa de vidro por trás, o texto do menu passou a
+              apoiar-se SÓ neste degradê para se manter legível quando o fundo
+              troca para uma arte clara. */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(90deg, rgba(4,6,10,0.78) 0%, rgba(4,6,10,0.42) 28%, rgba(4,6,10,0.05) 52%, transparent 68%)",
+                "linear-gradient(90deg, rgba(3,5,9,0.9) 0%, rgba(3,5,9,0.62) 26%, rgba(3,5,9,0.14) 50%, transparent 68%)",
             }}
           />
           {/* Rodapé sutil para a barra de dicas de controle. */}
@@ -973,6 +998,44 @@ export default function SplashPage() {
             className="absolute inset-x-0 bottom-0 h-36"
             style={{ background: "linear-gradient(0deg, rgba(4,6,10,0.6) 0%, transparent 100%)" }}
           />
+
+          {/* FAIXAS DIAGONAIS da identidade (referência: menu do eFootball).
+              São só recorte + degradê — nada de imagem nova nem de blur, que é o
+              que custa caro em tela cheia. Opacidade baixa de propósito: elas
+              emolduram a lista sem competir com a arte do carrossel. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              animation: phase === "main-menu" ? "fadeIn 1.2s ease-out 0.25s forwards" : "none",
+              opacity: 0,
+            }}
+          >
+            {/* Lâmina larga, do canto inferior esquerdo para o meio da tela. */}
+            <div
+              className="absolute inset-0 opacity-[0.16]"
+              style={{
+                clipPath: "polygon(0 74%, 74% 30%, 88% 44%, 0 96%)",
+                background: "linear-gradient(90deg, var(--brand) 0%, rgba(0,212,255,0.35) 45%, transparent 82%)",
+              }}
+            />
+            {/* Fio fino e aceso correndo por cima dela. */}
+            <div
+              className="absolute inset-0 opacity-60"
+              style={{
+                clipPath: "polygon(0 70.5%, 74% 26.5%, 74.6% 28.4%, 0 72.6%)",
+                background: "linear-gradient(90deg, var(--brand) 0%, rgba(0,255,200,0.15) 60%, transparent 85%)",
+              }}
+            />
+            {/* Cunha escura no alto, para os ícones e o logo respirarem. */}
+            <div
+              className="absolute inset-x-0 top-0 h-[38%] opacity-70"
+              style={{
+                clipPath: "polygon(0 0, 100% 0, 100% 26%, 0 100%)",
+                background: "linear-gradient(180deg, rgba(3,5,9,0.85) 0%, transparent 100%)",
+              }}
+            />
+          </div>
         </div>
 
         {/* Subtle top gradient - EAFC style */}
@@ -999,13 +1062,45 @@ export default function SplashPage() {
           ))}
         </div>
 
+        {/* ATALHOS DO CANTO — engrenagem e acessibilidade, como na referência.
+            Ficam sobre a cunha escura do topo para nunca sumirem no fundo claro.
+            São os DOIS únicos itens fora da lista; nada aqui mexe na navegação
+            por teclado/controle do menu (que continua por índice). */}
+        <div
+          className="absolute left-4 top-4 z-20 flex flex-col gap-1 sm:left-6 sm:top-6"
+          style={{
+            animation: phase === "main-menu" ? "fadeIn 0.6s ease-out 0.35s forwards" : "none",
+            opacity: 0,
+          }}
+        >
+          {([
+            { id: "config" as const, rotulo: "Configurações", icone: <Settings className="h-[18px] w-[18px]" strokeWidth={1.7} /> },
+            { id: "acessibilidade" as const, rotulo: "Acessibilidade", icone: <PersonStanding className="h-[19px] w-[19px]" strokeWidth={1.9} /> },
+          ]).map(atalho => (
+            <button
+              key={atalho.id}
+              onClick={() => setPainel(atalho.id)}
+              aria-label={atalho.rotulo}
+              title={atalho.rotulo}
+              className="group flex items-center gap-2.5 rounded-full py-1.5 pl-2 pr-3 text-white/45 transition-all duration-200 hover:bg-white/[0.07] hover:text-[var(--brand)]"
+            >
+              {atalho.icone}
+              {/* O rótulo só aparece no hover/foco: a referência mostra ícone
+                  puro, mas ícone sem nome deixa a função adivinhada. */}
+              <span className="max-w-0 overflow-hidden whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.16em] opacity-0 transition-all duration-200 group-hover:max-w-[10rem] group-hover:opacity-100 group-focus-visible:max-w-[10rem] group-focus-visible:opacity-100">
+                {atalho.rotulo}
+              </span>
+            </button>
+          ))}
+        </div>
+
         {/* Conteudo do menu - layout cinematografico alinhado a esquerda */}
         <div className="relative z-10 flex h-full flex-col justify-center px-8 sm:px-12 md:px-16 lg:px-24 pt-16 pb-24">
           <div className="w-full max-w-md">
 
             {/* Logo + badge de registro */}
             <div
-              className="mb-6"
+              className="mb-9"
               style={{
                 animation: phase === "main-menu" ? "slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
               }}
@@ -1037,10 +1132,17 @@ export default function SplashPage() {
               </div>
             </div>
 
-            {/* Menu vertical — agrupado num painel de vidro para leitura limpa e
-                organizada sobre o fundo do estádio. */}
+            {/* MENU EM LISTA DE TEXTO (1.0.267). Saiu o painel de vidro com um
+                cartão por item: a caixa competia com a arte do fundo e todos os
+                itens tinham o mesmo peso visual. Agora é a mesma lista, na mesma
+                ordem e com a mesma navegação — o que muda é a hierarquia: o item
+                sob o cursor cresce, ganha o traço da marca e revela a linha de
+                apoio; os outros recuam para um cinza discreto.
+
+                Sem divisor entre os blocos: o respiro maior (mt-*) já separa
+                jogar / ferramentas / sistema sem desenhar nada. */}
             <nav
-              className="flex flex-col gap-1.5 rounded-2xl border border-white/[0.08] bg-[#080b12]/55 p-2.5 shadow-[0_24px_70px_rgba(0,0,0,0.5)] backdrop-blur-md"
+              className="flex flex-col items-start"
               style={{
                 animation: phase === "main-menu" ? "slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
                 opacity: 0,
@@ -1048,68 +1150,61 @@ export default function SplashPage() {
             >
               {mainMenuOptions.map((option, index) => {
                 const isSelected = selectedIndex === index
-                // Divisor entre blocos (jogar / ferramentas / sistema).
                 const abreBloco = index > 0 && mainMenuOptions[index - 1].grupo !== option.grupo
                 return (
-                  <div key={option.id}>
-                    {abreBloco && <div className="mx-3 my-1.5 h-px bg-white/[0.07]" />}
-                    <button
-                      onClick={() => handleMenuSelect(index)}
-                      onMouseEnter={() => setSelectedIndex(index)}
+                  <button
+                    key={option.id}
+                    onClick={() => handleMenuSelect(index)}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                    onFocus={() => setSelectedIndex(index)}
+                    className={cn(
+                      "group relative w-full py-2 pl-5 pr-2 text-left transition-transform duration-300 ease-out",
+                      abreBloco && "mt-4",
+                      isSelected ? "translate-x-2" : "translate-x-0",
+                    )}
+                  >
+                    {/* Traço inclinado da marca — o "slash" da referência. */}
+                    <span
+                      aria-hidden
                       className={cn(
-                        "group relative flex w-full items-center gap-3.5 rounded-xl border px-3.5 py-2.5 text-left transition-all duration-200 overflow-hidden",
-                        isSelected
-                          ? "border-[var(--brand)]/35"
-                          : "border-transparent hover:border-white/10 hover:bg-white/[0.03]"
+                        "absolute left-0 w-[3px] rounded-sm transition-all duration-300",
+                        isSelected ? "h-7 opacity-100" : "h-0 opacity-0",
                       )}
                       style={{
-                        background: isSelected
-                          ? "linear-gradient(90deg, rgba(0,255,200,0.16) 0%, rgba(0,200,255,0.06) 50%, transparent 100%)"
-                          : "transparent",
-                        boxShadow: isSelected ? "0 8px 26px rgba(0,255,200,0.1)" : "none",
+                        top: "50%",
+                        transform: "translateY(-50%) skewX(-14deg)",
+                        background: "linear-gradient(180deg, var(--brand) 0%, var(--brand-2) 100%)",
+                        boxShadow: isSelected ? "0 0 16px rgba(0,255,200,0.55)" : "none",
                       }}
+                    />
+
+                    <span
+                      className={cn(
+                        "block truncate font-black leading-none transition-all duration-300",
+                        isSelected
+                          ? "text-[26px] text-white sm:text-[30px] [text-shadow:0_2px_22px_rgba(0,0,0,0.85)]"
+                          : "text-[18px] text-white/35 group-hover:text-white/65 sm:text-[20px]",
+                      )}
                     >
-                      {/* Barra de acento esquerda */}
+                      {option.label}
+                    </span>
+
+                    {/* A linha de apoio continua existindo, mas só para o item
+                        ativo: a lista inteira com duas linhas viraria um bloco de
+                        texto e mataria o destaque. */}
+                    {option.hint && (
                       <span
                         className={cn(
-                          "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-full transition-all duration-300",
-                          isSelected ? "h-9 bg-gradient-to-b from-[var(--brand)] to-[var(--brand-2)]" : "h-0 bg-transparent"
+                          "block overflow-hidden truncate text-[10.5px] font-semibold uppercase tracking-[0.18em] transition-all duration-300",
+                          isSelected
+                            ? "mt-2 max-h-5 text-[var(--brand)]/75 opacity-100"
+                            : "mt-0 max-h-0 opacity-0",
                         )}
-                      />
-
-                      {/* Icone */}
-                      <div className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 [&>svg]:h-5 [&>svg]:w-5",
-                        isSelected ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "bg-white/[0.05] text-white/45 group-hover:text-white/70"
-                      )}>
-                        {option.icon}
-                      </div>
-
-                      {/* Label + linha de apoio (o menu dizia so o nome da acao) */}
-                      <span className="min-w-0 flex-1">
-                        <span className={cn(
-                          "block truncate font-bold text-sm tracking-wide transition-colors duration-200",
-                          isSelected ? "text-white" : "text-white/55 group-hover:text-white/80"
-                        )}>
-                          {option.label}
-                        </span>
-                        {option.hint && (
-                          <span className={cn(
-                            "block truncate text-[10.5px] font-medium transition-colors duration-200",
-                            isSelected ? "text-white/45" : "text-white/25"
-                          )}>
-                            {option.hint}
-                          </span>
-                        )}
+                      >
+                        {option.hint}
                       </span>
-
-                      {/* Chevron do item selecionado */}
-                      <ChevronRight className={cn(
-                        "h-4 w-4 shrink-0 transition-all duration-200",
-                        isSelected ? "text-[var(--brand)] opacity-100 translate-x-0" : "text-white/0 opacity-0 -translate-x-2"
-                      )} />
-                    </button>
-                  </div>
+                    )}
+                  </button>
                 )
               })}
             </nav>
@@ -1152,6 +1247,23 @@ export default function SplashPage() {
         </div>
 
       </div>
+
+      {/* GAVETAS DOS DOIS ATALHOS DO CANTO. Ficam fora do bloco do menu de
+          propósito: o menu inteiro vive dentro de um fade com
+          `pointer-events-none`, e um painel aberto ali herdaria isso. */}
+      {painel === "config" && (
+        <PainelConfiguracoes
+          aoFechar={() => setPainel(null)}
+          idioma={gameState.language || "pt-BR"}
+          aoEscolherIdioma={id => setGameState({ language: id })}
+          volumeSfx={gameState.sfxVolume ?? 80}
+          aoMudarVolumeSfx={v => setGameState({ sfxVolume: v })}
+          // Sem o store hidratado, gravar aqui escreveria o DEFAULT por cima do
+          // save real — o mesmo tropeço já visto no boot das telas de carreira.
+          podeGravar={hydrated}
+        />
+      )}
+      {painel === "acessibilidade" && <PainelAcessibilidade aoFechar={() => setPainel(null)} />}
 
       {/* Modal de Registro */}
       <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>

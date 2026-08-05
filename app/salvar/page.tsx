@@ -126,7 +126,7 @@ export default function SalvarPage() {
     <div className="relative flex h-screen flex-col overflow-hidden bg-[#05080a]">
       {/* Fundo de estadio com gradiente */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <Image src="/images/stadium-night.png" alt="" fill priority className="object-cover opacity-40" />
+        <Image src="/images/stadium-night.webp" alt="" fill priority className="object-cover opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#05080a] via-[#05080a]/70 to-[#05080a]/40" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#05080a]/80 via-transparent to-[#05080a]/80" />
       </div>
@@ -265,7 +265,7 @@ export default function SalvarPage() {
             <div className="mt-4 flex flex-col items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center">
                 <Image
-                  src="/images/leagues-logos.png"
+                  src="/images/leagues-logos.webp"
                   alt="Liga"
                   width={28}
                   height={28}

@@ -1,7 +1,24 @@
-// Selecoes nacionais derivadas dos clubes de cada pais.
-// Como os jogadores do jogo nao tem nacionalidade explicita, o elenco de uma
-// selecao e formado pelos melhores atletas que atuam em clubes daquele pais
-// (abordagem "selecao com base nos jogadores da liga local").
+// Selecoes nacionais montadas pela NACIONALIDADE DO ATLETA.
+//
+// ⚠️ ANTES ERA PELO CLUBE, e isso estava errado por definicao: o elenco saia de
+// `allTeams.filter(t => t.pais === countryKey)` — os clubes DAQUELE PAIS. Numa
+// selecao de verdade e o contrario: Mbappe joga no Real Madrid e defende a
+// Franca. Com o filtro por clube, todo atleta que atua fora do proprio pais
+// ficava invisivel para a sua selecao, e o que faltava era completado por
+// `fallbackNationalPlayers`, que INVENTA nomes a partir do id da selecao
+// ("Aalbania1", "Aalbania2"...).
+//
+// O comentario original dizia que "os jogadores do jogo nao tem nacionalidade
+// explicita". Isso era verdade quando foi escrito e deixou de ser: a auditoria
+// (scripts/auditar-nacionalidades.ts) encontra 16.891 atletas, 13.259 deles
+// (78,5%) COM nacionalidade, cobrindo 145 paises. O dado chegou e o codigo nao
+// acompanhou.
+//
+// ⚠️ E O CASAMENTO E SEM ACENTO. As selecoes usam id/countryKey sem acento
+// ("Colombia", "Franca", "Italia") e os seeds usam o nome com acento
+// ("Colômbia", "França", "Itália"). Comparando cru, 29 selecoes davam ZERO
+// atletas tendo centenas no banco — Colombia 603, Franca 414, Italia 404,
+// Belgica 224, Russia 196. Nao faltava dado; faltava normalizar.
 
 import { allTeams, allBrazilianTeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition, type Player } from "@/lib/players-data"
@@ -88,6 +105,72 @@ export const NATIONAL_TEAMS: NationalTeam[] = [
   // Eliminatorias sul-americanas rodavam com 9 seçoes, numero IMPAR, que deixa
   // uma seleçao de folga por rodada e nao fecha o turno-returno de 18 jogos.
   { id: "bolivia", name: "Bolivia", code: "BOL", confederation: "CONMEBOL", cor1: "#007934", cor2: "#ffe000", countryKey: "Bolivia", baselineStrength: 70 },
+
+  // ─── ACRESCENTADAS EM 05/08/2026 ────────────────────────────────────────
+  //
+  // UEFA tinha 18 dos 55 membros e CONCACAF 6 dos 41 — faltavam Polonia,
+  // Servia, Ucrania, Dinamarca, Irlanda, Pais de Gales, Jamaica, Costa Rica...
+  // (a CONMEBOL ja estava completa, com os 10.)
+  //
+  // ⚠️ AS CORES SAEM DA ARTE DO UNIFORME, nao de memoria: `cor1` e a cor
+  // dominante da camisa 1 e `cor2` a da camisa 2, extraidas por
+  // scripts/gerar-selecoes-faltantes.ts. Escrever 49 pares de cores de cabeca
+  // seria chute, e chute errado nao da erro — so aparece como camisa errada.
+  //
+  // ⚠️ E SO ENTROU QUEM TEM ATLETA REAL NO BANCO (o numero em cada linha). O
+  // pool e por NACIONALIDADE agora, entao `countryKey` casa com o `nac` do
+  // seed. Cadastrar pais sem atleta o faria jogar com nomes de
+  // `fallbackNationalPlayers` — o defeito que acabamos de tirar de 27 selecoes.
+  // As 23 micronacoes sem dado ficaram de fora de proposito.
+  { id: "albania", name: "Albania", code: "ALB", confederation: "UEFA", cor1: "#b5131b", cor2: "#e9e8e8", countryKey: "Albânia" }, // 24 atletas reais
+  { id: "andorra", name: "Andorra", code: "AND", confederation: "UEFA", cor1: "#cd1818", cor2: "#e7e8e8", countryKey: "Andorra" }, // 3 atletas reais
+  { id: "armenia", name: "Armenia", code: "ARM", confederation: "UEFA", cor1: "#cc1827", cor2: "#e8e8e8", countryKey: "Armênia" }, // 8 atletas reais
+  { id: "azerbaijao", name: "Azerbaijao", code: "AZE", confederation: "UEFA", cor1: "#1951b1", cor2: "#e8e9e9", countryKey: "Azerbaijão" }, // 2 atletas reais
+  { id: "bielorrussia", name: "Bielorrussia", code: "BLR", confederation: "UEFA", cor1: "#752530", cor2: "#92b7ab", countryKey: "Bielorrússia" }, // 7 atletas reais
+  { id: "bulgaria", name: "Bulgaria", code: "BUL", confederation: "UEFA", cor1: "#e7e7e7", cor2: "#b51314", countryKey: "Bulgária" }, // 9 atletas reais
+  { id: "chipre", name: "Chipre", code: "CYP", confederation: "UEFA", cor1: "#13388c", cor2: "#d2d2d3", countryKey: "Chipre" }, // 9 atletas reais
+  { id: "dinamarca", name: "Dinamarca", code: "DEN", confederation: "UEFA", cor1: "#ae141b", cor2: "#d5cccd", countryKey: "Dinamarca" }, // 80 atletas reais
+  { id: "estonia", name: "Estonia", code: "EST", confederation: "UEFA", cor1: "#2a4e8a", cor2: "#e7e7e7", countryKey: "Estônia" }, // 3 atletas reais
+  { id: "ilhas_faroe", name: "Ilhas Faroe", code: "FRO", confederation: "UEFA", cor1: "#e8e7e8", cor2: "#12182e", countryKey: "Ilhas Faroé" }, // 1 atletas reais
+  { id: "finlandia", name: "Finlandia", code: "FIN", confederation: "UEFA", cor1: "#e9e9e9", cor2: "#274784", countryKey: "Finlândia" }, // 14 atletas reais
+  { id: "georgia", name: "Georgia", code: "GEO", confederation: "UEFA", cor1: "#e8eaea", cor2: "#252525", countryKey: "Geórgia" }, // 15 atletas reais
+  { id: "grecia", name: "Grecia", code: "GRE", confederation: "UEFA", cor1: "#e8e8e8", cor2: "#134472", countryKey: "Grécia" }, // 18 atletas reais
+  { id: "hungria", name: "Hungria", code: "HUN", confederation: "UEFA", cor1: "#b71823", cor2: "#e8e8e8", countryKey: "Hungria" }, // 13 atletas reais
+  { id: "islandia", name: "Islandia", code: "ISL", confederation: "UEFA", cor1: "#158acc", cor2: "#d6d4d5", countryKey: "Islândia" }, // 11 atletas reais
+  { id: "irlanda", name: "Irlanda", code: "IRL", confederation: "UEFA", cor1: "#0f5834", cor2: "#d5d8d6", countryKey: "Irlanda" }, // 58 atletas reais
+  { id: "israel", name: "Israel", code: "ISR", confederation: "UEFA", cor1: "#d5d5d5", cor2: "#3a6cb3", countryKey: "Israel" }, // 14 atletas reais
+  { id: "cazaquistao", name: "Cazaquistao", code: "KAZ", confederation: "UEFA", cor1: "#ebd32d", cor2: "#184494", countryKey: "Cazaquistão" }, // 1 atletas reais
+  { id: "kosovo", name: "Kosovo", code: "KVX", confederation: "UEFA", cor1: "#153672", cor2: "#d2d3d2", countryKey: "Kosovo" }, // 13 atletas reais
+  { id: "letonia", name: "Letonia", code: "LVA", confederation: "UEFA", cor1: "#752533", cor2: "#e7e7e7", countryKey: "Letônia" }, // 1 atletas reais
+  { id: "lituania", name: "Lituania", code: "LTU", confederation: "UEFA", cor1: "#d7b516", cor2: "#1b4b4d", countryKey: "Lituânia" }, // 8 atletas reais
+  { id: "luxemburgo", name: "Luxemburgo", code: "LUX", confederation: "UEFA", cor1: "#ae181c", cor2: "#1b2f46", countryKey: "Luxemburgo" }, // 6 atletas reais
+  { id: "moldavia", name: "Moldavia", code: "MDA", confederation: "UEFA", cor1: "#314b92", cor2: "#ebca29", countryKey: "Moldávia" }, // 4 atletas reais
+  { id: "montenegro", name: "Montenegro", code: "MNE", confederation: "UEFA", cor1: "#b41718", cor2: "#e9e9e9", countryKey: "Montenegro" }, // 7 atletas reais
+  { id: "macedonia_do_norte", name: "Macedonia do Norte", code: "MKD", confederation: "UEFA", cor1: "#cd1712", cor2: "#d3d3d3", countryKey: "Macedônia do Norte" }, // 5 atletas reais
+  { id: "irlanda_do_norte", name: "Irlanda do Norte", code: "NIR", confederation: "UEFA", cor1: "#104b4e", cor2: "#e9e9e8", countryKey: "Irlanda do Norte" }, // 22 atletas reais
+  { id: "polonia", name: "Polonia", code: "POL", confederation: "UEFA", cor1: "#e9e9e9", cor2: "#cf1818", countryKey: "Polônia" }, // 46 atletas reais
+  { id: "romenia", name: "Romenia", code: "ROU", confederation: "UEFA", cor1: "#ead01d", cor2: "#ce1a27", countryKey: "Romênia" }, // 24 atletas reais
+  { id: "servia", name: "Servia", code: "SRB", confederation: "UEFA", cor1: "#1b43b9", cor2: "#e8e7e7", countryKey: "Sérvia" }, // 54 atletas reais
+  { id: "eslovaquia", name: "Eslovaquia", code: "SVK", confederation: "UEFA", cor1: "#243c85", cor2: "#e7e7e7", countryKey: "Eslováquia" }, // 23 atletas reais
+  { id: "eslovenia", name: "Eslovenia", code: "SVN", confederation: "UEFA", cor1: "#e7e7e7", cor2: "#175793", countryKey: "Eslovênia" }, // 22 atletas reais
+  { id: "ucrania", name: "Ucrania", code: "UKR", confederation: "UEFA", cor1: "#d8cc17", cor2: "#185596", countryKey: "Ucrânia" }, // 26 atletas reais
+  { id: "pais_de_gales", name: "Pais de Gales", code: "WAL", confederation: "UEFA", cor1: "#b31212", cor2: "#d6d6d6", countryKey: "País de Gales" }, // 38 atletas reais
+  { id: "barbados", name: "Barbados", code: "BRB", confederation: "CONCACAF", cor1: "#e6b710", cor2: "#283487", countryKey: "Barbados" }, // 1 atletas reais
+  { id: "costa_rica", name: "Costa Rica", code: "CRC", confederation: "CONCACAF", cor1: "#aa182d", cor2: "#b3c7d4", countryKey: "Costa Rica" }, // 10 atletas reais
+  { id: "republica_dominicana", name: "Republica Dominicana", code: "DOM", confederation: "CONCACAF", cor1: "#253954", cor2: "#e8e8e8", countryKey: "República Dominicana" }, // 10 atletas reais
+  { id: "el_salvador", name: "El Salvador", code: "SLV", confederation: "CONCACAF", cor1: "#264b73", cor2: "#cdd1d4", countryKey: "El Salvador" }, // 5 atletas reais
+  { id: "guiana_francesa", name: "Guiana Francesa", code: "GYF", confederation: "CONCACAF", cor1: "#e8d449", cor2: "#2c7268", countryKey: "Guiana Francesa" }, // 1 atletas reais
+  { id: "guadalupe", name: "Guadalupe", code: "GLP", confederation: "CONCACAF", cor1: "#af1212", cor2: "#147845", countryKey: "Guadalupe" }, // 8 atletas reais
+  { id: "guatemala", name: "Guatemala", code: "GUA", confederation: "CONCACAF", cor1: "#e9e9e9", cor2: "#232323", countryKey: "Guatemala" }, // 2 atletas reais
+  { id: "guiana", name: "Guiana", code: "GUY", confederation: "CONCACAF", cor1: "#cb992f", cor2: "#1c774d", countryKey: "Guiana" }, // 2 atletas reais
+  { id: "honduras", name: "Honduras", code: "HON", confederation: "CONCACAF", cor1: "#eae9e9", cor2: "#171717", countryKey: "Honduras" }, // 6 atletas reais
+  { id: "jamaica", name: "Jamaica", code: "JAM", confederation: "CONCACAF", cor1: "#d4a933", cor2: "#252726", countryKey: "Jamaica" }, // 29 atletas reais
+  { id: "martinica", name: "Martinica", code: "MTQ", confederation: "CONCACAF", cor1: "#151514", cor2: "#cf1212", countryKey: "Martinica" }, // 6 atletas reais
+  { id: "porto_rico", name: "Porto Rico", code: "PUR", confederation: "CONCACAF", cor1: "#102c54", cor2: "#c9ced4", countryKey: "Porto Rico" }, // 2 atletas reais
+  { id: "santa_lucia", name: "Santa Lucia", code: "LCA", confederation: "CONCACAF", cor1: "#f0ca2e", cor2: "#1549b7", countryKey: "Santa Lúcia" }, // 1 atletas reais
+  { id: "sao_vicente", name: "Sao Vicente e Granadinas", code: "VIN", confederation: "CONCACAF", cor1: "#e9b536", cor2: "#1152aa", countryKey: "São Vicente e Granadinas" }, // 1 atletas reais
+  { id: "suriname", name: "Suriname", code: "SUR", confederation: "CONCACAF", cor1: "#e8e8e8", cor2: "#1c7650", countryKey: "Suriname" }, // 12 atletas reais
+  { id: "trinidad_e_tobago", name: "Trinidad e Tobago", code: "TRI", confederation: "CONCACAF", cor1: "#b52e45", cor2: "#f1eaea", countryKey: "Trinidad e Tobago" }, // 6 atletas reais
 ]
 
 const NT_BY_ID = new Map(NATIONAL_TEAMS.map(nt => [nt.id, nt]))
@@ -124,10 +207,90 @@ export function getAllNationalTeams(): NationalTeam[] {
   return NATIONAL_TEAMS.map(applyNationalTeamOverride)
 }
 
-// Clubes que alimentam o elenco da selecao
-function getClubsForNationalTeam(nt: NationalTeam): Team[] {
-  if (nt.id === "brasil") return allBrazilianTeams
-  return allTeams.filter(t => t.pais === nt.countryKey)
+/** Chave de comparacao de nacionalidade: sem acento, sem caixa, sem sobra. */
+function chaveDeNacao(v?: string | null): string {
+  return (v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim()
+}
+
+/**
+ * Grafias que os seeds usam e que NAO se resolvem so tirando acento.
+ *
+ * Mantido curto de proposito: cada linha aqui e uma divergencia real encontrada
+ * na auditoria, nao um chute. Acento sozinho ja resolve a maioria
+ * (Colômbia→Colombia, França→Franca, Itália→Italia...).
+ */
+const ALIAS_DE_NACAO: Record<string, string[]> = {
+  tchequia: ["republica tcheca", "chequia", "czechia"],
+  ira: ["irao", "iran"],
+  "estados unidos": ["eua", "estados unidos da america"],
+  "coreia do sul": ["coreia", "republica da coreia"],
+  "bosnia e herzegovina": ["bosnia", "bosnia-herzegovina"],
+  "africa do sul": ["republica sul-africana"],
+  "rd congo": ["congo", "republica democratica do congo", "congo-kinshasa"],
+  "arabia saudita": ["arabia"],
+  holanda: ["paises baixos"],
+}
+
+/** Todas as chaves sob as quais uma selecao aceita um atleta. */
+function chavesDaSelecao(nt: NationalTeam): Set<string> {
+  const base = [nt.name, nt.countryKey].filter(Boolean).map(chaveDeNacao)
+  const extras = base.flatMap(k => ALIAS_DE_NACAO[k] ?? []).map(chaveDeNacao)
+  // O Brasil tem countryKey vazio (clubes brasileiros nao repetem o pais).
+  if (nt.id === "brasil") base.push("brasil")
+  return new Set([...base, ...extras].filter(Boolean))
+}
+
+/**
+ * INDICE nacionalidade -> atletas, montado UMA VEZ.
+ *
+ * ⚠️ Sem cache isto seria inviavel: cada consulta a uma selecao varreria os
+ * ~2.400 clubes chamando `getPlayersForTeam` (que resolve seed + overrides por
+ * clube). A tela de convocacao consulta varias vezes por render.
+ *
+ * O indice e invalidado pelos MESMOS eventos que o resto do jogo usa quando o
+ * elenco muda — pacote do canal aplicado e store do Tauri hidratado —, senao
+ * uma atualizacao de elencos ficaria invisivel ate reiniciar.
+ */
+type FonteDeAtleta = { player: Player; team: Team }
+const indicePorNacao = new Map<string, Map<string, FonteDeAtleta[]>>()
+
+if (typeof window !== "undefined") {
+  const limpar = () => indicePorNacao.clear()
+  window.addEventListener("ultrafoot:elencos:atualizados", limpar)
+  window.addEventListener("ultrafoot:store:ready", limpar)
+}
+
+function getIndicePorNacao(raw: boolean): Map<string, FonteDeAtleta[]> {
+  const cacheKey = raw ? "raw" : "normal"
+  const pronto = indicePorNacao.get(cacheKey)
+  if (pronto) return pronto
+
+  const idx = new Map<string, FonteDeAtleta[]>()
+  for (const team of allTeams) {
+    for (const player of getPlayersForTeam(team, raw ? { raw: true } : undefined)) {
+      const k = chaveDeNacao(player.nac)
+      // Sem nacionalidade o atleta simplesmente nao entra: adivinhar pela liga
+      // colocaria um brasileiro do Porto na selecao de Portugal.
+      if (!k) continue
+      const lista = idx.get(k)
+      if (lista) lista.push({ player, team })
+      else idx.set(k, [{ player, team }])
+    }
+  }
+  indicePorNacao.set(cacheKey, idx)
+  return idx
+}
+
+/** Atletas REAIS elegiveis para a selecao, de qualquer clube do mundo. */
+function atletasDaNacao(nt: NationalTeam, raw: boolean): FonteDeAtleta[] {
+  const idx = getIndicePorNacao(raw)
+  const out: FonteDeAtleta[] = []
+  for (const chave of chavesDaSelecao(nt)) {
+    const lista = idx.get(chave)
+    if (lista) out.push(...lista)
+  }
+  // Melhores primeiro: a convocacao mostra os 60 primeiros.
+  return out.sort((a, b) => (b.player.base ?? 0) - (a.player.base ?? 0))
 }
 
 const NATIONAL_FALLBACK_POSITIONS = [
@@ -197,9 +360,7 @@ export function getNationalPlayerSources(
   nt: NationalTeam,
   opts?: { raw?: boolean },
 ): Array<{ player: Player; team: Team }> {
-  const sources = getClubsForNationalTeam(nt).flatMap(team =>
-    getPlayersForTeam(team, opts).map(player => ({ player, team })),
-  )
+  const sources = atletasDaNacao(nt, Boolean(opts?.raw))
   if (sources.length < 23) {
     const virtualTeam = {
       nome: nt.name,

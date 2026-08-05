@@ -1032,12 +1032,14 @@ export default function MercadoPage() {
           priority
           unoptimized
         />
-        {/* Base dark overlay */}
-        <div className="absolute inset-0 bg-black/40" />
-        {/* Top gradient to darken header area */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/15 to-black/70" />
-        {/* Subtle dark blue tint for game atmosphere */}
-        <div className="absolute inset-0 bg-[#050508]/20" />
+        {/* VINHETA NO MINIMO (pedido). Antes eram TRES camadas empilhadas —
+            `black/40` + um gradiente `black/55 → black/70` + `#050508/20` —
+            que somadas escureciam a arte em mais de 70% e faziam o fundo
+            praticamente sumir.
+            Sobrou só um veu leve no topo e no pe, onde de fato passam o
+            cabecalho e a barra de acoes: sem ele o texto branco fica ilegivel
+            sobre as partes claras da imagem. O miolo da arte fica limpo. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/45" />
       </div>
 
       <GameHeader team={userTeam} />

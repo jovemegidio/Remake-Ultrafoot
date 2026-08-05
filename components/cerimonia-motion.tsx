@@ -55,8 +55,32 @@ function usePapelPicado(quantidade: number, cores: readonly string[]): Papel[] {
   )
 }
 
+/**
+ * QUANTAS PARTÍCULAS A MÁQUINA AGUENTA.
+ *
+ * Papel picado e faíscas são animados pelo framer-motion, ou seja, por
+ * JavaScript a cada quadro. Num PC modesto, ~166 elementos em laço infinito
+ * engasgam a cena — e a cerimônia é justamente o momento em que travar dói mais.
+ *
+ * A conta é grosseira de propósito: núcleos e memória são o que o navegador
+ * expõe, e errar para menos custa só um pouco menos de brilho. `deviceMemory`
+ * não existe em todo navegador; sem ele decidimos só pelos núcleos.
+ */
+function escalaDaMaquina(): number {
+  if (typeof navigator === "undefined") return 1
+  const nucleos = navigator.hardwareConcurrency ?? 4
+  const memoria = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4
+  if (nucleos <= 2 || memoria <= 2) return 0.3
+  if (nucleos <= 4 || memoria <= 4) return 0.55
+  if (nucleos <= 8) return 0.8
+  return 1
+}
+
 export function PapelPicado({ ativo, cores }: { ativo: boolean; cores: readonly string[] }) {
-  const papeis = usePapelPicado(140, cores)
+  // `useState` com inicializador: mede a máquina UMA vez, no cliente, e nunca
+  // mais. Ler `navigator` direto no corpo quebraria a hidratação do Next.
+  const [quantidade] = useState(() => Math.max(24, Math.round(140 * escalaDaMaquina())))
+  const papeis = usePapelPicado(quantidade, cores)
   if (!ativo) return null
   return (
     <div className="pointer-events-none fixed inset-0 z-30 overflow-hidden" aria-hidden>
@@ -77,9 +101,10 @@ export function PapelPicado({ ativo, cores }: { ativo: boolean; cores: readonly 
 // ─── Faíscas douradas subindo (contraponto ao papel que desce) ───────────────
 
 export function FaiscasDouradas({ ativo }: { ativo: boolean }) {
+  const [quantidade] = useState(() => Math.max(6, Math.round(26 * escalaDaMaquina())))
   const faiscas = useMemo(
-    () => Array.from({ length: 26 }).map((_, i) => ({ id: i, x: Math.random() * 100, atraso: Math.random() * 5, duracao: 6 + Math.random() * 5, tamanho: 2 + Math.random() * 3 })),
-    [],
+    () => Array.from({ length: quantidade }).map((_, i) => ({ id: i, x: Math.random() * 100, atraso: Math.random() * 5, duracao: 6 + Math.random() * 5, tamanho: 2 + Math.random() * 3 })),
+    [quantidade],
   )
   if (!ativo) return null
   return (

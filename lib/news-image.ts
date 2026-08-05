@@ -21,8 +21,8 @@ export function seedFromString(input: string): number {
 
 // Acervo local (public/images/*). Todas embutidas no frontend, entao carregam offline.
 const STADIUM = "/images/stadium-bg.webp"
-const STADIUM_NIGHT = "/images/stadium-night.png"
-const TUNNEL = "/images/stadium-tunnel.png"
+const STADIUM_NIGHT = "/images/stadium-night.webp"
+const TUNNEL = "/images/stadium-tunnel.webp"
 const PITCH = "/images/field-bg.webp"
 const LEAGUES = "/images/leagues-ultrafoot.jpg"
 

@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { GameHeader } from "@/components/game-header"
+import { EstadioSetores } from "@/components/estadio-setores"
 import { Button } from "@/components/ui/button"
 import { useGameManager } from "@/lib/use-game-manager"
 import { useGameState } from "@/lib/save-system"
@@ -343,6 +344,19 @@ export default function InfraestruturaPage() {
         </section>
 
         <section className="mx-4 mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4"><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-bold text-white">Superfície do estádio</h2><p className="mt-1 text-xs text-white/45">Qualidade controla a frequência de lesões. O sintético custa menos, mas aumenta em 35% a recuperação quando ocorre uma contusão.</p></div><div className="flex flex-wrap items-end gap-2"><label className="text-[10px] uppercase text-white/45">Superfície<select value={pitchSurface} onChange={e=>setPitchSurface(e.target.value as PitchSurface)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="natural">Natural</option><option value="synthetic">Sintético</option></select></label><label className="text-[10px] uppercase text-white/45">Qualidade<select value={pitchQuality} onChange={e=>setPitchQuality(e.target.value as PitchQuality)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="poor">Ruim</option><option value="medium">Médio</option><option value="good">Bom</option></select></label><Button onClick={applyPitch} disabled={balance<pitchUpgradeCost(pitch,pitchSurface,pitchQuality)}>Aplicar · R$ {pitchUpgradeCost(pitch,pitchSurface,pitchQuality).toLocaleString("pt-BR")}</Button></div></div><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><div className="rounded bg-black/25 p-2 text-white/55">Manutenção mensal <b className="block text-white">R$ {pitch.monthlyMaintenance.toLocaleString("pt-BR")}</b></div><div className="rounded bg-black/25 p-2 text-white/55">Frequência de lesões <b className="block text-white">{pitchInjuryFrequencyMultiplier(pitch).toFixed(2)}x</b></div><div className="rounded bg-black/25 p-2 text-white/55">Duração da lesão <b className="block text-white">{pitchInjuryDurationMultiplier(pitch).toFixed(2)}x</b></div></div></section>
+
+        {/* SETORES DO ESTADIO — a tela que o `lib/stadium-sectors` esperava desde
+            29/07. Fica logo abaixo da superficie porque as duas decisoes sao do
+            mesmo assunto: o que o estadio custa e o que ele rende. */}
+        <EstadioSetores
+          saveState={saveState}
+          setSaveState={setSaveState}
+          capacidadeAtual={capacity}
+          prestigio={userTeam?.prestigio ?? 50}
+          ocupacaoProjetada={matchdayProjection.occupancy}
+          saldo={balance}
+          gastar={(valor) => gameEngine.spendClubFunds(valor)}
+        />
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">

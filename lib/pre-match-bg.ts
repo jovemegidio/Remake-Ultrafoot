@@ -7,9 +7,9 @@
 // Três fundos empacotados para não repetir o mesmo estádio em toda a carreira.
 // A seleção é estável por competição/ligas: não há piscada ao voltar para a tela.
 const DEFAULT_BACKGROUNDS = [
-  "/images/pre-jogo/in-game-1.png",
-  "/images/pre-jogo/in-game-4.png",
-  "/images/pre-jogo/in-game-5.png",
+  "/images/pre-jogo/in-game-1.webp",
+  "/images/pre-jogo/in-game-4.webp",
+  "/images/pre-jogo/in-game-5.webp",
 ]
 
 import stadiumManifest from "@/public/stadiums/manifest.json"
@@ -55,40 +55,40 @@ function defaultBackground(seed: string): string {
 
 // Por nome de competicao (o que matchInfo.competition traz).
 const BY_COMPETITION: Record<string, string> = {
-  "campeonato paulista": "/images/pre-jogo/paulistao.png",
-  "paulistao": "/images/pre-jogo/paulistao.png",
-  "paulistão": "/images/pre-jogo/paulistao.png",
-  "brasileirao serie a": "/images/pre-jogo/brasileirao.png",
-  "brasileirão série a": "/images/pre-jogo/brasileirao.png",
-  "copa do brasil": "/images/pre-jogo/copa-do-brasil.png",
-  "libertadores": "/images/pre-jogo/libertadores.png",
-  "copa libertadores": "/images/pre-jogo/libertadores.png",
-  "uefa champions league": "/images/pre-jogo/champions.png",
-  "champions league": "/images/pre-jogo/champions.png",
-  "uefa europa league": "/images/pre-jogo/europa-league.png",
-  "europa league": "/images/pre-jogo/europa-league.png",
+  "campeonato paulista": "/images/pre-jogo/paulistao.webp",
+  "paulistao": "/images/pre-jogo/paulistao.webp",
+  "paulistão": "/images/pre-jogo/paulistao.webp",
+  "brasileirao serie a": "/images/pre-jogo/brasileirao.webp",
+  "brasileirão série a": "/images/pre-jogo/brasileirao.webp",
+  "copa do brasil": "/images/pre-jogo/copa-do-brasil.webp",
+  "libertadores": "/images/pre-jogo/libertadores.webp",
+  "copa libertadores": "/images/pre-jogo/libertadores.webp",
+  "uefa champions league": "/images/pre-jogo/champions.webp",
+  "champions league": "/images/pre-jogo/champions.webp",
+  "uefa europa league": "/images/pre-jogo/europa-league.webp",
+  "europa league": "/images/pre-jogo/europa-league.webp",
   // Estaduais brasileiros (arte nova).
-  "campeonato mineiro": "/images/pre-jogo/mineiro.png",
-  "mineiro": "/images/pre-jogo/mineiro.png",
-  "campeonato baiano": "/images/pre-jogo/baiano.png",
-  "baiano": "/images/pre-jogo/baiano.png",
-  "campeonato carioca": "/images/pre-jogo/carioca.png",
-  "carioca": "/images/pre-jogo/carioca.png",
+  "campeonato mineiro": "/images/pre-jogo/mineiro.webp",
+  "mineiro": "/images/pre-jogo/mineiro.webp",
+  "campeonato baiano": "/images/pre-jogo/baiano.webp",
+  "baiano": "/images/pre-jogo/baiano.webp",
+  "campeonato carioca": "/images/pre-jogo/carioca.webp",
+  "carioca": "/images/pre-jogo/carioca.webp",
   // Portugal (Liga Portugal / Liga NOS).
-  "liga portugal": "/images/pre-jogo/liga-portugal.png",
-  "primeira liga": "/images/pre-jogo/liga-portugal.png",
-  "liga nos": "/images/pre-jogo/liga-portugal.png",
+  "liga portugal": "/images/pre-jogo/liga-portugal.webp",
+  "primeira liga": "/images/pre-jogo/liga-portugal.webp",
+  "liga nos": "/images/pre-jogo/liga-portugal.webp",
 }
 
 // Por divisao/liga (o que `league` traz, ex.: "serie_a", "la_liga").
 const BY_LEAGUE: Record<string, string> = {
-  serie_a: "/images/pre-jogo/brasileirao.png",
-  premier_league: "/images/pre-jogo/premier-league.png",
-  la_liga: "/images/pre-jogo/la-liga.png",
-  bundesliga: "/images/pre-jogo/bundesliga.png",
-  serie_a_ita: "/images/pre-jogo/serie-a-ita.png",
-  serie_b_ita: "/images/pre-jogo/serie-a-ita.png",
-  primeira_liga: "/images/pre-jogo/liga-portugal.png",
+  serie_a: "/images/pre-jogo/brasileirao.webp",
+  premier_league: "/images/pre-jogo/premier-league.webp",
+  la_liga: "/images/pre-jogo/la-liga.webp",
+  bundesliga: "/images/pre-jogo/bundesliga.webp",
+  serie_a_ita: "/images/pre-jogo/serie-a-ita.webp",
+  serie_b_ita: "/images/pre-jogo/serie-a-ita.webp",
+  primeira_liga: "/images/pre-jogo/liga-portugal.webp",
 }
 
 /**

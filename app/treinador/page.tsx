@@ -12,9 +12,12 @@ import { listJobOffers, removeJobOffer, assumirClube, podeTrocarDeClube, type Pe
 import { ofertasParaDesempregado, coachStandingScore } from "@/lib/coach-market"
 import { allTeams, type Team } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { saveMatchContext } from "@/lib/match-context"
 import { isFifaWindowMonth, windowLabel } from "@/lib/national-windows"
 import { rotuloDaSemana, semanasLivresParaAmistoso } from "@/lib/amistosos-calendario"
+import { avaliarConvite, chanceDoConvite, contaDoAmistoso } from "@/lib/amistosos-negociacao"
+import { formatCurrency } from "@/lib/teams-data"
+import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
+import { getGameDate } from "@/lib/game-date"
 import { PISO_ENTROSAMENTO } from "@/lib/treino-e-entrosamento"
 import { TeamCrest } from "@/components/team-crest"
 import { cn } from "@/lib/utils"
@@ -286,50 +289,77 @@ export default function TreinadorPage() {
       .slice(0, 30)
   }, [oppBusca, userTeam.curto])
 
-  const agendarAmistoso = useCallback((opp: Team) => {
+  /**
+   * ⚠️ AMISTOSO AGORA E NEGOCIADO, nao um item de lista.
+   *
+   * Antes bastava clicar: o Real Madrid vinha jogar contra um clube da Serie D,
+   * de graca, na semana escolhida. Agora o clube convidado AVALIA (prestigio,
+   * viagem, data) e pode RECUSAR, e o aceite custa CACHE DE PRESENCA — que sai
+   * do caixa na hora, como qualquer contrato. Ver lib/amistosos-negociacao.
+   */
+  const agendarAmistoso = useCallback(async (opp: Team) => {
     if (amistosos.length >= MAX_AMISTOSOS) return
     const week = semanasLivres[dataIdx]
     if (week == null) return
+
+    const convite = {
+      clube: userTeam, adversario: opp, semana: week,
+      temporada: state.season ?? 2026, emCasa,
+      // A semana do amistoso cai numa janela FIFA? E quando eles acontecem de verdade.
+      dataFifa: isFifaWindowMonth(getGameDate(state.season ?? 2026, week).getMonth()),
+    }
+    const resposta = avaliarConvite(convite)
+
+    if (!resposta.aceita) {
+      await avisarNoJogo({ titulo: "Convite recusado", mensagem: resposta.recado })
+      return
+    }
+
+    const { cache, bilheteria, saldo } = resposta.conta
+    const caixa = useGameEngine.getState().balance
+    if (cache > caixa) {
+      await avisarNoJogo({
+        titulo: `${opp.nome} aceita, mas cobra ${formatCurrency(cache)}`,
+        mensagem: `O caixa tem ${formatCurrency(caixa)}. Convide um adversario mais barato ou jogue fora de casa, onde o cache e menor.`,
+      })
+      return
+    }
+
+    const confirmado = await confirmarNoJogo({
+      titulo: `Amistoso com ${opp.nome}`,
+      mensagem: [
+        `Cachê de presença: ${formatCurrency(cache)}`,
+        emCasa
+          ? `Bilheteria estimada: ${formatCurrency(bilheteria)}`
+          : "Sem mando de campo: a bilheteria fica com o adversário.",
+        `Resultado no caixa: ${saldo >= 0 ? "+" : ""}${formatCurrency(saldo)}`,
+      ].join("\n"),
+      confirmar: "Fechar o amistoso",
+      cancelar: "Desistir",
+    })
+    if (!confirmado) return
+
+    // O cache sai AGORA (e um contrato assinado). A bilheteria so entra quando o
+    // jogo acontecer — creditar antes seria pagar por publico que nao foi.
+    useGameEngine.getState().addClubExpense(cache)
+
     setState({
       amistososAgendados: [...amistosos, {
         oppShort: opp.curto, oppNome: opp.nome,
         dateLabel: datasAmistoso[dataIdx] ?? rotuloDaSemana(state.season ?? 2026, week),
-        userIsHome: emCasa, week,
+        userIsHome: emCasa, week, cache, bilheteriaPrevista: bilheteria,
       }],
     } as Parameters<typeof setState>[0])
     setOppBusca("")
     setDataIdx(0)
-  }, [amistosos, setState, datasAmistoso, semanasLivres, dataIdx, emCasa, state.season])
+  }, [amistosos, setState, datasAmistoso, semanasLivres, dataIdx, emCasa, state.season, userTeam])
 
   const removerAmistoso = useCallback((i: number) => {
     setState({ amistososAgendados: amistosos.filter((_, idx) => idx !== i) } as Parameters<typeof setState>[0])
   }, [amistosos, setState])
 
-  /**
-   * Jogar o amistoso AGORA, sem esperar a data chegar.
-   *
-   * O atalho continua existindo (era o único jeito de disputar o jogo-treino
-   * até a 1.0.222), mas agora ele não apaga o amistoso da agenda: marca como
-   * disputado quando a partida terminar — quem faz isso é o ao-vivo, pelo
-   * `amistosoSemana` do contexto. Assim o resultado aparece no dia dele no
-   * calendário em vez de o jogo simplesmente sumir.
-   */
-  const jogarAmistoso = useCallback((i: number) => {
-    const a = amistosos[i]
-    if (!a) return
-    saveMatchContext({
-      homeShort: a.userIsHome ? userTeam.curto : a.oppShort,
-      awayShort: a.userIsHome ? a.oppShort : userTeam.curto,
-      homeKit: "home",
-      awayKit: a.userIsHome ? "away" : "home",
-      competition: "Amistoso",
-      round: `Amistoso · ${a.dateLabel}`,
-      friendly: true,
-      amistosoSemana: a.week,
-      duration: 90,
-    })
-    hardNavigate("/partida/ao-vivo")
-  }, [amistosos, userTeam.curto])
+  // O `jogarAmistoso` foi removido junto com o botao "Jogar" (pedido): a Area do
+  // Treinador AGENDA o amistoso; quem o disputa e o calendario, na semana dele.
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
@@ -586,7 +616,16 @@ export default function TreinadorPage() {
                           {a.golsPro ?? 0} × {a.golsContra ?? 0}
                         </span>
                       ) : (
-                        <button onClick={() => jogarAmistoso(i)} className="rounded-lg bg-[var(--brand)] px-3 py-1.5 text-xs font-black text-[var(--brand-ink)] hover:brightness-110">Jogar</button>
+                        /* SO MARCAR, NAO JOGAR (pedido). O botao "Jogar" era um
+                           atalho da epoca em que o amistoso nao entrava no
+                           calendario: ele antecipava a partida para fora da data
+                           marcada. Agora o jogo-treino tem semana propria e e
+                           disputado no dia dele, como qualquer compromisso —
+                           deixar os dois caminhos so criava a duvida de qual
+                           deles conta. */
+                        <span className="rounded-lg border border-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/45">
+                          na agenda
+                        </span>
                       )}
                       <button onClick={() => removerAmistoso(i)} className="rounded-lg p-1.5 text-white/30 hover:bg-white/5 hover:text-white/60"><X className="h-4 w-4" /></button>
                     </div>
@@ -613,13 +652,36 @@ export default function TreinadorPage() {
                   </div>
                   <input value={oppBusca} onChange={e => setOppBusca(e.target.value)} placeholder="Buscar adversário..." className="mb-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none" />
                   <div className="grid max-h-40 gap-1.5 overflow-y-auto sm:grid-cols-2">
-                    {advOpcoes.map(opp => (
-                      <button key={opp.curto + opp.file_key} onClick={() => agendarAmistoso(opp)} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] p-2 text-left hover:border-primary/40 hover:bg-white/[0.06]">
-                        <TeamCrest team={opp} size="sm" />
-                        <span className="min-w-0 flex-1 truncate text-xs text-white">{opp.nome}</span>
-                        <span className="text-[10px] text-white/30">{opp.prestigio}</span>
-                      </button>
-                    ))}
+                    {advOpcoes.map(opp => {
+                      // PRECO E CHANCE ANTES DO CLIQUE. A lista mostrava so o
+                      // prestigio — e como quase todo clube grande tem 88, era
+                      // uma coluna de "88" que nao dizia nada. O que o tecnico
+                      // precisa saber e quanto custa e se vao aceitar.
+                      const semanaAlvo = semanasLivres[dataIdx] ?? (state.week ?? 0)
+                      const convite = {
+                        clube: userTeam, adversario: opp, semana: semanaAlvo,
+                        temporada: state.season ?? 2026, emCasa,
+                      }
+                      const { cache } = contaDoAmistoso(convite)
+                      const chance = chanceDoConvite(convite)
+                      const corDaChance =
+                        chance === "provavel" ? "text-[var(--brand)]"
+                        : chance === "incerto" ? "text-amber-300" : "text-red-400"
+                      const rotuloDaChance =
+                        chance === "provavel" ? "provável" : chance === "incerto" ? "incerto" : "difícil"
+                      return (
+                        <button key={opp.curto + opp.file_key} onClick={() => { void agendarAmistoso(opp) }} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] p-2 text-left hover:border-primary/40 hover:bg-white/[0.06]">
+                          <TeamCrest team={opp} size="sm" />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-xs text-white">{opp.nome}</div>
+                            <div className={cn("text-[10px]", corDaChance)}>{rotuloDaChance}</div>
+                          </div>
+                          <span className="shrink-0 text-[10px] tabular-nums text-white/45" title="Cachê de presença">
+                            {formatCurrency(cache)}
+                          </span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}

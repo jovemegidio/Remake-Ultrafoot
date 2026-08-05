@@ -18,6 +18,7 @@ import type { SeasonAwards } from "@/lib/awards-engine"
 import type { Sponsor, SponsorOffer } from "@/lib/sponsor-engine"
 import type { ChallengeProgress } from "@/lib/challenge-engine"
 import type { NivelDeDificuldade } from "@/lib/dificuldade"
+import type { PorSetor, ObraDoEstadio } from "@/lib/stadium-sectors"
 
 const LEGACY_STORAGE_KEY = "ultrafoot:save"
 const ACTIVE_CAREER_KEY = "ultrafoot:active-career"
@@ -518,6 +519,22 @@ export interface GameState {
    * Ausente = equilibrado. Clube que nunca oscilou não ocupa espaço no save.
    */
   posturasDaIA?: Record<string, "defensivo" | "ofensivo">
+  /**
+   * ESTADIO POR SETORES (lib/stadium-sectors).
+   *
+   * O motor estava pronto e testado desde 29/07 e nao tinha tela: era o unico
+   * sistema da lista de "implementado porem desligado" que nao tinha equivalente
+   * vivo em outro lugar. Ausente = o clube ainda usa o preco global antigo
+   * (`ticketTier`); a migracao acontece na primeira vez que a tela de
+   * Infraestrutura abre, por `estadoInicialDoEstadio`.
+   */
+  estadioSetores?: {
+    capacidades: PorSetor<number>
+    precos: PorSetor<number>
+    /** O tecnico ainda nao mexeu em preco: segue o sugerido pelo prestigio. */
+    usarSugeridos: boolean
+    obra?: ObraDoEstadio
+  }
   /**
    * NÍVEL DE DIFICULDADE escolhido pelo jogador (lib/dificuldade.ts).
    *

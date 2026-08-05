@@ -44,6 +44,15 @@ export interface AmistosoAgendado {
   jogado?: boolean
   golsPro?: number
   golsContra?: number
+  /**
+   * Cache de presenca ja PAGO ao convidado no ato do acerto
+   * (ver lib/amistosos-negociacao). Opcional: amistosos marcados antes desta
+   * versao foram de graca, e reescrever o passado mostraria uma cobranca que
+   * nunca houve.
+   */
+  cache?: number
+  /** Bilheteria estimada no acerto — creditada quando o jogo acontece. */
+  bilheteriaPrevista?: number
 }
 
 /** Formato minimo de fixture que este modulo precisa enxergar. */

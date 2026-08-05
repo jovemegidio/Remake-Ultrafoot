@@ -36,6 +36,7 @@ import {
 import { useGameState, useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { clearMatchContext, loadMatchContext, saveMatchContext } from "@/lib/match-context"
+import { getGameDate } from "@/lib/game-date"
 import { timeDaSelecao } from "@/lib/partida-da-selecao"
 import { concluirAmistoso, ehAmistoso } from "@/lib/amistosos-calendario"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -389,7 +390,36 @@ export default function PartidaPage() {
     return serieATeams.find(t => t.curto !== (userTeamData?.curto ?? "")) ?? serieATeams[1]
   }, [selecaoVisitante, currentMatch, nextFixture, userTeamData])
 
+  /** Data real do jogo, pelo relogio da carreira (substitui o "01 ABR 2026" fixo). */
+  const rotuloDaDataDoJogo = useMemo(() => {
+    const semana = (currentMatch ?? nextFixture)?.week ?? saveAtual.week ?? 1
+    const d = getGameDate(saveAtual.season ?? 2026, semana)
+    const MES = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
+    return `${String(d.getDate()).padStart(2, "0")} ${MES[d.getMonth()]} ${d.getFullYear()}`
+  }, [currentMatch, nextFixture, saveAtual.week, saveAtual.season])
+
   const matchInfo = useMemo(() => {
+    // ⚠️ PARTIDA DE SELECAO NAO TEM NADA A VER COM O CALENDARIO DO CLUBE.
+    //
+    // Este bloco lia `currentMatch ?? nextFixture` — o proximo jogo do CLUBE —
+    // mesmo quando o jogo em tela era das Eliminatorias. Resultado (relato com
+    // print): Cabo Verde x RD Congo aparecia como "Brasileirao Serie D, RODADA
+    // 18", com a marca da Serie D nos dois cards. O contexto da selecao ja traz
+    // `competition` e `round` corretos (prepararPartidaDaSelecao os grava); o
+    // que faltava era esta tela olhar para eles.
+    if (ctxDaSelecao) {
+      const ctx = loadMatchContext()
+      const competition = ctx?.competition || "Seleções"
+      return {
+        competition,
+        leagueKey: competition,
+        round: ctx?.round || competition,
+        date: rotuloDaDataDoJogo,
+        time: "16:00",
+        stadium: homeTeam.estadio_nome,
+      }
+    }
+
     // league é a chave de divisao (ex: "serie_a") — usar diretamente para o logo
     const leagueName = getLeagueName(homeTeam.curto)
 
@@ -407,11 +437,13 @@ export default function PartidaPage() {
       leagueKey: isLeagueMatch ? league : competition,
       // Em copas/estaduais a fase ja vem no nome da competicao; na liga mostramos a rodada
       round: isLeagueMatch ? `Rodada ${currentRound ?? 1}` : competition,
-      date: "01 ABR 2026",
+      // A DATA ERA "01 ABR 2026" CRAVADA — aparecia igual em toda partida de
+      // toda temporada. Agora sai do relogio da carreira.
+      date: rotuloDaDataDoJogo,
       time: "16:00",
       stadium: homeTeam.estadio_nome,
     }
-  }, [league, currentRound, homeTeam, currentMatch, nextFixture])
+  }, [league, currentRound, homeTeam, currentMatch, nextFixture, ctxDaSelecao, rotuloDaDataDoJogo])
 
   const competitionTheme = useMemo(() => {
     const competitionId = (league ?? "serie_a").replace(/_/g, "-") as CompetitionId
@@ -426,8 +458,17 @@ export default function PartidaPage() {
    * marca do Brasileirao. Sem arte para a competicao, cai na liga (nao inventa outra).
    */
   const matchCompetitionLogo = useMemo(
-    () => getCompetitionLogo(matchInfo.competition) ?? getLeagueLogo(homeTeam.divisao),
-    [matchInfo.competition, homeTeam.divisao],
+    () => {
+      const daCompeticao = getCompetitionLogo(matchInfo.competition)
+      if (daCompeticao) return daCompeticao
+      // ⚠️ NUMA PARTIDA DE SELECAO NAO EXISTE "liga do mandante". Cair em
+      // `getLeagueLogo(homeTeam.divisao)` era o que estampava a marca do
+      // Brasileirao Serie D nos dois cards de Cabo Verde x RD Congo. Sem arte
+      // propria, melhor nenhum escudo do que o escudo errado.
+      if (ctxDaSelecao) return null
+      return getLeagueLogo(homeTeam.divisao)
+    },
+    [matchInfo.competition, homeTeam.divisao, ctxDaSelecao],
   )
 
   // Quick sim handler
@@ -469,10 +510,17 @@ export default function PartidaPage() {
           const usuarioEmCasa = homeTeam.curto === (userTeam.team?.curto ?? "")
           const golsPro = usuarioEmCasa ? result.home.goals : result.away.goals
           const golsContra = usuarioEmCasa ? result.away.goals : result.home.goals
+          // Bilheteria entra aqui tambem (a simulacao rapida e o mesmo jogo):
+          // o cache saiu no acerto, o publico so paga depois de a bola rolar.
+          const agendado = (saveRef.current.amistososAgendados ?? [])
+            .find(a => a.week === amistosoRef.current && !a.jogado)
           const atualizados = concluirAmistoso(
             saveRef.current.amistososAgendados ?? [], amistosoRef.current, golsPro, golsContra,
           )
           if (atualizados) setSaveState({ amistososAgendados: atualizados } as Parameters<typeof setSaveState>[0])
+          if (agendado?.bilheteriaPrevista) {
+            useGameEngine.getState().addClubRevenue(agendado.bilheteriaPrevista)
+          }
           registrarAmistosoNoEntrosamento()
           clearMatchContext()
           return
@@ -682,7 +730,7 @@ export default function PartidaPage() {
         <div className="absolute inset-0 bg-[#050508]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,#132534_0%,#070a0f_72%)]" />
           <Image
-            src="/images/pre-jogo/pre-jogo-fundo.png"
+            src="/images/pre-jogo/pre-jogo-fundo.webp"
             alt=""
             fill
             priority

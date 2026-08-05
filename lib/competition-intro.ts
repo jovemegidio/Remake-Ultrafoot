@@ -31,7 +31,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "libertadores",
     name: "CONMEBOL Libertadores",
     tagline: "A GLORIA ETERNA",
-    trophy: "/trofeus/tr_libertadores.png",
+    trophy: "/trofeus/tr_libertadores.webp",
     logo: "/ligas/03.png",
     colors: {
       primary: "#d4af37",
@@ -44,7 +44,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "copa_brasil",
     name: "Copa do Brasil",
     tagline: "O SONHO DE TODO CLUBE",
-    trophy: "/trofeus/tr_copa_BRA.png",
+    trophy: "/trofeus/tr_copa_BRA.webp",
     logo: "/ligas/02.png",
     colors: {
       primary: "#009c3b",
@@ -57,7 +57,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "copa_mundo",
     name: "Copa do Mundo FIFA",
     tagline: "O MUNDO PARA NUM SO JOGO",
-    trophy: "/trofeus/tr_copamundo.png",
+    trophy: "/trofeus/tr_copamundo.webp",
     logo: "/competicoes/copa-do-mundo-2026.png",
     colors: {
       primary: "#d4af37",
@@ -70,7 +70,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "sulamericana",
     name: "CONMEBOL Sul-Americana",
     tagline: "A BATALHA CONTINENTAL",
-    trophy: "/trofeus/tr_sulamericana.png",
+    trophy: "/trofeus/tr_sulamericana.webp",
     logo: "/ligas/04.png",
     colors: {
       primary: "#e63946",
@@ -83,7 +83,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "champions_league",
     name: "UEFA Champions League",
     tagline: "THE CHAMPIONS",
-    trophy: "/trofeus/tr_ligacampeoes.png",
+    trophy: "/trofeus/tr_ligacampeoes.webp",
     colors: {
       primary: "#1a237e",
       accent: "#c0c0c0",
@@ -95,7 +95,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "europa_league",
     name: "UEFA Europa League",
     tagline: "A NOITE E DELAS",
-    trophy: "/trofeus/tr_ligaeuropa.png",
+    trophy: "/trofeus/tr_ligaeuropa.webp",
     colors: {
       primary: "#f57c00",
       accent: "#ffb74d",
@@ -107,7 +107,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "conference_league",
     name: "UEFA Conference League",
     tagline: "RUMO A EUROPA",
-    trophy: "/trofeus/tr_conference.png",
+    trophy: "/trofeus/tr_conference.webp",
     colors: {
       primary: "#2e7d32",
       accent: "#81c784",
@@ -119,7 +119,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "mundial_clubes",
     name: "Mundial de Clubes FIFA",
     tagline: "OS MELHORES DO MUNDO",
-    trophy: "/trofeus/tr_mundial.png",
+    trophy: "/trofeus/tr_mundial.webp",
     colors: {
       primary: "#5b6cf0",
       accent: "#00c853",
@@ -131,7 +131,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "supercopa",
     name: "Supercopa do Brasil",
     tagline: "CAMPEAO DOS CAMPEOES",
-    trophy: "/trofeus/tr_supercopa_BRA.png",
+    trophy: "/trofeus/tr_supercopa_BRA.webp",
     colors: {
       primary: "#d4af37",
       accent: "#ffd700",
@@ -144,7 +144,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "copa_intercontinental",
     name: "Copa Intercontinental",
     tagline: "OS CAMPEOES DO MUNDO SE ENCONTRAM",
-    trophy: "/trofeus/tr_mundial.png",
+    trophy: "/trofeus/tr_mundial.webp",
     colors: {
       primary: "#c0952f",
       accent: "#ffd970",
@@ -159,7 +159,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "supercopa_uefa",
     name: "Supercopa da UEFA",
     tagline: "CAMPEAO DA EUROPA X CAMPEAO DA LIGA EUROPA",
-    trophy: "/trofeus/tr_supercopa_generico.png",
+    trophy: "/trofeus/tr_supercopa_generico.webp",
     colors: {
       primary: "#1e3a8a",
       accent: "#60a5fa",
@@ -171,7 +171,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "recopa",
     name: "Recopa Sul-Americana",
     tagline: "O CHOQUE DOS CAMPEOES",
-    trophy: "/trofeus/tr_recopasulamaericana.png",
+    trophy: "/trofeus/tr_recopasulamaericana.webp",
     colors: {
       primary: "#c0c0c0",
       accent: "#e8e8e8",
@@ -184,7 +184,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "copa_inglaterra",
     name: "FA Cup",
     tagline: "THE OLDEST CUP",
-    trophy: "/trofeus/tr_copa_ING.png",
+    trophy: "/trofeus/tr_copa_ING.webp",
     colors: {
       primary: "#c8102e",
       accent: "#ffffff",
@@ -196,7 +196,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "copa_espanha",
     name: "Copa del Rey",
     tagline: "LA COPA DEL REY",
-    trophy: "/trofeus/tr_copa_ESP.png",
+    trophy: "/trofeus/tr_copa_ESP.webp",
     colors: {
       primary: "#c60b1e",
       accent: "#ffc400",
@@ -208,7 +208,7 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
     id: "copa_italia",
     name: "Coppa Italia",
     tagline: "LA COPPA NAZIONALE",
-    trophy: "/trofeus/tr_copa_ITA.png",
+    trophy: "/trofeus/tr_copa_ITA.webp",
     colors: {
       primary: "#0066b3",
       accent: "#ffffff",

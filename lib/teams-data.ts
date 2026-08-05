@@ -378,7 +378,9 @@ export function getLocalCamisaPath(fileKey: string, variant: "home" | "away" | "
   const legacyVariant = fileKey === "manchester_united" && variant !== "home" ? "home" : variant
   const folder = legacyVariant === "home" ? "camisas" : legacyVariant === "away" ? "camisas2" : "camisas3"
   const key = localCamisaMap[fileKey] ?? (escudoMap[fileKey] || fileKey)
-  return `/${folder}/${key}.png`
+  // WebP SEM PERDAS no empacotado (bitmap idêntico ao PNG, ~30% menor). O
+  // `getRemoteCamisaUrl` continua em `.png`: aquele repositório é de terceiros.
+  return `/${folder}/${key}.webp`
 }
 
 export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home", teamName = ""): string {

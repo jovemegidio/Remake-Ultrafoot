@@ -37,6 +37,7 @@ import {
   fixturesQueContamNaTemporada, migrarAmistososSemSemana,
 } from "@/lib/amistosos-calendario"
 import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
+import { calcularRenda, precosSugeridos, obraConcluida, aplicarObra } from "@/lib/stadium-sectors"
 import { leaguePrizeMoney } from "@/lib/club-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
 import { berthsForSeason, continentalTitleBerth, type SuperCupBerth } from "@/lib/super-cups"
@@ -3099,6 +3100,25 @@ export function useGameManager() {
       }
     } catch { /* reação da IA nunca pode derrubar o avanço de semana */ }
 
+    // ---- A OBRA DO ESTADIO FICA PRONTA ----
+    //
+    // O motor de setores (lib/stadium-sectors) existia desde 29/07 sem NENHUM
+    // consumidor: era o unico da lista de "pronto porem desligado" que nao tinha
+    // equivalente vivo em outro lugar. A obra so entrega aqui — os lugares novos
+    // entram na capacidade e a bilheteria da proxima partida ja os cobra.
+    let estadioSetores = currentState.estadioSetores
+    if (estadioSetores?.obra && obraConcluida(estadioSetores.obra, currentState.season, newWeek)) {
+      const capacidades = aplicarObra(estadioSetores.capacidades, estadioSetores.obra)
+      const lugares = estadioSetores.obra.lugares
+      estadioSetores = { ...estadioSetores, capacidades, obra: undefined }
+      const total = Object.values(lugares).reduce((t, n) => t + (n ?? 0), 0)
+      addNotificationRef.current({
+        type: "news",
+        title: "Obra do estadio concluida",
+        message: `${total.toLocaleString("pt-BR")} lugares novos ja valem na proxima partida em casa.`,
+      })
+    }
+
     const scoutingDepartment=currentState.scoutingDepartment?advanceScoutingWeek(currentState.scoutingDepartment,newWeek):undefined
     // As chaves das partidas resolvidas automaticamente entram no save junto com
     // a semana: sem isso elas voltariam a ser candidatas na próxima chamada.
@@ -3108,8 +3128,8 @@ export function useGameManager() {
     // Mantém também uma cópia da dívida ativa no arquivo por clube. Isso torna
     // impossível uma troca de treinador perder o saldo entre dois renders.
     if(userShort&&debt)debtByClub[userShort]=debt
-    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA } as typeof currentState & { fixtures: unknown }
-    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA } as Partial<typeof currentState> & { fixtures: unknown })
+    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, estadioSetores } as typeof currentState & { fixtures: unknown }
+    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, estadioSetores } as Partial<typeof currentState> & { fixtures: unknown })
 
     // O jogador precisa saber que uma partida dele foi resolvida sem ele.
     if (autoPlayed.length > 0) {
@@ -3595,7 +3615,21 @@ export function useGameManager() {
         result: won ? "win" : lost ? "loss" : "draw",
         competitionWeight: isLeagueMatch ? 1 : 1.12,
       })
-      gameEngine.addClubRevenue(matchday.revenue)
+      // ESTADIO POR SETORES manda quando existe. Sem isto a tela de setores seria
+      // enfeite: o tecnico ampliaria o camarote, cobraria caro na cadeira, e a
+      // bilheteria continuaria saindo de um preco global unico. A OCUPACAO vem da
+      // mesma conta de sempre, entao publico e renda seguem reagindo a prestigio,
+      // torcida, titulos e resultado — o que muda e o preco, agora POR SETOR.
+      const setores = currentState.estadioSetores
+      const rendaFinal = setores
+        ? calcularRenda({
+            capacidades: setores.capacidades,
+            precos: setores.usarSugeridos ? precosSugeridos(userTeamForComp.prestigio) : setores.precos,
+            prestigio: userTeamForComp.prestigio,
+            atracao: matchday.occupancy,
+          })
+        : null
+      gameEngine.addClubRevenue(rendaFinal ? rendaFinal.renda : matchday.revenue)
       fanBase = fanBaseGrowth(fanBase, matchday, won ? "win" : lost ? "loss" : "draw", engineState.ticketTier ?? "normal")
     }
 

@@ -275,7 +275,7 @@ const COUNTRIES: CountryTab[] = [
 ]
 
 // Fundo trocado a pedido do usuario (2026-07-20): foto in-game 7.
-const STADIUM_BG = "/images/pre-jogo/in-game-7.png"
+const STADIUM_BG = "/images/pre-jogo/in-game-7.webp"
 
 export default function NovoJogoPage() {
   const { initializeNewGame } = useGameManager()

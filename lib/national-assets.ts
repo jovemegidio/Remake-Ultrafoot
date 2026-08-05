@@ -21,9 +21,12 @@ const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafo
 export function getNationalCrestUrl(id: string): string {
   const custom = getTeamOverride(`nation_${id}`)?.logoUrl
   if (custom) return custom
-  const rel = `/escudos/nations/${id}.png`
-  if (isTauri()) return gameAssetUrl(rel)
-  return `${ULTRAFOOT_RAW_URL}/teams${rel}`
+  // ⚠️ LOCAL E REMOTO DIVERGEM DE PROPÓSITO. O que viaja no instalador foi
+  // convertido para WebP sem perdas; o repositório remoto é de terceiros e
+  // continua servindo PNG. Este caminho montava UMA string para os dois — trocar
+  // a extensão de uma vez quebraria o lado web em silêncio.
+  if (isTauri()) return gameAssetUrl(`/escudos/nations/${id}.webp`)
+  return `${ULTRAFOOT_RAW_URL}/teams/escudos/nations/${id}.png`
 }
 
 /** Uniforme da selecao (home/away/third). Mesmo esquema (e formato PNG) do escudo. */
