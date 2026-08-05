@@ -193,9 +193,89 @@
   ],
   "changelog": [
     {
-      "version": "1.0.261",
+      "version": "1.0.267",
       "date": "2026-08-05",
       "latest": true,
+      "title": "O mundo envelhece junto com voce, e o estadio deixa de ser um numero so",
+      "changes": [
+        {
+          "type": "added",
+          "text": "O MUNDO ENVELHECE. Ate agora so o SEU elenco passava pelo tempo: os adversarios voltavam para 2026 a cada partida, com as mesmas idades, para sempre. Agora todo clube envelhece, evolui, se aposenta e promove cria da base. Uma carreira de dez anos passa a ser jogada contra clubes que mudaram junto com voce."
+        },
+        {
+          "type": "added",
+          "text": "A DIRETORIA CONTRATA. Ela ja renovava contrato de quem interessava; agora tambem vai ao mercado completar o elenco quando a janela esta aberta, respeitando caixa e teto de folha. Em dez temporadas sem o tecnico agir, o elenco parou de encolher ate o minimo de 18 e se mantem em 24."
+        },
+        {
+          "type": "added",
+          "text": "NIVEIS DE DIFICULDADE. Cinco niveis nas Configuracoes, de Amador a Lendario. \"Normal\" e exatamente o equilibrio que o jogo sempre teve, entao sua carreira nao muda ao atualizar; \"Justo\" tira qualquer vantagem do adversario."
+        },
+        {
+          "type": "added",
+          "text": "ESTADIO POR SETORES. Geral, arquibancada, cadeira e camarote agora tem preco e capacidade proprios. Voce escolhe quanto cobrar em cada setor e qual parte ampliar, com custo e prazo de obra separados — e a bilheteria da partida cobra exatamente o que voce definiu."
+        },
+        {
+          "type": "added",
+          "text": "OS RIVAIS REAGEM. Clube que emenda quatro derrotas se fecha atras e pode trocar de tecnico; quem emenda quatro vitorias vem para cima. A postura do adversario passou a valer dentro da partida, e voce e avisado quando o proximo rival muda de humor."
+        },
+        {
+          "type": "fixed",
+          "text": "PARAR DE JOGAR ENRIQUECIA O CLUBE. Como a unica despesa era a folha, abandonar o elenco fazia o caixa crescer sem parar. Estadio, base, viagem e administracao agora custam todo mes, tenha voce 30 ou 18 atletas."
+        },
+        {
+          "type": "fixed",
+          "text": "CLUBE APARECIA DUAS VEZES. Burnley, Cremonese e Real Oviedo subiram de divisao e continuaram tambem na antiga, cada um existindo em dobro no catalogo."
+        },
+        {
+          "type": "fixed",
+          "text": "ELENCO COMPLETADO COM NOME DE OUTRO PAIS. Onde faltam atletas reais, o jogo preenche o elenco — e um clube japones ou coreano recebia nomes eslavos. Agora o nome combina com o pais do clube."
+        }
+      ]
+    },
+    {
+      "version": "1.0.264",
+      "date": "2026-08-05",
+      "latest": false,
+      "title": "Amistoso se negocia, cria da base em destaque e o fim do Botafogo em toda tela",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "DADOS DO BOTAFOGO APARECIAM EM QUALQUER TELA, para quem dirige outro clube. Enquanto o save carrega, o jogo caia num clube de exemplo — e esse clube era o Botafogo. Agora nao cai em clube nenhum: a tela fica vazia por um instante em vez de mostrar nome, escudo, cores e saldo de um clube que nao e o seu."
+        },
+        {
+          "type": "fixed",
+          "text": "PARTIDA DE SELECAO MOSTRAVA A COMPETICAO DO CLUBE. Jogando as Eliminatorias, o pre-jogo anunciava \"Brasileirao Serie D, Rodada 18\" e estampava a marca da Serie D nos dois lados. Agora a competicao e a fase saem da propria competicao de selecoes."
+        },
+        {
+          "type": "fixed",
+          "text": "A DATA DA PARTIDA era sempre \"01 ABR 2026\", em qualquer jogo de qualquer temporada. Passa a sair do calendario da carreira."
+        },
+        {
+          "type": "changed",
+          "text": "AMISTOSO AGORA SE NEGOCIA. Antes bastava clicar num nome: o Real Madrid vinha jogar contra um clube da Serie D, de graca. Agora o clube convidado avalia prestigio, viagem e data — e pode RECUSAR, dizendo o motivo. Aceitando, cobra CACHE DE PRESENCA, que sai do caixa na hora. Com mando de campo voce paga cheio mas fica com a bilheteria; fora de casa o cache cai e a bilheteria e dele. A bilheteria so entra depois de a bola rolar."
+        },
+        {
+          "type": "changed",
+          "text": "A LISTA DE ADVERSARIOS PARA AMISTOSO mostra o custo e a chance de aceite ANTES do clique — antes exibia so o prestigio, que satura em 88 para quase todo clube grande e nao dizia nada."
+        },
+        {
+          "type": "changed",
+          "text": "AMISTOSO SO SE MARCA na Area do Treinador: o botao \"Jogar\" saiu. O jogo-treino tem semana propria e e disputado no dia dele, como qualquer compromisso."
+        },
+        {
+          "type": "added",
+          "text": "CRIA DA BASE EM DESTAQUE no gerenciamento do elenco: quem subiu da base do clube agora tem selo proprio e faixa na aba Condicao. Antes era indistinguivel de um reforco comprado."
+        },
+        {
+          "type": "changed",
+          "text": "FUNDO DO MERCADO trocado, e o escurecimento por cima dele foi reduzido: eram tres camadas empilhadas que somavam mais de 70% e faziam a arte praticamente sumir."
+        }
+      ]
+    },
+    {
+      "version": "1.0.261",
+      "date": "2026-08-05",
+      "latest": false,
       "title": "O calendario vira de ano, e o elenco para de esvaziar sozinho",
       "changes": [
         {
