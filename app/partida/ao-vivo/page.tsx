@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { safeLocalSet } from "@/lib/safe-storage"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNationalTeam } from "@/lib/use-national-team"
 import { timeDaSelecao } from "@/lib/partida-da-selecao"
 import { getNationalSquad } from "@/lib/national-teams"
@@ -45,6 +45,7 @@ import { loadGameState, saveGameStateAndFlush, useGameState, useUserTeam } from 
 import { calcularEfeitoColetiva } from "@/lib/press-effects"
 import { useNotifications } from "@/components/notifications-system"
 import { getPlayersForTeam, type Player } from "@/lib/players-data"
+import { nivelDeDificuldade } from "@/lib/dificuldade"
 import { assignPlayersToFormation, completarEscalacao, pickStartingXI, posicaoPelaCoordenada } from "@/lib/formations"
 import { clearMatchContext, loadMatchContext } from "@/lib/match-context"
 import { concluirAmistoso } from "@/lib/amistosos-calendario"
@@ -901,6 +902,16 @@ export default function PartidaAoVivoPage() {
   // entao vale ja no proximo lance / no 2o tempo). Ofensivo = mais ataque, menos solidez.
   const initialMentality = teamTactics.mentality === "muito_defensivo" ? "defensivo" : teamTactics.mentality === "muito_ofensivo" ? "ofensivo" : teamTactics.mentality
   const [userMentality, setUserMentality] = useState<"defensivo" | "equilibrado" | "ofensivo">(initialMentality)
+
+  // Postura do lado da MAQUINA. Clube sem entrada joga equilibrado — o save só
+  // guarda quem oscilou.
+  const posturasDaIA = savedGame.posturasDaIA
+  const posturaDaIA = useCallback(
+    (curto?: string): "defensivo" | "equilibrado" | "ofensivo" =>
+      (curto && posturasDaIA?.[curto]) || "equilibrado",
+    [posturasDaIA],
+  )
+  const nivelDificuldade = useMemo(() => nivelDeDificuldade(savedGame.dificuldade), [savedGame.dificuldade])
   // A formação pode ser alterada durante a partida sem alterar a escalação salva
   // para a próxima rodada. O radar e o plano de jogo leem este estado ao vivo.
   const [liveFormation, setLiveFormation] = useState(savedFormation ?? "4-3-3")
@@ -996,8 +1007,16 @@ export default function PartidaAoVivoPage() {
       penalty: engineTacticalAssignments?.penalty || engineSetPieceTakers?.penalty,
     },
     // Mentalidade aplicada ao lado do usuario (afeta a simulacao ao vivo).
-    homeMentality: userSide === "home" ? userMentality : undefined,
-    awayMentality: userSide === "away" ? userMentality : undefined,
+    // O LADO DA CPU tambem tem mentalidade agora: ela vem de `posturasDaIA`, que o
+    // avanco de semana atualiza quando um clube emenda derrotas (se fecha) ou
+    // vitorias (vem para cima). Antes o adversario jogava sempre no mesmo tom,
+    // campeao ou lanterna — a "identidade tatica" da IA nunca chegava ao campo.
+    homeMentality: userSide === "home" ? userMentality : posturaDaIA(homeTeam?.curto),
+    awayMentality: userSide === "away" ? userMentality : posturaDaIA(awayTeam?.curto),
+    // Nivel de dificuldade escolhido pelo jogador (lib/dificuldade). Sem ele o
+    // motor usa o 9 fixo de sempre.
+    cpuBonusBase: nivelDificuldade.bonusBase,
+    cpuPesoDoContexto: nivelDificuldade.pesoDoContexto,
     // Linha de impedimento do usuario. Sem esta ligacao o motor ate sabe gerar
     // impedimento, mas nunca ficaria sabendo que a armadilha esta armada — que
     // era exatamente o defeito antigo desta opcao.
@@ -1010,7 +1029,7 @@ export default function PartidaAoVivoPage() {
     awayAttack: userSide === "away" ? userForces.attack : undefined,
     awayDefense: userSide === "away" ? userForces.defense : undefined,
     awayMidfield: userSide === "away" ? userForces.midfield : undefined,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments])
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments, posturaDaIA, nivelDificuldade])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty,
@@ -1456,10 +1475,19 @@ export default function PartidaAoVivoPage() {
           if (matchCtx.amistosoSemana != null) {
             const golsPro = userSide === "home" ? state.home.goals : state.away.goals
             const golsContra = userSide === "home" ? state.away.goals : state.home.goals
+            // A BILHETERIA ENTRA AGORA, e nao no acerto: o cache foi pago na
+            // assinatura, mas o publico so vira dinheiro depois de o jogo
+            // acontecer. Creditar antes seria receber por gente que nao foi.
+            // Ver lib/amistosos-negociacao.
+            const agendado = (savedGame.amistososAgendados ?? [])
+              .find(a => a.week === matchCtx.amistosoSemana && !a.jogado)
             const atualizados = concluirAmistoso(
               savedGame.amistososAgendados ?? [], matchCtx.amistosoSemana, golsPro, golsContra,
             )
             if (atualizados) setSavedGame({ amistososAgendados: atualizados })
+            if (agendado?.bilheteriaPrevista) {
+              useGameEngine.getState().addClubRevenue(agendado.bilheteriaPrevista)
+            }
           }
           useGameEngine.getState().registrarMinutosJuntos(70)
           clearMatchContext()

@@ -3,7 +3,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { getTeamByShort, type Team } from "@/lib/teams-data"
 import { getNationalTeamById, getNationalStrength, type NationalTeam } from "@/lib/national-teams"
 import { getNationalCrestUrl } from "@/lib/national-assets"
 import { applyTeamOverride } from "@/lib/team-overrides"
@@ -17,6 +17,7 @@ import type { StadiumPitch } from "@/lib/infrastructure-engine"
 import type { SeasonAwards } from "@/lib/awards-engine"
 import type { Sponsor, SponsorOffer } from "@/lib/sponsor-engine"
 import type { ChallengeProgress } from "@/lib/challenge-engine"
+import type { NivelDeDificuldade } from "@/lib/dificuldade"
 
 const LEGACY_STORAGE_KEY = "ultrafoot:save"
 const ACTIVE_CAREER_KEY = "ultrafoot:active-career"
@@ -505,6 +506,25 @@ export interface GameState {
    * clube em crise indefinidamente.
    */
   demissoesMundo?: { curto: string; season: number; week: number; tecnico: string }[]
+  /**
+   * POSTURA TÁTICA DOS CLUBES DA IA, por sigla.
+   *
+   * Um clube que emenda quatro derrotas se fecha; um que emenda quatro vitórias
+   * vem para cima (`lib/ai-club-engine`, `decidirReacoesDaIA`). Antes disso a
+   * mentalidade do adversário simplesmente não existia na partida — só o lado do
+   * usuário mandava `homeMentality`/`awayMentality` ao motor, e o rival jogava
+   * sempre no mesmo tom, campeão ou lanterna.
+   *
+   * Ausente = equilibrado. Clube que nunca oscilou não ocupa espaço no save.
+   */
+  posturasDaIA?: Record<string, "defensivo" | "ofensivo">
+  /**
+   * NÍVEL DE DIFICULDADE escolhido pelo jogador (lib/dificuldade.ts).
+   *
+   * Ausente = "normal", que é exatamente o comportamento das versões anteriores
+   * — save antigo não muda de dificuldade ao abrir a versão nova.
+   */
+  dificuldade?: NivelDeDificuldade
   /**
    * HISTÓRICO DE PROPOSTAS QUE VOCÊ ENVIOU (aba "Propostas Enviadas" do Mercado).
    *
@@ -1196,8 +1216,42 @@ export function useGameState(): {
  * Time atual escolhido pelo usuario. Cai num default razoavel ate o save existir
  * (evita hydration mismatch ao retornar sempre o mesmo valor no SSR).
  */
-const FALLBACK_TEAM: Team =
-  serieATeams[0] ?? allTeams[0]
+/**
+ * ⚠️ CLUBE NEUTRO, NUNCA UM CLUBE DE VERDADE.
+ *
+ * Isto era `serieATeams[0]` — e `serieATeams[0]` e o **Botafogo**. Como
+ * `useUserTeam` cai aqui enquanto o save nao hidratou (assincrono, acontece em
+ * TODA navegacao), qualquer tela que pintasse antes da hidratacao mostrava nome,
+ * escudo, cores, estadio e saldo do Botafogo — para quem dirige outro clube.
+ * Era o relato "toda pagina que entro aparece dados do Botafogo RJ", e a mesma
+ * familia do falso "mock Palmeiras x Botafogo" do pre-jogo.
+ *
+ * Um placeholder SEM identidade e melhor que o clube errado: a tela aparece
+ * vazia por um instante em vez de mentir. O `curto` vazio tambem serve de
+ * sentinela — `getTeamByShort("")` nao resolve, entao nada casa com ele por
+ * engano.
+ *
+ * O tipo continua `Team` (e nao `null`) de proposito: dezenas de telas leem
+ * `userTeam.nome` direto, e trocar por nulo espalharia `?.` por todo lado sem
+ * resolver o que importa, que e nao exibir dado de outro clube.
+ */
+const FALLBACK_TEAM: Team = {
+  nome: "",
+  curto: "",
+  cidade: "",
+  estado: "",
+  cor1: "#1f2937",
+  cor2: "#111827",
+  prestigio: 0,
+  torcida: 0,
+  estadio_cap: 0,
+  saldo: 0,
+  file_key: "",
+  estadio_nome: "",
+  patrocinador: "",
+  escudo_url: "",
+  divisao: "serie_a",
+}
 
 /**
  * Converte um SavedTeam (persistido no save) para o tipo Team usado pelos componentes.

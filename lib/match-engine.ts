@@ -227,6 +227,14 @@ export interface MatchConfig {
    * Lado controlado pelo USUARIO. Quando o penalti sai para este lado, o motor para e
    * espera a escolha do batedor (resolvePendingPenalty). Sem isto, ele cobra sozinho.
    */
+  /**
+   * Vantagem do adversário quando o usuário está em campo, escolhida pelo
+   * jogador nas Configurações (`lib/dificuldade`). Ausente = 9, o valor fixo que
+   * o motor sempre usou — save antigo e a calibração do motor não mudam.
+   */
+  cpuBonusBase?: number
+  /** Peso dos ajustes por diferença de força e importância do jogo. 1 = como antes. */
+  cpuPesoDoContexto?: number
   userSide?: Side
   /**
    * Cobradores designados do lado do USUÁRIO, por nome.
@@ -517,14 +525,19 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   const forcaCpu = cpuEhVisitante ? config.awayRating : config.homeRating
   const forcaUsuario = cpuEhVisitante ? config.homeRating : config.awayRating
 
+  // ⚠️ O valor 9 e os pesos abaixo NAO sao mais constantes: eles sao o nivel
+  // "Normal" de `lib/dificuldade`, que e o padrao quando a UI nao manda nada.
+  // Assim a calibracao historica do motor continua valendo e o jogador passa a
+  // poder pedir "Justo" (sem vantagem nenhuma) ou "Lendario".
   let CPU_DIFFICULTY = 0
   if (config.userSide) {
-    CPU_DIFFICULTY = 9
-    CPU_DIFFICULTY += Math.max(-3, Math.min(7, (forcaCpu - forcaUsuario) * 0.09))
+    const peso = config.cpuPesoDoContexto ?? 1
+    CPU_DIFFICULTY = config.cpuBonusBase ?? 9
+    CPU_DIFFICULTY += Math.max(-3, Math.min(7, (forcaCpu - forcaUsuario) * 0.09)) * peso
     const ctx = config.modifiers
-    if (ctx?.isDerby) CPU_DIFFICULTY += 2
-    if (ctx?.matchImportance === "decisivo") CPU_DIFFICULTY += 2
-    else if (ctx?.matchImportance === "final") CPU_DIFFICULTY += 3
+    if (ctx?.isDerby) CPU_DIFFICULTY += 2 * peso
+    if (ctx?.matchImportance === "decisivo") CPU_DIFFICULTY += 2 * peso
+    else if (ctx?.matchImportance === "final") CPU_DIFFICULTY += 3 * peso
   }
 
   if (config.userSide === "home") {

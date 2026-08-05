@@ -15,6 +15,7 @@ import { clearJobOffers } from "@/lib/career-moves"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { getGameDate } from "@/lib/game-date"
+import { useTranslation } from "@/lib/i18n"
 
 const MONTHS_SHORT = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
 
@@ -94,6 +95,7 @@ function FormBars({ results }: { results: ("V" | "E" | "D")[] }) {
 }
 
 export function GameHeader({ team, showNav = true, className }: GameHeaderProps) {
+  const t = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
   const { state, setState } = useGameState()
@@ -377,7 +379,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         {/* Logo UF26 */}
         <Link
           href="/"
-          aria-label="Inicio"
+          aria-label={t.header.home}
           onClick={(e) => { e.preventDefault(); hardNavigate("/") }}
           className="flex h-11 shrink-0 items-center justify-center rounded-lg px-1 transition-opacity hover:opacity-80"
         >
@@ -428,7 +430,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         <button
           onClick={handleSave}
           disabled={saving}
-          aria-label="Salvar jogo"
+          aria-label={t.header.saveGame}
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-md transition-all",
             saved ? "text-[var(--brand)] bg-[var(--brand)]/10" : "text-white/45 hover:text-white/80 hover:bg-white/5",
@@ -465,7 +467,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
         <Link
           href="/configuracoes"
-          aria-label="Configuracoes"
+          aria-label={t.header.settings}
           onClick={(e) => { e.preventDefault(); hardNavigate("/configuracoes") }}
           className="flex h-8 w-8 items-center justify-center rounded-md text-white/45 hover:text-white/80 hover:bg-white/5 transition-colors"
         >
@@ -518,7 +520,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 <div className="grid grid-cols-4 gap-2">
                   <div className="text-center p-3 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                     <div className="text-lg font-bold text-white">{coachData.partidasTotal}</div>
-                    <div className="text-[9px] text-white/40 uppercase">Jogos</div>
+                    <div className="text-[9px] text-white/40 uppercase">{t.header.matches}</div>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-[var(--brand)]/10 border border-[var(--brand)]/20">
                     <div className="text-lg font-bold text-[var(--brand)]">{coachData.vitorias}</div>
@@ -537,7 +539,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-[var(--brand)]" />
-                    <span className="text-xs text-white/60">Aproveitamento</span>
+                    <span className="text-xs text-white/60">{t.header.winRate}</span>
                   </div>
                   <span className="text-sm font-bold text-[var(--brand)]">{coachData.aproveitamento}%</span>
                 </div>
@@ -545,7 +547,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-white/40" />
-                    <span className="text-xs text-white/60">Sequencia</span>
+                    <span className="text-xs text-white/60">{t.header.streak}</span>
                   </div>
                   <span className="text-sm font-bold text-[var(--brand)]">{coachData.sequencia}</span>
                 </div>
@@ -553,7 +555,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                   <div className="flex items-center gap-2">
                     <Trophy className="h-4 w-4 text-yellow-400" />
-                    <span className="text-xs text-white/60">Titulos na Temporada</span>
+                    <span className="text-xs text-white/60">{t.header.titlesInSeason}</span>
                   </div>
                   <span className="text-sm font-bold text-white">{coachData.titulosTemporada}</span>
                 </div>

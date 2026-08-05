@@ -90,6 +90,27 @@ export function carenciasDoElenco(elenco: readonly AtletaExistente[]): Record<st
  * O `overall` sai um degrau abaixo da media do elenco: e um remendo de ultima
  * hora, nao um reforco.
  */
+/**
+ * Nome de atleta determinístico e único dentro de um elenco.
+ *
+ * Exportado porque a diretoria também contrata (`lib/diretoria`) e um segundo
+ * gerador de nomes seria a terceira régua para a mesma coisa neste projeto — já
+ * aconteceu com preço de atleta e com salário de cria.
+ */
+export function gerarNomeDeAtleta(chave: string, usados: Set<string>): string {
+  const rnd = semente(chave)
+  for (let tentativa = 0; tentativa < 40; tentativa++) {
+    const candidato = `${NOMES[Math.floor(rnd() * NOMES.length)]} ${SOBRENOMES[Math.floor(rnd() * SOBRENOMES.length)]}`
+    if (!usados.has(candidato.toLocaleLowerCase("pt-BR"))) {
+      usados.add(candidato.toLocaleLowerCase("pt-BR"))
+      return candidato
+    }
+  }
+  const fallback = `${NOMES[Math.floor(rnd() * NOMES.length)]} ${SOBRENOMES[Math.floor(rnd() * SOBRENOMES.length)]} ${usados.size}`
+  usados.add(fallback.toLocaleLowerCase("pt-BR"))
+  return fallback
+}
+
 export function reforcosEmergenciais(
   elenco: readonly AtletaExistente[],
   opts: { divisao: string; temporada: number; semana: number; minimo?: number },

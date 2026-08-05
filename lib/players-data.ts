@@ -12,6 +12,8 @@ import { getPlayerOverride, bonusDasCaracteristicas } from "@/lib/player-overrid
 import { hasDeparted } from "@/lib/departed-players"
 import { getArrivals, hasAnyArrival } from "@/lib/world-market"
 import { saiuDoClube, chegouAoClube, temTransferencias } from "@/lib/atualizacao-elencos"
+import { envelhecerElenco } from "@/lib/mundo-vivo"
+import { temporadasDesdeOSeed, getClubeDoUsuario } from "@/lib/temporada-do-mundo"
 
 const REAL_SQUADS = realSquadsJson as unknown as Record<
   string,
@@ -716,6 +718,21 @@ const NOMES_PREENCHIMENTO: Record<string, { pri: string[]; ult: string[] }> = {
   Mexico: { pri: ["José", "Luis", "Miguel", "Ángel", "Carlos", "Jesús", "Emilio", "Andrés"], ult: ["Hernández", "Ramírez", "Flores", "Vargas", "Castillo", "Mendoza", "Reyes", "Cruz"] },
   Japao: { pri: ["Yuto", "Kenta", "Sho", "Takumi", "Riku", "Haruto", "Sota", "Kaito"], ult: ["Tanaka", "Suzuki", "Sato", "Watanabe", "Ito", "Yamamoto", "Nakamura", "Kobayashi"] },
   Arabia: { pri: ["Ahmed", "Mohammed", "Abdullah", "Faisal", "Khalid", "Omar", "Saud", "Yousef"], ult: ["Al-Harbi", "Al-Qahtani", "Al-Dossari", "Al-Ghamdi", "Al-Shehri", "Al-Otaibi", "Al-Zahrani", "Al-Amri"] },
+  // As nove entradas abaixo cobrem justamente as ligas onde o preenchimento mais
+  // aparece (medido: J-League, K-League, Ligue 2, Equador, Escocia, Dinamarca,
+  // Noruega, Paraguai e Peru concentram os elencos gerados das ligas jogaveis).
+  // Antes todas caiam em `Padrao`, um pool eslavo generico: um clube japones
+  // completava o elenco com "Nikola Popov". O dado real continua sendo o certo —
+  // isto so faz o preenchimento parar de denunciar a si mesmo.
+  Franca: { pri: ["Lucas", "Hugo", "Enzo", "Théo", "Nathan", "Maxime", "Clément", "Antoine"], ult: ["Martin", "Bernard", "Dubois", "Moreau", "Laurent", "Girard", "Lefevre", "Mercier"] },
+  Alemanha: { pri: ["Lukas", "Jonas", "Tim", "Niklas", "Leon", "Felix", "Max", "Jan"], ult: ["Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Wagner", "Becker", "Hoffmann"] },
+  Italia: { pri: ["Marco", "Andrea", "Luca", "Matteo", "Davide", "Simone", "Alessio", "Federico"], ult: ["Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano", "Greco", "Conti"] },
+  Inglaterra: { pri: ["Jack", "Harry", "Callum", "Ryan", "Liam", "Ethan", "Tyler", "Josh"], ult: ["Smith", "Taylor", "Walker", "Wright", "Hughes", "Baker", "Turner", "Palmer"] },
+  Portugal: { pri: ["João", "Tiago", "Rúben", "Gonçalo", "Diogo", "André", "Nuno", "Ricardo"], ult: ["Ferreira", "Pereira", "Gomes", "Fonseca", "Marques", "Cardoso", "Teixeira", "Moreira"] },
+  Holanda: { pri: ["Daan", "Sven", "Bram", "Jesse", "Ruben", "Thijs", "Lars", "Kees"], ult: ["De Jong", "Van Dijk", "Bakker", "Visser", "Smit", "Meijer", "De Vries", "Mulder"] },
+  Coreia: { pri: ["Min-jun", "Ji-ho", "Seo-jun", "Do-yun", "Eun-woo", "Ha-jun", "Si-woo", "Yu-jun"], ult: ["Kim", "Lee", "Park", "Choi", "Jung", "Kang", "Cho", "Yoon"] },
+  Nordico: { pri: ["Emil", "Magnus", "Kasper", "Oskar", "Henrik", "Jonas", "Mathias", "Erik"], ult: ["Hansen", "Nielsen", "Larsen", "Berg", "Johansen", "Andersen", "Lund", "Dahl"] },
+  Andino: { pri: ["Cristian", "Jhon", "Wilmer", "Édison", "Bryan", "Alexis", "Kevin", "Marlon"], ult: ["Quiñónez", "Caicedo", "Mendoza", "Chalá", "Cabezas", "Zambrano", "Ayoví", "Preciado"] },
   Padrao: { pri: ["Alex", "Marco", "David", "Daniel", "Leo", "Ivan", "Nikola", "Stefan"], ult: ["Novak", "Kovac", "Popov", "Horvat", "Petrov", "Marin", "Ilic", "Vidal"] },
 }
 
@@ -728,6 +745,15 @@ function poolDeNomes(team: Team) {
   if (pais.includes("méxic") || pais.includes("mexic")) return NOMES_PREENCHIMENTO.Mexico
   if (pais.includes("jap")) return NOMES_PREENCHIMENTO.Japao
   if (pais.includes("aráb") || pais.includes("arab") || div.includes("saudi")) return NOMES_PREENCHIMENTO.Arabia
+  if (pais.includes("fran") || div.startsWith("ligue_")) return NOMES_PREENCHIMENTO.Franca
+  if (pais.includes("aleman") || pais.includes("german") || pais.includes("áustria") || pais.includes("austria") || pais.includes("suíça") || pais.includes("suica") || div.startsWith("bundesliga")) return NOMES_PREENCHIMENTO.Alemanha
+  if (pais.includes("itál") || pais.includes("ital") || div.includes("_ita")) return NOMES_PREENCHIMENTO.Italia
+  if (pais.includes("inglat") || pais.includes("england") || pais.includes("escóc") || pais.includes("escoc") || pais.includes("irlanda") || pais.includes("gales") || div === "premier_league" || div === "championship" || div.includes("scottish")) return NOMES_PREENCHIMENTO.Inglaterra
+  if (pais.includes("portug") || div.includes("primeira_liga")) return NOMES_PREENCHIMENTO.Portugal
+  if (pais.includes("holand") || pais.includes("netherl") || pais.includes("bélgica") || pais.includes("belgica") || div.includes("eredivisie")) return NOMES_PREENCHIMENTO.Holanda
+  if (pais.includes("coreia") || pais.includes("korea") || div.startsWith("k_league")) return NOMES_PREENCHIMENTO.Coreia
+  if (pais.includes("dinamarc") || pais.includes("noruega") || pais.includes("suéc") || pais.includes("suec") || pais.includes("finlând") || pais.includes("finland") || pais.includes("islând") || pais.includes("island") || pais.includes("faroé") || pais.includes("faroe") || div.includes("eliteserien") || div.includes("superliga_den")) return NOMES_PREENCHIMENTO.Nordico
+  if (pais.includes("equador") || pais.includes("peru") || pais.includes("bolív") || pais.includes("boliv") || pais.includes("colômb") || pais.includes("colomb") || pais.includes("venezuel") || pais.includes("paragua") || pais.includes("chile") || pais.includes("urugua")) return NOMES_PREENCHIMENTO.Andino
   return NOMES_PREENCHIMENTO.Padrao
 }
 
@@ -1156,7 +1182,43 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
           .map(a => ({ nome: a.nome, pos: a.pos as Player["pos"], idade: a.idade, base: a.base, time: team.nome, nac: a.nac }))
         return [...semSaidas, ...novos]
       })()
-  const players = calibrateSquadRatings(team, ensurePlayableSquad(team, source))
+  // O MUNDO ENVELHECE. O seed é a foto de 2026; numa carreira em 2034 o rival
+  // não pode continuar com o elenco e as idades de 2026. Aplicado ANTES do
+  // preenchimento de propósito: quem se aposenta abre vaga, e o
+  // `ensurePlayableSquad` repõe pelo caminho normal.
+  //
+  // Duas exceções, ambas necessárias:
+  //   • modo `raw` (editor) — ali o objetivo é ver o cadastro original;
+  //   • o clube do usuário — o elenco dele vive no motor, que já o envelhece na
+  //     virada de temporada. Envelhecer aqui também mostraria o mesmo atleta com
+  //     duas idades em telas diferentes.
+  const temporadasPassadas = opts?.raw ? 0 : temporadasDesdeOSeed()
+  const doUsuario = temporadasPassadas > 0 && team.curto === getClubeDoUsuario()
+  let comTempo = source
+  if (temporadasPassadas > 0 && !doUsuario) {
+    const envelhecido = envelhecerElenco(source, temporadasPassadas, team.file_key ?? team.curto)
+    comTempo = envelhecido.elenco
+    // QUEM SE APOSENTA ABRE VAGA NA BASE. Sem esta reposicao o mundo encolheria
+    // para sempre — medido: de ~26 para ~20 atletas por clube em 10 temporadas,
+    // porque `ensurePlayableSquad` so garante o MINIMO jogavel, nunca o plantel
+    // que o clube tinha. As crias entram jovens e abaixo da media do elenco: e
+    // reposicao, nao rejuvenescimento gratis.
+    if (envelhecido.aposentados > 0) {
+      const usados = new Set(comTempo.map(p => normalizeTeamName(p.nome)))
+      const mediaDoElenco = comTempo.length
+        ? Math.round(comTempo.reduce((t, p) => t + p.base, 0) / comTempo.length)
+        : Math.max(45, Math.round(team.prestigio * 0.7))
+      const crias = Array.from({ length: envelhecido.aposentados }, (_, i) => ({
+        nome: nomePreenchimento(team, 900 + i, usados),
+        pos: FILLER_POSITION_ORDER[(comTempo.length + i) % FILLER_POSITION_ORDER.length],
+        idade: 18 + ((team.prestigio + i) % 4),
+        base: Math.max(40, mediaDoElenco - 6 - (i % 4)),
+        time: team.nome,
+      }))
+      comTempo = [...comTempo, ...crias]
+    }
+  }
+  const players = calibrateSquadRatings(team, ensurePlayableSquad(team, comTempo))
   const cap = DIVISION_RATING_CAP[team.divisao as string] ?? 92
   const capped = cap >= 92 ? players : players.map(p => p.base > cap ? { ...p, base: cap } : p)
   // raw = sem overrides (o editor precisa dos NOMES ORIGINAIS para chavear as edicoes).

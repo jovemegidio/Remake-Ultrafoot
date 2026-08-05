@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { useArrastarPorToque } from "@/hooks/use-arrastar-por-toque"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   ChevronLeft, 
@@ -335,11 +336,13 @@ export default function ElencoPage() {
   // REALISMO: nota da ultima partida, media, suspensao e persona por nome — o
   // elenco desta tela vem do hook de UI, os dados vivem no motor.
   const dadosMotor = useMemo(() => {
-    const mapa = new Map<string, { nota?: number; media?: number; susp: number; persona?: string }>()
+    const mapa = new Map<string, { nota?: number; media?: number; susp: number; persona?: string; cria?: boolean }>()
     for (const p of engineSquadPlayers) {
       mapa.set(p.name, {
         nota: p.lastMatchRating, media: p.avgMatchRating,
         susp: p.suspendedMatches ?? 0, persona: p.persona?.rotulo,
+        // Quem subiu da NOSSA base — ver `criaDaBase` no game-engine.
+        cria: p.criaDaBase,
       })
     }
     return mapa
@@ -426,6 +429,7 @@ export default function ElencoPage() {
         folego: Math.round(p.physical ?? 70),
         titular: titularesPorNome.has(p.name),
         lesionado: Boolean(p.injury),
+        cria: Boolean(p.criaDaBase),
       }))
       // Quem está pior primeiro: a lista serve para DECIDIR quem poupar.
       .sort((a, b) => (a.energia - a.fadiga) - (b.energia - b.fadiga))
@@ -973,19 +977,19 @@ export default function ElencoPage() {
     })
   }, [positionedPlayers])
 
-  const handleDropOnPitch = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    const playerId = parseInt(e.dataTransfer.getData("playerId"))
-    
+  // NÚCLEO DA SOLTA NA PRANCHETA — separado do `DragEvent` de propósito: o mouse
+  // chega por `onDrop` (HTML5) e o dedo por `useArrastarPorToque`, que não tem
+  // `dataTransfer`. Os dois entram aqui, então não há como divergirem.
+  const soltarNoCampo = useCallback((playerId: number, clientX: number, clientY: number) => {
     if (!pitchRef.current || !playerId) return
-    
+
     const rect = pitchRef.current.getBoundingClientRect()
     // O ponteiro cai numa posição de TELA; as coordenadas táticas continuam no
     // eixo vertical. Sem esta conversão, arrastar na prancheta horizontal
     // gravaria a formação girada 90° — e a partida escalaria o time de lado.
     const { x, y } = paraCampo(
-      ((e.clientX - rect.left) / rect.width) * 100,
-      ((e.clientY - rect.top) / rect.height) * 100,
+      ((clientX - rect.left) / rect.width) * 100,
+      ((clientY - rect.top) / rect.height) * 100,
     )
 
     // Clamp to field bounds
@@ -1057,12 +1061,15 @@ export default function ElencoPage() {
     setDragOverTarget(null)
   }, [bench, positionedPlayers, pinSlotsAndSwap, modoMovimento, movimentos, setMovimentos, paraCampo,
     playerPositions, formation, setFormation, setPlayers, setBench])
-  
-  const handleDropOnPlayer = useCallback((e: React.DragEvent, targetId: number) => {
-    e.preventDefault()
-    e.stopPropagation()
 
-    const draggedId = parseInt(e.dataTransfer.getData("playerId"))
+  /** Caminho do MOUSE: lê o id do `dataTransfer` e cai no núcleo compartilhado. */
+  const handleDropOnPitch = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    soltarNoCampo(parseInt(e.dataTransfer.getData("playerId")), e.clientX, e.clientY)
+  }, [soltarNoCampo])
+
+  /** NÚCLEO DA TROCA ENTRE DOIS ATLETAS — ver o comentário de `soltarNoCampo`. */
+  const trocarJogadores = useCallback((draggedId: number, targetId: number) => {
     if (!draggedId || draggedId === targetId) {
       setDraggingPlayer(null)
       setDragOverTarget(null)
@@ -1107,8 +1114,23 @@ export default function ElencoPage() {
 
     setDraggingPlayer(null)
     setDragOverTarget(null)
-  }, [players, bench, pinSlotsAndSwap])
-  
+    // `setPlayers`/`setBench` vêm de fora e podem trocar de identidade — uma
+    // closure velha escreveria no elenco do clube anterior.
+  }, [players, bench, pinSlotsAndSwap, setPlayers, setBench])
+
+  /** Caminho do MOUSE: lê o id do `dataTransfer` e cai no núcleo compartilhado. */
+  const handleDropOnPlayer = useCallback((e: React.DragEvent, targetId: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    trocarJogadores(parseInt(e.dataTransfer.getData("playerId")), targetId)
+  }, [trocarJogadores])
+
+  // Caminho do DEDO. Mesmo núcleo, sem `dataTransfer` — ver hooks/use-arrastar-por-toque.
+  const toque = useArrastarPorToque({
+    aoSoltarSobreItem: trocarJogadores,
+    aoSoltarNaArea: soltarNoCampo,
+  })
+
   const handleDragEnd = useCallback(() => {
     setDraggingPlayer(null)
     setDragOverTarget(null)
@@ -1690,6 +1712,7 @@ export default function ElencoPage() {
               ref={pitchRef}
               onDragOver={handleDragOver}
               onDrop={handleDropOnPitch}
+              {...toque.propsDaArea}
               // min-h-0: o campo pode encolher para o painel de reservas caber. Com
               // min-h-[350px] ele se recusava a ceder em telas baixas e o banco sumia.
               className={cn(
@@ -1845,6 +1868,7 @@ export default function ElencoPage() {
                   onDragOver={(e) => handleDragOverPlayer(e as unknown as React.DragEvent, player.id)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDropOnPlayer(e as unknown as React.DragEvent, player.id)}
+                  {...toque.propsDoItem(player.id)}
                   onDragEnd={handleDragEnd}
                   initial={false}
                   animate={temMovimento && draggingPlayer !== player.id && posDestino ? {
@@ -2059,6 +2083,7 @@ export default function ElencoPage() {
                         onDragOver={(e) => handleDragOverPlayer(e as unknown as React.DragEvent, player.id)}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDropOnPlayer(e as unknown as React.DragEvent, player.id)}
+                        {...toque.propsDoItem(player.id)}
                         onDragEnd={handleDragEnd}
                         animate={{
                           scale: draggingPlayer === player.id ? 1.05 : dragOverTarget === player.id ? 1.1 : 1,
@@ -2181,7 +2206,12 @@ export default function ElencoPage() {
                       {condicaoDosAtletas.map((linha) => (
                         <div
                           key={linha.id}
-                          className="grid grid-cols-[minmax(0,1fr)_84px_84px_84px] items-center gap-2 px-4 py-2.5 md:grid-cols-[minmax(0,1fr)_1fr_1fr_84px]"
+                          className={cn(
+                            "grid grid-cols-[minmax(0,1fr)_84px_84px_84px] items-center gap-2 px-4 py-2.5 md:grid-cols-[minmax(0,1fr)_1fr_1fr_84px]",
+                            // Cria da base ganha faixa propria: e o atleta que o
+                            // clube formou, e isso muda o que se faz com ele.
+                            linha.cria && "border-l-2 border-sky-400/70 bg-sky-400/[0.04]",
+                          )}
                         >
                           <div className="flex min-w-0 items-center gap-2.5">
                             <PlayerAvatarCircle
@@ -2196,6 +2226,7 @@ export default function ElencoPage() {
                               <p className="text-[10px] text-white/35">
                                 {linha.posicao} · {linha.titular ? "titular" : "reserva"}
                                 {linha.lesionado ? " · lesionado" : ""}
+                                {linha.cria && <span className="text-sky-300/80"> · cria da base</span>}
                               </p>
                             </div>
                           </div>
@@ -2441,6 +2472,14 @@ export default function ElencoPage() {
                                 {d && d.susp > 0 && (
                                   <span className="rounded bg-red-500/25 px-1.5 text-[9px] font-black uppercase tracking-wide text-red-300" title="Suspenso">
                                     suspenso {d.susp}
+                                  </span>
+                                )}
+                                {/* CRIA DA BASE — destaque proprio (pedido). No
+                                    elenco o garoto formado no clube era
+                                    indistinguivel de um reforco comprado. */}
+                                {d?.cria && (
+                                  <span className="rounded bg-sky-400/20 px-1.5 text-[9px] font-black uppercase tracking-wide text-sky-300" title="Formado na base do clube">
+                                    base
                                   </span>
                                 )}
                                 {d?.persona && (

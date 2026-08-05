@@ -12,6 +12,8 @@ import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision
 import { getGameDate } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { simulateWorldTransferWindow } from "@/lib/world-market"
+import { setTemporadaDoMundo, setClubeDoUsuario } from "@/lib/temporada-do-mundo"
+import { decidirReacoesDaIA, type ReacaoDaIA } from "@/lib/ai-club-engine"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
 import { pedidoDaSemana, montarPedido, agenteProcuraOutroClube, chanceDePreContrato, RELACAO_INICIAL } from "@/lib/pressao-do-agente"
 import { generateOffers } from "@/lib/sponsor-engine"
@@ -1786,6 +1788,18 @@ export function useGameManager() {
     return unsub
   }, [])
 
+  // O MUNDO PRECISA SABER EM QUE ANO ESTA. `players-data` monta o elenco de todo
+  // clube da IA e envelhece esse elenco pela temporada corrente — mas nao pode
+  // importar este hook (ciclo). Entao a informacao viaja por `temporada-do-mundo`,
+  // e e AQUI que ela e mantida em dia: na virada de temporada e quando o usuario
+  // troca de clube. Sem este efeito o mundo fica parado em 2026, que era o
+  // comportamento anterior.
+  useEffect(() => {
+    if (!hydrated) return
+    setTemporadaDoMundo(saveState.season)
+    setClubeDoUsuario(saveState.selectedTeamShort ?? null)
+  }, [hydrated, saveState.season, saveState.selectedTeamShort])
+
   // MIGRACAO de save antigo para o relogio ABSOLUTO de contrato. Ate a 1.0.136 o
   // endDate era comparado com a semana da temporada (que zera todo ano) e nenhum
   // contrato vencia. Sem esta migracao, um save em andamento veria o elenco
@@ -3030,6 +3044,61 @@ export function useGameManager() {
           alerta + linhaDivida,
       })
     }
+    // ── OS CLUBES DA IA REAGEM ────────────────────────────────────────────────
+    //
+    // `tickAIDecisions` existia desde a fase 38 e devolvia sempre lista vazia —
+    // e ninguem o chamava. O motor prometia clubes que entram em crise, mudam de
+    // postura e demitem o tecnico; nada disso acontecia. Agora acontece, e
+    // acontece ONDE O JOGADOR SENTE: a postura entra na partida dele pelo
+    // `posturasDaIA` (ver app/partida/ao-vivo), entao um rival em crise
+    // realmente se fecha contra voce.
+    const posturasDaIA = { ...(currentState.posturasDaIA ?? {}) }
+    try {
+      const formaPorClube = new Map<string, ("W" | "D" | "L")[]>()
+      for (const f of updatedStateFixtures) {
+        if (!f.played || f.homeGoals == null || f.awayGoals == null) continue
+        const registrar = (curto: string, r: "W" | "D" | "L") => {
+          const lista = formaPorClube.get(curto) ?? []
+          lista.push(r)
+          formaPorClube.set(curto, lista.slice(-5))
+        }
+        registrar(f.homeCurto, f.homeGoals > f.awayGoals ? "W" : f.homeGoals < f.awayGoals ? "L" : "D")
+        registrar(f.awayCurto, f.awayGoals > f.homeGoals ? "W" : f.awayGoals < f.homeGoals ? "L" : "D")
+      }
+      const candidatosIA = [...formaPorClube]
+        .filter(([curto]) => curto !== userShort)
+        .map(([curto, ultimos]) => {
+          const t = getTeamByShort(curto)
+          return {
+            curto,
+            nome: t?.nome ?? curto,
+            prestigio: t?.prestigio ?? 60,
+            ultimos,
+            identidade: (posturasDaIA[curto] === "ofensivo" ? "ofensivo" : posturasDaIA[curto] === "defensivo" ? "retranca" : "posse") as Parameters<typeof decidirReacoesDaIA>[0][number]["identidade"],
+          }
+        })
+      const reacoes: ReacaoDaIA[] = decidirReacoesDaIA(candidatosIA, absoluteWeek(currentState.season, newWeek))
+      for (const r of reacoes) {
+        posturasDaIA[r.curto] = r.novaIdentidade === "retranca" ? "defensivo" : "ofensivo"
+      }
+      // Só o que envolve o PRÓXIMO adversário vira notícia — o mundo inteiro
+      // mudando de postura toda semana seria ruído na Central.
+      const proximo = seasonCalendarRef.current.nextUserMatch
+      const adversario = proximo
+        ? (proximo.homeTeam.curto === userShort ? proximo.awayTeam.curto : proximo.homeTeam.curto)
+        : null
+      const doAdversario = reacoes.find(r => r.curto === adversario)
+      if (doAdversario) {
+        addNotificationRef.current({
+          type: "news",
+          title: doAdversario.motivo === "crise" ? `${doAdversario.clube} em crise` : `${doAdversario.clube} embalado`,
+          message: doAdversario.motivo === "crise"
+            ? `Seu próximo adversário vem de uma sequência ruim e deve se fechar atrás${doAdversario.demitiuTecnico ? " — e acabou de trocar de técnico" : ""}.`
+            : `Seu próximo adversário vem embalado e deve vir para cima.`,
+        })
+      }
+    } catch { /* reação da IA nunca pode derrubar o avanço de semana */ }
+
     const scoutingDepartment=currentState.scoutingDepartment?advanceScoutingWeek(currentState.scoutingDepartment,newWeek):undefined
     // As chaves das partidas resolvidas automaticamente entram no save junto com
     // a semana: sem isso elas voltariam a ser candidatas na próxima chamada.
@@ -3039,8 +3108,8 @@ export function useGameManager() {
     // Mantém também uma cópia da dívida ativa no arquivo por clube. Isso torna
     // impossível uma troca de treinador perder o saldo entre dois renders.
     if(userShort&&debt)debtByClub[userShort]=debt
-    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos } as typeof currentState & { fixtures: unknown }
-    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos } as Partial<typeof currentState> & { fixtures: unknown })
+    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA } as typeof currentState & { fixtures: unknown }
+    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA } as Partial<typeof currentState> & { fixtures: unknown })
 
     // O jogador precisa saber que uma partida dele foi resolvida sem ele.
     if (autoPlayed.length > 0) {

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import { useArrastarPorToque } from "@/hooks/use-arrastar-por-toque"
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -291,16 +292,19 @@ export default function PartidaEscalacaoPage() {
     setDragOverTarget(null)
   }, [])
   
-  const handleDropOnPitch = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    const playerId = parseInt(e.dataTransfer.getData("playerId"))
-    
+  // NÚCLEO DA SOLTA NO CAMPO — separado do `DragEvent` de propósito.
+  //
+  // O mouse chega por `onDrop` (HTML5) e o dedo por `useArrastarPorToque`, que
+  // não tem `dataTransfer` nenhum. Os dois entram AQUI, com o mesmo id e a mesma
+  // coordenada de tela, então não existe risco de o toque se comportar diferente
+  // do mouse: é literalmente o mesmo caminho.
+  const soltarNoCampo = useCallback((playerId: number, clientX: number, clientY: number) => {
     if (!pitchRef.current || !playerId) return
-    
+
     const rect = pitchRef.current.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * 100
-    const y = ((e.clientY - rect.top) / rect.height) * 100
-    
+    const x = ((clientX - rect.left) / rect.width) * 100
+    const y = ((clientY - rect.top) / rect.height) * 100
+
     // Clamp to field bounds
     const clampedX = Math.max(5, Math.min(95, x))
     const clampedY = Math.max(5, Math.min(95, y))
@@ -345,17 +349,20 @@ export default function PartidaEscalacaoPage() {
     setDragOverTarget(null)
   }, [bench, positionedPlayers, playerPositions, formation, setFormation, setPlayers, setBench])
 
-  const handleDropOnPlayer = useCallback((e: React.DragEvent, targetId: number) => {
+  /** Caminho do MOUSE: lê o id do `dataTransfer` e cai no núcleo compartilhado. */
+  const handleDropOnPitch = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    e.stopPropagation()
-    
-    const draggedId = parseInt(e.dataTransfer.getData("playerId"))
+    soltarNoCampo(parseInt(e.dataTransfer.getData("playerId")), e.clientX, e.clientY)
+  }, [soltarNoCampo])
+
+  /** NÚCLEO DA TROCA ENTRE DOIS ATLETAS — ver o comentário de `soltarNoCampo`. */
+  const trocarJogadores = useCallback((draggedId: number, targetId: number) => {
     if (!draggedId || draggedId === targetId) {
       setDraggingPlayer(null)
       setDragOverTarget(null)
       return
     }
-    
+
     const draggedFromField = players.find(p => p.id === draggedId)
     const draggedFromBench = bench.find(p => p.id === draggedId)
     const targetFromField = players.find(p => p.id === targetId)
@@ -408,8 +415,24 @@ export default function PartidaEscalacaoPage() {
     
     setDraggingPlayer(null)
     setDragOverTarget(null)
-  }, [players, bench])
-  
+    // `setPlayers`/`setBench` não são setters de `useState` — vêm de fora e podem
+    // trocar de identidade. `soltarNoCampo` já os declarava; aqui faltavam, e uma
+    // closure velha escreveria no elenco errado depois de uma troca de clube.
+  }, [players, bench, setPlayers, setBench])
+
+  /** Caminho do MOUSE: lê o id do `dataTransfer` e cai no núcleo compartilhado. */
+  const handleDropOnPlayer = useCallback((e: React.DragEvent, targetId: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    trocarJogadores(parseInt(e.dataTransfer.getData("playerId")), targetId)
+  }, [trocarJogadores])
+
+  // Caminho do DEDO. Mesmo núcleo, sem `dataTransfer` — ver hooks/use-arrastar-por-toque.
+  const toque = useArrastarPorToque({
+    aoSoltarSobreItem: trocarJogadores,
+    aoSoltarNaArea: soltarNoCampo,
+  })
+
   const handleDragEnd = useCallback(() => {
     setDraggingPlayer(null)
     setDragOverTarget(null)
@@ -906,10 +929,11 @@ export default function PartidaEscalacaoPage() {
             {activeTab === "elenco" && (
             <>
             {/* Pitch area */}
-            <div 
+            <div
               ref={pitchRef}
               onDragOver={handleDragOver}
               onDrop={handleDropOnPitch}
+              {...toque.propsDaArea}
               className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px] max-h-[500px]"
               style={{
                 background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
@@ -971,8 +995,9 @@ export default function PartidaEscalacaoPage() {
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDropOnPlayer(e as unknown as React.DragEvent, player.id)}
                   onDragEnd={handleDragEnd}
+                  {...toque.propsDoItem(player.id)}
                   initial={false}
-                  animate={{ 
+                  animate={{
                     left: `${player.x}%`, 
                     top: `${player.y}%`,
                     scale: draggingPlayer === player.id ? 1.1 : dragOverTarget === player.id ? 1.15 : selectedPlayerId === player.id ? 1.05 : 1,
@@ -1079,9 +1104,13 @@ export default function PartidaEscalacaoPage() {
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDropOnPlayer(e as unknown as React.DragEvent, player.id)}
                         onDragEnd={handleDragEnd}
+                        {...toque.propsDoItem(player.id)}
                         animate={{
-                          scale: draggingPlayer === player.id ? 1.05 : dragOverTarget === player.id ? 1.1 : 1,
-                          opacity: draggingPlayer === player.id ? 0.7 : 1,
+                          // `toque.arrastando` dá o mesmo destaque do mouse ao
+                          // item grudado no dedo — sem isso não há como saber
+                          // que o toque longo pegou.
+                          scale: draggingPlayer === player.id || toque.arrastando === player.id ? 1.05 : dragOverTarget === player.id ? 1.1 : 1,
+                          opacity: draggingPlayer === player.id || toque.arrastando === player.id ? 0.7 : 1,
                         }}
                         onClick={() => setSelectedPlayerId(player.id)}
                         className={cn(

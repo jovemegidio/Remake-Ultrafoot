@@ -41,6 +41,16 @@ export const esES: Translations = {
     finances: "Finanzas",
     market: "Mercado",
     settings: "Configuracion",
+    friendlies: "Amistosos",
+  },
+  header: {
+    matches: "Partidos",
+    winRate: "Rendimiento",
+    streak: "Racha",
+    titlesInSeason: "Titulos en la temporada",
+    home: "Inicio",
+    saveGame: "Guardar partida",
+    settings: "Ajustes",
   },
   splash: {
     newGame: "NUEVO JUEGO",

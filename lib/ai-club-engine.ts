@@ -2,7 +2,6 @@
 // Cada clube tem perfil próprio: contratar, vender, renovar, entrar em crise.
 // Usado pelo mercado de transferências para gerar propostas coerentes.
 
-import type { GameState } from "@/lib/save-system"
 import { aiTacticForClub, type TacticalIdentity } from "@/lib/tactics-engine"
 import type { TransferOffer } from "@/lib/transfer-engine"
 
@@ -139,18 +138,78 @@ export function detectCrisis(recentResults: ("W" | "D" | "L")[], financeRunway: 
   return badRun || brokeSoon
 }
 
-// ─── Tick semanal ─────────────────────────────────────────────────────────────
+// ─── Reação semanal dos clubes da IA ──────────────────────────────────────────
 
 /**
- * Tick weekly: clubes IA reagem ao contexto. Versão atual: detecta crises e
- * ajusta identidade tática de clubes em crise (retranca). Geração de ofertas
- * concretas fica no game-engine (generateAIOffers), que usa evaluateBuy.
+ * O que um clube da IA fez nesta rodada.
+ *
+ * ⚠️ ISTO SUBSTITUI O `tickAIDecisions`, QUE ERA UM STUB. Ele devolvia
+ * `{ newOffers: [], coachChanges: [], identityChanges: [] }` — sempre vazio — e
+ * ninguém o chamava; a auditoria 4.0 achou o par completo (código morto que
+ * prometia uma IA que não existia). A função nova é PURA: recebe o retrato da
+ * tabela e devolve as reações, sem tocar em `GameState`. Quem chama aplica.
  */
-export function tickAIDecisions(state: GameState, _week: number): {
-  state: GameState
-  newOffers: TransferOffer[]
-  coachChanges: { curto: string; newCoach: string }[]
-  identityChanges: { curto: string; newIdentity: TacticalIdentity }[]
-} {
-  return { state, newOffers: [], coachChanges: [], identityChanges: [] }
+export interface ReacaoDaIA {
+  curto: string
+  clube: string
+  /** Sequência recente que motivou a reação, para a notícia. */
+  motivo: "crise" | "recuperacao"
+  /** Nova postura tática do clube. */
+  novaIdentidade: TacticalIdentity
+  /** O clube demitiu o técnico? Só acontece na crise, e só com pouca paciência. */
+  demitiuTecnico: boolean
+}
+
+export interface ClubeParaReacao {
+  curto: string
+  nome: string
+  prestigio: number
+  /** Últimos resultados do clube, do mais antigo para o mais recente. */
+  ultimos: ("W" | "D" | "L")[]
+  /** Identidade tática atual. */
+  identidade: TacticalIdentity
+}
+
+/**
+ * Quem reage nesta rodada.
+ *
+ * Regra deliberadamente estreita: só muda quem está em ponta de sequência (4+
+ * derrotas em 5, ou 4+ vitórias em 5). Um mundo em que metade dos clubes muda de
+ * postura toda semana é ruído, não vida — e cada mudança vira notícia na
+ * Central, então o custo de exagerar é o jogador parar de ler.
+ */
+export function decidirReacoesDaIA(
+  clubes: readonly ClubeParaReacao[],
+  semanaAbsoluta: number,
+): ReacaoDaIA[] {
+  const reacoes: ReacaoDaIA[] = []
+  for (const c of clubes) {
+    const last5 = c.ultimos.slice(-5)
+    if (last5.length < 5) continue
+    const derrotas = last5.filter(r => r === "L").length
+    const vitorias = last5.filter(r => r === "W").length
+    const emCrise = derrotas >= 4 && vitorias === 0
+    const embalado = vitorias >= 4 && derrotas === 0
+    if (!emCrise && !embalado) continue
+
+    const cfg = getClubAIConfig(c.curto, c.prestigio)
+    // Na crise o clube se fecha; embalado, vai para cima. Se já está na postura
+    // que a situação pede, não há o que noticiar.
+    const novaIdentidade: TacticalIdentity = emCrise ? "retranca" : "ofensivo"
+    const demitiuTecnico = emCrise
+      && cfg.patienceWithCoach < 55
+      // Determinístico pela semana: o mesmo save não demite em cascata ao
+      // recarregar a tela, e clubes diferentes caem em semanas diferentes.
+      && hashStr(`${c.curto}:${semanaAbsoluta}`) % 100 < 45
+    if (novaIdentidade === c.identidade && !demitiuTecnico) continue
+
+    reacoes.push({
+      curto: c.curto,
+      clube: c.nome,
+      motivo: emCrise ? "crise" : "recuperacao",
+      novaIdentidade,
+      demitiuTecnico,
+    })
+  }
+  return reacoes
 }

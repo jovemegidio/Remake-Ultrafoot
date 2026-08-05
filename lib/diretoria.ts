@@ -106,3 +106,131 @@ export function decidirRenovacoes(
   }
   return decisoes
 }
+
+// ─── A DIRETORIA VAI AO MERCADO ──────────────────────────────────────────────
+//
+// Renovar não bastava. Medido em 10 temporadas passivas: com a renovação
+// automática o elenco para de despencar, mas converge para EXATAMENTE 18 — o
+// piso — em todos os clubes, porque ninguém repõe quem sai de vez. Um clube de
+// verdade não joga a temporada com 18 atletas; ele contrata.
+//
+// Aqui é a contraparte da renovação: quando o elenco fica abaixo do plantel de
+// trabalho, a diretoria busca reforço no setor mais escasso — e PAGA por ele. É
+// a mesma decisão nos dois sentidos: o clube gasta o caixa que estava parado.
+
+/** Plantel de trabalho que a diretoria tenta manter. */
+export const ALVO_DE_ELENCO = 24
+/** Quantos reforços a diretoria fecha por vez. Devagar de propósito: o técnico
+ *  continua sendo o protagonista do mercado. */
+export const REFORCOS_POR_VEZ = 2
+/** Prêmio pago sobre o valor de mercado. Comprar e revender tem de DAR PREJUÍZO,
+ *  senão a diretoria vira impressora de dinheiro — a mesma armadilha que fez o
+ *  reforço emergencial valer 0. */
+export const PREMIO_SOBRE_O_VALOR = 1.15
+/** Fração do caixa que a diretoria nunca gasta. */
+export const RESERVA_DE_CAIXA = 0.2
+
+export interface AtletaNoElenco {
+  readonly overall: number
+  readonly age: number
+  /** GOL / ZAG / LD / LE / VOL / MEI / ATA / ... */
+  readonly position: string
+}
+
+export interface ContratacaoDecidida {
+  /** Setor que o reforço vem cobrir. */
+  setor: "GOL" | "DEF" | "MEI" | "ATA"
+  /** Posição concreta sugerida. */
+  position: string
+  overall: number
+  age: number
+  salarioSemanal: number
+  /** O que sai do caixa agora. */
+  custo: number
+  /** Valor de mercado do atleta (menor que o custo, ver PREMIO_SOBRE_O_VALOR). */
+  marketValue: number
+}
+
+export interface ContextoDeContratacao extends ContextoDaDiretoria {
+  /** A janela está aberta? Fora dela a diretoria não contrata, como o técnico. */
+  janelaAberta: boolean
+  /** Salário semanal de um atleta deste overall nesta divisão. */
+  salarioDe: (overall: number) => number
+  /** Valor de mercado de um atleta deste overall nesta divisão. */
+  valorDe: (overall: number) => number
+}
+
+const SETORES = {
+  GOL: { posicoes: ["GOL"], minimo: 3, principal: "GOL" },
+  DEF: { posicoes: ["ZAG", "LD", "LE", "LAT", "DEF"], minimo: 7, principal: "ZAG" },
+  MEI: { posicoes: ["VOL", "MC", "MEI", "ME", "MD"], minimo: 7, principal: "MEI" },
+  ATA: { posicoes: ["ATA", "CA", "PE", "PD"], minimo: 5, principal: "ATA" },
+} as const
+
+type SetorId = keyof typeof SETORES
+
+/**
+ * Quem a diretoria contrata agora.
+ *
+ * Devolve lista vazia no caso normal — elenco cheio, janela fechada ou caixa
+ * curto. Como a de renovação, é chamada toda semana e precisa ser barata.
+ */
+export function decidirContratacoes(
+  elenco: readonly AtletaNoElenco[],
+  ctx: ContextoDeContratacao,
+): ContratacaoDecidida[] {
+  if (!ctx.janelaAberta) return []
+  if (elenco.length >= ALVO_DE_ELENCO) return []
+
+  const caixaUtil = ctx.caixa * (1 - RESERVA_DE_CAIXA)
+  if (caixaUtil <= 0) return []
+
+  // A régua de qualidade é o próprio elenco — a diretoria REPÕE o nível do
+  // clube, não faz o técnico campeão por conta própria. Um pouco abaixo da
+  // mediana: reforço de elenco, não estrela.
+  const overalls = [...elenco.map(a => a.overall)].sort((x, y) => x - y)
+  const mediana = overalls.length ? overalls[Math.floor(overalls.length / 2)] : 55
+  const overallDoReforco = Math.max(40, Math.round(mediana - 2))
+
+  const contagem = (setor: SetorId) =>
+    elenco.filter(a => (SETORES[setor].posicoes as readonly string[]).includes(a.position)).length
+
+  // Setor mais carente primeiro (o que está mais longe do mínimo).
+  const carencias = (Object.keys(SETORES) as SetorId[])
+    .map(setor => ({ setor, falta: SETORES[setor].minimo - contagem(setor) }))
+    .sort((a, b) => b.falta - a.falta)
+
+  const decisoes: ContratacaoDecidida[] = []
+  let caixaRestante = caixaUtil
+  let folhaProjetada = ctx.folhaAtual
+  let tamanho = elenco.length
+
+  for (let i = 0; i < REFORCOS_POR_VEZ && tamanho < ALVO_DE_ELENCO; i++) {
+    // Enquanto houver setor abaixo do mínimo, ele manda; depois é só volume.
+    const alvo = carencias[i % carencias.length]
+    const setor: SetorId = alvo.falta > 0 ? alvo.setor : "MEI"
+
+    const salario = ctx.salarioDe(overallDoReforco)
+    if (ctx.tetoDeFolha && folhaProjetada + salario > ctx.tetoDeFolha) break
+
+    const marketValue = ctx.valorDe(overallDoReforco)
+    const custo = Math.round(marketValue * PREMIO_SOBRE_O_VALOR)
+    if (custo > caixaRestante) break
+
+    caixaRestante -= custo
+    folhaProjetada += salario
+    tamanho++
+    alvo.falta--
+    decisoes.push({
+      setor,
+      position: SETORES[setor].principal,
+      overall: overallDoReforco,
+      // 23 a 28: idade de quem chega para jogar já, sem ser aposta nem veterano.
+      age: 23 + ((tamanho + i) % 6),
+      salarioSemanal: salario,
+      custo,
+      marketValue,
+    })
+  }
+  return decisoes
+}

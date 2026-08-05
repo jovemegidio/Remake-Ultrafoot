@@ -41,6 +41,16 @@ export const enUS: Translations = {
     finances: "Finances",
     market: "Market",
     settings: "Settings",
+    friendlies: "Friendlies",
+  },
+  header: {
+    matches: "Matches",
+    winRate: "Win rate",
+    streak: "Streak",
+    titlesInSeason: "Titles this season",
+    home: "Home",
+    saveGame: "Save game",
+    settings: "Settings",
   },
   splash: {
     newGame: "NEW GAME",

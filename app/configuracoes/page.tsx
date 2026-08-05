@@ -31,9 +31,10 @@ import {
   Keyboard,
   DollarSign,
   RefreshCw,
-  X, Building2 } from "lucide-react"
+  X, Building2, Swords } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { IDIOMAS } from "@/lib/i18n"
+import { NIVEIS, DIFICULDADE_PADRAO } from "@/lib/dificuldade"
 import { AtualizacoesPanel } from "@/components/atualizacoes-panel"
 import { SeloRegistrado } from "@/components/registro-necessario"
 import { anunciarSfx } from "@/lib/sfx-volume"
@@ -606,6 +607,40 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
             
+            {/* DIFICULDADE — o dedo na balanca deixou de ser constante de codigo.
+                O motor dava ao adversario +9 fixo sempre que o usuario entrava em
+                campo, e nao havia como pedir mais nem menos. "Normal" e exatamente
+                esse valor, entao carreira em andamento nao muda de comportamento. */}
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                <Swords className="h-4 w-4 text-primary" />
+                Dificuldade
+              </h3>
+              <p className="text-xs text-white/40 -mt-2">
+                Vale para as partidas que voce disputa. Muda a qualquer momento da carreira.
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                {NIVEIS.map((nivel) => (
+                  <button
+                    key={nivel.id}
+                    onClick={() => setState({ dificuldade: nivel.id })}
+                    className={cn(
+                      "flex items-start gap-3 p-3 rounded-lg border transition-all text-left",
+                      (state.dificuldade ?? DIFICULDADE_PADRAO) === nivel.id
+                        ? "border-primary bg-primary/10"
+                        : "border-white/10 bg-white/5 hover:border-white/20",
+                    )}
+                  >
+                    <span className="flex-1">
+                      <span className="block text-sm text-white">{nivel.nome}</span>
+                      <span className="block text-xs text-white/40 mt-0.5">{nivel.descricao}</span>
+                    </span>
+                    {(state.dificuldade ?? DIFICULDADE_PADRAO) === nivel.id && <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />

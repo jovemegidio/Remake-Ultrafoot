@@ -39,6 +39,16 @@ export const ptBR = {
     finances: "Financas",
     market: "Mercado",
     settings: "Configuracoes",
+    friendlies: "Amistosos",
+  },
+  header: {
+    matches: "Jogos",
+    winRate: "Aproveitamento",
+    streak: "Sequencia",
+    titlesInSeason: "Titulos na Temporada",
+    home: "Inicio",
+    saveGame: "Salvar jogo",
+    settings: "Configuracoes",
   },
   splash: {
     newGame: "NOVO JOGO",

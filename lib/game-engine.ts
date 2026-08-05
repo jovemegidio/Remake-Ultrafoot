@@ -19,9 +19,9 @@ import {
 } from "@/lib/mercado-realista"
 import { pickStartingXI } from "@/lib/formations"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
-import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor, youthPromotionSalaryWeekly } from "@/lib/club-economy"
-import { reforcosEmergenciais, ELENCO_MINIMO } from "@/lib/reposicao-emergencial"
-import { decidirRenovacoes } from "@/lib/diretoria"
+import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor, FRACAO_DO_CUSTO_OPERACIONAL, youthPromotionSalaryWeekly } from "@/lib/club-economy"
+import { reforcosEmergenciais, gerarNomeDeAtleta, ELENCO_MINIMO } from "@/lib/reposicao-emergencial"
+import { decidirRenovacoes, decidirContratacoes } from "@/lib/diretoria"
 
 /** Prazo minimo que um reforco assina ao chegar. Ver o contrato em `buyPlayer`. */
 const PRAZO_MINIMO_DE_CONTRATO_ANOS = 2
@@ -483,6 +483,15 @@ export interface Player {
   // Historico
   joinedClubWeek: number
   joinedClubSeason: number
+  /**
+   * CRIA DA BASE — subiu da categoria de base DESTE clube.
+   *
+   * Não é enfeite: quem formou o atleta é informação que muda decisão (segurar,
+   * emprestar para rodar, vender). No elenco ele era indistinguível de um
+   * reforço comprado. Opcional porque saves anteriores não têm a marca — e
+   * inventá-la para quem já estava no elenco seria falsificar o histórico.
+   */
+  criaDaBase?: boolean
   isLoanedIn: boolean
   loanedOut?: boolean
   loanEndWeek?: number
@@ -2945,7 +2954,20 @@ export const useGameEngine = create<GameEngineState>()(
           const isFifaDate = s.fifaDates.includes(newWeek)
           
           // Atualizar financas
-          const weeklyBalance = s.weeklyIncome - s.weeklyExpenses
+          //
+          // CUSTO OPERACIONAL: a despesa que nao encolhe junto com o elenco.
+          // Ate a 1.0.264 a unica saida recorrente era a folha — entao um tecnico
+          // que parava de agir via o elenco cair ao piso, a folha despencar e o
+          // caixa crescer para sempre (medido: City x4,2 e ABC x9,3 em 10
+          // temporadas passivas). Estadio, base, viagem e comissao administrativa
+          // custam igual com 30 ou com 18 atletas; e isso que esta linha cobra.
+          // Derivado da RECEITA JA CALCULADA, e nao da divisao do cadastro. O
+          // `weeklyIncome` ja e mantido pela divisao EFETIVA (1.0.260); ler a
+          // divisao estatica aqui repetiria o defeito que aquela versao corrigiu
+          // — o ABC tem `serie_c` gravado e joga a `serie_d`, e cobrar custo de
+          // Serie C sobre receita de Serie D quebrava o clube em duas temporadas.
+          const custoOperacional = Math.round(Math.max(0, s.weeklyIncome) * FRACAO_DO_CUSTO_OPERACIONAL)
+          const weeklyBalance = s.weeklyIncome - s.weeklyExpenses - custoOperacional
           
           // Expirar ofertas antigas
           const updatedOffers = s.transferOffers.map(offer => {
@@ -3265,6 +3287,81 @@ export const useGameEngine = create<GameEngineState>()(
             }
           }
 
+          // ---- A DIRETORIA VAI AO MERCADO ----
+          //
+          // Renovar segurava a queda mas nao repunha ninguem: em 10 temporadas
+          // passivas o elenco convergia para EXATAMENTE 18, o piso, em todo clube
+          // testado. Aqui a diretoria completa o plantel de trabalho quando a
+          // janela esta aberta — e PAGA por isso, o que tambem e o freio do caixa
+          // que so crescia. Vem DEPOIS do reforco emergencial de proposito: o
+          // emergencial e a rede de seguranca (vale 0), este e contratacao de
+          // verdade.
+          let saidaDeCaixaDaDiretoria = 0
+          {
+            const timeDoUsuario = getTeamByShort(s.myTeamShort ?? "")
+            // EFETIVA, nao a do cadastro — mesma armadilha do custo operacional.
+            const divisaoDoClube = timeDoUsuario ? String(effectiveDivision(timeDoUsuario)) : "serie_a"
+            const contratacoes = decidirContratacoes(
+              playersAfterNT.map(p => ({ overall: p.overall, age: p.age, position: p.position })),
+              {
+                agora: absoluteWeek(s.currentSeason, newWeek),
+                caixa: s.balance,
+                folhaAtual: folhaSemanal(playersAfterNT),
+                tetoDeFolha: Math.max(0, s.weeklyIncome) * 1.6,
+                janelaAberta: isTransferWindowOpen(newWeek),
+                salarioDe: (overall) => playerSalaryWeekly(overall, divisaoDoClube),
+                valorDe: (overall) => playerMarketValue(overall, divisaoDoClube),
+              },
+            )
+            if (contratacoes.length > 0) {
+              const usados = new Set(playersAfterNT.map(p => p.name.trim().toLocaleLowerCase("pt-BR")))
+              const fimDoVinculo = absoluteWeek(s.currentSeason, newWeek) + 52 * 3
+              playersAfterNT = [
+                ...playersAfterNT,
+                ...contratacoes.map((c, i) => {
+                  const name = gerarNomeDeAtleta(`diretoria:${s.myTeamShort}:${s.currentSeason}:${newWeek}:${i}`, usados)
+                  return {
+                    id: Math.max(Date.now() + 1000 + i, ...playersAfterNT.map(p => p.id + i + 1)),
+                    name,
+                    position: c.position as Player["position"],
+                    age: c.age,
+                    overall: c.overall,
+                    potential: Math.min(99, c.overall + 3),
+                    nationality: timeDoUsuario?.pais ?? "Brasil",
+                    ...atributosPorPosicao(c.overall, c.position as Player["position"], name),
+                    energy: 100,
+                    morale: "Normal" as const,
+                    form: c.overall,
+                    contract: {
+                      salary: c.salarioSemanal,
+                      endDate: fimDoVinculo,
+                      releaseClause: null,
+                      signedWeek: newWeek,
+                      signedSeason: s.currentSeason,
+                    },
+                    injury: null,
+                    marketValue: c.marketValue,
+                    seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
+                    training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
+                    nationalTeam: null,
+                    calledUp: false,
+                    joinedClubWeek: newWeek,
+                    joinedClubSeason: s.currentSeason,
+                    isLoanedIn: false,
+                    isStarter: false,
+                    statusEffects: [],
+                  } as Player
+                }),
+              ]
+              saidaDeCaixaDaDiretoria = contratacoes.reduce((t, c) => t + c.custo, 0)
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("ultrafoot:contratacoes-da-diretoria", {
+                  detail: contratacoes.map((c, i) => ({ posicao: c.position, overall: c.overall, custo: c.custo, indice: i })),
+                }))
+              }
+            }
+          }
+
           // ---- FUNDO DE INVESTIMENTO: forcar venda se chegou a semana ----
           const fundOffers: InvestmentFundOffer[] = [...s.pendingFundOffers]
           const FUND_NAMES = ["Alpha Capital", "Sport Ventures", "Global FC Fund", "Emerald Sports"]
@@ -3350,7 +3447,7 @@ export const useGameEngine = create<GameEngineState>()(
             pendingIncomingTransfers: canRegisterTransfers ? [] : s.pendingIncomingTransfers,
             marketingContracts: updatedMarketing,
             pendingFundOffers: fundOffers,
-            balance: s.balance + weeklyBalance + marketingBonus - penaltyTotal,
+            balance: s.balance + weeklyBalance + marketingBonus - penaltyTotal - saidaDeCaixaDaDiretoria,
             lastSeasonStandings: lastStandings,
           }
         })
@@ -3655,6 +3752,8 @@ export const useGameEngine = create<GameEngineState>()(
           }),
           isStarter: false,
           isLoanedIn: false,
+          // Marca de origem: este subiu da NOSSA base.
+          criaDaBase: true,
           joinedClubWeek: state.currentWeek,
           joinedClubSeason: state.currentSeason,
           seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },

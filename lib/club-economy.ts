@@ -100,6 +100,29 @@ export function weeklyIncomeFor(division: string, prestige: number): number {
   return Math.round(base * mult)
 }
 
+/**
+ * CUSTO OPERACIONAL SEMANAL — a despesa que NÃO encolhe com o elenco.
+ *
+ * O problema que isto resolve (auditoria 4.0): a única despesa recorrente era a
+ * folha. Quando o técnico parava de agir, o elenco encolhia até o piso, a folha
+ * despencava junto e o caixa crescia para sempre — 10 temporadas passivas
+ * multiplicavam o caixa do Manchester City por 4,2 e o do ABC por 9,3. Não agir
+ * era, literalmente, a jogada mais lucrativa do jogo.
+ *
+ * Estádio, centro de treinamento, base, viagens, comissão administrativa e
+ * folha não-atleta existem tendo elenco de 30 ou de 18. São 22% da receita
+ * recorrente do clube: pesa o suficiente para o caixa parado não render, e não
+ * tanto que um clube bem tocado quebre.
+ *
+ * Escala pela MESMA régua da receita de propósito — assim a conta continua justa
+ * na Série D e na Premier League, sem tabela nova para manter em dia.
+ */
+export const FRACAO_DO_CUSTO_OPERACIONAL = 0.22
+
+export function custoOperacionalSemanal(division: string, prestige: number): number {
+  return Math.round(weeklyIncomeFor(division, prestige) * FRACAO_DO_CUSTO_OPERACIONAL)
+}
+
 /** Premiacao de LIGA por posicao final (R$), creditada no fim da temporada. Antes
  *  aparecia no painel mas nunca entrava no caixa. Escala com a divisao. */
 export function leaguePrizeMoney(division: string, position: number, size: number): number {

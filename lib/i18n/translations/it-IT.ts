@@ -42,6 +42,16 @@ export const itIT: Translations = {
     finances: "Finanze",
     market: "Mercato",
     settings: "Impostazioni",
+    friendlies: "Amichevoli",
+  },
+  header: {
+    matches: "Partite",
+    winRate: "Rendimento",
+    streak: "Serie",
+    titlesInSeason: "Titoli in stagione",
+    home: "Home",
+    saveGame: "Salva partita",
+    settings: "Impostazioni",
   },
   splash: {
     newGame: "NUOVA PARTITA",

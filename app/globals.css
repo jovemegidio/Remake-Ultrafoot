@@ -1158,3 +1158,21 @@ html[data-performance="economy"] .shadow-2xl,
 html[data-performance="economy"] .shadow-xl {
   box-shadow: none !important;
 }
+
+/* CONTROLE ESCONDIDO ATRÁS DE HOVER NÃO EXISTE NO DEDO.
+   ────────────────────────────────────────────────────
+   O padrão `opacity-0 group-hover:opacity-100` revela um botão quando o mouse
+   passa por cima — apagar carreira na splash, trocar o avatar do treinador,
+   fechar um aviso. Num aparelho sem mouse não existe "passar por cima": o botão
+   fica invisível para sempre, e a única pista de que ele existe é o toque às
+   cegas no lugar certo.
+
+   `@media (hover: none)` cobre exatamente os aparelhos sem hover — no PC nada
+   muda. É preferível a uma varredura arquivo a arquivo porque vale também para
+   o próximo controle escrito nesse padrão. */
+@media (hover: none) {
+  .group .opacity-0[class*="group-hover:opacity-100"],
+  .opacity-0[class*="hover:opacity-100"] {
+    opacity: 1;
+  }
+}
