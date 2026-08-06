@@ -193,9 +193,72 @@
   ],
   "changelog": [
     {
-      "version": "1.0.267",
+      "version": "1.0.268",
       "date": "2026-08-05",
       "latest": true,
+      "title": "Elencos de verdade em 73 clubes, e o trofeu que voce levantou e o seu",
+      "changes": [
+        {
+          "type": "added",
+          "text": "ELENCOS REAIS EM 73 CLUBES. J-League, K-League, Ligue 2, Serie B italiana, Championship, Escocia, Equador, Chile e Arabia tinham times completados com atletas inventados. Agora tem elenco de verdade, com nome, posicao, idade e nivel vindos do Transfermarkt: o atleta inventado nas ligas jogaveis caiu de 1.187 para 336."
+        },
+        {
+          "type": "added",
+          "text": "O TROFEU CERTO NA CERIMONIA. O jogo tinha 72 trofeus desenhados e mostrava apenas 14 — quem levantava o Paulistao via o mesmo icone de quem levantava a Champions. Cada estadual, cada divisao e cada copa agora aparece com a propria taca."
+        },
+        {
+          "type": "fixed",
+          "text": "GOL DO ADVERSARIO ERA COMEMORADO. Quando o outro time marcava, a narracao festejava como se o gol fosse seu. Os nove narradores sempre tiveram a locucao certa gravada; ela nunca era tocada. Contusao tambem ganhou som."
+        }
+      ]
+    },
+    {
+      "version": "1.0.268",
+      "date": "2026-08-05",
+      "latest": false,
+      "title": "Emprestimo com opcao de compra, leilao para vender e o save protegido na atualizacao",
+      "changes": [
+        {
+          "type": "added",
+          "text": "OPCAO DE COMPRA NO EMPRESTIMO. A mesa do emprestimo ja negociava a clausula (e o clube dono cobrava caro por ela), mas o valor acertado era descartado na hora de fechar: o atleta chegava sem registro nenhum do combinado e, no fim do vinculo, simplesmente voltava para casa. Agora a opcao viaja com o atleta e da para exerce-la pela ficha dele, como na vida real."
+        },
+        {
+          "type": "added",
+          "text": "LEILAO PARA VENDER. Ate aqui so dava para vender esperando sondagem da IA ou aceitando o primeiro palpite do 'Vender agora'. Agora voce anuncia um atleta seu, define o piso e os clubes interessados disputam por tres semanas. Fechado o leilao, o dinheiro entra no caixa e o atleta sai na abertura da janela de transferencias."
+        },
+        {
+          "type": "added",
+          "text": "INICIAR A PROXIMA TEMPORADA NO ESCRITORIO E NA AREA DO TECNICO. Sem partida marcada, o botao de avancar mandava para a tela de partida, que devolvia para o escritorio — e o tecnico ficava preso nesse laco. Virar o ano agora e uma acao explicita, nos dois lugares."
+        },
+        {
+          "type": "added",
+          "text": "BUSCA POR VALOR DE MERCADO. O Mercado filtrava por nome, posicao, idade, pais, liga, time e situacao — tudo, menos preco. Entraram valor minimo e maximo, com um atalho 'Ate o meu caixa'."
+        },
+        {
+          "type": "added",
+          "text": "DOIS CLIQUES ABREM O ATLETA. O card do Mercado sempre mostrou a tecla 'Enter', mas nada escutava a tecla. Agora Enter funciona de verdade e o duplo clique faz a mesma coisa."
+        },
+        {
+          "type": "changed",
+          "text": "FICHA DO JOGADOR ORGANIZADA. O modal empilhava nove blocos sem limite de altura: em telas normais metade ficava fora da tela e nao havia como rolar ate ela — rescindir e vender simplesmente nao existiam para quem nao usasse um monitor grande. Agora sao tres abas (Perfil, Contrato e Mercado) com rolagem propria."
+        },
+        {
+          "type": "fixed",
+          "text": "SALVAR PASSA A SALVAR TUDO. Rescisao, renovacao, emprestimo, devolucao, fim de contrato, promocao da base e leilao nao deixavam rastro nenhum no save. Pior: o botao de salvar gravava o retrato da tela em que voce estava e podia desfazer uma decisao tomada minutos antes. Agora a gravacao e feita sobre o save do disco e todas as movimentacoes ficam registradas."
+        },
+        {
+          "type": "fixed",
+          "text": "SAVE PROTEGIDO NA ATUALIZACAO. O jogo guarda um retrato da sua carreira antes da primeira gravacao de cada versao nova, recusa gravacoes que apagariam uma carreira em andamento e nunca mais trata um save de versao desconhecida como 'nao ha save' — que era o caminho pelo qual uma campanha inteira se perdia. Da para voltar ao retrato anterior pela tela de Salvar."
+        },
+        {
+          "type": "fixed",
+          "text": "AGUARDAR MAIS UMA SEMANA NAO MEXIA O CALENDARIO. Sem clube, 'Aguardar novas propostas' avancava a semana no save mas nao no relogio do jogo — a data no cabecalho ficava parada."
+        }
+      ]
+    },
+    {
+      "version": "1.0.267",
+      "date": "2026-08-05",
       "title": "O mundo envelhece junto com voce, e o estadio deixa de ser um numero so",
       "changes": [
         {
@@ -230,12 +293,12 @@
           "type": "fixed",
           "text": "ELENCO COMPLETADO COM NOME DE OUTRO PAIS. Onde faltam atletas reais, o jogo preenche o elenco — e um clube japones ou coreano recebia nomes eslavos. Agora o nome combina com o pais do clube."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.264",
       "date": "2026-08-05",
-      "latest": false,
       "title": "Amistoso se negocia, cria da base em destaque e o fim do Botafogo em toda tela",
       "changes": [
         {
@@ -270,12 +333,12 @@
           "type": "changed",
           "text": "FUNDO DO MERCADO trocado, e o escurecimento por cima dele foi reduzido: eram tres camadas empilhadas que somavam mais de 70% e faziam a arte praticamente sumir."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.261",
       "date": "2026-08-05",
-      "latest": false,
       "title": "O calendario vira de ano, e o elenco para de esvaziar sozinho",
       "changes": [
         {
@@ -302,12 +365,12 @@
           "type": "fixed",
           "text": "A REDE DE SEGURANCA DO ELENCO so agia na virada da temporada e com piso de 11 atletas — sem banco e sem cobertura para lesao ou suspensao. Passa a agir semana a semana e com folga para escalar de verdade."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.258",
       "date": "2026-08-04",
-      "latest": false,
       "title": "Descanso do elenco, fotos nas substituicoes e propostas que nao somem",
       "changes": [
         {
@@ -342,12 +405,12 @@
           "type": "fixed",
           "text": "A CENTRAL DE ATUALIZACOES dizia \"nao foi possivel falar com o servidor\" mesmo com o servidor no ar — inclusive quando o motivo era simplesmente os canais estarem desligados nas suas proprias preferencias. Agora cada caso diz o que realmente aconteceu."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.257",
       "date": "2026-08-04",
-      "latest": false,
       "title": "Telas rapidas, Data FIFA de verdade, historico do treinador e selecao jogada",
       "changes": [
         {
@@ -382,7 +445,8 @@
           "type": "fixed",
           "text": "TROCAR DE CLUBE APAGAVA os reforcos ainda na fila e o dinheiro ja pago sumia junto. Agora o valor e estornado antes de a fila ser descartada."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.255",
