@@ -29,7 +29,7 @@
 //    Sem isso, dois renders da mesma tela dariam resultados diferentes.
 
 import {
-  encerrarLeilao, lancesDaIA, maiorLance, semanaDeAbertura,
+  encerrarLeilao, lanceDaIA, maiorLance,
   type LanceLeilao, type LeilaoAberto,
 } from "@/lib/leilao"
 
@@ -104,10 +104,34 @@ function comoLeilaoAberto(anuncio: LeilaoDeVenda, clubeDoUsuario: { curto: strin
   }
 }
 
+/** Sorteio 0-1 reproduzível a partir de um texto (FNV-1a, igual ao de lib/leilao). */
+function sorteioDe(texto: string): number {
+  let h = 2166136261
+  for (const c of texto) h = Math.imul(h ^ c.charCodeAt(0), 16777619)
+  return ((h >>> 0) % 100000) / 100000
+}
+
 /**
  * A disputa por este anúncio na semana informada.
  *
  * Não há lance do usuário aqui — quem vende não dá lance no próprio atleta.
+ *
+ * ⚠️ POR QUE O LAÇO DAS SEMANAS É ESCRITO AQUI, e não delegado a `lancesDaIA`.
+ *
+ * `lancesDaIA` deriva a semana de abertura do PRÓPRIO prazo, com
+ * `semanaDeAbertura(encerraNaSemana)` — ela assume o calendário de blocos fixos
+ * de três semanas do leilão de COMPRA, onde toda disputa abre e fecha junto. O
+ * anúncio de venda não segue esse calendário: ele abre na semana em que VOCÊ
+ * anuncia e fecha três semanas depois, em qualquer ponto do ano.
+ *
+ * Usando `lancesDaIA` direto, a abertura calculada caía antes (ou depois) da
+ * semana do anúncio: o leilão nascia já com lances na mesa, e o número de
+ * rodadas de disputa variava conforme o anúncio caísse no começo ou no fim de um
+ * bloco. Aqui o laço é o do anúncio.
+ *
+ * O que continua vindo de lib/leilao é `lanceDaIA` — a decisão de QUANTO cada
+ * clube oferece. É ali que mora a escala de valor, e ter duas seria o defeito que
+ * o leilão de compra já pagou caro (leilão barato vira o jeito fácil de negociar).
  */
 export function disputaPorAnuncio(
   anuncio: LeilaoDeVenda,
@@ -120,8 +144,30 @@ export function disputaPorAnuncio(
   // lances não podem continuar subindo (senão o preço mudaria a cada vez que o
   // técnico reabrisse a tela dias depois — e o dinheiro já teria entrado).
   const semanaEfetiva = Math.min(semana, anuncio.encerraNaSemana)
-  const lances = lancesDaIA(base, [...candidatos], Math.max(semanaDeAbertura(anuncio.encerraNaSemana), semanaEfetiva))
-  return { ...base, lances }
+
+  const acumulado: LanceLeilao[] = []
+  // Ordem de entrada derivada, para o clube mais rico não ser sempre o último.
+  const ordenados = [...candidatos].sort(
+    (a, b) => sorteioDe(`ordem:${anuncio.id}:${a.curto}`) - sorteioDe(`ordem:${anuncio.id}:${b.curto}`),
+  )
+  // Teto de concorrentes de 1 a 4 por anúncio: com teto fixo toda disputa vinha
+  // com o mesmo tamanho e ficava monótona.
+  const teto = 1 + Math.floor(sorteioDe(`teto:${anuncio.id}`) * 4)
+
+  for (let w = anuncio.abertoNaSemana; w <= semanaEfetiva; w++) {
+    for (const clube of ordenados) {
+      const jaEsta = acumulado.find(l => l.clubeCurto === clube.curto)
+      // Clube novo entra só até o teto; quem já está na mesa pode cobrir sempre.
+      if (!jaEsta && acumulado.length >= teto) continue
+      const parcial: LeilaoAberto = { ...base, lances: [...acumulado] }
+      const lance = lanceDaIA(parcial, clube, sorteioDe(`lance:${anuncio.id}:${clube.curto}:${w}`))
+      if (!lance) continue
+      // Cobrir só faz sentido se for para PASSAR o que já está na mesa.
+      if (jaEsta) { if (lance.valor > jaEsta.valor) jaEsta.valor = lance.valor }
+      else acumulado.push(lance)
+    }
+  }
+  return { ...base, lances: acumulado }
 }
 
 /** O maior lance na mesa agora (ou null). */

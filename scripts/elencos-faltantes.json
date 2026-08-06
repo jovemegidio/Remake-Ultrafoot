@@ -1,0 +1,714 @@
+[
+ {
+  "nome": "Shonan Bellmare",
+  "curto": "SBM",
+  "pais": "Japao",
+  "divisao": "j_league",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jubilo Iwata",
+  "curto": "JBI",
+  "pais": "Japao",
+  "divisao": "j_league",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Machida Zelvia",
+  "curto": "MCZ",
+  "pais": "Japao",
+  "divisao": "j_league",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Independiente de Cauquenes",
+  "curto": "ICA",
+  "pais": "Chile",
+  "divisao": "primera_b_chi",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Universidad de Concepcion",
+  "curto": "UDC",
+  "pais": "Chile",
+  "divisao": "primera_div_chi",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jeju United",
+  "curto": "JEU",
+  "pais": "Coreia do Sul",
+  "divisao": "k_league_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Incheon United",
+  "curto": "INC",
+  "pais": "Coreia do Sul",
+  "divisao": "k_league_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gimcheon Sangmu",
+  "curto": "GCS",
+  "pais": "Coreia do Sul",
+  "divisao": "k_league_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Clermont Foot 63",
+  "curto": "CF6",
+  "pais": "Franca",
+  "divisao": "ligue_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dijon FCO",
+  "curto": "DF",
+  "pais": "Franca",
+  "divisao": "ligue_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Grenoble Foot 38",
+  "curto": "GF3",
+  "pais": "Franca",
+  "divisao": "ligue_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "AS Nancy-Lorraine",
+  "curto": "NANCYLOR",
+  "pais": "Franca",
+  "divisao": "ligue_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Red Star FC",
+  "curto": "RSF",
+  "pais": "Franca",
+  "divisao": "ligue_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Rodez AF",
+  "curto": "RA",
+  "pais": "Franca",
+  "divisao": "ligue_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Sochaux-Montbéliard",
+  "curto": "SOCHAUXM",
+  "pais": "Franca",
+  "divisao": "ligue_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Kashiwa Reysol",
+  "curto": "KWR",
+  "pais": "Japao",
+  "divisao": "j_league",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Avispa Fukuoka",
+  "curto": "AVF",
+  "pais": "Japao",
+  "divisao": "j_league",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Sagan Tosu",
+  "curto": "SGT",
+  "pais": "Japao",
+  "divisao": "j_league",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Albirex Niigata",
+  "curto": "ALN",
+  "pais": "Japao",
+  "divisao": "j_league",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Tokyo Verdy",
+  "curto": "TKV",
+  "pais": "Japao",
+  "divisao": "j_league",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Sint-Truiden",
+  "curto": "STT",
+  "pais": "Belgica",
+  "divisao": "pro_league_bel",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Deportes Iberia",
+  "curto": "IBE",
+  "pais": "Chile",
+  "divisao": "primera_b_chi",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "FC Copenhagen",
+  "curto": "COP",
+  "pais": "Dinamarca",
+  "divisao": "superliga_den",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Cerro Montevideo",
+  "curto": "CER",
+  "pais": "Uruguai",
+  "divisao": "primera_div_ury",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Daejeon Citizen",
+  "curto": "DAE",
+  "pais": "Coreia do Sul",
+  "divisao": "k_league_1",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Changchun Yatai",
+  "curto": "CHY",
+  "pais": "China",
+  "divisao": "chinese_super",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Ohud",
+  "curto": "OHD",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Al-Jandal",
+  "curto": "JND",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Kilmarnock FC",
+  "curto": "KIL",
+  "pais": "Escocia",
+  "divisao": "scottish_prem",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Deportes Limache",
+  "curto": "LIM",
+  "pais": "Chile",
+  "divisao": "primera_div_chi",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Cusco FC",
+  "curto": "CUS",
+  "pais": "Peru",
+  "divisao": "primera_div_per",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Olympiacos",
+  "curto": "OLY",
+  "pais": "Grecia",
+  "divisao": "super_league_gre",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Qarabag",
+  "curto": "QAR",
+  "pais": "Azerbaijao",
+  "divisao": "premyer_liqa_aze",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Kairat",
+  "curto": "KAI",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Delfin SC",
+  "curto": "DEL",
+  "pais": "Equador",
+  "divisao": "primera_a_ecu",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Libertad FC",
+  "curto": "LIB",
+  "pais": "Equador",
+  "divisao": "primera_a_ecu",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Guayaquil City",
+  "curto": "GYC",
+  "pais": "Equador",
+  "divisao": "primera_a_ecu",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Gwangju FC",
+  "curto": "GWA",
+  "pais": "Coreia do Sul",
+  "divisao": "k_league_1",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Seongnam FC",
+  "curto": "SEO",
+  "pais": "Coreia do Sul",
+  "divisao": "k_league_2",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Cangzhou Mighty Lions",
+  "curto": "CZM",
+  "pais": "China",
+  "divisao": "chinese_super",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Al-Adalah",
+  "curto": "ADA",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Al-Jalala",
+  "curto": "JAL",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Al-Afaq",
+  "curto": "AFQ",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Escuela de Futbol de Macul",
+  "curto": "MAC",
+  "pais": "Chile",
+  "divisao": "primera_b_chi",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Libertad",
+  "curto": "LBP",
+  "pais": "Paraguai",
+  "divisao": "primera_div_par",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Bodo Glimt",
+  "curto": "BOD",
+  "pais": "Noruega",
+  "divisao": "eliteserien_nor",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Barcelona SC",
+  "curto": "BSC",
+  "pais": "Equador",
+  "divisao": "primera_a_ecu",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Leones del Norte",
+  "curto": "LEONESDE",
+  "pais": "Equador",
+  "divisao": "primera_a_ecu",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Lincoln City",
+  "curto": "LC",
+  "pais": "Inglaterra",
+  "divisao": "championship",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "West Bromwich Albion",
+  "curto": "WBA",
+  "pais": "Inglaterra",
+  "divisao": "championship",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Wrexham",
+  "curto": "WRE",
+  "pais": "Inglaterra",
+  "divisao": "championship",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Al-Sahel",
+  "curto": "SAH",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 14,
+  "total": 18
+ },
+ {
+  "nome": "Al-Nojoom",
+  "curto": "NOJ",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 14,
+  "total": 18
+ },
+ {
+  "nome": "Cádiz CF",
+  "curto": "CADIZCF",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 13,
+  "total": 18
+ },
+ {
+  "nome": "Real Sporting de Gijon",
+  "curto": "RSD",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 13,
+  "total": 18
+ },
+ {
+  "nome": "CD Castellón",
+  "curto": "CDCASTEL",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 12,
+  "total": 18
+ },
+ {
+  "nome": "RC Celta Fortuna",
+  "curto": "CELTAFOR",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 12,
+  "total": 18
+ },
+ {
+  "nome": "Guarany de Sobral",
+  "curto": "GUA",
+  "pais": "Brasil",
+  "divisao": "serie_d",
+  "gerados": 11,
+  "total": 28
+ },
+ {
+  "nome": "SD Eibar",
+  "curto": "SE",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "CD Eldense",
+  "curto": "CE",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "Granada CF",
+  "curto": "GC",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "CE Sabadell FC",
+  "curto": "CSF",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "Al-Raed",
+  "curto": "RAE",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_pro",
+  "gerados": 10,
+  "total": 18
+ },
+ {
+  "nome": "UD Almería",
+  "curto": "UA",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 10,
+  "total": 18
+ },
+ {
+  "nome": "AD Ceuta FC",
+  "curto": "ACF",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 10,
+  "total": 18
+ },
+ {
+  "nome": "Córdoba CF",
+  "curto": "CORDOBAC",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 10,
+  "total": 18
+ },
+ {
+  "nome": "Mantova 1911",
+  "curto": "M1",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 9,
+  "total": 18
+ },
+ {
+  "nome": "Burgos CF",
+  "curto": "BURGOSCF",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 9,
+  "total": 18
+ },
+ {
+  "nome": "Real Sociedad B",
+  "curto": "RSB",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 9,
+  "total": 18
+ },
+ {
+  "nome": "CD Tenerife",
+  "curto": "CT",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 9,
+  "total": 18
+ },
+ {
+  "nome": "Empoli FC",
+  "curto": "EF",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 8,
+  "total": 18
+ },
+ {
+  "nome": "Modena FC",
+  "curto": "MF",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 8,
+  "total": 18
+ },
+ {
+  "nome": "Cesena FC",
+  "curto": "CF",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 8,
+  "total": 18
+ },
+ {
+  "nome": "Calcio Padova",
+  "curto": "CP",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 8,
+  "total": 18
+ },
+ {
+  "nome": "US Avellino 1912",
+  "curto": "A1",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 8,
+  "total": 18
+ },
+ {
+  "nome": "Querétaro",
+  "curto": "QRO",
+  "pais": "Mexico",
+  "divisao": "liga_mx",
+  "gerados": 7,
+  "total": 18
+ },
+ {
+  "nome": "Municipal Mejillones",
+  "curto": "MEJ",
+  "pais": "Chile",
+  "divisao": "primera_b_chi",
+  "gerados": 7,
+  "total": 18
+ },
+ {
+  "nome": "Palermo FC",
+  "curto": "PF",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 7,
+  "total": 18
+ },
+ {
+  "nome": "Fernandez Vial",
+  "curto": "FVL",
+  "pais": "Chile",
+  "divisao": "primera_b_chi",
+  "gerados": 6,
+  "total": 18
+ },
+ {
+  "nome": "UC Sampdoria",
+  "curto": "US",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 6,
+  "total": 18
+ },
+ {
+  "nome": "Ascoli Calcio 1898",
+  "curto": "AC1",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 6,
+  "total": 18
+ },
+ {
+  "nome": "Pisa Sporting Club",
+  "curto": "PISASPOR",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "US Catanzaro 1929",
+  "curto": "C1",
+  "pais": "Italia",
+  "divisao": "serie_b_ita",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "Villarreal CF",
+  "curto": "VLR",
+  "pais": "Espanha",
+  "divisao": "la_liga",
+  "gerados": 4,
+  "total": 18
+ },
+ {
+  "nome": "Al-Kawkab",
+  "curto": "KAW",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 4,
+  "total": 18
+ },
+ {
+  "nome": "Ypiranga-RS",
+  "curto": "YPI",
+  "pais": "Brasil",
+  "divisao": "serie_c",
+  "gerados": 3,
+  "total": 20
+ },
+ {
+  "nome": "Bangu",
+  "curto": "BGU",
+  "pais": "Brasil",
+  "divisao": "serie_d",
+  "gerados": 3,
+  "total": 18
+ },
+ {
+  "nome": "Sampaio Correa-RJ",
+  "curto": "SCR",
+  "pais": "Brasil",
+  "divisao": "serie_d",
+  "gerados": 3,
+  "total": 18
+ },
+ {
+  "nome": "Atletico Madrid",
+  "curto": "ATM",
+  "pais": "Espanha",
+  "divisao": "la_liga",
+  "gerados": 3,
+  "total": 18
+ }
+]

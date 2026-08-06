@@ -7,7 +7,7 @@ import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TeamCrest } from "@/components/team-crest"
 import { useActionBar } from "@/components/ea-action-bar"
-import { useGameState } from "@/lib/save-system"
+import { useGameState, temRetratoPreAtualizacao, restaurarRetratoPreAtualizacao } from "@/lib/save-system"
 import { salvarTudo } from "@/lib/salvar-tudo"
 import { useGameManager } from "@/lib/use-game-manager"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
@@ -42,6 +42,15 @@ export default function SalvarPage() {
   const [saveName, setSaveName] = useState("Carreira de Manager - progresso 1")
   const [savedName, setSavedName] = useState("Carreira de Manager - progresso 1")
   const [saveFeedback, setSaveFeedback] = useState("")
+  /**
+   * Existe um retrato do save anterior a esta atualizacao? (lib/save-system).
+   * Lido depois da hidratacao: antes disso o persistent-store ainda nao carregou
+   * do disco e a resposta seria sempre "nao".
+   */
+  const [temRetrato, setTemRetrato] = useState(false)
+  useEffect(() => {
+    if (hydrated) setTemRetrato(temRetratoPreAtualizacao())
+  }, [hydrated, state.careerId])
 
   useEffect(() => {
     if (!hydrated) return
@@ -212,6 +221,40 @@ export default function SalvarPage() {
       {/* Conteudo */}
       <main className="relative z-10 flex-1 overflow-y-auto px-10 pb-24">
         {saveFeedback && <div className="mx-auto mb-4 max-w-md rounded-lg border border-emerald-400/30 bg-emerald-400/10 p-3 text-center text-sm font-bold text-emerald-300">{saveFeedback}</div>}
+
+        {/* VOLTAR AO SAVE DE ANTES DA ATUALIZACAO.
+            O jogo guarda um retrato da carreira ANTES da primeira gravacao de
+            cada versao nova (ver lib/save-system.ts). Se uma atualizacao mexer no
+            formato do save e algo sair errado, este e o caminho de volta — sem
+            depender de o jogador ter feito copia a mao. */}
+        {temRetrato && (
+          <div className="mx-auto mb-6 flex max-w-3xl flex-wrap items-center gap-4 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] p-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-amber-200">Carreira de antes desta atualizacao</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-white/55">
+                Guardamos como a sua carreira estava antes de o jogo ser atualizado. Use isto
+                apenas se algo tiver ficado errado depois da atualizacao — o progresso feito
+                desde entao volta para a copia de seguranca.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (!restaurarRetratoPreAtualizacao()) {
+                  setSaveFeedback("Nao foi possivel restaurar o retrato anterior.")
+                  setTimeout(() => setSaveFeedback(""), 4000)
+                  return
+                }
+                setTemRetrato(false)
+                // Recarrega para o jogo inteiro reler o save restaurado — meia
+                // dezena de telas guarda o estado em memoria.
+                hardNavigate("/", true)
+              }}
+              className="shrink-0 rounded-lg border border-amber-400/50 bg-amber-400/10 px-4 py-2 text-xs font-bold text-amber-200 transition-colors hover:bg-amber-400/20"
+            >
+              Restaurar
+            </button>
+          </div>
+        )}
         {/* Linha de instrucao + espacos livres */}
         <div className="mb-8 mt-2 flex items-start justify-between gap-6">
           <p className="max-w-3xl text-[15px] leading-relaxed text-white/55">

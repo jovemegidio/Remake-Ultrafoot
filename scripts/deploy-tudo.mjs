@@ -206,6 +206,9 @@ const GATES = [
   { nome: "regulamentos das competicoes", cmd: "npx", args: ["tsx", "scripts/qa-competition-regulations.ts"] },
   { nome: "regras do jogo", cmd: "npx", args: ["tsx", "scripts/test-contrato-base-de-tempo.ts"] },
   { nome: "piso de elenco", cmd: "npx", args: ["tsx", "scripts/test-piso-de-elenco.ts"] },
+  // Perder o save numa atualizacao e o pior defeito possivel: nao ha suporte que
+  // devolva a carreira. Ver lib/save-system.ts (as tres camadas).
+  { nome: "save protegido na atualizacao", cmd: "npx", args: ["tsx", "scripts/test-save-protegido.ts"] },
 ]
 // ⚠️ OS GATES RODAM NO DISCO DE BUILD, NAO NO REPOSITORIO.
 //

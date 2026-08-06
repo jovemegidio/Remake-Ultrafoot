@@ -2850,6 +2850,15 @@ export const useGameEngine = create<GameEngineState>()(
           origin: string
           destination: string
         }> = []
+        /**
+         * MOVIMENTACOES A REGISTRAR DEPOIS DO `set`.
+         *
+         * `registrarMovimentacao` grava no disco (commitGameState). Chamar isso de
+         * DENTRO do updater do zustand seria efeito colateral em reducer: o
+         * updater pode ser reexecutado, e a mesma saida entraria duas vezes no
+         * extrato. Mesmo padrao de `expiredDepartures`, logo acima.
+         */
+        const movimentacoesDaSemana: Array<Parameters<typeof registrarMovimentacao>[0]> = []
         
         set((s) => {
           // Chance de o treino render +1 no atributo. Antes era 0.7 fixo; agora o Centro de
@@ -3117,7 +3126,7 @@ export const useGameEngine = create<GameEngineState>()(
             // de compra que o tecnico deixou passar, que e informacao de verdade
             // ("por que o atleta sumiu do meu elenco?").
             for (const p of emprestimosVencidos) {
-              registrarMovimentacao({
+              movimentacoesDaSemana.push({
                 playerName: p.name,
                 type: "loan_return",
                 value: 0,
@@ -3565,6 +3574,9 @@ export const useGameEngine = create<GameEngineState>()(
             lastSeasonStandings: lastStandings,
           }
         })
+
+        // Extrato: gravado FORA do updater, pelo motivo explicado na declaracao.
+        for (const mov of movimentacoesDaSemana) registrarMovimentacao(mov)
 
         // Atualiza o mercado mundial fora do updater do Zustand. Isso também
         // remove o atleta do elenco-base de origem e o adiciona ao novo clube,

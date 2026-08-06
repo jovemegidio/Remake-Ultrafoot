@@ -1192,15 +1192,22 @@ export default function PartidaAoVivoPage() {
     const id = `snd-${last.id}`
     if (lastSoundEventId.current === id) return
     lastSoundEventId.current = id
+    // GOL CONTRA VOCÊ NÃO É COMEMORAÇÃO. Todo gol enfileirava `gol1` — a
+    // narração de festa —, inclusive quando quem marcava era o adversário. O
+    // pacote sempre teve o `goladv` gravado para isso, nos NOVE narradores, e
+    // ele nunca era pedido: o arquivo existia no disco e não tinha um único
+    // chamador. Mesma história do `contusao`, que também nunca tocava.
+    const doUsuario = last.side === userSide
     switch (last.type) {
-      case "goal":    playSound("gol"); enqueueEvent("gol1"); break
+      case "goal":    playSound("gol"); enqueueEvent(doUsuario ? "gol1" : "goladv"); break
       case "foul":    playSound("apito_falta"); break
       case "yellow_card": playSound("cartao_amarelo"); break
       case "red_card":    playSound("cartao_vermelho"); enqueueEvent("expulsao"); break
       case "penalty":     playSound("penalti"); enqueueEvent("penalty"); break
       case "sub":         playSound("substituicao"); break
+      case "injury":      enqueueEvent("contusao"); break
     }
-  }, [state.events, playSound])
+  }, [state.events, playSound, userSide])
 
   // Vermelho precisa retirar o atleta do radar/campo, não apenas reduzir a força do time.
   useEffect(() => {

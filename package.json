@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.267",
+  "version": "1.0.268",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -52,10 +52,11 @@
     "build:qa": "cross-env TAURI_BUILD=1 npm run build",
     "qa:modal": "node scripts/qa-modal-keyboard.mjs",
     "qa:navigation": "tsx scripts/qa-navigation.ts",
-    "qa:regras": "tsx scripts/test-fixture-catchup.ts && tsx scripts/test-amistoso-calendario.ts && tsx scripts/test-treino-entrosamento.ts && tsx scripts/test-entrosamento.ts && tsx scripts/test-mercado-realista.ts && tsx scripts/test-radar-evento.ts && tsx scripts/test-posicao-por-coordenada.ts && tsx scripts/test-escalacao-salva.ts && tsx scripts/test-liga-curta.ts && tsx scripts/test-posicoes-do-elenco.ts && tsx scripts/test-escudo-clube-formador.ts && tsx scripts/test-contrato-base-de-tempo.ts && tsx scripts/test-piso-de-elenco.ts && tsx scripts/test-diretoria.ts && tsx scripts/test-mundo-vivo.ts && tsx scripts/test-dificuldade-e-diretoria.ts",
+    "qa:regras": "tsx scripts/test-fixture-catchup.ts && tsx scripts/test-amistoso-calendario.ts && tsx scripts/test-treino-entrosamento.ts && tsx scripts/test-entrosamento.ts && tsx scripts/test-mercado-realista.ts && tsx scripts/test-radar-evento.ts && tsx scripts/test-posicao-por-coordenada.ts && tsx scripts/test-escalacao-salva.ts && tsx scripts/test-liga-curta.ts && tsx scripts/test-posicoes-do-elenco.ts && tsx scripts/test-escudo-clube-formador.ts && tsx scripts/test-contrato-base-de-tempo.ts && tsx scripts/test-piso-de-elenco.ts && tsx scripts/test-diretoria.ts && tsx scripts/test-mundo-vivo.ts && tsx scripts/test-dificuldade-e-diretoria.ts && tsx scripts/test-trofeus.ts",
     "prebuild": "node scripts/preparar-env-licenca.mjs && node scripts/embutir-edicoes.mjs && node scripts/build-team-player-photos.mjs",
     "qa:gates": "npx tsc --noEmit -p tsconfig.json && npx eslint app components lib hooks && node scripts/audit-feature-gaps.mjs && npx tsx scripts/qa-competition-regulations.ts && npm run qa:regras",
-    "qa:carreiras": "tsx scripts/qa-carreiras-longas.ts"
+    "qa:carreiras": "tsx scripts/qa-carreiras-longas.ts",
+    "qa:save-protegido": "tsx scripts/test-save-protegido.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

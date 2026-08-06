@@ -16,7 +16,7 @@ import { Gavel, ArrowRight, Trophy, XCircle, Coins } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { LeiloesPanel, contarLeiloesAbertos } from "@/components/leiloes-panel"
 import { LeilaoVendaPanel } from "@/components/leilao-venda-panel"
-import { useUserTeam, useGameState } from "@/lib/save-system"
+import { useUserTeam, useGameState, commitGameState } from "@/lib/save-system"
 import { useRequireClub } from "@/lib/use-require-team"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -157,14 +157,29 @@ export default function LeiloesPage() {
       )
     }
     setVendas(fechados)
+    // ⚠️ `commitGameState`, NAO `setState`. Sair desta tela (o botao "Ir para o
+    // escritorio" navega na mesma tacada) desmonta o componente antes de o React
+    // processar a fila, e o `setState` do useGameState so grava DENTRO desse
+    // atualizador — o anuncio ja resolvido voltaria na proxima visita.
+    //
+    // O caixa em si nao corre risco de ser creditado duas vezes: o motor recusa a
+    // segunda chamada (o atleta ja saiu, ou ja esta na fila de saida). Mas o
+    // desfecho apareceria de novo, e o anuncio ficaria preso para sempre.
+    commitGameState({ leiloesDeVenda: abertos })
     setState({ leiloesDeVenda: abertos })
   }, [state.leiloesDeVenda, state.week, candidatos, semana, season, userTeam, setState, registrarSaidaAcertada])
 
   const anunciar = useCallback((anuncio: LeilaoDeVenda) => {
-    setState(atual => ({ leiloesDeVenda: [...(atual.leiloesDeVenda ?? []), anuncio] }))
+    const atualizado = commitGameState(atual => ({
+      leiloesDeVenda: [...(atual.leiloesDeVenda ?? []), anuncio],
+    }))
+    setState({ leiloesDeVenda: atualizado.leiloesDeVenda })
   }, [setState])
   const cancelarAnuncio = useCallback((id: string) => {
-    setState(atual => ({ leiloesDeVenda: (atual.leiloesDeVenda ?? []).filter(a => a.id !== id) }))
+    const atualizado = commitGameState(atual => ({
+      leiloesDeVenda: (atual.leiloesDeVenda ?? []).filter(a => a.id !== id),
+    }))
+    setState({ leiloesDeVenda: atualizado.leiloesDeVenda })
   }, [setState])
 
   // ABERTURA DELIBERADA vs PASSAGEM DO PÓS-PARTIDA. A partida manda todo mundo

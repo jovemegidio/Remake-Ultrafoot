@@ -27,11 +27,23 @@ const maximo = args.includes("--maximo") ? Number(args[args.indexOf("--maximo") 
 const PALAVRAS_PT = /\b(de|do|da|para|com|sem|por|em|no|na|os|as|um|uma|voce|seu|sua|nao|sim|jogo|jogos|time|clube|elenco|atleta|jogador|partida|rodada|temporada|contrato|salario|semana|mes|ano|valor|preco|caixa|saldo|renda|custo|obra|tecnico|treinador|diretoria|torcida|estadio|mercado|proposta|oferta|titulo|vitoria|derrota|empate)\b/i
 const ACENTO = /[áàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ]/
 
-/** Pula o que nao e texto de interface. */
+/**
+ * Pula o que nao e texto de interface.
+ *
+ * ⚠️ A primeira versao contava 1.233 e o numero era INFLADO: entravam
+ * fragmento de JSX partido em duas linhas (`>Tela cheia</div> <div className=`),
+ * pedaco de codigo (`as ViewType, title:`) e classe utilitaria. Um medidor que
+ * exagera e tao ruim quanto um que mente para menos — quem le decide errado onde
+ * investir. As regras abaixo exigem que a string PARECA FRASE.
+ */
 const IGNORAR = [
+  /[<>{}]/,                            // fragmento de JSX ou template
+  /\w+\s*[:=]\s*$/,                     // pedaco de codigo cortado
+  /as [A-Z]\w+/,                      // cast de TypeScript
+  /^[a-z]+([A-Z]\w*)+$/,                // camelCase (identificador)
   /^[a-z0-9_-]+$/i,                    // chave tecnica, id, slug
   /^#[0-9a-f]{3,8}$/i,                 // cor
-  /^\/[\w/.-]*$/,                      // rota ou caminho
+  /^@?\/[\w/.-]*$/,                    // rota, caminho ou import "@/lib/..."
   /^[\d\s.,:%+-]*$/,                   // so numero/pontuacao
   /^(https?|data):/i,                  // url
   /^[A-Z_]+$/,                         // CONSTANTE
@@ -68,7 +80,7 @@ for (const f of arquivos) {
   const chamadas = (src.match(/\bt\.[a-zA-Z]+\.[a-zA-Z]+/g) ?? []).length
   totalTextos += achados.size
   totalTraduzidos += chamadas
-  if (achados.size > 0) porArquivo.push({ arquivo: relative(RAIZ, f), pendentes: achados.size, usaI18n, chamadas, exemplos: [...achados].slice(0, 6) })
+  if (achados.size > 0) porArquivo.push({ arquivo: relative(RAIZ, f), pendentes: achados.size, usaI18n, chamadas, exemplos: [...achados].slice(0, 6), todos: [...achados] })
 }
 
 porArquivo.sort((a, b) => b.pendentes - a.pendentes)
@@ -77,7 +89,7 @@ if (detalhe) {
   const alvo = porArquivo.filter(a => a.arquivo.replace(/\\/g, "/").includes(detalhe))
   for (const a of alvo) {
     console.log(`\n${a.arquivo} — ${a.pendentes} pendentes (i18n: ${a.usaI18n ? "sim" : "NAO"}, ${a.chamadas} chamadas)`)
-    for (const e of a.exemplos) console.log(`   ${e}`)
+    for (const e of a.todos) console.log(`   ${e}`)
   }
   process.exit(0)
 }

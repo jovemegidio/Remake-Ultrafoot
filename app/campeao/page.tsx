@@ -6,6 +6,8 @@ import { motion } from "framer-motion"
 import { Trophy, Star, Home, ArrowRight, Crown, Medal } from "lucide-react"
 import { useMovimentoReduzido, PapelPicado, FaiscasDouradas, TEMPOS, subirComPeso, entrarDeBaixo } from "@/components/cerimonia-motion"
 import { TeamCrest } from "@/components/team-crest"
+import { trofeuDaCompeticao } from "@/lib/trofeus"
+import { gameAssetUrl } from "@/lib/game-asset"
 import { Cutscene } from "@/components/cutscene"
 import { Button } from "@/components/ui/button"
 import { useUserTeam, useGameState } from "@/lib/save-system"
@@ -122,6 +124,14 @@ export default function CampeaoPage() {
 
   const seasonLabel = champion?.season ?? `${currentSeason}/${String(currentSeason + 1).slice(-2)}`
   const competitionName = champion?.competition ?? getLeagueName(team.curto)
+
+  // A arte sai do NOME da competição — é o que o save guarda. `gameAssetUrl`
+  // porque no app instalado os recursos não vivem na raiz do site.
+  const arteDoTrofeu = useMemo(
+    () => gameAssetUrl(trofeuDaCompeticao(competitionName, champion?.type)),
+    [competitionName, champion?.type],
+  )
+  const [semArte, setSemArte] = useState(false)
 
   const stats = champion?.stats ?? { won: 0, drawn: 0, lost: 0, goalsFor: 0 }
 
@@ -287,16 +297,43 @@ export default function CampeaoPage() {
           <div className="relative">
             {/* Halo do troféu */}
             <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.55) 0%, transparent 70%)" }} />
-            <Trophy
-              className="relative h-36 w-36 sm:h-44 sm:w-44 animate-champ-glow"
-              style={{ color: "#fbbf24", filter: "drop-shadow(0 12px 30px rgba(251,191,36,0.55))" }}
-            />
+            {/* A ARTE DO TROFÉU, e não mais o ícone de linha.
+                O acervo tem 72 peças e 58 delas nunca chegaram à tela: quem
+                ganhava o Paulistão via o MESMO desenho de quem ganhava a
+                Champions. `trofeuDaCompeticao` resolve pelo nome da competição
+                e sempre cai num genérico — título sem arte específica ainda tem
+                troféu, e a cerimônia nunca quebra. Se o arquivo faltar, o ícone
+                antigo volta como rede (`onError`). */}
+            {semArte ? (
+              <Trophy
+                className="relative h-36 w-36 sm:h-44 sm:w-44 animate-champ-glow"
+                style={{ color: "#fbbf24", filter: "drop-shadow(0 12px 30px rgba(251,191,36,0.55))" }}
+              />
+            ) : (
+              <img
+                src={arteDoTrofeu}
+                alt=""
+                onError={() => setSemArte(true)}
+                className="relative h-36 w-36 sm:h-44 sm:w-44 object-contain animate-champ-glow"
+                style={{ filter: "drop-shadow(0 12px 30px rgba(251,191,36,0.55))" }}
+              />
+            )}
             {/* Reflexo do troféu no pedestal */}
-            <Trophy
-              aria-hidden
-              className="absolute left-1/2 top-full h-36 w-36 sm:h-44 sm:w-44 -translate-x-1/2 scale-y-[-1] opacity-15 blur-[2px]"
-              style={{ color: "#fbbf24", maskImage: "linear-gradient(to bottom, black, transparent 70%)", WebkitMaskImage: "linear-gradient(to bottom, black, transparent 70%)" }}
-            />
+            {semArte ? (
+              <Trophy
+                aria-hidden
+                className="absolute left-1/2 top-full h-36 w-36 sm:h-44 sm:w-44 -translate-x-1/2 scale-y-[-1] opacity-15 blur-[2px]"
+                style={{ color: "#fbbf24", maskImage: "linear-gradient(to bottom, black, transparent 70%)", WebkitMaskImage: "linear-gradient(to bottom, black, transparent 70%)" }}
+              />
+            ) : (
+              <img
+                src={arteDoTrofeu}
+                alt=""
+                aria-hidden
+                className="absolute left-1/2 top-full h-36 w-36 sm:h-44 sm:w-44 -translate-x-1/2 scale-y-[-1] object-contain opacity-15 blur-[2px]"
+                style={{ maskImage: "linear-gradient(to bottom, black, transparent 70%)", WebkitMaskImage: "linear-gradient(to bottom, black, transparent 70%)" }}
+              />
+            )}
           </div>
           {/* Pedestal */}
           <div className="mt-2 h-2 w-56 rounded-full bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent" />

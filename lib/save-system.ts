@@ -856,6 +856,124 @@ function backupKey(careerId: string): string {
   return `${saveKey(careerId)}:backup`
 }
 
+// ─── SAVE À PROVA DE ATUALIZAÇÃO ─────────────────────────────────────────────
+//
+// ⚠️ POR QUE ISTO EXISTE (pedido: "ajuste uma logica para nao corromper os saves
+// ao atualizar o game").
+//
+// Atualizar o jogo é o momento de maior risco para o save, por três motivos que
+// já se materializaram nesta base:
+//
+//  1. MIGRAÇÃO NOVA COM DEFEITO. Toda versão pode mudar o formato (foi assim na
+//     v5, quando o relógio de contratos virou semana absoluta). Se a migração
+//     errar, o save é reescrito errado e não há volta — a cópia `:backup` já foi
+//     sobrescrita pela primeira gravação da versão nova.
+//  2. GRAVAR ANTES DE HIDRATAR. O `persistent-store` carrega do disco de forma
+//     assíncrona; uma tela que grave antes disso escreve DEFAULT_STATE por cima
+//     da carreira. Já aconteceu (a memória do projeto registra o efeito que
+//     apagava o save com o time de fallback).
+//  3. SAVE DO FUTURO. Quem instala uma versão nova, joga, e depois volta para a
+//     antiga trazia um save com `version` desconhecida — e `safeParse` devolvia
+//     `null`, o jogo abria em DEFAULT_STATE e a PRIMEIRA gravação apagava tudo.
+//
+// A defesa tem três camadas, e nenhuma delas depende do jogador fazer nada.
+
+/** Versão do jogo que está rodando (injetada no build por next.config.mjs). */
+const VERSAO_DO_APP = process.env.NEXT_PUBLIC_VERSAO_DO_JOGO ?? "desconhecida"
+
+/** Retrato do save como ele estava ANTES da primeira gravação desta versão. */
+function preAtualizacaoKey(careerId: string): string {
+  return `${saveKey(careerId)}:pre-atualizacao`
+}
+
+/** Qual versão do jogo gravou este save pela última vez. */
+function versaoQueGravouKey(careerId: string): string {
+  return `${saveKey(careerId)}:versao`
+}
+
+const _snapshotFeito = new Set<string>()
+
+/**
+ * CAMADA 1 — retrato antes da primeira gravação de uma versão nova.
+ *
+ * Roda no começo de `saveGameState`, não no boot: assim o retrato é, por
+ * construção, do save COMO ELE ESTAVA antes de esta versão tocar nele. Um
+ * snapshot tirado no boot já pode chegar tarde (outra tela pode ter gravado
+ * antes) e um tirado depois da migração guardaria justamente o dado migrado —
+ * inútil para desfazer uma migração ruim.
+ *
+ * Só grava quando a versão MUDOU: reabrir o jogo na mesma versão não substitui
+ * o retrato pela partida de hoje, que é o que o jogador quer poder desfazer.
+ */
+function guardarRetratoDaVersaoAnterior(careerId: string): void {
+  if (_snapshotFeito.has(careerId)) return
+  _snapshotFeito.add(careerId)
+  try {
+    if (storeGet(versaoQueGravouKey(careerId)) === VERSAO_DO_APP) return
+    const bruto = storeGet(saveKey(careerId))
+    // Carreira nova (nada gravado ainda) só recebe a marca da versão.
+    if (bruto) storeSet(preAtualizacaoKey(careerId), bruto)
+    storeSet(versaoQueGravouKey(careerId), VERSAO_DO_APP)
+  } catch {
+    /* proteção nunca pode impedir o jogo de salvar */
+  }
+}
+
+/**
+ * CAMADA 2 — a gravação que APAGA a carreira.
+ *
+ * Detecta o caso do item 2 acima: um estado zerado (sem clube, semana 0, sem
+ * histórico) prestes a substituir uma carreira em andamento. Isso NUNCA é uma
+ * ação do jogador — pedir demissão zera o clube mas preserva semana, temporada e
+ * histórico, e começar outra carreira usa `replaceState` com um careerId novo.
+ *
+ * Devolve true quando a gravação deve ser RECUSADA.
+ */
+function apagaCarreiraEmAndamento(anterior: GameState | null, novo: GameState): boolean {
+  if (!anterior) return false
+  const temProgresso =
+    Boolean(anterior.selectedTeamShort) ||
+    (anterior.week ?? 0) > 0 ||
+    (anterior.seasonHistory?.length ?? 0) > 0 ||
+    (anterior.passagens?.length ?? 0) > 0
+  if (!temProgresso) return false
+  const novoEstaVazio =
+    !novo.selectedTeamShort &&
+    (novo.week ?? 0) === 0 &&
+    (novo.seasonHistory?.length ?? 0) === 0 &&
+    (novo.passagens?.length ?? 0) === 0 &&
+    (novo.squadPlayers?.length ?? 0) === 0
+  return novoEstaVazio
+}
+
+/** Existe um retrato pré-atualização desta carreira? */
+export function temRetratoPreAtualizacao(careerId = getActiveCareerId()): boolean {
+  return Boolean(careerId && storeGet(preAtualizacaoKey(careerId)))
+}
+
+/**
+ * CAMADA 3 (manual) — volta o save ao retrato anterior à atualização.
+ *
+ * Existe para o caso em que a migração de uma versão nova estraga a carreira: o
+ * jogador restaura o retrato e continua na versão anterior, sem perder a
+ * campanha. A cópia atual vira `:backup` antes, para a restauração também ser
+ * reversível.
+ */
+export function restaurarRetratoPreAtualizacao(careerId = getActiveCareerId()): boolean {
+  if (!careerId) return false
+  const retrato = storeGet(preAtualizacaoKey(careerId))
+  if (!retrato || !safeParse(retrato)) return false
+  const atual = storeGet(saveKey(careerId))
+  if (atual) storeSet(backupKey(careerId), atual)
+  storeSet(saveKey(careerId), retrato)
+  storeSet(versaoQueGravouKey(careerId), VERSAO_DO_APP)
+  // O retrato foi consumido: mantê-lo faria o próximo clique restaurar de novo
+  // um estado que já não é o "antes da atualização".
+  storeRemove(preAtualizacaoKey(careerId))
+  _snapshotFeito.add(careerId)
+  return true
+}
+
 function readCareerIndex(): CareerSaveSummary[] {
   try {
     const parsed = JSON.parse(storeGet(CAREER_INDEX_KEY) ?? "[]")
@@ -956,7 +1074,22 @@ function safeParse(raw: string | null): GameState | null {
     if (parsed.version === 6) {
       return { ...DEFAULT_STATE, ...parsed, version: VERSION, careerId: parsed.careerId ?? null, saveName: parsed.saveName ?? "Carreira principal" }
     }
-    if (parsed.version !== VERSION) return null
+    // SAVE DE VERSAO DESCONHECIDA — inclusive o "save do futuro".
+    //
+    // Isto era `return null`, e null significa "nao ha save": o jogo abria em
+    // DEFAULT_STATE e a PRIMEIRA gravacao apagava a carreira inteira. Acontecia
+    // com quem instalasse uma versao nova, jogasse, e voltasse para a antiga —
+    // e aconteceria com qualquer VERSION futura que esquecesse um degrau de
+    // migracao aqui.
+    //
+    // Descartar o save nunca e mais seguro do que carrega-lo: os campos que esta
+    // versao nao conhece sao ignorados pelo TypeScript e continuam gravados;
+    // os que faltam vem de DEFAULT_STATE. Na pior das hipoteses o jogador perde
+    // um sistema novo, em vez da campanha.
+    if (parsed.version !== VERSION) {
+      console.warn(`[save] versao ${parsed.version} != ${VERSION}: carregando assim mesmo para nao perder a carreira.`)
+      return { ...DEFAULT_STATE, ...parsed, version: VERSION }
+    }
     return { ...DEFAULT_STATE, ...parsed }
   } catch {
     return null
@@ -1029,9 +1162,21 @@ export function saveGameState(state: GameState): void {
     return
   }
   const resolvedId = careerId || makeCareerId()
+  // CAMADA 1: retrato do save ANTES de esta versao escrever qualquer coisa nele.
+  guardarRetratoDaVersaoAnterior(resolvedId)
   const next = { ...state, careerId: resolvedId, version: VERSION, updatedAt: Date.now() }
   const key = saveKey(resolvedId)
   const previous = storeGet(key)
+  // CAMADA 2: gravacao que apagaria uma carreira em andamento nao acontece.
+  //
+  // Ela nunca vem do jogador — vem de uma tela que gravou antes de o
+  // persistent-store terminar de hidratar e escreveu DEFAULT_STATE por cima.
+  if (apagaCarreiraEmAndamento(safeParse(previous), next)) {
+    console.warn(
+      "[save] gravacao recusada: o estado a salvar esta vazio e o save em disco tem uma carreira em andamento.",
+    )
+    return
+  }
   // Snapshot anterior permite recuperar fechamento/queda de energia durante a gravacao.
   if (previous) storeSet(backupKey(resolvedId), previous)
   setActiveCareerId(resolvedId)
@@ -1073,6 +1218,10 @@ export function clearGameState(): void {
   if (careerId) {
     storeRemove(saveKey(careerId))
     storeRemove(backupKey(careerId))
+    // Retrato e marca de versao morrem com a carreira: sem isto sobrariam chaves
+    // orfas apontando para um save que nao existe mais.
+    storeRemove(preAtualizacaoKey(careerId))
+    storeRemove(versaoQueGravouKey(careerId))
     storeSet(CAREER_INDEX_KEY, JSON.stringify(readCareerIndex().filter(item => item.id !== careerId)))
     storeRemove(`ultrafoot-game-engine:${careerId}`)
   } else {
@@ -1091,6 +1240,8 @@ export function deleteCareerSave(careerId: string): void {
   const summary = readCareerIndex().find(item => item.id === careerId)
   storeRemove(saveKey(careerId))
   storeRemove(backupKey(careerId))
+  storeRemove(preAtualizacaoKey(careerId))
+  storeRemove(versaoQueGravouKey(careerId))
   storeRemove(`ultrafoot-game-engine:${careerId}`)
   storeSet(CAREER_INDEX_KEY, JSON.stringify(readCareerIndex().filter(item => item.id !== careerId)))
   if (getActiveCareerId() === careerId) storeRemove(ACTIVE_CAREER_KEY)
