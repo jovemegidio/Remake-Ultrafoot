@@ -44,7 +44,8 @@ import { markRejection, getRejectionCooldown, CARENCIA_POR_MOTIVO } from "@/lib/
 import { confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
 import { formatCurrency, formatCurrencyFor } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
-import { useGameState, useUserTeam, type GameState, type SquadPlayer } from "@/lib/save-system"
+import { useGameState, type GameState, type SquadPlayer } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useRequireClub } from "@/lib/use-require-team"
 import { markDeparted, hasDeparted } from "@/lib/departed-players"
 import { useNotifications } from "@/components/notifications-system"
@@ -419,10 +420,18 @@ export default function MercadoPage() {
       setMarketNotice(`Não encontrei ${vencido.jogador} no mercado para fechar o contrato do leilão.`)
       return
     }
+    // ⚠️ A NEGOCIACAO DO LEILAO CONTINUA EM "PROPOSTAS ENVIADAS" (pedido).
+    //
+    // O recado do leilao chegava na aba em que o jogador ESTIVESSE — no relato,
+    // "Mercado de Juniores" —, e ali nao ha nada sobre aquele atleta: fechado o
+    // modal, a negociacao sumia da tela e o aviso virava um beco sem saida.
+    // Propostas Enviadas e onde o acompanhamento vive, entao e para la que a
+    // tela vai antes de abrir o modal.
+    setActiveTab("enviadas")
     setSelectedPlayer(alvo)
     setNegotiationType("buy")
     setNegotiationOpen(true)
-    setMarketNotice(`Leilão vencido por ${formatCurrency(vencido.valor)} — feche o contrato com ${vencido.jogador}.`)
+    setMarketNotice(`Leilão vencido por ${formatCurrency(vencido.valor)} — feche o contrato com ${vencido.jogador}. A negociação continua aqui, em Propostas Enviadas.`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [careerState.leilaoVencido, transferTargets])
 

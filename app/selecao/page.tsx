@@ -16,7 +16,8 @@ import {
   Users,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
-import { useUserTeam, useGameState, useManagingNational } from "@/lib/save-system"
+import { useGameState } from "@/lib/save-system"
+import { useUserTeam, useManagingNational } from "@/lib/time-da-carreira"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { useNationalTeam } from "@/lib/use-national-team"

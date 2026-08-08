@@ -17,7 +17,8 @@ import {
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
-import { useGameState, useUserTeam } from "@/lib/save-system"
+import { useGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { buildCareerStats, rankInHistory } from "@/lib/hall-of-fame-engine"
 import { cn } from "@/lib/utils"
 

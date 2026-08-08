@@ -22,8 +22,9 @@ import {
   Sparkles
 } from "lucide-react"
 import { PlayerAvatar } from "@/components/player-avatar"
+import { TrilhaDePassos, GrupoDeCampos } from "@/components/modal-kit"
 import { cn } from "@/lib/utils"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { type Player, formatWeeksToDate, getContractStatus } from "@/lib/game-engine"
 
 interface ContractModalProps {
@@ -123,7 +124,7 @@ export function ContractModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-[#0c0c10] border-white/10">
+      <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden border-white/10 bg-[#0c0c10] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
@@ -132,8 +133,18 @@ export function ContractModal({
           <DialogDescription className="text-white/50">
             {step === "view" ? "Detalhes do contrato de" : "Renovacao de contrato de"} {player.name}
           </DialogDescription>
+          <TrilhaDePassos
+            className="pt-2"
+            atual={step}
+            passos={[
+              { id: "view", rotulo: "Contrato atual" },
+              { id: "negotiate", rotulo: "Proposta" },
+              { id: "success", rotulo: "Assinatura" },
+            ]}
+          />
         </DialogHeader>
 
+        <div className="min-h-0 flex-1 overflow-y-auto">
         {step === "view" && (
           <div className="space-y-6 py-4">
             {/* Player Info */}
@@ -230,8 +241,8 @@ export function ContractModal({
         )}
 
         {step === "negotiate" && (
-          <div className="space-y-6 py-4">
-            {/* Salary Slider */}
+          <div className="space-y-4 py-4">
+            <GrupoDeCampos titulo="O que você oferece" nota="Salário e duração — o atleta pesa os dois juntos, não só o valor.">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white/70">Novo Salario Semanal</span>
@@ -252,8 +263,7 @@ export function ContractModal({
               </div>
             </div>
 
-            {/* Contract Length */}
-            <div className="space-y-4">
+            <div className="mt-5 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white/70">Duracao do Contrato</span>
                 <span className="text-xl font-bold text-white">
@@ -277,7 +287,9 @@ export function ContractModal({
               </div>
             </div>
 
-            {/* Summary */}
+            </GrupoDeCampos>
+
+            {/* O veredito da proposta fica FORA do grupo: e a resposta, nao um campo. */}
             <div className={cn(
               "p-4 rounded-lg border",
               isProposalAcceptable ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"
@@ -337,6 +349,8 @@ export function ContractModal({
             </div>
           </div>
         )}
+
+        </div>
 
         <DialogFooter>
           {step === "view" && (

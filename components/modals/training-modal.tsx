@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress"
 import { Zap, Target, Footprints, Star, Shield, TrendingUp, Check, Dumbbell } from "lucide-react"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { cn } from "@/lib/utils"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 
 interface Player {
   id: number

@@ -16,7 +16,8 @@ import { Gavel, ArrowRight, Trophy, XCircle, Coins } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { LeiloesPanel, contarLeiloesAbertos } from "@/components/leiloes-panel"
 import { LeilaoVendaPanel } from "@/components/leilao-venda-panel"
-import { useUserTeam, useGameState, commitGameState } from "@/lib/save-system"
+import { useGameState, commitGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useRequireClub } from "@/lib/use-require-team"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -39,6 +40,13 @@ export default function LeiloesPage() {
   const semana = useGameEngine(st => st.currentWeek)
   const season = useGameEngine(st => st.currentSeason)
   const saldo = useGameEngine(st => st.balance)
+  // Mesmo piso que o painel usa — a contagem da tela e a lista TEM de concordar.
+  const meuElencoLeilao = useGameEngine(st => st.squadPlayers)
+  const pisoDoMeuElenco = useMemo(() => {
+    if (!meuElencoLeilao.length) return 78
+    const onze = [...meuElencoLeilao].sort((a, b) => b.overall - a.overall).slice(0, 11)
+    return Math.round(onze.reduce((soma, p) => soma + p.overall, 0) / onze.length) - 6
+  }, [meuElencoLeilao])
 
   // Mesmo catálogo da aba Buscar do Mercado — os atletas em disputa saem dele.
   const pool = useMemo(
@@ -70,7 +78,7 @@ export default function LeiloesPage() {
   // descartar leilão sem nenhum interessado), então contamos por ele para as duas
   // telas não discordarem sobre o que é um leilão válido.
   const quantos = useMemo(
-    () => contarLeiloesAbertos(pool, candidatos, semana),
+    () => contarLeiloesAbertos(pool, candidatos, semana, pisoDoMeuElenco),
     [pool, candidatos, semana],
   )
 

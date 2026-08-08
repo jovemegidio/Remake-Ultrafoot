@@ -33,7 +33,8 @@ import { Button } from "@/components/ui/button"
 import { RandomEvents } from "@/components/random-events"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
-import { useGameState, useUserTeam } from "@/lib/save-system"
+import { useGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { aplicarPunicao, punicoesSugeridas, rotuloPunicao } from "@/lib/punicoes"
 import { lerTorcida } from "@/lib/pressao-torcida"
 import type { DisciplinePunishment } from "@/lib/game-engine"
@@ -232,7 +233,11 @@ export default function CentralPage() {
             >
               <tab.icon className="h-4 w-4" />
               {tab.label}
-              {tab.count && tab.count > 0 && (
+              {/* ⚠️ ERA `{tab.count && tab.count > 0 && (...)}`. Com count = 0 a
+                  expressao vale 0, e o React DESENHA o zero: a aba aparecia
+                  escrita "Contratos0". Testar so o maior que zero devolve
+                  `false`, que o React ignora. */}
+              {(tab.count ?? 0) > 0 && (
                 <span className={cn(
                   "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
                   activeTab === tab.id ? "bg-black/20 text-black" : "bg-red-500 text-white"
@@ -318,7 +323,14 @@ export default function CentralPage() {
                     <AlertCircle className="h-4 w-4 text-orange-400" />
                   </div>
                   <div className="text-3xl font-black text-orange-400">
-                    {playerMorale.filter(p => p.morale < 70).length}
+                    {/* ⚠️ O CORTE ERA 70, e "Normal" vale 66 na escala
+                        (MORAL: Feliz 92, Motivado 82, Normal 66, Insatisfeito
+                        48, Infeliz 28). Um elenco inteiramente NORMAL era
+                        contado como 27 atletas "com moral baixa", contradizendo
+                        a propria lista logo abaixo, que os rotulava Normal. O
+                        corte agora e 60 — a mesma fronteira que `getMoraleColor`
+                        ja usava para pintar de amarelo. */}
+                    {playerMorale.filter(p => p.morale < 60).length}
                   </div>
                   <p className="text-[10px] text-white/40 mt-1">jogadores com moral baixa</p>
                 </div>

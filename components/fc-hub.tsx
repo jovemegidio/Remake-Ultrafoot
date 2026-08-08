@@ -4,7 +4,8 @@ import { safeLocalSet } from "@/lib/safe-storage"
 import { useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 import { CalendarDays, Clock3, Copy, Database, ExternalLink, Inbox, LoaderCircle, LogOut, MessageCircle, MessagesSquare, Play, Power, RefreshCw, Search, Server, ShieldCheck, UserPlus, Users, Wifi, X } from "lucide-react"
-import { useGameState, useUserTeam, type GameState } from "@/lib/save-system"
+import { useGameState, type GameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import {
   disconnectDiscordSocial,
   getDiscordSocialSnapshot,

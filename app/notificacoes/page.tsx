@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { GameHeader } from "@/components/game-header"
-import { useGameState, useUserTeam } from "@/lib/save-system"
+import { useGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useNotifications, type Notification } from "@/components/notifications-system"
 import { calcSeasonObjective, generateBoardEvaluation, generateBoardObjectiveMessage } from "@/lib/board-engine"
 import { detectEvents, respondToEvent, type DressingRoomEvent } from "@/lib/dressing-room-engine"
@@ -34,6 +35,10 @@ export default function NotificacoesPage() {
   const [aba, setAba] = useState<Aba>("notificacoes")
   // Reuniao com a diretoria (lib/conversa-diretoria.ts).
   const [reuniaoAberta, setReuniaoAberta] = useState(false)
+  /** Assunto com que a reuniao abre, quando o tecnico chega por uma mensagem. */
+  const [assuntoDaReuniao, setAssuntoDaReuniao] = useState<"verba" | "meta" | "pressao" | "elenco" | undefined>(undefined)
+  /** Elenco para o tecnico ESCOLHER com quem falar (ver a aba Atletas). */
+  const elencoParaConversa = useGameEngine(st => st.squadPlayers)
   const engineBalance = useGameEngine(s => s.balance)
   const engineAddRevenue = useGameEngine(s => s.addClubRevenue)
   const { state: saveState, replaceState } = useGameState()
@@ -217,10 +222,31 @@ export default function NotificacoesPage() {
 
         {aba === "diretoria" && (
           <div className="flex-1 space-y-3 overflow-y-auto p-4 scrollbar-game">
+            {/* ⚠️ ABA SEM SAIDA (pedido: "ajuste para funcionar corretamente").
+                A aba era uma lista PASSIVA: sem recado da diretoria, ela dizia
+                "ainda nao se manifestou" e acabava ali — o tecnico nao tinha como
+                PUXAR conversa, embora a reuniao ja existisse (o botao dela mora
+                na aba de avisos, onde ninguem procura). Agora a acao esta onde a
+                falta dela aparece. */}
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--brand)]/20 bg-[var(--brand)]/[0.06] p-4">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-white">Falar com a diretoria</p>
+                <p className="mt-0.5 text-xs text-white/50">
+                  Pedir verba, renegociar a meta, falar da pressão ou do elenco.
+                </p>
+              </div>
+              <button
+                onClick={() => setReuniaoAberta(true)}
+                className="shrink-0 rounded-lg bg-[var(--brand)] px-4 py-2 text-xs font-bold text-[var(--brand-ink)] hover:brightness-110"
+              >
+                Abrir reunião
+              </button>
+            </div>
+
             {mensagensDiretoria.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-white/35">
+              <div className="flex flex-col items-center justify-center gap-3 py-12 text-white/35">
                 <Building2 className="h-12 w-12" />
-                <p className="text-sm">A diretoria ainda não se manifestou nesta temporada.</p>
+                <p className="text-sm">Nenhum recado novo — a conversa acima está sempre disponível.</p>
               </div>
             ) : mensagensDiretoria.map(msg => msg && (
               <article key={msg.id} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
@@ -230,6 +256,20 @@ export default function NotificacoesPage() {
                 </div>
                 <h3 className="mt-1.5 text-base font-bold text-white">{msg.subject}</h3>
                 <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/65">{msg.fullContent}</p>
+                {/* RESPONDER (pedido: "essa mensagem com metas para a temporada
+                    ajuste para conseguir responder"). A mensagem era so leitura:
+                    a diretoria cobrava e o tecnico nao tinha reposta. O botao
+                    abre a reuniao JA no assunto certo — renegociar a meta quando
+                    a mensagem fala de metas, pressao no resto. */}
+                <button
+                  onClick={() => {
+                    setAssuntoDaReuniao(/meta|objetivo/i.test(`${msg.subject} ${msg.fullContent}`) ? "meta" : "pressao")
+                    setReuniaoAberta(true)
+                  }}
+                  className="mt-4 rounded-lg border border-[var(--brand)]/35 bg-[var(--brand)]/10 px-4 py-2 text-xs font-bold text-[var(--brand)] hover:bg-[var(--brand)]/20"
+                >
+                  Responder à diretoria
+                </button>
               </article>
             ))}
           </div>
@@ -237,10 +277,41 @@ export default function NotificacoesPage() {
 
         {aba === "atletas" && (
           <div className="flex-1 space-y-3 overflow-y-auto p-4 scrollbar-game">
+            {/* CHAMAR UM ATLETA PARA CONVERSAR. Antes so dava para RESPONDER a
+                quem pedisse conversa; um vestiario tranquilo virava tela morta.
+                O `BenchTalk` (global) ja escuta este evento com o id do atleta —
+                reaproveitamos em vez de abrir uma segunda conversa paralela. */}
+            <div className="rounded-xl border border-[var(--brand)]/20 bg-[var(--brand)]/[0.06] p-4">
+              <p className="text-sm font-bold text-white">Chamar um atleta para conversar</p>
+              <p className="mt-0.5 text-xs text-white/50">
+                Escolha quem você quer ouvir — moral, minutagem, renovação, o que estiver pegando.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[...elencoParaConversa]
+                  // Quem está pior de moral primeiro: é com quem a conversa importa.
+                  .sort((a, b) => (a.moralePoints ?? 55) - (b.moralePoints ?? 55))
+                  .slice(0, 12)
+                  .map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => window.dispatchEvent(new CustomEvent("ultrafoot:bench-talk", { detail: { playerId: p.id } }))}
+                      className="rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/75 transition-colors hover:border-[var(--brand)]/40 hover:text-white"
+                      title={`Moral ${p.morale}`}
+                    >
+                      {p.name}
+                      <span className="ml-1.5 text-[10px] text-white/35">{p.position}</span>
+                    </button>
+                  ))}
+                {elencoParaConversa.length === 0 && (
+                  <span className="text-xs text-white/35">Elenco ainda não carregado.</span>
+                )}
+              </div>
+            </div>
+
             {eventosVestiario.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-white/35">
+              <div className="flex flex-col items-center justify-center gap-3 py-12 text-white/35">
                 <Users className="h-12 w-12" />
-                <p className="text-sm">Vestiário tranquilo. Ninguém pediu conversa.</p>
+                <p className="text-sm">Vestiário tranquilo — ninguém pediu conversa. Chame alguém acima.</p>
               </div>
             ) : eventosVestiario.map(ev => (
               <article key={ev.id} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
@@ -389,8 +460,9 @@ export default function NotificacoesPage() {
       {/* REUNIÃO COM A DIRETORIA. O desfecho vale de verdade: confiança do
           conselho, verba extra no caixa e meta renegociada ficam no save. */}
       <ConversaDiretoria
+        assuntoInicial={assuntoDaReuniao}
         aberto={reuniaoAberta}
-        onFechar={() => setReuniaoAberta(false)}
+        onFechar={() => { setReuniaoAberta(false); setAssuntoDaReuniao(undefined) }}
         clube={userTeam.nome}
         estado={estadoDaDiretoria}
         onDesfecho={aplicarDesfechoDaReuniao}

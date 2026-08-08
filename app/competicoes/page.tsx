@@ -64,7 +64,8 @@ const COPA_BRASIL_2026_OITAVAS: string[] = [
   "vasco", "palmeiras", "atleticomg_bra", "miirassol_sp", "juventude",
   "chapecoense_bra", "gremio", "atleticopr_bra", "fortaleza", "corinthians_bra",
 ]
-import { useUserTeam, getCareerScopedKey } from "@/lib/save-system"
+import { getCareerScopedKey } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams, computeStandingsFromFixtures, type Fixture } from "@/lib/use-game-manager"
 import type { StandingsEntry } from "@/lib/game-engine"
 import { useGameEngine, type MatchResult as EngineMatchResult } from "@/lib/game-engine"
@@ -72,6 +73,7 @@ import { getPlayersForTeam } from "@/lib/players-data"
 import { gerarEstatisticasCompeticao } from "@/lib/competition-scorers"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { resolveTieByCurto, type CobrancaPenalti } from "@/lib/cup-engine"
+import { faseDaPartida } from "@/lib/competition-phase"
 import { resultadoDoConfronto } from "@/lib/cup-bracket"
 // Assistir a disputa de penaltis de qualquer confronto da chave, nao so do seu.
 import { PenaltisAlheiosModal } from "@/components/match/penaltis-alheios-modal"
@@ -969,6 +971,33 @@ export default function CompeticoesPage() {
     if (!leagueStarted) setActiveTab("estadual")
   }, [leagueStarted])
 
+  /**
+   * FASE REAL DO CLUBE NA COPA NACIONAL.
+   *
+   * ⚠️ O card dizia "OITAVAS" para um clube da Serie D na PRIMEIRA FASE (relato
+   * com print: "o time sendo de menor expressao entrando nas oitavas esta
+   * errado").
+   *
+   * O regulamento no motor esta certo — `copaDoBrasil(entraTarde)` so manda para
+   * a 5a fase quem e de primeira divisao; a Serie D comeca na 1a. O que mentia
+   * era a TELA: o chaveamento desenhado aqui tem quatro colunas (oitavas ->
+   * final) e `copaBrasilDoCalendario` COLAPSA 1a, 2a, 3a, 4a, 5a e oitavas todas
+   * no primeiro espaco. Bom para desenhar a chave; pessimo como rotulo, porque
+   * anuncia oitavas para quem esta a cinco fases delas.
+   *
+   * Aqui o rotulo sai do fixture do proprio clube, que e onde a fase de verdade
+   * mora — o mesmo `faseDaPartida` que o calendario e a pre-partida usam.
+   */
+  const faseNaCopa = useMemo(() => {
+    const minhasDaCopa = seasonCalendar.fixtures
+      .filter(f => f.isUserMatch && f.competitionType === "cup"
+        && f.competition.localeCompare(countryComps.domesticCup, undefined, { sensitivity: "base" }) === 0)
+    if (minhasDaCopa.length === 0) return null
+    // A que vale e a proxima por jogar; sem ela, a ultima disputada.
+    const proxima = minhasDaCopa.find(f => !f.played) ?? minhasDaCopa[minhasDaCopa.length - 1]
+    return faseDaPartida(proxima)?.label ?? null
+  }, [seasonCalendar.fixtures, countryComps.domesticCup])
+
   const competitions = [
     {
       id: "brasileirao",
@@ -992,9 +1021,13 @@ export default function CompeticoesPage() {
         ? `${t.finances.champion}: ${compState.copaBrasil.champion}`
         : compState.copaBrasil.eliminated
           ? t.competitions.eliminated
-          : compState.copaBrasil.drawn
-            ? compState.copaBrasil.currentRound.charAt(0).toUpperCase() + compState.copaBrasil.currentRound.slice(1)
-            : t.competitions.awaiting,
+          // Fase do PROPRIO clube (ver `faseNaCopa`), nao o rotulo colapsado do
+          // chaveamento de quatro colunas.
+          : faseNaCopa
+            ? faseNaCopa
+            : compState.copaBrasil.drawn
+              ? compState.copaBrasil.currentRound.charAt(0).toUpperCase() + compState.copaBrasil.currentRound.slice(1)
+              : t.competitions.awaiting,
       userPosition: null,
       icon: Trophy,
       color: compState.copaBrasil.eliminated ? "text-red-400" : "text-[var(--brand)]",
@@ -1026,7 +1059,12 @@ export default function CompeticoesPage() {
       name: continentalSpot.competition ?? countryComps.continental,
       type: continentalSpot.isSecondary ? "Continental (2a)" : "Continental",
       teams: 32,
-      status: compState.libertadores.qualified
+      // ⚠️ QUEM TEM JOGO ESTA CLASSIFICADO. `compState.libertadores.qualified`
+      // sai de `userPosition <= 4` — a posicao de AGORA na tabela. Um clube que
+      // se classificou pela temporada passada e hoje esta em 5o veria
+      // "NAO CLASSIFICADO" num card de competicao que ele disputa nesta semana.
+      // O calendario e quem sabe: se ha fixture continental, ele esta dentro.
+      status: competicoesDoClube.continental
         ? compState.libertadores.champion
           ? `${t.finances.champion}: ${compState.libertadores.champion}`
           : compState.libertadores.eliminated
@@ -1037,18 +1075,33 @@ export default function CompeticoesPage() {
         : t.competitions.notQualified,
       userPosition: null,
       icon: Globe,
-      color: compState.libertadores.qualified
+      color: competicoesDoClube.continental
         ? compState.libertadores.eliminated ? "text-red-400" : "text-amber-400"
         : "text-white/30",
-      bgColor: compState.libertadores.qualified
+      bgColor: competicoesDoClube.continental
         ? compState.libertadores.eliminated ? "bg-red-400/10" : "bg-amber-400/10"
         : "bg-white/5",
-      borderColor: compState.libertadores.qualified
+      borderColor: competicoesDoClube.continental
         ? compState.libertadores.eliminated ? "border-red-400/30" : "border-amber-400/30"
         : "border-white/10"
     },
-  // Estadual so existe no Brasil — um clube espanhol nao disputa "Paulistao".
-  ].filter(c => c.id !== "estadual" || isBrazilian)
+  // ⚠️ SO O QUE O CLUBE DISPUTA DE VERDADE (pedido: "a pagina de competicoes deve
+  // exibir apenas competicoes que o time do usuario ira jogar").
+  //
+  // As ABAS ja usavam `competicoesDoClube` — derivado do CALENDARIO, que e a
+  // unica fonte honesta do que o clube joga. Os CARDS do topo nao usavam: eles
+  // eram uma lista fixa de quatro, e o filtro cobria so o estadual (para clube
+  // de fora do Brasil). Resultado: um time da Serie D via o card da Libertadores
+  // marcado "NAO CLASSIFICADO" ocupando um quarto da tela — anunciando uma
+  // competicao que ele nao joga, com um rotulo que so existe para dizer isso.
+  //
+  // Agora os dois lados leem a mesma fonte. Sem fixture, sem card.
+  ].filter(c => {
+    if (c.id === "estadual") return isBrazilian && competicoesDoClube.estadual
+    if (c.id === "copa-do-brasil") return competicoesDoClube.copa
+    if (c.id === "libertadores") return competicoesDoClube.continental
+    return true
+  })
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
@@ -1204,6 +1257,13 @@ export default function CompeticoesPage() {
             )}
           </TabsContent>
 
+          {/* ⚠️ O GATILHO da aba ja era escondido para quem nao disputa a copa,
+              mas o CONTEUDO nao: bastava o `activeTab` cair em "copa-do-brasil"
+              — pelo estado salvo, ou pelo LB/RB do controle, que percorre a
+              lista de abas sem olhar quem esta disputando — para o chaveamento
+              aparecer inteiro, com o botao de simular. Era o relato "a Copa do
+              Brasil ainda aparece e deixa simular" num clube de Serie D. */}
+          {competicoesDoClube.copa && (
           <TabsContent value="copa-do-brasil" className="mt-4">
             <CopaBracket
               userTeam={userTeam}
@@ -1215,6 +1275,7 @@ export default function CompeticoesPage() {
               )}
             />
           </TabsContent>
+          )}
 
           <TabsContent value="estadual" className="mt-4">
             <EstadualView

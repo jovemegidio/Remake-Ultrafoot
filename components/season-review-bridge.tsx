@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { useGameState } from "@/lib/save-system"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useNotifications } from "@/components/notifications-system"
 import { calcSeasonObjective } from "@/lib/board-engine"
 

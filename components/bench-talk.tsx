@@ -16,7 +16,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Send, X } from "lucide-react"
 import { useGameEngine } from "@/lib/game-engine"
-import { useGameState, useUserTeam } from "@/lib/save-system"
+import { useGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useNotifications } from "@/components/notifications-system"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
 import {
@@ -28,6 +29,7 @@ import {
   type EstadoDoAtleta,
 } from "@/lib/conversa-atleta"
 import { cn } from "@/lib/utils"
+import { BotaoMicrofone } from "@/components/botao-microfone"
 
 const LIMIAR = 5
 
@@ -356,6 +358,9 @@ export function BenchTalk() {
                 maxLength={280}
                 className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-[var(--brand)]/40 focus:outline-none"
               />
+              {/* FALAR em vez de digitar. O texto cai no MESMO campo e passa
+                  pela mesma leitura de intencao — ver components/botao-microfone.tsx. */}
+              <BotaoMicrofone onTexto={setTexto} />
               <button
                 type="submit"
                 disabled={!texto.trim() || digitando}

@@ -3,7 +3,8 @@
 import { Calendar, Target, TrendingUp, AlertCircle, Newspaper, ShoppingCart, Star, Zap, Trophy } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { useUserTeam, useGameState } from "@/lib/save-system"
+import { useGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
 

@@ -24,7 +24,7 @@ import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameEngine, type Player } from "@/lib/game-engine"
 import { formatCurrency } from "@/lib/teams-data"
 import {
@@ -32,6 +32,8 @@ import {
   ROTULO_DO_FOCO, rotuloDaCarga,
   type FocoColetivo, type IntensidadeTreino,
 } from "@/lib/treino-e-entrosamento"
+import { montarRotina, ROTULO_DO_DIA } from "@/lib/rotina-da-semana"
+import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
 // Tipos de treinamento disponiveis
@@ -126,8 +128,29 @@ const FOCOS: { id: FocoColetivo; nota: string }[] = [
 export default function TreinamentoPage() {
   const { team: userTeam } = useUserTeam()
   const { squadPlayers, trainPlayer, currentWeek, clubInfrastructure } = useGameEngine()
+  // O calendario e quem diz quantos jogos ha na semana — nao um palpite da tela.
+  const { seasonCalendar } = useGameManager()
   const planoDeTreino = useGameEngine(s => s.planoDeTreino) ?? PLANO_PADRAO
   const definirPlanoDeTreino = useGameEngine(s => s.definirPlanoDeTreino)
+  const posturaDaSemana = useGameEngine(s => s.posturaDaSemana) ?? "equilibrado"
+  const definirPosturaDaSemana = useGameEngine(s => s.definirPosturaDaSemana)
+  /**
+   * A SEMANA DO CLUBE (pedido: "dia de jogo, dia de descanso, dia de treinamento").
+   * Quantos jogos ha na semana vem do calendario; a postura decide o uso dos dias
+   * livres. Ver lib/rotina-da-semana.ts.
+   */
+  const jogosDaSemana = useMemo(() => {
+    const cal = seasonCalendar?.fixtures ?? []
+    // A semana que vem — a que o motor vai processar no proximo avanco, e a unica
+    // sobre a qual a postura escolhida aqui ainda manda.
+    //
+    // ⚠️ O `|| 1` so vale com o calendario VAZIO (ainda hidratando). Com calendario
+    // carregado e nenhum jogo marcado, zero e a resposta certa: e semana livre, e
+    // a tela precisa dizer isso. Um `|| 1` cego mostraria jogo onde nao ha.
+    if (cal.length === 0) return 1
+    return cal.filter(f => f.isUserMatch && !f.played && f.week === currentWeek + 1).length
+  }, [seasonCalendar, currentWeek])
+  const rotina = useMemo(() => montarRotina(jogosDaSemana, posturaDaSemana), [jogosDaSemana, posturaDaSemana])
   const ultimoTreino = useGameEngine(s => s.ultimoTreino)
   // `?? VAZIO` e nao `?? {}`: um literal novo a cada render invalidaria os
   // useMemo abaixo em todo ciclo, e a prévia do treino é cara (percorre o elenco).
@@ -325,6 +348,71 @@ export default function TreinamentoPage() {
                 alerta={previa.riscoMedio > 0.045}
               />
             </div>
+          </div>
+
+          {/* ── A SEMANA ─────────────────────────────────────────────────────
+              O tecnico via so "intensidade" e "foco", como se treinasse todos os
+              dias. Aqui aparece a semana de verdade: onde caem os jogos, onde da
+              para trabalhar e onde e melhor poupar. A vespera de jogo nunca e
+              treino — no futebol ela e de ativacao. */}
+          <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-white/40">Semana de trabalho</div>
+                <p className="mt-0.5 text-xs text-white/60">{rotina.resumo}</p>
+              </div>
+              <div className="flex gap-1.5">
+                {([
+                  { id: "poupar", rotulo: "Poupar" },
+                  { id: "equilibrado", rotulo: "Equilibrado" },
+                  { id: "carga_total", rotulo: "Carga total" },
+                ] as const).map(op => (
+                  <button
+                    key={op.id}
+                    onClick={() => definirPosturaDaSemana(op.id)}
+                    title={op.id === "poupar"
+                      ? "Menos treino, mais energia para o jogo — e menos evolucao."
+                      : op.id === "carga_total"
+                        ? "Treina todos os dias livres: evolui mais, chega mais cansado."
+                        : "Um dia de folga, o resto de trabalho."}
+                    className={cn(
+                      "rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
+                      posturaDaSemana === op.id
+                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                        : "border border-white/10 text-white/60 hover:text-white",
+                    )}
+                  >
+                    {op.rotulo}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-1.5">
+              {rotina.dias.map(d => (
+                <div
+                  key={d.indice}
+                  className={cn(
+                    "rounded-lg border p-2 text-center",
+                    d.tipo === "jogo" ? "border-[var(--brand)]/50 bg-[var(--brand)]/12"
+                      : d.tipo === "descanso" ? "border-sky-400/30 bg-sky-400/[0.07]"
+                      : "border-white/10 bg-white/[0.03]",
+                  )}
+                >
+                  <div className="text-[9px] uppercase tracking-wide text-white/35">{d.rotulo.slice(0, 3)}</div>
+                  <div className={cn(
+                    "mt-0.5 text-[10px] font-bold",
+                    d.tipo === "jogo" ? "text-[var(--brand)]"
+                      : d.tipo === "descanso" ? "text-sky-300" : "text-white/70",
+                  )}>
+                    {ROTULO_DO_DIA[d.tipo]}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-[10px] leading-4 text-white/35">
+              Carga de treino da semana: {Math.round(rotina.fatorDeCarga * 100)}% do normal
+              {rotina.recuperacaoExtra > 0 && ` · +${rotina.recuperacaoExtra} de energia pelo descanso`}
+            </p>
           </div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">

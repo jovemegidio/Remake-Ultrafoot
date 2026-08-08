@@ -23,7 +23,7 @@ import {
 } from "lucide-react"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { cn } from "@/lib/utils"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { type Player, type PlayerInjury, INJURY_TYPES, getInjuryRecoveryTime } from "@/lib/game-engine"
 
 interface MedicalModalProps {
