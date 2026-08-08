@@ -3,10 +3,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getTeamByShort, type Team } from "@/lib/teams-data"
-import { getNationalTeamById, getNationalStrength, type NationalTeam } from "@/lib/national-teams"
-import { getNationalCrestUrl } from "@/lib/national-assets"
-import { applyTeamOverride } from "@/lib/team-overrides"
+// ⚠️ SÓ O TIPO. Este arquivo é carregado pela SPLASH (que apenas lista as
+// carreiras salvas), e `teams-data` arrasta o pool de 2.452 clubes — 8,9 MB de
+// JSON que viram JavaScript no primeiro carregamento. `import type` some no
+// build; um import de valor devolveria o peso todo.
+//
+// Precisa do time de verdade (`useUserTeam`, `useManagingNational`,
+// `nationalTeamToTeam`)? Está em `lib/time-da-carreira`, que explica o porquê.
+import type { Team } from "@/lib/teams-data"
 import type { NationalCompetitionState } from "@/lib/national-competitions"
 import { storeGet, storeSet, storeRemove, initPersistentStore, flushPersistentStore } from "@/lib/persistent-store"
 import { mirrorSaveToFolder, deleteSaveFromFolder, listMirroredCareerSuffixes } from "@/lib/save-folder"
@@ -667,6 +671,19 @@ export interface GameState {
   // causa de acesso/rebaixamento. A resolucao da liga prefere isto. undefined = usa a
   // divisao original do time.
   divisionOverride?: string
+  /**
+   * LIGA CONGELADA: os clubes (curto) que disputam a liga do usuario NESTA
+   * temporada. Escrito no inicio da carreira e reescrito a cada virada.
+   *
+   * Sem isto a composicao da liga era recalculada do zero a cada carregamento, a
+   * partir dos dados do jogo (divisao curada + pool). Uma ATUALIZACAO que
+   * trouxesse clubes novos para a divisao reescrevia a liga NO MEIO da carreira,
+   * e `expectedLeagueFixtures` — `(times - 1) * 2`, recalculado toda semana —
+   * passava a exigir mais partidas do que a temporada tinha gerado. Resultado:
+   * `leagueComplete` falso para sempre e a temporada NUNCA virava, sem acesso e
+   * sem rebaixamento. Ver [lib/use-game-manager] resolveLeagueTeams.
+   */
+  leagueTeams?: string[]
   // PIRAMIDE VIVA: divisao ATUAL de cada clube (curto -> divisao) apos os acessos
   // e rebaixamentos acumulados. Guarda so quem saiu da divisao estatica. Alimenta
   // getTeamsByDivision via setClubDivisions, para os rivais tambem trocarem de
@@ -1390,47 +1407,6 @@ export function useGameState(): {
 }
 
 /**
- * Time atual escolhido pelo usuario. Cai num default razoavel ate o save existir
- * (evita hydration mismatch ao retornar sempre o mesmo valor no SSR).
- */
-/**
- * ⚠️ CLUBE NEUTRO, NUNCA UM CLUBE DE VERDADE.
- *
- * Isto era `serieATeams[0]` — e `serieATeams[0]` e o **Botafogo**. Como
- * `useUserTeam` cai aqui enquanto o save nao hidratou (assincrono, acontece em
- * TODA navegacao), qualquer tela que pintasse antes da hidratacao mostrava nome,
- * escudo, cores, estadio e saldo do Botafogo — para quem dirige outro clube.
- * Era o relato "toda pagina que entro aparece dados do Botafogo RJ", e a mesma
- * familia do falso "mock Palmeiras x Botafogo" do pre-jogo.
- *
- * Um placeholder SEM identidade e melhor que o clube errado: a tela aparece
- * vazia por um instante em vez de mentir. O `curto` vazio tambem serve de
- * sentinela — `getTeamByShort("")` nao resolve, entao nada casa com ele por
- * engano.
- *
- * O tipo continua `Team` (e nao `null`) de proposito: dezenas de telas leem
- * `userTeam.nome` direto, e trocar por nulo espalharia `?.` por todo lado sem
- * resolver o que importa, que e nao exibir dado de outro clube.
- */
-const FALLBACK_TEAM: Team = {
-  nome: "",
-  curto: "",
-  cidade: "",
-  estado: "",
-  cor1: "#1f2937",
-  cor2: "#111827",
-  prestigio: 0,
-  torcida: 0,
-  estadio_cap: 0,
-  saldo: 0,
-  file_key: "",
-  estadio_nome: "",
-  patrocinador: "",
-  escudo_url: "",
-  divisao: "serie_a",
-}
-
-/**
  * Converte um SavedTeam (persistido no save) para o tipo Team usado pelos componentes.
  * Se já for um Team (tem file_key), retorna sem conversão.
  */
@@ -1459,61 +1435,10 @@ export function savedTeamToTeam(t: Team | SavedTeam | null | undefined): Team | 
   }
 }
 
-/**
- * Converte uma SELEÇÃO nacional no tipo Team usado por todas as telas (office,
- * central, calendário, elenco, partida). É a peça que permite "comandar uma
- * seleção como um clube" (Task 2): as telas continuam falando `Team`, sem saber
- * se por trás há um clube ou uma seleção.
- *
- * `file_key` recebe o prefixo `nation_` para NÃO colidir com nenhum clube; o
- * `escudo_url` já aponta para o escudo real da seleção, então o TeamCrest resolve
- * pela imagem mesmo sem entrada no mapa de escudos de clubes.
- */
-export function nationalTeamToTeam(nt: NationalTeam): Team {
-  const forca = getNationalStrength(nt)
-  return applyTeamOverride({
-    nome: nt.name,
-    curto: nt.code,
-    cor1: nt.cor1,
-    cor2: nt.cor2,
-    prestigio: forca,
-    saldo: 0,
-    // Seleção não tem divisão de liga; sentinela só para satisfazer o tipo.
-    divisao: "selecao" as Team["divisao"],
-    pais: nt.name,
-    cidade: "",
-    estado: "",
-    torcida: 0,
-    estadio_cap: 0,
-    file_key: `nation_${nt.id}`,
-    estadio_nome: "",
-    patrocinador: "",
-    escudo_url: getNationalCrestUrl(nt.id),
-  })
-}
-
-export function useUserTeam(): { team: Team; hydrated: boolean } {
-  const { state, hydrated } = useGameState()
-  // MODO SELEÇÃO tem prioridade: se o técnico assumiu uma seleção, o "time atual"
-  // de todas as telas passa a ser ela. Cai no clube quando o id não resolve.
-  const nation = state.managingNationalTeamId ? getNationalTeamById(state.managingNationalTeamId) : null
-  const team = nation
-    ? nationalTeamToTeam(nation)
-    : state.selectedTeamShort
-      ? getTeamByShort(state.selectedTeamShort) ?? FALLBACK_TEAM
-      : FALLBACK_TEAM
-  return { team, hydrated }
-}
-
-/**
- * Estado do MODO SELEÇÃO para as telas que precisam adaptar o comportamento
- * (não só o rótulo): elenco vira convocação, calendário usa janelas FIFA, etc.
- */
-export function useManagingNational(): { isNational: boolean; nationalTeam: NationalTeam | null; hydrated: boolean } {
-  const { state, hydrated } = useGameState()
-  const nationalTeam = (state.managingNationalTeamId ? getNationalTeamById(state.managingNationalTeamId) : null) ?? null
-  return { isNational: !!nationalTeam, nationalTeam, hydrated }
-}
+// `nationalTeamToTeam`, `useUserTeam` e `useManagingNational` MUDARAM DE CASA:
+// agora vivem em `lib/time-da-carreira`. Eram os únicos daqui que precisavam de
+// `teams-data`/`national-teams` em runtime, e por causa deles a splash carregava
+// 17 MB de seeds só para listar as carreiras salvas. O arquivo de lá explica.
 
 export function selectTeam(shortName: string, managerName?: string): void {
   const current = loadGameState()

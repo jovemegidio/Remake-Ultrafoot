@@ -61,6 +61,15 @@ export function isSeasonOver(input: {
   seasonEndWeek: number
   userFixtures: readonly { played?: boolean }[]
 }): boolean {
+  // ⚠️ NAO AFROUXE ESTA TRAVA (tentei em 07/08/2026 e o
+  // `test-fixture-catchup` reprovou na hora: "liga incompleta NUNCA encerra,
+  // mesmo passando do fim").
+  //
+  // O sintoma que me levou ate aqui era real — "nao consigo iniciar a
+  // temporada" —, mas a causa NAO e esta funcao: e `leagueComplete` chegar
+  // falso numa temporada que de fato acabou, o que se resolve em
+  // `expectedLeagueFixtures` (use-game-manager), nao relaxando o contrato que
+  // impede o "rebaixado com 15 jogos".
   if (!input.leagueComplete) return false
   const semCompromissos =
     input.userFixtures.length > 0 && input.userFixtures.every(fixture => fixture.played)

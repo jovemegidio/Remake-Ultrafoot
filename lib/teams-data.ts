@@ -5,6 +5,18 @@ import { gameAssetUrl, isTauri } from "@/lib/game-asset"
 import { normalizeCountry } from "@/lib/country-normalize"
 import { applyTeamOverride, getTeamOverride } from "@/lib/team-overrides"
 import { getCurrency, currencyForCountry } from "@/lib/currency"
+// ⚠️ NAO ADIANTA TROCAR ESTE IMPORT POR UM SEED "SO DE CLUBES" (testado e
+// MEDIDO em 07/08/2026 — a mediana por tela PIOROU de 15,19 para 16,21 MB).
+//
+// A tentacao e obvia: este modulo e importado por 92 arquivos, usa o seed numa
+// linha so (`allPoolTeams`) e o `PoolTeamRaw` abaixo nao le `jogadores`, que e
+// 7,85 dos 8,91 MB do arquivo. Derivei o arquivo enxuto (1,01 MB) e apontei
+// para ca — e o completo continuou entrando em 49 das 56 telas assim mesmo,
+// porque `lib/game-engine.ts` e `lib/use-game-manager.ts` importam
+// `players-data`, que o puxa. Resultado: 1 MB SOMADO, nada removido.
+//
+// Cortar de verdade exige tornar `players-data` assincrono (o `allPlayers` e um
+// `const` exportado, consumido de forma sincrona) — nao basta mexer aqui.
 import importedBF2026 from "@/data/seeds/imported-bf2026.json"
 // Tabela de acesso/rebaixamento ja consumada em 2026. Ver `_divisoes2026`.
 import divisionOverrides2026 from "@/data/seeds/division_overrides_2026.json"
@@ -1470,6 +1482,37 @@ const _divisoes2026: Record<string, string> = (() => {
   return mapa
 })()
 
+/**
+ * CLUBES DO POOL PROMOVIDOS A UMA DIVISAO REAL — por `file_key`, na mao.
+ *
+ * O comentario acima explica por que o casamento por NOME nao pode ser estendido
+ * ao pool: `curto` se repete, ha dezenas de nomes quase iguais e a tentativa
+ * anterior colocou "Cruzeiro - AL" e um segundo "Coritiba" na Serie A.
+ *
+ * Mas a Serie C ficava com 12 dos 20 clubes que o proprio
+ * `division_overrides_2026.json` declara, e as 8 vagas eram preenchidas por
+ * prestigio com clube sorteado — o tecnico da Serie C enfrentava adversario que
+ * nao esta na Serie C. Como o clube do usuario pode SUBIR para ca (acesso da
+ * Serie D), essa e a divisao que mais aparece com o elenco errado.
+ *
+ * A solucao e o par explicito, igual ao que ja se faz com escudo: `file_key` e
+ * unico, entao nao ha homonimo possivel. As quatro armadilhas que o nome teria
+ * caido estao anotadas — todas foram conferidas uma a uma.
+ */
+const PROMOVIDOS_DO_POOL: Record<string, string> = {
+  ituano_sp: "serie_c",
+  anapolisgo_bra: "serie_c",      // ⚠️ por nome casaria com "Grêmio Anápolis" (prestigio maior)
+  brusquesc_bra: "serie_c",
+  "maranhãoqtt_bra": "serie_c",
+  maringapr: "serie_c",           // ⚠️ por nome casaria com "Galo Maringá"
+  ferroviaria_sp: "serie_c",      // ⚠️ por nome casaria com "Desportiva Ferroviária" (ES)
+  itabaiana_se: "serie_c",
+  barra_sc: "serie_c",            // ⚠️ por nome casaria com "Barranquilla" (Colômbia)
+}
+
+/** Os clubes do pool promovidos, ja como Team, prontos para entrar na divisao. */
+const _promovidosDoPool: Team[] = allPoolTeams.filter(t => PROMOVIDOS_DO_POOL[t.file_key])
+
 /** Quanto do arquivo de 2026 casou com o catalogo curado (para o teste conferir). */
 export function getDivisoes2026(): Record<string, string> {
   return _divisoes2026
@@ -1481,7 +1524,15 @@ export function effectiveDivision(team: { curto: string; divisao: string }): str
 }
 
 export function getTeamsByDivision(divisao: string): Team[] {
-  return allTeams.filter(t => effectiveDivision(t) === divisao).map(applyTeamOverride)
+  const curados = allTeams.filter(t => effectiveDivision(t) === divisao).map(applyTeamOverride)
+  // Os promovidos do pool entram AQUI, e nao em `allTeams`: manter o catalogo
+  // curado intocado evita que um `curto` repetido do pool atropele um clube
+  // curado em toda tela que resolve clube por codigo.
+  const doPool = _promovidosDoPool
+    .filter(t => (_clubDivisions[t.curto] ?? PROMOVIDOS_DO_POOL[t.file_key]) === divisao)
+    .filter(t => !curados.some(c => c.file_key === t.file_key))
+    .map(applyTeamOverride)
+  return [...curados, ...doPool]
 }
 
 /** Abaixo disto o turno-returno não sustenta um campeonato. */
@@ -1646,7 +1697,24 @@ export function completarLigaComPool(divisao: string, alvo = tamanhoDaLiga(divis
   // para o completamento parar, entao doze ligas rodavam menores do que o
   // proprio regulamento anunciava — Bundesliga 2 com 13 de 18, Ligue 2 com 14
   // de 18, MLS com 24 de 30. Nada acusava: as rodadas saem do elenco real.
-  if (base.length >= alvo) return base
+  //
+  // ⚠️⚠️ E FALTAVA O OUTRO LADO: a divisao que tem clubes DEMAIS.
+  //
+  // A funcao so sabia COMPLETAR, nunca APARAR. A Serie D tinha 27 clubes
+  // curados contra as 20 do regulamento, e os 27 iam inteiros para o
+  // calendario. Tres estragos de uma vez:
+  //   1. numero IMPAR — `generateBrasileirao` monta N-1 rodadas com um folga por
+  //      rodada e NENHUM clube completa o turno-returno;
+  //   2. 52 rodadas em vez de 38, empurrando a temporada ate a semana 86;
+  //   3. dezembro com 455 jogos, porque tudo que passa de 31/dez e grampeado la.
+  // Ver [lib/use-game-manager] resolveLeagueTeams e o caso da Portuguesa.
+  //
+  // Aparar e por PRESTIGIO: quem fica sao os mais fortes da divisao, que e o
+  // criterio que o resto do jogo ja usa para ordenar clube.
+  if (base.length > alvo) {
+    return [...base].sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0)).slice(0, alvo)
+  }
+  if (base.length === alvo) return base
 
   const jaTem = new Set(base.map(t => t.file_key))
   // ⚠️ CLUBE BRASILEIRO CURADO NAO TEM O CAMPO `pais` — ele guarda a UF em

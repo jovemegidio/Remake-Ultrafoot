@@ -8,8 +8,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, absoluteWeek, getContractStatus, isTransferWindowOpen, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, type Team } from "@/lib/teams-data"
-import { getGameDate } from "@/lib/game-date"
+import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, MIN_TIMES_PARA_LIGA, type Team } from "@/lib/teams-data"
+import { getGameDate, configurarDuracaoDaTemporada } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { simulateWorldTransferWindow } from "@/lib/world-market"
 import { setTemporadaDoMundo, setClubeDoUsuario } from "@/lib/temporada-do-mundo"
@@ -1403,9 +1403,57 @@ export function getUserLeagueTeams(teamShort: string, divisionOverride?: string)
   // Guarda: divisao sem times (nunca deveria) -> cai na estatica para nao quebrar a liga.
   if (divisionTeams.length < 4) return getTeamsByDivision(userTeam.divisao)
   // Garante que o time do usuario esta na lista (ele sobe/cai levando o proprio clube).
+  //
+  // ⚠️ O caminho antigo montava `[userTeam, ...slice(0, ceil(rodadas/2) - 1)]`,
+  // que com 38 rodadas declaradas da 19 clubes — IMPAR. Liga impar nao fecha
+  // turno-returno e a temporada nunca termina (ver resolveLeagueTeams). Agora o
+  // clube do usuario ENTRA no lugar do mais fraco e o TAMANHO nao muda: a lista
+  // que sai daqui vale exatamente o que o regulamento da divisao manda.
   const hasUser = divisionTeams.some(t => t.curto === teamShort)
-  if (!hasUser) return [userTeam, ...divisionTeams.slice(0, Math.max(3, Math.ceil(getLeagueRounds(division) / 2)) - 1)]
+  if (!hasUser) {
+    const semOMaisFraco = [...divisionTeams]
+      .sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0))
+      .slice(0, Math.max(3, divisionTeams.length - 1))
+    return [userTeam, ...semOMaisFraco]
+  }
   return divisionTeams
+}
+
+/**
+ * A liga do usuario NA TEMPORADA EM CURSO — preferindo a composicao congelada.
+ *
+ * `getUserLeagueTeams` monta a divisao a partir dos DADOS DO JOGO (clubes
+ * curados + pool). Isso significa que ela muda quando o jogo e ATUALIZADO: uma
+ * versao que traga clubes novos para a Serie D reescreve a liga no meio da
+ * carreira. Quando isso acontece, `expectedLeagueFixtures` — que e
+ * `(times - 1) * 2` recalculado TODA semana — passa a exigir mais partidas do
+ * que a temporada chegou a gerar, `leagueComplete` fica falso para sempre e a
+ * temporada NUNCA vira. Sem virada nao ha acesso nem rebaixamento: o jogador
+ * avanca semanas dentro do mesmo ano ate desistir.
+ *
+ * Caso real (06/08/2026): carreira na Portuguesa comecou com uma Serie D de 19
+ * clubes, jogou 40 partidas — e a mesma divisao ja valia 27 clubes, exigindo 52.
+ * A temporada estava travada havia semanas com o clube em 2o lugar.
+ *
+ * Por isso a composicao e congelada no save (`leagueTeams`) e so recalculada na
+ * virada. A lista congelada e aceita mesmo se algum clube tiver sumido dos
+ * dados: o calendario e a exigencia saem os DOIS dela, entao continuam
+ * coerentes entre si — que e a unica coisa que a virada precisa.
+ */
+export function resolveLeagueTeams(
+  teamShort: string,
+  divisionOverride: string | undefined,
+  congelada: readonly string[] | undefined,
+): Team[] {
+  if (congelada && congelada.length >= MIN_TIMES_PARA_LIGA) {
+    const times = congelada
+      .map(curto => getTeamByShort(curto))
+      .filter((time): time is Team => Boolean(time))
+    if (times.length >= MIN_TIMES_PARA_LIGA && times.some(time => time.curto === teamShort)) {
+      return times
+    }
+  }
+  return getUserLeagueTeams(teamShort, divisionOverride)
 }
 
 export function getLeagueName(teamShort: string, divisionOverride?: string): string {
@@ -1824,7 +1872,7 @@ export function useGameManager() {
     if (gameEngine.squadPlayers.length > 1 && gameEngine.serieAStandings.length > 0) return
     const teamShort = saveState.selectedTeamShort
     setClubDivisions(saveState.clubDivisions) // piramide viva antes de montar a liga
-    const leagueTeams = getUserLeagueTeams(teamShort, saveState.divisionOverride)
+    const leagueTeams = resolveLeagueTeams(teamShort, saveState.divisionOverride, saveState.leagueTeams)
     gameEngine.initializeGame(teamShort)
     useGameEngine.setState({
       serieAStandings: initializeStandings(leagueTeams),
@@ -1832,6 +1880,28 @@ export function useGameManager() {
       currentSeason: saveState.season,
     })
   }, [hydrated, engineHydrated, saveState.selectedTeamShort, saveState.week, saveState.season, gameEngine.squadPlayers.length, gameEngine.serieAStandings.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── MIGRACAO: congela a liga das carreiras que comecaram antes de `leagueTeams`
+  //
+  // A carreira em andamento nao tem a lista congelada, e a divisao dela ja pode
+  // ter mudado de tamanho por atualizacao do jogo — que e exatamente o estado em
+  // que a temporada nao vira mais. A liga que ela REALMENTE jogou esta na tabela
+  // do motor (`serieAStandings` vale para qualquer divisao; o nome engana), e e
+  // dali que a lista e adotada: e a unica fonte que descreve os adversarios que
+  // o jogador de fato enfrentou.
+  //
+  // ⚠️ So grava depois de `hydrated` E `engineHydrated`. Escrever antes disso
+  // salvaria a tabela do estado default por cima da carreira do jogador.
+  useEffect(() => {
+    if (!hydrated) return
+    if (!engineHydrated) return
+    if (!saveState.selectedTeamShort) return
+    if (saveState.leagueTeams?.length) return
+    const daTabela = gameEngine.serieAStandings.map(linha => linha.teamShort).filter(Boolean)
+    if (daTabela.length < MIN_TIMES_PARA_LIGA) return
+    if (!daTabela.includes(saveState.selectedTeamShort)) return
+    setSaveState({ leagueTeams: daTabela })
+  }, [hydrated, engineHydrated, saveState.selectedTeamShort, saveState.leagueTeams, gameEngine.serieAStandings]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Inicializa o jogo quando o usuario seleciona um time
   const initializeNewGame = useCallback((teamShort: string, managerName?: string, initialCareerState: Partial<GameState> = {}) => {
@@ -1894,6 +1964,9 @@ export function useGameManager() {
       // Data de posse do primeiro clube. Antes só trocas de emprego preenchiam
       // este campo, então a Área do Treinador não sabia quando a carreira começou.
       contratadoEm: { season: 2026, week: 0 },
+      // Congela a liga ja na criacao: a partir daqui uma atualizacao do jogo nao
+      // reescreve mais os adversarios desta temporada.
+      leagueTeams: leagueTeams.map(time => time.curto),
       ...(managerName ? { managerName: managerName.trim() || "Tecnico" } : {}),
       // Fixtures semeadas para rastreamento de fim de temporada
       fixtures: initialFixtures,
@@ -1968,7 +2041,7 @@ export function useGameManager() {
       .filter(r => r.season === saveState.season - 1 && r.teamCurto === userTeamShort)
       .sort((a, b) => (b.won + b.drawn + b.lost) - (a.won + a.drawn + a.lost))[0]?.position ?? 0
 
-    const leagueTeams = getUserLeagueTeams(userTeamShort, saveState.divisionOverride)
+    const leagueTeams = resolveLeagueTeams(userTeamShort, saveState.divisionOverride, saveState.leagueTeams)
     const competition = LEAGUE_NAMES[division] ?? getLeagueName(userTeamShort)
     // Gera a liga com round=1..L (semana sera reatribuida ao intercalar as copas)
     const leagueFixtures = generateBrasileirao(leagueTeams, userTeamShort, competition, division, stateChampRoundsCount)
@@ -2241,7 +2314,7 @@ export function useGameManager() {
     const userShort = currentState.selectedTeamShort ?? ""
     const divOverride = currentState.divisionOverride
     setClubDivisions(currentState.clubDivisions) // piramide viva antes de montar ligas
-    const leagueTeamsForEnd = getUserLeagueTeams(userShort, divOverride)
+    const leagueTeamsForEnd = resolveLeagueTeams(userShort, divOverride, currentState.leagueTeams)
     const stateRoundsForEnd = getStateChampRounds(userShort)
     // A temporada de liga jamais pode acabar por ter menos confrontos do que o
     // regulamento cadastrado. Em saves antigos havia bancos parciais e o cálculo
@@ -2262,8 +2335,26 @@ export function useGameManager() {
       ...fixturesQueContamNaTemporada(seasonCalendarRef.current.fixtures).map(fixture => fixture.week),
     )
 
+    // ⚠️ SAVE ANTIGO NAO TEM `competitionType` (07/08/2026, diagnosticado NO save
+    // do jogador: carreira do Botafogo, semana 57, com 38 partidas do usuario —
+    // 24 jogadas — e **zero** casando `competitionType === "league"`).
+    //
+    // Aquelas 38 sao "Brasileirao Serie A": o campo simplesmente nao existia
+    // quando o calendario foi gravado. Com o filtro so por tipo, a lista vinha
+    // VAZIA, `0 >= expectedLeagueFixtures` era falso e `leagueComplete` ficava
+    // falso para sempre — a temporada nunca virava, o escritorio anunciava "o
+    // clube nao tem mais jogos" e o botao "Iniciar nova temporada" nao fazia
+    // nada. Nenhum teste pegou porque todos geram calendario novo, que tem o
+    // campo; o defeito so existe em save antigo.
+    //
+    // O nome da competicao e a rede: quando o tipo falta, vale o que casa com a
+    // liga do clube nesta temporada.
+    const nomeDaLiga = getLeagueName(userShort, divOverride)
     const leagueUserFixtures = seasonCalendarRef.current.fixtures.filter(
-      fixture => fixture.isUserMatch && fixture.competitionType === "league",
+      fixture => fixture.isUserMatch && (
+        fixture.competitionType === "league" ||
+        (!fixture.competitionType && fixture.competition === nomeDaLiga)
+      ),
     )
     // Quantas partidas de liga a temporada REALMENTE tem, pelo turno-returno dos
     // times inscritos — que é exatamente o que generateSeasonFixtures produz.
@@ -2275,7 +2366,41 @@ export function useGameManager() {
     //   Série C (30 partidas x 38 declaradas), Série D (36 x 38),
     //   Scottish Premiership (22 x 38) e Pro League BEL (30 x 34).
     // Quem escolhesse esses clubes ficava presa no fim da temporada para sempre.
-    const expectedLeagueFixtures = Math.max(1, (leagueTeamsForEnd.length - 1) * 2)
+    //
+    // ⚠️ E `(times - 1) * 2` reincidia no MESMO erro quando a liga tem numero
+    // IMPAR de clubes. Com N impar, `generateBrasileirao` monta N-1 rodadas com
+    // um folga por rodada: cada clube joga no maximo 2*floor((N-1)²/N) partidas
+    // — 34 numa liga de 19, nunca as 36 que a formula exige. A condicao ficava
+    // impossivel de novo. Caso real (06/08/2026): Serie D de 19 clubes, o
+    // jogador em 2o lugar, temporada travada em 2026 havia semanas.
+    //
+    // O piso agora e UM TURNO completo. Continua barrando o "rebaixado com 15
+    // jogos" (a liga pela metade) e e alcancavel nas duas paridades. Quem manda
+    // de verdade e o `every(played)` da linha seguinte, sobre o calendario
+    // REALMENTE gerado para a liga congelada desta temporada.
+    // ⚠️ SEM LISTA CONGELADA, QUEM MANDA E O CALENDARIO (07/08/2026: "nao estou
+    // conseguindo iniciar a temporada").
+    //
+    // O bloco de `resolveLeagueTeams` ja explica o veneno: a composicao da liga
+    // e RECALCULADA a partir dos dados do jogo, entao uma atualizacao que traga
+    // clubes novos para a divisao faz `expectedLeagueFixtures` exigir mais
+    // partidas do que a temporada gerou — `leagueComplete` fica falso PARA
+    // SEMPRE e a temporada nunca vira. A defesa criada na epoca foi congelar
+    // `leagueTeams` no save; ela protege quem comecou a carreira DEPOIS disso.
+    //
+    // Quem tem save anterior nao tem a lista congelada, cai no recalculo e fica
+    // exatamente no beco: escritorio anunciando "o clube nao tem mais jogos" e o
+    // botao "Iniciar nova temporada" sem efeito nenhum.
+    //
+    // Aqui, quando NAO ha lista congelada, a exigencia e limitada ao que o
+    // calendario realmente tem. Isso nao afrouxa a trava do "rebaixado com 15
+    // jogos": ela existe para o caso de haver partida PENDENTE, e o
+    // `every(played)` logo abaixo continua valendo integralmente. O que muda e
+    // so parar de exigir jogos que nunca foram marcados.
+    const ligaCongelada = (currentState.leagueTeams?.length ?? 0) >= MIN_TIMES_PARA_LIGA
+    const expectedLeagueFixtures = ligaCongelada
+      ? Math.max(1, leagueTeamsForEnd.length - 1)
+      : Math.max(1, Math.min(leagueTeamsForEnd.length - 1, leagueUserFixtures.length))
     const leagueFixturesComplete = leagueUserFixtures.length >= expectedLeagueFixtures &&
       leagueUserFixtures.every(fixture => fixture.played)
 
@@ -2639,6 +2764,9 @@ export function useGameManager() {
         torcidaOrganizadas: organizadasDepois,
         divisionOverride: nextDivisionOverride,
         clubDivisions: nextClubDivisions,
+        // A liga da temporada NOVA e recalculada aqui — e so aqui. Congelada no
+        // save, ela deixa de mudar quando o jogo for atualizado no meio do ano.
+        leagueTeams: teamsForReset.map(time => time.curto),
         divisionMovement,
         completedFixtureKeys: [],
         ...(ganhouALiga ? { coachTotalTitles: (currentState.coachTotalTitles ?? 0) + 1 } : {}),
@@ -2648,8 +2776,28 @@ export function useGameManager() {
         seasonHistory: seasonRecord
           ? [...(currentState.seasonHistory ?? []), seasonRecord]
           : currentState.seasonHistory,
+        // COMPETICOES DA SELECAO VOLTAM A SER JOGAVEIS (relato: "com uma selecao
+        // no comando nao consigo jogar a Copa do Mundo").
+        //
+        // `completedThisSeason` — o nome diz "nesta temporada" — era preenchido
+        // por `finishCompetition` e NUNCA zerado: nem aqui, nem em lugar nenhum
+        // do jogo. A vitrine desabilita o que esta nessa lista
+        // (`disabled={done}`), entao cada competicao encerrada sumia PARA O
+        // RESTO DA CARREIRA. Quem encerrou a Copa do Mundo uma vez nunca mais
+        // conseguia entrar nela — e o mesmo valia para Copa America, Eurocopa e
+        // Eliminatorias.
+        //
+        // O contrato com a selecao atravessa a virada, entao so a lista da
+        // temporada e limpa; `completedWindows` fica (a chave dele ja inclui a
+        // temporada) e `currentCompetition` tambem, para nao apagar uma
+        // competicao em andamento no meio da virada.
+        ...(currentState.nationalCareer
+          ? { nationalCareer: { ...currentState.nationalCareer, completedThisSeason: [] } }
+          : {}),
       }
       saveStateRef.current = { ...currentState, ...patch }
+      // Virada de temporada é o momento mais caro de perder: grava direto, sem
+      // depender de o React processar a fila (ver o comentário em advanceWeek).
       setSaveState(patch)
 
       // CERIMONIA DO TITULO DA LIGA. Antes o campeao so era sinalizado quando
@@ -2867,6 +3015,51 @@ export function useGameManager() {
         }
       } catch { /* a cobranca do agente nunca pode travar o avanco da semana */ }
     }
+
+    // ── PATROCÍNIO CHEGA DURANTE A TEMPORADA ────────────────────────────────
+    //
+    // ⚠️ POR QUE ISTO EXISTE (pedido: "implemente propostas de patrocinio,
+    // chegando na central de notificacoes").
+    //
+    // O mercado publicitario so procurava o clube na VIRADA DE TEMPORADA: quem
+    // recusasse as propostas de janeiro ficava o ano inteiro sem nenhuma, e a
+    // receita de patrocinio virava uma decisao unica tomada antes da primeira
+    // rodada. Empresa nao funciona assim — ela procura quem esta em evidencia.
+    //
+    // A cada 6 semanas, e so quando ha ESPACO (ate 4 contratos ativos), uma nova
+    // proposta aparece. A chance sobe com a campanha: lider recebe procura, quem
+    // esta na parte de baixo, nao — e e isso que liga a receita ao desempenho.
+    try {
+      const ativos = currentState.activeSponsors ?? []
+      const naMesa = currentState.sponsorOffers ?? []
+      const cabeMais = ativos.length < 4 && naMesa.length < 3
+      if (cabeMais && newWeek > 0 && newWeek % 6 === 0) {
+        const tabelaAgora = useGameEngine.getState().serieAStandings
+        const posicaoAtual = tabelaAgora.findIndex(l => l.teamShort === userShort) + 1
+        const total = Math.max(1, tabelaAgora.length)
+        // Campanha boa atrai; campanha ruim, nem tanto. Nunca zero: clube pequeno
+        // tambem fecha patrocinio, so que menos.
+        const posicaoRelativa = posicaoAtual > 0 ? 1 - (posicaoAtual - 1) / total : 0.5
+        const chance = 0.25 + posicaoRelativa * 0.45
+        if (Math.random() < chance) {
+          const diretor = useGameEngine.getState().staffMembers?.find(st => st.role === "diretor_marketing")
+          const nivelMkt = diretor ? Math.max(1, Math.min(5, Math.round(diretor.competence / 20))) : 1
+          const nova = generateOffers(userTeam?.prestigio ?? 50, nivelMkt).slice(0, 1)
+          if (nova.length > 0) {
+            setSaveState({ sponsorOffers: [...naMesa, ...nova] })
+            addNotificationRef.current({
+              type: "system", priority: "medium",
+              title: `Proposta de patrocínio: ${nova[0].sponsor.name}`,
+              message: `${nova[0].sponsor.name} quer estampar a camisa do clube por `
+                + `R$ ${nova[0].sponsor.monthlyValue.toLocaleString("pt-BR")}/mês `
+                + `em ${nova[0].durationSeasons} temporada(s). Aceite, recuse ou faça contraproposta.`,
+              href: "/mensagens",
+            })
+          }
+        }
+      }
+    } catch { /* patrocinio e receita extra: nunca pode travar o avanco da semana */ }
+
 
     // ── CONSEQUÊNCIAS DO DESGASTE ────────────────────────────────────────────
     //
@@ -3128,8 +3321,23 @@ export function useGameManager() {
     // Mantém também uma cópia da dívida ativa no arquivo por clube. Isso torna
     // impossível uma troca de treinador perder o saldo entre dois renders.
     if(userShort&&debt)debtByClub[userShort]=debt
-    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, estadioSetores } as typeof currentState & { fixtures: unknown }
-    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, estadioSetores } as Partial<typeof currentState> & { fixtures: unknown })
+    const patchDaSemana = { week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, estadioSetores }
+    saveStateRef.current = { ...currentState, ...patchDaSemana } as typeof currentState & { fixtures: unknown }
+    // ⚠️ NAO TROQUE ISTO POR `commitGameState` (tentado em 07/08/2026 e
+    // REVERTIDO: o office ficava carregando para sempre depois de escolher o
+    // time).
+    //
+    // A intencao era boa — garantir que a semana chegasse ao disco mesmo se a
+    // tela desmontasse. Mas `commitGameState` mescla sobre o que esta NO DISCO
+    // *agora*, e criar carreira usa `replaceState`, que adia a gravacao para um
+    // microtask. Rodando antes dele, o commit reescrevia o save com o estado
+    // ANTIGO + o patch: `selectedTeamShort` sumia, `getTeamByShort` devolvia
+    // null e `app/page.tsx` ficava preso no `if (!hydrated || !userTeam)`.
+    //
+    // A durabilidade da simulacao e resolvida pelo `flushPersistentStore()` no
+    // fim do laco (app/calendario) e no botao Simular (app/partida) — sem mexer
+    // na ordem de gravacao.
+    setSaveState(patchDaSemana as Partial<typeof currentState> & { fixtures: unknown })
 
     // O jogador precisa saber que uma partida dele foi resolvida sem ele.
     if (autoPlayed.length > 0) {
@@ -3676,6 +3884,7 @@ export function useGameManager() {
     }
     saveStateRef.current = { ...currentState, ...patch }
     lastCompletedFixtureWeekRef.current = targetWeek
+    // Mesmo motivo do `advanceWeek` acima: NAO usar `commitGameState` aqui.
     setSaveState(patch)
 
     // Atualiza o calendário em memória no mesmo tick. Assim advanceWeek e um clique
@@ -3845,6 +4054,25 @@ export function useGameManager() {
     [saveState.selectedTeamShort]
   )
 
+  /**
+   * INFORMA AO CALENDARIO QUANTO DURA ESTA TEMPORADA.
+   *
+   * Sem isto o `getGameDate` avanca 7 dias fixos por rodada, e uma temporada de
+   * estadual + liga (ate ~58 rodadas) estoura o ano: a semana 57 caia em
+   * 28/jan do ano SEGUINTE com o rotulo ainda na temporada velha. Ver o
+   * cabecalho de lib/game-date.
+   *
+   * A duracao sai das mesmas duas fontes que o fim de temporada usa — estadual
+   * e liga —, entao data e regra nao podem divergir.
+   */
+  useEffect(() => {
+    const curto = saveState.selectedTeamShort
+    if (!curto) return
+    const estadual = getStateChampRounds(curto)
+    const daLiga = getLeagueRounds(saveState.divisionOverride ?? league)
+    configurarDuracaoDaTemporada(estadual + daLiga)
+  }, [saveState.selectedTeamShort, saveState.divisionOverride, league])
+
   // PAUSA FIFA ATIVA. Na vida real, enquanto a janela de selecoes (data FIFA ou
   // Copa do Mundo) esta aberta, o campeonato de CLUBES para: o tecnico de clube
   // nao joga ate a janela fechar. Aqui detectamos que a pausa esta valendo AGORA —
@@ -3853,9 +4081,31 @@ export function useGameManager() {
   const fifaPause = useMemo(() => {
     const prox = seasonCalendar.nextUserMatch
     const limite = prox?.week ?? Number.POSITIVE_INFINITY
-    const breaks = seasonCalendar.fixtures
-      .filter(f => f.competitionType === "fifa_break" && f.week >= saveState.week && f.week < limite)
+    // ⚠️ A JANELA NAO ENCOLHE CONFORME AS SEMANAS PASSAM (relato: "nao avanca a
+    // proxima rodada, os jogos do time nao desbloqueiam").
+    //
+    // O filtro era `f.week >= saveState.week`, entao `breaks[0]` — e com ele o
+    // `fromWeek` — andava JUNTO com a semana atual. A Central do Mundial calcula
+    // a rodada exibida como `currentWeek - fromWeek`, que assim dava **sempre
+    // zero**: por mais que se clicasse em "Acompanhar proxima rodada", a tela
+    // repetia a Rodada 1 e a Copa parecia travada.
+    //
+    // Agora a janela e a sequencia CONTIGUA de semanas de pausa que contem a
+    // semana atual — o comeco dela nao se move. Continua havendo pausa so
+    // enquanto sobrar pelo menos uma semana a cumprir (`pendentes`), entao o
+    // desbloqueio dos jogos do clube segue automatico quando a ultima passa.
+    const naJanela = seasonCalendar.fixtures
+      .filter(f => f.competitionType === "fifa_break" && f.week < limite)
       .sort((a, b) => a.week - b.week)
+    const pendentes = naJanela.filter(f => f.week >= saveState.week)
+    if (pendentes.length === 0) return null
+
+    // Anda para tras enquanto as semanas forem coladas: e a MESMA pausa.
+    const semanas = new Set(naJanela.map(f => f.week))
+    let inicio = pendentes[0].week
+    while (semanas.has(inicio - 1)) inicio--
+
+    const breaks = naJanela.filter(f => f.week >= inicio)
     if (breaks.length === 0) return null
     // A flag manda. O casamento pelo rótulo fica como rede para saves gerados
     // antes de `worldCup` existir; em ano de Copa, uma pausa de junho com várias

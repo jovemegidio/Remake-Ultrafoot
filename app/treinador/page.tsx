@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { GameHeader } from "@/components/game-header"
-import { commitGameState, useGameState, useUserTeam } from "@/lib/save-system"
+import { commitGameState, useGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { buildCareerStats, rankInHistory } from "@/lib/hall-of-fame-engine"
 import { listJobOffers, removeJobOffer, assumirClube, podeTrocarDeClube, type PendingJobOffer } from "@/lib/career-moves"
+import { calcSeasonObjective, computeBoardConfidence } from "@/lib/board-engine"
 import { ofertasParaDesempregado, coachStandingScore } from "@/lib/coach-market"
 import { allTeams, type Team } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -21,6 +23,10 @@ import { getGameDate } from "@/lib/game-date"
 import { PISO_ENTROSAMENTO } from "@/lib/treino-e-entrosamento"
 import { TeamCrest } from "@/components/team-crest"
 import { IniciarTemporadaCard } from "@/components/iniciar-temporada"
+import { PainelDoTreinador, type MetaDaDiretoria } from "@/components/treinador/painel-do-treinador"
+import { BlocoRecolhivel } from "@/components/bloco-recolhivel"
+import { analisarComComissao } from "@/lib/comissao-tecnica"
+import { ReuniaoDaComissao } from "@/components/treinador/reuniao-da-comissao"
 import { cn } from "@/lib/utils"
 import { Award, Briefcase, ClipboardList, Star, TrendingDown, TrendingUp, Trophy, UserCircle, Swords, Home, Plane, Dumbbell, Users, X } from "lucide-react"
 
@@ -128,6 +134,106 @@ export default function TreinadorPage() {
   // aparecem, ancoradas na reputacao (ver lib/coach-market). "Aguardar novas
   // propostas" avanca uma rodada da carreira e traz outro lote.
   const desempregado = !state.selectedTeamShort
+
+  // ── DADOS DO PAINEL DO TREINADOR ────────────────────────────────────────
+  //
+  // Tudo derivado do que ja existe: nada aqui grava no save nem cria campo novo.
+  const gameEngine = useGameEngine()
+
+  /** Elenco no formato que `mercado-realista` entende (posicao/overall/idade). */
+  const elencoParaAvaliacao = useMemo(
+    () => (gameEngine.squadPlayers ?? []).map(p => ({
+      posicao: p.position,
+      overall: p.overall,
+      idade: p.age,
+    })),
+    [gameEngine.squadPlayers],
+  )
+
+  /**
+   * O PARECER DA COMISSAO — analise offline, sem API e sem custo.
+   *
+   * Recebe o estado que o jogo ja tem e devolve recomendacoes assinadas por
+   * cada profissional. Ver lib/comissao-tecnica; as regras tem teste proprio
+   * em scripts/test-comissao-tecnica.ts (16 casos).
+   */
+  const pareceresDaComissao = useMemo(() => {
+    const prox = seasonCalendar.nextUserMatch
+    const euEmCasa = prox ? prox.homeTeam.curto === userTeam?.curto : false
+    const adv = prox ? (euEmCasa ? prox.awayTeam : prox.homeTeam) : null
+    const ordenados = [...elencoParaAvaliacao].sort((a, b) => b.overall - a.overall).slice(0, 11)
+    const forcaDoTime = ordenados.length
+      ? Math.round(ordenados.reduce((t, a) => t + a.overall, 0) / ordenados.length)
+      : undefined
+    return analisarComComissao({
+      elenco: (gameEngine.squadPlayers ?? []).map(p => ({
+        id: p.id, nome: p.name, posicao: p.position, overall: p.overall, idade: p.age,
+        energia: p.energy ?? 100, forma: p.form ?? 70, titular: Boolean(p.isStarter),
+        lesionado: Boolean(p.injury), jogosDeSuspensao: p.suspendedMatches ?? 0,
+        fimDeContrato: p.contract?.endDate, potencial: p.potential,
+      })),
+      semanaAtual: state.week ?? 0,
+      forcaDoTime,
+      proximoAdversario: adv ? { nome: adv.nome, forca: adv.prestigio ?? 50, casa: euEmCasa } : undefined,
+      caixa: gameEngine.balance,
+      saldoSemanal: gameEngine.weeklyIncome - gameEngine.weeklyExpenses,
+      formaRecente: matchResults
+        .filter(r => r.homeTeam === userTeam?.curto || r.awayTeam === userTeam?.curto)
+        .slice(-5).reverse()
+        .map(r => {
+          const casa = r.homeTeam === userTeam?.curto
+          const pro = casa ? r.homeScore : r.awayScore
+          const contra = casa ? r.awayScore : r.homeScore
+          return pro > contra ? "V" as const : pro === contra ? "E" as const : "D" as const
+        }),
+    })
+  }, [gameEngine.squadPlayers, gameEngine.balance, gameEngine.weeklyIncome, gameEngine.weeklyExpenses,
+      elencoParaAvaliacao, seasonCalendar.nextUserMatch, userTeam, state.week, matchResults])
+
+  /** Objetivo da temporada — a cobranca que a diretoria fixou para este clube. */
+  const objetivoDaTemporada = useMemo(
+    () => (userTeam ? calcSeasonObjective(userTeam as never) : null),
+    [userTeam],
+  )
+
+  /** Confianca da diretoria — a MESMA conta do escritorio (board-engine). */
+  const confiancaDaDiretoria = useMemo(() => {
+    if (!userTeam || !objetivoDaTemporada) return 50
+    const pos = classificacao.findIndex(c => c.teamShort === userTeam.curto) + 1
+    return computeBoardConfidence({
+      currentPosition: pos > 0 ? pos : Math.max(1, classificacao.length),
+      objective: objetivoDaTemporada,
+      // MAIS RECENTE PRIMEIRO — o board-engine pesa os ultimos jogos.
+      recentForm: matchResults
+        .filter(r => r.homeTeam === userTeam.curto || r.awayTeam === userTeam.curto)
+        .slice(-5)
+        .reverse()
+        .map(r => {
+          const casa = r.homeTeam === userTeam.curto
+          const pro = casa ? r.homeScore : r.awayScore
+          const contra = casa ? r.awayScore : r.homeScore
+          return pro > contra ? "V" as const : pro === contra ? "E" as const : "D" as const
+        }),
+      seasonProgress: Math.max(0, Math.min(1, (state.week ?? 0) / 38)),
+    })
+  }, [userTeam, objetivoDaTemporada, classificacao, matchResults, state.week])
+
+  /** Metas: a cobranca da temporada + o que a campanha ja entregou. */
+  const metasDaDiretoria = useMemo<MetaDaDiretoria[]>(() => {
+    if (!userTeam) return []
+    const objetivo = objetivoDaTemporada
+    const pos = classificacao.findIndex(c => c.teamShort === userTeam.curto) + 1
+    const total = Math.max(1, classificacao.length)
+    const alvo = objetivo?.targetPosition ?? Math.ceil(total / 2)
+    const metas: MetaDaDiretoria[] = [{
+      rotulo: objetivo?.description ?? `Terminar entre os ${alvo} primeiros`,
+      detalhe: pos > 0 ? `Hoje em ${pos}o de ${total}` : "Campeonato ainda nao comecou",
+      // Progresso: 1 quando esta na posicao alvo ou acima; cai conforme se afasta.
+      progresso: pos > 0 ? Math.max(0, Math.min(1, (total - pos + 1) / (total - alvo + 1))) : 0,
+      cumprida: pos > 0 && pos <= alvo,
+    }]
+    return metas
+  }, [userTeam, classificacao, objetivoDaTemporada])
   const [rodadaMercado, setRodadaMercado] = useState(0)
   const standing = useMemo(() => {
     const rep = carreira?.reputation ?? 0
@@ -438,6 +544,34 @@ export default function TreinadorPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
+          {/* PAINEL DO TREINADOR — metas, dinheiro e carencias, nesta ordem.
+              As tres perguntas que ele faz ao sentar na mesa moravam em telas
+              diferentes (escritorio, financas e lugar nenhum). Ver
+              components/treinador/painel-do-treinador. */}
+          {!desempregado && (
+            <PainelDoTreinador
+              className="mb-5"
+              metas={metasDaDiretoria}
+              confianca={confiancaDaDiretoria}
+              caixa={gameEngine.balance}
+              receitaSemanal={gameEngine.weeklyIncome}
+              despesaSemanal={gameEngine.weeklyExpenses}
+              elenco={elencoParaAvaliacao}
+            />
+          )}
+
+          {!desempregado && (
+            <BlocoRecolhivel
+              className="mb-5"
+              aberto
+              destaque
+              icone={<ClipboardList className="h-4 w-4" />}
+              titulo="Reunião da comissão técnica"
+            >
+              <ReuniaoDaComissao pareceres={pareceresDaComissao} />
+            </BlocoRecolhivel>
+          )}
+
           {/* FIM DE TEMPORADA (pedido: "implemente na area do treinador a mesma
               opcao de iniciar uma nova temporada tambem"). So com clube: quem
               esta desempregado nao tem temporada de clube para virar — para ele o
@@ -579,11 +713,11 @@ export default function TreinadorPage() {
 
           {/* Amistosos & Entrosamento — só com clube */}
           {!desempregado && (
-          <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">
-            <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
-              <Users className="h-4 w-4 text-[var(--brand)]" />
-              Entrosamento & Amistosos
-            </h2><span className="h-px flex-1 bg-gradient-to-r from-[var(--brand)]/40 to-transparent" /></div>
+          <BlocoRecolhivel
+            className="mt-4"
+            icone={<Users className="h-4 w-4" />}
+            titulo="Entrosamento & Amistosos"
+          >
 
             {/* Barra de entrosamento */}
             <div className="mt-3 rounded-lg bg-black/30 p-3">
@@ -718,16 +852,16 @@ export default function TreinadorPage() {
                 </div>
               )}
             </div>
-          </section>
+          </BlocoRecolhivel>
           )}
 
           {/* Últimos resultados */}
-          <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">
+                    <BlocoRecolhivel
+            className="mt-4"
+            icone={<ClipboardList className="h-4 w-4" />}
+            titulo="Últimos resultados"
+          >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
-                <ClipboardList className="h-4 w-4 text-[var(--brand)]" />
-                Últimos resultados
-              </h2><span className="h-px flex-1 bg-gradient-to-r from-[var(--brand)]/40 to-transparent" /></div>
               {aproveitamentoRecente !== null && (
                 <span className={cn(
                   "flex items-center gap-1 text-xs font-semibold",
@@ -761,14 +895,14 @@ export default function TreinadorPage() {
                 ))}
               </div>
             )}
-          </section>
+          </BlocoRecolhivel>
 
           {/* Carreira */}
-          <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">
-            <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
-              <Trophy className="h-4 w-4 text-[#ffd700]" />
-              Carreira
-            </h2><span className="h-px flex-1 bg-gradient-to-r from-[var(--brand)]/40 to-transparent" /></div>
+                    <BlocoRecolhivel
+            className="mt-4"
+            icone={<Trophy className="h-4 w-4" />}
+            titulo="Carreira"
+          >
 
             {!carreira ? (
               <p className="mt-2 text-sm text-white/45">
@@ -896,7 +1030,7 @@ export default function TreinadorPage() {
                 )}
               </>
             )}
-          </section>
+          </BlocoRecolhivel>
 
         </div>
       </main>

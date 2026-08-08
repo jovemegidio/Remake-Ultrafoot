@@ -17,8 +17,9 @@ import Image from "next/image"
 import { GamepadButton } from "@/components/gamepad-icons"
 import { TeamCrest } from "@/components/team-crest"
 import { faseDaPartida } from "@/lib/competition-phase"
+import { getIntroForCompetition, logoDaCompeticao } from "@/lib/competition-intro"
 import { getTeamByShort } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { GameHeader } from "@/components/game-header"
 import { useGameManager, seasonMonthsForDivision, type Fixture } from "@/lib/use-game-manager"
 import { diaDaPartida, ehAmistoso } from "@/lib/amistosos-calendario"
@@ -27,6 +28,7 @@ import { getGameDate } from "@/lib/game-date"
 import { cn } from "@/lib/utils"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { useNotifications } from "@/components/notifications-system"
+import { flushPersistentStore } from "@/lib/persistent-store"
 
 // `roundToDay`/`diaDaPartida` moraram aqui até a 1.0.222. Foram para
 // lib/amistosos-calendario porque o amistoso precisa saber em que dia os jogos
@@ -53,6 +55,26 @@ const WEEKDAY_NAMES = [
   "DOMINGO", "SEGUNDA-FEIRA", "TERCA-FEIRA", "QUARTA-FEIRA", 
   "QUINTA-FEIRA", "SEXTA-FEIRA", "SABADO"
 ]
+
+/**
+ * COR POR COMPETICAO — a chave de leitura da grade do mes.
+ *
+ * Cada tipo tem a sua faixa; dentro de `continental`, Libertadores e Sula sao
+ * separadas de proposito, porque e o par que mais confunde quem bate o olho.
+ * A legenda no rodape da grade usa exatamente estas mesmas cores.
+ */
+function CORES_POR_COMPETICAO(tipo?: string, nome?: string) {
+  const n = (nome ?? "").toLowerCase()
+  if (n.includes("libertadores")) return { fundo: "rgba(255,120,40,0.34)", borda: "rgba(255,120,40,0.72)", texto: "#ffc79a" }
+  if (n.includes("sul-americana") || n.includes("sudamericana") || n.includes("sula")) return { fundo: "rgba(255,80,120,0.32)", borda: "rgba(255,80,120,0.7)", texto: "#ffb0c4" }
+  switch (tipo) {
+    case "league":      return { fundo: "rgba(0,136,255,0.35)",  borda: "rgba(0,136,255,0.62)",  texto: "#8ed0ff" }
+    case "state":       return { fundo: "rgba(0,204,102,0.33)",  borda: "rgba(0,204,102,0.62)",  texto: "#86ffb0" }
+    case "cup":         return { fundo: "rgba(190,120,255,0.32)", borda: "rgba(190,120,255,0.7)", texto: "#dcbcff" }
+    case "continental": return { fundo: "rgba(255,120,40,0.34)", borda: "rgba(255,120,40,0.72)", texto: "#ffc79a" }
+    default:            return { fundo: "rgba(255,255,255,0.12)", borda: "rgba(255,255,255,0.40)", texto: "#e6e6e6" }
+  }
+}
 
 export default function CalendarioPage() {
   const router = useRouter()
@@ -212,6 +234,19 @@ export default function CalendarioPage() {
           catch (e) { console.error("[calendario] falha ao avançar a semana:", e); falhou = true }
         }
       } finally {
+        // ESPERA O DISCO CONFIRMAR ANTES DE DEVOLVER A TELA.
+        //
+        // Relato: "simula mas depois buga e retorna para uma ou duas partidas
+        // antes de simular". Cada semana enfileira uma gravacao ASSINCRONA no
+        // persistent-store (store.set + store.save, serializados). A simulacao
+        // terminava e liberava o botao com a fila ainda drenando; recarregar
+        // nesse intervalo lia o arquivo ANTIGO — e o boot ainda sobrescreve o
+        // espelho do localStorage com o que veio do arquivo, matando a versao
+        // mais nova. Nada aqui esperava por essa fila.
+        //
+        // Fica no `finally` de proposito: vale tambem quando o jogador aperta
+        // Parar ou quando uma semana lanca.
+        try { await flushPersistentStore() } catch { /* o save em memoria ja esta correto */ }
         setIsSimulating(false)
         setSimProgress(0)
         setParando(false)
@@ -787,15 +822,20 @@ export default function CalendarioPage() {
                 // distinguir de relance o jogo-treino do compromisso oficial —
                 // era exatamente por nao aparecer aqui que ele parecia inexistente.
                 const amistoso = ehAmistoso(item.fixture)
+                // ⚠️ A COR IDENTIFICA A COMPETICAO, NAO O MANDO (pedido: "organiza
+                // por competicoes", com a referencia do calendario do FM).
+                //
+                // Antes azul = casa e verde = fora. Isso gastava a unica pista
+                // visual forte da grade com uma informacao que ja aparece escrita
+                // no chip (`vs` / `@`) — e deixava impossivel bater o olho no mes
+                // e ver "estas tres semanas sao de Libertadores". Agora cada
+                // competicao tem a sua cor e a legenda embaixo da grade explica;
+                // o mando continua no simbolo, que e onde ele custa nada.
                 const cores = amistoso
-                  ? { fundo: "rgba(255,255,255,0.14)", borda: "rgba(255,255,255,0.45)", texto: "#e6e6e6" }
+                  ? { fundo: "rgba(255,255,255,0.12)", borda: "rgba(255,255,255,0.40)", texto: "#e6e6e6" }
                   : fase?.isFinal
                   ? { fundo: "rgba(255, 196, 0, 0.38)", borda: "rgba(255, 196, 0, 0.85)", texto: "#ffe08a" }
-                  : fase?.isKnockout
-                    ? { fundo: "rgba(190, 120, 255, 0.32)", borda: "rgba(190, 120, 255, 0.7)", texto: "#dcbcff" }
-                    : isHome
-                      ? { fundo: "rgba(0, 136, 255, 0.35)", borda: "rgba(0, 136, 255, 0.6)", texto: "#8ed0ff" }
-                      : { fundo: "rgba(0, 204, 102, 0.35)", borda: "rgba(0, 204, 102, 0.6)", texto: "#86ffb0" }
+                  : CORES_POR_COMPETICAO(item.fixture?.competitionType, item.fixture?.competition)
                 
                 return (
                   <button
@@ -822,50 +862,113 @@ export default function CalendarioPage() {
                       {item.day}
                     </span>
 
-                    {/* Match Card (EA FC Style) */}
-                    {hasMatch && opponent && (
-                      <div
-                        className="absolute left-2 right-2 rounded-lg px-2 flex items-center justify-center gap-1.5 overflow-hidden shadow-lg border"
-                        style={{
-                          bottom: 6,
-                          height: 32,
-                          backgroundColor: cores.fundo,
-                          borderColor: cores.borda,
-                          borderStyle: amistoso ? "dashed" : "solid",
-                          boxShadow: fase?.isFinal ? "0 0 12px rgba(255,196,0,0.45)" : undefined,
-                        }}
-                      >
-                        <TeamCrest team={opponent} size="xs" />
-                        <div className="min-w-0 flex flex-col items-start leading-none">
-                          <div
-                            className="font-black uppercase"
-                            style={{
-                              color: cores.texto,
-                              fontSize: 9,
-                              lineHeight: "10px",
-                            }}
-                          >
-                            {amistoso ? "Amistoso" : fase?.isKnockout ? fase.label : isHome ? "Casa" : "Fora"}
+                    {/* CARTAO DO DIA — ESCUDO E PLACAR, so isso.
+                        A versao anterior ainda carimbava "vs SIGLA" por cima do
+                        escudo: dizia duas vezes a mesma coisa e roubava o espaco
+                        que faz o escudo ser reconhecivel. Agora a celula tem o
+                        escudo grande, o placar quando ja passou, e o logo da
+                        competicao pequeno no canto. O resto — adversario por
+                        extenso, competicao, mando, fase — vive no `title`, que
+                        aparece ao passar o mouse. */}
+                    {hasMatch && opponent && (() => {
+                      const f = item.fixture
+                      const intro = getIntroForCompetition(f?.competition)
+                      const jogou = Boolean(f?.played)
+                      const meus = isHome ? (f?.homeScore ?? 0) : (f?.awayScore ?? 0)
+                      const deles = isHome ? (f?.awayScore ?? 0) : (f?.homeScore ?? 0)
+                      const resultado = !jogou ? "" : meus > deles ? "Vitória" : meus === deles ? "Empate" : "Derrota"
+                      // Tudo o que saiu da tela continua acessivel aqui.
+                      const detalhe = [
+                        `${isHome ? "Em casa" : "Fora"} · ${opponent.nome}`,
+                        f?.competition ?? "",
+                        fase?.label ?? "",
+                        amistoso ? "Amistoso" : "",
+                        jogou ? `${resultado} ${meus}–${deles}` : "A disputar",
+                      ].filter(Boolean).join(" · ")
+                      return (
+                        <div
+                          title={detalhe}
+                          className="group/jogo absolute inset-x-1.5 bottom-1.5 top-8 overflow-hidden rounded-lg border transition-all hover:brightness-125"
+                          style={{
+                            backgroundColor: cores.fundo,
+                            borderColor: cores.borda,
+                            borderStyle: amistoso ? "dashed" : "solid",
+                            boxShadow: fase?.isFinal ? "0 0 14px rgba(255,196,0,0.45)" : undefined,
+                          }}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <TeamCrest team={opponent} size="lg" />
                           </div>
-                          <div
-                            className="font-bold text-white/60 uppercase"
-                            style={{ fontSize: 8, lineHeight: "9px" }}
-                          >
-                            {amistoso
-                              ? (item.fixture?.played
-                                  ? `${item.fixture.homeScore ?? 0}x${item.fixture.awayScore ?? 0}`
-                                  : isHome ? "Casa" : "Fora")
-                              : fase?.isKnockout
-                              ? (isHome ? "Casa" : "Fora")
-                              : item.fixture?.competition === "Brasileirao Serie A" ? "Liga" : "Copa"}
-                          </div>
+  {/* Logo da competicao: tenta o acervo por SLUG do nome (23
+                            arquivos) e cai no da vinheta. Some sozinho se o
+                            arquivo nao existir — assim um logo novo passa a
+                            aparecer so por existir na pasta. */}
+                        {(intro?.logo || logoDaCompeticao(f?.competition)) && (
+                          // Chip escuro atrás do logo: sem ele, um logo claro
+                          // sobre escudo claro some. É o que permite aumentá-lo
+                          // sem perder legibilidade em cima de qualquer escudo.
+                          <span className="absolute left-1 top-1 grid h-7 w-7 place-items-center rounded-md bg-black/55 ring-1 ring-white/10">
+                            <img
+                              src={logoDaCompeticao(f?.competition) ?? intro?.logo ?? ""}
+                              alt={f?.competition ?? ""}
+                              onError={e => {
+                                const img = e.currentTarget
+                                if (intro?.logo && img.src !== intro.logo) img.src = intro.logo
+                                // Esconde o CHIP inteiro, não só a imagem — senão
+                                // sobra um quadrado escuro vazio na célula.
+                                else img.parentElement!.style.display = "none"
+                              }}
+                              className="h-6 w-6 object-contain drop-shadow"
+                            />
+                          </span>
+                        )}
+                          {jogou && (
+                            <span className={cn(
+                              "absolute inset-x-0 bottom-0 bg-black/70 py-0.5 text-center text-[10px] font-black tabular-nums leading-none",
+                              meus > deles ? "text-emerald-300" : meus === deles ? "text-white/75" : "text-red-300",
+                            )}>
+                              {meus}–{deles}
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      )
+                    })()}
                   </button>
                 )
               })}
             </div>
+
+            {/* LEGENDA — a cor da grade só serve se disser o que significa.
+                Mostra apenas as competições que o clube REALMENTE tem no mês:
+                uma legenda fixa com sete itens seria ruído para quem só disputa
+                estadual e liga. */}
+            {(() => {
+              const vistos = new Map<string, { fundo: string; borda: string }>()
+              for (const f of monthFixtures) {
+                if (!f.isUserMatch || ehAmistoso(f)) continue
+                const nome = f.competition ?? ""
+                if (!nome || vistos.has(nome)) continue
+                const c = CORES_POR_COMPETICAO(f.competitionType, nome)
+                vistos.set(nome, { fundo: c.fundo, borda: c.borda })
+              }
+              if (vistos.size === 0) return null
+              return (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-white/5 px-4 py-2">
+                  {[...vistos.entries()].map(([nome, c]) => (
+                    <span key={nome} className="flex items-center gap-1.5 text-[10px] font-medium text-white/45">
+                      <span
+                        className="h-2.5 w-4 rounded-[3px] border"
+                        style={{ backgroundColor: c.fundo, borderColor: c.borda }}
+                      />
+                      {nome}
+                    </span>
+                  ))}
+                  <span className="ml-auto text-[10px] text-white/25">
+                    <b className="text-white/40">vs</b> em casa · <b className="text-white/40">@</b> fora
+                  </span>
+                </div>
+              )
+            })()}
           </div>
         </main>
       </div>

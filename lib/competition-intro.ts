@@ -302,3 +302,27 @@ export function wasIntroSeen(signature: string): boolean {
   if (typeof window === "undefined") return false
   return window.sessionStorage.getItem(SEEN_KEY) === signature
 }
+
+/**
+ * Caminho do LOGO da competição, resolvido pelo nome.
+ *
+ * ⚠️ Existe porque `getIntroForCompetition` cobre só QUATRO torneios — os que
+ * têm vinheta de entrada. O acervo `public/competicoes/` tem 23 arquivos,
+ * nomeados pelo slug do nome ("Brasileirao Serie D" →
+ * `brasileirao-serie-d.png`). O calendário precisa do logo de TODAS as
+ * competições, não só das que abrem vinheta.
+ *
+ * Não valida se o arquivo existe: num export estático não há como checar em
+ * tempo de execução. Quem renderiza deve esconder a imagem no `onError` — assim
+ * um logo novo passa a funcionar só por existir na pasta, sem tocar em código.
+ */
+export function logoDaCompeticao(nome: string | undefined | null): string | null {
+  if (!nome) return null
+  const slug = nome
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+  return slug ? `/competicoes/${slug}.png` : null
+}

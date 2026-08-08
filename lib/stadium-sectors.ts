@@ -271,7 +271,27 @@ export function calcularRenda(input: {
     // geral é a mais sensível; o camarote quase não sente.
     const excesso = sugeridos[s.id] > 0 ? preco / sugeridos[s.id] - 1 : 0
     const sensibilidade = s.id === "geral" ? 0.55 : s.id === "arquibancada" ? 0.42 : s.id === "cadeira" ? 0.28 : 0.10
-    const ocupacao = Math.max(0.05, Math.min(1, atracao * (1 - excesso * sensibilidade)))
+
+    // ⚠️ GLITCH DE DINHEIRO INFINITO — CONSERTADO (relato de jogador, 07/08/2026:
+    // "coloco o ingresso num valor alto, pago a dívida inteira e ainda sobra").
+    //
+    // A ocupação tinha piso FIXO de 5%: `Math.max(0.05, ...)`. Como a renda é
+    // `público × preço`, e o público nunca caía abaixo de 5% do setor POR MAIS
+    // CARO QUE FOSSE O INGRESSO, a receita crescia sem limite — bastava digitar
+    // um número absurdo e 5% do estádio "pagava". Dinheiro infinito por
+    // construção, sem depender de bug de estado nem de save corrompido.
+    //
+    // O piso agora vale só para preço ATÉ o sugerido: aí ele representa o
+    // torcedor fiel, que vai ao estádio mesmo em jogo ruim, e faz sentido. Acima
+    // do sugerido a demanda pode chegar a ZERO — ninguém paga dez vezes o preço
+    // justo. Isso fecha a torneira: a receita passa a ter um máximo (cobrar mais
+    // caro rende mais até certo ponto e depois esvazia o estádio), que é como
+    // bilheteria funciona de verdade.
+    const ocupacaoCrua = atracao * (1 - excesso * sensibilidade)
+    const ocupacao = excesso <= 0
+      ? Math.max(0.05, Math.min(1, ocupacaoCrua))
+      : Math.max(0, Math.min(1, ocupacaoCrua))
+
     const publico = Math.round(capacidade * ocupacao)
     return { publico, renda: publico * preco, ocupacao }
   })

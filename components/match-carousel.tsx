@@ -17,6 +17,15 @@ interface Match {
   competition: string
   matchday?: number
   stadium?: string
+  /**
+   * CONFRONTO DIRETO — 1º x 2º, briga por G4, duelo do Z4.
+   *
+   * Vem pronto de quem tem a classificação em mãos (o escritório): o carrossel
+   * não recalcula tabela, só pinta. `tom` decide a cor, e não o texto — assim
+   * uma partida "1º x 2º" e outra "briga pelo título" ficam visualmente iguais
+   * sem precisar casar string.
+   */
+  duelo?: { rotulo: string; tom: "titulo" | "g4" | "z4" }
 }
 
 interface MatchCarouselProps {
@@ -155,6 +164,23 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               <span className="text-[10px] text-white/40 uppercase tracking-wider">
                 {currentMatch.competition}
               </span>
+              {currentMatch.duelo && (
+                <>
+                  <span className="h-1 w-1 rounded-full bg-white/20" />
+                  <span
+                    className={cn(
+                      "rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider ring-1",
+                      currentMatch.duelo.tom === "titulo"
+                        ? "bg-amber-400/15 text-amber-300 ring-amber-400/30"
+                        : currentMatch.duelo.tom === "g4"
+                          ? "bg-[var(--brand)]/15 text-[var(--brand)] ring-[var(--brand)]/30"
+                          : "bg-red-500/15 text-red-300 ring-red-500/30",
+                    )}
+                  >
+                    {currentMatch.duelo.rotulo}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -287,8 +313,14 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
             <Play className="h-4 w-4 fill-current" />
             <span>Jogar Partida</span>
           </Link>
+          {/* SIMULAR = PULAR DIRETO AO RESULTADO (pedido).
+              Ia para a tela AO VIVO em modo simulacao, que ainda desenha a
+              partida inteira minuto a minuto — quem clica em "Simular" quer
+              justamente NAO assistir. Agora vai para a pre-partida com o sinal
+              `simular=1`, e ela resolve o jogo pelo `handleQuickSim`, que ja
+              existia e ja registra resultado, estatisticas e coletiva. */}
           <Link
-            href="/partida/ao-vivo?simulate=true"
+            href="/partida?simular=1"
             className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg border-2 border-white/20 bg-white/5 text-white text-sm font-medium hover:border-[var(--brand)]/50 hover:bg-white/10 hover:text-[var(--brand)] transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Monitor className="h-4 w-4" />

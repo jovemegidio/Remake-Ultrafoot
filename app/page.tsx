@@ -30,6 +30,7 @@ import { CtaPill } from "@/components/cta-pill"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { MatchCarousel } from "@/components/match-carousel"
+import { getGameDate } from "@/lib/game-date"
 import { NewsFeed } from "@/components/news-feed"
 import { formatCurrency, formatNumber, getTeamByShort, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
@@ -50,7 +51,8 @@ import { useTranslation } from "@/lib/i18n"
 import { useNationalTeam } from "@/lib/use-national-team"
 import { calcSeasonObjective, computeBoardConfidence, getCareerStatus } from "@/lib/board-engine"
 import { Flag, Briefcase } from "lucide-react"
-import { useGameState, useManagingNational } from "@/lib/save-system"
+import { useGameState } from "@/lib/save-system"
+import { useManagingNational } from "@/lib/time-da-carreira"
 import { NationalOffice } from "@/components/national-office"
 import { IniciarTemporadaCard } from "@/components/iniciar-temporada"
 import { WorldCupCenter } from "@/components/world-cup-center"
@@ -236,12 +238,50 @@ export default function DashboardPage() {
   // Fica após o early-return de carregamento e todos os hooks — não altera a ordem deles.
   if (isNational) return <NationalOffice />
 
+  // ⚠️ ORDENA POR SEMANA — o `filter` sozinho devolvia a ordem CRUA do array de
+  // fixtures, que nao e cronologica: na tela apareciam "Rod. 5 — 15 Mar" acima de
+  // "Rod. 7 — 22 Fev". Como o primeiro item desta lista tambem alimenta o cartao
+  // de PROXIMA PARTIDA (`nextMatches[0]`), a partida anunciada como a proxima
+  // podia nem ser a mais proxima no calendario.
+  const porData = (a: Fixture, b: Fixture) => a.week - b.week || a.id - b.id
+
+  /**
+   * CONFRONTO DIRETO: partida entre dois times que disputam a MESMA coisa.
+   *
+   * Só marca quando os dois lados estão na mesma faixa da tabela — 1º x 2º e uma
+   * final antecipada, 3º x 5º é briga por G4, 18º x 19º é duelo do Z4. Um líder
+   * contra o 15º não é confronto direto, e marcar tudo seria o mesmo que não
+   * marcar nada.
+   */
+  const dueloDaTabela = (casa?: string, fora?: string) => {
+    if (!casa || !fora || standings.length < 6) return undefined
+    const pos = (c: string) => { const i = standings.findIndex(s => s.teamShort === c); return i >= 0 ? i + 1 : null }
+    const a = pos(casa), b = pos(fora)
+    if (!a || !b) return undefined
+    const zona = Math.max(4, Math.round(standings.length * 0.2))  // G4/Z4 proporcionais à liga
+    const limiteZ = standings.length - zona + 1
+
+    if (a <= 2 && b <= 2) return { rotulo: `${a}º x ${b}º · líderes`, tom: "titulo" as const }
+    if (a <= zona && b <= zona) return { rotulo: `${a}º x ${b}º · briga pelo topo`, tom: "titulo" as const }
+    // Um dentro e outro logo atrás: quem vencer troca de lugar com o outro.
+    if ((a <= zona && b <= zona + 3) || (b <= zona && a <= zona + 3)) {
+      return { rotulo: `${a}º x ${b}º · vaga em jogo`, tom: "g4" as const }
+    }
+    if (a >= limiteZ && b >= limiteZ) return { rotulo: `${a}º x ${b}º · duelo do Z${zona}`, tom: "z4" as const }
+    if ((a >= limiteZ && b >= limiteZ - 3) || (b >= limiteZ && a >= limiteZ - 3)) {
+      return { rotulo: `${a}º x ${b}º · seis pontos`, tom: "z4" as const }
+    }
+    return undefined
+  }
+
   const nextMatches = seasonCalendar.fixtures
     .filter(f => f.isUserMatch && !f.played)
+    .sort(porData)
     .slice(0, 5)
 
   const recentResults = seasonCalendar.fixtures
     .filter(f => f.isUserMatch && f.played)
+    .sort(porData)
     .slice(-3)
 
   const standingsPreview = (() => {
@@ -544,8 +584,21 @@ export default function DashboardPage() {
               return (
                 <>
                   {/* Manchete de data */}
+                  {/* ⚠️ MESMO RELOGIO DO CABECALHO.
+                      A manchete saia de `fixtureDate(season, round, month)` — a
+                      data da PROXIMA PARTIDA — e o cabecalho de
+                      `getGameDate(season, week)`. Com jogo marcado os dois quase
+                      coincidem; sem jogo marcado (temporada encerrada) `round`
+                      virava `saveState.week` e a conta por rodada devolvia outro
+                      dia: o topo dizia "28 JAN" e a manchete "8 DE DEZ", na mesma
+                      tela. Sem partida, a data corrente e a unica verdade. */}
                   <h1 className="text-3xl md:text-4xl font-extrabold uppercase tracking-tight text-white text-balance">
-                    {fixtureDateHeadline(currentSeason, round, next?.month)}
+                    {next
+                      ? fixtureDateHeadline(currentSeason, round, next.month)
+                      : (() => {
+                          const hoje = getGameDate(currentSeason, saveState?.week ?? 1)
+                          return `${HOME_WEEKDAYS_LONG[hoje.getDay()]}, ${hoje.getDate()} de ${HOME_MONTHS_LONG[hoje.getMonth()]}`
+                        })()}
                   </h1>
                   <div className="mt-3 flex items-center gap-3">
                     <span className="text-xs font-semibold uppercase tracking-wider text-[var(--brand)]">Rodada {round}</span>
@@ -654,10 +707,45 @@ export default function DashboardPage() {
             })()}
           </div>
 
-          {/* Coluna direita: noticia em destaque */}
+          {/* COLUNA DA DIREITA: o ANÚNCIO, fixo (pedido).
+              A notícia saiu daqui — o carrossel com capa ocupava metade do
+              escritório para mostrar uma matéria por vez, e as manchetes agora
+              vivem na faixa de texto logo abaixo. O que fica é a peça
+              patrocinada, e ela fica PARADA: antes vinha intercalada no
+              carrossel, então aparecia e sumia sozinha, o que é o pior dos dois
+              mundos — atrapalhava quem queria ler e não garantia exibição a quem
+              paga. `aspect-[4/3]` com teto de altura evita que a arte estique o
+              escritório em telas largas. */}
           <div>
-            <NewsFeed />
+            <a
+              href="https://instagram.com/garagemcomics"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative block overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0c0c10]"
+            >
+              <span className="absolute left-2 top-2 z-10 rounded bg-black/65 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white/50">
+                Publicidade
+              </span>
+              <div className="relative aspect-[4/3] max-h-[340px] w-full">
+                <Image
+                  src="/ads/garagem-comics.png"
+                  alt="Garagem Comics"
+                  fill
+                  unoptimized
+                  className="object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+                />
+              </div>
+            </a>
           </div>
+        </section>
+
+        {/* FAIXA DE MANCHETES — só texto (pedido).
+            Ocupa a tira larga entre o herói e o carrossel, que estava vazia. Sem
+            capa, sem logo, sem contadores: quatro títulos que se lê de relance,
+            com a fonte e o horário. O card com imagem continua na coluna da
+            direita, para quem quiser abrir a matéria. */}
+        <section className="rounded-xl border border-white/[0.06] bg-black/25 px-4 py-2.5 backdrop-blur-[2px]">
+          <NewsFeed somenteTexto />
         </section>
 
         <div className="grid gap-5 lg:grid-cols-3">
@@ -672,6 +760,7 @@ export default function DashboardPage() {
                   competition: f.competition,
                   matchday: f.round,
                   stadium: f.homeTeam.estadio_nome || "Estadio",
+                  duelo: dueloDaTabela(f.homeTeam.curto, f.awayTeam.curto),
                 }))}
                 userTeam={userTeam}
               />

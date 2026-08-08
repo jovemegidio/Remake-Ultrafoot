@@ -6,6 +6,7 @@ import { X, Trophy, Goal, Zap, TrendingUp, AlertTriangle, Bell, Star, Users, Dol
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { initPersistentStore, storeGet, storeSet } from "@/lib/persistent-store"
+import { usePathname } from "next/navigation"
 import { getCareerScopedKey, useGameState } from "@/lib/save-system"
 
 // Types
@@ -298,6 +299,7 @@ export function NotificationToastContainer() {
   const { notifications } = useNotifications()
   // Toasts pertencem a carreira: fora dela (splash, novo jogo, editor) nada aparece.
   const { state: gateState } = useGameState()
+  const pathname = usePathname()
   // Fechar um toast nao deve apagar a notificacao da central, mas tambem nao pode
   // deixa-lo reaparecer em cada render. Antes o X removia da lista visual e este
   // efeito o inseria novamente imediatamente porque ainda era a ultima notificacao.
@@ -318,12 +320,23 @@ export function NotificationToastContainer() {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  // Toasts so nas telas da carreira. Checar apenas selectedTeamShort nao
-  // bastava: com carreira ativa no save, o autosave disparava toast em cima
-  // da SPLASH (bug relatado com print da intro).
-  const rota = typeof window !== "undefined" ? window.location.pathname : ""
-  const foraDaCarreira = ["/splash", "/novo-jogo", "/editar", "/editor", "/sem-clube", "/legal"].some(p => rota.startsWith(p))
-  if (!gateState.selectedTeamShort || foraDaCarreira) return null
+  // ⚠️ LISTA DE PERMISSÃO, NÃO DE EXCLUSÃO (pedido: "essas notificações devem
+  // aparecer somente no office/pre-office").
+  //
+  // Antes era o contrário — bloqueava splash, novo-jogo, editor — e por isso
+  // vazava para TODA tela nova que ninguém lembrasse de adicionar à lista. Foi
+  // assim que "Fulano quer conversar" apareceu por cima do pré-jogo, segundos
+  // antes de iniciar a partida: a tela de partida nunca esteve na lista negra.
+  //
+  // Uma lista de exclusão erra por omissão; uma de permissão erra por excesso de
+  // silêncio, que é o lado seguro: no pior caso o aviso espera o técnico voltar
+  // ao escritório — onde ele pode agir — em vez de interromper um jogo.
+  //
+  // A Central de Notificações continua registrando tudo; isto governa apenas o
+  // que SALTA na tela.
+  const rota = pathname ?? ""
+  const telaDeAviso = rota === "/" || rota.startsWith("/pre-office")
+  if (!gateState.selectedTeamShort || !telaDeAviso) return null
   // "Notificacoes / Alertas do jogo", em Configuracoes, so silencia o que SALTA
   // na tela — a central continua registrando tudo. Antes essa chave nao existia
   // no save e o interruptor nao fazia nada.

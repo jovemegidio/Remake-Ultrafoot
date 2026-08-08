@@ -54,7 +54,8 @@ import { isFullscreenEnabled, setFullscreen } from "@/lib/fullscreen"
 import { CURRENCIES, setCurrency, getCurrencyCode } from "@/lib/currency"
 import { Slider } from "@/components/ui/slider"
 import { useTheme, themePresets, type ThemeColor } from "@/components/theme-provider"
-import { useGameState, useUserTeam, type ManagerProfile } from "@/lib/save-system"
+import { useGameState, type ManagerProfile } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { cn } from "@/lib/utils"
 import { ControllerTypeContext, ControllerButton } from "@/components/controller-buttons"
 import { CONTROL_MAPPINGS, ACTION_LABELS, type GameContext, type GameAction } from "@/lib/gamepad-controls"
@@ -84,8 +85,12 @@ const menuCards = [
 // idioma novo aparece no seletor no momento em que o arquivo dele existe.
 const languageOptions = IDIOMAS.map(i => ({ id: i.id, label: i.label, flag: i.flag }))
 
+// "Padrão" deixou de ser um narrador: os sete efeitos curtos dele agora tocam
+// SEMPRE, por baixo de qualquer voz (lib/audio-commentary.ts). Escolher "Padrão"
+// virou, na pratica, escolher NAO ter voz — e o rotulo precisa dizer isso, senao
+// a lista sugere que as outras oito opcoes trocam os efeitos, e elas somam.
 const commentaryVoices = [
-  ["padrao", "Padrão"], ["andre-hening", "André Hening"], ["cleber-machado", "Cléber Machado"],
+  ["padrao", "Padrão (só efeitos, sem voz)"], ["andre-hening", "André Hening"], ["cleber-machado", "Cléber Machado"],
   ["gustavo-villani", "Gustavo Villani"], ["jorge-igor", "Jorge Igor"], ["luis-roberto", "Luis Roberto"],
   ["luiz-felipe-freitas", "Luiz Felipe Freitas"], ["nivaldo-prieto", "Nivaldo Prieto"], ["rogerio-vaughan", "Rogério Vaughan"],
 ] as const

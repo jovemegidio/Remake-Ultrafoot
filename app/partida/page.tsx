@@ -17,12 +17,14 @@ import {
   TrendingDown,
   Minus,
   Trophy,
+  Settings,
 } from "lucide-react"
 import { ActionHint } from "@/components/gamepad-icons"
 import { GamepadControlsBar, useGamepadDetection } from "@/components/gamepad-controls-bar"
 import { getCompetitionTheme, type CompetitionId } from "@/lib/competition-themes"
 import { TeamCrest } from "@/components/team-crest"
 import { CtaPill } from "@/components/cta-pill"
+import { AjustesFinais } from "@/components/match/ajustes-finais"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -33,9 +35,11 @@ import {
   isKitVariantAvailable,
   type Team,
 } from "@/lib/teams-data"
-import { useGameState, useUserTeam } from "@/lib/save-system"
+import { useGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { clearMatchContext, loadMatchContext, saveMatchContext } from "@/lib/match-context"
+import { flushPersistentStore } from "@/lib/persistent-store"
 import { getGameDate } from "@/lib/game-date"
 import { timeDaSelecao } from "@/lib/partida-da-selecao"
 import { concluirAmistoso, ehAmistoso } from "@/lib/amistosos-calendario"
@@ -84,17 +88,17 @@ function TeamPanel({
   leagueName,
   leagueLogo,
   onSelect,
+  elencoVivo,
 }: {
   team: Team
   selected: boolean
   leagueName: string
   leagueLogo: string | null
   onSelect: () => void
+  /** Elenco do motor — so para o clube do usuario. Ver teamSectorRatings. */
+  elencoVivo?: readonly { position: string; overall: number }[]
 }) {
   const country = getCountryInfo(team)
-
-  // Avaliacao em estrelas com suporte a meia-estrela (prestigio em escala 0-10)
-  const ratingHalf = Math.max(0.5, Math.min(5, Math.round(team.prestigio) / 2))
 
   const cor1 = team.cor1 || "#10b981"
   // ATA/MEI/DEF vinham das LETRAS do codigo do clube:
@@ -103,7 +107,7 @@ function TeamPanel({
   // calibracao) e devolvia ~90 para todos os grandes brasileiros.
   // Agora sai do elenco real calibrado; ver teamSectorRatings.
   const stats = useMemo(() => {
-    const s = teamSectorRatings(team)
+    const s = teamSectorRatings(team, elencoVivo)
     // A seta compara a linha com o proprio time: um ataque 4 acima do overall e
     // mesmo o forte do elenco. Isso e informacao util antes do jogo, ao
     // contrario da seta antiga, sorteada pelo codigo do clube.
@@ -115,7 +119,15 @@ function TeamPanel({
       mei: { value: s.mei, trend: trend(s.mei) },
       def: { value: s.def, trend: trend(s.def) },
     }
-  }, [team])
+  }, [team, elencoVivo])
+
+  // ⚠️ AS ESTRELAS SAIAM DE `team.prestigio` — um numero ESTATICO do catalogo,
+  // que nao muda nunca. Dava a cena absurda de um elenco reformulado do zero
+  // exibindo as mesmas estrelas do primeiro dia. Agora elas saem da MESMA nota
+  // que o ATA/MEI/DEF, entao contratar forte sobe a estrela e vender o time
+  // inteiro desce. Faixa 45-85 de overall mapeada em 0,5-5 estrelas.
+  const ratingHalf = Math.max(0.5, Math.min(5,
+    Math.round(((stats.overall - 45) / 40) * 10) / 2))
 
   const TrendIndicator = ({ trend }: { trend: string }) => {
     if (trend === "up") return <ChevronUp className="h-3.5 w-3.5 text-emerald-400" />
@@ -285,6 +297,16 @@ export default function PartidaPage() {
   // em tempo de execução, não de compilação.
   const ctxDaSelecao = useMemo(() => loadMatchContext().national ?? null, [])
   const enginePlayersPre = useGameEngine(s => s.squadPlayers)
+  // O elenco VIVO so vale para o clube do usuario; o adversario nao tem um.
+  const elencoDoUsuario = useMemo(
+    () => enginePlayersPre.map(p => ({ position: p.position, overall: p.overall })),
+    [enginePlayersPre],
+  )
+
+  /** Painel de ultimos ajustes (tecla D) — ver components/match/ajustes-finais.tsx. */
+  const [ajustesAbertos, setAjustesAbertos] = useState(false)
+  /** Aviso de que a pre-partida nao tem volta (Esc / botao B). */
+  const [avisoSemVolta, setAvisoSemVolta] = useState(false)
   const setStarterPre = useGameEngine(s => s.setStarter)
   const [escalacaoInvalida, setEscalacaoInvalida] = useState<Player[] | null>(null)
 
@@ -357,6 +379,8 @@ export default function PartidaPage() {
   // Agora usa a PROXIMA partida real do calendario e, se nem isso houver, o time do
   // usuario. Sem clube inventado.
   const nextFixture = seasonCalendar?.nextUserMatch ?? null
+  /** Codigo do clube do usuario — decide de quem e o elenco vivo nos paineis. */
+  const meuCurto = userTeam.team?.curto ?? ""
   const userTeamData = useMemo(
     () => getTeamByShort(userTeam.team?.curto ?? ""),
     [userTeam.team?.curto],
@@ -538,9 +562,42 @@ export default function PartidaPage() {
         // meio de semana sobra: avancar aqui fazia o motor simular a copa como
         // partida atrasada, sem o jogador jogar.
         if (!temPartidaPendenteNaSemana()) void advanceWeek()
+        // O RESULTADO SIMULADO PRECISA CHEGAR AO ARQUIVO (relato: "o simular
+        // disputa a partida mas ao atualizar volta para antes de simular").
+        //
+        // A tela AO VIVO ja descarregava o store ao terminar; esta, nao — e ela
+        // e justamente a que o jogador usa em sequencia, sem sair da tela, o que
+        // dava tempo de acumular varias partidas so na memoria. Agora que
+        // `registerUserMatchResult`/`advanceWeek` gravam direto no save, so falta
+        // esperar a fila do disco.
+        void flushPersistentStore()
       }
     }, 1500)
   }, [homeTeam, awayTeam, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana, setSaveState, userTeam.team?.curto, registrarAmistosoNoEntrosamento])
+
+  /**
+   * CHEGOU PELO BOTAO "SIMULAR" (pedido: "simular deveria pular a partida ate o
+   * resultado").
+   *
+   * O botao do escritorio ia para a tela AO VIVO em modo simulacao, que ainda
+   * desenha o jogo minuto a minuto — o oposto do que quem clica em "Simular"
+   * quer. Agora ele chega aqui com `?simular=1` e a partida e resolvida de uma
+   * vez pelo `handleQuickSim`, que ja existia e ja cuida de resultado,
+   * estatisticas, bilheteria e coletiva.
+   *
+   * A ref garante UMA execucao: sem ela, qualquer re-render dispararia outra
+   * simulacao e o placar mudaria sozinho na frente do jogador.
+   */
+  const simulacaoAutomatica = useRef(false)
+  useEffect(() => {
+    if (simulacaoAutomatica.current) return
+    if (typeof window === "undefined") return
+    if (new URLSearchParams(window.location.search).get("simular") !== "1") return
+    if (!homeTeam || !awayTeam) return
+    simulacaoAutomatica.current = true
+    handleQuickSim()
+  }, [homeTeam, awayTeam, handleQuickSim])
+
 
   // Save match context before navigation
   //
@@ -602,10 +659,8 @@ export default function PartidaPage() {
           irParaPartida()
           break
         case "B":
-          // "Voltar" devolve ao ESCRITORIO (de onde a pre-partida foi aberta), nao ao
-          // menu de saves. Antes ia para /splash?menu=1, jogando o usuario para a tela de
-          // selecao de save no meio da carreira.
-          hardNavigate("/")
+          // Mesma regra do Esc: da pre-partida nao se volta ao escritorio.
+          setAvisoSemVolta(true)
           break
         case "X":
           handleQuickSim()
@@ -644,8 +699,18 @@ export default function PartidaPage() {
         event.preventDefault()
         handleQuickSim()
       } else if (event.key === "Escape") {
+        // ⚠️ A PRE-PARTIDA NAO TEM VOLTA (pedido: "ao entrar nessa tela de
+        // pre-jogo o jogador nao pode retornar ao office/pre-office").
+        //
+        // O confronto ja esta marcado e a bilheteria ja foi creditada; sair daqui
+        // deixava o tecnico circulando pelo escritorio com uma partida pendente,
+        // que o avanco de semana depois resolvia sozinho como "jogo atrasado".
+        // Daqui so se sai jogando, simulando ou pelos ajustes finais (tecla D).
         event.preventDefault()
-        hardNavigate("/")
+        setAvisoSemVolta(true)
+      } else if (event.key.toLowerCase() === "d") {
+        event.preventDefault()
+        setAjustesAbertos(true)
       }
     }
     window.addEventListener("keydown", handleKeyDown)
@@ -788,6 +853,7 @@ export default function PartidaPage() {
             leagueName={homeLeague}
             leagueLogo={matchCompetitionLogo}
             onSelect={() => setFocusedSide("home")}
+            elencoVivo={homeTeam.curto === meuCurto ? elencoDoUsuario : undefined}
           />
 
           {/* Coluna central de opcoes */}
@@ -807,24 +873,26 @@ export default function PartidaPage() {
               <span className="max-w-24 text-sm leading-tight text-white/55 text-balance">Casa e visitante</span>
             </button>
 
+            {/* OPCOES DE JOGO (pedido). Era o interruptor solto "Fase ao vivo",
+                numa tecla `f` que nao aparecia em lugar nenhum do resto do jogo
+                e que ninguem relacionava com nada. Virou a porta unica das
+                opcoes da partida — a mesma que o `D` do rodape abre — e o
+                "assistir ao vivo" mudou-se para dentro dela, ao lado da
+                escalacao, da prancheta e da mentalidade. */}
             <button
-              onClick={() => setLivePhase((v) => !v)}
+              onClick={() => setAjustesAbertos(true)}
               className="flex flex-col items-center gap-1.5 text-center"
             >
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 text-xs font-bold text-white/70">
                   d
                 </span>
-                {livePhase ? (
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500">
-                    <Check className="h-3.5 w-3.5 text-black" strokeWidth={3} />
-                  </span>
-                ) : (
-                  <span className="h-6 w-6 rounded-full border-2 border-white/30" />
-                )}
+                <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white/30">
+                  <Settings className="h-3.5 w-3.5 text-white/70" />
+                </span>
               </div>
-              <span className="text-sm leading-tight text-white/55">Fase ao vivo</span>
-              <span className="text-sm font-medium text-white/75">{livePhase ? "Sim" : "Não"}</span>
+              <span className="text-sm leading-tight text-white/55">Opções de jogo</span>
+              <span className="text-sm font-medium text-white/75">{livePhase ? "Ao vivo" : "Simular"}</span>
             </button>
           </div>
 
@@ -835,6 +903,7 @@ export default function PartidaPage() {
             leagueName={awayLeague}
             leagueLogo={matchCompetitionLogo}
             onSelect={() => setFocusedSide("away")}
+            elencoVivo={awayTeam.curto === meuCurto ? elencoDoUsuario : undefined}
           />
         </div>
 
@@ -849,11 +918,11 @@ export default function PartidaPage() {
                 </span>
                 <span className="text-sm font-semibold">Selecionar</span>
               </button>
-              <button onClick={() => hardNavigate("/")} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
+              <button onClick={() => setAjustesAbertos(true)} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
                 <span className="flex h-7 min-w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 px-1.5 text-xs font-bold">
-                  Esc
+                  D
                 </span>
-                <span className="text-sm font-semibold">Voltar</span>
+                <span className="text-sm font-semibold">Ajustes finais</span>
               </button>
             </div>
 
@@ -960,10 +1029,50 @@ export default function PartidaPage() {
         />
       )}
   
+  <AjustesFinais
+        aberto={ajustesAbertos}
+        onFechar={() => setAjustesAbertos(false)}
+        meuTime={userTeam.team}
+        adversario={homeTeam.curto === userTeam.team.curto ? awayTeam : homeTeam}
+        estadio={{
+          nome: homeTeam.estadio_nome,
+          capacidade: homeTeam.estadio_cap,
+          mandante: homeTeam.curto === userTeam.team.curto,
+        }}
+      />
+
+      {avisoSemVolta && (
+        <div
+          className="fixed inset-0 z-[96] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+          onClick={() => setAvisoSemVolta(false)}
+        >
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0b0d12] p-6 text-center" onClick={e => e.stopPropagation()}>
+            <h2 className="text-base font-bold text-white">A partida já está marcada</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/60">
+              Daqui não dá para voltar ao escritório. Faça os últimos acertos em
+              <b className="text-white/80"> Ajustes finais (D)</b> e entre em campo — ou use a
+              simulação rápida.
+            </p>
+            <button
+              onClick={() => { setAvisoSemVolta(false); setAjustesAbertos(true) }}
+              className="mt-5 w-full rounded-lg bg-[var(--brand)] py-2.5 text-sm font-bold text-[var(--brand-ink)] hover:brightness-110"
+            >
+              Abrir ajustes finais
+            </button>
+            <button
+              onClick={() => setAvisoSemVolta(false)}
+              className="mt-2 w-full rounded-lg py-2 text-xs font-semibold text-white/50 hover:text-white"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
   <GamepadControlsBar
         customActions={[
           { button: "A", label: "Iniciar Partida" },
-          { button: "B", label: "Voltar" },
+          { button: "B", label: "Ajustes finais" },
           { button: "X", label: "Sim. Rapida" },
           { button: "LB", label: "Kit Casa" },
           { button: "RB", label: "Kit Fora" },

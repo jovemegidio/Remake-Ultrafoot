@@ -70,7 +70,19 @@ export function toClientRoute(href: string): string {
 }
 
 /**
- * Perform a full-page navigation (no client-side routing).
+ * Navega para outra tela do jogo.
+ *
+ * ⚠️ O NOME MENTE, E ESTE DOCBLOCK JA MENTIU JUNTO. Dizia "full-page navigation
+ * (no client-side routing)" — o oposto do que o corpo faz desde que a rota
+ * interna passou a ser despachada como `ultrafoot:navigate` para o
+ * `native-app-provider`, que chama `router.push`. Rota interna é **client-side**;
+ * só URL externa/protocolo especial cai no `location.assign` lá embaixo.
+ *
+ * Isso importa para decisão de performance: como não há reload, o peso de JS de
+ * uma tela é pago UMA VEZ (ao entrar no jogo) e não a cada troca de tela. Em
+ * 07/08/2026 eu li este docblock, conclui que cada navegação recarregava 15 MB e
+ * quase refatorei a camada de dados inteira por causa disso.
+ *
  * @param href   Destination href.
  * @param replace When true, replaces the current history entry instead of pushing.
  */

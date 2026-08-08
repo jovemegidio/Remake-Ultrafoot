@@ -30,6 +30,9 @@ import { attributesFromOverall, overallFromAttributes, shiftAttributes } from "@
 // o promovido da base chegar ao elenco valendo o MESMO que valia na base.
 import { valorDeMercadoJovem } from "@/lib/youth-academy-rules"
 import { recordWorldTransfer } from "@/lib/world-market"
+// ROTINA DA SEMANA (dia de jogo / treino / descanso). Modulo puro: so calcula a
+// composicao da semana e os fatores que ela impoe ao treino e a recuperacao.
+import { montarRotina, type Postura } from "@/lib/rotina-da-semana"
 // EXTRATO DE MOVIMENTACOES. Toda entrada/saida do elenco passa a deixar rastro no
 // save (pedido: "ao salvar deve salvar tudo... todas as movimentacoes feitas pelo
 // jogador"). O modulo so importa save-system, que NAO importa o motor — sem ciclo.
@@ -2048,6 +2051,12 @@ interface GameEngineState {
   minutosNaViradaDaSemana: Record<number, number>
   /** Plano de treino COLETIVO da semana (intensidade x foco). */
   planoDeTreino: PlanoDeTreino
+  /**
+   * Como o tecnico usa os dias LIVRES da semana (ver lib/rotina-da-semana.ts).
+   * Opcional: save anterior a esta versao cai no equilibrado, que e o
+   * comportamento de sempre.
+   */
+  posturaDaSemana?: Postura
   /** Ultimo resumo do treino semanal, para a tela mostrar carga/fadiga/risco. */
   ultimoTreino: { carga: number; energiaMedia: number; fadigaMedia: number; riscoMedio: number; lesionados: string[]; semana: number } | null
   /** Save ja migrado para o relogio absoluto de contrato (ver migracao). */
@@ -2238,6 +2247,8 @@ interface GameEngineState {
    */
   registrarMinutosJuntos: (minutos: number, ids?: number[]) => void
   /** Define o plano de treino coletivo da semana. */
+  /** Como usar os dias LIVRES da semana (ver lib/rotina-da-semana.ts). */
+  definirPosturaDaSemana: (postura: Postura) => void
   definirPlanoDeTreino: (plano: Partial<PlanoDeTreino>) => void
   rolarLesaoSimulada: (qtdJogos: number) => void
   acumularEstatisticasSimuladas: (golsPro: number, golsContra: number) => void
@@ -2810,6 +2821,7 @@ export const useGameEngine = create<GameEngineState>()(
       fadigaCronica: {},
       minutosNaViradaDaSemana: {},
       planoDeTreino: { ...PLANO_PADRAO },
+      posturaDaSemana: "equilibrado",
       ultimoTreino: null,
       squadMorale: {
         overall: 70,
@@ -2928,10 +2940,23 @@ export const useGameEngine = create<GameEngineState>()(
             emTreinoIndividual: Boolean(p.training.currentFocus),
             focoIndividual: p.training.currentFocus ?? null,
           }))
+          // ── A SEMANA TEM DIAS (ver lib/rotina-da-semana.ts) ─────────────
+          //
+          // Quantos jogos o clube tem nesta semana decide quantos dias sobram, e
+          // a POSTURA do tecnico decide o que fazer com eles. Treinar mais rende
+          // mais e cansa mais; poupar devolve energia e custa evolucao. Antes o
+          // plano era aplicado de bloco e descansar so acontecia por acidente,
+          // numa semana sem partida.
+          const jogosNaSemana = s.matchResults.filter(r =>
+            r.season === s.currentSeason && r.week === newWeek &&
+            (r.homeTeam === s.myTeamShort || r.awayTeam === s.myTeamShort),
+          ).length
+          const rotina = montarRotina(jogosNaSemana, s.posturaDaSemana ?? "equilibrado")
+
           const resumoTreino = aplicarSemanaDeTreino(entrada, plano, {
             centroDeTreinamento: trainingLvl,
             centroMedico: medicalLvl,
-          })
+          }, rotina.fatorDeCarga, rotina.recuperacaoExtra)
           const efeitoPorId = new Map(resumoTreino.efeitos.map(e => [e.id, e]))
           const lesionadosNoTreino: string[] = []
 
@@ -5301,7 +5326,12 @@ export const useGameEngine = create<GameEngineState>()(
        */
       registrarMinutosJuntos: (minutos, ids) => {
         set((s) => {
-          const disponiveis = s.squadPlayers.filter(p => !p.injury)
+          // EXPULSO CONTA COMO LESIONADO AQUI: quem cumpre suspensao nao entrou
+          // em campo, entao nao acumula minutos jogados juntos. Antes so a lesao
+          // era descontada, e o suspenso ganhava entrosamento de um jogo que
+          // assistiu do banco — inflando o numero justamente na semana em que o
+          // time teve de se rearranjar sem ele.
+          const disponiveis = s.squadPlayers.filter(p => !p.injury && (p.suspendedMatches ?? 0) <= 0)
           const alvo = ids?.length
             ? ids
             : disponiveis.filter(p => p.isStarter).map(p => p.id)
@@ -5314,6 +5344,8 @@ export const useGameEngine = create<GameEngineState>()(
       definirPlanoDeTreino: (plano) => {
         set((s) => ({ planoDeTreino: { ...(s.planoDeTreino ?? PLANO_PADRAO), ...plano } }))
       },
+
+      definirPosturaDaSemana: (postura) => set({ posturaDaSemana: postura }),
 
       /**
        * LESAO EM JOGO SIMULADO (pedido): quando o usuario SIMULA a partida (nao
@@ -5765,9 +5797,38 @@ export const useGameEngine = create<GameEngineState>()(
        * subir (dy negativo) é avançar.
        */
       setTacticalPlayerMovements: (movements) => {
+        const anteriores = get().tacticalPlayerMovements
         set({ tacticalPlayerMovements: movements })
         const base = get().tacticalPlayerPositions
         const porNome = new Map(get().squadPlayers.map(p => [p.name, p.id]))
+
+        /**
+         * ⚠️ APAGAR A SETA PRECISA APAGAR A INSTRUÇÃO QUE ELA GEROU.
+         *
+         * Este laço não existia, e era o relato do jogador: "não é possível
+         * zerar a instrução depois de mexer nela uma vez". A tradução abaixo só
+         * percorre as setas QUE EXISTEM; quem apagava a seta saía do mapa e
+         * nunca mais era visitado, então `getForward`/`holdPosition`/
+         * `stayWider`/`cutInside`/`roaming`/`runs` ficavam congelados no valor
+         * derivado da seta antiga — para sempre, inclusive na simulação.
+         *
+         * Os valores abaixo são os MESMOS defaults de `setPlayerInstructions`:
+         * sem seta, o atleta volta a ser neutro.
+         */
+        for (const nome of Object.keys(anteriores)) {
+          if (nome in movements) continue
+          const id = porNome.get(nome)
+          if (id == null) continue
+          get().setPlayerInstructions(id, {
+            getForward: false,
+            holdPosition: false,
+            stayWider: false,
+            cutInside: false,
+            roaming: "liberdade_moderada",
+            runs: "as_vezes",
+          })
+        }
+
         for (const [nome, destino] of Object.entries(movements)) {
           const id = porNome.get(nome)
           const origem = base[nome]
@@ -6485,8 +6546,10 @@ export const useGameEngine = create<GameEngineState>()(
         const negatives: AnalysisPoint[] = shuffledNegatives.slice(0, numNegatives)
         
         // Seleciona melhores e piores jogadores
+        // Mesma regra do lesionado para o EXPULSO/suspenso: quem nao jogou nao
+        // pode aparecer como melhor nem como pior da partida.
         const sortedPlayers = [...state.squadPlayers]
-          .filter(p => !p.injury)
+          .filter(p => !p.injury && (p.suspendedMatches ?? 0) <= 0)
           .sort((a, b) => (b.overall + b.form) - (a.overall + a.form))
         
         const bestPlayers = sortedPlayers.slice(0, 3).map(p => ({

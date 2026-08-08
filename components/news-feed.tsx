@@ -360,9 +360,86 @@ export function generateDynamicNews(
 interface NewsFeedProps {
   className?: string
   compact?: boolean
+  /** Faixa só de texto (escritório): sem capa, sem logo, sem contadores. */
+  somenteTexto?: boolean
 }
 
-export function NewsFeed({ className, compact = false }: NewsFeedProps) {
+
+/**
+ * FAIXA DE MANCHETES — carrossel de UMA noticia por vez, em ciclo.
+ *
+ * Era uma linha com quatro manchetes truncadas lado a lado: cabiam quatro,
+ * mas nenhuma cabia INTEIRA — todas terminavam em reticencias, e ler qualquer
+ * uma exigia o `title` do mouse. Uma de cada vez usa a mesma altura para
+ * mostrar o titulo completo, e o ciclo entrega as outras sem pedir clique.
+ *
+ * Detalhes que fazem diferenca aqui:
+ *  - PAUSA no hover: manchete que troca embaixo do cursor e como janela que
+ *    foge do clique.
+ *  - `key` no titulo faz o React remontar o no a cada troca, entao a animacao
+ *    de entrada roda de novo sem estado extra.
+ *  - Anuncio fica de fora: sem a arte, peca paga vira indistinguivel de
+ *    materia (o resto deste arquivo tem o mesmo cuidado).
+ */
+function FaixaDeManchetes({ news, className }: { news: NewsItem[]; className?: string }) {
+  const manchetes = useMemo(() => news.filter(n => !n.isAd), [news])
+  const [i, setI] = useState(0)
+  const [pausado, setPausado] = useState(false)
+
+  useEffect(() => {
+    if (pausado || manchetes.length <= 1) return
+    const t = setInterval(() => setI(v => (v + 1) % manchetes.length), 6000)
+    return () => clearInterval(t)
+  }, [pausado, manchetes.length])
+
+  // A lista muda de tamanho quando novas materias chegam; sem isto o indice
+  // poderia apontar para fora do array e a faixa sumia.
+  useEffect(() => { setI(v => (manchetes.length ? v % manchetes.length : 0)) }, [manchetes.length])
+
+  if (manchetes.length === 0) return null
+  const item = manchetes[i] ?? manchetes[0]
+
+  return (
+    <div
+      className={cn("flex items-center gap-3", className)}
+      onMouseEnter={() => setPausado(true)}
+      onMouseLeave={() => setPausado(false)}
+    >
+      <button
+        key={item.id}
+        onClick={() => item.link && window.open(item.link, "_blank", "noopener,noreferrer")}
+        className="group flex min-w-0 flex-1 items-baseline gap-2 text-left animate-in fade-in slide-in-from-bottom-1 duration-500"
+        title={item.title}
+      >
+        <span className="shrink-0 text-[9px] font-black uppercase tracking-widest text-[var(--brand)]/70">
+          {NEWS_SOURCES[item.source]?.name ?? item.source}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/80 transition-colors group-hover:text-white">
+          {item.title}
+        </span>
+        <span className="shrink-0 text-[9px] tabular-nums text-white/25">{item.date}</span>
+      </button>
+
+      {/* Marcadores: mostram que ha mais e deixam pular direto. */}
+      {manchetes.length > 1 && (
+        <div className="flex shrink-0 items-center gap-1">
+          {manchetes.slice(0, 8).map((m, idx) => (
+            <button
+              key={m.id}
+              onClick={() => setI(idx)}
+              aria-label={`Manchete ${idx + 1}`}
+              className={cn(
+                "h-1 rounded-full transition-all",
+                idx === i ? "w-4 bg-[var(--brand)]" : "w-1 bg-white/20 hover:bg-white/40",
+              )}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+export function NewsFeed({ className, compact = false, somenteTexto = false }: NewsFeedProps) {
   const { state } = useGameState()
   const engine = useGameEngine()
   const userTeamShort = state.selectedTeamShort ?? null
@@ -492,6 +569,21 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
     center: { zIndex: 1, x: 0, opacity: 1, scale: 1 },
     exit: (dir: number) => ({ zIndex: 0, x: dir < 0 ? 300 : -300, opacity: 0, scale: 0.95 }),
   }
+
+  /**
+   * FAIXA SÓ DE TEXTO (pedido: "as notícias devem ser apenas texto").
+   *
+   * O feed padrão é uma vitrine com capa, logo do veículo, selo verificado e
+   * contadores — pesa muito para a faixa estreita do escritório, onde o que se
+   * quer é BATER O OLHO nas manchetes. Aqui não há imagem nenhuma: só a fonte,
+   * o título e o tempo, em linhas que cabem lado a lado.
+   *
+   * Reusa a MESMA lista `news` do feed completo, então uma matéria nova aparece
+   * nos dois sem duplicar regra de negócio. Anúncios ficam de fora: sem a arte,
+   * um anúncio vira indistinguível de notícia — e disfarçar peça paga de
+   * jornalismo é justamente o que o resto deste arquivo evita.
+   */
+  if (somenteTexto) return <FaixaDeManchetes news={news} className={className} />
 
   if (compact) {
     return (

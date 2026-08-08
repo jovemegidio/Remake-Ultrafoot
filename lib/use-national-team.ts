@@ -423,7 +423,7 @@ export function useNationalTeam() {
    *
    * Antes isto zerava só o `nationalCareer` (o contrato). O
    * `managingNationalTeamId` — que é o que decide o "time atual" de TODAS as
-   * telas (save-system.useUserTeam) — continuava apontando para a seleção. O
+   * telas (time-da-carreira.useUserTeam) — continuava apontando para a seleção. O
    * resultado era um beco sem saída: o técnico seguia visualmente no modo
    * seleção, comandando uma seleção que não era mais dele, e as três telas
    * (convocação, competições, amistosos) o EXPULSAVAM de volta para /selecao a
@@ -449,13 +449,14 @@ export function useNationalTeam() {
     const def = getCompetitionDef(competitionId)
     if (!def) return
     const comp = createNationalCompetition(def, nationalTeam, state.season)
-    setState({
+    const patch = {
       nationalCareer: {
         ...DEFAULT_NATIONAL_CAREER,
         ...(state.nationalCareer ?? {}),
         currentCompetition: comp,
       },
-    })
+    }
+    setState(patch)
   }, [nationalTeam, state.nationalCareer, state.season, setState])
 
   /**
@@ -603,13 +604,17 @@ export function useNationalTeam() {
     const current = state.nationalCareer?.currentCompetition
     if (!current) return
     const prev = state.nationalCareer ?? DEFAULT_NATIONAL_CAREER
-    setState({
+    const patch = {
       nationalCareer: {
         ...prev,
         currentCompetition: null,
+        // Zerado na virada de temporada (use-game-manager). Sem aquele reset esta
+        // linha era uma via de mao unica: a competicao encerrada ficava
+        // desabilitada na vitrine pelo resto da carreira.
         completedThisSeason: [...prev.completedThisSeason, current.competitionId],
       },
-    })
+    }
+    setState(patch)
   }, [state.nationalCareer, setState])
 
   const currentCompetition = career.currentCompetition ?? null

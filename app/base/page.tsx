@@ -7,7 +7,9 @@ import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { SystemMediaPlayer } from "@/components/system-media-player"
 import { Button } from "@/components/ui/button"
-import { useUserTeam, useGameState, commitGameState, type GameState, type SquadPlayer } from "@/lib/save-system"
+import { useGameState, commitGameState, type GameState, type SquadPlayer } from "@/lib/save-system"
+import { useGameManager } from "@/lib/use-game-manager"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { flushPersistentStore } from "@/lib/persistent-store"
 import { formatCurrency } from "@/lib/teams-data"
 import { generateYouthMarketProspects, generateYouthProspects } from "@/lib/youth-academy"
@@ -129,6 +131,8 @@ export default function BasePage() {
   // `hydrated` NAO e detalhe: ver o bloco EFEITO QUE ESCREVE SO DEPOIS DE HIDRATAR,
   // logo acima da semeadura. Sem ele a tela reescrevia a base no primeiro render.
   const { state, setState, hydrated } = useGameState()
+  // O calendario tambem anda quando se trabalha na base — ver `developMonth`.
+  const { advanceWeek, temPartidaPendenteNaSemana } = useGameManager()
   const { addNotification } = useNotifications()
   const youth = state.youthPlayers ?? []
   const balance = state.balance && state.balance > 0 ? state.balance : team.saldo
@@ -533,7 +537,7 @@ export default function BasePage() {
     }
   }
 
-  const developMonth = () => {
+  const developMonth = async () => {
     // Evolucao tambem grava sobre o save relido: estas duas acoes SUBSTITUEM a
     // lista inteira, entao um fechamento velho apagaria contratacoes recentes.
     let evoluidos = 0
@@ -542,9 +546,32 @@ export default function BasePage() {
       evoluidos = result.report.highlights.length
       return { youthPlayers: result.state.youthPlayers, updatedAt: result.state.updatedAt }
     })
+
+    // ⚠️ O MES TAMBEM PASSA NO CALENDARIO (pedido: "evoluir um mes deve avancar
+    // no calendario"). Antes so os garotos evoluiam e a data do topo ficava
+    // parada — um mes de trabalho sem um dia passar.
+    //
+    // MAS NAO AVANCA A TAPA: `advanceWeek` resolve sozinho a partida da semana
+    // que ficou para tras, entao empurrar 4 semanas cegamente faria o jogador
+    // PERDER ate 4 jogos sem nunca ver a tela deles. Aqui a regra e parar assim
+    // que houver jogo seu na semana — o mes anda ate a beira do proximo
+    // compromisso e devolve a decisao para quem joga.
+    let semanas = 0
+    for (let i = 0; i < 4; i++) {
+      if (temPartidaPendenteNaSemana()) break
+      await advanceWeek()
+      semanas++
+    }
+    // A base grava direto no disco (`aplicarNaBase`); o avanco de semana entra
+    // pelo caminho do React. Descarrega os dois antes de qualquer navegacao.
+    try { await flushPersistentStore() } catch { /* o save em memoria ja esta correto */ }
+
     void avisarNoJogo({
       titulo: "Mês de trabalho na base",
-      mensagem: `${evoluidos} jovem(ns) evoluíram neste mês.`,
+      mensagem: `${evoluidos} jovem(ns) evoluíram neste mês.`
+        + (semanas === 4 ? " O calendário avançou 4 semanas."
+          : semanas > 0 ? ` O calendário avançou ${semanas} semana(s) e parou: você tem jogo a disputar.`
+          : " O calendário não andou: você tem jogo a disputar nesta semana."),
       tom: "sucesso",
     })
   }

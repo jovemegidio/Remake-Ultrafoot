@@ -193,9 +193,211 @@
   ],
   "changelog": [
     {
+      "version": "1.0.276",
+      "data": "2026-08-08",
+      "latest": true,
+      "titulo": "Negocie com os empresários, e um calendário que se lê de relance",
+      "itens": [
+        "NOVO: converse com o EMPRESÁRIO do atleta. Além de aceitar ou recusar o pedido, agora dá para negociar — contrapropor um valor, prometer minutos em campo ou perguntar o que ele realmente quer. Cada empresário tem seu jeito de negociar, e a relação com ele é mostrada na tela: recusar pedido justo desgasta, e relação rompida faz ele oferecer seu jogador no mercado.",
+        "Calendário: cada dia mostra o escudo do adversário, o placar e o logo da competição, agora bem maior e legível.",
+        "Os avisos do jogo (\"Fulano quer conversar\") deixaram de aparecer por cima do pré-jogo — agora só surgem no escritório, onde dá para resolvê-los."
+      ]
+    },
+    {
+      "version": "1.0.275",
+      "data": "2026-08-08",
+      "latest": false,
+      "titulo": "Comissão técnica, correção do dinheiro infinito e Infraestrutura no menu",
+      "itens": [
+        "CORRIGIDO: era possível ganhar dinheiro infinito colocando o ingresso num valor muito alto — o estádio nunca esvaziava. Agora preço acima do justo afasta o público de verdade, e cobrar caro demais zera a bilheteria.",
+        "Nova COMISSÃO TÉCNICA na área do treinador: auxiliar, preparador físico, departamento médico, olheiro, analista e diretoria apontam o que precisa de decisão — escalação irregular, desgaste com substituto sugerido, carência por posição, contratos vencendo, caixa e leitura do próximo adversário.",
+        "Infraestrutura do Clube ganhou entrada própria no menu (W) — antes só existia dentro de Configurações."
+      ]
+    },
+    {
+      "version": "1.0.274",
+      "data": "2026-08-07",
+      "latest": false,
+      "titulo": "Temporada destravada, comissão técnica e telas mais objetivas",
+      "itens": [
+        "Corrigido: a temporada não virava em saves antigos — o botão Iniciar nova temporada agora funciona e o ano novo começa em 1º de janeiro.",
+        "Central do Mundial: a rodada avança de verdade e os jogos do clube desbloqueiam ao fim da Copa.",
+        "Competições de seleção voltam a ser jogáveis a cada temporada (Copa do Mundo, Copa América, Eurocopa, Eliminatórias).",
+        "Simular deixou de perder progresso ao recarregar o jogo.",
+        "Nova área do treinador: metas da diretoria, financeiro e indicações de reforço por posição.",
+        "Prancheta com campo tático, foto do estádio e projeção de bilheteria.",
+        "Calendário refeito: escudo do adversário, logo da competição e placar; cores por competição.",
+        "Lesionado e suspenso não podem mais ser escalados, cada um com o seu motivo.",
+        "Escritório: manchetes em carrossel, confronto direto destacado e próximas partidas em ordem.",
+        "Infraestrutura e área do treinador reorganizadas, com blocos recolhíveis.",
+        "Sons do jogo tocam junto com a narração do comentarista escolhido.",
+        "Uniformes e escudos importados no editor param de sumir a cada atualização.",
+        "Abertura do jogo cerca de 17% mais rápida."
+      ]
+    },
+    {
+      "version": "1.0.273",
+      "date": "2026-08-06",
+      "latest": false,
+      "title": "As fotos dos atletas voltam, e o launcher abre o jogo sozinho ao terminar",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "MERCADO SEM ROSTO. A deteccao de homonimos comparava o clube do atleta entre as duas bases de elenco, e elas escrevem o clube de formas diferentes — o slug minusculo numa, o nome com maiuscula na outra. Com isso o atleta virava homonimo de SI MESMO: 44.859 nomes entravam na lista de ambiguos, praticamente o elenco inteiro. E um nome marcado assim tinha a foto descartada ANTES de o jogo tentar qualquer fonte, inclusive a que ja estava publicada no servidor. Agora sao 6.203 — os homonimos de verdade."
+        },
+        {
+          "type": "changed",
+          "text": "O LAUNCHER ABRE O JOGO AO TERMINAR. Instalar ou atualizar so tem um proposito: jogar. A barra chegava ao fim e o launcher ficava parado esperando um segundo clique — ainda mais estranho na atualizacao obrigatoria, em que a pessoa ja tinha apertado Jogar e foi interrompida pelo download."
+        },
+        {
+          "type": "fixed",
+          "text": "O JOGO NAO REBAIXA MAIS O LAUNCHER. O instalador do jogo carrega uma copia do instalador do launcher e a executa; essa copia estava congelada em julho, entao instalar o jogo rebaixava o launcher de volta para uma versao antiga."
+        }
+      ]
+    },
+    {
+      "version": "1.0.272",
+      "date": "2026-08-06",
+      "title": "A semana tem dias, o simular vai direto ao placar e da para FALAR com a diretoria e com o elenco",
+      "changes": [
+        {
+          "type": "added",
+          "text": "DIA DE JOGO, DIA DE TREINO, DIA DE DESCANSO. A semana era um bloco unico em que o elenco treinava o tempo todo. Agora ela tem sete dias: o calendario diz onde caem as partidas e voce escolhe a postura — Poupar, Equilibrado ou Carga total. Vespera de jogo NUNCA e dia de treino, nem na carga total. Poupar rende energia e custa evolucao; carga total faz o contrario. Semana de tres jogos quase nao deixa treinar, que e o problema real de quem disputa tres competicoes."
+        },
+        {
+          "type": "added",
+          "text": "FALAR EM VEZ DE DIGITAR. Um botao de microfone nas conversas com a diretoria e com os atletas transcreve a sua voz para o campo de texto. As duas formas continuam valendo — fale ou escreva. Aviso honesto: o jogo e offline e nao ha modelo de linguagem; o entendimento e por palavra-chave, e foi justamente esse vocabulario que triplicou nesta versao."
+        },
+        {
+          "type": "added",
+          "text": "O ATLETA REBATE. Dizer \"voce nao esta treinando o suficiente\" a quem esta ha doze jogos sem entrar agora recebe resposta — ele cita os jogos no banco, e a conversa continua em vez de acabar ali. Ameacar quem ja perdeu o lugar nao intimida. Entraram quatro intencoes novas: criticar, ameacar, perguntar e renovar."
+        },
+        {
+          "type": "changed",
+          "text": "SIMULAR VAI DIRETO AO RESULTADO. Ele passava pela tela de pre-jogo e parava ali. Agora simular pula a partida e entrega o placar."
+        },
+        {
+          "type": "added",
+          "text": "PROPOSTAS DE PATROCINIO CHEGAM NA CENTRAL. Durante a temporada, com intervalo, e com chance ligada a sua posicao na tabela: quem esta na frente recebe mais e melhores ofertas."
+        },
+        {
+          "type": "changed",
+          "text": "OS QUATRO MODAIS FORAM ARRUMADOS. Editar jogador virou abas (Identidade, Perfil, Caracteristicas, Atributos) com o Salvar sempre a vista — antes eram 230 linhas de rolagem com o botao la embaixo. Editar time saiu de uma grade plana de doze campos para cinco blocos com titulo. Negociar e renovar ganharam trilha de passos e corpo rolavel: em tela de 768px a mesa do emprestimo passava do rodape e o botao de fechar negocio ficava inalcancavel."
+        },
+        {
+          "type": "changed",
+          "text": "MODO DE DESEMPENHO PARA MAQUINAS MODESTAS. Desfoques, sombras de texto, filtros e gradientes decorativos saem do caminho, e as imagens fora da tela deixam de ser desenhadas."
+        },
+        {
+          "type": "fixed",
+          "text": "SEU ATLETA SO VAI A LEILAO SE VOCE COLOCAR. Segunda trava no caminho: nada do seu elenco entra em leilao sem anuncio seu."
+        },
+        {
+          "type": "added",
+          "text": "A DATA COMPLETA NO CABECALHO. Passar o mouse sobre a semana mostra o dia exato."
+        },
+        {
+          "type": "added",
+          "text": "AS ABAS DA CENTRAL PASSARAM A FAZER ALGO. Diretoria abre a reuniao; Atletas escolhe com quem falar; a mensagem de metas da temporada pode ser respondida."
+        }
+      ],
+      "latest": false
+    },
+    {
+      "version": "1.0.271",
+      "date": "2026-08-06",
+      "title": "A temporada volta a virar, a Serie D vira liga de verdade e o controle passa a funcionar nos modais",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "A TEMPORADA NAO TRAVA MAIS. A composicao da liga era remontada a cada carregamento a partir dos dados do jogo, entao uma atualizacao que trouxesse clubes novos reescrevia a liga NO MEIO da carreira e o fim de temporada passava a exigir mais partidas do que a temporada tinha gerado. Quem estava nessa situacao avancava semanas para sempre dentro do mesmo ano, sem acesso e sem rebaixamento. Agora os adversarios da temporada ficam gravados no save e so mudam na virada."
+        },
+        {
+          "type": "fixed",
+          "text": "LIGA COM NUMERO IMPAR DE CLUBES NUNCA FECHAVA. A conta do fim de temporada pedia turno-returno completo, que e impossivel quando a liga tem clube em numero impar: sempre sobra um folga por rodada. A exigencia passou a ser um turno."
+        },
+        {
+          "type": "changed",
+          "text": "SERIE D REGULAMENTADA. Ela rodava com 27 clubes — numero impar, 52 rodadas e a temporada indo ate a semana 86, com dezembro carregando 455 jogos. Agora sao 20 clubes, como as outras divisoes, com 38 rodadas."
+        },
+        {
+          "type": "added",
+          "text": "SERIE C COM OS CLUBES DE VERDADE. Faltavam 8 dos 20 clubes reais e as vagas eram preenchidas por sorteio de prestigio. Ituano, Anapolis, Brusque, Maranhao, Maringa, Ferroviaria, Itabaiana e Barra-SC entraram no lugar certo."
+        },
+        {
+          "type": "fixed",
+          "text": "INSTRUCOES DOS JOGADORES. O botao \"Com a bola / Sem a bola\" trocava so o proprio texto e nao mexia em nada — agora ele troca de verdade o que o arrasto edita. E apagar a seta de movimentacao voltou a apagar a instrucao que ela gerou: antes, mexeu uma vez, ficava para sempre."
+        },
+        {
+          "type": "added",
+          "text": "ZERAR A MOVIMENTACAO. Botao proprio na prancheta, para o atleta selecionado ou para o time inteiro. Antes a unica forma era soltar o atleta exatamente em cima de si mesmo."
+        },
+        {
+          "type": "fixed",
+          "text": "CONTROLE NOS MODAIS. A ponte de gamepad so enxergava dialogo Radix, e a maior parte dos modais do jogo e feita na mao — mesa de negociacao, batedor de penalti, coletiva, resultado da partida, contrato, exame medico. Em todos eles o controle era um beco sem saida. Agora A aciona, B fecha e o D-pad navega em todos."
+        },
+        {
+          "type": "changed",
+          "text": "AVISO DE SAIDA NO CONTROLE. Da para escolher entre Sim e Nao pelo direcional, a opcao selecionada aparece marcada e as dicas mostram os botoes do controle ligado — antes so dizia (Enter) e (Esc), que nao existem no joystick."
+        }
+      ],
+      "latest": false
+    },
+    {
+      "version": "1.0.270",
+      "date": "2026-08-06",
+      "title": "Coletiva com relogio, ultimos ajustes antes do apito e um pacote grande de escudos, uniformes e rostos",
+      "changes": [
+        {
+          "type": "added",
+          "text": "COLETIVA COM TEMPO. A sala de imprensa agora faz 10 perguntas e cada uma tem 15 segundos (18 nas que falam de um atleta). Deixar o tempo acabar E uma resposta — e das piores: o elenco le como tecnico sem controle e a diretoria como despreparo publico. Antes dava para pensar cinco minutos em cada frase e sempre escolher a otima."
+        },
+        {
+          "type": "added",
+          "text": "AJUSTES FINAIS (tecla D) NA PRE-PARTIDA. Uma ultima olhada antes do apito: formacao, quantos titulares estao escalados, quem entrou lesionado, suspenso ou com menos de 60% de energia, a mentalidade da equipe e os dados do estadio."
+        },
+        {
+          "type": "changed",
+          "text": "DA PRE-PARTIDA NAO SE VOLTA MAIS AO ESCRITORIO. O confronto ja esta marcado e a bilheteria ja foi creditada; sair dali deixava uma partida pendente que o avanco de semana resolvia sozinho como jogo atrasado. Daqui se sai jogando, simulando ou pelos ajustes finais."
+        },
+        {
+          "type": "changed",
+          "text": "O CAMPO OCUPA A TELA NA VISAO DE CARTAS. A prancheta deitada tinha um teto de largura que sobrava de quando ela era novidade: numa tela larga ficavam duas faixas pretas nas laterais e o campo — onde se arrastam as cartas — era menor do que o espaco disponivel."
+        },
+        {
+          "type": "fixed",
+          "text": "COMPETICOES QUE VOCE NEM DISPUTA APARECIAM. Um time da Serie D via o card da Libertadores marcado 'NAO CLASSIFICADO' ocupando um quarto da tela. Agora a pagina lista so o que esta no calendario do seu clube."
+        },
+        {
+          "type": "fixed",
+          "text": "COPA DO BRASIL DIZIA 'OITAVAS' PARA QUEM ESTAVA NA PRIMEIRA FASE. O regulamento sempre esteve certo (so a primeira divisao entra na 5a fase; os demais comecam na 1a), mas a tela juntava todas as fases iniciais num espaco so do chaveamento e anunciava oitavas para quem estava a cinco fases delas."
+        },
+        {
+          "type": "added",
+          "text": "PACOTE DE ARTE: 236 clubes ganharam uniformes (Premier League, La Liga, Serie A e B italianas, Bundesliga 1 e 2, Ligue 1 e 2, Primeira Liga, Hypermotion, Brasileirao, Argentina, Uruguai e Equador), 150 escudos novos entraram no jogo e 330 atletas passaram a ter rosto. Tudo empacotado no jogo, em WebP — nao depende de internet e nao se perde nas proximas atualizacoes."
+        }
+      ],
+      "latest": false
+    },
+    {
+      "version": "1.0.269",
+      "date": "2026-08-06",
+      "title": "Escudos e uniformes voltam a aparecer no jogo instalado",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "ESCUDOS E UNIFORMES SUMIDOS (desde a 1.0.266). No jogo instalado muitos clubes apareciam com escudo generico, imagem quebrada ou camisa desenhada, mesmo com a arte instalada no seu computador. O motivo: o endereco da imagem era decidido durante o BUILD, quando o jogo ainda nao sabe que vai rodar como aplicativo — e acabava gravado como um endereco da internet, apontando para um repositorio de terceiros. Sem conexao (ou com aquele repositorio fora do ar), a arte simplesmente nao carregava. Agora, quando a imagem falha, o jogo passa a usar o arquivo que ja esta instalado na sua maquina."
+        },
+        {
+          "type": "fixed",
+          "text": "O jogo tentava a MESMA imagem quatro vezes antes de desistir. Como o endereco e que estava errado, repetir nunca resolvia — so atrasava a queda para o escudo generico."
+        }
+      ],
+      "latest": false
+    },
+    {
       "version": "1.0.268",
       "date": "2026-08-05",
-      "latest": true,
       "title": "Elencos de verdade em 73 clubes, e o trofeu que voce levantou e o seu",
       "changes": [
         {
@@ -210,12 +412,12 @@
           "type": "fixed",
           "text": "GOL DO ADVERSARIO ERA COMEMORADO. Quando o outro time marcava, a narracao festejava como se o gol fosse seu. Os nove narradores sempre tiveram a locucao certa gravada; ela nunca era tocada. Contusao tambem ganhou som."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.268",
       "date": "2026-08-05",
-      "latest": false,
       "title": "Emprestimo com opcao de compra, leilao para vender e o save protegido na atualizacao",
       "changes": [
         {
@@ -254,7 +456,8 @@
           "type": "fixed",
           "text": "AGUARDAR MAIS UMA SEMANA NAO MEXIA O CALENDARIO. Sem clube, 'Aguardar novas propostas' avancava a semana no save mas nao no relogio do jogo — a data no cabecalho ficava parada."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.267",

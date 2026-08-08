@@ -1112,6 +1112,45 @@ html[data-performance-mode] .office-bg-b { display: none !important; }
 html[data-performance-mode] .office-bg-a { animation: none !important; opacity: 1 !important; }
 html[data-performance-mode] video { display: none !important; }
 
+/* ── O QUE AINDA PASSAVA (pedido: "deixe o jogo otimizado ao maximo, para rodar
+   em maquinas mais modestas") ─────────────────────────────────────────────────
+
+   O perfil ja matava `backdrop-filter`, sombras grandes, o crossfade do
+   escritorio e video. Faltavam quatro custos que aparecem justamente nas telas
+   mais usadas, e todos sao de COMPOSICAO — o tipo que trava GPU integrada:
+
+   1. `filter: blur()/drop-shadow()` — diferente do backdrop, ele rasteriza o
+      proprio elemento fora da tela. Cada escudo do jogo usa drop-shadow, e uma
+      tabela mostra 20 de uma vez.
+   2. `text-shadow` em texto grande (placar, cronometro): repintado a cada frame
+      durante a partida.
+   3. Os REFLETORES da prancheta: quatro `radial-gradient` empilhados sobre o
+      campo inteiro, redesenhados a cada arraste de carta.
+   4. `will-change` deixado ligado promove camada para sempre e come VRAM —
+      em placa integrada isso e memoria que falta para o resto. */
+html[data-performance-mode] [class*="drop-shadow"],
+html[data-performance-mode] [style*="drop-shadow"] {
+  filter: none !important;
+}
+html[data-performance-mode] [class*="blur-"]:not([class*="backdrop"]) {
+  filter: none !important;
+}
+html[data-performance-mode] [class*="text-shadow"],
+html[data-performance-mode] [style*="text-shadow"] {
+  text-shadow: none !important;
+}
+html[data-performance-mode] * {
+  will-change: auto !important;
+}
+/* Gradiente radial em superficie grande vira cor chapada: a leitura continua,
+   o custo de pintura cai. So onde o gradiente e DECORACAO (fundo), nunca em
+   barra de progresso ou indicador, que perderiam sentido. */
+html[data-performance-mode] .pointer-events-none[style*="radial-gradient"] {
+  background: rgba(5, 5, 8, 0.55) !important;
+}
+/* Imagem fora da tela nao precisa ser decodificada no primeiro frame. */
+html[data-performance-mode] img { content-visibility: auto; }
+
 /* Foco visivel: essencial para teclado e controle. */
 html[data-a11y-focus] *:focus-visible {
   outline: 3px solid var(--brand) !important;
@@ -1182,4 +1221,28 @@ html[data-performance="economy"] .shadow-xl {
   .opacity-0[class*="hover:opacity-100"] {
     opacity: 1;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CAMPOS NUMERICOS — a setinha nativa nao combina com tema escuro.
+ 
+   O WebView2 desenha o spinner de `input[type=number]` com a cor do SISTEMA:
+   um retangulo CLARO colado na borda do campo. Em todos os filtros escuros do
+   jogo (mercado de juniores, busca de atletas, idade/overall/potencial/preco)
+   ele aparecia como um bloco branco fora do lugar — e em alguns temas some por
+   completo, virando uma area clicavel invisivel.
+ 
+   Some com o controle nativo e deixa o campo ser um campo. Quem quer ajustar
+   fino digita ou usa as setas do teclado, que continuam funcionando: esconder o
+   spinner NAO desliga o `step`, o `min` nem o `max`.
+   ───────────────────────────────────────────────────────────────────────────── */
+input[type="number"] {
+  -moz-appearance: textfield;      /* Firefox */
+  appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
 }

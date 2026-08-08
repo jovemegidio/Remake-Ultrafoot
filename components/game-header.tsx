@@ -4,11 +4,12 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useRef, useEffect, useMemo } from "react"
-import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout, Flag, Swords, Gavel } from "lucide-react"
+import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout, Flag, Swords, Gavel, Heart, Building2 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { ManagerAvatar } from "@/components/manager-avatar"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
-import { podeSalvarCarreira, useGameState, useManagingNational } from "@/lib/save-system"
+import { podeSalvarCarreira, useGameState } from "@/lib/save-system"
+import { useManagingNational } from "@/lib/time-da-carreira"
 import { salvarTudo } from "@/lib/salvar-tudo"
 import { useGameManager } from "@/lib/use-game-manager"
 import { clearJobOffers } from "@/lib/career-moves"
@@ -302,6 +303,25 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const gameDate = advanceDate ?? getGameDate(currentSeason, currentWeek)
   const gameDateLabel = `${gameDate.getDate().toString().padStart(2, "0")} ${MONTHS_SHORT[gameDate.getMonth()]}`
 
+  /**
+   * TEMPORADA QUE ATRAVESSA O ANO — "2026/27".
+   *
+   * ⚠️ A temporada ocupa MAIS SEMANAS DO QUE UM ANO TEM. `getGameDate` faz
+   * `01/01 do ano + (semana-1)*7`, entao a partir da semana 54 a data passa para
+   * o ano seguinte: semana 57 = 28/jan/2027, semana 58 = 04/fev/2027 (conferido
+   * na aritmetica). O rotulo continuava cravado em "Temporada 2026", e a tela
+   * mostrava "Temporada 2026 | 04 FEV" — incoerente, e foi o que fez parecer que
+   * uma temporada NOVA tinha comecado em fevereiro.
+   *
+   * Aqui o rotulo passa a dizer a verdade: enquanto a data estiver dentro do ano
+   * da temporada mostra "2026"; quando atravessa, mostra "2026/27". Isto e
+   * apresentacao — nao muda o calendario nem o motor.
+   */
+  const anoDaData = gameDate.getFullYear()
+  const temporadaLabel = anoDaData > currentSeason
+    ? `${currentSeason}/${String(anoDaData).slice(-2)}`
+    : String(currentSeason)
+
   const handleSave = async () => {
     // Sem carreira iniciada no pre-office nao ha o que salvar (salvarTudo checa
     // de novo, lendo o disco — aqui e so para nao acender o "salvando").
@@ -422,12 +442,24 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
       {/* Direita: acoes + widget do clube */}
       <div className="flex items-center gap-3 shrink-0">
-        {/* Info temporada/calendario (data real, nao contador de rodada) */}
-        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
+        {/* Info temporada/calendario (data real, nao contador de rodada).
+            O chip mostra "09 ABR" por falta de espaco; a data COMPLETA aparece ao
+            passar o mouse (pedido) — junto com o dia da semana, que e o que diz
+            se hoje e dia de jogo. */}
+        <div className="group relative hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
           <Calendar className="h-3.5 w-3.5 text-[var(--brand)]" />
-          <span className="text-[10px] text-white/45 font-medium">Temporada {currentSeason}</span>
+          <span className="text-[10px] text-white/45 font-medium">Temporada {temporadaLabel}</span>
           <span className="text-white/15">|</span>
           <span className="text-[11px] text-white font-semibold">{gameDateLabel}</span>
+
+          <div className="pointer-events-none absolute right-0 top-full z-50 mt-1.5 hidden min-w-[190px] rounded-lg border border-white/10 bg-[#0b0d12] px-3 py-2 shadow-xl group-hover:block">
+            <p className="text-[11px] font-bold text-white tabular-nums">
+              {`${String(gameDate.getDate()).padStart(2, "0")}/${String(gameDate.getMonth() + 1).padStart(2, "0")}/${gameDate.getFullYear()}`}
+            </p>
+            <p className="mt-0.5 text-[10px] capitalize text-white/50">
+              {gameDate.toLocaleDateString("pt-BR", { weekday: "long" })} · semana {currentWeek}
+            </p>
+          </div>
         </div>
 
         {/* Salvar */}
@@ -731,17 +763,27 @@ const NAV_MENU_ITEMS: NavMenuItem[] = [
   { label: "Notificacoes", href: "/notificacoes", icon: Bell },
   { label: "Elenco", href: "/elenco", icon: User, clubOnly: true },
   { label: "Juniores", href: "/base", icon: Sprout, clubOnly: true },
-  { label: "Taticas", href: "/elenco/taticas", icon: Settings, clubOnly: true },
+  // ⚠️ TATICAS E LEILOES SAIRAM DO MENU (pedido).
+  //
+  // Taticas: a prancheta pertence ao PRE-JOGO. Alcancavel pelo menu a qualquer
+  // momento, ela virava atalho para abrir o elenco no meio de outra tela — e
+  // no pre-jogo levava o tecnico para FORA da partida, o que dava margem a
+  // mexer no time depois de ver coisa que nao deveria. Agora ela abre dentro do
+  // proprio pre-jogo (ver components/match/ajustes-finais).
+  // Leiloes: a tela continua existindo e e alcancada pelo pos-partida e pelo
+  // Mercado; o que sai e a entrada do menu.
   { label: "Mercado", href: "/mercado", icon: TrendingUp, clubOnly: true },
-  // LEILOES era alcancavel SO pelo pos-partida, e a tela ate saia sozinha quando
-  // nao havia disputa. Com o leilao de VENDA (anunciar um atleta seu) ela virou
-  // destino: `?ver=vender` marca a visita deliberada e segura a tela.
-  { label: "Leiloes", href: "/leiloes?ver=vender", icon: Gavel, clubOnly: true },
+  { label: "Central do Clube", href: "/central", icon: Heart, clubOnly: true },
   { label: "Calendario", href: "/calendario", icon: Calendar, clubOnly: true },
   // Competicoes e Classificacao apontavam para a MESMA rota — eram duas
   // entradas para a mesma tela. Viraram uma so.
   { label: "Competicoes e Classificacao", href: "/competicoes", icon: Trophy, clubOnly: true },
   { label: "Financas", href: "/financas", icon: TrendingUp, clubOnly: true },
+  // INFRAESTRUTURA ganhou entrada PROPRIA aqui (pedido). Ela existia so dentro
+  // de Configuracoes, o que a escondia: quem quer mexer em bilheteria, obra do
+  // estadio ou nivel do CT nao vai procurar isso em "configuracoes do jogo".
+  // E decisao de gestao, e mora junto das outras.
+  { label: "Infraestrutura do Clube", href: "/infraestrutura", icon: Building2, clubOnly: true },
   { label: "Treinamento", href: "/treinamento", icon: User, clubOnly: true },
   { label: "Configuracoes", href: "/configuracoes", icon: Settings },
 ]

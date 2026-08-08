@@ -18,8 +18,11 @@ import {
 import { GameHeader } from "@/components/game-header"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
-import { useUserTeam, useGameState } from "@/lib/save-system"
+import { useGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/time-da-carreira"
 import { aplicarResposta, RELACAO_INICIAL, type RespostaDoClube } from "@/lib/pressao-do-agente"
+import { ConversaAgente } from "@/components/conversa-agente"
+import { type EstadoDoAgente, type DesfechoDoAgente, type PerfilDoAgente } from "@/lib/conversa-agente"
 import { useGameEngine, type Player, getContractStatus, formatWeeksToDate, absoluteWeek } from "@/lib/game-engine"
 import { formatCurrency } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
@@ -40,6 +43,66 @@ export default function ContratosPage() {
   // agente calar a boca, e a negociação não valeria nada.
   const { state: saveState, setState: setSaveState } = useGameState()
   const pedidoDeAgente = saveState.pedidoDeAgente ?? null
+
+  // ── CONVERSA COM O EMPRESARIO ───────────────────────────────────────────
+  //
+  // Aceitar/Recusar sao os dois extremos. A conversa e o meio: contrapropor,
+  // prometer minutos, perguntar o que ele quer. Ver lib/conversa-agente.
+  const [conversaAberta, setConversaAberta] = useState(false)
+
+  /** Perfil ESTAVEL por atleta: derivado do id, nao sorteado a cada render. */
+  const perfilDoAgente = (id: number): PerfilDoAgente =>
+    (["duro", "razoavel", "conciliador"] as const)[id % 3]
+
+  const estadoDoAgente = useMemo<EstadoDoAgente | null>(() => {
+    if (!pedidoDeAgente) return null
+    const p = squadPlayers.find(x => x.id === pedidoDeAgente.playerId)
+    if (!p) return null
+    const relacao = saveState.relacoesComAgentes?.[String(p.id)] ?? RELACAO_INICIAL
+    const fimAbsoluto = p.contract?.endDate ?? 0
+    return {
+      nome: `Empresário de ${p.name.split(" ")[0]}`,
+      perfil: perfilDoAgente(p.id),
+      desgaste: relacao.desgaste,
+      pedidosRecusados: relacao.pedidosRecusados,
+      pedido: {
+        tipo: pedidoDeAgente.tipo,
+        salarioPedido: pedidoDeAgente.salarioPedido,
+        anosPedidos: pedidoDeAgente.anosPedidos,
+      },
+      atleta: {
+        id: p.id, nome: p.name, overall: p.overall, idade: p.age,
+        salarioMensal: (p.contract?.salary ?? 0) * 4,
+        valorDeMercado: p.marketValue ?? 0,
+        semanasDeContrato: Math.max(0, fimAbsoluto - absoluteWeek(currentSeason, currentWeek)),
+        minutosNaTemporada: 0,
+        jogosDoClube: currentWeek,
+        titular: Boolean(p.isStarter),
+        moral: 60,
+      },
+      caixaDoClube: balance,
+    }
+  }, [pedidoDeAgente, squadPlayers, saveState.relacoesComAgentes, currentSeason, currentWeek, balance])
+
+  /** Aplica no save o que a conversa decidiu. */
+  const aplicarDesfechoDaConversa = (d: DesfechoDoAgente) => {
+    if (!pedidoDeAgente) return
+    const chave = String(pedidoDeAgente.playerId)
+    const relacao = saveState.relacoesComAgentes?.[chave] ?? RELACAO_INICIAL
+    const novoDesgaste = Math.max(0, Math.min(100, relacao.desgaste + d.desgasteDelta))
+    setSaveState({
+      relacoesComAgentes: {
+        ...(saveState.relacoesComAgentes ?? {}),
+        [chave]: { ...relacao, desgaste: novoDesgaste },
+      },
+      // Acordo fechado ou saida combinada tiram o pedido da mesa; uma conversa
+      // que so troca farpas mantem o pedido pendente, como deve ser.
+      ...(d.acordoFechado || d.vaiOferecerNoMercado ? { pedidoDeAgente: null } : {}),
+    })
+    if (d.acordoFechado && d.valorAcordado) {
+      renewContract(pedidoDeAgente.playerId, Math.round(d.valorAcordado / 4), pedidoDeAgente.anosPedidos ?? 2)
+    }
+  }
 
   const responderAoAgente = (resposta: RespostaDoClube) => {
     if (!pedidoDeAgente) return
@@ -233,6 +296,12 @@ export default function ContratosPage() {
                 className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-bold text-[var(--brand-ink)] hover:opacity-90"
               >
                 Aceitar
+              </button>
+              <button
+                onClick={() => setConversaAberta(true)}
+                className="rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-400/20"
+              >
+                Negociar
               </button>
               <button
                 onClick={() => responderAoAgente("recusado")}
@@ -590,6 +659,15 @@ export default function ContratosPage() {
             </div>
           </div>
         </div>
+      )}
+      {/* A conversa com o empresario — o meio entre aceitar e recusar. */}
+      {estadoDoAgente && (
+        <ConversaAgente
+          aberto={conversaAberta}
+          onFechar={() => setConversaAberta(false)}
+          estado={estadoDoAgente}
+          onDesfecho={aplicarDesfechoDaConversa}
+        />
       )}
     </div>
   )

@@ -116,6 +116,16 @@ const MAX_IMPORTED_OVERALL = 92
 // da correcao: os clubes brasileiros curados vem daqui, nao do seed importado.
 // A resolucao acontece de forma preguicosa (getter) porque `nacionalidadePorNome`
 // e construido mais abaixo no arquivo.
+// ⚠️ JA TENTEI TORNAR ISTO PREGUICOSO (07/08/2026) — E FOI REVERTIDO.
+//
+// O ganho era real e medido (boot do grafo 1684 -> 1300 ms, -23%), e os gates
+// passaram todos, inclusive `qa-carreiras-longas` com 8 clubes x 10 temporadas.
+// Mesmo assim, na build instalada o OFFICE passou a ficar "carregando" para
+// sempre depois de escolher o time. Os gates rodam o motor, nao o ciclo do
+// React — e foi exatamente por ali que o defeito passou.
+//
+// Se for tentar de novo: valide ABRINDO O JOGO e entrando no office com uma
+// carreira nova, nao so com os testes de motor.
 export const playersByTeam: Record<string, Player[]> = Object.fromEntries(
   Object.entries(RAW).map(([time, list]) => [
     time,
@@ -176,6 +186,33 @@ function findUniqueImportedPlayer(name: string): { idade: number; overall: numbe
 }
 
 /**
+ * ADIA UMA TABELA CARA ATE O PRIMEIRO USO.
+ *
+ * Os quatro mapas abaixo cruzam ~46 mil atletas do Transfermarkt e eram montados
+ * no CARREGAMENTO DO MODULO: 609 ms neste PC (medido por
+ * `scripts/bench-boot-seeds.ts` em 06/08/2026), 4 a 8 vezes isso num celular. E
+ * quem abria a tela de escolher clube pagava tudo isso sem precisar de um unico
+ * elenco — os mapas so fazem falta quando a carreira comeca de fato.
+ *
+ * Ler o JSON e barato perto disso: o mesmo `imported-bf2026.json` leva 72 ms
+ * para ser interpretado. O caro era a INDEXACAO, nao o dado.
+ *
+ * O valor e memorizado na primeira chamada, entao o resultado e identico ao de
+ * antes — muda so QUANDO o trabalho acontece.
+ */
+function preguicoso<T>(construir: () => T): () => T {
+  let valor: T | undefined
+  let pronto = false
+  return () => {
+    if (!pronto) {
+      valor = construir()
+      pronto = true
+    }
+    return valor as T
+  }
+}
+
+/**
  * NACIONALIDADE REAL por nome, vinda do Transfermarkt (real-squads-tm, campo
  * `c`). O seed do pool so traz `nac` para uma fatia dos atletas — auditoria de
  * 23/07/2026: apenas 18% do elenco curado tinha pais, e 461 dos 542 clubes
@@ -184,7 +221,7 @@ function findUniqueImportedPlayer(name: string): { idade: number; overall: numbe
  * Nome com DUAS nacionalidades diferentes e descartado — melhor vazio do que
  * atribuir a bandeira errada a um homonimo.
  */
-const nacionalidadePorNome: Map<string, string> = (() => {
+const nacionalidadePorNome = preguicoso((): Map<string, string> => {
   const mapa = new Map<string, string>()
   const conflito = new Set<string>()
   for (const elenco of Object.values(realSquadsTM as Record<string, Array<{ n?: string; c?: string }>>)) {
@@ -200,7 +237,7 @@ const nacionalidadePorNome: Map<string, string> = (() => {
   }
   for (const c of conflito) mapa.delete(c)
   return mapa
-})()
+})
 
 /**
  * POSICAO REAL por nome, da mesma coleta do Transfermarkt (campo `p`).
@@ -218,7 +255,7 @@ const nacionalidadePorNome: Map<string, string> = (() => {
  * Nome com DUAS posicoes diferentes e descartado: melhor manter o valor
  * grosseiro do que chutar a posicao de um homonimo.
  */
-const posicaoRealPorNome: Map<string, string> = (() => {
+const posicaoRealPorNome = preguicoso((): Map<string, string> => {
   const mapa = new Map<string, string>()
   const conflito = new Set<string>()
   for (const elenco of Object.values(realSquadsTM as Record<string, Array<{ n?: string; p?: string }>>)) {
@@ -234,7 +271,7 @@ const posicaoRealPorNome: Map<string, string> = (() => {
   }
   for (const c of conflito) mapa.delete(c)
   return mapa
-})()
+})
 
 /** Posicoes GROSSEIRAS — as unicas que o refinamento tem permissao de trocar. */
 const POSICAO_GROSSEIRA = new Set(["MEI", "ZAG", "DEF", "BAN", "MID", ""])
@@ -253,7 +290,7 @@ function refinarPosicoes<T extends { nome: string; pos: string }>(elenco: T[]): 
   const out = elenco.map(p => {
     const atual = String(p.pos ?? "").toUpperCase()
     if (!POSICAO_GROSSEIRA.has(atual)) return p
-    const real = posicaoRealPorNome.get(normalizeTeamName(p.nome))
+    const real = posicaoRealPorNome().get(normalizeTeamName(p.nome))
     if (!real || real.toUpperCase() === atual) return p
     mudou = true
     return { ...p, pos: real as T["pos"] }
@@ -316,7 +353,7 @@ function distribuirPosicoesGrosseiras<T extends { nome: string; pos: string }>(e
   const mutaveis = elenco.filter(p => {
     const atual = String(p.pos ?? "").toUpperCase()
     if (atual !== "ZAG" && atual !== "MEI") return false
-    return !posicaoRealPorNome.has(normalizeTeamName(p.nome))
+    return !posicaoRealPorNome().has(normalizeTeamName(p.nome))
   }).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))  // estavel entre sessoes
 
   if (mutaveis.length === 0) return elenco
@@ -371,7 +408,7 @@ function distribuirPosicoesGrosseiras<T extends { nome: string; pos: string }>(e
  * "Arrascaeta" no TM e "Giorgian de Arrascaeta". Dentro do elenco do clube o
  * nome e praticamente unico, o que resolve os dois casos com seguranca.
  */
-const nacPorClube: Map<string, Map<string, string>> = (() => {
+const nacPorClube = preguicoso((): Map<string, Map<string, string>> => {
   const mapa = new Map<string, Map<string, string>>()
   const porCurto = new Map<string, Map<string, string> | null>()
 
@@ -398,7 +435,7 @@ const nacPorClube: Map<string, Map<string, string>> = (() => {
   }
   for (const [k, v] of porCurto) if (v && !mapa.has(k)) mapa.set(k, v)
   return mapa
-})()
+})
 
 /**
  * Elenco do TM correspondente a este clube.
@@ -419,7 +456,7 @@ function elencoTmDoClube(team?: Team | null): Map<string, string> | undefined {
   for (const c of candidatos) {
     const k = normalizeTeamName(String(c ?? ""))
     if (!k) continue
-    const achado = nacPorClube.get(k)
+    const achado = nacPorClube().get(k)
     if (achado) return achado
   }
   return undefined
@@ -453,7 +490,7 @@ function resolverNac(nome: string, doSeed?: string, team?: Team | null): string 
     }
     if (quantos === 1 && unico) return unico
   }
-  return nacionalidadePorNome.get(chave)
+  return nacionalidadePorNome().get(chave)
 }
 
 const teamAliasOverrides: Record<string, string[]> = {
@@ -978,7 +1015,23 @@ function getCuratedPlayersByTeam(teamName: string): Player[] {
   return normalizedKey ? playersByTeam[normalizedKey] ?? [] : []
 }
 
-export const allPlayers: Player[] = [
+/**
+ * TODOS os atletas do jogo, em lista unica — construida SOB DEMANDA.
+ *
+ * Era `export const allPlayers`, montado no carregamento do modulo: achatava
+ * tres mapas grandes (~544 ms do boot, medido em `scripts/bench-boot-seeds.ts`)
+ * para produzir uma lista que **ninguem consumia**. As duas telas que pareciam
+ * usa-la (`elenco/gerenciamento`, `partida/escalacao`) tem um `useMemo` LOCAL de
+ * mesmo nome — `grep` por identificador engana, procure por `import`.
+ *
+ * Que nao ha consumidor nao e opiniao: como o `const` exportado deixou de
+ * existir, qualquer importacao dele quebraria o `tsc` — e ele passa limpo.
+ *
+ * ⚠️ Esta e a UNICA parte preguicosa que sobreviveu. Tornar `playersByTeam`
+ * preguicoso (via `Proxy`) tambem foi tentado em 07/08/2026 e **derrubou o
+ * office**: ver o aviso na declaracao dele, mais acima.
+ */
+export const getAllPlayers = preguicoso((): Player[] => [
   ...Object.values(playersByTeam).flat(),
   ...Object.entries(importedPlayersByTeam)
     .filter(([teamName]) => !getCuratedPlayersByTeam(teamName).length)
@@ -986,7 +1039,7 @@ export const allPlayers: Player[] = [
   ...Object.entries(manualPlayersByTeam)
     .filter(([teamName]) => !getCuratedPlayersByTeam(teamName).length && !importedPlayersByTeam[teamName]?.length)
     .flatMap(([, players]) => players),
-]
+])
 
 export function getPlayersByTeam(teamName: string): Player[] {
   const curated = getCuratedPlayersByTeam(teamName)
@@ -1084,7 +1137,7 @@ const REAL_SQUADS_TM = realSquadsTM as Record<string, RealSquadPlayerTM[]>
  * Nome que aparece em MAIS DE UM clube (Botafogo RJ/SP/PB) fica de fora deste
  * indice — carregar o elenco do clube errado seria pior do que nao carregar.
  */
-const REAL_SQUADS_POR_NOME: Map<string, RealSquadPlayerTM[]> = (() => {
+const REAL_SQUADS_POR_NOME = preguicoso((): Map<string, RealSquadPlayerTM[]> => {
   const mapa = new Map<string, RealSquadPlayerTM[]>()
   const duplicados = new Set<string>()
   for (const [chave, roster] of Object.entries(REAL_SQUADS_TM)) {
@@ -1095,13 +1148,13 @@ const REAL_SQUADS_POR_NOME: Map<string, RealSquadPlayerTM[]> = (() => {
   }
   for (const d of duplicados) mapa.delete(d)
   return mapa
-})()
+})
 
 function getRealSquad(team: Team): Player[] | null {
   const roster = REAL_SQUADS_TM[`${team.curto}|${normalizeTeamName(team.nome)}`]
-    ?? REAL_SQUADS_POR_NOME.get(normalizeTeamName(team.nome))
+    ?? REAL_SQUADS_POR_NOME().get(normalizeTeamName(team.nome))
     ?? (teamAliasOverrides[team.file_key ?? ""] ?? [])
-      .map(a => REAL_SQUADS_POR_NOME.get(normalizeTeamName(a)))
+      .map(a => REAL_SQUADS_POR_NOME().get(normalizeTeamName(a)))
       .find(Boolean)
   if (!roster?.length) return null
   return roster.map(p => ({
@@ -1340,8 +1393,24 @@ export interface TeamSectorRatings {
   def: number
 }
 
-export function teamSectorRatings(team: Team): TeamSectorRatings {
-  const squad = getPlayersForTeam(team)
+export function teamSectorRatings(
+  team: Team,
+  /**
+   * ELENCO VIVO — o do motor, com as contratacoes e vendas desta carreira.
+   *
+   * ⚠️ Sem isto a funcao lia SO o elenco do seed (`getPlayersForTeam`), que e o
+   * plantel de fabrica do clube. O tecnico contratava um zagueiro 60 para uma
+   * zaga 45 e o DEF do pre-jogo nao mexia um ponto — nem no fim da temporada,
+   * com o elenco inteiro trocado. Era o relato "a nota nao muda".
+   *
+   * So o clube do USUARIO tem elenco vivo; os adversarios continuam saindo do
+   * seed, que para eles e a verdade.
+   */
+  elencoVivo?: readonly { position: string; overall: number }[],
+): TeamSectorRatings {
+  const squad = elencoVivo?.length
+    ? elencoVivo.map(p => ({ pos: p.position, base: p.overall }))
+    : getPlayersForTeam(team)
   if (!squad.length) {
     // Sem elenco, o prestigio e a unica informacao real disponivel.
     const fromPrestige = Math.max(45, Math.min(90, 45 + Math.round(team.prestigio * 0.5)))
