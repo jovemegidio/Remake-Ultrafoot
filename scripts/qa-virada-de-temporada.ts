@@ -20,8 +20,21 @@
 // Premiership e Pro League BEL travaram antes (auditoria de 20/07).
 //
 //   npx tsx scripts/qa-virada-de-temporada.ts
+//
+// ⚠️ ESTE SCRIPT JA PASSOU VERDE COM A TEMPORADA TRAVADA NA MAO DE UM JOGADOR.
+// Dois furos, os dois corrigidos em 06/08/2026:
+//
+//   1. Media o calendario com `generateSeasonFixtures` (career-engine), e nao
+//      com `generateBrasileirao` — que e o gerador que o CALENDARIO DE VERDADE
+//      usa, e o unico cujo resultado alimenta `leagueUserFixtures`. Os dois
+//      divergem justamente na liga IMPAR.
+//   2. Copiava a formula `(times - 1) * 2` do gate. Numa liga de N impar o
+//      gerador monta N-1 rodadas com um folga por rodada e nenhum clube alcanca
+//      esse numero — a condicao era impossivel e a temporada nunca virava.
+//
+// Agora mede com o gerador certo e usa o piso de UM TURNO, igual ao gate.
 import assert from "node:assert/strict"
-import { getUserLeagueTeams, getLeagueRounds } from "../lib/use-game-manager"
+import { getUserLeagueTeams, getLeagueRounds, generateBrasileirao } from "../lib/use-game-manager"
 import { generateSeasonFixtures } from "../lib/career-engine"
 import { allTeams, effectiveDivision } from "../lib/teams-data"
 
@@ -41,13 +54,22 @@ const suspeitas: string[] = []
 
 for (const [divisao, clube] of [...divisoes].sort()) {
   const times = getUserLeagueTeams(clube, divisao)
-  const esperado = Math.max(1, (times.length - 1) * 2)
+  // O MESMO piso do gate em advanceWeek: um turno completo.
+  const esperado = Math.max(1, times.length - 1)
 
   let doUsuario = 0
   let erro = ""
   try {
-    const fixtures = generateSeasonFixtures(times, clube, SEASON)
-    doUsuario = fixtures.filter(f => f.homeCurto === clube || f.awayCurto === clube).length
+    // O gerador do CALENDARIO — o que decide `leagueUserFixtures`.
+    const fixtures = generateBrasileirao(times, clube, "Liga", divisao, 0)
+    doUsuario = fixtures.filter(f => f.isUserMatch).length
+    // O outro gerador (usado nas fixtures semeadas do save) tem de concordar:
+    // se os dois discordarem, alguma tela conta uma temporada que a outra nao ve.
+    const semeadas = generateSeasonFixtures(times, clube, SEASON)
+      .filter(f => f.homeCurto === clube || f.awayCurto === clube).length
+    if (semeadas !== doUsuario) {
+      suspeitas.push(`${divisao}: calendario gera ${doUsuario} jogos, save semeia ${semeadas}`)
+    }
   } catch (e) {
     erro = (e as Error).message
   }

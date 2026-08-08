@@ -5,7 +5,7 @@
 //
 // sortitoutsi: <pasta-liga>/<...>/<time>_1|2|3.png  (1=titular,2=reserva,3=terceiro)
 
-import { readdirSync, statSync, writeFileSync } from "node:fs"
+import { existsSync, readdirSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { allBrazilianTeams, allPoolTeams } from "../lib/teams-data"
 import { allInternationalTeams } from "../lib/international-teams"
@@ -13,8 +13,17 @@ import { allInternationalTeams } from "../lib/international-teams"
 const SRC = process.argv[2] ?? "C:/Ultrafoot-kits-src"
 const WRITE = process.argv.includes("--write")
 
-// pasta sortitoutsi -> divisao do jogo
+// pasta do pack -> divisao do jogo.
+//
+// ⚠️ SO ENTRA PASTA COM DIVISAO CORRESPONDENTE NO JOGO. Varias pastas do acervo
+// (Oberliga, Tercera RFEF, Serie D italiana, Championnat National, Liga 3 de
+// Portugal...) sao de divisoes que o jogo simplesmente nao tem — sem clube para
+// casar, o casamento por token acabaria dando a camisa ao homonimo de outra
+// liga. Ficar de fora e o comportamento certo: a memoria do projeto registra
+// dois casos de escudo/elenco que foram parar no clube errado por casamento
+// frouxo (Botafogo RJ/SP/PB, Barcelona ESP/Guayaquil).
 const LIGA_POR_PASTA: Record<string, string> = {
+  // Sul-America (pack sortitoutsi)
   "Brazil_-_Serie_A": "serie_a",
   "Argentina_-_Primera_Division": "liga_argentina",
   "China_-_Super_League": "chinese_super",
@@ -22,6 +31,17 @@ const LIGA_POR_PASTA: Record<string, string> = {
   "Ecuador_-_Liga_Pro_A": "primera_a_ecu",
   "Japan_-_J1_League": "j_league",
   "Uruguay_-_Liga_AUF_Uruguaya": "primera_div_ury",
+  // Europa — cada uma so onde o jogo tem a divisao (ver o aviso acima).
+  "England_-_Premier_League": "premier_league",
+  "France_-_Ligue_1": "ligue_1",
+  "France_-_Ligue_2": "ligue_2",
+  "Germany_-_Bundesliga": "bundesliga",
+  "Germany_-_Bundesliga_2": "bundesliga_2",
+  "Italy_-_Serie_A": "serie_a_ita",
+  "Italy_-_Serie_B": "serie_b_ita",
+  "Portugal_-_Primeira_Liga": "primeira_liga",
+  "Spain_-_La_Liga": "la_liga",
+  "Spain_-_Liga_Hypermotion": "la_liga_2",
 }
 
 const TOKENS_LIXO = new Set(["fc","sc","ec","cf","ca","cd","ac","afc","club","clube","de","do","da","rb","se","ce","ec","cr","cs","cd","cf","aa","ad"])
@@ -63,6 +83,18 @@ const OVERRIDE: Record<string, string> = {
   tokyofc: "fc_tokyo",
   // Argentina
   gimnasia_y_esgrima: "gimnasia_la_plata",
+  estudiantes: "estudiantes_lp",
+  estudiantes_cuarto: "estudiantes_rio_cuarto",
+  // Inglaterra / Franca / Italia / Alemanha / Espanha — grafias do pack europeu.
+  // Todos conferidos contra o file_key REAL da liga no jogo (nao adivinhados: a
+  // memoria do projeto tem dois casos de arte no clube errado por casamento
+  // frouxo, e a liga certa nao protege de trocar Inter por Milan).
+  manunited: "manchester_united",
+  parissaintgerman: "psg",
+  internazionale_milano: "inter_milan",
+  borussia_gladbach: "borussia_mgladbach",
+  hsv: "hamburgo_ale",
+  espanol: "espanyol",
 }
 
 const todos = [...allBrazilianTeams, ...allPoolTeams, ...allInternationalTeams]
@@ -79,11 +111,20 @@ function timesDaLiga(divisao: string) {
 function basesSortitoutsi(pastaLiga: string): { base: string; dir: string }[] {
   const raiz = join(SRC, pastaLiga)
   const out = new Map<string, string>()
+  // Pasta que nao veio no acervo nao e erro: o mapa lista as ligas que o jogo
+  // suporta, e nem todo pack traz todas. Antes um diretorio faltando derrubava a
+  // importacao INTEIRA com ENOENT — inclusive as ligas que ja tinham casado.
+  if (!existsSync(raiz)) return []
   const varrer = (dir: string) => {
     for (const nome of readdirSync(dir)) {
       const p = join(dir, nome)
       if (statSync(p).isDirectory()) { if (nome !== "Alt") varrer(p); continue }
-      const m = /^(.+)_[123]\.png$/i.exec(nome)
+      // DOIS FORMATOS DE NOME no acervo, e ignorar o segundo custou uma liga
+      // inteira: os packs sul-americanos usam `time_1.png` e os espanhois usam
+      // `time1.png` (sem underscore). Com so a primeira forma, La Liga casava
+      // 0 de 63 arquivos — e o relatorio dizia "0/0", como se a pasta estivesse
+      // vazia, em vez de "nao entendi estes nomes".
+      const m = /^(.+)_([123])\.png$/i.exec(nome) ?? /^(.+?)([123])\.png$/i.exec(nome)
       if (m) out.set(m[1], dir)
     }
   }
