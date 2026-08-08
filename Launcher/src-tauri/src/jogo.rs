@@ -83,6 +83,23 @@ fn somar_sessao(segundos: u64) {
     }
 }
 
+/// Fecha a sessão em andamento ANTES de o launcher morrer.
+///
+/// Quem soma o tempo é `supervisionar`, e ele só soma quando VÊ o jogo terminar.
+/// Se o launcher sai primeiro, aquela thread morre junto com o processo e a
+/// partida inteira some do "tempo de jogo" — e sair com o jogo aberto é caso
+/// comum (fechar no X, "Sair" na bandeja). Aqui a sessão é contabilizada com o
+/// tempo decorrido até agora; o jogo continua rodando (o `Child` do Rust não
+/// mata o processo ao ser descartado).
+pub fn fechar_sessao_em_andamento() {
+    let Ok(mut guarda) = ativa().lock() else { return };
+    let Some(sessao) = guarda.take() else { return };
+    let segundos = sessao.inicio.elapsed().as_secs();
+    drop(guarda);
+    somar_sessao(segundos);
+    crate::diario!("INFO", "launcher saiu com o jogo aberto ({segundos}s creditados)");
+}
+
 fn emitir(app: &AppHandle, estado: EstadoDoJogo) {
     let _ = app.emit("launcher://jogo", estado);
 }

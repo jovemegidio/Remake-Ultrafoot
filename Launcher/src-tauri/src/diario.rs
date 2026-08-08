@@ -160,6 +160,18 @@ pub fn gerar_diagnostico() -> Result<String, String> {
         crate::jogo::tempo_total().sessoes
     ));
 
+    // Requisitos do sistema: é a primeira coisa a olhar quando o jogo "instala
+    // e não abre", e a que o jogador tem menos condição de responder sozinho.
+    texto.push_str("\n=== Requisitos do sistema ===\n");
+    for r in crate::requisitos::auditar_requisitos() {
+        texto.push_str(&format!(
+            "{:<32} {}{}\n",
+            r.nome,
+            if r.instalado { "OK" } else if r.essencial { "FALTANDO (essencial)" } else { "faltando" },
+            r.versao.map(|v| format!(" — {v}")).unwrap_or_default()
+        ));
+    }
+
     texto.push_str("\n=== Últimas linhas do diário ===\n");
     if let Some(arq) = arquivo_do_dia() {
         if let Ok(conteudo) = std::fs::read_to_string(&arq) {

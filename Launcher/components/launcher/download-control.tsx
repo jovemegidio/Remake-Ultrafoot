@@ -66,7 +66,9 @@ export function DownloadControl({
     const conferindo = install.phase === "checking"
     const label = pausado
       ? t("baixar.pausado")
-      : install.phase === "applying"
+      : install.phase === "prereq"
+        ? t("baixar.requisitos")
+        : install.phase === "applying"
         ? t("baixar.aplicando")
         : install.phase === "installing"
           ? t("baixar.instalando")

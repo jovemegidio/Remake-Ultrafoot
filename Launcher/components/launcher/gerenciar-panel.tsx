@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from "react"
 import {
   FolderOpen, HardDrive, Gauge, Clock, ShieldCheck, Trash2, FileText,
   Link2, GitBranch, Loader2, CheckCircle2, AlertTriangle, PlayCircle,
+  Puzzle, Download, ShieldAlert,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
@@ -20,9 +21,102 @@ import {
   espacoNoDisco, pastaDeInstalacao, escolherPastaDeInstalacao, criarAtalho,
   definirLimiteDeBanda, estadoDoDownload, verificarArquivos, desinstalarJogo,
   canalAtual, definirCanal, abrirPastaDeLogs, gerarDiagnostico, estadoDoJogo,
-  acaoAoAbrir, definirAcaoAoAbrir,
+  acaoAoAbrir, definirAcaoAoAbrir, auditarRequisitos, instalarRequisito,
   type EstadoDoJogo, type Canal, type AcaoAoAbrir, type RelatorioDoPatch,
+  type Requisito,
 } from "@/lib/launcher-bridge"
+
+/**
+ * REQUISITOS DO SISTEMA — o "verificar dependências" da Steam.
+ *
+ * Sem WebView2 ou sem o runtime do Visual C++, o jogo instala com sucesso e
+ * simplesmente não abre. Do lado do jogador isso parece jogo quebrado, e o
+ * relato que chega é "instalei e não acontece nada". Aqui ele vê o que falta e
+ * resolve num clique.
+ */
+function BlocoDeRequisitos() {
+  const [itens, setItens] = useState<Requisito[]>([])
+  const [instalando, setInstalando] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+
+  const auditar = useCallback(() => {
+    void auditarRequisitos().then(setItens)
+  }, [])
+  useEffect(auditar, [auditar])
+
+  const instalar = async (id: string) => {
+    setErro(null)
+    setInstalando(id)
+    try {
+      await instalarRequisito(id)
+    } catch (e) {
+      setErro(String(e))
+    } finally {
+      setInstalando(null)
+      auditar()
+    }
+  }
+
+  if (itens.length === 0) return null
+  const faltando = itens.filter((i) => !i.instalado)
+
+  return (
+    <Bloco icone={Puzzle} titulo="Requisitos do sistema">
+      {faltando.length === 0 ? (
+        <p className="mb-3 flex items-center gap-1.5 text-xs text-primary">
+          <CheckCircle2 className="h-3.5 w-3.5" /> Tudo que o jogo precisa está instalado.
+        </p>
+      ) : (
+        <p className="mb-3 text-xs text-amber-300">
+          {faltando.length} {faltando.length === 1 ? "componente falta" : "componentes faltam"} nesta máquina.
+        </p>
+      )}
+
+      <div className="space-y-2">
+        {itens.map((r) => (
+          <div key={r.id} className="flex items-start justify-between gap-3 rounded-lg border border-border/60 px-3 py-2">
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                {r.instalado ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" />
+                ) : r.essencial ? (
+                  <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-red-400" />
+                ) : (
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                )}
+                <span className="truncate">{r.nome}</span>
+                {r.essencial && !r.instalado && (
+                  <span className="shrink-0 rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-300">
+                    obrigatório
+                  </span>
+                )}
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {r.instalado ? (r.versao ?? "instalado") : r.descricao}
+              </p>
+            </div>
+            {!r.instalado && (
+              <button
+                disabled={instalando !== null}
+                onClick={() => instalar(r.id)}
+                title={r.precisa_admin ? "O Windows vai pedir permissão de administrador." : undefined}
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold transition-colors hover:bg-white/[0.05] disabled:opacity-40"
+              >
+                {instalando === r.id ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Download className="h-3 w-3" />
+                )}
+                Instalar{r.tamanho_mb > 0 ? ` (${r.tamanho_mb} MB)` : ""}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      {erro && <p className="mt-2 text-[11px] text-red-300">{erro}</p>}
+    </Bloco>
+  )
+}
 
 const LIMITES = [
   { kbps: 0, rotulo: "—" },
@@ -166,6 +260,9 @@ export function GerenciarPanel({
           <span className="min-w-0 break-words">{recado}</span>
         </div>
       )}
+
+      {/* ── Requisitos do sistema ── */}
+      <BlocoDeRequisitos />
 
       {/* ── Instalação ── */}
       <Bloco icone={HardDrive} titulo={t("gerenciar.pasta")}>

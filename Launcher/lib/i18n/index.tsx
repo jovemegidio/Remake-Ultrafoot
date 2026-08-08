@@ -80,10 +80,17 @@ export function ProvedorDeIdioma({ children }: { children: React.ReactNode }) {
     let vivo = true
     void (async () => {
       const base = idioma.split("-")[0]
+      // O INGLÊS É RESERVA PARA QUEM NÃO FALA PORTUGUÊS.
+      //
+      // Em pt-PT (ou qualquer variante do português) pular o inglês é melhor: a
+      // reserva final já é o pt-BR, que um falante de português lê sem esforço.
+      // Sem esta exceção, uma chave sem tradução europeia apareceria em INGLÊS
+      // no meio de uma tela em português — o pior dos dois mundos.
+      const semIngles = base === "pt" || base === "en"
       const [doIdioma, doBase, doIngles] = await Promise.all([
         carregarPacote(idioma),
         base !== idioma ? carregarPacote(base) : Promise.resolve({}),
-        idioma.startsWith("en") ? Promise.resolve({}) : carregarPacote("en"),
+        semIngles ? Promise.resolve({}) : carregarPacote("en"),
       ])
       if (!vivo) return
       setPacote({ ...doBase, ...doIdioma })
@@ -127,7 +134,14 @@ export function ProvedorDeIdioma({ children }: { children: React.ReactNode }) {
       rtl: ehRtl(idioma),
       trocarIdioma,
       t,
-      cobertura: idioma === IDIOMA_PADRAO ? 1 : Object.keys(pacote).length / TOTAL_DE_CHAVES,
+      // Variantes do português contam como completas: o que não estiver
+      // traduzido cai no pt-BR, que já é português — nada aparece em outra
+      // língua, e mostrar "12% traduzido" ali seria só assustar quem entende
+      // cada palavra da tela.
+      cobertura:
+        idioma.split("-")[0] === "pt"
+          ? 1
+          : Object.keys(pacote).length / TOTAL_DE_CHAVES,
     }),
     [idioma, trocarIdioma, t, pacote],
   )

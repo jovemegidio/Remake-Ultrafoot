@@ -36,7 +36,13 @@ export type LatestInfo = {
  * `checking` = conferindo o que já está no disco (fase do delta, antes de baixar).
  * `applying` = trocando os arquivos, já com tudo baixado — não dá para cancelar.
  */
-export type ProgressPhase = "checking" | "downloading" | "installing" | "applying" | "done"
+export type ProgressPhase =
+  | "prereq"
+  | "checking"
+  | "downloading"
+  | "installing"
+  | "applying"
+  | "done"
 
 export type ProgressPayload = {
   phase: ProgressPhase
@@ -209,20 +215,44 @@ export async function setAutostartEnabled(enabled: boolean): Promise<void> {
 }
 
 /**
- * Ao fechar a janela, chama `shouldMinimize()`. Se true, esconde para a bandeja em
- * vez de sair. Retorna uma função para remover o handler.
+ * TODO PEDIDO DE FECHAMENTO PASSA PELA TELA.
+ *
+ * Vale para o Alt+F4 e para qualquer fechamento vindo do sistema (o X próprio da
+ * barra de título chama isto direto). O padrão é SEMPRE barrado: quem decide o
+ * que acontece — sumir na bandeja ou perguntar antes de sair — é o launcher.
+ *
+ * O padrão precisava ser barrado de qualquer forma. Não barrado, o `@tauri-apps/api`
+ * responde chamando `window.destroy()`, que exige a permissão `core:window:allow-destroy`;
+ * ela não estava na lista de capabilities, então a chamada era recusada em
+ * silêncio (promessa rejeitada, sem ninguém ouvindo) e o launcher simplesmente
+ * NÃO FECHAVA. A permissão foi adicionada, mas a saída de verdade é
+ * `encerrarLauncher()`, que derruba o processo inteiro em vez de só a janela.
+ *
+ * Retorna a função que remove o ouvinte.
  */
-export async function setupCloseToTray(shouldMinimize: () => boolean): Promise<() => void> {
+export async function aoPedirFechamento(quandoPedir: () => void): Promise<() => void> {
   if (!isTauri()) return () => {}
   const { getCurrentWindow } = await import("@tauri-apps/api/window")
   const win = getCurrentWindow()
-  const unlisten = await win.onCloseRequested(async (event) => {
-    if (shouldMinimize()) {
-      event.preventDefault()
-      await win.hide()
-    }
+  const unlisten = await win.onCloseRequested((event) => {
+    event.preventDefault()
+    quandoPedir()
   })
   return unlisten
+}
+
+/** Some para a bandeja (o launcher continua vivo no relógio). */
+export async function esconderJanela(): Promise<void> {
+  if (!isTauri()) return
+  const { getCurrentWindow } = await import("@tauri-apps/api/window")
+  await getCurrentWindow().hide()
+}
+
+/** Fecha o launcher de verdade — processo, bandeja e downloads incluídos. */
+export async function encerrarLauncher(): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("encerrar_launcher")
 }
 
 /** Abre o jogo instalado. O launcher CONTINUA VIVO supervisionando (ver jogo.rs). */
@@ -484,6 +514,55 @@ export async function versoesAnteriores(): Promise<VersaoDisponivel[]> {
   try {
     const { invoke } = await import("@tauri-apps/api/core")
     return await invoke<VersaoDisponivel[]>("versoes_anteriores")
+  } catch {
+    return []
+  }
+}
+
+// ─── Requisitos do sistema ───────────────────────────────────────────────────
+
+export type Requisito = {
+  id: string
+  nome: string
+  descricao: string
+  /** Sem isto o jogo não abre — o launcher instala sozinho antes de baixar. */
+  essencial: boolean
+  instalado: boolean
+  versao: string | null
+  precisa_admin: boolean
+  tamanho_mb: number
+}
+
+/** Lê a máquina (registro/arquivos). Não instala nada. */
+export async function auditarRequisitos(): Promise<Requisito[]> {
+  if (!isTauri()) return []
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<Requisito[]>("auditar_requisitos")
+  } catch {
+    return []
+  }
+}
+
+/** Instala um requisito. Os que pedem admin abrem o aviso do Windows. */
+export async function instalarRequisito(id: string): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("instalar_requisito", { id })
+}
+
+/**
+ * Instala os ESSENCIAIS que faltarem. Chamado antes de baixar o jogo.
+ *
+ * Devolve o que foi instalado agora. Nunca lança por falha de um requisito: é
+ * melhor o jogo ir para o disco e faltar um runtime — que a aba Gerenciar
+ * mostra — do que travar a instalação inteira.
+ */
+export async function garantirRequisitos(): Promise<string[]> {
+  if (!isTauri()) return []
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<string[]>("garantir_requisitos")
   } catch {
     return []
   }

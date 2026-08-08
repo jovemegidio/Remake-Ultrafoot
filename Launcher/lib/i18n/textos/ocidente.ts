@@ -4,6 +4,7 @@
 import type { PacoteDeIdioma } from "../catalogo"
 
 const en: PacoteDeIdioma = {
+  "baixar.requisitos": "Checking requirements",
   "nav.inicio": "Home",
   "nav.loja": "Store",
   "nav.novidades": "News",
@@ -100,6 +101,7 @@ const enGB: PacoteDeIdioma = {
 }
 
 const es: PacoteDeIdioma = {
+  "baixar.requisitos": "Comprobando requisitos",
   "nav.inicio": "Inicio",
   "nav.loja": "Tienda",
   "nav.novidades": "Novedades",
@@ -203,6 +205,7 @@ const esAR: PacoteDeIdioma = {
 }
 
 const fr: PacoteDeIdioma = {
+  "baixar.requisitos": "Vérification des prérequis",
   "nav.inicio": "Accueil",
   "nav.loja": "Boutique",
   "nav.novidades": "Actualités",
@@ -295,6 +298,7 @@ const fr: PacoteDeIdioma = {
 }
 
 const it: PacoteDeIdioma = {
+  "baixar.requisitos": "Verifica dei requisiti",
   "nav.inicio": "Home",
   "nav.loja": "Negozio",
   "nav.novidades": "Novità",
@@ -387,6 +391,7 @@ const it: PacoteDeIdioma = {
 }
 
 const nl: PacoteDeIdioma = {
+  "baixar.requisitos": "Vereisten controleren",
   "nav.inicio": "Start",
   "nav.loja": "Winkel",
   "nav.novidades": "Nieuws",
@@ -494,6 +499,7 @@ const pt: PacoteDeIdioma = {
 }
 
 const gl: PacoteDeIdioma = {
+  "baixar.requisitos": "Comprobando requisitos",
   "nav.inicio": "Inicio",
   "nav.loja": "Tenda",
   "nav.novidades": "Novidades",
@@ -522,9 +528,48 @@ const gl: PacoteDeIdioma = {
   "gerenciar.desinstalar": "Desinstalar",
   "conf.titulo": "Configuración",
   "conf.idioma": "Idioma",
+  "nav.hub": "FC Hub", "nav.centro": "Game Center",
+  "conta.beneficios": "Compras e progreso",
+  "rede.anticheat": "Anti-trampas activo", "rede.edicaoLiberada": "Edición liberada",
+  "acao.entrarParaInstalar": "Inicia sesión para instalar", "acao.jogando": "Xogando",
+  "acao.parar": "Deter",
+  "baixar.atualizando": "Actualizando", "baixar.conferindo": "Comprobando ficheiros",
+  "baixar.aplicando": "Aplicando a actualización", "baixar.restantes": "{tempo} restantes",
+  "baixar.tamanho": "Tamaño: {tamanho}", "baixar.semInternet": "Sen internet para descargar",
+  "baixar.obrigatoria": "Actualización obrigatoria ({tamanho}) — o launcher xa a está a descargar.",
+  "baixar.rapida": "Actualización rápida: {baixado} en vez de {completo}",
+  "baixar.semEspaco": "Espazo insuficiente no disco",
+  "gerenciar.pasta": "Cartafol do xogo", "gerenciar.escolherPasta": "Escoller cartafol",
+  "gerenciar.espacoLivre": "{espaco} libres", "gerenciar.limite": "Límite de velocidade",
+  "gerenciar.semLimite": "Sen límite", "gerenciar.tempoDeJogo": "Tempo xogado",
+  "gerenciar.ultimaVez": "Última partida", "gerenciar.nunca": "Nunca",
+  "gerenciar.sessoes": "{n} sesións", "gerenciar.horas": "{h} h {m} min",
+  "gerenciar.arquivosOk": "Todos os ficheiros están correctos.",
+  "gerenciar.arquivosRuins": "{n} ficheiros con problemas.",
+  "gerenciar.desinstalarAviso": "O xogo elimínase deste computador. As túas partidas e a túa conta manteñense.",
+  "gerenciar.atalho": "Crear atallo no escritorio", "gerenciar.canal": "Canle de actualización",
+  "gerenciar.estavel": "Estable", "gerenciar.beta": "Beta",
+  "gerenciar.betaAviso": "A beta recibe as versións antes ca ninguén — e tamén os seus fallos.",
+  "gerenciar.logs": "Abrir o cartafol de rexistros", "gerenciar.diagnostico": "Xerar diagnóstico",
+  "gerenciar.diagnosticoPronto": "Diagnóstico gardado en {caminho}",
+  "conf.geral": "Xeral", "conf.aparencia": "Aparencia", "conf.acessibilidade": "Accesibilidade",
+  "conf.perfil": "Perfil", "conf.idiomaAjuda": "Cambia o launcher. O xogo ten o seu propio idioma.",
+  "conf.iniciarComWindows": "Iniciar con Windows",
+  "conf.bandeja": "Minimizar á bandexa ao pechar", "conf.aoAbrirOJogo": "Ao abrir o xogo",
+  "conf.esconder": "Agochar na bandexa", "conf.minimizar": "Minimizar",
+  "conf.fecharLauncher": "Pechar o launcher", "conf.naoFazerNada": "Deixar a xanela aberta",
+  "conf.tema": "Tema", "conf.fonte": "Fonte", "conf.tamanhoDoTexto": "Tamaño do texto",
+  "conf.altoContraste": "Alto contraste", "conf.reduzirAnimacoes": "Reducir animacións",
+  "launcher.atualizando": "Actualizando o launcher",
+  "launcher.novaVersao": "Nova versión {versao}. O launcher vai reiniciarse en breve.",
+  "launcher.semAtualizar": "Xogar sen actualizar",
+  "launcher.falhou": "Non puiden instalar a actualización do launcher. Podes seguir xogando.",
+  "aviso.jogoCaiu": "O xogo pechouse de forma inesperada. Verificar os ficheiros adoita resolvelo.",
+  "aviso.fecheOJogo": "Pecha o xogo antes de continuar.",
 }
 
 const ca: PacoteDeIdioma = {
+  "baixar.requisitos": "Comprovant els requisits",
   "nav.inicio": "Inici",
   "nav.loja": "Botiga",
   "nav.novidades": "Novetats",
@@ -553,6 +598,44 @@ const ca: PacoteDeIdioma = {
   "gerenciar.desinstalar": "Desinstal·la",
   "conf.titulo": "Configuració",
   "conf.idioma": "Idioma",
+  "nav.hub": "FC Hub", "nav.centro": "Game Center",
+  "conta.beneficios": "Compres i progrés",
+  "rede.anticheat": "Anti-trampes actiu", "rede.edicaoLiberada": "Edició desbloquejada",
+  "acao.entrarParaInstalar": "Inicia la sessió per instal·lar", "acao.jogando": "Jugant",
+  "acao.parar": "Atura",
+  "baixar.atualizando": "Actualitzant", "baixar.conferindo": "Comprovant els fitxers",
+  "baixar.aplicando": "Aplicant l'actualització", "baixar.restantes": "{tempo} restants",
+  "baixar.tamanho": "Mida: {tamanho}", "baixar.semInternet": "Sense internet per baixar",
+  "baixar.obrigatoria": "Actualització obligatòria ({tamanho}) — el launcher ja la baixa.",
+  "baixar.rapida": "Actualització ràpida: {baixado} en lloc de {completo}",
+  "baixar.semEspaco": "Espai insuficient al disc",
+  "gerenciar.pasta": "Carpeta del joc", "gerenciar.escolherPasta": "Tria una carpeta",
+  "gerenciar.espacoLivre": "{espaco} lliures", "gerenciar.limite": "Límit de velocitat",
+  "gerenciar.semLimite": "Sense límit", "gerenciar.tempoDeJogo": "Temps jugat",
+  "gerenciar.ultimaVez": "Última partida", "gerenciar.nunca": "Mai",
+  "gerenciar.sessoes": "{n} sessions", "gerenciar.horas": "{h} h {m} min",
+  "gerenciar.arquivosOk": "Tots els fitxers són correctes.",
+  "gerenciar.arquivosRuins": "{n} fitxers amb problemes.",
+  "gerenciar.desinstalarAviso": "El joc s'elimina d'aquest ordinador. Les partides i el compte es mantenen.",
+  "gerenciar.atalho": "Crea una drecera a l'escriptori", "gerenciar.canal": "Canal d'actualització",
+  "gerenciar.estavel": "Estable", "gerenciar.beta": "Beta",
+  "gerenciar.betaAviso": "La beta rep les versions abans que ningú — i també els seus errors.",
+  "gerenciar.logs": "Obre la carpeta de registres", "gerenciar.diagnostico": "Genera un diagnòstic",
+  "gerenciar.diagnosticoPronto": "Diagnòstic desat a {caminho}",
+  "conf.geral": "General", "conf.aparencia": "Aparença", "conf.acessibilidade": "Accessibilitat",
+  "conf.perfil": "Perfil", "conf.idiomaAjuda": "Canvia el launcher. El joc té el seu propi idioma.",
+  "conf.iniciarComWindows": "Inicia amb el Windows",
+  "conf.bandeja": "Minimitza a la safata en tancar", "conf.aoAbrirOJogo": "En obrir el joc",
+  "conf.esconder": "Amaga a la safata", "conf.minimizar": "Minimitza",
+  "conf.fecharLauncher": "Tanca el launcher", "conf.naoFazerNada": "Deixa la finestra oberta",
+  "conf.tema": "Tema", "conf.fonte": "Tipus de lletra", "conf.tamanhoDoTexto": "Mida del text",
+  "conf.altoContraste": "Alt contrast", "conf.reduzirAnimacoes": "Redueix les animacions",
+  "launcher.atualizando": "Actualitzant el launcher",
+  "launcher.novaVersao": "Nova versió {versao}. El launcher es reiniciarà de seguida.",
+  "launcher.semAtualizar": "Juga sense actualitzar",
+  "launcher.falhou": "No he pogut instal·lar l'actualització del launcher. Pots continuar jugant.",
+  "aviso.jogoCaiu": "El joc s'ha tancat inesperadament. Verificar els fitxers sol resoldre-ho.",
+  "aviso.fecheOJogo": "Tanca el joc abans de continuar.",
 }
 
 const PACOTES: Record<string, PacoteDeIdioma> = {

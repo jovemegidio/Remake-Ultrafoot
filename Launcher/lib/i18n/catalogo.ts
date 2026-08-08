@@ -60,6 +60,7 @@ export const PT_BR = {
   "baixar.conferindo": "Conferindo arquivos",
   "baixar.aplicando": "Aplicando atualização",
   "baixar.pausado": "Pausado",
+  "baixar.requisitos": "Verificando requisitos do Windows",
   "baixar.restantes": "{tempo} restantes",
   "baixar.tamanho": "Tamanho: {tamanho}",
   "baixar.semInternet": "Sem internet para baixar",
@@ -117,6 +118,14 @@ export const PT_BR = {
   "launcher.novaVersao": "Nova versão {versao}. O launcher vai reiniciar em instantes.",
   "launcher.semAtualizar": "Jogar sem atualizar agora",
   "launcher.falhou": "Não consegui instalar a atualização do launcher. Você pode continuar jogando normalmente.",
+
+  // ── Sair do launcher ──
+  "sair.titulo": "Fechar o launcher?",
+  "sair.texto": "Você realmente deseja fechar o Ultrafoot Launcher?",
+  "sair.confirmar": "Sim, fechar",
+  "sair.bandeja": "Só minimizar para a bandeja",
+  "sair.avisoDownload": "O download em andamento vai parar.",
+  "sair.avisoJogo": "O jogo continua aberto, mas o launcher para de acompanhar a partida.",
 
   // ── Avisos ──
   "aviso.jogoCaiu": "O jogo fechou inesperadamente. Verificar os arquivos costuma resolver.",

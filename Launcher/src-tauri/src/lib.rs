@@ -23,6 +23,7 @@ mod diario; // log em arquivo + diagnóstico para o suporte
 mod disco; // espaço livre e pasta de instalação escolhida
 mod jogo; // supervisão do jogo aberto, tempo de jogo e crash
 mod patch; // atualização por arquivo (delta) e verificação de integridade
+mod requisitos; // WebView2, VC++, .NET, DirectX: audita e instala o que falta
 
 const LATEST_JSON_URL: &str =
     "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json";
@@ -517,7 +518,21 @@ pub(crate) fn read_installed_game() -> InstalledGame {
 
 #[tauri::command]
 fn get_installed_game() -> InstalledGame {
-    read_installed_game()
+    let jogo = read_installed_game();
+    // ESTA LINHA É O SINAL DE VIDA DA INTERFACE.
+    //
+    // É a primeira coisa que a tela pede ao abrir. Se ela aparece no diário, a
+    // webview carregou e o React rodou; se o log tem o "launcher iniciado" mas
+    // NÃO tem esta linha, o processo subiu e a interface não — que é o sintoma
+    // de janela em branco (CSP bloqueando um script, arquivo faltando no
+    // pacote). Sem isso, os dois casos dão o mesmo relato: "não abre".
+    diario!(
+        "INFO",
+        "interface no ar — jogo instalado={} versão={}",
+        jogo.installed,
+        jogo.version.clone().unwrap_or_else(|| "?".into())
+    );
+    jogo
 }
 
 #[tauri::command]
@@ -706,7 +721,7 @@ async fn download_and_install(app: AppHandle, url: String, version: String) -> R
 
 /// Baixa `url` para `dest` com progresso (velocidade/ETA), RETOMANDO de um download
 /// parcial e com ATÉ 3 tentativas em caso de falha de rede.
-fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) -> Result<(), String> {
+pub(crate) fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) -> Result<(), String> {
     // ⚠️ O PEDAÇO PARCIAL SÓ VALE PARA A MESMA URL. Ver o bug de %TEMP% mais
     // abaixo: um parcial de OUTRA versão fazia o `Range` pedir a continuação de
     // um arquivo já completo, o servidor devolvia 416 e a atualização morria em
@@ -1160,8 +1175,25 @@ fn do_self_update(
 #[cfg(windows)]
 fn spawn_installer_and_relaunch(setup: &std::path::Path) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
+    // ⚠️ SO `CREATE_NO_WINDOW` — NAO somar `DETACHED_PROCESS` (relato: "uma tela
+    // preta de `timeout /t 2 /nobreak` aparece durante a instalacao").
+    //
+    // As duas flags se atrapalham. `DETACHED_PROCESS` diz "nao herde o console
+    // do pai e nao receba nenhum"; o `cmd.exe`, sendo aplicacao de console e
+    // ficando sem um, **aloca um console proprio — visivel**, com o titulo da
+    // linha que estiver rodando. O `>nul` do script esconde o TEXTO, nunca a
+    // janela. `CREATE_NO_WINDOW` sozinho cria o console ja oculto, que e o que
+    // se quer aqui.
+    //
+    // Tirar `DETACHED_PROCESS` nao encurta a vida do processo: no Windows o
+    // filho nao morre com o pai (nao ha job object envolvido), e e por isso que
+    // o .bat consegue esperar os 2 s, rodar o instalador e reabrir o launcher
+    // depois que o processo antigo ja saiu.
+    //
+    // Este era o UNICO spawn do launcher que somava as duas flags — os outros
+    // seis (instalador do jogo, requisitos, etc.) ja usavam so `CREATE_NO_WINDOW`
+    // e nunca mostraram janela.
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    const DETACHED_PROCESS: u32 = 0x0000_0008;
 
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let bat = std::env::temp_dir().join("ultrafoot-launcher-update.bat");
@@ -1176,7 +1208,7 @@ fn spawn_installer_and_relaunch(setup: &std::path::Path) -> Result<(), String> {
     std::process::Command::new("cmd")
         .arg("/C")
         .arg(&bat)
-        .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
+        .creation_flags(CREATE_NO_WINDOW)
         .spawn()
         .map_err(|e| format!("não consegui iniciar a atualização: {e}"))?;
     Ok(())
@@ -1436,6 +1468,28 @@ async fn self_update(
         .map_err(|e| format!("tarefa interrompida: {e}"))??;
     app.exit(0);
     Ok(())
+}
+
+/// SAIR DE VEZ — o único caminho de saída do launcher.
+///
+/// A tela pergunta antes ("deseja mesmo fechar?"); quando a resposta é sim, quem
+/// encerra é este comando, e não `window.destroy()` do lado do JavaScript.
+///
+/// A diferença importa: destruir a janela deixa de pé a bandeja e as threads de
+/// download/supervisão, e depende de uma permissão da janela para funcionar —
+/// era exatamente por essa permissão faltar que o X não fechava nada. `app.exit`
+/// não depende de permissão nenhuma e derruba o processo inteiro, que é o que
+/// "fechar o launcher" significa para quem clicou.
+#[tauri::command]
+fn encerrar_launcher(app: AppHandle) {
+    diario!("INFO", "launcher encerrado pelo usuário");
+    encerrar(&app);
+}
+
+/// Saída única: credita a sessão de jogo aberta e derruba o processo.
+fn encerrar(app: &AppHandle) {
+    jogo::fechar_sessao_em_andamento();
+    app.exit(0);
 }
 
 #[derive(Serialize, Clone)]
@@ -1704,6 +1758,14 @@ pub fn run() {
                 std::env::consts::ARCH
             );
             controle::carregar_limite();
+            // AUDITORIA DOS REQUISITOS NA ABERTURA, fora da thread da UI.
+            //
+            // Só LÊ o registro e registra no diário — não instala nada aqui. O
+            // valor é o diagnóstico: quando alguém disser "instalei e não abre",
+            // a resposta já está no log daquele dia, sem precisar perguntar nada.
+            std::thread::spawn(|| {
+                let _ = requisitos::auditar_requisitos();
+            });
 
             // DESCOBERTA DE ENDEREÇOS FORA DA THREAD DA UI.
             //
@@ -1739,7 +1801,10 @@ pub fn run() {
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "open" => show_main(app),
-                    "quit" => app.exit(0),
+                    // "Sair" na bandeja não pergunta nada — é um item de menu
+                    // que já diz o que faz. Mas passa pela mesma saída da tela,
+                    // para o tempo de jogo em andamento não se perder.
+                    "quit" => encerrar(app),
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
@@ -1762,6 +1827,7 @@ pub fn run() {
             launch_game,
             check_launcher_update,
             self_update,
+            encerrar_launcher,
             fetch_launcher_config,
             check_server_status,
             google_login,
@@ -1788,6 +1854,10 @@ pub fn run() {
             jogo::tempo_de_jogo,
             jogo::acao_ao_abrir,
             jogo::definir_acao_ao_abrir,
+            // Requisitos do sistema (WebView2, VC++, .NET, DirectX)
+            requisitos::auditar_requisitos,
+            requisitos::instalar_requisito,
+            requisitos::garantir_requisitos,
             // Manutenção
             desinstalar_jogo,
             criar_atalho,

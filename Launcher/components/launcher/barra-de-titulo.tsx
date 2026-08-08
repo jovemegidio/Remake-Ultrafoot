@@ -19,8 +19,9 @@
  *    a decoração. As oito faixas invisíveis das beiradas repõem o
  *    comportamento — sem elas, a janela ficaria presa num tamanho só.
  *
- * O X respeita "minimizar para a bandeja": quem ligou a opção continua com o
- * launcher vivo no relógio, exatamente como antes.
+ * O X NÃO fecha nada por conta própria: ele só avisa (`aoFechar`). Quem decide é
+ * o launcher — sumir na bandeja, para quem ligou a opção, ou perguntar antes de
+ * sair. É o mesmo caminho do Alt+F4, para os dois não divergirem.
  */
 
 import { useCallback, useEffect, useState } from "react"
@@ -68,11 +69,11 @@ export function BordasParaRedimensionar() {
 
 export function BarraDeTitulo({
   titulo,
-  fecharParaBandeja,
+  aoFechar,
 }: {
   titulo: string
-  /** Mesma preferência do X do sistema: some para a bandeja em vez de sair. */
-  fecharParaBandeja: () => boolean
+  /** Pedido de fechamento. A decisão (bandeja ou confirmar a saída) é de quem chama. */
+  aoFechar: () => void
 }) {
   const [maximizada, setMaximizada] = useState(true)
 
@@ -98,10 +99,6 @@ export function BarraDeTitulo({
     })
   }, [])
 
-  const fechar = useCallback(() => {
-    void janela().then((j) => (fecharParaBandeja() ? j.hide() : j.close()))
-  }, [fecharParaBandeja])
-
   return (
     <div
       data-tauri-drag-region
@@ -122,7 +119,7 @@ export function BarraDeTitulo({
         <BotaoDaJanela aoClicar={alternarTamanho} rotulo={maximizada ? "Restaurar" : "Maximizar"}>
           {maximizada ? <Copy className="h-3 w-3" /> : <Square className="h-3 w-3" />}
         </BotaoDaJanela>
-        <BotaoDaJanela aoClicar={fechar} rotulo="Fechar" perigo>
+        <BotaoDaJanela aoClicar={aoFechar} rotulo="Fechar" perigo>
           <X className="h-3.5 w-3.5" />
         </BotaoDaJanela>
       </div>

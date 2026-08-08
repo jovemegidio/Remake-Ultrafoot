@@ -17,6 +17,7 @@ import {
 } from "@/lib/preferencias"
 import { CommunityBar } from "./community-bar"
 import { BarraDeTitulo, BordasParaRedimensionar } from "./barra-de-titulo"
+import { ConfirmarSaida } from "./confirmar-saida"
 import { GerenciarPanel } from "./gerenciar-panel"
 import { ligarAtalhosDeTelaCheia } from "@/lib/tela-cheia"
 import { cn } from "@/lib/utils"
@@ -31,11 +32,14 @@ import {
   selfUpdate,
   getAutostartEnabled,
   setAutostartEnabled,
-  setupCloseToTray,
+  aoPedirFechamento,
+  esconderJanela,
+  encerrarLauncher,
   fetchLauncherConfig,
   checkServerStatus,
   openExternal,
   atualizarPorPartes,
+  garantirRequisitos,
   pausarDownload,
   retomarDownload,
   cancelarDownload,
@@ -202,6 +206,21 @@ export function LauncherShell({
   const [closeToTray, setCloseToTray] = useState(false)
   const closeToTrayRef = useRef(false)
   closeToTrayRef.current = closeToTray
+  const [confirmandoSaida, setConfirmandoSaida] = useState(false)
+
+  // PEDIDO DE FECHAMENTO (X da barra, Alt+F4, fechar pelo sistema).
+  //
+  // Com "minimizar para a bandeja" ligado não há o que confirmar: nada está
+  // sendo fechado, a janela só some. Sem a opção, a saída é definitiva — aí a
+  // pergunta aparece. O ref existe porque este callback é registrado uma vez no
+  // ouvinte do Tauri e não pode congelar o valor da preferência.
+  const pedirParaFechar = useCallback(() => {
+    if (closeToTrayRef.current) {
+      void esconderJanela()
+      return
+    }
+    setConfirmandoSaida(true)
+  }, [])
 
   useEffect(() => {
     // Carrega preferências e liga o "fechar para a bandeja".
@@ -216,11 +235,11 @@ export function LauncherShell({
     }
     void getAutostartEnabled().then(setAutostart)
     let cleanup = () => {}
-    void setupCloseToTray(() => closeToTrayRef.current).then((un) => {
+    void aoPedirFechamento(pedirParaFechar).then((un) => {
       cleanup = un
     })
     return () => cleanup()
-  }, [])
+  }, [pedirParaFechar])
 
   const toggleCloseToTray = useCallback((value: boolean) => {
     setCloseToTray(value)
@@ -488,6 +507,22 @@ export function LauncherShell({
        * sempre funcionou. Atualizar não pode depender de o atalho dar certo.
        */
       const caminho = async () => {
+        // ── REQUISITOS DO SISTEMA, ANTES DE QUALQUER BYTE ──
+        //
+        // Sem WebView2 ou sem o runtime do Visual C++, o jogo instala "com
+        // sucesso" e não abre — e o jogador só descobre depois de esperar o
+        // download inteiro. Conferir aqui custa a leitura de duas chaves do
+        // registro quando está tudo certo (o caso comum) e evita o pior relato
+        // que existe: "instalei e não acontece nada".
+        //
+        // Nunca bloqueia: se um requisito falhar, o download acontece do mesmo
+        // jeito e a pendência fica visível na aba Gerenciar.
+        setInstall((prev) => ({ ...prev, phase: "prereq", progress: 0 }))
+        const instalados = await garantirRequisitos()
+        if (instalados.length > 0) {
+          console.info(`[launcher] requisitos instalados: ${instalados.join(", ")}`)
+        }
+
         if (latest.manifesto && install.installed) {
           try {
             const r = await atualizarPorPartes(latest.manifesto, aoProgredir)
@@ -523,6 +558,26 @@ export function LauncherShell({
             phase: "done",
             progress: 100,
           }))
+
+          /**
+           * ABRE O JOGO SOZINHO AO TERMINAR (pedido).
+           *
+           * Instalar ou atualizar so tem um proposito: jogar. Terminar a barra e
+           * deixar o launcher parado esperando um segundo clique nao serve a
+           * ninguem — ainda mais na atualizacao OBRIGATORIA, em que a pessoa ja
+           * apertou Jogar uma vez e foi interrompida pelo download.
+           *
+           * ⚠️ So abre se o caminho existir DE VERDADE (`real.path`): sem isso a
+           * chamada falharia e o erro apareceria do nada, sem ninguem ter pedido
+           * nada. E o erro continua sendo mostrado, nao engolido — foi assim que
+           * um `void launchGame(...)` escondeu falha de abertura antes.
+           */
+          const caminhoDoJogo = real.path ?? install.path
+          if (real.installed && caminhoDoJogo) {
+            launchGame(caminhoDoJogo).catch((e: unknown) => {
+              console.error("[launcher] instalou mas nao abriu:", e)
+            })
+          }
         })
         .catch((err) => {
           console.error("[launcher] falha ao instalar:", err)
@@ -630,7 +685,21 @@ export function LauncherShell({
     <div className="launcher-shell relative flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
       {/* Janela sem decoração do sistema: os controles e o arrasto vêm daqui. */}
       <BordasParaRedimensionar />
-      <BarraDeTitulo titulo="Ultrafoot Launcher" fecharParaBandeja={() => closeToTrayRef.current} />
+      <BarraDeTitulo titulo="Ultrafoot Launcher" aoFechar={pedirParaFechar} />
+      {confirmandoSaida && (
+        <ConfirmarSaida
+          jogoRodando={!!jogo?.rodando}
+          baixando={install.downloading}
+          aoCancelar={() => setConfirmandoSaida(false)}
+          aoMinimizar={() => {
+            setConfirmandoSaida(false)
+            void esconderJanela()
+          }}
+          aoConfirmar={() => {
+            void encerrarLauncher()
+          }}
+        />
+      )}
       <div className="relative flex min-h-0 flex-1 w-full overflow-hidden">
       <div className="pointer-events-none absolute inset-0 opacity-40 launcher-grid" />
       {launcherUpdate && (

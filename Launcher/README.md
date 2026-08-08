@@ -19,6 +19,161 @@ jogador — em **modo silencioso** — sem precisar atualizar por dentro do jogo
 
 O botão único mostra **Instalar** / **Atualizar** / **Jogar** conforme o estado real.
 
+## Atualização por arquivo (delta) — 1.0.26
+
+Toda atualização do jogo baixava o **instalador inteiro**: uma correção de três
+linhas custava ~630 MB para cada jogador, toda vez. Com o ritmo de publicação do
+Ultrafoot, esse era o maior custo real do produto.
+
+Agora a publicação pode gerar um **manifesto**: a lista de todos os arquivos da
+versão, cada um com `sha256` e tamanho. Os conteúdos ficam num armazém
+**endereçado por conteúdo** (`blobs/<2 primeiros do sha>/<sha>.gz`), então
+arquivo que não mudou entre versões tem o mesmo nome — não sobe de novo e, o que
+importa, **não desce de novo**.
+
+```bash
+# na máquina onde o jogo está INSTALADO (não a pasta de build)
+node scripts/gerar-manifesto.mjs \
+  --pasta "C:\Users\<voce>\AppData\Local\Ultrafoot 26" \
+  --versao 1.0.258 \
+  --saida .\dist-patch
+
+rsync -av dist-patch/blobs/ vps:/var/www/ultrafoot/downloads/blobs/
+scp dist-patch/manifesto-1.0.258.json vps:/var/www/ultrafoot/downloads/
+```
+
+E no `latest.json`:
+
+```json
+"platforms": { "windows-x86_64": { "url": "…", "manifesto": "https://…/downloads/manifesto-1.0.258.json" } }
+```
+
+**As três regras que não podem cair** (`src-tauri/src/patch.rs`):
+
+1. **Nada é aplicado antes de TODOS os blobs estarem baixados e conferidos.** Um
+   patch aplicado pela metade é instalação quebrada — pior do que não atualizar,
+   e sem instalador para consertar.
+2. **Caminho vindo do manifesto é dado de rede.** `..`, caminho absoluto e letra
+   de unidade são recusados; sem isso um manifesto adulterado escreveria em
+   qualquer lugar do disco.
+3. **Falhou? Cai no instalador completo.** O delta é otimização, nunca o único
+   caminho. Sem manifesto publicado, o launcher se comporta como sempre se
+   comportou.
+
+Nunca apague blobs de versões ainda no ar — o manifesto delas aponta para eles.
+
+O mesmo manifesto alimenta o **verificar integridade** e o **reparar** de
+verdade: em vez de rebaixar o instalador, o launcher confere arquivo por arquivo
+e busca só os que não batem.
+
+## Requisitos do sistema (1.0.28)
+
+O instalador entregava os arquivos e ia embora. Faltando o **WebView2** ou o
+**runtime do Visual C++** na máquina, o jogo instalava "com sucesso" e **não
+abria** — e o relato que chegava era "instalei e não acontece nada".
+
+Agora o launcher audita antes de baixar (`src-tauri/src/requisitos.rs`):
+
+| Componente | Papel | Ação |
+| --- | --- | --- |
+| Microsoft Edge WebView2 | o jogo É uma app Tauri: a interface roda dentro dele | **instala sozinho** |
+| Visual C++ 2015-2022 x64 | runtime C do executável e do próprio WebView2 | **instala sozinho** |
+| .NET Framework 4.8 | já vem no Win10 1903+; cobre instalação antiga | um clique em Gerenciar |
+| DirectX (D3DCompiler) | aceleração gráfica da interface | um clique em Gerenciar |
+
+Regras que valem a pena manter:
+
+- **Detecta antes de instalar.** Rodar um redistribuível à toa custa minutos,
+  pede UAC sem motivo e é o jeito mais rápido de o jogador achar que o launcher
+  está fazendo besteira.
+- **Usa o instalador que já veio com o jogo** (`prerequisites/vc_redist.x64.exe`)
+  quando ele existe — não baixa de novo.
+- **Nunca bloqueia o download.** Se um requisito falhar, o jogo vai para o disco
+  do mesmo jeito e a pendência aparece na aba Gerenciar. Travar a instalação
+  inteira por causa de um runtime seria pior.
+- **Códigos 3010 e 1638 são sucesso** (reinício pendente / versão igual ou mais
+  nova já instalada). Tratá-los como erro faria o launcher insistir para sempre
+  num componente que já está lá.
+- **Confere de novo na máquina depois de instalar.** O código de saída diz que o
+  instalador rodou, não que a dependência ficou utilizável.
+
+Dá para acrescentar um requisito sem lançar versão nova, pelo array `requisitos`
+do `launcher-config.json` — mas **só com `sha256`**: isso baixa e executa um
+programa, muitas vezes como administrador, e sem conferir a assinatura quem
+alterasse a configuração mandaria o launcher rodar o que quisesse na máquina de
+todo mundo. Extra sem `sha256` é ignorado de propósito.
+
+O diagnóstico (`Gerenciar → Gerar diagnóstico`) já sai com a tabela preenchida —
+é a primeira coisa a olhar quando alguém disser que o jogo não abre.
+
+## O que a aba Gerenciar faz
+
+Tudo isto existia só no backend e não tinha porta de entrada:
+
+| Ação | Onde mora |
+| --- | --- |
+| Verificar arquivos / reparar | `patch.rs` → `verificar_arquivos` |
+| Escolher o disco de instalação | `disco.rs` → `/D=` do NSIS, só antes da 1ª instalação |
+| Espaço livre antes de baixar | `disco.rs` → `conferir_espaco` (2,2× o pacote + 300 MB) |
+| Limite de velocidade | `controle.rs` → balde de fichas no loop de leitura |
+| Pausar / cancelar | `controle.rs` → o pedaço baixado FICA no disco |
+| Tempo de jogo e última sessão | `jogo.rs` → `%APPDATA%/Ultrafoot/tempo-de-jogo.json` |
+| Desinstalar | `UninstallString` do registro + `/S _?=` |
+| Canal beta e atalho | `canal.json` / WScript.Shell |
+| Logs e diagnóstico | `diario.rs` → `%APPDATA%/Ultrafoot/logs` |
+
+## O launcher continua vivo enquanto o jogo roda
+
+`launch_game` terminava com `app.exit(0)`: o launcher se matava no instante em
+que o jogo abria. Isso custava três coisas de uma vez — a presença no FC Hub
+morria justo quando a pessoa começava a jogar, não havia como contar tempo de
+jogo, e crash era indistinguível de fechar normalmente.
+
+Agora ele **some para a bandeja** (configurável em Gerenciar) e supervisiona o
+processo filho: conta a sessão, volta à tela quando o jogo sai e, se o código de
+saída não for zero, notifica e oferece o *Verificar arquivos*.
+
+## Diagnóstico: a linha que prova que a interface subiu
+
+`%APPDATA%/Ultrafoot/logs/launcher-AAAA-MM-DD.log` (data em **UTC**, 7 dias):
+
+```
+2026-08-05 00:06:47Z INFO  launcher 1.0.26 iniciado (windows x86_64)
+2026-08-05 00:06:48Z INFO  interface no ar — jogo instalado=true versão=1.0.255
+```
+
+A segunda linha é o sinal de vida da UI. Se o log tem a primeira e **não** tem a
+segunda, o processo subiu e a webview não — janela em branco (CSP bloqueando um
+script, arquivo faltando no pacote). Sem ela, os dois casos geram o mesmo relato:
+"não abre".
+
+## Idiomas
+
+126 idiomas em `lib/i18n/`. O português é a fonte (`catalogo.ts`); os pacotes são
+`Partial<Catalogo>` de propósito, e o que faltar cai na cadeia
+**idioma → idioma base → inglês → português**. Um idioma pela metade mostra a
+frase em outro idioma; nunca mostra a chave crua. O seletor exibe a cobertura em
+porcentagem — é mais honesto do que deixar o jogador descobrir sozinho.
+
+Para saber onde continuar:
+
+```bash
+node scripts/qa-idiomas.mjs             # 48 completos, 78 parciais (05/08/2026)
+node scripts/qa-idiomas.mjs --faltando  # as chaves que faltam, idioma a idioma
+```
+
+Completos hoje: as famílias ocidental (inglês, espanhol, francês, italiano,
+neerlandês, galego, catalão e as variantes), germânica/nórdica (alemão, sueco,
+dinamarquês, norueguês ×2, finlandês, islandês, feroês, africâner,
+luxemburguês), eslava inteira (12), Oriente Médio (árabe, turco, hebraico,
+persa, urdu, pashto, curdo ×2, sindi, azerbaijano) e leste asiático (chinês ×2,
+cantonês, japonês, coreano). Os demais têm o núcleo — navegação, botões e
+estados de download — e completar é só acrescentar chaves em `lib/i18n/textos/`.
+
+⚠️ A janela abre **sem decoração do sistema** (`decorations: false`). Quem mexer
+nisso precisa lembrar que a barra e as bordas de redimensionar passaram a ser
+nossas: `components/launcher/barra-de-titulo.tsx`.
+
 ### Recibo da compra
 
 Na aba da loja, todo pedido **já pago** ganha um botão de recibo. O launcher pede
