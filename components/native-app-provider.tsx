@@ -1,7 +1,9 @@
 "use client"
 
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { ControllerButton, useGamepadConnected } from "@/components/controller-buttons"
 import { normalizeAppHref, toClientRoute } from "@/lib/hard-navigation"
 import { initPersistentStore, storeGet, storeSet } from "@/lib/persistent-store"
 import { applySavedFullscreen, toggleFullscreen } from "@/lib/fullscreen"
@@ -11,7 +13,7 @@ import type { InGameUpdateOffer } from "@/lib/updater"
 
 // Versao do "o que ha de novo". Trocar SO quando houver novidade a apresentar —
 // e o que faz o modal reaparecer para quem ja viu a anterior.
-const WHATS_NEW_VERSION = "1.0.187"
+const WHATS_NEW_VERSION = "1.0.271"
 const WHATS_NEW_KEY = "ultrafoot:last-seen-whats-new"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
@@ -325,25 +327,49 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
   const [page, setPage] = useState(0)
   const pages = [
     {
-      eyebrow: "Temporada 2026 · Build 1.0.187",
-      title: "Partidas mais imersivas",
-      body: "O radar ao vivo agora respeita as dimensões reais do campo, ganhou leitura visual mais clara e mantém jogadores, bola e formações em escala coerente.",
-      accent: "DIA DE JOGO",
-      bullets: ["Campo na proporção oficial de 105 × 68", "Jogadores e nomes mais legíveis", "Física e Notas removidos da navegação"],
+      eyebrow: "Temporada 2026 · Build 1.0.271",
+      title: "A temporada volta a virar",
+      body: "Carreiras ficavam presas no mesmo ano para sempre: os adversários da liga eram remontados a cada carregamento, então uma atualização do jogo reescrevia o campeonato no meio da temporada e o fim de ano nunca chegava — sem acesso e sem rebaixamento.",
+      accent: "CARREIRA",
+      bullets: [
+        "Os adversários da temporada ficam gravados na carreira",
+        "Liga com número ímpar de clubes voltou a poder terminar",
+        "Acesso e rebaixamento aplicados de novo na virada",
+      ],
     },
     {
-      eyebrow: "Gestão de elenco",
-      title: "Decisões com contexto e resposta",
-      body: "Pedidos de conversa agora podem ser respondidos diretamente pela caixa de entrada, enquanto a central de substituições apresenta o elenco em uma lista tática limpa.",
-      accent: "VESTIÁRIO",
-      bullets: ["Botão persistente para conversar", "Três respostas com efeito na moral", "Substituições com energia, overall e atributos essenciais"],
+      eyebrow: "Competições brasileiras",
+      title: "Série D regulamentada, Série C completa",
+      body: "A Série D rodava com 27 clubes — número ímpar, 52 rodadas e a temporada indo até a semana 86. E a Série C tinha só 12 dos 20 clubes reais: as outras oito vagas eram sorteadas por prestígio.",
+      accent: "BRASILEIRÃO",
+      bullets: [
+        "Série D com 20 clubes e 38 rodadas",
+        "Ituano, Anápolis, Brusque, Maranhão, Maringá, Ferroviária, Itabaiana e Barra-SC na Série C",
+        "Dezembro deixou de acumular o dobro de jogos",
+      ],
     },
     {
-      eyebrow: "Ultrafoot Game Center",
-      title: "Launcher renovado",
-      body: "A experiência começa antes de entrar em campo: o launcher ganhou identidade visual, destaque editorial, navegação compacta e proteção contra downgrade acidental.",
-      accent: "VERSÃO 1.0.187",
-      bullets: ["Launcher 1.0.9", "Hero editorial e notícias compactas", "Comparação correta entre versões instaladas e publicadas"],
+      eyebrow: "Prancheta e dia de jogo",
+      title: "As instruções finalmente mudam alguma coisa",
+      body: "O botão \"Com a bola / Sem a bola\" trocava apenas o próprio texto. E apagar a seta de movimentação não apagava a instrução que ela tinha gerado: mexeu uma vez, ficava para sempre.",
+      accent: "TÁTICA",
+      bullets: [
+        "Com a bola / Sem a bola troca o que o arrasto edita",
+        "Botão para zerar a movimentação de um atleta ou do time",
+        "Prancheta e táticas abrem dentro do pré-jogo, sem sair da partida",
+        "Estrelas e ATA/MEI/DEF saem do elenco de verdade",
+      ],
+    },
+    {
+      eyebrow: "Controle",
+      title: "O joystick chega aos modais",
+      body: "A ponte de gamepad só enxergava um tipo de janela, e a maior parte dos modais do jogo é feita de outro jeito. Mesa de negociação, batedor de pênalti, coletiva, contrato e exame médico eram becos sem saída no controle.",
+      accent: "GAMEPAD",
+      bullets: [
+        "A aciona, B fecha e o direcional navega em 35 modais",
+        "Aviso de saída com opção selecionada e dicas do controle ligado",
+        "Leilão passou a respeitar a verba liberada pela diretoria",
+      ],
     },
   ]
   const current = pages[page]
@@ -412,10 +438,51 @@ function InGameUpdateDialog({ offer, onLater }: { offer: InGameUpdateOffer; onLa
   )
 }
 
+/**
+ * Rodape de dicas do controle do aviso de saida.
+ *
+ * Componente separado de proposito: `useGamepadConnected` faz polling a cada 2s
+ * e nao pode ficar dentro do dialogo re-renderizando os botoes de escolha.
+ */
+function QuitPadHints() {
+  const { connected, type } = useGamepadConnected()
+  if (!connected) return null
+  return (
+    <div className="relative mt-6 flex items-center justify-center gap-4 text-[10px] text-white/40">
+      <span className="flex items-center gap-1.5">
+        <ControllerButton button="DPAD_UP" controller={type} size="xs" showLabel={false} />
+        escolher
+      </span>
+      <span className="flex items-center gap-1.5">
+        <ControllerButton button="A" controller={type} size="xs" showLabel={false} />
+        confirmar
+      </span>
+      <span className="flex items-center gap-1.5">
+        <ControllerButton button="B" controller={type} size="xs" showLabel={false} />
+        voltar
+      </span>
+    </div>
+  )
+}
+
 // Aviso de saida. O jogo salva sozinho, mas o usuario pediu a confirmacao para nao
-// fechar sem querer. Esc/B cancela, Enter/A confirma (teclado + controle).
+// fechar sem querer. Esc/B cancela, A aciona a opcao selecionada (teclado + controle).
 function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+  /**
+   * SELECAO NAVEGAVEL. Antes o A confirmava a saida direto e nao havia como
+   * ANDAR entre as duas opcoes: no controle o dialogo era cego — nenhuma marca
+   * de foco, nenhuma dica de botao, so "(Enter)" e "(Esc)" escritos na tela,
+   * que nao existem no joystick. Agora o D-pad/analogico move, A aciona o que
+   * ESTA SELECIONADO e B continua sendo o cancelar direto.
+   *
+   * Comeca em "nao": o botao perigoso nunca pode ser o padrao de um toque.
+   */
+  const [escolha, setEscolha] = useState<"sim" | "nao">("nao")
+  const escolhaRef = useRef(escolha)
+  escolhaRef.current = escolha
+
   useEffect(() => {
+    const acionar = () => (escolhaRef.current === "sim" ? onConfirm() : onCancel())
     // FASE DE CAPTURA + stopImmediatePropagation: enquanto o aviso de saida esta aberto,
     // Esc/Enter pertencem SO a ele. Sem isso, a tela de fundo (ex.: menu da splash, que
     // tambem escuta Enter/Esc no document) reagia a mesma tecla — o usuario apertava
@@ -423,15 +490,24 @@ function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onCo
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault(); e.stopImmediatePropagation(); onCancel()
+      } else if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "Tab") {
+        e.preventDefault(); e.stopImmediatePropagation()
+        setEscolha(v => (v === "sim" ? "nao" : "sim"))
       } else if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault(); e.stopImmediatePropagation(); onConfirm()
+        e.preventDefault(); e.stopImmediatePropagation()
+        // Teclado mantem o contrato historico: Enter = sim. Quem chegou aqui
+        // pelo teclado ja apertava Enter para sair desde sempre.
+        onConfirm()
       }
     }
-    // Controle: A confirma, B cancela — mesma gramatica do resto do jogo.
+    // Controle: A aciona a selecao, B cancela — mesma gramatica do resto do jogo.
     const onPad = (e: Event) => {
       const { button } = (e as CustomEvent<{ button: string }>).detail
-      if (button === "A") onConfirm()
+      if (button === "A") acionar()
       else if (button === "B") onCancel()
+      else if (button === "DPAD_UP" || button === "DPAD_DOWN") {
+        setEscolha(v => (v === "sim" ? "nao" : "sim"))
+      }
     }
     document.addEventListener("keydown", onKey, true)
     window.addEventListener("gamepad:button", onPad)
@@ -443,6 +519,9 @@ function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onCo
 
   return (
     <div
+      // Este aviso trata o proprio controle (selecao + A/B logo acima), entao
+      // fica FORA da ponte generica — senao o A seria processado duas vezes.
+      data-gamepad-modal="off"
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#080912]/82 backdrop-blur-xl"
       onClick={onCancel}
     >
@@ -457,17 +536,39 @@ function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onCo
         <div className="relative mx-auto mt-7 flex w-44 flex-col gap-2">
           <button
             onClick={onConfirm}
-            className="rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-[var(--brand)] px-5 py-2.5 text-sm font-black text-white shadow-[0_0_22px_rgba(0,255,200,.25)]"
+            onMouseEnter={() => setEscolha("sim")}
+            aria-selected={escolha === "sim"}
+            className={cn(
+              "rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-[var(--brand)] px-5 py-2.5 text-sm font-black text-white transition-all",
+              // O ANEL E A MARCA DA SELECAO. Sem ele o controle move o foco e
+              // nada muda na tela — foi o relato de "o controle nao funciona".
+              escolha === "sim"
+                ? "shadow-[0_0_22px_rgba(0,255,200,.45)] ring-2 ring-white/80 scale-[1.03]"
+                : "opacity-70",
+            )}
           >
             Sim <span className="text-white/60">(Enter)</span>
           </button>
           <button
             onClick={onCancel}
-            className="rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white/75 transition-colors hover:bg-white/15"
+            onMouseEnter={() => setEscolha("nao")}
+            aria-selected={escolha === "nao"}
+            className={cn(
+              "rounded-full px-5 py-2.5 text-sm font-semibold transition-all",
+              escolha === "nao"
+                ? "bg-white/20 text-white ring-2 ring-white/70 scale-[1.03]"
+                : "bg-white/10 text-white/75 hover:bg-white/15",
+            )}
           >
             Não <span className="text-white/35">(Esc)</span>
           </button>
         </div>
+
+        {/* DICAS DO CONTROLE — so aparecem com um controle ligado, e com os
+            simbolos do controle que o jogador escolheu (Xbox/PlayStation).
+            Antes a tela so oferecia "(Enter)" e "(Esc)", que nao existem no
+            joystick: quem jogava de controle nao tinha o que apertar. */}
+        <QuitPadHints />
       </div>
     </div>
   )

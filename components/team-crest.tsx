@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils"
 import { getEscudoUrl, getTeamByShort, type Team } from "@/lib/teams-data"
 import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
 import { escudoDoServidor } from "@/lib/atualizacao-elencos"
+import { gameAssetUrl, gameAssetUrlAlternativa, isTauri } from "@/lib/game-asset"
+import { getLocalEscudoPath } from "@/lib/escudos-map"
 // Escudos EMBUTIDOS no build (viajam no mesmo seed dos overrides, campo logoUrl). E por
 // eles que um escudo importado no editor chega aos OUTROS jogadores, nao so ao save local.
 import bundledOverrides from "@/data/seeds/team-overrides.json"
@@ -111,6 +113,8 @@ export function TeamCrest({
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  /** 0 = URL como veio; 1 = a OUTRA forma (caminho <-> game-asset://). Ver handleError. */
+  const [formaDaUrl, setFormaDaUrl] = useState(0)
   const [customLogo, setCustomLogo] = useState<string | null>(null)
   const MAX_RETRIES = 4
 
@@ -163,7 +167,20 @@ export function TeamCrest({
     setImageError(false)
     setImageLoaded(false)
     setRetryCount(0)
-  }, [escudoUrl, customLogo])
+    // ⚠️ NO APP INSTALADO COMECA JA PELO ARQUIVO EMPACOTADO.
+    //
+    // O `src` do HTML pre-renderizado e sempre a URL REMOTA (no build `window`
+    // nao existe, entao `isTauri()` e falso). Ate agora o caminho local so era
+    // tentado DEPOIS de o remoto falhar — quatro tentativas mais o 404. Isso
+    // funcionava com internet boa; sem rede, com o GitHub lento ou com o clube
+    // faltando no repositorio de terceiros (o caso de brasiliense_df, que la
+    // nao existe com esse nome), a cadeia acabava no ESCUDO DESENHADO. Era o
+    // relato "apareceu a versao desenhada".
+    //
+    // Depois da hidratacao `isTauri()` responde a verdade, e o arquivo local
+    // esta garantido: `public/escudos/**/*` inteiro vai em bundle.resources.
+    setFormaDaUrl(isTauri() && escudoKey && !customLogo ? 1 : 0)
+  }, [escudoUrl, customLogo, escudoKey])
 
   /**
    * Imagem JA em cache nao dispara onLoad.
@@ -179,16 +196,59 @@ export function TeamCrest({
   useEffect(() => {
     const img = imgRef.current
     if (img?.complete && img.naturalWidth > 0) setImageLoaded(true)
-  }, [escudoUrl, customLogo, retryCount])
+  }, [escudoUrl, customLogo, retryCount, formaDaUrl])
 
-  // O protocolo game-asset:// (Tauri) por vezes falha numa primeira tentativa logo apos
-  // a janela abrir. Antes de cair pro escudo generico, tenta de novo algumas vezes.
+  // SELEÇÃO (Task 2): o "time" de uma seleção usa file_key `nation_<id>`, que NÃO
+  // existe no mapa de escudos de clubes. Nesse caso o escudo real vem do próprio
+  // `escudo_url` (getNationalCrestUrl). Restrito a `nation_` para não alterar em
+  // nada a resolução dos clubes.
+  const isNationKey = (escudoKey ?? "").startsWith("nation_")
+  const nationCrest = isNationKey ? (resolvedTeam?.escudo_url || null) : null
+  const urlBase = customLogo ?? nationCrest ?? escudoUrl
+  // SEGUNDA FORMA da URL (ver handleError):
+  //   • com chave do clube -> o caminho EMPACOTADO via game-asset:// (cobre o
+  //     caso principal, em que a base veio como URL remota do pre-render);
+  //   • sem chave -> o flip simples caminho <-> protocolo.
+  // `null` quando nao ha segunda forma possivel (data:/blob:).
+  const proximaForma = /^(data:|blob:)/i.test(urlBase ?? "")
+    ? null
+    : escudoKey
+      ? gameAssetUrl(getLocalEscudoPath(escudoKey))
+      : gameAssetUrlAlternativa(urlBase ?? "")
+  const activeUrl = formaDaUrl === 1 ? (proximaForma ?? urlBase) : urlBase
+
+  // ⚠️ O QUE ESTAVA ACONTECENDO (relato: "escudos e uniformes foram perdidos" —
+  // escudo generico e imagem quebrada no app instalado, desde a 1.0.266).
+  //
+  // `getEscudoUrl` decide a URL por ambiente:
+  //
+  //     if (isTauri())  ->  game-asset://localhost/escudos/x.webp   (empacotado)
+  //     senao           ->  https://.../teams/escudos/x.png         (repo remoto)
+  //
+  // O jogo e EXPORT ESTATICO: o HTML e pre-renderizado no build, onde `window`
+  // nao existe e `isTauri()` e FALSO. Entao o `src` que vai gravado no HTML e a
+  // URL REMOTA — e o React nao corrige atributo divergente na hidratacao, entao
+  // ela permanece dentro do aplicativo. O escudo passou a depender de internet e
+  // de um repositorio de terceiros: sem rede (ou com ele fora do ar), 404 ->
+  // escudo generico.
+  //
+  // Repetir a MESMA url quatro vezes, que era o que este handler fazia, nunca
+  // resolveria: o problema nao e instabilidade, e a url errada.
+  //
+  // A saida e cair no CAMINHO EMPACOTADO, que existe no disco do jogador
+  // independentemente de ambiente (`getLocalEscudoPath` — o mesmo que o
+  // preflight de release usa). So depois disso desistimos para o desenho.
   const handleError = () => {
     if (retryCount < MAX_RETRIES) {
       setTimeout(() => setRetryCount((c) => c + 1), 120)
-    } else {
-      setImageError(true)
+      return
     }
+    if (formaDaUrl === 0 && proximaForma) {
+      setFormaDaUrl(1)
+      setRetryCount(0)
+      return
+    }
+    setImageError(true)
   }
 
   // Professional fallback shield component
@@ -275,14 +335,6 @@ export function TeamCrest({
     )
   }
 
-  // SELEÇÃO (Task 2): o "time" de uma seleção usa file_key `nation_<id>`, que NÃO
-  // existe no mapa de escudos de clubes. Nesse caso o escudo real vem do próprio
-  // `escudo_url` (getNationalCrestUrl). Restrito a `nation_` para não alterar em
-  // nada a resolução dos clubes.
-  const isNationKey = (escudoKey ?? "").startsWith("nation_")
-  const nationCrest = isNationKey ? (resolvedTeam?.escudo_url || null) : null
-  const activeUrl = customLogo ?? nationCrest ?? escudoUrl
-
   if (!activeUrl || (imageError && showFallback)) {
     return <FallbackShield />
   }
@@ -308,7 +360,7 @@ export function TeamCrest({
 
       <Image
         ref={imgRef}
-        key={`${escudoKey ?? ""}-${retryCount}-${customLogo ? "custom" : "default"}`}
+        key={`${escudoKey ?? ""}-${retryCount}-${formaDaUrl}-${customLogo ? "custom" : "default"}`}
         src={activeUrl}
         alt={`Escudo ${resolvedTeam?.nome || 'Time'}`}
         width={pixels}

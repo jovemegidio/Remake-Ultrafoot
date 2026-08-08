@@ -540,11 +540,29 @@ interface ImagemGuardada { u: string; d: string }
  * de 60 MB — e apertar aqui não economiza nada, só apaga escudo da tela.
  */
 const TETO_WEB = 8 * 1024 * 1024
-// 72 MB porque e o que o conteudo real pede: ~600 escudos (14 MB), ~670
-// uniformes em resolucao nativa (28 MB) e ~240 retratos (8 MB), com folga. O
-// uniforme so nao e reduzido porque reduzir foi testado e reprovado — ver
-// scripts/publicar-camisas-pasta.mjs.
-const TETO_APP = 72 * 1024 * 1024
+// 200 MB porque e o que o conteudo real pede depois do lote de 06/08/2026,
+// MEDIDO no manifesto v46 e nao estimado: 603 escudos (16,2 MB), 2.000
+// uniformes em resolucao NATIVA (137,1 MB) e 1.088 retratos (9,2 MB) — 163 MB,
+// com ~20% de folga para o proximo lote. O uniforme so nao e reduzido porque
+// reduzir foi testado e reprovado — ver scripts/publicar-camisas-pasta.mjs.
+//
+// ⚠️ MECA, NAO ESTIME. Eu tinha chutado 90 MB para os uniformes e o numero real
+// era 137 — a arte do FenixCAP e maior que a do sortitoutsi e os lotes antigos
+// pesam mais. Como conferir na VPS, somando o tamanho no disco das URLs UNICAS
+// do manifesto e inflando por 4/3 (base64):
+//
+//   {u.rsplit('/',1)[-1] for u in urls} -> os.path.getsize -> * 4/3
+//
+// ⚠️ O TETO NAO E UM LIMITE DE DISCO, E O QUE DECIDE O QUE APARECE. No app a
+// webview nao alcanca a VPS, entao imagem que nao coube aqui simplesmente nao
+// pinta — apertar este numero nao "economiza", apaga clube da tela. Com 72 MB o
+// lote de 06/08 entrava pela metade: as fatias de escudo e de uniforme
+// estouravam antes de o pacote acabar, e o sintoma seria o mesmo da 1.0.250
+// (escudo publicado, conferido no ar, e invisivel no jogo).
+//
+// O custo e o arquivo do store (%APPDATA%\com.ultrafoot.remake\ultrafoot-
+// clubs.json), que passa de ~127 MB para ~215 MB e e lido inteiro no boot.
+const TETO_APP = 200 * 1024 * 1024
 
 function tetoDeImagens(): number {
   return isTauri() ? TETO_APP : TETO_WEB
@@ -558,7 +576,13 @@ function tetoDeImagens(): number {
  * vem depois não fica "com menos" — fica sem nada, porque o laço para no teto.
  * Cada tipo tem metade e um não pode invadir o do outro.
  */
-const FATIA = { escudo: 0.22, kit: 0.48, foto: 0.3 }
+//
+// As fatias saem do PESO REAL de cada tipo, nao de um rateio bonito. Medido no
+// manifesto v46 (já em base64, que é como fica guardado): escudo 16,2 MB,
+// uniforme 137,1 MB (nativo, e é de longe o item caro), retrato 9,2 MB. Uma
+// divisão igual deixaria o uniforme de fora e sobraria fatia nos outros dois
+// sem uso, porque um tipo não invade o do outro.
+const FATIA = { escudo: 0.12, kit: 0.78, foto: 0.1 }
 
 interface CacheImagens { porChave: Map<string, ImagemGuardada>; porUrl: Map<string, string> }
 let cacheImagens: { bruto: string; dados: CacheImagens } | null = null
@@ -628,7 +652,30 @@ export async function guardarFotosLocalmente(
     if (!url || url.startsWith("data:")) continue
     fotos.set(chave, url)
   }
-  const alvos = new Map([...escudos, ...kits, ...fotos])
+  // ⚠️ A MESMA IMAGEM CHEGA EM VÁRIAS CHAVES, e guardá-la duas vezes gasta
+  // orçamento por nada. O canal publica todo clube nas DUAS chaves — a do pool e
+  // a curada (`santa` e `santacruz_pe`) — porque não dá para saber qual delas a
+  // tela vai consultar. Como a URL termina no sha do conteúdo, as duas chaves
+  // trazem a MESMA url; e `comCopiaLocal` procura por URL, não por chave, então
+  // uma cópia já atende as duas.
+  //
+  // No lote de 06/08 isso era 163 escudos e centenas de uniformes repetidos — o
+  // bastante para estourar a fatia do escudo e derrubar da tela clube que estava
+  // publicado, exatamente o sintoma da 1.0.250.
+  const soUmaPorUrl = (m: Map<string, string>): Map<string, string> => {
+    const vistas = new Set<string>()
+    const saida = new Map<string, string>()
+    for (const [chave, url] of m) {
+      if (vistas.has(url)) continue
+      vistas.add(url)
+      saida.set(chave, url)
+    }
+    return saida
+  }
+  const escudosUnicos = soUmaPorUrl(escudos)
+  const kitsUnicos = soUmaPorUrl(kits)
+  const fotosUnicas = soUmaPorUrl(fotos)
+  const alvos = new Map([...escudosUnicos, ...kitsUnicos, ...fotosUnicas])
   if (alvos.size === 0) return 0
 
   const { fetchDoAmbiente } = await import("@/lib/buscar-json")
@@ -678,9 +725,9 @@ export async function guardarFotosLocalmente(
     }
   }
 
-  await baixar("escudo", escudos)
-  await baixar("kit", kits)
-  await baixar("foto", fotos)
+  await baixar("escudo", escudosUnicos)
+  await baixar("kit", kitsUnicos)
+  await baixar("foto", fotosUnicas)
 
   // Grava também quando só houve descarte: a limpeza do formato antigo e das
   // sobras de elenco anterior precisa persistir mesmo que nenhuma imagem nova

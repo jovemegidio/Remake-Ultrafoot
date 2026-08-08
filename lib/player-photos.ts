@@ -154,12 +154,30 @@ function getNomesAmbiguos(): Set<string> {
   if (nomesAmbiguos) return nomesAmbiguos
   const doClube = new Map<string, string>()
   const repetidos = new Set<string>()
+  /**
+   * ⚠️ O CLUBE PRECISA SER NORMALIZADO NOS DOIS LADOS.
+   *
+   * As duas fontes nomeiam o clube de formas diferentes: em `real-squads-tm` a
+   * chave e "SANTOS|santos" (o slug, minusculo) e em `imported-bf2026` vem
+   * `team.nome` ("Santos", com maiuscula). Comparando cru, "santos" !== "Santos"
+   * e o MESMO atleta no MESMO clube era marcado como homonimo de si proprio.
+   *
+   * O estrago era enorme e silencioso: 44.859 nomes entravam na lista de
+   * ambiguos — praticamente o elenco inteiro do jogo. E `getPlayerPhotoUrl` faz
+   * `if (ambiguo) return undefined` ANTES de tentar o canal de atualizacao, a
+   * foto local e a remota. Resultado: mercado sem rosto nenhum, inclusive para
+   * quem tinha foto publicada na VPS (o relato do Neymar, que aparece como
+   * "Santos" nas duas bases e mesmo assim caia aqui).
+   *
+   * Normalizando, a lista cai para 6.203 — que sao os homonimos DE VERDADE.
+   */
   const ver = (nome: string, clube: string) => {
     const k = normalizePlayerKey(nome)
-    if (!k || !clube) return
+    const c = normalizePlayerKey(clube)
+    if (!k || !c) return
     const anterior = doClube.get(k)
-    if (anterior === undefined) doClube.set(k, clube)
-    else if (anterior !== clube) repetidos.add(k)
+    if (anterior === undefined) doClube.set(k, c)
+    else if (anterior !== c) repetidos.add(k)
   }
   for (const [chave, roster] of Object.entries(realSquadsTM as Record<string, { n: string }[]>)) {
     const clube = chave.split("|")[1] ?? chave

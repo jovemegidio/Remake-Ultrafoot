@@ -71,11 +71,29 @@ export const ASSUNTOS: { id: AssuntoDaDiretoria; titulo: string; descricao: stri
 const semAcento = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
 
+// ⚠️ VOCABULARIO AMPLO DE PROPOSITO (pedido: "aumente o contexto de fala onde
+// posso falar qualquer coisa e eles entenderem").
+//
+// O jogo e OFFLINE e nao tem modelo de linguagem: o que existe aqui e leitura de
+// INTENCAO por palavra-chave, e a qualidade dela e exatamente o tamanho desta
+// lista. Falar por voz ou digitar livremente so funciona se as palavras que uma
+// pessoa realmente usa estiverem aqui — incluindo giria, forma falada e erro de
+// digitacao comum. Trechos curtos (prefixos) cobrem as flexoes: "reforc" pega
+// reforco, reforcos, reforcar.
 const PALAVRAS_DE_ASSUNTO: Record<AssuntoDaDiretoria, string[]> = {
-  verba: ["verba", "dinheiro", "grana", "investir", "investimento", "reforc", "contratar", "contrata", "caixa", "orcamento", "budget", "comprar", "janela"],
-  meta: ["meta", "objetivo", "cobranca", "cobrar", "exig", "titulo", "classific", "rebaix", "tabela", "posicao", "campanha"],
-  pressao: ["pressao", "imprensa", "apoio", "respaldo", "demiss", "demitir", "cadeira", "confianca", "critica", "torcida", "cobranca da torcida"],
-  elenco: ["elenco", "grupo", "jogador", "atleta", "plantel", "lesao", "lesionad", "desfalque", "curto", "qualidade"],
+  verba: ["verba", "dinheiro", "grana", "investir", "investimento", "reforc", "contratar", "contrata", "caixa",
+    "orcamento", "budget", "comprar", "janela", "bufunfa", "money", "capital", "aporte", "libera", "liberar",
+    "abrir o cofre", "cofre", "gastar", "gasto", "teto", "folha", "salarial", "propost", "negociar jogador",
+    "mercado", "trazer alguem", "trazer um", "preciso de gente", "falta jogador", "sem elenco pra"],
+  meta: ["meta", "objetivo", "cobranca", "cobrar", "exig", "titulo", "classific", "rebaix", "tabela", "posicao",
+    "campanha", "alvo", "expectativa", "onde querem", "que esperam", "top", "g4", "g6", "z4", "subir", "acesso",
+    "promocao", "descer", "cair", "primeira divisao", "serie a", "objetivos", "resultado esperado"],
+  pressao: ["pressao", "imprensa", "apoio", "respaldo", "demiss", "demitir", "cadeira", "confianca", "critica",
+    "torcida", "cobranca da torcida", "clima", "estabilidade", "seguro", "meu emprego", "meu cargo", "corda bamba", "vao me mandar", "tempo", "paciencia", "prazo", "credito", "estao satisfeitos",
+    "aguentam", "respaldo do conselho", "conselho", "presidente"],
+  elenco: ["elenco", "grupo", "jogador", "atleta", "plantel", "lesao", "lesionad", "desfalque", "curto",
+    "qualidade", "time", "escalacao", "banco", "reserva", "titular", "peca", "carente", "fraco", "limitado",
+    "nivel", "material humano", "vestiario", "moral", "entrosamento", "sub", "base", "juniores"],
   // PEDIR DEMISSAO pela conversa (pedido). Palavras que so aparecem quando e
   // isso mesmo que se quer dizer — "sair", sozinho, e ambiguo demais.
   demissao: ["pedir demissao", "peco demissao", "me demito", "demito", "quero sair do clube",
@@ -84,8 +102,12 @@ const PALAVRAS_DE_ASSUNTO: Record<AssuntoDaDiretoria, string[]> = {
 }
 
 const PALAVRAS_DE_TOM: Record<TomDaResposta, string[]> = {
-  firme: ["preciso", "exijo", "tem que", "nao da", "impossivel", "sem isso", "cobro", "inaceitavel", "obrigat", "ou entao", "nao aceito"],
-  humilde: ["assumo", "minha responsabilidade", "culpa minha", "eu resolvo", "trabalho com", "sem problema", "aceito", "entendo", "vou responder", "me viro"],
+  firme: ["preciso", "exijo", "tem que", "nao da", "impossivel", "sem isso", "cobro", "inaceitavel", "obrigat",
+    "ou entao", "nao aceito", "faco questao", "e o minimo", "nao tem como", "ou eu", "de jeito nenhum",
+    "absurdo", "inadmissivel", "nao vou", "recuso", "quero ja", "urgente", "agora"],
+  humilde: ["assumo", "minha responsabilidade", "culpa minha", "eu resolvo", "trabalho com", "sem problema",
+    "aceito", "entendo", "vou responder", "me viro", "peco desculpa", "desculpa", "reconheco", "erramos",
+    "errei", "vou corrigir", "confie", "me deem tempo", "estou ciente", "faremos melhor", "compreendo"],
   diplomatico: ["proponho", "sugiro", "podemos", "talvez", "acredito", "gostaria", "seria bom", "vamos", "que tal", "penso"],
 }
 

@@ -10,7 +10,12 @@
 // blindar o grupo faz o contrario. Uma nota so nao expressa isso, por isso o tom
 // de cada resposta viaja junto.
 
-export type TomResposta = "positivo" | "neutro" | "negativo" | "agressivo" | string
+/**
+ * `omisso` = o tecnico deixou o tempo da pergunta acabar (ver o cronometro em
+ * components/match/post-match-press.tsx). NAO e o mesmo que "neutro": ficar
+ * calado diante da imprensa passa inseguranca, e os dois lados leem isso mal.
+ */
+export type TomResposta = "positivo" | "neutro" | "negativo" | "agressivo" | "omisso" | string
 
 export interface EfeitoColetiva {
   /** Variacao na moral do elenco. */
@@ -37,10 +42,14 @@ export function calcularEfeitoColetiva(input: {
   const agressivas = tons.filter(t => t === "agressivo").length
   const positivas = tons.filter(t => t === "positivo").length
   const negativas = tons.filter(t => t === "negativo").length
+  const omissas = tons.filter(t => t === "omisso").length
 
   // O elenco sente o saldo das respostas quase diretamente; cobrar em publico
   // pesa mais do que o numero sugere, porque expoe o grupo.
-  const moralDelta = Math.max(-12, Math.min(12, moraleImpact - agressivas * 2))
+  // O silencio pesa no elenco: o grupo esperava ser defendido (ou cobrado) e
+  // ouviu o tecnico travar. Alem do impacto negativo que a propria resposta ja
+  // carrega, cada omissao tira mais um ponto.
+  const moralDelta = Math.max(-12, Math.min(12, moraleImpact - agressivas * 2 - omissas))
 
   /**
    * A diretoria NAO e o espelho do elenco. Ela valoriza quem assume
@@ -58,7 +67,31 @@ export function calcularEfeitoColetiva(input: {
   } else {
     diretoriaDelta += Math.sign(moraleImpact)
   }
+  // A DIRETORIA E QUEM MENOS PERDOA A OMISSAO. O clube tem imagem publica a
+  // defender: um tecnico que emudece na coletiva vira manchete sozinho. Pesa em
+  // qualquer resultado — inclusive na vitoria, onde havia so o que colher.
+  diretoriaDelta -= omissas * 2
   diretoriaDelta = Math.max(-8, Math.min(8, diretoriaDelta))
+
+  // Recado proprio quando o problema FOI o silencio: sem isto o tecnico levava
+  // um "caiu mal no vestiario" sem entender que o motivo foi nao ter respondido.
+  if (omissas > 0) {
+    const plural = omissas > 1
+    return {
+      moralDelta,
+      diretoriaDelta,
+      recadoElenco: {
+        titulo: plural ? `Voce nao respondeu ${omissas} perguntas` : "Voce ficou sem resposta",
+        texto: `O elenco assistiu a coletiva e viu o tecnico travar diante da imprensa. `
+          + `Isso passa inseguranca ao grupo (${moralDelta} de moral).`,
+      },
+      recadoDiretoria: {
+        titulo: "A diretoria cobrou postura na entrevista",
+        texto: `Ficar calado em coletiva vira noticia sozinho e expoe o clube. `
+          + `A diretoria pediu preparo para as proximas (${diretoriaDelta} de confianca).`,
+      },
+    }
+  }
 
   const recadoElenco = moralDelta === 0 ? null : moralDelta > 0
     ? {

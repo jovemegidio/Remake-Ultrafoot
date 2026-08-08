@@ -274,8 +274,16 @@ export function aplicarSemanaDeTreino(
   atletas: readonly AtletaNaSemana[],
   plano: PlanoDeTreino,
   infra: { centroDeTreinamento?: number; centroMedico?: number } = {},
+  /**
+   * Quanto da semana foi de fato TREINO (ver lib/rotina-da-semana.ts).
+   * 1 = a semana de referencia (quatro dias de treino). Menos dias, menos carga:
+   * e o que faz poupar o elenco ter preco, e nao ser escolha gratuita.
+   */
+  fatorDeCarga = 1,
+  /** Energia extra dos dias de DESCANSO, somada a recuperacao normal. */
+  recuperacaoExtra = 0,
 ): ResumoDaSemana {
-  const carga = cargaDoPlano(plano, infra.centroDeTreinamento ?? 2)
+  const carga = cargaDoPlano(plano, infra.centroDeTreinamento ?? 2) * fatorDeCarga
   const medico = infra.centroMedico ?? 2
   const efeitos: EfeitoDaSemana[] = []
 
@@ -325,7 +333,10 @@ export function aplicarSemanaDeTreino(
       + (plano.foco === "recuperacao" ? 10 : 0)
       + (a.emTreinoIndividual ? -3 : 0) // treino extra também cobra
 
-    const energia = Math.max(0, Math.min(100, a.energia - desgaste + recuperacao))
+    // `recuperacaoExtra` sao os dias de DESCANSO da semana (ver rotina-da-semana).
+    // Entra aqui, e nao no desgaste, porque poupar nao desfaz o jogo que ja
+    // aconteceu — ele acrescenta recuperacao em cima do que o corpo ja faria.
+    const energia = Math.max(0, Math.min(100, a.energia - desgaste + recuperacao + recuperacaoExtra))
 
     // FADIGA CRÔNICA: o excedente que a semana não conseguiu repor. Quem sobra
     // energia paga a dívida devagar — por isso semana leve é remédio, não luxo.

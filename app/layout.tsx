@@ -3,10 +3,10 @@ import { Geist, Geist_Mono, Oswald, Poppins } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { GamepadProvider } from "@/components/gamepad-provider"
 import { NotificationsProvider, NotificationToastContainer } from "@/components/notifications-system"
-import { MarketNotificationsBridge } from "@/components/market-notifications-bridge"
-import { FinanceInfraNotificationsBridge } from "@/components/finance-infra-notifications-bridge"
-import { SeasonReviewBridge } from "@/components/season-review-bridge"
-import { BenchTalk } from "@/components/bench-talk"
+// ⚠️ Autosave, avisos de mercado/finanças, revisão de temporada e banco de
+// reservas NÃO entram mais aqui: cada um alcança os seeds, e este layout envolve
+// até a splash. Agora vivem em `carreira-ativa`, montados só com carreira aberta.
+import { CarreiraAtiva } from "@/components/carreira-ativa"
 import { DialogoDoJogo } from "@/components/dialogo-do-jogo"
 import { PendingInboxGate } from "@/components/pending-inbox-gate"
 import { NativeAppProvider } from "@/components/native-app-provider"
@@ -14,7 +14,6 @@ import { MusicPlayerWrapper } from "@/components/music-player-wrapper"
 import { EaActionBarProvider, EaActionBar } from "@/components/ea-action-bar"
 import { FcHubLoader } from "@/components/fc-hub-loader"
 import { AvisoAtualizacaoElencos } from "@/components/aviso-atualizacao-elencos"
-import { GameAutosave } from "@/components/game-autosave"
 import { PerformanceProfileBootstrap } from "@/components/performance-profile"
 import { MotionProfileProvider } from "@/components/motion-profile"
 import { BotaoMinimizar } from "@/components/botao-minimizar"
@@ -73,11 +72,10 @@ export default function RootLayout({
           <ThemeProvider>
             <GamepadProvider>
               <NotificationsProvider>
-                <GameAutosave />
-                <MarketNotificationsBridge />
-                <FinanceInfraNotificationsBridge />
-                <SeasonReviewBridge />
-                <BenchTalk />
+                {/* Autosave, avisos de mercado/finanças, revisão de temporada e
+                    banco de reservas. Só montam com carreira aberta — eram eles
+                    que traziam os seeds para a splash. Ver carreira-ativa. */}
+                <CarreiraAtiva />
                 <PendingInboxGate />
                 <PerformanceProfileBootstrap />
                 <EaActionBarProvider>

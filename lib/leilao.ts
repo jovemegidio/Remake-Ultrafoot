@@ -154,9 +154,28 @@ export function emLeilaoNaSemana(
   clubeNome: string,
   overall: number,
   semana: number,
-  contexto?: { prestigioDoClube?: number; idade?: number; potencial?: number },
+  contexto?: {
+    prestigioDoClube?: number
+    idade?: number
+    potencial?: number
+    /**
+     * PISO DE INTERESSE — o menor overall que ESTE comprador acha relevante.
+     *
+     * ⚠️ O piso era fixo em 78, e isso tornava o leilao uma sala fechada: um
+     * clube de Serie C ou D, com elenco na casa dos 50, NUNCA via um atleta em
+     * disputa, porque nenhum jogador do porte dele chegava a ser sorteado. So
+     * craque de primeira prateleira ia a leilao — que nem eram contrataveis por
+     * quem estava embaixo. Era o relato "coloque tambem jogadores de divisoes
+     * inferiores, para clube pequeno conseguir contratar".
+     *
+     * Quem chama passa o nivel do proprio elenco; sem isso, continua em 78 e
+     * nada muda para quem ja usava a funcao.
+     */
+    pisoDeInteresse?: number
+  },
 ): boolean {
-  if (overall < 78) return false
+  const piso = Math.min(78, Math.max(45, contexto?.pisoDeInteresse ?? 78))
+  if (overall < piso) return false
   // A janela dura 3 semanas, então o bloco de semanas é o que define o lote.
   const bloco = Math.floor(semana / 3)
   const sorteio = sorteioDe(`leilao:${chaveLeilao(jogadorNome, clubeNome)}:${bloco}`)

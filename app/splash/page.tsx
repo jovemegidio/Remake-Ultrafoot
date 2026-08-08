@@ -13,8 +13,11 @@ import { cn } from "@/lib/utils"
 import { Globe, Save, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, Download, Cloud, FolderOpen, Settings, PersonStanding } from "lucide-react"
 import { openSavesFolder } from "@/lib/save-folder"
 import { activateCareerSave, listCareerSaves, loadGameState, hasSave, clearAllGameData, deleteCareerSave, reconcileCareersWithFolder, useGameState } from "@/lib/save-system"
-import { useGameEngine } from "@/lib/game-engine"
-import { getTeamByShort } from "@/lib/teams-data"
+// ⚠️ NADA DE `@/lib/game-engine` NEM `@/lib/teams-data` NO TOPO DESTE ARQUIVO.
+// Os dois arrastam os seeds (pool de 2.452 clubes + elencos reais): 17 MB de
+// JavaScript que o jogador baixava e o navegador interpretava ANTES do menu
+// principal aparecer. Aqui eles entram por `await import(...)`, no momento em que
+// a pessoa realmente entra numa carreira. Ver lib/time-da-carreira.
 import { useTranslation } from "@/lib/i18n"
 import { useVersaoDoJogo } from "@/lib/versao-do-jogo"
 import { isTauri } from "@/lib/game-asset"
@@ -195,13 +198,38 @@ export default function SplashPage() {
     void reconcileCareersWithFolder()
   }, [showLoadModal])
 
+  // NOME DO CLUBE DE CADA CARREIRA — só quando o modal de carregar abre.
+  //
+  // Resolver isto exige `teams-data`, que traz o pool de 2.452 clubes junto. Era
+  // o último fio prendendo os 17 MB de seeds ao menu principal, para escrever
+  // "Flamengo" em vez de "FLA" numa lista que a maioria nem abre. Agora o dado
+  // chega depois: a lista aparece com a sigla e o nome entra quando carregar.
+  const [nomesDeClube, setNomesDeClube] = useState<Record<string, string>>({})
+  useEffect(() => {
+    if (!showLoadModal) return
+    let vivo = true
+    void import("@/lib/teams-data").then(({ getTeamByShort }) => {
+      if (!vivo) return
+      const mapa: Record<string, string> = {}
+      for (const carreira of saveInfo.careers) {
+        const nome = getTeamByShort(carreira.teamShort)?.nome
+        if (nome) mapa[carreira.teamShort] = nome
+      }
+      setNomesDeClube(mapa)
+    })
+    return () => {
+      vivo = false
+    }
+  }, [showLoadModal, saveInfo.careers])
+
   const hasSaveGame = saveInfo.hasSaveGame
   const savedGames = saveInfo.careers.map(career => {
-    const team = getTeamByShort(career.teamShort)
     return {
         id: career.id,
         name: career.name,
-        teamName: team?.nome || career.teamShort,
+        // Cai na sigla enquanto o nome não chega — que já era o comportamento
+        // quando o clube não estava no pool.
+        teamName: nomesDeClube[career.teamShort] || career.teamShort,
         season: `${career.season}/${career.season + 1}`,
         date: career.updatedAt ? new Date(career.updatedAt).toLocaleDateString("pt-BR") : "-",
         position: `Semana ${career.week}`,
@@ -378,6 +406,10 @@ export default function SplashPage() {
     }
     // O app permanece em uma unica WebView. Rehidrata explicitamente o motor do
     // slot escolhido antes de abrir o escritorio, sem reaproveitar elenco/tatica.
+    //
+    // O motor entra por import dinamico: e aqui, ao ABRIR uma carreira, que os
+    // seeds passam a fazer falta — nao na hora de desenhar o menu.
+    const { useGameEngine } = await import("@/lib/game-engine")
     await useGameEngine.persist.rehydrate()
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("ultrafoot:session-active", "true")

@@ -23,11 +23,13 @@ import {
   assuntoDoTexto,
   responderDiretoria,
   tomDoTexto,
+  type AssuntoDaDiretoria,
   type DesfechoDaConversa,
   type EstadoDaDiretoria,
   type FalaDaConversa,
 } from "@/lib/conversa-diretoria"
 import { cn } from "@/lib/utils"
+import { BotaoMicrofone } from "@/components/botao-microfone"
 
 /** Uma linha do chat, com hora — como qualquer aplicativo de mensagem. */
 interface Mensagem extends FalaDaConversa {
@@ -44,6 +46,7 @@ export function ConversaDiretoria({
   estado,
   onDesfecho,
   onPedirDemissao,
+  assuntoInicial,
 }: {
   aberto: boolean
   onFechar: () => void
@@ -52,6 +55,13 @@ export function ConversaDiretoria({
   onDesfecho: (d: DesfechoDaConversa) => void
   /** Confirmada a saída, quem chama executa (limpa o clube e volta ao menu). */
   onPedirDemissao: () => void
+  /**
+   * Abre a reunião JÁ NESTE ASSUNTO — usado por quem chega de uma mensagem
+   * específica (ex.: "Metas da temporada", que era só leitura e agora tem
+   * "Responder"). Sem isto o técnico caía na saudação genérica e tinha de
+   * reencontrar o assunto sozinho.
+   */
+  assuntoInicial?: AssuntoDaDiretoria
 }) {
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [texto, setTexto] = useState("")
@@ -60,6 +70,9 @@ export function ConversaDiretoria({
   const [confirmandoSaida, setConfirmandoSaida] = useState(false)
   const fimDaLista = useRef<HTMLDivElement>(null)
   const campo = useRef<HTMLInputElement>(null)
+  // `enviar` e declarado depois do efeito de abertura; a ref evita a TDZ sem
+  // reordenar o componente inteiro.
+  const enviarRef = useRef<((m: string) => void) | null>(null)
 
   // Saudação de abertura, uma vez por reunião.
   useEffect(() => {
@@ -72,7 +85,11 @@ export function ConversaDiretoria({
     setTexto("")
     setDigitando(false)
     window.setTimeout(() => campo.current?.focus(), 80)
-  }, [aberto, clube])
+    // Chegou por uma mensagem específica: já entra no assunto dela.
+    if (assuntoInicial) {
+      window.setTimeout(() => enviarRef.current?.(RESPOSTAS[assuntoInicial][1].texto), 260)
+    }
+  }, [aberto, clube, assuntoInicial])
 
   // Rola para a última mensagem, como todo chat.
   useEffect(() => {
@@ -127,6 +144,7 @@ export function ConversaDiretoria({
       else onDesfecho(desfecho)
     }, 700)
   }
+  enviarRef.current = enviar
 
   return (
     <div className="fixed inset-0 z-[95] grid place-items-center bg-black/75 p-6" onClick={onFechar}>
@@ -237,6 +255,9 @@ export function ConversaDiretoria({
             maxLength={280}
             className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-[var(--brand)]/40 focus:outline-none"
           />
+          {/* FALAR em vez de digitar. O texto cai no MESMO campo e passa
+              pela mesma leitura de intencao — ver components/botao-microfone.tsx. */}
+          <BotaoMicrofone onTexto={setTexto} />
           <button
             type="submit"
             disabled={!texto.trim() || digitando}

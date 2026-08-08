@@ -28,6 +28,16 @@ export type IntencaoDoTecnico =
   | "elogiar"
   | "explicar"
   | "liberar"
+  // ── INTENÇÕES ACRESCENTADAS (pedido: "eu responder a um jogador 'você não
+  // está treinando o suficiente' e ele ter uma resposta pra rebater e afins").
+  //
+  // Antes tudo que fosse cobrança caía em `exigir`, e `exigir` respondia sempre
+  // a mesma coisa. Cobrar TREINO, criticar DESEMPENHO e AMEAÇAR são três falas
+  // diferentes, e um atleta real rebate cada uma de um jeito.
+  | "criticar"   // desempenho/postura: "está jogando mal", "não está treinando"
+  | "ameacar"    // consequência: "vai para o banco", "vou te vender"
+  | "perguntar"  // ouvir: "como você está?", "o que está acontecendo?"
+  | "renovar"    // contrato: "quero renovar com você"
 
 export interface EstadoDoAtleta {
   nome: string
@@ -70,17 +80,63 @@ const semAcento = (s: string) =>
 // então precisam de palavras específicas. Quem escreve solto cai em "explicar",
 // que é a resposta honesta e sem efeito colateral.
 
+// ⚠️ VOCABULARIO GRANDE DE PROPOSITO. O jogo e offline e nao tem modelo de
+// linguagem: entender "qualquer coisa" e, na pratica, ter aqui as palavras que
+// uma pessoa REALMENTE usa — incluindo giria, forma falada e prefixo que cobre
+// as flexoes ("trein" pega treino, treinando, treinar, treinamento).
 const PALAVRAS: Record<IntencaoDoTecnico, string[]> = {
-  liberar: ["procurar outro clube", "pode sair", "pode procurar", "libero", "liberado", "arrume outro", "arruma outro", "nao conto com voce", "nao conto contigo", "esta liberado", "pode negociar", "vou te emprestar", "emprestimo", "te coloco na lista", "lista de transfer", "melhor voce sair", "seu lugar nao e aqui"],
-  prometer: ["vai ser titular", "sera titular", "voce e titular", "voce joga", "vai jogar", "comeca jogando", "escalado", "prometo", "garanto a vaga", "a vaga e sua", "conte com a vaga", "entra no time", "titular na proxima", "vou te escalar"],
-  exigir: ["treino", "treinar", "conquist", "merec", "esforc", "empenho", "dedica", "prove", "provar", "mostre", "mostrar", "corre atras", "trabalh", "por conta propria", "ninguem ganha vaga"],
-  acolher: ["confio", "confianca em voce", "paciencia", "calma", "seu momento vai chegar", "estou com voce", "conte comigo", "sei do seu valor", "voce e importante", "tranquilo", "nao desanime", "seguro"],
-  elogiar: ["parabens", "otimo", "excelente", "muito bom", "gosto do seu", "voce e bom", "qualidade", "melhor do", "orgulho", "grande jogador", "craque"],
-  explicar: ["momento do time", "opcao tatica", "tatica", "esquema", "concorrencia", "concorrente", "sistema", "explico", "explicar", "questao de", "hoje o time", "a escolha", "por isso"],
+  liberar: ["procurar outro clube", "pode sair", "pode procurar", "libero", "liberado", "arrume outro",
+    "arruma outro", "nao conto com voce", "nao conto contigo", "esta liberado", "pode negociar",
+    "vou te emprestar", "emprestimo", "te coloco na lista", "lista de transfer", "melhor voce sair",
+    "seu lugar nao e aqui", "nao faz parte dos planos", "fora dos planos", "pode ir embora", "ta liberado",
+    "arranje outro", "busque outro", "seu ciclo acabou", "seu ciclo aqui", "nao tem mais espaco",
+    "vou te dispensar", "dispensad", "nao serve mais"],
+  prometer: ["vai ser titular", "sera titular", "voce e titular", "voce joga", "vai jogar", "comeca jogando",
+    "escalado", "prometo", "garanto a vaga", "a vaga e sua", "conte com a vaga", "entra no time",
+    "titular na proxima", "vou te escalar", "voce comeca", "e seu o lugar", "vaga garantida", "pode se preparar",
+    "prepare-se para jogar", "te ponho em campo", "vou te por", "vou te colocar", "proximo jogo voce"],
+  exigir: ["trein", "conquist", "merec", "esforc", "empenho", "dedica", "prove", "provar", "mostre", "mostrar",
+    "corre atras", "trabalh", "por conta propria", "ninguem ganha vaga", "se dedique", "ralar", "ralando",
+    "suar", "sue a camisa", "vai ter que", "tem que correr", "academia", "intensidade", "foco", "disciplina",
+    "chegue mais cedo", "faca por onde"],
+  acolher: ["confio", "confianca em voce", "paciencia", "calma", "seu momento vai chegar", "estou com voce",
+    "conte comigo", "sei do seu valor", "voce e importante", "tranquilo", "nao desanime", "seguro",
+    "fique calmo", "sua hora vai chegar", "acredito em voce", "nao se preocupe", "estamos juntos",
+    "cabeca erguida", "nao desista", "vai passar", "to contigo", "apoio voce"],
+  elogiar: ["parabens", "otimo", "excelente", "muito bom", "gosto do seu", "voce e bom", "qualidade",
+    "melhor do", "orgulho", "grande jogador", "craque", "fera", "monstro", "jogou muito", "mandou bem",
+    "show", "espetacular", "diferenciado", "decisivo", "importante para o grupo", "referencia"],
+  explicar: ["momento do time", "opcao tatica", "tatica", "esquema", "concorrencia", "concorrente", "sistema",
+    "explico", "explicar", "questao de", "hoje o time", "a escolha", "por isso", "e o seguinte", "acontece que",
+    "a razao", "o motivo", "por que", "porque", "entenda", "e assim", "questao tecnica", "escolha minha",
+    "nao e pessoal", "nada contra voce"],
+  // ── NOVAS ──────────────────────────────────────────────────────────────
+  criticar: ["nao esta trein", "nao treina", "treinando pouco", "treinando mal", "nao se dedica",
+    "esta devendo", "ta devendo", "jogando mal", "jogou mal", "rendimento", "caiu de", "abaixo do",
+    "decepcion", "fraco", "apagado", "sumiu em campo", "nao corre", "nao ajuda", "relaxad", "acomodad",
+    "desligad", "postura", "atitude", "compromisso", "peso", "fora de forma", "condicao fisica",
+    "chega atrasado", "indisciplina", "nao esta bem", "esta ruim", "precisa melhorar", "insuficiente",
+    "nao e suficiente", "esperava mais"],
+  ameacar: ["vai para o banco", "vai pro banco", "fica no banco", "banco de reservas", "vou te vender",
+    "te vendo", "vou negociar voce", "perde a vaga", "vai perder", "ultima chance", "ou muda ou",
+    "se nao mudar", "consequencia", "vou tomar providencia", "nao vou aceitar", "assim nao da",
+    "corto voce", "fica fora", "nem relacionado", "sem relacionar", "multa", "advertencia"],
+  perguntar: ["como voce esta", "como esta", "tudo bem", "o que esta acontecendo", "o que houve",
+    "algum problema", "quer conversar", "me conta", "como se sente", "como estao as coisas",
+    "esta feliz", "esta incomodado", "o que voce acha", "sua opiniao", "quer falar", "escuto voce",
+    "estou ouvindo", "desabafa", "o que voce quer"],
+  renovar: ["renovar", "renovacao", "novo contrato", "estender", "aumentar seu salario", "aumento",
+    "valorizar", "valorizacao", "quero voce aqui", "seguir conosco", "continuar no clube", "mais tempo aqui",
+    "assinar", "proposta de contrato", "melhorar seu contrato", "reajuste"],
 }
 
 /** A ordem de leitura: o que tem consequencia pesada exige palavra clara. */
-const ORDEM: IntencaoDoTecnico[] = ["liberar", "prometer", "exigir", "acolher", "elogiar", "explicar"]
+// A ordem importa: o que tem consequencia pesada exige palavra clara e e lido
+// primeiro. `criticar` vem ANTES de `exigir` porque "voce nao esta treinando" e
+// critica, nao cobranca — e a resposta do atleta e outra.
+const ORDEM: IntencaoDoTecnico[] = [
+  "liberar", "ameacar", "prometer", "renovar", "criticar", "exigir", "perguntar", "acolher", "elogiar", "explicar",
+]
 
 function pontos(texto: string, chaves: string[]): number {
   return chaves.reduce((n, k) => (texto.includes(k) ? n + 1 : n), 0)
@@ -172,6 +228,119 @@ export function responderAtleta(intencao: IntencaoDoTecnico, e: EstadoDoAtleta):
       viraTitular: true,
       registraPromessa: true,
       encerra: true,
+    }
+  }
+
+  // ── CRITICAR: ele REBATE, e o argumento sai da situacao real dele ────────
+  //
+  // O pedido era exatamente este: dizer "voce nao esta treinando o suficiente" e
+  // ouvir uma resposta a altura. Quem treina ha 12 jogos sem entrar nao aceita
+  // essa critica calado; quem esta de moral alta e joga responde diferente de
+  // quem ja desistiu. `encerra: false` mantem a conversa aberta — critica pede
+  // reposta, e resposta pede treplica.
+  if (intencao === "criticar") {
+    if (impaciente && desconfiado) {
+      return {
+        resposta: `Professor, o senhor me cobra dedicação, mas eu não entro há ${e.jogosSemJogar} jogos ` +
+          `e já ouvi promessa que não valeu. Fica difícil ouvir que o problema sou eu.`,
+        moralDegraus: -2,
+        encerra: false,
+      }
+    }
+    if (impaciente) {
+      return {
+        resposta: `Eu chego cedo e saio tarde do treino, professor. Se o senhor acha que estou devendo, ` +
+          `me põe em campo e cobra de mim lá dentro — no treino eu já mostrei o que sei fazer.`,
+        moralDegraus: -1,
+        encerra: false,
+      }
+    }
+    if (moral >= 3) {
+      return {
+        resposta: `Recebo a crítica, professor. Se o senhor viu algo que não está bom, me diz o que é ` +
+          `que eu corrijo — não vim aqui para brigar.`,
+        moralDegraus: 0,
+        encerra: false,
+      }
+    }
+    if (e.idade >= 31) {
+      return {
+        resposta: `Eu tenho ${e.idade} anos, professor, não tenho mais o que provar em treino. ` +
+          `O que eu preciso é de ritmo de jogo, e isso o senhor é quem me dá.`,
+        moralDegraus: -1,
+        encerra: false,
+      }
+    }
+    return {
+      resposta: `Se está faltando alguma coisa da minha parte, eu quero saber qual é. ` +
+        `Me aponta e eu trabalho nisso.`,
+      moralDegraus: -1,
+      encerra: false,
+    }
+  }
+
+  // ── AMEACAR: funciona com quem tem o que perder; com quem ja perdeu, nao ──
+  if (intencao === "ameacar") {
+    if (impaciente || e.naListaDeTransferencias) {
+      return {
+        resposta: `Banco eu já conheço, professor — estou nele há ${e.jogosSemJogar} jogos. ` +
+          `Se a ideia é me pressionar, o senhor está ameaçando com o que eu já vivo.`,
+        moralDegraus: -2,
+        encerra: false,
+      }
+    }
+    if (moral >= 3) {
+      return {
+        resposta: `Não precisa chegar a esse ponto, professor. Se tem algo errado, me fala e eu resolvo.`,
+        moralDegraus: -1,
+        encerra: false,
+      }
+    }
+    return {
+      resposta: `Entendi o recado. Vou mostrar em campo que o senhor não precisa disso comigo.`,
+      moralDegraus: -1,
+      encerra: false,
+    }
+  }
+
+  // ── PERGUNTAR: ouvir custa nada e quase sempre rende ─────────────────────
+  if (intencao === "perguntar") {
+    if (e.naListaDeTransferencias) {
+      return {
+        resposta: `Sinceramente? Estou na lista, professor. Fico mais tranquilo sabendo o que vai ser de mim.`,
+        moralDegraus: 0,
+        encerra: false,
+      }
+    }
+    if (impaciente) {
+      return {
+        resposta: `Estou incomodado, professor — e acho que o senhor sabe por quê. ${e.jogosSemJogar} jogos ` +
+          `sem entrar pesa na cabeça de qualquer um.`,
+        moralDegraus: 1,
+        encerra: false,
+      }
+    }
+    return {
+      resposta: `Estou bem, professor. Trabalhando e esperando a oportunidade. Obrigado por perguntar.`,
+      moralDegraus: 1,
+      encerra: false,
+    }
+  }
+
+  // ── RENOVAR: sinal forte de valorizacao ──────────────────────────────────
+  if (intencao === "renovar") {
+    if (impaciente) {
+      return {
+        resposta: `Renovar eu quero, professor. Mas contrato novo sem jogo não resolve o meu problema — ` +
+          `eu preciso é entrar em campo.`,
+        moralDegraus: 1,
+        encerra: false,
+      }
+    }
+    return {
+      resposta: `Isso é um reconhecimento e tanto, professor. Pode falar com o meu empresário que eu quero ficar.`,
+      moralDegraus: 2,
+      encerra: false,
     }
   }
 

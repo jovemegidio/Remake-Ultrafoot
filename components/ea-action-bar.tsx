@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { BarChart3, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
+import { useEhAppCelular } from "@/lib/plataforma"
 
 /**
  * Barra de acoes inferior estilo EA FC Manager.
@@ -171,6 +172,9 @@ export function EaActionBar() {
   const ctx = useContext(ActionBarContext)
   const pathname = usePathname()
   const { state } = useGameState()
+  // Antes do `return null` de propósito: hook não pode ficar depois de saída
+  // condicional, senão a ordem muda entre renderizações e o React quebra.
+  const celular = useEhAppCelular()
   const actions = ctx?.actions ?? DEFAULT_ACTIONS
 
   // A barra pertence ao escritorio da carreira. Na splash, editor e fluxos antes
@@ -219,8 +223,14 @@ export function EaActionBar() {
         <span className="flex h-4 w-4 items-center justify-center rounded-[3px] border border-white/20 text-[8px] font-bold text-white/55">
           f
         </span>
-        <button onClick={() => window.dispatchEvent(new Event("ultrafoot:fc-hub"))} className="flex items-center gap-2 hover:text-white"><span className="text-[11px] font-semibold tracking-wide text-white/55">FC HUB</span><KeyCap label="Tab" /></button>
-        <div className="mx-1 h-4 w-px bg-white/10" />
+        {/* O FC Hub não existe no app de celular (ver components/fc-hub-loader):
+            sem ele montado, este botão só disparava um evento que ninguém ouve. */}
+        {!celular && (
+          <>
+            <button onClick={() => window.dispatchEvent(new Event("ultrafoot:fc-hub"))} className="flex items-center gap-2 hover:text-white"><span className="text-[11px] font-semibold tracking-wide text-white/55">FC HUB</span><KeyCap label="Tab" /></button>
+            <div className="mx-1 h-4 w-px bg-white/10" />
+          </>
+        )}
         <div className="flex items-center gap-1">
           <Users className="h-3.5 w-3.5" />
           <span className="text-[11px] font-semibold text-white/55">1</span>

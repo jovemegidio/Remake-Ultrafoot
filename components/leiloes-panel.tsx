@@ -18,6 +18,7 @@
 
 import { useMemo, useState } from "react"
 import { Gavel, TrendingUp, Trophy, XCircle, Clock } from "lucide-react"
+import { useGameEngine } from "@/lib/game-engine"
 import { TeamCrest } from "@/components/team-crest"
 import { formatCurrency } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
@@ -58,6 +59,8 @@ export function contarLeiloesAbertos(
   pool: AlvoDeLeilao[],
   candidatos: { curto: string; nome: string; prestigio: number; caixa: number; forcaElenco: number }[],
   semana: number,
+  /** Mesmo piso do painel — as duas contas TEM de usar o mesmo criterio. */
+  pisoDoMeuElenco = 78,
 ): number {
   let total = 0
   const encerra = semanaDeEncerramento(semana)
@@ -68,6 +71,7 @@ export function contarLeiloesAbertos(
     if (!alvo.team?.nome) continue
     if (!emLeilaoNaSemana(alvo.name, alvo.team.nome, alvo.overall, semana, {
       prestigioDoClube: alvo.team.prestigio, idade: alvo.age, potencial: alvo.potential,
+      pisoDeInteresse: pisoDoMeuElenco,
     })) continue
     const chave = chaveLeilao(alvo.name, alvo.team.nome)
     if (vistos.has(chave)) continue
@@ -117,6 +121,34 @@ export function LeiloesPanel({
   pool, semana, season, saldo, candidatos, lancesSalvos, onLance, onNegociar, clubeDoUsuario,
 }: Props) {
   const [rascunho, setRascunho] = useState<Record<string, number>>({})
+
+  /**
+   * TETO DO LANCE — e a VERBA, nao o caixa inteiro.
+   *
+   * ⚠️ A trava so comparava com `saldo`, entao um clube podia apostar ate o
+   * ultimo centavo do caixa num leilao — dinheiro que paga folha, estadio e
+   * divida. Era o relato do lance desproporcional ao tamanho do clube.
+   * A verba de transferencia e o numero que a diretoria realmente liberou; sem
+   * ela cadastrada, cai no caixa como antes.
+   */
+  /**
+   * PISO DE INTERESSE deste clube — o nivel do proprio elenco, menos uma folga.
+   *
+   * E o que abre o leilao para quem esta embaixo: um elenco de 50 passa a ver
+   * atletas de 44 para cima; um de 80 continua vendo so os 78+, como antes.
+   * A folga de 6 existe para o leilao servir tambem para REPOR, nao so para
+   * subir de patamar.
+   */
+  const meuElenco = useGameEngine(st => st.squadPlayers)
+  const pisoDoMeuElenco = useMemo(() => {
+    if (!meuElenco.length) return 78
+    const onze = [...meuElenco].sort((a, b) => b.overall - a.overall).slice(0, 11)
+    const media = onze.reduce((soma, p) => soma + p.overall, 0) / onze.length
+    return Math.round(media) - 6
+  }, [meuElenco])
+
+  const verbaDeTransferencia = useGameEngine(st => st.transferBudget) ?? 0
+  const tetoDeLance = verbaDeTransferencia > 0 ? Math.min(saldo, verbaDeTransferencia) : saldo
   const [aviso, setAviso] = useState<string | null>(null)
 
   const leiloes = useMemo<LeilaoNaTela[]>(() => {
@@ -127,10 +159,24 @@ export function LeiloesPanel({
     // leilao e clube+nome, os dois eram o MESMO leilao aparecendo em dobro — e
     // cobrir um nao mexia no outro. A chave tambem serve para deduplicar.
     const vistos = new Set<string>()
+    // ⚠️ ATLETA SEU NUNCA VAI A LEILAO SOZINHO (pedido, reforcado: "jogadores do
+    // meu time so vao a leilao se eu colocar para ir a leilao").
+    //
+    // O catalogo ja exclui o clube do usuario por sigla E por nome normalizado
+    // (ver generateDetailedMarketTargets — a exclusao so por sigla ja falhou uma
+    // vez, porque a tabela BF usa "CORINTHI" e o jogo usa "COR"). Esta e a
+    // segunda tranca, no ponto onde o leilao e MONTADO: se um dia o catalogo
+    // deixar passar, aqui nao vira disputa. O leilao de VENDA (a outra aba) e o
+    // unico caminho para um atleta seu entrar em disputa, e ele exige anuncio.
+    const meuClube = clubeDoUsuario.nome.trim().toLocaleLowerCase("pt-BR")
+    const minhaSigla = clubeDoUsuario.curto.trim().toUpperCase()
     for (const alvo of pool) {
       if (!alvo.team?.nome) continue
+      if (alvo.team.nome.trim().toLocaleLowerCase("pt-BR") === meuClube) continue
+      if ((alvo.team.curto ?? "").trim().toUpperCase() === minhaSigla) continue
       if (!emLeilaoNaSemana(alvo.name, alvo.team.nome, alvo.overall, semana, {
         prestigioDoClube: alvo.team.prestigio, idade: alvo.age, potencial: alvo.potential,
+        pisoDeInteresse: pisoDoMeuElenco,
       })) continue
       const chave = chaveLeilao(alvo.name, alvo.team.nome)
       if (vistos.has(chave)) continue
@@ -186,8 +232,12 @@ export function LeiloesPanel({
       setAviso(`Para cobrir a disputa por ${item.alvo.name} é preciso oferecer ao menos ${formatCurrency(minimo)}.`)
       return
     }
-    if (valor > saldo) {
-      setAviso(`Seu caixa é de ${formatCurrency(saldo)} — este lance não cabe. Venda alguém antes.`)
+    if (valor > tetoDeLance) {
+      setAviso(
+        verbaDeTransferencia > 0 && verbaDeTransferencia < saldo
+          ? `A diretoria liberou ${formatCurrency(tetoDeLance)} para contratar. O caixa até tem mais, mas ele paga folha, estádio e dívida.`
+          : `Seu caixa é de ${formatCurrency(saldo)} — este lance não cabe. Venda alguém antes.`,
+      )
       return
     }
     onLance({ chave: item.leilao.id, valor, encerraNaSemana: item.leilao.encerraNaSemana, season, semanaDoLance: semana })
@@ -306,7 +356,10 @@ export function LeiloesPanel({
                     onChange={(e) => {
                       // Aceita so digito: o usuario pode apagar/colar com pontos.
                       const digitos = e.target.value.replace(/\D/g, "")
-                      setRascunho(r => ({ ...r, [item.leilao.id]: digitos ? Number(digitos) : 0 }))
+                      // Clampa no teto: digitar 15 milhoes com 1 no caixa nunca
+                      // chega a virar um lance, entao nem aceita o numero.
+                      const bruto = digitos ? Number(digitos) : 0
+                      setRascunho(r => ({ ...r, [item.leilao.id]: Math.min(bruto, tetoDeLance) }))
                     }}
                     className="w-48 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-right text-sm tabular-nums text-white outline-none focus:border-[var(--brand)]/50"
                   />

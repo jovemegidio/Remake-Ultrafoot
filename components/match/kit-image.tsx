@@ -10,7 +10,8 @@
 // Sempre ha algo apresentavel, e o time nao fica com um buraco na tela.
 
 import { useEffect, useRef, useState } from "react"
-import { getCamisaUrl, isKitVariantAvailable, type Team } from "@/lib/teams-data"
+import { getCamisaUrl, getLocalCamisaPath, isKitVariantAvailable, type Team } from "@/lib/teams-data"
+import { gameAssetUrl } from "@/lib/game-asset"
 
 export type KitVariant = "home" | "away" | "third"
 
@@ -68,9 +69,18 @@ function DrawnKit({ team, variant }: { team: Team; variant: KitVariant }) {
 export function KitImage({ team, variant }: { team: Team; variant: KitVariant }) {
   const [revision, setRevision] = useState(0)
   const [retryCount, setRetryCount] = useState(0)
+  /** 0 = URL como veio; 1 = a OUTRA forma (caminho <-> game-asset://). Ver handleError. */
+  const [formaDaUrl, setFormaDaUrl] = useState(0)
   // revision faz o componente reler o override depois que o store assincrono
   // termina de hidratar ou quando o editor salva/importa uma camisa.
-  const url = getCamisaUrl(team.file_key, variant, team.nome)
+  const urlBase = getCamisaUrl(team.file_key, variant, team.nome)
+  // SEGUNDA FORMA: o caminho EMPACOTADO da camisa, que existe no disco do
+  // jogador independentemente de ambiente (ver handleError). Nao se aplica a
+  // uniforme importado pelo usuario (data:/blob:), que ja e o dado em si.
+  const proximaForma = /^(data:|blob:)/i.test(urlBase ?? "") || !team.file_key
+    ? null
+    : gameAssetUrl(getLocalCamisaPath(team.file_key, variant))
+  const url = formaDaUrl === 1 ? (proximaForma ?? urlBase) : urlBase
   const [failed, setFailed] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
 
@@ -94,7 +104,7 @@ export function KitImage({ team, variant }: { team: Team; variant: KitVariant })
   }, [team.file_key])
 
   // Troca de time/variante: volta a tentar a arte.
-  useEffect(() => { setFailed(false); setRetryCount(0) }, [url, revision])
+  useEffect(() => { setFailed(false); setRetryCount(0); setFormaDaUrl(0) }, [urlBase, revision])
 
   // Imagem em CACHE nao dispara onError/onLoad depois do mount — checa na mao.
   // (Mesmo problema que ja tinha derrubado os escudos no TeamCrest.)
@@ -109,6 +119,24 @@ export function KitImage({ team, variant }: { team: Team; variant: KitVariant })
     // kits existentes como ausentes (caso visto em Arsenal/Manchester/Real).
     if (retryCount < 4) {
       window.setTimeout(() => setRetryCount(value => value + 1), 140)
+      return
+    }
+    // ⚠️ ANTES DE DESISTIR, TENTA O CAMINHO EMPACOTADO (relato: "uniformes
+    // foram perdidos", desde a 1.0.266).
+    //
+    // `getCamisaUrl` decide por ambiente, igual ao escudo:
+    //     isTauri()  -> game-asset://localhost/camisas/x.webp  (empacotado)
+    //     senao      -> https://.../teams/camisas/x.png        (repo remoto)
+    //
+    // O export e estatico: o HTML sai pre-renderizado do build, onde `isTauri()`
+    // e FALSO — entao o `src` gravado e a URL REMOTA, e ela permanece dentro do
+    // aplicativo (o React nao corrige atributo divergente na hidratacao). Sem
+    // rede, ou com o repositorio de terceiros fora do ar, a arte 404 e o clube
+    // cai na camisa desenhada. Repetir a MESMA url quatro vezes nunca resolveu:
+    // o problema nao e instabilidade, e a url errada.
+    if (formaDaUrl === 0 && proximaForma) {
+      setFormaDaUrl(1)
+      setRetryCount(0)
       return
     }
     setFailed(true)

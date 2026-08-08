@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AbasDoModal, GrupoDeCampos } from "@/components/modal-kit"
 import { nomeOficialDoClube } from "@/lib/club-names"
 import { hardNavigate } from "@/lib/hard-navigation"
 import {
@@ -389,9 +390,15 @@ export default function EditarPage() {
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState(0)
   // Edicao de jogador (nome/posicao/overall) — persiste via player-overrides.
   const [editingPlayer, setEditingPlayer] = useState<EditorPlayer | null>(null)
+  // Aba do modal de jogador. Ver components/modal-kit.tsx: o modal era um scroll
+  // unico de nome ate atributos, com o Salvar fora da vista.
+  const [abaDoJogador, setAbaDoJogador] = useState("identidade")
   const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0, idade: 0, nac: "", preferredFoot: "Direita" as "Direita" | "Esquerda" | "Ambidestro", reputation: "normal" as "normal" | "estrela" | "top_mundial", lado: "D" as "E" | "D" | "C", traits: [] as string[], faceDataUrl: "", pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 })
   const openPlayerEdit = (p: EditorPlayer) => {
     setEditingPlayer(p)
+    // Abrir SEMPRE na primeira aba: herdar a aba do jogador anterior faz o modal
+    // abrir em "Atributos" para quem so queria corrigir um nome.
+    setAbaDoJogador("identidade")
     const sourceTeamKey = p.sourceTeamKey ?? selectedTeam?.file_key
     const ov = sourceTeamKey ? getPlayerOverride(sourceTeamKey, p.originalName) : null
     setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall, idade: p.idade, nac: ov?.nac ?? p.pais ?? "", preferredFoot: ov?.preferredFoot ?? "Direita", reputation: ov?.reputation ?? "normal", lado: ov?.lado ?? ladoDaPosicao(p.posicao), traits: (ov?.traits ?? []).slice(0, MAX_CARACTERISTICAS), faceDataUrl: ov?.faceDataUrl ?? "", pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical })
@@ -1300,10 +1307,14 @@ export default function EditarPage() {
                   <div className="flex-1 overflow-y-auto scrollbar-thin px-6 py-5 space-y-6">
 
                     {/* Dados gerais */}
-                    <section>
-                      <h3 className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-3">
-                        {isNationalTeam(selectedTeam) ? "Dados da Seleção" : "Dados do Clube"}
-                      </h3>
+                    {/* AGRUPAMENTO (pedido: "organize o modal de editar time").
+                        Eram doze campos numa grade unica e plana: nome, estadio,
+                        tecnico e cor disputavam o mesmo espaco visual. Os campos e o
+                        que cada um grava sao os MESMOS - mudou so o agrupamento. */}
+                    <GrupoDeCampos
+                      titulo={isNationalTeam(selectedTeam) ? "Identidade da seleção" : "Identidade do clube"}
+                      nota="Como o time aparece em tabela, placar e escudo."
+                    >
                       <div className="grid grid-cols-2 gap-3">
                         {/* NOME DE EXIBICAO — o curto, que aparece em tabela,
                             placar e escudo. O rotulo dizia "Nome completo", o
@@ -1344,18 +1355,11 @@ export default function EditarPage() {
                             className="w-full px-3 py-2 text-xs bg-white/[0.04] border border-white/[0.08] rounded-lg text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all font-mono"
                           />
                         </div>
-                        {/* Prestígio */}
-                        <div>
-                          <label className="block text-[10px] text-white/40 mb-1">Prestígio (Overall)</label>
-                          <input
-                            type="number"
-                            min={1} max={99}
-                            value={editDraft.prestigio ?? selectedTeam.prestigio}
-                            onChange={e => setEditDraft(p => ({ ...p, prestigio: Math.min(99, Math.max(1, Number(e.target.value))) }))}
-                            className="w-full px-3 py-2 text-xs bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-white/20 transition-all"
-                          />
-                        </div>
-                        {/* Estádio */}
+                      </div>
+                    </GrupoDeCampos>
+
+                    <GrupoDeCampos titulo="Estádio" nota="A capacidade define público, bilheteria e o teto das obras.">
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] text-white/40 mb-1">Nome do Estádio</label>
                           <input
@@ -1376,9 +1380,14 @@ export default function EditarPage() {
                             className="w-full px-3 py-2 text-xs bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-white/20 transition-all"
                           />
                         </div>
-                        {/* TÉCNICO. O clube tinha estádio, cores e patrocínio, mas não
-                            tinha treinador — não dava para corrigir o nome de quem
-                            comanda o time nem a nacionalidade dele. */}
+                      </div>
+                    </GrupoDeCampos>
+
+                    {/* TÉCNICO. O clube tinha estádio, cores e patrocínio, mas não
+                        tinha treinador — não dava para corrigir o nome de quem
+                        comanda o time nem a nacionalidade dele. */}
+                    <GrupoDeCampos titulo="Comando" nota="Quem dirige a equipe nas telas de partida.">
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] text-white/40 mb-1">Nome do técnico</label>
                           <input
@@ -1400,9 +1409,14 @@ export default function EditarPage() {
                             {PAISES_ORDENADOS.map(p => <option key={p} value={p}>{p}</option>)}
                           </select>
                         </div>
-                        {/* PAÍS DO CLUBE. Sem isto não havia como consertar um clube
-                            importado no país errado — e o país decide bandeira,
-                            competições e a seleção dos atletas da casa. */}
+                      </div>
+                    </GrupoDeCampos>
+
+                    {/* PAÍS DO CLUBE. Sem isto não havia como consertar um clube
+                        importado no país errado — e o país decide bandeira,
+                        competições e a seleção dos atletas da casa. */}
+                    <GrupoDeCampos titulo="Peso e alcance" nota="País, prestígio e reputação decidem competições, atração de atletas e receita.">
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] text-white/40 mb-1">País do clube</label>
                           <select
@@ -1412,6 +1426,17 @@ export default function EditarPage() {
                           >
                             {PAISES_ORDENADOS.map(p => <option key={p} value={p}>{p}</option>)}
                           </select>
+                        </div>
+                        {/* PRESTÍGIO — força do elenco (a REPUTAÇÃO abaixo é outra coisa). */}
+                        <div>
+                          <label className="block text-[10px] text-white/40 mb-1">Prestígio (Overall)</label>
+                          <input
+                            type="number"
+                            min={1} max={99}
+                            value={editDraft.prestigio ?? selectedTeam.prestigio}
+                            onChange={e => setEditDraft(p => ({ ...p, prestigio: Math.min(99, Math.max(1, Number(e.target.value))) }))}
+                            className="w-full px-3 py-2 text-xs bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-white/20 transition-all"
+                          />
                         </div>
                         {/* REPUTAÇÃO. Separada do prestígio de propósito: prestígio é a
                             força do ELENCO, reputação é o alcance da MARCA. Um clube
@@ -1430,7 +1455,11 @@ export default function EditarPage() {
                             <option value="mundial">Mundial</option>
                           </select>
                         </div>
-                        {/* Patrocinador */}
+                      </div>
+                    </GrupoDeCampos>
+
+                    <GrupoDeCampos titulo="Marca e cores" nota="As cores valem em todo o jogo: escudo gerado, faixas e o uniforme padrão.">
+                      <div className="grid grid-cols-2 gap-3">
                         <div className="col-span-2">
                           <label className="block text-[10px] text-white/40 mb-1">Patrocinador principal</label>
                           <input
@@ -1466,7 +1495,7 @@ export default function EditarPage() {
                           </div>
                         </div>
                       </div>
-                    </section>
+                    </GrupoDeCampos>
 
                     {/* Kits */}
                     <section>
@@ -1664,10 +1693,24 @@ export default function EditarPage() {
       {/* Modal de edicao de JOGADOR (nome / posicao / overall) — persiste e viaja no build. */}
       {editingPlayer && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setEditingPlayer(null)}>
-          <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/10 bg-[#0f1e22] p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-1 text-lg font-bold text-white">Editar jogador</h3>
-            <p className="mb-4 text-xs text-white/40">Original: {editingPlayer.originalName}</p>
-            <div className="space-y-3">
+          <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f1e22]" onClick={(e) => e.stopPropagation()}>
+            {/* Cabecalho FIXO: o nome de quem se edita nao pode sumir na rolagem. */}
+            <div className="shrink-0 border-b border-white/[0.07] px-6 pb-3 pt-5">
+              <h3 className="text-lg font-bold text-white">Editar jogador</h3>
+              <p className="mb-3 text-xs text-white/40">Original: {editingPlayer.originalName}</p>
+              <AbasDoModal
+                ativa={abaDoJogador}
+                onTrocar={setAbaDoJogador}
+                abas={[
+                  { id: "identidade", rotulo: "Identidade" },
+                  { id: "perfil", rotulo: "Perfil" },
+                  { id: "caracteristicas", rotulo: "Características", selo: `${pDraft.traits.length}/${MAX_CARACTERISTICAS}` },
+                  { id: "atributos", rotulo: "Atributos" },
+                ]}
+              />
+            </div>
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-4">
+              {abaDoJogador === "identidade" && (<>
               <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                 <PlayerAvatar name={pDraft.nome || editingPlayer.nome} photoUrl={pDraft.faceDataUrl || undefined} position={pDraft.posicao} fileKey={selectedTeam?.file_key} size="xl" />
                 <div>
@@ -1714,6 +1757,10 @@ export default function EditarPage() {
                   />
                 </div>
               </div>
+              </>)}
+
+              {abaDoJogador === "perfil" && (<>
+              <GrupoDeCampos titulo="Ficha do atleta" nota="Idade, pé e reputação mudam preço, salário e como a IA o avalia.">
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Idade</label>
@@ -1732,6 +1779,9 @@ export default function EditarPage() {
                   </select>
                 </div>
               </div>
+              </GrupoDeCampos>
+
+              <GrupoDeCampos titulo="Origem e lado" nota="A nacionalidade decide bandeira e convocação; o lado vale para quem joga aberto.">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Nacionalidade</label>
@@ -1766,6 +1816,10 @@ export default function EditarPage() {
                 </div>
               </div>
 
+              </GrupoDeCampos>
+              </>)}
+
+              {abaDoJogador === "caracteristicas" && (
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-[10px] uppercase tracking-wide text-white/40">Características</label>
@@ -1814,7 +1868,10 @@ export default function EditarPage() {
                 </p>
               </div>
 
+              )}
+
               {/* Atributos individuais (valem na partida) */}
+              {abaDoJogador === "atributos" && (
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label className="text-[10px] uppercase tracking-wide text-white/40">Atributos</label>
@@ -1839,8 +1896,10 @@ export default function EditarPage() {
                   ))}
                 </div>
               </div>
+              )}
             </div>
-            <div className="mt-6 flex items-center justify-end gap-2">
+            {/* Rodape FIXO: Salvar sempre a vista, em qualquer aba. */}
+            <div className="flex shrink-0 items-center justify-end gap-2 border-t border-white/[0.07] px-6 py-4">
               <button onClick={() => setEditingPlayer(null)} className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/60 hover:bg-white/10">Cancelar</button>
               <button
                 onClick={async () => {

@@ -26,6 +26,46 @@ import { useEffect } from "react"
 const SELETOR_DIALOGO =
   '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]'
 
+/**
+ * ⚠️ A PONTE SO ENXERGAVA DIALOGO RADIX — e a maior parte dos modais do jogo
+ * nao e Radix.
+ *
+ * A auditoria (scripts/qa-gamepad.ts) achou 35 modais/confirmacoes montados na
+ * mao como `<div className="fixed inset-0 ...">`: mesa de negociacao, escolha
+ * do batedor de penalti, coletiva pos-jogo, resultado da partida, contrato,
+ * exame medico, olheiro... Nenhum tem `role="dialog"` nem `data-state`, entao o
+ * seletor acima nao casava e o controle ficava morto exatamente onde mais
+ * prende o jogador. Era o relato "o controle nao funciona nessa tela".
+ *
+ * Agora ha uma segunda passada, heuristica e conservadora: sobreposicao FIXA
+ * cobrindo a tela, visivel, com pelo menos um botao habilitado. Quem quiser
+ * ficar de fora (porque ja trata o proprio controle, como o aviso de saida)
+ * marca `data-gamepad-modal="off"`.
+ */
+function sobreposicaoNaMao(): HTMLElement | null {
+  if (typeof document === "undefined") return null
+  const candidatos: { el: HTMLElement; z: number; ordem: number }[] = []
+  const todos = document.querySelectorAll<HTMLElement>("div.fixed.inset-0, [data-gamepad-modal='on']")
+  todos.forEach((el, ordem) => {
+    if (el.dataset.gamepadModal === "off") return
+    // Dentro de um dialogo Radix? Entao a primeira passada ja cuida dele.
+    if (el.closest(SELETOR_DIALOGO)) return
+    const rect = el.getBoundingClientRect()
+    if (rect.width < window.innerWidth * 0.5 || rect.height < window.innerHeight * 0.5) return
+    const estilo = getComputedStyle(el)
+    if (estilo.position !== "fixed" || estilo.visibility === "hidden" || estilo.display === "none") return
+    if (estilo.pointerEvents === "none") return
+    // Sem nada para acionar, nao e um modal — e um fundo, um brilho, um vinheta.
+    if (!el.querySelector("button:not([disabled]), [href]")) return
+    const z = Number.parseInt(estilo.zIndex, 10)
+    candidatos.push({ el, z: Number.isNaN(z) ? 0 : z, ordem })
+  })
+  if (!candidatos.length) return null
+  // O de cima: maior z-index; empatou, o ultimo montado.
+  candidatos.sort((a, b) => a.z - b.z || a.ordem - b.ordem)
+  return candidatos[candidatos.length - 1].el
+}
+
 const SELETOR_FOCAVEL = [
   "button:not([disabled])",
   "[href]",
@@ -40,7 +80,9 @@ const SELETOR_FOCAVEL = [
 export function dialogoAberto(): HTMLElement | null {
   if (typeof document === "undefined") return null
   const todos = document.querySelectorAll<HTMLElement>(SELETOR_DIALOGO)
-  return todos.length ? todos[todos.length - 1] : null
+  // Radix primeiro: quando existe, é o de cima (ele monta em portal no fim do body).
+  if (todos.length) return todos[todos.length - 1]
+  return sobreposicaoNaMao()
 }
 
 function focaveis(dialogo: HTMLElement): HTMLElement[] {

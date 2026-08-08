@@ -407,7 +407,20 @@ export default function ElencoPage() {
   const [showSuggestedSubs, setShowSuggestedSubs] = useState(false)
   const [showLeaderboards, setShowLeaderboards] = useState(false)
   const [tacticalSaved, setTacticalSaved] = useState(false)
-  const [ballInstruction, setBallInstruction] = useState<"sem_bola" | "com_bola">("sem_bola")
+  /**
+   * FASE DA PRANCHETA — e ela É o `modoMovimento`, não um estado paralelo.
+   *
+   * ⚠️ Isto era um `useState` que NINGUÉM lia além do próprio rótulo: o botão
+   * "Com a bola / Sem a bola" trocava o texto e mais nada. Era o relato do
+   * jogador — "não consigo editar as instruções para jogar com bola e sem bola,
+   * mantém a mesma estrutura e não altera". Não alterava mesmo: não havia
+   * ligação nenhuma com posição, seta ou instrução.
+   *
+   * Agora a fase é derivada: SEM a bola é a forma base (arrastar move o atleta
+   * de lugar); COM a bola é para onde ele se desloca (arrastar desenha a seta,
+   * que o motor traduz em avançar/segurar/abrir/fechar).
+   */
+  const ballInstruction: "sem_bola" | "com_bola" = modoMovimento ? "com_bola" : "sem_bola"
   const pitchRef = useRef<HTMLDivElement>(null)
   const positionsHydratedForTeam = useRef("")
 
@@ -1725,7 +1738,15 @@ export default function ElencoPage() {
                 // Deitado o campo precisa de LARGURA, não de altura: o teto de
                 // 560px foi calibrado para a prancheta em pé e espremeria as
                 // cartas numa faixa estreita no meio da tela.
-                campoHorizontal ? "max-w-[1100px]" : "max-w-[560px]",
+                //
+                // ⚠️ SEM TETO NO MODO CARTAS (pedido: "ajuste o campo, na
+                // visualização de cartas, para tomar toda a área"). O teto de
+                // 1100px sobrava de quando a prancheta deitada era novidade: numa
+                // tela larga ele deixava duas faixas pretas nas laterais, e o
+                // campo — que é justamente onde se arrastam as cartas — ficava
+                // menor do que o espaço disponível. Em pé o teto continua, senão
+                // a prancheta vira um retângulo deformado.
+                campoHorizontal ? "max-w-none" : "max-w-[560px]",
               )}
               style={{
                 // Prancheta tática em azul-marinho, como a referência do dossiê:
@@ -2025,16 +2046,51 @@ export default function ElencoPage() {
                 )
               })}
 
-              {/* Tactical instruction overlay */}
-              <button 
-                onClick={() => setBallInstruction(prev => prev === "sem_bola" ? "com_bola" : "sem_bola")}
-                className="absolute bottom-2 md:bottom-4 left-2 md:left-4 flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white/70 text-[10px] md:text-xs transition-colors border border-white/10"
-              >
-                <span>{ballInstruction === "sem_bola" ? "Sem a bola" : "Com a bola"}</span>
-                <span className="text-white/40">|</span>
-                <span className="text-[var(--brand)]">Trocar instrucao</span>
-                <ChevronRight className="h-3 w-3 text-[var(--brand)]" />
-              </button>
+              {/* FASE DA PRANCHETA + ZERAR A MOVIMENTAÇÃO.
+                  O botão da esquerda troca de verdade o que o arrasto edita; o
+                  da direita só aparece quando há seta para apagar — antes a
+                  única forma de apagar era soltar o atleta exatamente em cima
+                  de si mesmo, o que ninguém descobria. */}
+              <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 flex items-center gap-2">
+                <button
+                  onClick={() => setModoMovimento(v => !v)}
+                  title={ballInstruction === "sem_bola"
+                    ? "Arrastando, você muda ONDE o atleta fica. Toque para editar a movimentação dele."
+                    : "Arrastando, você marca PARA ONDE o atleta se desloca. Toque para voltar à posição base."}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-2 py-1 text-[10px] text-white/70 transition-colors hover:bg-black/80 md:px-3 md:py-1.5 md:text-xs"
+                >
+                  <span>{ballInstruction === "sem_bola" ? "Sem a bola" : "Com a bola"}</span>
+                  <span className="text-white/40">|</span>
+                  <span className="text-[var(--brand)]">Trocar instrucao</span>
+                  <ChevronRight className="h-3 w-3 text-[var(--brand)]" />
+                </button>
+
+                {Object.keys(movimentos).length > 0 && (
+                  <button
+                    onClick={() => {
+                      const alvo = positionedPlayers.find(p => p.id === selectedPlayerId)
+                      // Com um atleta selecionado que TEM seta, zera só a dele.
+                      // Sem isso, zera a prancheta inteira.
+                      if (alvo && movimentos[alvo.name]) {
+                        const novos = { ...movimentos }
+                        delete novos[alvo.name]
+                        setMovimentos(novos)
+                      } else {
+                        setMovimentos({})
+                      }
+                    }}
+                    title="Apagar a seta de movimentação e devolver as instruções do atleta ao normal"
+                    className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/60 px-2 py-1 text-[10px] text-white/70 transition-colors hover:border-red-400/40 hover:text-red-300 md:px-3 md:py-1.5 md:text-xs"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    <span>
+                      {positionedPlayers.find(p => p.id === selectedPlayerId && movimentos[p.name])
+                        ? "Zerar deste atleta"
+                        : "Zerar movimentação"}
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
             
             {/* Banco de reservas — FECHADO por padrao (pedido).

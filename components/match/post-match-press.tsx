@@ -469,7 +469,22 @@ const POST_MATCH_QUESTIONS: PressQuestion[] = [
 ]
 
 /** Quantas perguntas a coletiva faz. Eram 3 no total; agora a sala tem tamanho de sala. */
-const PERGUNTAS_POR_COLETIVA = 7
+const PERGUNTAS_POR_COLETIVA = 10
+
+/**
+ * SEGUNDOS PARA RESPONDER CADA PERGUNTA (pedido: "tempo para responder cada
+ * pergunta ... a cada pergunta mal respondida isso deve impactar a moral").
+ *
+ * Coletiva de verdade não espera: o técnico responde na hora, sob pressão, e
+ * hesitar já é uma resposta. Sem relógio, a tela virava um formulário — dava para
+ * pensar cinco minutos em cada frase e sempre escolher a ótima.
+ *
+ * 15s é o intervalo em que dá para LER as três opções e decidir, mas não para
+ * ponderar cada palavra. Perguntas dirigidas a um atleta ganham 3s a mais: elas
+ * são mais longas e a consequência é mais delicada.
+ */
+const SEGUNDOS_POR_PERGUNTA = 15
+const SEGUNDOS_EXTRA_PERGUNTA_DE_ATLETA = 3
 
 interface PostMatchPressProps {
   isOpen: boolean
@@ -512,6 +527,10 @@ export function PostMatchPress({
   const [answeredQuestions, setAnsweredQuestions] = useState<{ tone: string; impact: number; alvo?: string; tomAtleta?: TomResposta }[]>([])
   const [showResult, setShowResult] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
+  /** Segundos restantes da pergunta atual (ver SEGUNDOS_POR_PERGUNTA). */
+  const [segundos, setSegundos] = useState(SEGUNDOS_POR_PERGUNTA)
+  /** Quantas perguntas o tecnico deixou o tempo estourar — some no resultado. */
+  const [semResposta, setSemResposta] = useState(0)
 
   // Determina se o usuario ganhou, perdeu ou empatou
   const matchResult = useMemo(() => {
@@ -577,6 +596,48 @@ export function PostMatchPress({
       setIsAnimating(false)
     }, 300)
   }, [currentQuestion, currentQuestionIndex, selectedQuestions.length, isAnimating])
+
+  /**
+   * O TEMPO ACABOU — e isso conta como resposta.
+   *
+   * ⚠️ Silencio em coletiva nao e neutro. Quem trava diante da imprensa passa
+   * inseguranca: o elenco le como tecnico sem controle da situacao e a diretoria
+   * le como despreparo publico. Por isso a nao-resposta entra com tom proprio
+   * ("omisso") e impacto negativo — se ela fosse tratada como "neutro", deixar o
+   * relogio correr seria a jogada segura, e o cronometro viraria enfeite.
+   *
+   * O peso e maior do que a pior opcao disponivel (-2) de proposito: responder
+   * mal ainda e melhor do que nao responder.
+   */
+  const tempoEsgotado = useCallback(() => {
+    if (isAnimating) return
+    setIsAnimating(true)
+    setSemResposta(n => n + 1)
+    setAnsweredQuestions(prev => [...prev, {
+      tone: "omisso",
+      impact: -3,
+      alvo: currentQuestion?.alvo,
+      tomAtleta: currentQuestion?.alvo ? "cobranca" : undefined,
+    }])
+    setTimeout(() => {
+      if (currentQuestionIndex < selectedQuestions.length - 1) setCurrentQuestionIndex(prev => prev + 1)
+      else setShowResult(true)
+      setIsAnimating(false)
+    }, 300)
+  }, [currentQuestion, currentQuestionIndex, selectedQuestions.length, isAnimating])
+
+  // Relogio da pergunta. Reinicia a cada pergunta e para quando o resultado abre.
+  useEffect(() => {
+    if (showResult || !currentQuestion) return
+    setSegundos(SEGUNDOS_POR_PERGUNTA + (currentQuestion.alvo ? SEGUNDOS_EXTRA_PERGUNTA_DE_ATLETA : 0))
+  }, [currentQuestionIndex, showResult, currentQuestion])
+
+  useEffect(() => {
+    if (showResult || isAnimating || !currentQuestion) return
+    if (segundos <= 0) { tempoEsgotado(); return }
+    const t = window.setTimeout(() => setSegundos(v => v - 1), 1000)
+    return () => window.clearTimeout(t)
+  }, [segundos, showResult, isAnimating, currentQuestion, tempoEsgotado])
 
   // Finalizar e voltar para o office
   const finishAndReturn = useCallback(() => {
@@ -678,6 +739,38 @@ export function PostMatchPress({
                     </span>
                   </div>
                   <Progress value={(currentQuestionIndex / selectedQuestions.length) * 100} className="h-1.5" />
+                </div>
+
+                {/* ── RELOGIO DA PERGUNTA ────────────────────────────────────
+                    A sala nao espera: deixar o tempo acabar E uma resposta, e
+                    das piores (ver `tempoEsgotado`). Fica acima do card porque
+                    precisa ser a primeira coisa que o olho pega. */}
+                <div className="mb-4">
+                  <div className="mb-1.5 flex items-center justify-between text-xs">
+                    <span className={cn(
+                      "font-semibold uppercase tracking-wide",
+                      segundos <= 5 ? "text-red-400" : "text-white/45",
+                    )}>
+                      {segundos <= 5 ? "Responda!" : "Tempo para responder"}
+                    </span>
+                    <span className={cn(
+                      "font-black tabular-nums",
+                      segundos <= 5 ? "text-red-400" : "text-white/70",
+                    )}>
+                      {Math.max(0, segundos)}s
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-[width] duration-1000 ease-linear",
+                        segundos <= 5 ? "bg-red-500" : "bg-[var(--brand)]",
+                      )}
+                      style={{
+                        width: `${Math.max(0, (segundos / (SEGUNDOS_POR_PERGUNTA + (currentQuestion?.alvo ? SEGUNDOS_EXTRA_PERGUNTA_DE_ATLETA : 0))) * 100)}%`,
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Card da pergunta */}

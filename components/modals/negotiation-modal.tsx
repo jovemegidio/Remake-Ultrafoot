@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatar } from "@/components/player-avatar"
+import { TrilhaDePassos, GrupoDeCampos } from "@/components/modal-kit"
 import { formatCurrency, type Team } from "@/lib/teams-data"
 import {
   evaluatePlayerDecision,
@@ -517,7 +518,11 @@ export function NegotiationModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-[#0c0c10] border-white/10 overflow-hidden">
+      {/* max-h + rolagem: em tela de 768px de altura a mesa do emprestimo
+          (duracao, folha, minutagem, opcao de compra) passava do rodape e o botao
+          de fechar negocio ficava inalcancavel. `overflow-hidden` sozinho CORTAVA
+          o conteudo em vez de deixar rolar. */}
+      <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden border-white/10 bg-[#0c0c10] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             {actionIcon}
@@ -531,8 +536,29 @@ export function NegotiationModal({
               : `Negocie o emprestimo de ${player.name}`
             }
           </DialogDescription>
+          {/* Onde a negociacao esta. Cada passo trocava o modal inteiro sem dizer
+              se ainda dava para ajustar algo ou se o negocio ja estava fechado. */}
+          <TrilhaDePassos
+            className="pt-2"
+            /* "response" e a espera pela resposta — ele nao merece um passo proprio,
+               mas sumir com a trilha durante a espera daria a impressao de que o
+               modal trocou de assunto. Os dois pintam o ultimo passo. */
+            atual={step === "response" ? "result" : step}
+            passos={isLoan
+              ? [
+                  { id: "offer", rotulo: "Proposta" },
+                  { id: "loan_terms", rotulo: "Termos" },
+                  { id: "result", rotulo: "Resposta" },
+                ]
+              : [
+                  { id: "offer", rotulo: "Proposta" },
+                  { id: "terms", rotulo: "Agente" },
+                  { id: "result", rotulo: "Resposta" },
+                ]}
+          />
         </DialogHeader>
 
+        <div className="min-h-0 flex-1 overflow-y-auto">
         {step === "offer" && (
           <div className="space-y-6 py-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
             {/* Player Info */}
@@ -565,7 +591,8 @@ export function NegotiationModal({
               </div>
             </div>
 
-            {/* Value Info */}
+            {/* Os numeros da mesa, num bloco so. */}
+            <GrupoDeCampos titulo="Os números" nota={isLoan ? "O que o dono pede e o que você oferece pela cessão." : "O que ele vale e o que você está disposto a pagar."}>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-4 rounded-xl bg-white/5 border border-white/10 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-white/5 to-transparent rounded-bl-full" />
@@ -586,8 +613,7 @@ export function NegotiationModal({
               </div>
             </div>
 
-            {/* Offer Slider */}
-            <div className="space-y-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+            <div className="mt-3 space-y-4 rounded-xl border border-white/[0.04] bg-white/[0.02] p-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-white/50">Valor da Proposta</span>
                 <span className={cn("font-medium px-2 py-0.5 rounded", status.color, status.bgColor + "/20")}>
@@ -616,6 +642,8 @@ export function NegotiationModal({
                 </p>
               )}
             </div>
+
+            </GrupoDeCampos>
 
             {/* Nem o mínimo o caixa alcança: a mesa nem abre. Antes dava para
                 montar a proposta inteira e só descobrir na hora de fechar. */}
@@ -1228,6 +1256,8 @@ export function NegotiationModal({
             )}
           </div>
         )}
+
+        </div>
 
         <DialogFooter className="gap-2">
           {step === "offer" && (
