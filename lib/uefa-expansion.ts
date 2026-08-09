@@ -294,6 +294,15 @@ export const UEFA_EXPANSION_COMPETITIONS = Object.fromEntries(
       format: division.format,
       teams: division.participants.length,
       rounds: division.rounds,
+      // TURNOS. A Challenge League suica joga QUATRO turnos entre dez clubes
+      // (36 jogos), e o gate de regulamentos so aceita `rounds` igual a
+      // (teams-1) x turnos — assumindo 2 quando o campo falta. Sem declarar
+      // isto, a Suica reprovava a publicacao inteira. Derivado, e nao escrito a
+      // mao, para nao criar uma segunda verdade sobre o mesmo numero.
+      roundRobinCycles: Math.max(
+        1,
+        Math.round(division.rounds / Math.max(1, division.participants.length - 1)),
+      ),
       prize: division.id.endsWith("_1") ? 3_000_000 : 900_000,
       prestige: division.id.endsWith("_1") ? 50 : 32,
       promotion: division.id.endsWith("_2") ? division.promotion : 0,
@@ -308,7 +317,7 @@ export const UEFA_EXPANSION_COMPETITIONS = Object.fromEntries(
   ),
 ) as Record<string, Array<{
   id: string; name: string; shortName: string; type: "league"; region: string
-  format: UefaTierDefinition["format"]; teams: number; rounds: number
+  format: UefaTierDefinition["format"]; teams: number; rounds: number; roundRobinCycles: number
   prize: number; prestige: number; promotion: number; relegation: number
   continentalSpots: { competition: string; spots: number }[]
   formatDetails: string; sourceUrl: string; participantStatus: UefaTierDefinition["participantStatus"]

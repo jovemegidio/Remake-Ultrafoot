@@ -16,6 +16,7 @@ import { setTemporadaDoMundo, setClubeDoUsuario } from "@/lib/temporada-do-mundo
 import { decidirReacoesDaIA, type ReacaoDaIA } from "@/lib/ai-club-engine"
 import { evolveAIClubSocialState } from "@/lib/ai-club-social"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
+import { UEFA_EXPANSION_COMPETITIONS } from "@/lib/uefa-expansion"
 import { pedidoDaSemana, montarPedido, agenteProcuraOutroClube, chanceDePreContrato, RELACAO_INICIAL } from "@/lib/pressao-do-agente"
 import { generateOffers } from "@/lib/sponsor-engine"
 import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, resultadoDoConfronto, disputaDeterministica, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
@@ -528,7 +529,22 @@ export function cupTitlePrize(competitionName: string): number {
 
 // Retorna o total de rodadas da liga principal
 export function getLeagueRounds(division: string): number {
-  return LEAGUE_CALENDAR[division]?.rounds ?? 38
+  const doCalendario = LEAGUE_CALENDAR[division]?.rounds
+  if (doCalendario) return doCalendario
+
+  // ⚠️ AS DIVISOES DA EXPANSAO UEFA NAO ESTAO NO LEAGUE_CALENDAR e caiam no
+  // padrao de 38. Mas elas declaram 21 (Romenia), 30 (Austria), 34 (Polonia) e
+  // 36 (Suica) — e quando o calendario pede mais rodadas do que a competicao
+  // tem, a liga NUNCA FECHA A TEMPORADA. E o mesmo defeito que a Pro League
+  // belga ja teve (16 clubes/30 rodadas contra 34 do calendario), documentado
+  // em international-competitions.
+  //
+  // Perguntar a propria competicao evita ter de repetir cada numero aqui e
+  // mantem as proximas federacoes corretas sem ninguem lembrar deste arquivo.
+  const daCompeticao = UEFA_EXPANSION_COMPETITIONS[division]?.[0]?.rounds
+  if (daCompeticao) return daCompeticao
+
+  return 38
 }
 
 // ── Copas e competicoes continentais ─────────────────────────────────────────
