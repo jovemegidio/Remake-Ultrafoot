@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import {
   Dumbbell,
   Target,
@@ -25,7 +25,9 @@ import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/time-da-carreira"
-import { useGameEngine, type Player } from "@/lib/game-engine"
+import { useGameEngine, type Player, type TratamentoMedico } from "@/lib/game-engine"
+import { MedicalModal } from "@/components/modals/medical-modal"
+import { avisar as avisarNoJogo } from "@/lib/dialogo-do-jogo"
 import { formatCurrency } from "@/lib/teams-data"
 import {
   aplicarSemanaDeTreino, duplasDoGrupo, PISO_ENTROSAMENTO, PLANO_PADRAO,
@@ -134,6 +136,45 @@ export default function TreinamentoPage() {
   const definirPlanoDeTreino = useGameEngine(s => s.definirPlanoDeTreino)
   const posturaDaSemana = useGameEngine(s => s.posturaDaSemana) ?? "equilibrado"
   const definirPosturaDaSemana = useGameEngine(s => s.definirPosturaDaSemana)
+  /**
+   * DEPARTAMENTO MEDICO. O modal existia pronto e sem nenhum importador; a porta
+   * dele e o selo "Lesionado" da lista, que ja estava aqui.
+   */
+  const tratarLesao = useGameEngine(s => s.tratarLesao)
+  // Guardar o ID, e nao o objeto: guardando o objeto, o modal continua exibindo
+  // o prazo ANTIGO depois do tratamento, porque a copia nao acompanha o motor.
+  const [idNoMedico, setIdNoMedico] = useState<number | null>(null)
+  const atletaNoMedico = useMemo(
+    () => squadPlayers.find(p => p.id === idNoMedico) ?? null,
+    [squadPlayers, idNoMedico],
+  )
+
+  const aplicarTratamento = useCallback((playerId: number, tratamento: TratamentoMedico) => {
+    const r = tratarLesao(playerId, tratamento)
+    if (!r.ok) {
+      avisarNoJogo({
+        titulo: "Tratamento nao aplicado",
+        tom: "alerta",
+        mensagem: r.motivo === "sem-dinheiro"
+          ? "O caixa do clube nao cobre esse tratamento."
+          : r.motivo === "ja-tratado"
+            ? "Esta lesao ja recebeu tratamento. Uma lesao, um tratamento."
+            : "O atleta nao esta lesionado.",
+      })
+      return
+    }
+    const dif = r.semanasAntes - r.semanasDepois
+    avisarNoJogo({
+      titulo: "Departamento medico",
+      mensagem: dif > 0
+        ? `Prazo reduzido de ${r.semanasAntes} para ${r.semanasDepois} semanas.`
+          + (r.custo > 0 ? ` Custo: ${formatCurrency(r.custo)}.` : "")
+        : dif < 0
+          ? `Cirurgia marcada. O prazo sobe para ${r.semanasDepois} semanas, mas a`
+            + ` lesao se resolve de vez. Custo: ${formatCurrency(r.custo)}.`
+          : `Recuperacao natural mantida: ${r.semanasDepois} semanas.`,
+    })
+  }, [tratarLesao])
   /**
    * A SEMANA DO CLUBE (pedido: "dia de jogo, dia de descanso, dia de treinamento").
    * Quantos jogos ha na semana vem do calendario; a postura decide o uso dos dias
@@ -687,10 +728,17 @@ export default function TreinamentoPage() {
                           </span>
                         </div>
                       ) : player.injury ? (
-                        <div className="flex items-center gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); setIdNoMedico(player.id) }}
+                          title="Abrir departamento medico"
+                          className="flex items-center gap-2 justify-end w-full rounded-md px-2 py-1 -mr-2 transition-colors hover:bg-red-500/10"
+                        >
                           <AlertCircle className="h-4 w-4 text-red-500" />
-                          <span className="text-xs text-red-500">Lesionado</span>
-                        </div>
+                          <span className="text-xs text-red-500 underline decoration-dotted underline-offset-2">
+                            Lesionado · {player.injury.weeksRemaining} sem
+                          </span>
+                        </button>
                       ) : player.energy < 30 ? (
                         <div className="flex items-center gap-2 justify-end">
                           <Heart className="h-4 w-4 text-orange-500" />
@@ -873,6 +921,13 @@ export default function TreinamentoPage() {
       {inspectPlayer && (
         <PlayerInspectModal player={inspectPlayer} currentWeek={currentWeek} onClose={() => setInspectPlayer(null)} />
       )}
+
+      <MedicalModal
+        open={atletaNoMedico !== null}
+        onOpenChange={aberto => { if (!aberto) setIdNoMedico(null) }}
+        player={atletaNoMedico}
+        onTreatment={aplicarTratamento}
+      />
     </div>
   )
 }

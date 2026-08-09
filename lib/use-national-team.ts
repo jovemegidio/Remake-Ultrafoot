@@ -33,6 +33,26 @@ import { useGameEngine } from "@/lib/game-engine"
 // aproveitamento + XP). Era 6 e, na pratica, quase ninguem recebia convite
 // (relato: "nunca vem proposta de selecao, nem pequena"). 2 abre as pequenas.
 const MIN_SCORE_FOR_OFFERS = 2
+
+/**
+ * SALARIO DE UMA SELECAO — fonte unica.
+ *
+ * A mesma formula monta a oferta inicial E o teto da negociacao. Ficam juntas
+ * de proposito: quando a tela calculava o proprio limite, eram duas escalas
+ * para a mesma grandeza — o defeito que ja custou a este projeto o leilao, o
+ * caixa dos clubes e o Championship.
+ */
+export function salarioDeMercadoDaSelecao(strength: number): number {
+  return Math.round((45_000 + strength * 3_500) / 5_000) * 5_000
+}
+
+/** Teto absoluto da negociacao: nenhuma federacao passa daqui. */
+export function tetoSalarialDaSelecao(strength: number): number {
+  return Math.round(salarioDeMercadoDaSelecao(strength) * 1.4 / 5_000) * 5_000
+}
+
+/** Depois disto a oferta congela: e pegar ou largar. */
+export const MAX_RODADAS_DE_NEGOCIACAO = 2
 // QUANDO chega o convite de selecao.
 //
 // ⚠️ MUDOU NA 1.0.231. Antes o convite chegava DEPOIS da data FIFA de junho
@@ -382,18 +402,57 @@ export function useNationalTeam() {
   }, [setState, state.nationalCareer, state.season, state.week])
 
   const counterOffer = useCallback((offer: NationalOffer, monthlySalary: number, contractMonths: number) => {
-    const currentSalary = offer.monthlySalary ?? Math.round((45_000 + offer.strength * 3_500) / 5_000) * 5_000
-    const salaryIncrease = monthlySalary / Math.max(1, currentSalary)
+    // ⚠️ GLITCH DE SALARIO INFINITO (relatado por jogador, 08/08/2026).
+    //
+    // O limite percentual abaixo sempre existiu, mas era relativo ao salario
+    // ATUAL da proposta — que a propria negociacao aumentava. Havia DUAS rotas
+    // divergentes, e nenhuma delas tinha teto:
+    //
+    //   1. Recusada: a federacao subia a oferta em 10% (1a) ou 4% (demais), sem
+    //      limite de rodadas. Pedir um absurdo em sequencia compunha para sempre.
+    //   2. Aceita: 1,25x e depois 1,12x sobre o valor JA aumentado. Repetindo,
+    //      1,25 x 1,12^n cresce sem limite.
+    //
+    // O conserto tem tres partes, e as tres sao necessarias: teto ABSOLUTO
+    // ancorado no salario de mercado da selecao (nao no valor corrente, que e
+    // justamente o que inflava), numero maximo de rodadas, e saneamento da
+    // entrada — o campo da tela aceitava NaN e negativo.
+    //
+    // A ancora e recalculada pela mesma formula da oferta original em vez de
+    // guardada num campo novo: assim vale para save antigo, que nao teria o campo.
+    const TETO_SALARIAL = tetoSalarialDaSelecao(offer.strength)
+    const MAX_RODADAS = MAX_RODADAS_DE_NEGOCIACAO
+
+    // ⚠️ Pedido invalido e RECUSADO, nunca "saneado para zero". Zerar parecia
+    // seguro e nao era: 0 passa no teste de aumento (0 <= 1,25) e o tecnico
+    // assinava por salario ZERO. Entrada suja tem que reprovar, nao virar um
+    // numero valido pequeno.
+    const pedidoValido = Number.isFinite(monthlySalary) && monthlySalary > 0
+    const pedido = pedidoValido ? Math.round(monthlySalary) : 0
+    const currentSalary = offer.monthlySalary ?? salarioDeMercadoDaSelecao(offer.strength)
+    const salaryIncrease = pedido / Math.max(1, currentSalary)
     const round = (offer.negotiationRound ?? 0) + 1
     // Federação tolera até 25% na primeira contraproposta e 12% na segunda.
     const limit = round === 1 ? 1.25 : 1.12
-    const accepted = salaryIncrease <= limit && contractMonths >= 12 && contractMonths <= 48
+    const accepted =
+      pedidoValido &&
+      round <= MAX_RODADAS &&
+      salaryIncrease <= limit &&
+      pedido <= TETO_SALARIAL &&
+      contractMonths >= 12 && contractMonths <= 48
+
+    const arredondar = (v: number) => Math.round(Math.min(v, TETO_SALARIAL) / 5_000) * 5_000
     const updated = (state.pendingNationalOffers ?? []).map(item => {
       if (item.nationalTeamId !== offer.nationalTeamId) return item
-      if (accepted) return { ...item, monthlySalary, contractMonths, negotiationRound: round, status: "countered" as const }
+      if (accepted) {
+        return { ...item, monthlySalary: arredondar(pedido), contractMonths, negotiationRound: round, status: "countered" as const }
+      }
+      // Recusada: a federacao ainda melhora um pouco, mas NUNCA acima do teto —
+      // e depois de MAX_RODADAS a oferta congela (e pegar ou largar).
+      const melhoria = round > MAX_RODADAS ? 1 : round === 1 ? 1.1 : 1.04
       return {
         ...item,
-        monthlySalary: Math.round(item.monthlySalary * (round === 1 ? 1.1 : 1.04) / 5_000) * 5_000,
+        monthlySalary: arredondar(item.monthlySalary * melhoria),
         negotiationRound: round,
         status: "countered" as const,
       }

@@ -243,7 +243,9 @@ if (SAIDA) {
       // Custa 31 KB por camisa em vez de 15; e o orcamento da copia local em
       // lib/atualizacao-elencos foi ajustado para caber.
       const img = await sharp(caminho)
-        .webp({ quality: 90, effort: 6 })
+        // ⚠️ effort 4, e nao 6: nestas artes COM alfa o 6 custa 4.027 ms por
+        // imagem contra 74 ms, para economizar 3% de bytes. Medido em 06/08/26.
+        .webp({ quality: 90, effort: 4 })
         .toBuffer()
       kits[VARIANTE[n]] = { data: `data:image/webp;base64,${img.toString("base64")}` }
     }

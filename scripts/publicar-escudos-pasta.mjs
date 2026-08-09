@@ -225,6 +225,59 @@ function clubes() {
   return lista
 }
 
+// ─── O CATALOGO CURADO, e por que ele decide se o escudo aparece ─────────────
+//
+// ⚠️ MESMO ERRO QUE JA ANULOU 17 UNIFORMES (ver publicar-uniformes-pasta.mjs).
+// O universo de casamento aqui e o POOL, mas quem a TELA desenha nas Series
+// A/B/C/D sao os arrays CURADOS de lib/teams-data.ts — e o mesmo clube costuma
+// existir nos dois com chaves DIFERENTES ("Santa Cruz" e `santa` no pool e
+// `santacruz_pe` no curado). Publicando so na chave do pool, o escudo vai para
+// uma chave que o jogo nunca consulta, sem erro nenhum.
+//
+// O pool NAO e inutil: clube que so existe la e desenhado por essa chave mesmo
+// (`completarLigaComPool`). Por isso a saida leva as DUAS chaves.
+const fonteCurada = readFileSync(path.join(RAIZ, "lib/teams-data.ts"), "utf-8")
+  + "\n" + readFileSync(path.join(RAIZ, "lib/international-teams.ts"), "utf-8")
+const curadoPorNome = new Map()
+const chavesCuradas = new Set()
+// Cada clube curado e um objeto sem chaves aninhadas — `{...}` sem `{` dentro basta.
+for (const m of fonteCurada.matchAll(/\{[^{}]*\}/g)) {
+  const fk = m[0].match(/file_key:\s*"([^"]+)"/)
+  const nm = m[0].match(/(?:^|[\s,{])nome:\s*"([^"]+)"/) // `estadio_nome` tambem casa "nome:"
+  if (!fk || !nm) continue
+  chavesCuradas.add(fk[1])
+  const k = norm(nm[1])
+  const pais = m[0].match(/(?:^|[\s,{])pais:\s*"([^"]+)"/)
+  if (!curadoPorNome.has(k)) curadoPorNome.set(k, { fileKey: fk[1], pais: pais?.[1] ?? "" })
+}
+
+/** A chave curada equivalente a este clube do pool, se houver e for outra. */
+function gemeoCurado(alvo) {
+  if (chavesCuradas.has(alvo.fileKey)) return null
+  const g = curadoPorNome.get(norm(alvo.nome))
+  return g && g.fileKey !== alvo.fileKey ? g : null
+}
+
+/**
+ * O clube do pool e o curado sao do MESMO pais?
+ *
+ * ⚠️ SO SERVE PARA DESEMPATAR COLISAO. "Everton" existe duas vezes no pool
+ * (`everton_ing` e `everton_chi`) e as duas caem no MESMO curado `everton`, que
+ * e o de Goodison Park. Sem desempate, quem entrasse por ultimo no laco ficava
+ * com a chave — e o escudo do Everton de Viña del Mar apareceria na Premier
+ * League, sem erro nenhum. Comparo o sufixo do fileKey do pool com o `pais` do
+ * curado pela mesma tabela PAISES que a validacao de origem ja usa.
+ */
+function mesmoPais(alvo, curado) {
+  if (!curado.pais) return false
+  const alvoPais = norm(curado.pais)
+  for (const { pais, sufixos } of Object.values(PAISES)) {
+    if (!pais.some(p => norm(p) === alvoPais)) continue
+    return sufixos.includes(alvo.sufixo)
+  }
+  return false
+}
+
 /** O sufixo do arquivo CONTRADIZ a origem deste clube? */
 function contradiz(clube, sufixo) {
   if (!sufixo) return false
@@ -306,6 +359,8 @@ const arquivos = readdirSync(PASTA).filter(f => ehImagem(path.join(PASTA, f)))
 
 const itens = []
 const casados = []
+const comGemeo = []
+const disputados = []
 const ambiguos = []
 const semClube = []
 const contraditos = []
@@ -331,6 +386,28 @@ for (const arquivo of arquivos) {
     }
     resolvidos.push({ arquivo, alvo, sufixo, manual: true })
     continue
+  }
+
+  // ⚠️ O CLUBE CUJO NOME JA TRAZ A UF VENCE, E VEM ANTES DE TUDO.
+  //
+  // Isto custou o escudo do Flamengo. "Flamengo - PI.png" foi lido como
+  // nome="Flamengo" + sufixo="PI", e o unico clube chamado "Flamengo" no pool e
+  // o `flarj`, do Rio. O sufixo PI nao o CONTRADIZ (o seed nao guarda UF para
+  // ele), entao a regra de origem aprovou — e o Flamengo do Rio passou a
+  // ostentar o escudo do Flamengo do Piaui, publicado e conferido no ar.
+  //
+  // Mas `flamengopi_bra` ("Flamengo PI") existe no pool, e sempre existiu: la a
+  // UF faz parte do NOME. Comparar o nome do arquivo COM o sufixo colado acha
+  // esse clube de primeira, e isso e prova muito mais forte do que "ninguem
+  // desmentiu". Vale para os 7 casos da pasta — Fluminense-PI, Juventus-SP,
+  // Porto-PE, Sampaio Corrêa-RJ, São José-SP e Vitória-PE eram os outros, e
+  // todos precisavam de par manual justamente por isto.
+  if (sufixo) {
+    const comUf = CLUBES.filter(c => c.cru === norm(nome + sufixo))
+    if (comUf.length === 1) {
+      resolvidos.push({ arquivo, alvo: comUf[0], sufixo, manual: false, viaUf: true })
+      continue
+    }
   }
 
   const chave = chaveNome(nome)
@@ -396,6 +473,31 @@ for (const [fileKey, lista] of porClube) {
   }
 }
 
+// ─── Gemeo curado: um por chave, e so com prova de origem quando ha disputa ──
+//
+// Dois clubes do pool podem reivindicar a MESMA chave curada (o caso Everton).
+// Resolvo antes de gravar qualquer coisa: com disputa, so leva a chave quem for
+// do mesmo pais do curado; se ninguem for, ou se mais de um for, ninguem leva e
+// o caso sai no relatorio.
+const reivindicacoes = new Map()
+for (const e of escolhidos) {
+  const g = gemeoCurado(e.alvo)
+  if (!g) continue
+  if (!reivindicacoes.has(g.fileKey)) reivindicacoes.set(g.fileKey, { curado: g, candidatos: [] })
+  reivindicacoes.get(g.fileKey).candidatos.push(e)
+}
+const gemeoDe = new Map() // fileKey do pool -> chave curada aprovada
+for (const [chave, { curado, candidatos }] of reivindicacoes) {
+  if (candidatos.length === 1) { gemeoDe.set(candidatos[0].alvo.fileKey, chave); continue }
+  const doPais = candidatos.filter(c => mesmoPais(c.alvo, curado))
+  if (doPais.length === 1) {
+    gemeoDe.set(doPais[0].alvo.fileKey, chave)
+    disputados.push(`${chave}: ficou com ${doPais[0].alvo.fileKey} (mesmo pais do curado, "${curado.pais}"); fora ${candidatos.filter(c => c !== doPais[0]).map(c => c.alvo.fileKey).join(", ")}`)
+  } else {
+    disputados.push(`⚠️ ${chave}: disputada por ${candidatos.map(c => c.alvo.fileKey).join(" x ")} sem desempate por pais — NENHUM levou a chave curada`)
+  }
+}
+
 // ─── Segundo passe: recorte e base64 ─────────────────────────────────────────
 for (const { arquivo, alvo, manual } of escolhidos) {
   // `contain` com fundo transparente: escudo nao e quadrado, e esticar ou cortar
@@ -411,8 +513,14 @@ for (const { arquivo, alvo, manual } of escolhidos) {
     .png({ compressionLevel: 9, palette: true })
     .toBuffer()
 
-  itens.push({ file_key: alvo.fileKey, escudo_data: `data:image/png;base64,${png.toString("base64")}` })
-  casados.push(`${arquivo} -> ${alvo.nome} [${alvo.fileKey}]${manual ? "  (par manual)" : ""}`)
+  const dataUrl = `data:image/png;base64,${png.toString("base64")}`
+  itens.push({ file_key: alvo.fileKey, escudo_data: dataUrl })
+  const gemeo = gemeoDe.get(alvo.fileKey)
+  if (gemeo) {
+    itens.push({ file_key: gemeo, escudo_data: dataUrl })
+    comGemeo.push(`${alvo.fileKey} + ${gemeo} [${alvo.nome}]`)
+  }
+  casados.push(`${arquivo} -> ${alvo.nome} [${alvo.fileKey}${gemeo ? " + " + gemeo : ""}]${manual ? "  (par manual)" : ""}`)
 }
 
 const RESUMO = process.argv.includes("--resumo")
@@ -438,6 +546,14 @@ if (semClube.length) {
 }
 if (excluidos.length) {
   console.log(`\nEXCLUIDOS de proposito (--pares "_excluir"): ${excluidos.join(", ")}`)
+}
+if (comGemeo.length) {
+  console.log(`\nPUBLICADOS TAMBEM NA CHAVE CURADA (${comGemeo.length}) — sem isto a tela nao mostraria:`)
+  if (!RESUMO) for (const g of comGemeo) console.log(`   ${g}`)
+}
+if (disputados.length) {
+  console.log(`\nCHAVE CURADA DISPUTADA por mais de um clube do pool:`)
+  for (const d of disputados) console.log(`   ${d}`)
 }
 
 const kb = (itens.reduce((s, i) => s + i.escudo_data.length, 0) / 1024).toFixed(0)

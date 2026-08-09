@@ -425,6 +425,39 @@ export interface PlayerInjury {
   severity: "leve" | "media" | "grave"
   weeksRemaining: number
   startWeek: number
+  /**
+   * Tratamento ja aplicado nesta lesao. Existe para TRAVAR repeticao: sem ele,
+   * mandar fisioterapia em sequencia multiplica 0,8 ate a lesao sumir por
+   * R$ 50 mil a rodada. Uma lesao, um tratamento.
+   */
+  tratamento?: TratamentoMedico
+}
+
+/**
+ * DEPARTAMENTO MEDICO. O tratamento e uma decisao de uma vez por lesao: paga-se
+ * na hora e o prazo muda na hora. A recuperacao semanal continua sendo do
+ * avanco de semana — aqui so se encurta (ou alonga) o que falta.
+ */
+export type TratamentoMedico = "conservador" | "fisioterapia" | "cirurgia"
+
+export interface ResultadoDoTratamento {
+  ok: boolean
+  /** Por que falhou, para a tela dizer algo util em vez de nao reagir. */
+  motivo?: "sem-lesao" | "sem-dinheiro" | "ja-tratado"
+  custo: number
+  semanasAntes: number
+  semanasDepois: number
+}
+
+/**
+ * Custo e efeito de cada tratamento. `fator` multiplica as semanas restantes:
+ * a cirurgia alonga o prazo de proposito — ela e para lesao grave, onde o
+ * ganho e nao ter recaida, nao voltar antes.
+ */
+export const TRATAMENTOS_MEDICOS: Record<TratamentoMedico, { custo: number; fator: number }> = {
+  conservador: { custo: 0, fator: 1 },
+  fisioterapia: { custo: 50_000, fator: 0.8 },
+  cirurgia: { custo: 200_000, fator: 1.3 },
 }
 
 export interface PlayerStats {
@@ -2255,6 +2288,7 @@ interface GameEngineState {
   cumprirSuspensao: (playerId: number) => void
   setPlayerShirtNumber: (playerId: number, shirtNumber: number) => boolean
   injurePlayer: (playerId: number, injury: PlayerInjury) => void
+  tratarLesao: (playerId: number, tratamento: TratamentoMedico) => ResultadoDoTratamento
   healPlayer: (playerId: number) => void
   initializeGame: (teamShort: string) => void
   updateHeadToHead: (result: MatchResult) => void
@@ -5491,6 +5525,31 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
       
+      tratarLesao: (playerId, tratamento) => {
+        const alvo = get().squadPlayers.find(p => p.id === playerId)
+        const semanasAntes = alvo?.injury?.weeksRemaining ?? 0
+        const { custo, fator } = TRATAMENTOS_MEDICOS[tratamento]
+        const falha = (motivo: ResultadoDoTratamento["motivo"]): ResultadoDoTratamento =>
+          ({ ok: false, motivo, custo: 0, semanasAntes, semanasDepois: semanasAntes })
+
+        if (!alvo?.injury) return falha("sem-lesao")
+        if (alvo.injury.tratamento) return falha("ja-tratado")
+        // Cobra ANTES de mexer no prazo: se o caixa nao cobre, nada acontece.
+        if (custo > 0 && !get().spendClubFunds(custo)) return falha("sem-dinheiro")
+
+        // Piso de 1 semana: nenhum tratamento cura no mesmo instante em que e
+        // contratado — senao a fisioterapia vira "curar por R$ 50 mil".
+        const semanasDepois = Math.max(1, Math.round(semanasAntes * fator))
+        set(s => ({
+          squadPlayers: s.squadPlayers.map(p =>
+            p.id === playerId && p.injury
+              ? { ...p, injury: { ...p.injury, weeksRemaining: semanasDepois, tratamento } }
+              : p,
+          ),
+        }))
+        return { ok: true, custo, semanasAntes, semanasDepois }
+      },
+
       healPlayer: (playerId) => {
         set((s) => ({
           squadPlayers: s.squadPlayers.map(p => 

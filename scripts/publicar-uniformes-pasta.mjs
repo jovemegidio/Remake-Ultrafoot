@@ -1,8 +1,11 @@
 // Publica UNIFORMES de uma pasta pelo canal de atualizacao.
 //
 // Irmao de publicar-escudos-pasta.mjs e publicar-fotos-catalogo.mjs: le a pasta,
-// descobre o clube e a variante pelo NOME DO ARQUIVO, reduz a arte e exporta o
-// pacote que o carregar-uniformes.py grava no banco da VPS.
+// descobre o clube e a variante pelo NOME DO ARQUIVO, converte para webp e
+// exporta o pacote que o carregar-uniformes.py grava no banco da VPS.
+//
+// ⚠️ POR PADRAO NAO REDUZ (`--reduzir` liga os 256px). Reduzir foi reprovado
+// pelo usuario; ver a nota na conversao, la embaixo.
 //
 //   node scripts/publicar-uniformes-pasta.mjs --pasta "C:\\...\\Portuguesa" \
 //     [--clube portuguesa_bra] [--divisoes b,c,d] [--exportar uniformes.json]
@@ -46,14 +49,22 @@ const clubeForcado = opt("--clube")
 const exportar = opt("--exportar")
 // Divisoes pedidas (b,c,d). Vazio = todas.
 const divisoesPedidas = (opt("--divisoes") ?? "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean)
+// Pais da pasta (ARG, ITA, ESP...). Vazio = pasta brasileira, o comportamento
+// original. Ver PAISES_PASTA logo abaixo.
+const paisPedido = (opt("--pais") ?? "").trim().toUpperCase()
+// Subpastas contam? As ligas menores vem em grupos ("Group A", "Grupo 1
+// Galicia", "Bayernliga Nord") e sem isto a pasta de cima parece vazia.
+const recursivo = args.includes("--recursivo")
+const RESUMO = args.includes("--resumo")
+// Reduzir para 256px? Ver a nota grande na conversao — por padrao NAO reduz.
+const reduzir = args.includes("--reduzir")
 if (!pasta) {
-  console.error('uso: node scripts/publicar-uniformes-pasta.mjs --pasta "<pasta>" [--clube <fileKey>] [--divisoes b,c,d] [--exportar <arquivo.json>]')
+  console.error('uso: node scripts/publicar-uniformes-pasta.mjs --pasta "<pasta>" [--pais ITA] [--recursivo] [--clube <fileKey>] [--divisoes b,c,d] [--resumo] [--exportar <arquivo.json>]')
   process.exit(1)
 }
 
-// 256x256 webp com transparencia: o MESMO formato de public/kits-imported, que
-// e o que o jogo ja desenha. A arte de origem vem em ~450x560 e pesa 240 KB;
-// assim cada variante fica em ~10 KB e o manifesto nao incha.
+// Lado usado SO com `--reduzir`. 256 e o formato de public/kits-imported, que e
+// o que o jogo ja desenha; a arte de origem vem em 420x420 ou ~450x560.
 const LADO = 256
 
 const RAIZ = path.resolve(import.meta.dirname, "..")
@@ -74,6 +85,7 @@ const MAPA_MANUAL = new Map(Object.entries({
   fccascavel: "cascavel_pr",
   lagarto: "lagarto_se",              // no seed o nome virou o do estadio ("Barretão")
 }))
+
 
 const VARIANTES_POR_PALAVRA = [
   [/^(casa|home|principal|1)$/i, "home"],
@@ -117,6 +129,39 @@ const UFS = new Set(["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS"
 const semAcento = (s) => (s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
 const norm = (s) => semAcento(s).toLowerCase().replace(/[^a-z0-9]/g, "")
 
+// `--mapa arquivo.json` acrescenta pares `slug: fileKey` sem mexer no script.
+// Sao ~29 pastas de liga e cada uma traz o seu punhado de slugs indecifraveis
+// ("internazionale_milano", "hellas", "atalanta_bergamasca"); deixar isso no
+// codigo transformaria o MAPA_MANUAL num catalogo. Chave comecada por `_` e
+// comentario (JSON nao tem comentario), como no --pares dos escudos.
+//
+// ⚠️ A CHAVE E NAMESPACED POR PAIS (`"COL:nacional"`), e isso nao e enfeite. O
+// mesmo slug quer dizer clubes diferentes em pastas diferentes: "nacional" e o
+// Atlético Nacional na Colômbia e o Nacional da Madeira em Portugal;
+// "fortaleza" e o Fortaleza CEIF na Colômbia e o Leão do Pici no Brasil. Um
+// mapa global poria a camisa colombiana no Fortaleza — e o mapa manual e
+// consultado ANTES de tudo, entao nenhuma trava posterior pegaria isso.
+// Chave sem prefixo vale para qualquer pasta; use so quando o slug for unico.
+//
+// O valor pode ser uma LISTA: o primeiro item e o clube do pool que decide nome
+// e divisao, e os demais sao chaves onde a mesma camisa tambem e publicada. E
+// como se declara o gemeo curado que o casamento por nome nao acha: o pool
+// chama "Liverpool Football Club" e o curado, so "Liverpool"; "Wolverhampton" e
+// "Wolves" nem se parecem. Sem a chave curada, a Premier League do jogo continua
+// desenhando a camisa antiga — a mesma falha silenciosa de sempre.
+const CHAVES_EXTRA = new Map() // fileKey do pool -> [outras chaves]
+const MAPA_EXTRA = opt("--mapa")
+if (MAPA_EXTRA) {
+  for (const [chave, valor] of Object.entries(JSON.parse(readFileSync(path.resolve(MAPA_EXTRA), "utf8")))) {
+    if (chave.startsWith("_")) continue
+    const [prefixo, slug] = chave.includes(":") ? chave.split(":") : [null, chave]
+    if (prefixo && prefixo.toUpperCase() !== paisPedido) continue
+    const [principal, ...extras] = Array.isArray(valor) ? valor : [valor]
+    MAPA_MANUAL.set(norm(slug), String(principal))
+    if (extras.length) CHAVES_EXTRA.set(String(principal), extras.map(String))
+  }
+}
+
 // ⚠️ SO PALAVRA INTEIRA, e "atletico" NAO entra: no Brasil ela e o nome, e sem
 // ela Atletico-GO/-MG/-PR ficam com a mesma chave. (Mesma lista do script de
 // escudos, pelo mesmo motivo.)
@@ -156,6 +201,7 @@ const porFileKey = new Map(times.map(t => [t.fileKey, t]))
 const fonteCurada = await readFile(path.join(RAIZ, "lib/teams-data.ts"), "utf8")
   + "\n" + await readFile(path.join(RAIZ, "lib/international-teams.ts"), "utf8")
 const curadoPorNome = new Map()
+const curadoPorChave = new Map()
 const chavesCuradas = new Set()
 // Cada clube curado e um objeto sem chaves aninhadas — `{...}` sem `{` dentro basta.
 for (const m of fonteCurada.matchAll(/\{[^{}]*\}/g)) {
@@ -165,12 +211,24 @@ for (const m of fonteCurada.matchAll(/\{[^{}]*\}/g)) {
   chavesCuradas.add(fk[1])
   const k = norm(nm[1])
   if (!curadoPorNome.has(k)) curadoPorNome.set(k, fk[1])
+  const ck = norm(fk[1])
+  if (!curadoPorChave.has(ck)) curadoPorChave.set(ck, fk[1])
 }
 
-/** A chave curada equivalente a este clube do pool, se houver e for outra. */
-function gemeoCurado(time) {
+/**
+ * A chave curada equivalente a este clube do pool, se houver e for outra.
+ *
+ * ⚠️ O NOME DO POOL SOZINHO NAO ACHA. O pool escreve "Liverpool Football Club",
+ * "Tottenham Hotspur" e "Wolverhampton"; o curado escreve "Liverpool",
+ * "Tottenham" e "Wolves" — e sem a chave curada a Premier League do jogo
+ * continua desenhando a camisa antiga, calada. O SLUG DO ARQUIVO e a segunda
+ * sonda, e e boa justamente porque a pasta usa o apelido, que e o que o catalogo
+ * curado costuma guardar ("liverpool", "wolves", "brighton", "tottenham").
+ */
+function gemeoCurado(time, slug) {
   if (chavesCuradas.has(time.fileKey)) return null
   const g = curadoPorNome.get(norm(time.nome))
+    ?? (slug ? curadoPorChave.get(norm(slug)) ?? curadoPorNome.get(norm(slug)) : null)
   return g && g !== time.fileKey ? g : null
 }
 
@@ -203,7 +261,58 @@ const divisaoDe = (time, slug) =>
 const ehBrasileiro = (t) =>
   norm(t.pais) === "brasil" || /_bra$/i.test(t.fileKey) || UFS.has((t.estado || t.pais || "").toUpperCase())
 
+// ─── PASTA ESTRANGEIRA: prova de origem OBRIGATORIA ──────────────────────────
+//
+// ⚠️ TODO O CASAMENTO ACIMA FOI ESCRITO PARA UMA PASTA BRASILEIRA, e a camada 4
+// ("nome sem sociedade") casa clube diferente com facilidade. Solto sobre uma
+// pasta italiana, "roma1.png" acha o Roma-GO antes do Roma da Itália e a camisa
+// vai para o clube errado sem erro nenhum — o mesmo tipo de falha silenciosa que
+// ja custou um lote inteiro (ver a nota da chave curada).
+//
+// Com `--pais`, o universo e RECORTADO antes de qualquer camada: so entra clube
+// com prova A FAVOR daquele pais (nome do pais no seed ou sufixo do fileKey).
+// Nao e "nao contradiz" — e prova positiva, porque aqui a duvida sempre resolve
+// para o brasileiro, que e o homonimo mais provavel no pool.
+//
+// Os valores de `pais` saem de CONSULTA ao seed, nao de chute: ele mistura nome
+// por extenso ("Inglaterra"), sigla de tres ("CHN", "ARA") e de duas ("IT",
+// "FR"), as vezes no mesmo pais.
+const PAISES_PASTA = {
+  BRA: { pais: ["brasil", "br"], sufixos: ["bra"] },
+  ARG: { pais: ["argentina", "ar"], sufixos: ["arg", "ar"] },
+  ITA: { pais: ["italia", "it"], sufixos: ["ita", "it"] },
+  ESP: { pais: ["espanha", "es"], sufixos: ["esp"] },
+  ING: { pais: ["inglaterra", "eng"], sufixos: ["ing", "eng"] },
+  ALE: { pais: ["alemanha", "ger", "de"], sufixos: ["ale", "ger"] },
+  FRA: { pais: ["franca", "fr"], sufixos: ["fra", "fr"] },
+  POR: { pais: ["portugal", "pt"], sufixos: ["por", "pt"] },
+  CHI: { pais: ["chile"], sufixos: ["chi"] },
+  COL: { pais: ["colombia"], sufixos: ["col"] },
+  EQU: { pais: ["equador"], sufixos: ["equ", "ecu"] },
+  JAP: { pais: ["japao", "jpn"], sufixos: ["jap", "jpn"] },
+  CHN: { pais: ["china", "chn"], sufixos: ["chn", "chi_na"] },
+}
+if (paisPedido && !PAISES_PASTA[paisPedido]) {
+  console.error(`--pais ${paisPedido} desconhecido. Use um de: ${Object.keys(PAISES_PASTA).join(", ")}`)
+  process.exit(1)
+}
+const ehDoPais = (t) => {
+  // ⚠️ `--pais BRA` NAO PODE SER SO A TABELA. O clube brasileiro guarda a UF em
+  // `pais`/`estado` ("SP", "RS") e o fileKey termina nela (`miirassol_sp`), nao
+  // em `_bra` — pela tabela, metade do Brasil ficaria de fora do proprio
+  // universo. Para o Brasil vale o teste que ja existia.
+  if (paisPedido === "BRA") return ehBrasileiro(t)
+  const p = PAISES_PASTA[paisPedido]
+  const sufixo = (t.fileKey.split("_").at(-1) ?? "").toLowerCase()
+  return p.pais.includes(norm(t.pais)) || p.sufixos.includes(sufixo)
+}
+
 // ─── Camadas de casamento ────────────────────────────────────────────────────
+const universo = paisPedido ? times.filter(ehDoPais) : times
+if (paisPedido) {
+  console.log(`Pasta de ${paisPedido}: ${universo.length} clubes do pool com prova de origem (de ${times.length}).\n`)
+}
+
 const camadas = [
   { nome: "fileKey", chave: (t) => [norm(t.fileKey)] },
   { nome: "fileKey sem pais", chave: (t) => [norm(t.fileKey.replace(/_bra$/i, ""))] },
@@ -221,9 +330,16 @@ const camadas = [
       return uf ? [chaveNome(t.nome), chaveNome(t.nome) + uf] : [chaveNome(t.nome)]
     },
   },
+  // ⚠️ ULTIMO RECURSO, E SO POR fileKey INTEIRO. O recorte por pais derruba o
+  // clube cujo `pais` no seed e lixo e cujo fileKey nao tem sufixo de pais —
+  // `lyon` esta gravado com pais "LYON" e `porto` com pais "Brasil", e os dois
+  // sairiam da propria liga. fileKey e unico e igual por inteiro ao slug ja e
+  // prova suficiente (a camada 1 nunca exigiu origem); vem por ULTIMO para que
+  // qualquer casamento dentro do pais ganhe dele.
+  { nome: "fileKey no pool inteiro", universo: times, chave: (t) => [norm(t.fileKey)] },
 ].map(c => {
   const mapa = new Map()
-  for (const t of times) {
+  for (const t of (c.universo ?? universo)) {
     for (const k of c.chave(t)) {
       if (!k || k.length < 3) continue
       if (!mapa.has(k)) mapa.set(k, [])
@@ -253,16 +369,38 @@ function acharClube(slug) {
     if (!c?.length) continue
     if (c.length === 1) return { time: c[0], via: camada.nome }
     // ⚠️ PASTA BRASILEIRA: homonimo estrangeiro nao e candidato. E o que separa
-    // Portuguesa da Venezuela, Guarani do Paraguai e Santos Laguna.
-    const br = c.filter(ehBrasileiro)
-    if (br.length === 1) return { time: br[0], via: `${camada.nome} (so o brasileiro)` }
-    ambiguo = ambiguo ?? (br.length ? br : c)
+    // Portuguesa da Venezuela, Guarani do Paraguai e Santos Laguna. Numa pasta
+    // com `--pais` esse desempate nao existe: o universo ja e so daquele pais, e
+    // preferir o brasileiro seria exatamente o erro que o recorte evita.
+    if (!paisPedido) {
+      const br = c.filter(ehBrasileiro)
+      if (br.length === 1) return { time: br[0], via: `${camada.nome} (so o brasileiro)` }
+      ambiguo = ambiguo ?? (br.length ? br : c)
+      continue
+    }
+    ambiguo = ambiguo ?? c
   }
   return ambiguo ? { ambiguo } : { nada: true }
 }
 
 // ─── Leitura da pasta ────────────────────────────────────────────────────────
-const arquivos = (await readdir(pasta)).filter(f => /\.(png|jpe?g|webp)$/i.test(f))
+//
+// Com `--recursivo` os nomes vem RELATIVOS a pasta raiz ("Group A/roma_1.png").
+// Quem quebra o nome so olha o basename; o caminho relativo existe para o
+// relatorio e para abrir o arquivo.
+async function listar(dir, prefixo = "") {
+  const saida = []
+  for (const item of await readdir(dir, { withFileTypes: true })) {
+    const rel = prefixo ? `${prefixo}/${item.name}` : item.name
+    if (item.isDirectory()) {
+      if (recursivo) saida.push(...await listar(path.join(dir, item.name), rel))
+      continue
+    }
+    if (/\.(png|jpe?g|webp)$/i.test(item.name)) saida.push(rel)
+  }
+  return saida
+}
+const arquivos = await listar(pasta)
 if (arquivos.length === 0) {
   console.error("pasta sem imagem")
   process.exit(1)
@@ -276,7 +414,7 @@ const foraDaDivisao = new Map()
 const duplicados = []
 
 for (const arquivo of arquivos.sort()) {
-  const { slug, variante, ultimo } = partes(arquivo)
+  const { slug, variante, ultimo } = partes(path.basename(arquivo))
   if (!variante) { semVariante.push(`${arquivo}${ultimo ? ` (fim: "${ultimo}")` : ""}`); continue }
 
   let achado
@@ -300,7 +438,7 @@ for (const arquivo of arquivos.sort()) {
     continue
   }
 
-  if (!porClube.has(time.fileKey)) porClube.set(time.fileKey, { time, div, via: achado.via, kits: {} })
+  if (!porClube.has(time.fileKey)) porClube.set(time.fileKey, { time, div, via: achado.via, slug, kits: {} })
   const alvo = porClube.get(time.fileKey)
   const origem = path.join(pasta, arquivo)
   const quando = statSync(origem).mtimeMs
@@ -323,25 +461,57 @@ for (const arquivo of arquivos.sort()) {
 // ─── Conversao ───────────────────────────────────────────────────────────────
 const clubes = []
 const comGemeo = []
-for (const { time, div, via, kits } of [...porClube.values()].sort((a, b) => a.time.nome.localeCompare(b.time.nome))) {
+const disputadas = []
+const chavesUsadas = new Set([...porClube.keys()])
+for (const { time, div, via, slug, kits } of [...porClube.values()].sort((a, b) => a.time.nome.localeCompare(b.time.nome))) {
   const saida = {}
   const linhas = []
   for (const [v, k] of Object.entries(kits)) {
-    // trim antes do resize: a margem transparente varia por arquivo e sem tirar
-    // ela cada variante fica com a camisa de um tamanho na tela.
-    const buf = await sharp(k.origem)
-      .trim()
-      .resize(LADO, LADO, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-      .webp({ quality: 90 })
-      .toBuffer()
+    // ⚠️ POR PADRAO NAO REDUZ, e a razao e uma REPROVACAO, nao uma medicao.
+    // Reduzir 420 -> 256 ja foi tentado e recusado na hora ("qualidade
+    // terrivel"): a listra do PSG perde saturacao e a trama de losangos vira
+    // borrao. Quem estraga e a REDUCAO, nao o webp — a 420 com o mesmo q90 fica
+    // indistinguivel do original. Custa ~26 KB por camisa em vez de ~14, e o
+    // orcamento da copia local em lib/atualizacao-elencos foi ajustado para
+    // caber. A mesma nota esta em scripts/publicar-camisas-pasta.mjs.
+    //
+    // `--reduzir` existe para o rabo da tabela (Oberliga, Tercera, Serie D),
+    // onde ninguem olha de perto e o que importa e caber.
+    //
+    // ⚠️ E O `trim()` SO VALE COM REDUCAO. Ele tira a margem transparente, que
+    // varia por arquivo; sem redimensionar depois, cada camisa sairia com uma
+    // dimensao diferente e a tela desenharia uma maior que a outra.
+    const buf = reduzir
+      ? await sharp(k.origem)
+        .trim()
+        .resize(LADO, LADO, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .webp({ quality: 90 })
+        .toBuffer()
+      // ⚠️ `effort: 4`, E NAO 6 — MEDIDO, e ha um abismo entre os dois. Nestas
+      // artes (420x420 COM canal alfa) o effort 6 liga uma busca cara no plano
+      // de transparencia e custa 4.027 ms por imagem contra 74 ms no 4 (54x)
+      // para economizar 1 KB em 31 (3%). Em 2.208 pecas e a diferenca entre 3
+      // minutos e 2,5 HORAS. Nao suba este numero sem cronometrar COM alfa.
+      : await sharp(k.origem).webp({ quality: 90, effort: 4 }).toBuffer()
     saida[v] = { data: `data:image/webp;base64,${buf.toString("base64")}` }
     linhas.push(`${v} ${(buf.length / 1024).toFixed(0)}KB`)
   }
-  const gemeo = gemeoCurado(time)
-  console.log(`  ${time.nome} (${time.fileKey}${gemeo ? " + " + gemeo : ""}) ${div ? "[" + div.toUpperCase() + "]" : ""}: ${linhas.join(" | ")}   ← ${via}`)
+  // O gemeo achado por nome e as chaves declaradas a mao entram juntos, sem
+  // repetir: as duas respondem a mesma pergunta ("que chave a tela consulta?").
+  const outras = [...new Set([gemeoCurado(time, slug), ...(CHAVES_EXTRA.get(time.fileKey) ?? [])].filter(k => k && k !== time.fileKey))]
+  if (!RESUMO) console.log(`  ${time.nome} (${[time.fileKey, ...outras].join(" + ")}) ${div ? "[" + div.toUpperCase() + "]" : ""}: ${linhas.join(" | ")}   ← ${via}`)
   clubes.push({ file_key: time.fileKey, kits: saida })
   // A MESMA arte na chave curada: e ela que a tela consulta nas divisoes.
-  if (gemeo) { clubes.push({ file_key: gemeo, kits: saida }); comGemeo.push(`${time.fileKey} + ${gemeo} [${time.nome}]`) }
+  for (const chave of outras) {
+    // ⚠️ DOIS CLUBES DO POOL PODEM APONTAR PARA A MESMA CHAVE CURADA (foi o caso
+    // do Everton nos escudos: o de Liverpool e o de Viña del Mar). O segundo
+    // sobrescreveria o primeiro em silencio; aqui ele nao entra e sai no
+    // relatorio para ser decidido a mao.
+    if (chavesUsadas.has(chave)) { disputadas.push(`${chave}: ja tomada; ${time.fileKey} [${time.nome}] NAO a levou`); continue }
+    chavesUsadas.add(chave)
+    clubes.push({ file_key: chave, kits: saida })
+    comGemeo.push(`${time.fileKey} + ${chave} [${time.nome}]`)
+  }
 }
 
 console.log(`\n${clubes.length} chaves (${clubes.length - comGemeo.length} clubes) | ${clubes.reduce((s, c) => s + Object.keys(c.kits).length, 0)} pecas`)
@@ -349,6 +519,7 @@ if (comGemeo.length) {
   console.log(`\nPUBLICADO NAS DUAS CHAVES — pool + curada (${comGemeo.length}):`)
   for (const g of comGemeo) console.log("  = " + g)
 }
+if (disputadas.length) { console.log("\nCHAVE CURADA DISPUTADA por mais de um clube:"); for (const d of disputadas) console.log("  ! " + d) }
 if (duplicados.length) { console.log("\nARQUIVO REPETIDO PARA A MESMA VARIANTE:"); for (const d of duplicados) console.log("  ! " + d) }
 if (ambiguos.length) { console.log("\nAMBIGUO (resolva no MAPA_MANUAL ou com --clube):"); for (const a of ambiguos) console.log("  ? " + a) }
 if (semClube.length) { console.log("\nSEM CLUBE NO SEED:"); console.log("  " + semClube.join("\n  ")) }

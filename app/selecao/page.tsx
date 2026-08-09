@@ -20,7 +20,7 @@ import { useGameState } from "@/lib/save-system"
 import { useUserTeam, useManagingNational } from "@/lib/time-da-carreira"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
-import { useNationalTeam } from "@/lib/use-national-team"
+import { useNationalTeam, salarioDeMercadoDaSelecao, tetoSalarialDaSelecao } from "@/lib/use-national-team"
 import { assumirSelecao, voltarAoClube } from "@/lib/career-moves"
 import { NationalCrest, NationalKit, strengthTone } from "@/components/national/national-crest"
 import {
@@ -55,7 +55,10 @@ function OfferCard({
 }) {
   const nt = getNationalTeamById(offer.nationalTeamId)
   const comps = nt ? getCompetitionsForConfederation(nt.confederation) : []
-  const baseSalary = offer.monthlySalary ?? Math.round((45_000 + offer.strength * 3_500) / 5_000) * 5_000
+  // Formula unica, do mesmo dono que julga a contraproposta. Antes a tela
+  // repetia a conta na mao, e teto e oferta podiam divergir em silencio.
+  const baseSalary = offer.monthlySalary ?? salarioDeMercadoDaSelecao(offer.strength)
+  const tetoSalarial = tetoSalarialDaSelecao(offer.strength)
   const baseMonths = offer.contractMonths ?? 18
   const objectives = offer.objectives ?? ["Cumprir a meta da principal competição"]
   const obligations = offer.obligations ?? ["Participar das janelas internacionais", "Convocar atletas por mérito"]
@@ -106,7 +109,24 @@ function OfferCard({
       {negotiating && (
         <div className="rounded-lg border border-[var(--brand)]/20 bg-[var(--brand)]/[0.03] p-3 space-y-3">
           <label className="block text-xs text-white/60">Salário pretendido
-            <input type="number" step={5000} min={baseSalary} value={salary} onChange={e => setSalary(Number(e.target.value))} className="mt-1 w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-white" />
+            {/* O `max` e a metade visivel da trava; a federacao recusa acima do
+                teto de qualquer jeito (ver counterOffer em use-national-team),
+                mas sem ele o campo aceitava valor absurdo e ate NaN. */}
+            <input
+              type="number"
+              step={5000}
+              min={baseSalary}
+              max={tetoSalarial}
+              value={salary}
+              onChange={e => {
+                const v = Number(e.target.value)
+                setSalary(Number.isFinite(v) ? Math.min(Math.max(0, v), tetoSalarial) : baseSalary)
+              }}
+              className="mt-1 w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-white"
+            />
+            <span className="mt-1 block text-[11px] text-white/35">
+              A federação não passa de R$ {tetoSalarial.toLocaleString("pt-BR")} por mês.
+            </span>
           </label>
           <label className="block text-xs text-white/60">Contrato (meses)
             <select value={months} onChange={e => setMonths(Number(e.target.value))} className="mt-1 w-full rounded-md border border-white/10 bg-[#101015] px-3 py-2 text-white">

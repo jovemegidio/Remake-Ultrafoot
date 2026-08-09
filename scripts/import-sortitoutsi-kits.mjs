@@ -33,8 +33,15 @@ for (const [fileKey, info] of Object.entries(mapa)) {
   const key = normalizeKitKey(fileKey)
   const variants = {}
   for (const idx of [1, 2, 3]) {
-    const input = path.join(info.dir, `${info.base}_${idx}.png`)
-    try { await fs.access(input) } catch { continue }
+    // Os dois formatos do acervo (ver o casador): `time_1.png` nos packs
+    // sul-americanos e `time1.png` nos espanhois. O casador guarda a BASE sem o
+    // digito, entao aqui as duas formas precisam ser tentadas — senao a liga
+    // casa e mesmo assim nao importa arquivo nenhum.
+    let input = path.join(info.dir, `${info.base}_${idx}.png`)
+    try { await fs.access(input) } catch {
+      input = path.join(info.dir, `${info.base}${idx}.png`)
+      try { await fs.access(input) } catch { continue }
+    }
     const filename = `sts_${key}_${VAR[idx]}.webp`
     await sharp(input).resize(256, 256, { fit: "inside", withoutEnlargement: true })
       .webp({ quality: 82, alphaQuality: 90 }).toFile(path.join(outDir, filename))

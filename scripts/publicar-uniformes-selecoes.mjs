@@ -141,6 +141,23 @@ const SLUG_PARA_SELECAO = {
   ukraine: "ucrania",
   wales: "pais_de_gales",
 
+  // ─── CONMEBOL (06/08/2026) ────────────────────────────────────────────
+  // As dez, todas no catalogo do jogo. So `brazil`, `ecuador`, `paraguay` e
+  // `uruguay` mudam de grafia; as outras seis sao iguais nos dois lados e
+  // estao aqui de proposito, para a tabela continuar sendo a lista COMPLETA do
+  // que sai da pasta (slug ausente e ignorado em silencio, e "ignorado" e o
+  // mesmo desfecho de "escrito diferente").
+  argentina: "argentina",
+  bolivia: "bolivia",
+  brazil: "brasil",
+  chile: "chile",
+  colombia: "colombia",
+  ecuador: "equador",
+  paraguay: "paraguai",
+  peru: "peru",
+  uruguay: "uruguai",
+  venezuela: "venezuela",
+
   // ─── CAF (05/08/2026) ─────────────────────────────────────────────────
   algeria: "argelia",
   cape_verde: "cabo_verde",
@@ -204,12 +221,14 @@ for (const [selecao, kits] of [...porSelecao.entries()].sort()) {
   const linhas = []
   for (const [v, k] of Object.entries(kits)) {
     // `trim` antes do resize: a margem transparente varia por arquivo e sem
-    // tirar ela cada variante sai de um tamanho diferente na tela.
-    const buf = await sharp(k.origem)
-      .trim()
-      .resize(LADO, LADO, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-      .webp({ quality: 90 })
-      .toBuffer()
+    // ⚠️ SEM REDUZIR, pelo mesmo motivo do uniforme de clube: reduzir 420 -> 256
+    // ja foi reprovado ("qualidade terrivel"). O `trim()` saiu junto — ele so
+    // fazia sentido antes de um resize que igualasse as dimensoes de novo.
+    //
+    // ⚠️ `effort: 4`, E NAO 6 — MEDIDO. Nestas artes (COM canal alfa) o effort 6
+    // liga uma busca cara no plano de transparencia e custa 4.027 ms por imagem
+    // contra 74 ms no 4 (54x) para economizar 3% de bytes.
+    const buf = await sharp(k.origem).webp({ quality: 90, effort: 4 }).toBuffer()
     saida[v] = { data: `data:image/webp;base64,${buf.toString("base64")}` }
     linhas.push(`${v} ${(buf.length / 1024).toFixed(0)}KB`)
   }

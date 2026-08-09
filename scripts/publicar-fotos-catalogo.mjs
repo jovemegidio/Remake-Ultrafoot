@@ -440,15 +440,23 @@ for (const { fileKey, pasta } of pares) {
       if (!r.recortou) semRecorte.push(nomeDoArquivo)
     }
 
-    const png = await sharp(fonte)
+    // ⚠️ WEBP, E AQUI ELE GANHA DE LAVADA — nao repita o resultado do escudo.
+    // No escudo o PNG paletizado venceu (area chapada, monocromatico) e a nota
+    // ficou registrada; ROSTO e o caso oposto: foto de verdade, com gradiente e
+    // fundo. Medido nos mesmos 8 retratos do Corinthians: 786 KB em PNG contra
+    // 55 KB em webp 82 — 14x. Em 1.085 retratos e a diferenca entre 125 MB e
+    // 9 MB, e o orcamento de imagem do cliente e de 72 MB para TUDO (escudo,
+    // uniforme e rosto): em PNG a maioria dos rostos nao caberia e sumiria da
+    // tela sem erro nenhum, que e o sintoma classico daqui.
+    const imagem = await sharp(fonte)
       .resize({ width: LARGURA, withoutEnlargement: true })
-      .png({ compressionLevel: 9 })
+      .webp({ quality: 82 })
       .toBuffer()
 
     itens.push({
       file_key: fileKey,
       nome_original: doJogo,
-      foto_data: `data:image/png;base64,${png.toString("base64")}`,
+      foto_data: `data:image/webp;base64,${imagem.toString("base64")}`,
     })
     casados++
   }

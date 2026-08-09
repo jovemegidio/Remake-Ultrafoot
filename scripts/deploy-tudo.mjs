@@ -199,16 +199,36 @@ if (!publicar) {
 // Resultado pratico: build subia com gate "passando" sem ter olhado nada.
 //
 // Reprovar aqui custa um commit. Reprovar depois deixa o binario no ar.
+// ⚠️ NUNCA `npx` AQUI — os gates rodam por `execFileSync`, e no Windows isso
+// significa ENOENT ANTES de qualquer verificacao acontecer.
+//
+// `npx` nao e um .exe: e `npx.cmd`/`npx.ps1`. O `execFileSync` (sem `shell: true`,
+// que nao da para ligar porque os outros comandos daqui levam caminhos com
+// espaco) nao faz resolucao por PATHEXT e falha na hora. Resultado medido em
+// 05/08/2026: TODA publicacao morria em "GATE REPROVADO: type-check" no MESMO
+// SEGUNDO em que comecava — um tsc de verdade leva ~90s. O gate criado para
+// impedir build ruim de subir nunca chegou a olhar uma linha de codigo, e a
+// unica saida era `--pular-gates`, ou seja, publicar sem verificacao nenhuma.
+//
+// Chamando `node` (que E um .exe) com o caminho do modulo local, o gate roda.
 const GATES = [
-  { nome: "type-check", cmd: "npx", args: ["tsc", "--noEmit", "-p", "tsconfig.json"] },
-  { nome: "lint", cmd: "npx", args: ["eslint", "app", "components", "lib", "hooks"] },
+  { nome: "type-check", cmd: "node", args: ["node_modules/typescript/bin/tsc", "--noEmit", "-p", "tsconfig.json"] },
+  { nome: "lint", cmd: "node", args: ["node_modules/eslint/bin/eslint.js", "app", "components", "lib", "hooks"] },
   { nome: "lacunas de funcionalidade", cmd: "node", args: ["scripts/audit-feature-gaps.mjs"] },
-  { nome: "regulamentos das competicoes", cmd: "npx", args: ["tsx", "scripts/qa-competition-regulations.ts"] },
-  { nome: "regras do jogo", cmd: "npx", args: ["tsx", "scripts/test-contrato-base-de-tempo.ts"] },
-  { nome: "piso de elenco", cmd: "npx", args: ["tsx", "scripts/test-piso-de-elenco.ts"] },
+  { nome: "regulamentos das competicoes", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/qa-competition-regulations.ts"] },
+  { nome: "regras do jogo", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-contrato-base-de-tempo.ts"] },
+  { nome: "piso de elenco", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-piso-de-elenco.ts"] },
   // Perder o save numa atualizacao e o pior defeito possivel: nao ha suporte que
   // devolva a carreira. Ver lib/save-system.ts (as tres camadas).
-  { nome: "save protegido na atualizacao", cmd: "npx", args: ["tsx", "scripts/test-save-protegido.ts"] },
+  { nome: "save protegido na atualizacao", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-save-protegido.ts"] },
+  // Escudo/uniforme que nao resolve no app instalado passou TRES versoes no ar
+  // (1.0.266 a 1.0.268) sem ninguem perceber no build. Ver o cabecalho do teste.
+  { nome: "escudo e uniforme no app instalado", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-escudo-no-app-instalado.ts"] },
+  // A rotina da semana modula CARGA DE TREINO e RECUPERACAO de todo o elenco.
+  // Um erro aqui nao aparece na tela: aparece semanas depois, no elenco moido ou
+  // no elenco que nunca evolui. A trava que mais importa e "vespera de jogo nunca
+  // e treino" — sem ela a interface entrega o time cansado em campo.
+  { nome: "rotina da semana", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-rotina-da-semana.ts"] },
 ]
 // ⚠️ OS GATES RODAM NO DISCO DE BUILD, NAO NO REPOSITORIO.
 //
@@ -428,6 +448,50 @@ if (!soLauncher) {
 }
 if (!soJogo) {
   dispararSeCommitado("launcher-platforms.yml", ["Launcher"], "launcher (Linux/macOS)")
+}
+
+// ─── Canal de atualizacao: RECARIMBO ─────────────────────────────────────────
+//
+// ⚠️ SEM ISTO, TODA BUILD APAGA O CANAL PARA QUEM ATUALIZA. O cliente so aceita
+// pacote com `publicado_em` MAIOR que o selo da build (`NEXT_PUBLIC_SELO_DO_BUILD`,
+// que e a hora da compilacao). O raciocinio esta em lib/atualizacao-elencos.ts e
+// e correto — pacote anterior ao build nao sabe nada que o build ja nao saiba —
+// mas ele vale para ELENCO, e nao para escudo, uniforme e rosto, que a build nao
+// carrega. Resultado pratico: o jogador atualiza o jogo e perde de uma vez os
+// escudos, os uniformes e as fotos que ja tinha baixado.
+//
+// O conserto e republicar o MESMO conteudo depois da build, so para o carimbo de
+// data passar a ser posterior. Ja foi feito a mao ("Recarimbo para a 1.0.258",
+// "Recarimbo para a 1.0.261") e esquecido outras tantas; e um passo de deploy,
+// nao um lembrete.
+//
+// Nada e reenviado: `publicar` monta o manifesto a partir do banco que ja esta
+// na VPS. So a versao e o `publicado_em` mudam.
+if (!soLauncher) {
+  passo("Canal de atualizacao: recarimbando o manifesto (pos-build)")
+  if (!publicar) {
+    console.log("  (ensaio) republicaria o manifesto para o selo desta build.")
+  } else if (!CHAVE) {
+    console.log("  ⚠️ ULTRAFOOT_VPS_KEY nao definida — RECARIMBE A MAO ou o canal some para quem atualizar.")
+  } else {
+    const py = [
+      "import sys; sys.path.insert(0, '/opt/ultrafoot/atualizacoes')",
+      "import os",
+      "os.environ.setdefault('ULTRAFOOT_ATU_DB', '/var/lib/ultrafoot/atualizacoes/atualizacoes.db')",
+      "os.environ.setdefault('ULTRAFOOT_ATU_PUB', '/var/www/ultrafoot/atualizacoes')",
+      "import server",
+      "con = server.conectar()",
+      `print(server.publicar(con, None, 'Recarimbo para a ${VERSAO_JOGO}'))`,
+      "con.commit()",
+    ].join("\n")
+    try {
+      const saida = rodar("ssh", ["-i", CHAVE, "-o", "ConnectTimeout=20", VPS,
+        `sudo -u ultrafoot python3 - <<'PY'\n${py}\nPY`]).trim()
+      console.log(`  ${saida.split("\n").pop()}`)
+    } catch (e) {
+      console.log(`  ⚠️ recarimbo FALHOU (${e.message.split("\n")[0]}) — refaca a mao, senao quem atualizar perde escudo, uniforme e foto.`)
+    }
+  }
 }
 
 console.log("\nDEPLOY CONCLUIDO.")

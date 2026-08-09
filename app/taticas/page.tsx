@@ -28,6 +28,7 @@ import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import { forcasDaTatica, resumoDoPlano } from "@/lib/forcas-taticas"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameEngine, persistGameEngineNow, type TeamTactics, type PlayerInstructions, type PlayerRole, PLAYER_ROLE_INFO } from "@/lib/game-engine"
@@ -137,6 +138,9 @@ export default function TaticasPage() {
   const [showSaveConfirm, setShowSaveConfirm] = useState(false)
   
   const { teamTactics, setTeamTactics, playerInstructions, setPlayerInstructions, squadPlayers } = gameEngine
+  // Mesmo calculo que a partida usa — nao uma previa parecida. Se a tela
+  // estimasse por conta propria, seriam duas escalas para a mesma grandeza.
+  const efeitoDoPlano = useMemo(() => forcasDaTatica(teamTactics), [teamTactics])
 
   // ── Táticas salvas (preset do CONJUNTO tático, não da escalação) ──────────
   const [taticasSalvas, setTaticasSalvas] = useState<TaticaSalva[]>([])
@@ -332,6 +336,52 @@ export default function TaticasPage() {
             </button>
           </div>
           {avisoTatica && <p className="mt-2 text-xs text-[var(--brand)]">{avisoTatica}</p>}
+        </div>
+
+        {/* EFEITO DO PLANO. Ate a 1.0.277 estes controles nao mudavam nada no
+            placar; agora mudam, e o jogador precisa VER isso — senao a mudanca
+            e invisivel e vale tanto quanto nao existir. */}
+        <div className="mb-4 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
+              Efeito do plano
+            </span>
+            {([
+              ["Ataque", efeitoDoPlano.attack],
+              ["Meio", efeitoDoPlano.midfield],
+              ["Defesa", efeitoDoPlano.defense],
+            ] as const).map(([rotulo, valor]) => (
+              <span key={rotulo} className="flex items-baseline gap-1.5">
+                <span className="text-xs text-white/40">{rotulo}</span>
+                <span className={cn(
+                  "text-sm font-bold tabular-nums",
+                  valor > 0 ? "text-[var(--brand)]" : valor < 0 ? "text-red-400" : "text-white/40",
+                )}>
+                  {valor > 0 ? `+${valor}` : valor}
+                </span>
+              </span>
+            ))}
+            <span className={cn(
+              "ml-auto rounded-full px-3 py-1 text-xs font-medium",
+              efeitoDoPlano.conflitos.length > 0
+                ? "bg-red-500/15 text-red-300"
+                : efeitoDoPlano.coerencia > 0
+                  ? "bg-[var(--brand)]/15 text-[var(--brand)]"
+                  : "bg-white/5 text-white/50",
+            )}>
+              {resumoDoPlano(efeitoDoPlano)}
+            </span>
+          </div>
+          {efeitoDoPlano.conflitos.length > 0 && (
+            <ul className="mt-3 space-y-1.5 border-t border-white/[0.06] pt-3">
+              {efeitoDoPlano.conflitos.map(c => (
+                <li key={c} className="flex gap-2 text-xs leading-relaxed text-white/60">
+                  <span className="text-red-400">•</span>
+                  {c}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Content */}

@@ -24,47 +24,59 @@ import {
 import { PlayerAvatar } from "@/components/player-avatar"
 import { cn } from "@/lib/utils"
 import { useUserTeam } from "@/lib/time-da-carreira"
-import { type Player, type PlayerInjury, INJURY_TYPES, getInjuryRecoveryTime } from "@/lib/game-engine"
+import {
+  type Player, type PlayerInjury, type TratamentoMedico,
+  INJURY_TYPES, getInjuryRecoveryTime, TRATAMENTOS_MEDICOS, useGameEngine,
+} from "@/lib/game-engine"
 
 interface MedicalModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   player: Player | null
-  onTreatment?: (playerId: number, treatment: string) => void
+  onTreatment?: (playerId: number, tratamento: TratamentoMedico) => void
 }
 
-const treatments = [
-  { 
-    id: "conservative", 
-    label: "Tratamento Conservador", 
-    description: "Recuperacao natural sem intervencao",
+/**
+ * ⚠️ CUSTO E EFEITO VEM DO MOTOR (`TRATAMENTOS_MEDICOS`), nunca daqui. Esta
+ * tela ficou 290 linhas sem nenhum importador e com numeros proprios; quando
+ * ela foi ligada, os valores dela ja nao batiam com nada. Texto e cor sao da
+ * tela; dinheiro e semana sao do motor.
+ */
+const treatments: {
+  id: TratamentoMedico
+  label: string
+  description: string
+  icon: typeof Bed
+  color: string
+  bgColor: string
+  borderColor: string
+}[] = [
+  {
+    id: "conservador",
+    label: "Tratamento Conservador",
+    description: "Recuperacao natural, sem custo e sem atalho",
     icon: Bed,
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
     borderColor: "border-blue-500/30",
-    speedBonus: 0
   },
-  { 
-    id: "physiotherapy", 
-    label: "Fisioterapia Intensiva", 
-    description: "Acelera recuperacao em 20%",
+  {
+    id: "fisioterapia",
+    label: "Fisioterapia Intensiva",
+    description: "Encurta o prazo em 20%",
     icon: Activity,
     color: "text-green-500",
     bgColor: "bg-green-500/10",
     borderColor: "border-green-500/30",
-    speedBonus: 0.2,
-    cost: 50000
   },
-  { 
-    id: "surgery", 
-    label: "Cirurgia", 
-    description: "Para lesoes graves, recuperacao garantida",
+  {
+    id: "cirurgia",
+    label: "Cirurgia",
+    description: "Para lesao grave: alonga o prazo, mas resolve de vez",
     icon: Syringe,
     color: "text-red-500",
     bgColor: "bg-red-500/10",
     borderColor: "border-red-500/30",
-    speedBonus: -0.3, // demora mais mas e mais seguro
-    cost: 200000
   },
 ]
 
@@ -74,7 +86,7 @@ export function MedicalModal({
   player,
   onTreatment,
 }: MedicalModalProps) {
-  const [selectedTreatment, setSelectedTreatment] = useState<string | null>(null)
+  const [selectedTreatment, setSelectedTreatment] = useState<TratamentoMedico | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   // ⚠️ SEM `fileKey` O RETRATO NAO APARECE. `getPlayerPhotoUrls` so consulta a
   // pasta editorial e o pacote do canal de atualizacao quando sabe o CLUBE — a
@@ -82,8 +94,14 @@ export function MedicalModal({
   // por `playerId`, e o atleta caia na silhueta mesmo com foto publicada.
   // Este modal trata sempre de atleta do PROPRIO elenco.
   const { team: meuClube } = useUserTeam()
+  // Ler o caixa aqui e o que permite desabilitar a opcao cara ANTES do clique —
+  // o motor tambem recusa, mas recusa em silencio, e a tela precisa explicar.
+  const caixa = useGameEngine(s => s.balance)
 
   if (!player) return null
+
+  // Uma lesao, um tratamento: e a mesma trava do motor, espelhada na tela.
+  const jaTratado = Boolean(player.injury?.tratamento)
 
   const handleTreatment = () => {
     if (!selectedTreatment) return
@@ -193,35 +211,48 @@ export function MedicalModal({
                 <div className="text-xs text-white/50 uppercase tracking-wider mb-3">
                   Opcoes de Tratamento
                 </div>
+                {jaTratado && (
+                  <div className="mb-3 rounded-lg border border-[#ffd700]/30 bg-[#ffd700]/10 p-2.5 text-xs text-[#ffd700]">
+                    Esta lesao ja recebeu tratamento. O prazo restante segue no
+                    avanco de semana.
+                  </div>
+                )}
                 <div className="space-y-2">
                   {treatments.map((treatment) => {
                     const Icon = treatment.icon
                     const isSelected = selectedTreatment === treatment.id
-                    
+                    const custo = TRATAMENTOS_MEDICOS[treatment.id].custo
+                    const semSaldo = custo > 0 && caixa < custo
+
                     // Cirurgia apenas para lesoes graves
-                    if (treatment.id === "surgery" && player.injury?.severity !== "grave") {
+                    if (treatment.id === "cirurgia" && player.injury?.severity !== "grave") {
                       return null
                     }
-                    
+
                     return (
                       <button
                         key={treatment.id}
                         onClick={() => setSelectedTreatment(treatment.id)}
+                        disabled={semSaldo || jaTratado}
                         className={cn(
                           "w-full p-3 rounded-lg border text-left transition-all flex items-center gap-3",
-                          isSelected 
-                            ? `${treatment.bgColor} ${treatment.borderColor}`
-                            : "bg-white/5 border-white/10 hover:border-white/20"
+                          semSaldo || jaTratado
+                            ? "bg-white/5 border-white/10 opacity-40 cursor-not-allowed"
+                            : isSelected
+                              ? `${treatment.bgColor} ${treatment.borderColor}`
+                              : "bg-white/5 border-white/10 hover:border-white/20"
                         )}
                       >
                         <Icon className={cn("h-5 w-5", treatment.color)} />
                         <div className="flex-1">
                           <div className="font-medium text-white text-sm">{treatment.label}</div>
-                          <div className="text-xs text-white/50">{treatment.description}</div>
+                          <div className="text-xs text-white/50">
+                            {semSaldo ? "Caixa insuficiente" : treatment.description}
+                          </div>
                         </div>
-                        {treatment.cost && (
+                        {custo > 0 && (
                           <div className="text-xs text-[#ffd700] font-semibold">
-                            R$ {(treatment.cost / 1000).toFixed(0)}K
+                            R$ {(custo / 1000).toFixed(0)}K
                           </div>
                         )}
                       </button>

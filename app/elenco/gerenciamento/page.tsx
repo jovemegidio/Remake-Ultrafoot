@@ -37,6 +37,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatar, PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { climaDoVestiario, ROTULO_DO_PAPEL } from "@/lib/hierarquia-do-elenco"
 import { ContractNegotiationModal } from "@/components/squad/contract-negotiation-modal"
 import { RenovacaoEmprestimoModal } from "@/components/squad/renovacao-emprestimo-modal"
 import { artilheiros, cartoes } from "@/lib/leaderboards"
@@ -426,6 +427,16 @@ export default function ElencoPage() {
 
   const TABS: Array<"elenco" | "condicao" | "taticas" | "atribuicoes"> = ["elenco", "condicao", "taticas", "atribuicoes"]
   const allPlayers = useMemo(() => [...players, ...bench], [players, bench])
+  /**
+   * Mesmo calculo que a partida usa — nao uma previa parecida.
+   * ⚠️ Sai de `engineSquadPlayers`, NAO de `allPlayers`: a lista da tela e uma
+   * forma reduzida do atleta e nao carrega moral. Com ela o clima sairia sempre
+   * neutro, e o painel mentiria em silencio.
+   */
+  const clima = useMemo(
+    () => climaDoVestiario(engineSquadPlayers, tacticalAssignments?.captain),
+    [engineSquadPlayers, tacticalAssignments?.captain],
+  )
 
   // ─── ABA CONDIÇÃO: energia, fadiga crônica e entrosamento ────────────────────
   //
@@ -2510,6 +2521,54 @@ export default function ElencoPage() {
                           </select>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* CLIMA DO VESTIARIO. A bracadeira era escolhivel e nao fazia
+                      nada no jogo; agora a moral de quem manda pesa mais que a do
+                      quarto goleiro, e o efeito aparece AQUI, ao lado da escolha
+                      que o causa. Ver lib/hierarquia-do-elenco.ts. */}
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                      <h3 className="text-sm font-semibold text-white">Clima do vestiário</h3>
+                      <span className="flex items-baseline gap-1.5">
+                        <span className="text-xs text-white/40">Lideranças</span>
+                        <span className="text-sm font-bold tabular-nums text-white">{clima.clima}</span>
+                      </span>
+                      <span className="flex items-baseline gap-1.5">
+                        <span className="text-xs text-white/40">Elenco</span>
+                        <span className="text-sm font-bold tabular-nums text-white/60">{clima.climaSimples}</span>
+                      </span>
+                      <span className={cn(
+                        "ml-auto rounded-full px-3 py-1 text-xs font-medium tabular-nums",
+                        clima.efeito > 0 ? "bg-[var(--brand)]/15 text-[var(--brand)]"
+                          : clima.efeito < 0 ? "bg-red-500/15 text-red-300"
+                            : "bg-white/5 text-white/50",
+                      )}>
+                        {clima.efeito > 0 ? `+${clima.efeito}` : clima.efeito} em campo
+                      </span>
+                    </div>
+
+                    {clima.vozes.length > 0 && (
+                      <ul className="mt-3 space-y-1.5 border-t border-white/[0.06] pt-3">
+                        {clima.vozes.map(v => (
+                          <li key={v} className="text-xs leading-relaxed text-white/60">{v}</li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <div className="mt-3 flex flex-wrap gap-1.5 border-t border-white/[0.06] pt-3">
+                      {clima.postos
+                        .filter(p => p.papel === "capitao" || p.papel === "vice_capitao" || p.influencia >= 45)
+                        .sort((a, b) => b.influencia - a.influencia)
+                        .slice(0, 6)
+                        .map(p => (
+                          <span key={p.playerId} className="rounded-full bg-white/5 px-2.5 py-1 text-[11px] text-white/60">
+                            <span className="text-white/85">{p.nome}</span>
+                            {" · "}{ROTULO_DO_PAPEL[p.papel]}
+                            {" · "}<span className="tabular-nums">{p.influencia}</span>
+                          </span>
+                        ))}
                     </div>
                   </div>
 

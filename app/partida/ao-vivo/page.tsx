@@ -58,6 +58,8 @@ import { outrosEstaduaisDaRodada } from "@/lib/parallel-rounds"
 import { useDiscordRPC } from "@/hooks/use-discord-rpc"
 import { useTranslation } from "@/lib/i18n"
 import { persistGameEngineNow, useGameEngine, shootingForPosition, type Player as EnginePlayer } from "@/lib/game-engine"
+import { forcasDaTatica } from "@/lib/forcas-taticas"
+import { climaDoVestiario } from "@/lib/hierarquia-do-elenco"
 import { flushPersistentStore } from "@/lib/persistent-store"
 import { hardNavigate } from "@/lib/hard-navigation"
 import {
@@ -924,14 +926,24 @@ export default function PartidaAoVivoPage() {
     window.setTimeout(() => setLiveTacticNotice(null), 2600)
   }
 
-  const tacticalForces = useMemo(() => {
-    const base = { attack: 0, defense: 0, midfield: 0 }
-    if (teamTactics.playingStyle === "posse_bola") return { ...base, midfield: 5, attack: 1 }
-    if (teamTactics.playingStyle === "contra_ataque") return { ...base, attack: 4, defense: 3, midfield: -2 }
-    if (teamTactics.playingStyle === "pressao_alta") return { ...base, attack: 3, midfield: 3, defense: -1 }
-    if (teamTactics.playingStyle === "jogo_direto") return { ...base, attack: 2, midfield: -1 }
-    return { ...base, attack: 1, midfield: 2 }
-  }, [teamTactics.playingStyle])
+  /**
+   * Antes este calculo vivia aqui e olhava UM campo: `playingStyle`. Os outros
+   * doze controles da tela de Taticas nao mudavam nada no placar — o jogador
+   * escolhia marcacao, linha e saida de bola por nada. Agora sai inteiro de
+   * `lib/forcas-taticas.ts`, que preserva estes mesmos numeros para o estilo
+   * (a calibracao do motor nao muda) e soma os demais como TROCA, com teto.
+   */
+  const tacticalForces = useMemo(() => forcasDaTatica(teamTactics), [teamTactics])
+
+  /**
+   * CLIMA DO VESTIARIO. O capitao ja era escolhivel em Elenco > Gerenciamento e
+   * nao tinha nenhum efeito no jogo. Agora a moral de quem manda pesa mais que
+   * a do quarto goleiro. Derivado do elenco, nao guardado no save.
+   */
+  const climaDoElenco = useMemo(
+    () => climaDoVestiario(enginePlayers, engineTacticalAssignments?.captain),
+    [enginePlayers, engineTacticalAssignments?.captain],
+  )
 
   // FORCA REAL DO LADO DO USUARIO — do elenco, nao do prestigio do clube.
   // Antes homeAttack/Defense/Midfield = prestigio (um numero so): um elenco
@@ -969,14 +981,17 @@ export default function PartidaAoVivoPage() {
     const pMoral = (m: string) => (m === "Feliz" ? 80 : m === "Motivado" ? 68 : m === "Descontente" ? 35 : m === "Revoltado" ? 20 : 55)
     const formaMedia = xi.length ? xi.reduce((s, p) => s + (p.form ?? 70), 0) / xi.length : 70
     const moralMedia = xi.length ? xi.reduce((s, p) => s + (p.moralePoints ?? pMoral(p.morale)), 0) / xi.length : 55
-    const mod = (formaMedia - 70) / 9 + (moralMedia - 55) / 13
+    // LIDERANCA. `moralMedia` acima e media SIMPLES; a hierarquia acrescenta so
+    // a parcela de quem manda no vestiario estar acima ou abaixo do grupo — por
+    // isso somar os dois nao conta moral duas vezes. Ver lib/hierarquia-do-elenco.
+    const mod = (formaMedia - 70) / 9 + (moralMedia - 55) / 13 + climaDoElenco.efeito
     return {
       overall,
       attack: atk + tacticalForces.attack + mod,
       defense: def + tacticalForces.defense + mod,
       midfield: mid + tacticalForces.midfield + mod,
     }
-  }, [enginePlayers, selecaoConvocada, matchCtx.national, tacticalForces, userSide, homeTeam.prestigio, awayTeam.prestigio])
+  }, [enginePlayers, selecaoConvocada, matchCtx.national, tacticalForces, climaDoElenco.efeito, userSide, homeTeam.prestigio, awayTeam.prestigio])
 
   // Config da simulacao
   const config = useMemo(() => ({

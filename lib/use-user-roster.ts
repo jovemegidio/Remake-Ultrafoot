@@ -22,7 +22,7 @@ import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
 import { attributesFromOverall } from "@/lib/player-attributes"
 import { capGoalkeepers, pickStartingXI, repararEscalacao } from "@/lib/formations"
-import type { Player as EnginePlayer } from "@/lib/game-engine"
+import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
 import tmFisico from "@/data/seeds/tm-fisico.json"
 
 // ─── ALTURA E PÉ REAIS ───────────────────────────────────────────────────────
@@ -209,9 +209,38 @@ export function useUserRoster(
   const userTeam = resolvedTeam ?? serieATeams[0]
   const teamReady = Boolean(resolvedTeam)
 
+  /**
+   * ⚠️ CARREIRA VIVA — a trava que impede atleta vendido de ressuscitar.
+   *
+   * BUG RELATADO (jogador, 08/08/2026): "ao vender o time todo, ao voltar ao
+   * elenco os vendidos retornam". Valia tambem para emprestimo e leilao, porque
+   * os tres tiram gente do elenco.
+   *
+   * A causa era o `>= 11` logo abaixo: com menos de 11 no motor, a tela caia em
+   * `buildElencoPlayers(userTeam)`, que remonta o elenco a partir do DADO DO
+   * CLUBE — trazendo de volta todo mundo que havia saido. Uma causa, tres
+   * sintomas.
+   *
+   * O piso de elenco existe e e outro: `lib/reposicao-emergencial.ts`, cujos
+   * atletas valem ZERO no mercado justamente para nao virar a impressora
+   * "vender tudo -> ganhar elenco -> vender de novo". Ressuscitar o elenco
+   * original aqui reabria essa impressora com atletas de valor CHEIO.
+   *
+   * Com `myTeamShort` preenchido, o motor esta hidratado e o elenco dele e a
+   * verdade — mesmo curto, mesmo VAZIO. Sem ele (pre-visualizacao de time, ou
+   * carreira ainda nao iniciada), o dado do clube continua sendo a fonte.
+   *
+   * Confiar no elenco vazio e seguro porque os dois campos andam JUNTOS:
+   * `initializeGame` grava `myTeamShort` e `squadPlayers` no MESMO `set`, e o
+   * `zustand/persist` restaura o estado inteiro de uma vez. Nao existe instante
+   * com clube definido e elenco ainda por chegar — que seria o caso perigoso,
+   * ja visto neste projeto (efeito que grava antes de hidratar apagou save).
+   */
+  const carreiraViva = useGameEngine(s => Boolean(s.myTeamShort))
+
   const rosterFromSource = () => {
     if (!teamReady) return { players: [], bench: [] }
-    if (engineSquad.length >= 11) {
+    if (engineSquad.length >= 11 || carreiraViva) {
       const available = engineSquad.filter(p => !p.loanedOut)
       const declared = available.filter(p => p.isStarter)
       // NAO descarta o XI do tecnico quando a conta nao fecha em 11: conserta.
