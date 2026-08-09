@@ -1,704 +1,1418 @@
 {
   "atleticomg_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "atletico_mineiro",
     "nome": "Atletico-MG",
     "divisao": "serie_a"
   },
   "atleticopr_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "atletico_paranaense",
     "nome": "Athletico-PR",
     "divisao": "serie_a"
   },
   "bahia": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "bahia",
     "nome": "Bahia",
     "divisao": "serie_a"
   },
   "botafogorj_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "botafogo",
     "nome": "Botafogo",
     "divisao": "serie_a"
   },
   "chapecoense_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "chapecoense",
     "nome": "Chapecoense",
     "divisao": "serie_a"
   },
   "remo_pa": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "clube_do_remo",
     "nome": "Remo",
     "divisao": "serie_a"
   },
   "corinthians_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "corinthians",
     "nome": "Corinthians",
     "divisao": "serie_a"
   },
   "coritiba_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "coritiba",
     "nome": "Coritiba",
     "divisao": "serie_a"
   },
   "cruzeiro_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "cruzeiro",
     "nome": "Cruzeiro",
     "divisao": "serie_a"
   },
   "flarj": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "flamengo",
     "nome": "Flamengo",
     "divisao": "serie_a"
   },
   "flurj": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "fluminense",
     "nome": "Fluminense",
     "divisao": "serie_a"
   },
   "gremio": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "gremio",
     "nome": "Gremio",
     "divisao": "serie_a"
   },
   "miirassol_sp": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "mirassol",
     "nome": "Mirassol",
     "divisao": "serie_a"
   },
   "palmeiras": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "palmeiras",
     "nome": "Palmeiras",
     "divisao": "serie_a"
   },
   "bragantino_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "rb_bragantino",
     "nome": "RB Bragantino",
     "divisao": "serie_a"
   },
   "santos": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "santos",
     "nome": "Santos",
     "divisao": "serie_a"
   },
   "saopaulo_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "sao_paolo",
     "nome": "Sao Paulo",
     "divisao": "serie_a"
   },
   "internacional_bra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "sc_internacional",
     "nome": "Internacional",
     "divisao": "serie_a"
   },
   "vasco": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "vasco_gama",
     "nome": "Vasco da Gama",
     "divisao": "serie_a"
   },
   "vitoria": {
-    "dir": "C:\\Ultrafoot-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
+    "dir": "C:\\uf-kits-src\\Brazil_-_Serie_A\\Brazil - Serie A",
     "base": "vitoria_ec",
     "nome": "Vitoria",
     "divisao": "serie_a"
   },
   "aldosivi": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "aldosivi",
     "nome": "Aldosivi",
     "divisao": "liga_argentina"
   },
   "argentinos_jrs": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "argentinos_jrs",
     "nome": "Argentinos Juniors",
     "divisao": "liga_argentina"
   },
   "atletico_tucuman": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "atletico_tucuman",
     "nome": "Atletico Tucuman",
     "divisao": "liga_argentina"
   },
   "banfield_arg": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "banfield",
     "nome": "Banfield",
     "divisao": "liga_argentina"
   },
+  "barracas_central": {
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "barracas_central",
+    "nome": "Barracas Central",
+    "divisao": "liga_argentina"
+  },
   "belgrano_cordoba": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "belgrano",
     "nome": "Belgrano Cordoba",
     "divisao": "liga_argentina"
   },
   "boca_juniors": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "boca_juniors",
     "nome": "Boca Juniors",
     "divisao": "liga_argentina"
   },
   "central_cordoba": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "central_cordoba",
     "nome": "Central Cordoba",
     "divisao": "liga_argentina"
   },
   "defensa_y_justicia": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "defensa_y_justicia",
     "nome": "Defensa y Justicia",
     "divisao": "liga_argentina"
   },
   "deportivo_riestra": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "deportivo_riestra",
     "nome": "Deportivo Riestra",
     "divisao": "liga_argentina"
   },
   "estudiantes_lp": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "estudiantes",
     "nome": "Estudiantes LP",
     "divisao": "liga_argentina"
   },
-  "gimnasia_la_plata": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+  "estudiantes_rio_cuarto": {
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "estudiantes_cuarto",
+    "nome": "Estudiantes Rio Cuarto",
+    "divisao": "liga_argentina"
+  },
+  "gimnasia_mendoza": {
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "gimnasia_mendoza",
+    "nome": "Gimnasia Mendoza",
+    "divisao": "liga_argentina"
+  },
+  "gimnasia_la_plata": {
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "gimnasia_y_esgrima",
     "nome": "Gimnasia La Plata",
     "divisao": "liga_argentina"
   },
   "huracan_arg": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "huracan",
     "nome": "Huracan",
     "divisao": "liga_argentina"
   },
   "independiente_arg": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "independiente",
     "nome": "Independiente",
     "divisao": "liga_argentina"
   },
   "independiente_rivadavia": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "independiente_rivadavia",
     "nome": "Independiente Rivadavia",
     "divisao": "liga_argentina"
   },
   "instituto_acc": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "instituto_acc",
     "nome": "Instituto",
     "divisao": "liga_argentina"
   },
   "lanus_arg": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "lanus",
     "nome": "Lanus",
     "divisao": "liga_argentina"
   },
   "newells_old_boys": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "newells_old_boys",
     "nome": "Newells Old Boys",
     "divisao": "liga_argentina"
   },
   "platense": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "platense",
     "nome": "Platense",
     "divisao": "liga_argentina"
   },
   "racing_arg": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "racing_avellaneda",
     "nome": "Racing Club",
     "divisao": "liga_argentina"
   },
   "river_plate": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "river_plate",
     "nome": "River Plate",
     "divisao": "liga_argentina"
   },
   "rosario_central": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "rosario_central",
     "nome": "Rosario Central",
     "divisao": "liga_argentina"
   },
   "san_lorenzo": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "san_lorenzo",
     "nome": "San Lorenzo",
     "divisao": "liga_argentina"
   },
   "sarmiento": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "sarmiento",
     "nome": "Sarmiento",
     "divisao": "liga_argentina"
   },
   "talleres_cordoba": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "talleres_de_cordoba",
     "nome": "Talleres Cordoba",
     "divisao": "liga_argentina"
   },
   "tigre_arg": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "tigre",
     "nome": "Tigre",
     "divisao": "liga_argentina"
   },
   "union_santa_fe": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "union_santa_fe",
     "nome": "Union Santa Fe",
     "divisao": "liga_argentina"
   },
   "velez_sarsfield": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "dir": "C:\\uf-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "velez_sarsfield",
     "nome": "Vélez Sarsfield",
     "divisao": "liga_argentina"
   },
-  "beijing_guoan": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "beijing",
-    "nome": "Beijing Guoan",
-    "divisao": "chinese_super"
-  },
-  "chengdu_rongcheng": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "chengdu_rongcheng",
-    "nome": "Chengdu Rongcheng",
-    "divisao": "chinese_super"
-  },
-  "dalian_pro": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "dalian_yingbo",
-    "nome": "Dalian Pro",
-    "divisao": "chinese_super"
-  },
-  "henan_fc": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "henan_fc",
-    "nome": "Henan FC",
-    "divisao": "chinese_super"
-  },
-  "qingdao_hainiu": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "qingdao_hainiu",
-    "nome": "Qingdao Hainiu",
-    "divisao": "chinese_super"
-  },
-  "shandong_taishan": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "shandong_taishan",
-    "nome": "Shandong Taishan",
-    "divisao": "chinese_super"
-  },
-  "shanghai_port": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "shanghai_port",
-    "nome": "Shanghai Port",
-    "divisao": "chinese_super"
-  },
-  "shenzhen_fc": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "shenzhen_peng_city",
-    "nome": "Shenzhen FC",
-    "divisao": "chinese_super"
-  },
-  "tianjin_jinmen": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "tianjin_jinmen_tiger",
-    "nome": "Tianjin Jinmen Tiger",
-    "divisao": "chinese_super"
-  },
-  "wuhan_three_towns": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "wuhan_three_towns",
-    "nome": "Wuhan Three Towns",
-    "divisao": "chinese_super"
-  },
-  "zhejiang_fc": {
-    "dir": "C:\\Ultrafoot-kits-src\\China_-_Super_League\\China - Super League",
-    "base": "zhejiang_fc",
-    "nome": "Zhejiang FC",
-    "divisao": "chinese_super"
-  },
-  "aguilas_doradas": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "aguilas_doradas",
-    "nome": "Aguilas Doradas",
-    "divisao": "primera_a_col"
-  },
-  "alianza_fc_col": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "alianza",
-    "nome": "Alianza FC",
-    "divisao": "primera_a_col"
-  },
-  "america_cali": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "america_cali",
-    "nome": "America de Cali",
-    "divisao": "primera_a_col"
-  },
-  "boyaca_chico": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "boyaca_chico",
-    "nome": "Boyaca Chico",
-    "divisao": "primera_a_col"
-  },
-  "bucaramanga": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "bucamaranga",
-    "nome": "Atletico Bucaramanga",
-    "divisao": "primera_a_col"
-  },
-  "cucuta_dep": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "cucuta",
-    "nome": "Cucuta Deportivo",
-    "divisao": "primera_a_col"
-  },
-  "deportivo_cali": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "deportivo_cali",
-    "nome": "Deportivo Cali",
-    "divisao": "primera_a_col"
-  },
-  "dep_pereira": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "depor_pereira",
-    "nome": "Deportivo Pereira",
-    "divisao": "primera_a_col"
-  },
-  "dep_pasto": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "dep_pasto",
-    "nome": "Deportivo Pasto",
-    "divisao": "primera_a_col"
-  },
-  "deportes_tolima": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "dep_tolima",
-    "nome": "Deportes Tolima",
-    "divisao": "primera_a_col"
-  },
-  "fortaleza_ceif": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "fortaleza",
-    "nome": "Fortaleza CEIF",
-    "divisao": "primera_a_col"
-  },
-  "ind_medellin": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "independiente",
-    "nome": "Independiente Medellin",
-    "divisao": "primera_a_col"
-  },
-  "jaguares_cordoba": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "jaguares",
-    "nome": "Jaguares de Cordoba",
-    "divisao": "primera_a_col"
-  },
-  "junior_baq": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "junior",
-    "nome": "Junior Barranquilla",
-    "divisao": "primera_a_col"
-  },
-  "millonarios": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "millonairos",
-    "nome": "Millonarios",
-    "divisao": "primera_a_col"
-  },
-  "atletico_nacional": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "nacional",
-    "nome": "Atletico Nacional",
-    "divisao": "primera_a_col"
-  },
-  "once_caldas": {
-    "dir": "C:\\Ultrafoot-kits-src\\Colombia_-_Liga_BetPlay_Dimayor\\Colombia - Liga BetPlay Dimayor",
-    "base": "once_caldas",
-    "nome": "Once Caldas",
-    "divisao": "primera_a_col"
-  },
   "aucas": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "aucas",
     "nome": "Aucas",
     "divisao": "primera_a_ecu"
   },
   "barcelona_sc": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "barcelona_sc",
     "nome": "Barcelona SC",
     "divisao": "primera_a_ecu"
   },
   "cd_universidad_catolica": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "cd_universidad_catolica",
     "nome": "Universidad Catolica",
     "divisao": "primera_a_ecu"
   },
   "delfin_sc": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "delfin_sc",
     "nome": "Delfin SC",
     "divisao": "primera_a_ecu"
   },
   "deportivo_cuenca": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "deportivo_cuenca",
     "nome": "Deportivo Cuenca",
     "divisao": "primera_a_ecu"
   },
   "emelec": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "emelec",
     "nome": "Emelec",
     "divisao": "primera_a_ecu"
   },
   "guayaquil_city": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "guayaquil_city",
     "nome": "Guayaquil City",
     "divisao": "primera_a_ecu"
   },
   "independiente_del_valle": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "independiente_del_valle",
     "nome": "Independiente del Valle",
     "divisao": "primera_a_ecu"
   },
   "ldu_quito": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "ldu_quito",
     "nome": "LDU Quito",
     "divisao": "primera_a_ecu"
   },
   "leones_del_norte": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "leones_del_norte",
     "nome": "Leones del Norte",
     "divisao": "primera_a_ecu"
   },
   "libertad_fc": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "libertad_fc",
     "nome": "Libertad FC",
     "divisao": "primera_a_ecu"
   },
   "macara": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "macara",
     "nome": "Macara",
     "divisao": "primera_a_ecu"
   },
   "manta": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "manta",
     "nome": "Manta FC",
     "divisao": "primera_a_ecu"
   },
   "mushuc_runa": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "mushuc_runa",
     "nome": "Mushuc Runa",
     "divisao": "primera_a_ecu"
   },
   "orense": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "orense",
     "nome": "Orense",
     "divisao": "primera_a_ecu"
   },
   "tecnico_universitario": {
-    "dir": "C:\\Ultrafoot-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
+    "dir": "C:\\uf-kits-src\\Ecuador_-_Liga_Pro_A\\Ecuador - Liga Pro A",
     "base": "tecnico_universitario",
     "nome": "Tecnico Universitario",
     "divisao": "primera_a_ecu"
   },
-  "avispa_fukuoka": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "avispa_fukuoka",
-    "nome": "Avispa Fukuoka",
-    "divisao": "j_league"
-  },
-  "cerezo_osaka": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "cerezo_osaka",
-    "nome": "Cerezo Osaka",
-    "divisao": "j_league"
-  },
-  "gamba_osaka": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "gamba_osaka",
-    "nome": "Gamba Osaka",
-    "divisao": "j_league"
-  },
-  "kashima_antlers": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "kashima_antlers",
-    "nome": "Kashima Antlers",
-    "divisao": "j_league"
-  },
-  "kashiwa_reysol": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "kashiwa_reysol",
-    "nome": "Kashiwa Reysol",
-    "divisao": "j_league"
-  },
-  "kawasaki_frontale": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "kawasaki_frontale",
-    "nome": "Kawasaki Frontale",
-    "divisao": "j_league"
-  },
-  "machida_zelvia": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "machida_zelvia ",
-    "nome": "Machida Zelvia",
-    "divisao": "j_league"
-  },
-  "nagoya_grampus": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "nagoya_grampus",
-    "nome": "Nagoya Grampus",
-    "divisao": "j_league"
-  },
-  "sanfrecce_hiroshima": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "sanfrecce",
-    "nome": "Sanfrecce Hiroshima",
-    "divisao": "j_league"
-  },
-  "fc_tokyo": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "tokyofc",
-    "nome": "FC Tokyo",
-    "divisao": "j_league"
-  },
-  "tokyo_verdy": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "tokyo_verdy",
-    "nome": "Tokyo Verdy",
-    "divisao": "j_league"
-  },
-  "urawa_reds": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "urawa_red",
-    "nome": "Urawa Red Diamonds",
-    "divisao": "j_league"
-  },
-  "vissel_kobe": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "vissel_kobe",
-    "nome": "Vissel Kobe",
-    "divisao": "j_league"
-  },
-  "yokohama_marinos": {
-    "dir": "C:\\Ultrafoot-kits-src\\Japan_-_J1_League\\Japan - J1 League",
-    "base": "yokohama_marinos",
-    "nome": "Yokohama F. Marinos",
-    "divisao": "j_league"
+  "albion_ury": {
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "base": "albion_fc",
+    "nome": "Albion FC",
+    "divisao": "primera_div_ury"
   },
   "progreso_ury": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "atletico_progreso",
     "nome": "Progreso",
     "divisao": "primera_div_ury"
   },
   "boston_river": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "boston_river",
     "nome": "Boston River",
     "divisao": "primera_div_ury"
   },
   "cerro_ury": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "ca_cerro",
     "nome": "Cerro Montevideo",
     "divisao": "primera_div_ury"
   },
+  "juventud_ury": {
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "base": "ca_juventud",
+    "nome": "Juventud",
+    "divisao": "primera_div_ury"
+  },
+  "central_espanol_ury": {
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "base": "central_espanol",
+    "nome": "Central Espanol",
+    "divisao": "primera_div_ury"
+  },
   "cerro_largo": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "cerro_largo",
     "nome": "Cerro Largo",
     "divisao": "primera_div_ury"
   },
   "nacional_ury": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "club_nacional",
     "nome": "Nacional Montevideo",
     "divisao": "primera_div_ury"
   },
   "danubio_ury": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "danubio",
     "nome": "Danubio",
     "divisao": "primera_div_ury"
   },
   "defensor_sporting": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "defensor_sporting",
     "nome": "Defensor Sporting",
     "divisao": "primera_div_ury"
   },
+  "dep_maldonado_ury": {
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "base": "deportivo_maldonado",
+    "nome": "Deportivo Maldonado",
+    "divisao": "primera_div_ury"
+  },
   "liverpool_ury": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "liverpool_montevideo",
     "nome": "Liverpool FC Uruguai",
     "divisao": "primera_div_ury"
   },
   "city_torque": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "montevideo_city",
     "nome": "City Torque",
     "divisao": "primera_div_ury"
   },
   "wanderers_ury": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "montevideo_wanderers",
     "nome": "Wanderers Uruguai",
     "divisao": "primera_div_ury"
   },
   "penarol": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "penarol",
     "nome": "Penarol",
     "divisao": "primera_div_ury"
   },
   "racing_ury": {
-    "dir": "C:\\Ultrafoot-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
+    "dir": "C:\\uf-kits-src\\Uruguay_-_Liga_AUF_Uruguaya\\Uruguay - Liga AUF Uruguaya",
     "base": "racing_montevideo",
     "nome": "Racing Club Uruguai",
     "divisao": "primera_div_ury"
+  },
+  "arsenal": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "arsenal",
+    "nome": "Arsenal",
+    "divisao": "premier_league"
+  },
+  "aston_villa": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "aston_villa",
+    "nome": "Aston Villa",
+    "divisao": "premier_league"
+  },
+  "bournemouth": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "bournemouth",
+    "nome": "AFC Bournemouth",
+    "divisao": "premier_league"
+  },
+  "brentford": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "brentford",
+    "nome": "Brentford",
+    "divisao": "premier_league"
+  },
+  "brighton": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "brighton",
+    "nome": "Brighton",
+    "divisao": "premier_league"
+  },
+  "burnley_ing": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "burnley",
+    "nome": "Burnley",
+    "divisao": "premier_league"
+  },
+  "chelsea": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "chelsea",
+    "nome": "Chelsea",
+    "divisao": "premier_league"
+  },
+  "crystal_palace": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "crystal_palace",
+    "nome": "Crystal Palace",
+    "divisao": "premier_league"
+  },
+  "everton": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "everton",
+    "nome": "Everton",
+    "divisao": "premier_league"
+  },
+  "nottingham_forest": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "forest",
+    "nome": "Nottingham Forest",
+    "divisao": "premier_league"
+  },
+  "fulham": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "fulham",
+    "nome": "Fulham",
+    "divisao": "premier_league"
+  },
+  "leedsunited_ing": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "leeds",
+    "nome": "Leeds United",
+    "divisao": "premier_league"
+  },
+  "liverpool": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "liverpool",
+    "nome": "Liverpool",
+    "divisao": "premier_league"
+  },
+  "manchester_united": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "manunited",
+    "nome": "Manchester United",
+    "divisao": "premier_league"
+  },
+  "manchester_city": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "man_city",
+    "nome": "Manchester City",
+    "divisao": "premier_league"
+  },
+  "newcastle": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "newcastle",
+    "nome": "Newcastle United",
+    "divisao": "premier_league"
+  },
+  "sunderland": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "sunderland",
+    "nome": "Sunderland",
+    "divisao": "premier_league"
+  },
+  "tottenham": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "tottenham",
+    "nome": "Tottenham",
+    "divisao": "premier_league"
+  },
+  "west_ham": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "west_ham",
+    "nome": "West Ham",
+    "divisao": "premier_league"
+  },
+  "wolves": {
+    "dir": "C:\\uf-kits-src\\England_-_Premier_League\\England - Premier League",
+    "base": "wolves",
+    "nome": "Wolves",
+    "divisao": "premier_league"
+  },
+  "angers": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "angers",
+    "nome": "Angers",
+    "divisao": "ligue_1"
+  },
+  "auxerre": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "auxerre",
+    "nome": "Auxerre",
+    "divisao": "ligue_1"
+  },
+  "brest": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "brest",
+    "nome": "Brest",
+    "divisao": "ligue_1"
+  },
+  "le_havre": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "havre",
+    "nome": "Le Havre AC",
+    "divisao": "ligue_1"
+  },
+  "lens": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "lens",
+    "nome": "RC Lens",
+    "divisao": "ligue_1"
+  },
+  "lille": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "lille",
+    "nome": "LOSC Lille",
+    "divisao": "ligue_1"
+  },
+  "lorient_fr": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "lorient",
+    "nome": "Lorient",
+    "divisao": "ligue_1"
+  },
+  "lyon": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "lyon",
+    "nome": "Lyon",
+    "divisao": "ligue_1"
+  },
+  "metz_fr": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "metz",
+    "nome": "Metz",
+    "divisao": "ligue_1"
+  },
+  "monaco": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "monaco",
+    "nome": "AS Monaco",
+    "divisao": "ligue_1"
+  },
+  "nantes": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "nantes",
+    "nome": "FC Nantes",
+    "divisao": "ligue_1"
+  },
+  "nice": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "nice",
+    "nome": "OGC Nice",
+    "divisao": "ligue_1"
+  },
+  "marseille": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "olympique_marseille",
+    "nome": "Marseille",
+    "divisao": "ligue_1"
+  },
+  "psg": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "parissaintgerman",
+    "nome": "Paris Saint-Germain",
+    "divisao": "ligue_1"
+  },
+  "paris_fra": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "paris",
+    "nome": "Paris FC",
+    "divisao": "ligue_1"
+  },
+  "rennes": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "rennes",
+    "nome": "Rennes",
+    "divisao": "ligue_1"
+  },
+  "strasbourg": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "strasbourg",
+    "nome": "Strasbourg",
+    "divisao": "ligue_1"
+  },
+  "toulouse": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_1\\France - Ligue 1",
+    "base": "toulouse",
+    "nome": "FC Toulouse",
+    "divisao": "ligue_1"
+  },
+  "annecy": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "annecy",
+    "nome": "FC Annecy",
+    "divisao": "ligue_2"
+  },
+  "boulogne": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "boulogne",
+    "nome": "US Boulogne",
+    "divisao": "ligue_2"
+  },
+  "clermont_foot_63": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "clermont",
+    "nome": "Clermont Foot 63",
+    "divisao": "ligue_2"
+  },
+  "dunkerque": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "dunkerque",
+    "nome": "USL Dunkerque",
+    "divisao": "ligue_2"
+  },
+  "grenoble_foot_38": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "grenoble",
+    "nome": "Grenoble Foot 38",
+    "divisao": "ligue_2"
+  },
+  "guingamp": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "guingamp",
+    "nome": "EA Guingamp",
+    "divisao": "ligue_2"
+  },
+  "nancy_lorraine": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "nancy",
+    "nome": "AS Nancy-Lorraine",
+    "divisao": "ligue_2"
+  },
+  "pau_fc": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "pau",
+    "nome": "Pau FC",
+    "divisao": "ligue_2"
+  },
+  "red_star_fc": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "red_star",
+    "nome": "Red Star FC",
+    "divisao": "ligue_2"
+  },
+  "rodez_af": {
+    "dir": "C:\\uf-kits-src\\France_-_Ligue_2\\France - Ligue 2",
+    "base": "rodez",
+    "nome": "Rodez AF",
+    "divisao": "ligue_2"
+  },
+  "augsburg": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "augsburg",
+    "nome": "FC Augsburg",
+    "divisao": "bundesliga"
+  },
+  "bayern_munich": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "bayern",
+    "nome": "Bayern Munich",
+    "divisao": "bundesliga"
+  },
+  "borussia_mgladbach": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "borussia_gladbach",
+    "nome": "Borussia Mönchengladbach",
+    "divisao": "bundesliga"
+  },
+  "borussia_dortmund": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "dortmund",
+    "nome": "Borussia Dortmund",
+    "divisao": "bundesliga"
+  },
+  "eintracht_frankfurt": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "eintracht_frankfurt",
+    "nome": "Eintracht Frankfurt",
+    "divisao": "bundesliga"
+  },
+  "freiburg": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "freiburg",
+    "nome": "SC Freiburg",
+    "divisao": "bundesliga"
+  },
+  "heidenheim": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "heidenheim",
+    "nome": "1. FC Heidenheim",
+    "divisao": "bundesliga"
+  },
+  "hoffenheim": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "hoffenheim",
+    "nome": "TSG Hoffenheim",
+    "divisao": "bundesliga"
+  },
+  "hamburgo_ale": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "hsv",
+    "nome": "Hamburgo",
+    "divisao": "bundesliga"
+  },
+  "fckoln_ale": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "koln",
+    "nome": "Koln",
+    "divisao": "bundesliga"
+  },
+  "bayer_leverkusen": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "leverkusen",
+    "nome": "Bayer Leverkusen",
+    "divisao": "bundesliga"
+  },
+  "mainz": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "mainz",
+    "nome": "Mainz 05",
+    "divisao": "bundesliga"
+  },
+  "rb_leipzig": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "rb_leipzig",
+    "nome": "RB Leipzig",
+    "divisao": "bundesliga"
+  },
+  "stuttgart": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "stuttgart",
+    "nome": "Stuttgart",
+    "divisao": "bundesliga"
+  },
+  "st_pauli": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "st_pauli",
+    "nome": "FC St. Pauli",
+    "divisao": "bundesliga"
+  },
+  "union_berlin": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "union_berlin",
+    "nome": "Union Berlin",
+    "divisao": "bundesliga"
+  },
+  "werder_bremen": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "werder_bremen",
+    "nome": "Werder Bremen",
+    "divisao": "bundesliga"
+  },
+  "wolfsburg": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga\\Germany - Bundesliga",
+    "base": "wolfsburg",
+    "nome": "VfL Wolfsburg",
+    "divisao": "bundesliga"
+  },
+  "arminia_bielefeld": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "arminia",
+    "nome": "Arminia Bielefeld",
+    "divisao": "bundesliga_2"
+  },
+  "eintracht_braunschweig": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "braunschweig",
+    "nome": "Eintracht Braunschweig",
+    "divisao": "bundesliga_2"
+  },
+  "darmstadt_98": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "darmstadt",
+    "nome": "SV Darmstadt 98",
+    "divisao": "bundesliga_2"
+  },
+  "dynamo_dresden": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "dynamo_dresden",
+    "nome": "Dynamo Dresden",
+    "divisao": "bundesliga_2"
+  },
+  "hannover_96": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "hannover",
+    "nome": "Hannover 96",
+    "divisao": "bundesliga_2"
+  },
+  "hertha_bsc": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "hertha_berlin",
+    "nome": "Hertha BSC",
+    "divisao": "bundesliga_2"
+  },
+  "fc_kaiserslautern": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "kaiserslautern",
+    "nome": "1. FC Kaiserslautern",
+    "divisao": "bundesliga_2"
+  },
+  "karlsruher_sc": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "karlsruher",
+    "nome": "Karlsruher SC",
+    "divisao": "bundesliga_2"
+  },
+  "fc_magdeburg": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "magdeburg",
+    "nome": "1. FC Magdeburg",
+    "divisao": "bundesliga_2"
+  },
+  "fc_nurnberg": {
+    "dir": "C:\\uf-kits-src\\Germany_-_Bundesliga_2\\Germany - Bundesliga 2",
+    "base": "nurnberg",
+    "nome": "1. FC Nürnberg",
+    "divisao": "bundesliga_2"
+  },
+  "atalanta": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "atalanta_bergamasca",
+    "nome": "Atalanta",
+    "divisao": "serie_a_ita"
+  },
+  "bologna": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "bologna",
+    "nome": "Bologna",
+    "divisao": "serie_a_ita"
+  },
+  "cagliari": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "cagliari",
+    "nome": "Cagliari",
+    "divisao": "serie_a_ita"
+  },
+  "como": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "como",
+    "nome": "Como",
+    "divisao": "serie_a_ita"
+  },
+  "cremonese_ita": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "cremonese",
+    "nome": "Cremonese",
+    "divisao": "serie_a_ita"
+  },
+  "fiorentina": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "fiorentina",
+    "nome": "Fiorentina",
+    "divisao": "serie_a_ita"
+  },
+  "genoa": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "genoa",
+    "nome": "Genoa CFC",
+    "divisao": "serie_a_ita"
+  },
+  "hellas_verona": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "hellas",
+    "nome": "Hellas Verona",
+    "divisao": "serie_a_ita"
+  },
+  "inter_milan": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "internazionale_milano",
+    "nome": "Inter",
+    "divisao": "serie_a_ita"
+  },
+  "juventus": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "juventus",
+    "nome": "Juventus",
+    "divisao": "serie_a_ita"
+  },
+  "lazio": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "lazio",
+    "nome": "Lazio",
+    "divisao": "serie_a_ita"
+  },
+  "lecce": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "lecce",
+    "nome": "Lecce",
+    "divisao": "serie_a_ita"
+  },
+  "ac_milan": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "milan",
+    "nome": "AC Milan",
+    "divisao": "serie_a_ita"
+  },
+  "napoli": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "napoli",
+    "nome": "Napoli",
+    "divisao": "serie_a_ita"
+  },
+  "parma": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "parma",
+    "nome": "Parma",
+    "divisao": "serie_a_ita"
+  },
+  "pisa_it": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "pisa",
+    "nome": "Pisa",
+    "divisao": "serie_a_ita"
+  },
+  "roma": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "roma",
+    "nome": "Roma",
+    "divisao": "serie_a_ita"
+  },
+  "sassuolo_it": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "sassuolo",
+    "nome": "Sassuolo",
+    "divisao": "serie_a_ita"
+  },
+  "torino": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "torino",
+    "nome": "Torino",
+    "divisao": "serie_a_ita"
+  },
+  "udinese": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_A\\Italy - Serie A",
+    "base": "udinese",
+    "nome": "Udinese",
+    "divisao": "serie_a_ita"
+  },
+  "avellino_1912": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "avellino",
+    "nome": "US Avellino 1912",
+    "divisao": "serie_b_ita"
+  },
+  "carrarese_calcio": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "carrarese",
+    "nome": "Carrarese Calcio",
+    "divisao": "serie_b_ita"
+  },
+  "catanzaro_1929": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "catanzaro",
+    "nome": "US Catanzaro 1929",
+    "divisao": "serie_b_ita"
+  },
+  "cesena_fc": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "cesena",
+    "nome": "Cesena FC",
+    "divisao": "serie_b_ita"
+  },
+  "empoli_fc": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "empoli",
+    "nome": "Empoli FC",
+    "divisao": "serie_b_ita"
+  },
+  "mantova_1911": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "mantova",
+    "nome": "Mantova 1911",
+    "divisao": "serie_b_ita"
+  },
+  "modena_fc": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "modena",
+    "nome": "Modena FC",
+    "divisao": "serie_b_ita"
+  },
+  "calcio_padova": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "padova",
+    "nome": "Calcio Padova",
+    "divisao": "serie_b_ita"
+  },
+  "palermo_fc": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "palermo",
+    "nome": "Palermo FC",
+    "divisao": "serie_b_ita"
+  },
+  "uc_sampdoria": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "sampdoria",
+    "nome": "UC Sampdoria",
+    "divisao": "serie_b_ita"
+  },
+  "sudtirol": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "sudtirol",
+    "nome": "FC Sudtirol",
+    "divisao": "serie_b_ita"
+  },
+  "virtus_entella": {
+    "dir": "C:\\uf-kits-src\\Italy_-_Serie_B\\Italy - Serie B",
+    "base": "virtus_entella",
+    "nome": "Virtus Entella",
+    "divisao": "serie_b_ita"
+  },
+  "arouca": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "arouca",
+    "nome": "FC Arouca",
+    "divisao": "primeira_liga"
+  },
+  "benfica": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "benfica",
+    "nome": "Benfica",
+    "divisao": "primeira_liga"
+  },
+  "braga": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "braga",
+    "nome": "SC Braga",
+    "divisao": "primeira_liga"
+  },
+  "casa_pia": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "casa_pia",
+    "nome": "Casa Pia AC",
+    "divisao": "primeira_liga"
+  },
+  "estoril": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "estoril",
+    "nome": "Estoril Praia",
+    "divisao": "primeira_liga"
+  },
+  "estrela_amadora": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "estrela_amadora",
+    "nome": "CF Estrela Amadora",
+    "divisao": "primeira_liga"
+  },
+  "famalicao": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "famalicao",
+    "nome": "FC Famalicão",
+    "divisao": "primeira_liga"
+  },
+  "vitoria_guimaraes": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "guimaraes",
+    "nome": "Vitoria Guimaraes",
+    "divisao": "primeira_liga"
+  },
+  "moreirense": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "moreirense",
+    "nome": "Moreirense FC",
+    "divisao": "primeira_liga"
+  },
+  "nacional_portugal": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "nacional",
+    "nome": "Nacional",
+    "divisao": "primeira_liga"
+  },
+  "porto": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "porto",
+    "nome": "FC Porto",
+    "divisao": "primeira_liga"
+  },
+  "rio_ave": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "rio_ave",
+    "nome": "Rio Ave FC",
+    "divisao": "primeira_liga"
+  },
+  "santa_clara": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "santa_clara",
+    "nome": "CD Santa Clara",
+    "divisao": "primeira_liga"
+  },
+  "sporting": {
+    "dir": "C:\\uf-kits-src\\Portugal_-_Primeira_Liga\\Portugal - Primeira Liga",
+    "base": "sporting",
+    "nome": "Sporting CP",
+    "divisao": "primeira_liga"
+  },
+  "alaves": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "alaves",
+    "nome": "Alaves",
+    "divisao": "la_liga"
+  },
+  "athletic_bilbao": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "athletic_bilbao",
+    "nome": "Athletic Bilbao",
+    "divisao": "la_liga"
+  },
+  "atletico_madrid": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "atletico_madrid",
+    "nome": "Atletico Madrid",
+    "divisao": "la_liga"
+  },
+  "barcelona": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "barcelona",
+    "nome": "FC Barcelona",
+    "divisao": "la_liga"
+  },
+  "real_betis": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "betis",
+    "nome": "Real Betis",
+    "divisao": "la_liga"
+  },
+  "celta_vigo": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "Celta",
+    "nome": "Celta Vigo",
+    "divisao": "la_liga"
+  },
+  "elche_esp": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "elche",
+    "nome": "Elche",
+    "divisao": "la_liga"
+  },
+  "espanyol": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "espanol",
+    "nome": "Espanyol",
+    "divisao": "la_liga"
+  },
+  "getafe": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "getafe",
+    "nome": "Getafe CF",
+    "divisao": "la_liga"
+  },
+  "girona": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "girona",
+    "nome": "Girona",
+    "divisao": "la_liga"
+  },
+  "levante_esp": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "levante",
+    "nome": "Levante",
+    "divisao": "la_liga"
+  },
+  "mallorca": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "mallorca",
+    "nome": "Mallorca",
+    "divisao": "la_liga"
+  },
+  "osasuna": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "osasuna",
+    "nome": "Osasuna",
+    "divisao": "la_liga"
+  },
+  "realoviedo_esp": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "oviedo",
+    "nome": "Real Oviedo",
+    "divisao": "la_liga"
+  },
+  "rayo_vallecano": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "rayo_vallecano",
+    "nome": "Rayo Vallecano",
+    "divisao": "la_liga"
+  },
+  "real_madrid": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "real_madrid",
+    "nome": "Real Madrid",
+    "divisao": "la_liga"
+  },
+  "real_sociedad": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "real_sociedad",
+    "nome": "Real Sociedad",
+    "divisao": "la_liga"
+  },
+  "sevilla": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "sevilla",
+    "nome": "Sevilla",
+    "divisao": "la_liga"
+  },
+  "valencia": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "valencia",
+    "nome": "Valencia CF",
+    "divisao": "la_liga"
+  },
+  "villarreal": {
+    "dir": "C:\\uf-kits-src\\Spain_-_La_Liga\\Spain - La Liga",
+    "base": "villarreal",
+    "nome": "Villarreal CF",
+    "divisao": "la_liga"
+  },
+  "albacete_balompie": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "albacete",
+    "nome": "Albacete Balompié",
+    "divisao": "la_liga_2"
+  },
+  "ud_almeria": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "almeria",
+    "nome": "UD Almería",
+    "divisao": "la_liga_2"
+  },
+  "andorra": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "andorra",
+    "nome": "FC Andorra",
+    "divisao": "la_liga_2"
+  },
+  "burgos_cf": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "burgos",
+    "nome": "Burgos CF",
+    "divisao": "la_liga_2"
+  },
+  "cadiz_cf": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "cadiz",
+    "nome": "Cádiz CF",
+    "divisao": "la_liga_2"
+  },
+  "cd_castellon": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "castellon",
+    "nome": "CD Castellón",
+    "divisao": "la_liga_2"
+  },
+  "ad_ceuta_fc": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "ceuta",
+    "nome": "AD Ceuta FC",
+    "divisao": "la_liga_2"
+  },
+  "cordoba_cf": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "cordoba",
+    "nome": "Córdoba CF",
+    "divisao": "la_liga_2"
+  },
+  "sd_eibar": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "eibar",
+    "nome": "SD Eibar",
+    "divisao": "la_liga_2"
+  },
+  "granada_cf": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "granada",
+    "nome": "Granada CF",
+    "divisao": "la_liga_2"
+  },
+  "real_sociedad_b": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "real_sociedad_b",
+    "nome": "Real Sociedad B",
+    "divisao": "la_liga_2"
+  },
+  "real_sporting_de_gijon": {
+    "dir": "C:\\uf-kits-src\\Spain_-_Liga_Hypermotion\\Spain - Liga Hypermotion",
+    "base": "sporting_gijon",
+    "nome": "Real Sporting de Gijon",
+    "divisao": "la_liga_2"
   }
 }

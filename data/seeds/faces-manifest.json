@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-31T23:13:50.560Z",
-  "available": 26626,
+  "generatedAt": "2026-08-06T10:21:46.308Z",
+  "available": 26627,
   "missing": 7794,
   "entries": {
     "rijad-kobiljar": "/jogadores/rijad-kobiljar.jpg",
@@ -26629,6 +26629,7 @@
     "driton-camaj": "/jogadores/df11-tm_293239.webp",
     "selim-dilli": "/jogadores/df11-tm_395849.webp",
     "abdullah-balkc": "/jogadores/df11-tm_261494.webp",
-    "furkan-demir": "/jogadores/df11-tm_509989.webp"
+    "furkan-demir": "/jogadores/df11-tm_509989.webp",
+    "dieguinho": "/jogadores/dieguinho.png"
   }
 }
