@@ -79,7 +79,7 @@ export default function LeiloesPage() {
   // telas não discordarem sobre o que é um leilão válido.
   const quantos = useMemo(
     () => contarLeiloesAbertos(pool, candidatos, semana, pisoDoMeuElenco),
-    [pool, candidatos, semana],
+    [pool, candidatos, semana, pisoDoMeuElenco],
   )
 
   // ── DESFECHO DOS LEILÕES QUE FECHARAM ───────────────────────────────────

@@ -346,7 +346,7 @@ function useCompetitions(userTeamShort: string, userPosition: number, season: nu
     } catch {
       setState(initialCompetitionState(userPosition))
     }
-  }, [storageKey])
+  }, [storageKey, userPosition])
   
   // Salvar no localStorage
   useEffect(() => {
@@ -899,7 +899,7 @@ export default function CompeticoesPage() {
       form: [...entry.form.slice(-5), "", "", "", "", ""].slice(0, 5) as ("W" | "D" | "L" | "")[],
       isUser: entry.teamShort === userTeam.curto,
     }))
-  }, [gameStandings, userTeam.curto])
+  }, [gameStandings, userTeam.curto, userTeam.divisao])
 
   const serieBStandings = useMemo(() => generateStandings(serieBTeams, userTeam.curto), [userTeam.curto])
 

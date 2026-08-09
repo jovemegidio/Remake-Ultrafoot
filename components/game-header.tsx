@@ -59,6 +59,7 @@ const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/imprensa", meta: { parent: "Escritorio", parentHref: "/financas", title: "Imprensa" } },
   { prefix: "/infraestrutura", meta: { parent: "Escritorio", parentHref: "/financas", title: "Infraestrutura" } },
   { prefix: "/analise-partida", meta: { parent: "Escritorio", parentHref: "/financas", title: "Analise da Partida" } },
+  { prefix: "/performance", meta: { parent: "Escritorio", parentHref: "/financas", title: "Performance Center" } },
   { prefix: "/configuracoes", meta: { parent: "Personalizar", parentHref: "/configuracoes", title: "Configuracoes" } },
   { prefix: "/salvar", meta: { parent: "Personalizar", parentHref: "/configuracoes", title: "Salvar" } },
 ]
@@ -779,6 +780,7 @@ const NAV_MENU_ITEMS: NavMenuItem[] = [
   // entradas para a mesma tela. Viraram uma so.
   { label: "Competicoes e Classificacao", href: "/competicoes", icon: Trophy, clubOnly: true },
   { label: "Financas", href: "/financas", icon: TrendingUp, clubOnly: true },
+  { label: "Performance Center", href: "/performance", icon: Heart, clubOnly: true },
   // INFRAESTRUTURA ganhou entrada PROPRIA aqui (pedido). Ela existia so dentro
   // de Configuracoes, o que a escondia: quem quer mexer em bilheteria, obra do
   // estadio ou nivel do CT nao vai procurar isso em "configuracoes do jogo".

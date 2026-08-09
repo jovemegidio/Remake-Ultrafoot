@@ -23,6 +23,7 @@ import type { Sponsor, SponsorOffer } from "@/lib/sponsor-engine"
 import type { ChallengeProgress } from "@/lib/challenge-engine"
 import type { NivelDeDificuldade } from "@/lib/dificuldade"
 import type { PorSetor, ObraDoEstadio } from "@/lib/stadium-sectors"
+import type { AIClubSocialState } from "@/lib/ai-club-social"
 
 const LEGACY_STORAGE_KEY = "ultrafoot:save"
 const ACTIVE_CAREER_KEY = "ultrafoot:active-career"
@@ -453,6 +454,8 @@ export interface GameState {
   promessasAoAtleta?: Record<string, { semana: number; jogosDoTime: number; jogosDoAtleta: number }>
   /** Quantas promessas de titularidade você já deixou de cumprir nesta carreira. */
   promessasQuebradas?: number
+  /** Eventos de vestiário já respondidos; impede a mesma cobrança de reaparecer ao navegar. */
+  resolvedDressingRoomEvents?: string[]
   // Legado entre carreiras (Roguelike)
   coachLegacy: CoachLegacy
   // Selecao nacional
@@ -523,6 +526,12 @@ export interface GameState {
    * Ausente = equilibrado. Clube que nunca oscilou não ocupa espaço no save.
    */
   posturasDaIA?: Record<string, "defensivo" | "ofensivo">
+  /**
+   * Memória social dos outros clubes. Moral, coesão, apoio ao técnico e pressão
+   * evoluem semanalmente e afetam o desempenho em campo. Opcional mantém saves
+   * antigos compatíveis; o primeiro avanço cria apenas os clubes ativos.
+   */
+  socialDaIA?: Record<string, AIClubSocialState>
   /**
    * ESTADIO POR SETORES (lib/stadium-sectors).
    *

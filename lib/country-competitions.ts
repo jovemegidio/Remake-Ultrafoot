@@ -1,4 +1,5 @@
 import { competitionsByLeague } from "./international-competitions"
+import { UEFA_EXPANSION_FEDERATIONS } from "./uefa-expansion"
 
 // Competicoes por PAIS/LIGA.
 //
@@ -86,12 +87,29 @@ export const LEAGUE_COMPETITIONS: Record<string, CountryCompetitions> = {
   ligue_2: { country: "Franca", domesticCup: "Coupe de France", ...UEFA },
   primera_b_chi: { country: "Chile", domesticCup: "Copa Chile", ...CONMEBOL, hasStateChampionship: false },
   saudi_first_div: { country: "Arabia Saudita", domesticCup: "King's Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
+  liga_portugal_2: { country: "Portugal", domesticCup: "Taca de Portugal", ...UEFA },
+  eerste_divisie: { country: "Holanda", domesticCup: "KNVB Beker", ...UEFA },
+  challenger_pro: { country: "Belgica", domesticCup: "Beker van Belgie", ...UEFA },
+  tff_1_lig: { country: "Turquia", domesticCup: "Turkish Cup", ...UEFA },
+  russian_first: { country: "Russia", domesticCup: "Copa da Russia", ...UEFA },
+  primera_b_arg: { country: "Argentina", domesticCup: "Copa Argentina", ...CONMEBOL, hasStateChampionship: false },
+  torneo_betplay: { country: "Colombia", domesticCup: "Copa Colombia", ...CONMEBOL, hasStateChampionship: false },
+  segunda_div_ury: { country: "Uruguai", domesticCup: "Copa AUF Uruguay", ...CONMEBOL, hasStateChampionship: false },
+  liga_2_per: { country: "Peru", domesticCup: "Copa de la Liga", ...CONMEBOL, hasStateChampionship: false },
+  copa_simon_bolivar: { country: "Bolivia", domesticCup: "Copa de la División Profesional", ...CONMEBOL, hasStateChampionship: false },
+  division_intermedia_par: { country: "Paraguai", domesticCup: "Copa Paraguay", ...CONMEBOL, hasStateChampionship: false },
+  liga_futve_2: { country: "Venezuela", domesticCup: "Copa Venezuela", ...CONMEBOL, hasStateChampionship: false },
+  j2_league: { country: "Japao", domesticCup: "Copa do Imperador", continental: "AFC Champions League Elite", continentalSecondary: "AFC Champions League Two", hasStateChampionship: false },
+  k_league_2: { country: "Coreia do Sul", domesticCup: "Korea Cup", continental: "AFC Champions League Elite", continentalSecondary: "AFC Champions League Two", hasStateChampionship: false },
+  scottish_champ: { country: "Escocia", domesticCup: "Scottish Cup", ...UEFA },
+  serie_b_ecu: { country: "Equador", domesticCup: "Copa Ecuador", ...CONMEBOL, hasStateChampionship: false },
+  china_league_one: { country: "China", domesticCup: "Chinese FA Cup", continental: "AFC Champions League Elite", continentalSecondary: "AFC Champions League Two", hasStateChampionship: false },
 
   // LIGAS NACIONAIS que existiam no catalogo sem competicoes declaradas. Sao as
   // mesmas onze que tinham menos de oito clubes e agora foram completadas pelo
   // pool (ver completarLigaComPool em lib/teams-data): sem estas entradas, o
   // campeonato ficava de pe mas a copa e a continental continuavam genericas.
-  primera_div_per: { country: "Peru", domesticCup: "Copa Peru", ...CONMEBOL, hasStateChampionship: false },
+  primera_div_per: { country: "Peru", domesticCup: "Copa de la Liga", ...CONMEBOL, hasStateChampionship: false },
   primera_div_ven: { country: "Venezuela", domesticCup: "Copa Venezuela", ...CONMEBOL, hasStateChampionship: false },
   primera_div_bol: { country: "Bolivia", domesticCup: "Copa Bolivia", ...CONMEBOL, hasStateChampionship: false },
   primera_div_par: { country: "Paraguai", domesticCup: "Copa Paraguai", ...CONMEBOL, hasStateChampionship: false },
@@ -102,6 +120,21 @@ export const LEAGUE_COMPETITIONS: Record<string, CountryCompetitions> = {
   eliteserien_nor: { country: "Noruega", domesticCup: "Copa da Noruega", ...UEFA },
   protathlima_cyp: { country: "Chipre", domesticCup: "Copa do Chipre", ...UEFA },
   premier_liga_kaz: { country: "Cazaquistao", domesticCup: "Copa do Cazaquistao", ...UEFA },
+  betinia_liga: { country: "Dinamarca", domesticCup: "Copa da Dinamarca", ...UEFA },
+  obos_ligaen: { country: "Noruega", domesticCup: "Copa da Noruega", ...UEFA },
+  second_div_cyp: { country: "Chipre", domesticCup: "Copa do Chipre", ...UEFA },
+  chance_narodni_liga: { country: "Chequia", domesticCup: "Copa da Chequia", ...UEFA },
+}
+
+for (const federation of UEFA_EXPANSION_FEDERATIONS) {
+  for (const division of [federation.top, federation.second]) {
+    if (!division?.participants.length) continue
+    LEAGUE_COMPETITIONS[division.id] = {
+      country: federation.country,
+      domesticCup: `Copa nacional — ${federation.country}`,
+      ...UEFA,
+    }
+  }
 }
 
 const FALLBACK: CountryCompetitions = {
@@ -130,28 +163,46 @@ export function hasStateChampionship(divisao: string | undefined): boolean {
 // contra o Boca Juniors. Aqui derivamos a confederacao a partir da liga do clube e, com
 // ela, quais ligas fornecem os participantes.
 
-export type Confederation = "CONMEBOL" | "UEFA" | "AFC" | "CONCACAF"
+export type Confederation = "CONMEBOL" | "UEFA" | "AFC" | "CONCACAF" | "UNAFFILIATED"
 
 const CONFEDERATION_DIVISIONS: Record<Confederation, string[]> = {
   CONMEBOL: [
     "serie_a", "serie_b", "serie_c", "serie_d",
     "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury", "primera_a_ecu",
+    "primera_b_arg", "torneo_betplay", "primera_b_chi", "segunda_div_ury", "serie_b_ecu",
+    "primera_div_per", "primera_div_ven", "primera_div_bol", "primera_div_par",
+    "liga_2_per", "copa_simon_bolivar", "division_intermedia_par", "liga_futve_2",
   ],
   UEFA: [
     "premier_league", "la_liga", "serie_a_ita", "bundesliga", "ligue_1",
     "primeira_liga", "eredivisie", "scottish_prem", "super_lig",
     "pro_league_bel", "russian_prem",
+    "championship", "la_liga_2", "serie_b_ita", "bundesliga_2", "ligue_2",
+    "liga_portugal_2", "eerste_divisie", "scottish_champ", "tff_1_lig",
+    "challenger_pro", "russian_first", "super_league_gre", "superliga_den",
+    "fortuna_liga_cze", "premyer_liqa_aze", "eliteserien_nor", "protathlima_cyp",
+    "premier_liga_kaz", "betinia_liga", "obos_ligaen", "second_div_cyp", "chance_narodni_liga",
   ],
-  AFC: ["saudi_pro", "j_league", "k_league_1", "chinese_super"],
+  AFC: ["saudi_pro", "saudi_first_div", "j_league", "j2_league", "k_league_1", "k_league_2", "chinese_super", "china_league_one"],
   CONCACAF: ["mls", "liga_mx"],
+  UNAFFILIATED: [],
 }
 
+CONFEDERATION_DIVISIONS.UEFA.push(...UEFA_EXPANSION_FEDERATIONS.flatMap(federation =>
+  [federation.top, federation.second]
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry?.participants.length))
+    .map(entry => entry.id),
+))
+
 export function getConfederation(divisao: string | undefined): Confederation {
-  if (!divisao) return "CONMEBOL"
+  if (!divisao) return "UNAFFILIATED"
   for (const [conf, divs] of Object.entries(CONFEDERATION_DIVISIONS)) {
     if (divs.includes(divisao)) return conf as Confederation
   }
-  return "CONMEBOL"
+  // Nunca inventar continente: uma divisao nova precisa ser cadastrada antes de
+  // receber adversarios continentais. O fallback antigo mandava qualquer liga
+  // desconhecida para a Libertadores.
+  return "UNAFFILIATED"
 }
 
 /** Ligas que fornecem os participantes da continental do clube. */

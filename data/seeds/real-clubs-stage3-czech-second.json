@@ -1,0 +1,18 @@
+[
+  { "nome": "1. SK Prostejov", "curto": "PRV", "cidade": "Prostejov", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "prostejov" },
+  { "nome": "FC Banik Ostrava B", "curto": "BOB", "cidade": "Ostrava", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "banik_ostrava_b", "promotionEligible": false, "reserveTeamOf": "banik_ostrava" },
+  { "nome": "FC Sellier & Bellot Vlasim", "curto": "VLA", "cidade": "Vlasim", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "vlasim" },
+  { "nome": "FC SILON Taborsko", "curto": "TAB", "cidade": "Tabor", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "taborsko" },
+  { "nome": "FC Vysocina Jihlava", "curto": "JIH", "cidade": "Jihlava", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "vysocina_jihlava" },
+  { "nome": "FK Arsenal Ceska Lipa", "curto": "ACL", "cidade": "Ceska Lipa", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "arsenal_ceska_lipa" },
+  { "nome": "FK Dukla Praha", "curto": "DUK", "cidade": "Praga", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "dukla_praha" },
+  { "nome": "FK Trinec", "curto": "TRI", "cidade": "Trinec", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "trinec" },
+  { "nome": "FK VIAGEM Usti nad Labem", "curto": "UNL", "cidade": "Usti nad Labem", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "usti_nad_labem" },
+  { "nome": "FK Viktoria Zizkov", "curto": "ZIZ", "cidade": "Praga", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "viktoria_zizkov" },
+  { "nome": "Fotbal Pribram", "curto": "PRI", "cidade": "Pribram", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "pribram" },
+  { "nome": "MFK Karvina", "curto": "KRV", "cidade": "Karvina", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "mfk_karvina" },
+  { "nome": "SK Hanacka Slavia Kromeriz", "curto": "KRO", "cidade": "Kromeriz", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "hanacka_slavia_kromeriz" },
+  { "nome": "SK Kladno", "curto": "KLA", "cidade": "Kladno", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "kladno" },
+  { "nome": "SK Slavia Praha B", "curto": "SLB", "cidade": "Praga", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "slavia_praha_b", "promotionEligible": false, "reserveTeamOf": "slavia_praha" },
+  { "nome": "Slezsky FC Opava", "curto": "OPA", "cidade": "Opava", "pais": "Chequia", "divisao": "chance_narodni_liga", "file_key": "opava" }
+]

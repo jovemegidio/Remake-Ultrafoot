@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useRef, useCallback, useContext } from "react"
+import { useState, useRef, useCallback, useContext, useMemo } from "react"
 import { X, Save, RotateCcw, ChevronDown, Users, Shuffle, ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
 import { ControllerButton, ControllerToolbar } from "@/components/controller-buttons"
 import { cn } from "@/lib/utils"
 import { type Team } from "@/lib/teams-data"
+import { getPlayersForTeam } from "@/lib/players-data"
 import { ControllerTypeContext } from "@/components/controller-buttons"
 
 // Posicoes de jogadores no campo
@@ -121,31 +122,6 @@ const FORMATIONS: Record<string, { name: string; positions: { pos: string; x: nu
   },
 }
 
-// Jogadores iniciais mockados
-const DEFAULT_STARTERS: Omit<Position, "x" | "y">[] = [
-  { id: 1, name: "Silva", number: 1, position: "GOL", rating: 78 },
-  { id: 2, name: "Santos", number: 2, position: "LD", rating: 74 },
-  { id: 3, name: "Oliveira", number: 3, position: "ZAG", rating: 77 },
-  { id: 4, name: "Costa", number: 4, position: "ZAG", rating: 76 },
-  { id: 5, name: "Ferreira", number: 6, position: "LE", rating: 73 },
-  { id: 6, name: "Souza", number: 5, position: "VOL", rating: 76 },
-  { id: 7, name: "Almeida", number: 8, position: "MEI", rating: 78 },
-  { id: 8, name: "Rodrigues", number: 10, position: "MEI", rating: 82 },
-  { id: 9, name: "Lima", number: 7, position: "PE", rating: 79 },
-  { id: 10, name: "Pereira", number: 9, position: "ATA", rating: 84 },
-  { id: 11, name: "Martins", number: 11, position: "PD", rating: 78 },
-]
-
-const DEFAULT_BENCH = [
-  { id: 12, name: "Gomes", number: 12, position: "GOL", rating: 70 },
-  { id: 13, name: "Ribeiro", number: 13, position: "ZAG", rating: 71 },
-  { id: 14, name: "Araujo", number: 14, position: "VOL", rating: 73 },
-  { id: 15, name: "Barbosa", number: 15, position: "MEI", rating: 74 },
-  { id: 16, name: "Carvalho", number: 16, position: "ATA", rating: 76 },
-  { id: 17, name: "Tavares", number: 17, position: "PD", rating: 72 },
-  { id: 18, name: "Mendes", number: 18, position: "MEI", rating: 71 },
-]
-
 // Rating color helper
 function getRatingColor(rating: number): string {
   if (rating >= 85) return "from-[#d4af37] to-[#ffd700]" // Gold
@@ -165,15 +141,22 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
   const controllerType = useContext(ControllerTypeContext)
   const [formation, setFormation] = useState("4-3-3")
   const [showFormationMenu, setShowFormationMenu] = useState(false)
+  const roster = useMemo(() => getPlayersForTeam(team).map((player, index) => ({
+    id: index + 1,
+    name: player.nome,
+    number: index + 1,
+    position: player.pos,
+    rating: player.base,
+  })), [team])
   const [players, setPlayers] = useState<Position[]>(() => {
     const formationData = FORMATIONS[formation]
-    return DEFAULT_STARTERS.map((p, i) => ({
+    return roster.slice(0, 11).map((p, i) => ({
       ...p,
       x: formationData.positions[i]?.x || 50,
       y: formationData.positions[i]?.y || 50,
     }))
   })
-  const [bench] = useState(DEFAULT_BENCH)
+  const [bench] = useState(roster.slice(11, 18))
   const [draggingId, setDraggingId] = useState<number | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<"formation" | "tactics" | "attributes">("formation")

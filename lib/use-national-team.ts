@@ -605,7 +605,7 @@ export function useNationalTeam() {
     }
 
     setState({ nationalCareer: careerPatch, ...coachPatch })
-  }, [state.nationalCareer, state.coachTotalTitles, state.coachXP, nationalTeam, setState])
+  }, [state.nationalCareer, state.nationalCalls, state.nationalCuts, state.coachTotalTitles, state.coachXP, nationalTeam, setState])
 
   // AMISTOSO de selecao (preparacao antes dos torneios, como na vida real). E
   // SIMULADO — como as partidas oficiais de selecao — pela forca dos dois lados,

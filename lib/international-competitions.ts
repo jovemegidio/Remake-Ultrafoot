@@ -1,5 +1,6 @@
 // Competicoes internacionais
 import type { Divisao } from "./teams-data"
+import { UEFA_EXPANSION_COMPETITIONS } from "./uefa-expansion"
 
 export interface Competition {
   id: string
@@ -10,6 +11,10 @@ export interface Competition {
   format: "points" | "knockout" | "group_knockout" | "league_playoff" | "league_phase"
   teams: number
   rounds?: number
+  /** Número de turnos completos entre todos os clubes (2 = ida e volta). */
+  roundRobinCycles?: number
+  /** Quantos torneios completos a temporada contém (ex.: Apertura + Clausura). */
+  seasonSegments?: number
   groups?: number
   teamsPerGroup?: number
   prize: number
@@ -18,10 +23,13 @@ export interface Competition {
   promotion?: number
   continentalSpots?: { competition: string; spots: number }[]
   formatDetails?: string
+  /** Fonte da entidade responsável pela competição. */
+  sourceUrl?: string
+  participantStatus?: "provisional-snapshot" | "official-verified"
 }
 
 // Competicoes por liga
-export const competitionsByLeague: Record<Divisao, Competition[]> = {
+export const competitionsByLeague: Record<string, Competition[]> = {
   // Brasil
   serie_a: [
     {
@@ -762,13 +770,13 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
     { id: "eerste_divisie", name: "Eerste Divisie", shortName: "Eerste Div", type: "league", region: "holanda", format: "league_playoff", teams: 20, rounds: 38, prize: 2000000, prestige: 35, promotion: 3, relegation: 0, formatDetails: "Campeão e vice elegíveis sobem diretamente; campeões de período e melhores elegíveis disputam o playoff pela terceira vaga. Equipes B não podem subir." },
   ],
   challenger_pro: [
-    { id: "challenger_pro", name: "Challenger Pro League", shortName: "Challenger", type: "league", region: "belgica", format: "league_playoff", teams: 16, rounds: 30, prize: 1500000, prestige: 32, promotion: 2, relegation: 0, formatDetails: "Formato 2026/27 para 15/16 clubes: líder elegível sobe; clubes elegíveis do 2º ao 5º disputam a segunda vaga; equipes U23 não podem subir." },
+    { id: "challenger_pro", name: "Challenger Pro League", shortName: "Challenger", type: "league", region: "belgica", format: "league_playoff", teams: 15, rounds: 28, prize: 1500000, prestige: 32, promotion: 2, relegation: 0, formatDetails: "Formato 2026/27 com 15 clubes: 30 datas e uma folga por clube em cada turno, totalizando 28 jogos por equipe; líder sobe e 2º ao 5º disputam a segunda vaga. A queda ao nível amador será ativada quando esse nível entrar na pirâmide jogável." },
   ],
   tff_1_lig: [
     { id: "tff_1_lig", name: "TFF 1. Lig", shortName: "1. Lig", type: "league", region: "turquia", format: "league_playoff", teams: 20, rounds: 38, prize: 2500000, prestige: 36, promotion: 3, relegation: 0, formatDetails: "Vinte clubes em turno e returno; quatro rebaixados. O acesso combina vagas diretas e playoff conforme o estatuto TFF 2026/27." },
   ],
   russian_first: [
-    { id: "russian_first", name: "Russian First League", shortName: "RPL 2", type: "league", region: "russia", format: "points", teams: 20, rounds: 38, prize: 2000000, prestige: 35, promotion: 2, relegation: 0 },
+    { id: "russian_first", name: "Russian First League", shortName: "RPL 2", type: "league", region: "russia", format: "points", teams: 18, rounds: 34, prize: 2000000, prestige: 35, promotion: 2, relegation: 0, formatDetails: "Dezoito clubes em turno e returno em 2026/27. Os dois primeiros sobem diretamente; 3º e 4º disputam os playoffs de acesso, sujeitos ao licenciamento RFU." },
   ],
 
   // 2as divisoes - Americas
@@ -805,7 +813,7 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
   ],
   // 2as divisoes criadas para o pais ter rebaixamento de verdade
   scottish_champ: [
-    { id: "scottish_champ", name: "Scottish Championship", shortName: "Scottish Champ", type: "league", region: "escocia", format: "league_playoff", teams: 10, rounds: 18, prize: 2000000, prestige: 34, promotion: 2, relegation: 0, formatDetails: "Turno e returno entre os dez clubes; o campeao sobe direto e o segundo decide o acesso no playoff." },
+    { id: "scottish_champ", name: "Scottish Championship", shortName: "Scottish Champ", type: "league", region: "escocia", format: "league_playoff", teams: 10, rounds: 36, roundRobinCycles: 4, prize: 2000000, prestige: 34, promotion: 2, relegation: 0, formatDetails: "Quatro turnos entre os dez clubes (36 jogos); campeão sobe. A queda à League One será ativada quando o terceiro nível entrar na pirâmide jogável." },
   ],
   serie_b_ecu: [
     { id: "serie_b_ecu", name: "LigaPro Serie B", shortName: "LigaPro B", type: "league", region: "equador", format: "league_playoff", teams: 10, rounds: 18, prize: 1200000, prestige: 32, promotion: 2, relegation: 0, formatDetails: "Turno e returno entre os dez clubes; os dois primeiros sobem a Serie A." },
@@ -813,7 +821,79 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
   china_league_one: [
     { id: "china_league_one", name: "China League One", shortName: "China Liga 1", type: "league", region: "china", format: "points", teams: 11, rounds: 20, prize: 3000000, prestige: 30, promotion: 2, relegation: 0, formatDetails: "Turno e returno. A China League One real tem 16 clubes; aqui a divisao e montada com os clubes chineses disponiveis." },
   ],
+
+  // Ligas sul-americanas que existiam apenas como clubes soltos no catálogo.
+  // Os formatos abaixo são os publicados pelas federações para a temporada
+  // 2026; copa e liga são objetos diferentes para não apagar fases reais.
+  primera_div_per: [
+    { id: "liga_1_peru", name: "Liga 1 do Peru", shortName: "Liga 1 Peru", type: "league", region: "peru", format: "league_playoff", teams: 18, rounds: 34, prize: 3500000, prestige: 57, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Dezoito clubes disputam Apertura e Clausura; a tabela acumulada define os playoffs do título, quatro vagas à Libertadores, quatro à Sul-Americana e os dois rebaixados." },
+    { id: "copa_liga_peru", name: "Copa de la Liga", shortName: "Copa da Liga", type: "cup", region: "peru", format: "group_knockout", teams: 18, groups: 4, prize: 1000000, prestige: 46, formatDetails: "Competição profissional separada da Copa Perú, conforme o catálogo de regulamentos FPF 2026." },
+  ],
+  primera_div_bol: [
+    { id: "division_profesional_bol", name: "Liga de la División Profesional", shortName: "División Profesional", type: "league", region: "bolivia", format: "points", teams: 16, rounds: 30, prize: 3000000, prestige: 56, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Dezesseis clubes em turno e returno. O último cai diretamente; o penúltimo disputa permanência em ida e volta contra o campeão da Copa Simón Bolívar." },
+    { id: "copa_division_profesional_bol", name: "Copa de la División Profesional", shortName: "Copa Profesional", type: "cup", region: "bolivia", format: "group_knockout", teams: 16, groups: 4, teamsPerGroup: 4, prize: 1200000, prestige: 48, formatDetails: "Quatro grupos de quatro; os dois melhores de cada grupo avançam às quartas, seguidas por semifinal e final." },
+  ],
+  primera_div_par: [
+    { id: "division_honor_par", name: "Copa de Primera do Paraguai", shortName: "División de Honor", type: "league", region: "paraguai", format: "league_playoff", teams: 12, rounds: 44, seasonSegments: 2, prize: 3000000, prestige: 58, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Doze clubes disputam dois campeonatos independentes: Apertura e Clausura, cada um com 22 rodadas em turno e returno. O descenso usa a média acumulada prevista pela APF." },
+    { id: "copa_paraguay", name: "Copa Paraguay", shortName: "Copa Paraguay", type: "cup", region: "paraguai", format: "knockout", teams: 74, prize: 1000000, prestige: 51, formatDetails: "Setenta e quatro clubes: 17 campeões departamentais, 12 da Primera C, 17 da Primera B, 16 da Intermedia e 12 da División de Honor. O campeão vai à Libertadores." },
+  ],
+  primera_div_ven: [
+    { id: "liga_futve_1", name: "Liga FUTVE 1", shortName: "Liga FUTVE", type: "league", region: "venezuela", format: "group_knockout", teams: 14, groups: 2, rounds: 26, prize: 2500000, prestige: 53, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Fases regulares com quatorze clubes e classificação dos oito melhores a dois quadrangulares; os vencedores decidem o título." },
+    { id: "copa_venezuela", name: "Copa Venezuela", shortName: "Copa Venezuela", type: "cup", region: "venezuela", format: "group_knockout", teams: 28, groups: 5, prize: 800000, prestige: 46, formatDetails: "A fase inicial reúne 20 clubes em cinco grupos de quatro; oito classificados se juntam aos oito clubes da Liga FUTVE 1 vindos dos quadrangulares. O mata-mata, das oitavas à final, é em ida e volta." },
+  ],
+  liga_2_per: [
+    { id: "liga_2_per", name: "Liga 2 do Peru", shortName: "Liga 2 Peru", type: "league", region: "peru", format: "group_knockout", teams: 18, groups: 2, prize: 900000, prestige: 34, promotion: 2, relegation: 0, formatDetails: "Dezoito clubes passam por fase regional, fase final e playoffs. Campeão e vice sobem à Liga 1; os últimos de cada grupo de descenso caem à Liga 3." },
+  ],
+  copa_simon_bolivar: [
+    { id: "copa_simon_bolivar", name: "Copa Simón Bolívar", shortName: "Simón Bolívar", type: "league", region: "bolivia", format: "group_knockout", teams: 24, groups: 6, teamsPerGroup: 4, prize: 650000, prestige: 32, promotion: 2, relegation: 0, formatDetails: "A etapa regional reúne 69 clubes das nove associações departamentais. A carreira começa na fase nacional oficial: 24 classificados em seis grupos de quatro; 16 avançam às oitavas, e todas as eliminatórias até a final são em ida e volta." },
+  ],
+  division_intermedia_par: [
+    { id: "division_intermedia_par", name: "División Intermedia", shortName: "Intermedia", type: "league", region: "paraguai", format: "points", teams: 16, rounds: 30, prize: 750000, prestige: 34, promotion: 2, relegation: 0, formatDetails: "Dezesseis clubes em turno e returno; campeão e vice sobem diretamente para a División de Honor." },
+  ],
+  liga_futve_2: [
+    { id: "liga_futve_2", name: "Liga FUTVE 2", shortName: "FUTVE 2", type: "league", region: "venezuela", format: "group_knockout", teams: 14, groups: 2, rounds: 26, prize: 600000, prestige: 31, promotion: 2, relegation: 0, formatDetails: "Quatorze clubes profissionais disputam a segunda divisão e participam da fase inicial da Copa Venezuela; os melhores avançam à fase decisiva pelo acesso." },
+  ],
+
+  // Lote europeu 2026 — antes estes países tinham apenas um clube curado e
+  // nenhuma competição associada, portanto a carreira ficava sem calendário.
+  super_league_gre: [
+    { id: "super_league_gre", name: "Super League Greece", shortName: "Super League", type: "league", region: "grecia", format: "league_playoff", teams: 14, rounds: 26, groups: 3, prize: 6500000, prestige: 61, continentalSpots: [{ competition: "champions_league", spots: 2 }, { competition: "europa_league", spots: 1 }, { competition: "conference_league", spots: 2 }], formatDetails: "Fase regular de 26 rodadas. Depois, a classificação separa playoffs de 1º–4º e 5º–8º e playout de 9º–14º; os pontos da primeira fase são mantidos." },
+  ],
+  superliga_den: [
+    { id: "superliga_den", name: "3F Superliga", shortName: "Superliga", type: "league", region: "dinamarca", format: "league_playoff", teams: 12, rounds: 32, groups: 2, prize: 7500000, prestige: 62, relegation: 2, continentalSpots: [{ competition: "champions_league", spots: 2 }, { competition: "europa_league", spots: 1 }, { competition: "conference_league", spots: 2 }], formatDetails: "Doze clubes jogam 22 rodadas; os seis primeiros formam o grupo do título e os seis últimos o grupo de permanência, cada qual com mais dez rodadas. Os dois últimos do grupo de permanência são rebaixados." },
+  ],
+  fortuna_liga_cze: [
+    { id: "fortuna_liga_cze", name: "Chance Liga", shortName: "Chance Liga", type: "league", region: "chequia", format: "league_playoff", teams: 16, rounds: 30, groups: 3, prize: 6000000, prestige: 61, relegation: 1, continentalSpots: [{ competition: "champions_league", spots: 2 }, { competition: "europa_league", spots: 1 }, { competition: "conference_league", spots: 2 }], formatDetails: "Dezesseis clubes fazem 30 rodadas e seguem para três blocos finais. O último cai diretamente; 14º e 15º disputam o playoff de permanência." },
+  ],
+  chance_narodni_liga: [
+    { id: "chance_narodni_liga", name: "Chance Národní Liga", shortName: "Chance Národní Liga", type: "league", region: "chequia", format: "points", teams: 16, rounds: 30, prize: 1800000, prestige: 41, promotion: 1, relegation: 0, formatDetails: "Dezesseis clubes em turno e returno, totalizando 30 rodadas. O campeão sobe diretamente; 2º e 3º disputam playoff contra 14º e 15º da elite. Os dois últimos descem ao terceiro nível, ainda não jogável." },
+  ],
+  premyer_liqa_aze: [
+    { id: "premyer_liqa_aze", name: "Misli Premyer Liqası", shortName: "Premyer Liqa", type: "league", region: "azerbaijao", format: "points", teams: 12, rounds: 33, roundRobinCycles: 3, prize: 3500000, prestige: 52, continentalSpots: [{ competition: "champions_league", spots: 1 }, { competition: "conference_league", spots: 3 }], formatDetails: "Doze clubes disputam três turnos, totalizando 33 partidas por equipe. O último cai diretamente; o 11º disputa playoff contra o vice da I Liqa." },
+  ],
+  eliteserien_nor: [
+    { id: "eliteserien_nor", name: "NFF Eliteserien", shortName: "Eliteserien", type: "league", region: "noruega", format: "points", teams: 16, rounds: 30, prize: 9000000, prestige: 64, relegation: 2, continentalSpots: [{ competition: "champions_league", spots: 1 }, { competition: "conference_league", spots: 3 }], formatDetails: "Dezesseis clubes em turno e returno. 15º e 16º caem diretamente para a OBOS-ligaen; o 14º disputa a repescagem em ida e volta." },
+  ],
+  protathlima_cyp: [
+    { id: "protathlima_cyp", name: "Cyprus League by Stoiximan", shortName: "Cyprus League", type: "league", region: "chipre", format: "league_playoff", teams: 14, rounds: 26, groups: 2, prize: 3000000, prestige: 51, relegation: 3, continentalSpots: [{ competition: "champions_league", spots: 1 }, { competition: "conference_league", spots: 3 }], formatDetails: "Quatorze clubes fazem 26 rodadas. Os seis primeiros jogam mais dez partidas pelo título; os oito restantes jogam mais sete pela permanência. Os três últimos do grupo B são rebaixados." },
+  ],
+  premier_liga_kaz: [
+    { id: "premier_liga_kaz", name: "Kazakhstan Premier League", shortName: "Premier Liga", type: "league", region: "cazaquistao", format: "points", teams: 16, rounds: 30, prize: 4000000, prestige: 52, continentalSpots: [{ competition: "champions_league", spots: 1 }, { competition: "conference_league", spots: 3 }], formatDetails: "A elite foi ampliada de 14 para 16 clubes em 2026 e disputa turno e returno, totalizando 30 rodadas." },
+  ],
+  betinia_liga: [
+    { id: "betinia_liga", name: "Betinia LIGA", shortName: "1. Division", type: "league", region: "dinamarca", format: "league_playoff", teams: 12, rounds: 32, groups: 2, prize: 2200000, prestige: 43, promotion: 2, relegation: 0, formatDetails: "Doze clubes disputam 22 rodadas. Os seis primeiros seguem ao grupo de acesso e os seis últimos ao grupo de permanência, com mais dez partidas; os dois melhores sobem à 3F Superliga." },
+  ],
+  obos_ligaen: [
+    { id: "obos_ligaen", name: "OBOS-ligaen", shortName: "OBOS-ligaen", type: "league", region: "noruega", format: "points", teams: 16, rounds: 30, prize: 2500000, prestige: 45, promotion: 2, relegation: 0, formatDetails: "Dezesseis clubes em turno e returno. Os dois primeiros sobem diretamente; do 3º ao 6º disputam a qualificação cujo vencedor enfrenta o 14º da Eliteserien." },
+  ],
+  second_div_cyp: [
+    { id: "second_div_cyp", name: "Cyprus Second Division", shortName: "Second Division", type: "league", region: "chipre", format: "league_playoff", teams: 16, rounds: 29, groups: 2, prize: 700000, prestige: 34, promotion: 3, relegation: 0, formatDetails: "Os 16 clubes jogam uma primeira fase de 15 rodadas. Os oito primeiros e os oito últimos formam dois grupos e jogam mais 14 rodadas; os três primeiros do grupo A sobem." },
+  ],
 }
+
+// Mantido fora do literal gigante para que a expansão de federações seja
+// declarativa e auditável em um único arquivo.
+Object.assign(competitionsByLeague, UEFA_EXPANSION_COMPETITIONS)
 
 // Funcao para obter competicoes de um time
 export function getCompetitionsForTeam(divisao: Divisao): Competition[] {

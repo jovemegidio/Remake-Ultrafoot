@@ -41,6 +41,8 @@ export default function NotificacoesPage() {
   const elencoParaConversa = useGameEngine(st => st.squadPlayers)
   const engineBalance = useGameEngine(s => s.balance)
   const engineAddRevenue = useGameEngine(s => s.addClubRevenue)
+  const engineAdjustPlayerMorale = useGameEngine(s => s.ajustarMoralJogador)
+  const engineAddMoraleEvent = useGameEngine(s => s.addMoraleEvent)
   const { state: saveState, replaceState } = useGameState()
   const { standings, currentWeek } = useGameManager()
 
@@ -78,10 +80,25 @@ export default function NotificacoesPage() {
 
   const eventosVestiario = useMemo<DressingRoomEvent[]>(() => {
     if (!saveState.selectedTeamShort) return []
-    return detectEvents(saveState, currentWeek)
-  }, [saveState, currentWeek])
+    const resolved = new Set(saveState.resolvedDressingRoomEvents ?? [])
+    return detectEvents(saveState, currentWeek, elencoParaConversa).filter(event => !resolved.has(event.id))
+  }, [saveState, currentWeek, elencoParaConversa])
 
   const responderVestiario = (eventId: string, responseId: string) => {
+    const event = eventosVestiario.find(item => item.id === eventId)
+    const response = event?.options.find(item => item.id === responseId)
+    if (event && response) {
+      const step = response.effects.moralDelta > 0 ? 1 : response.effects.moralDelta < 0 ? -1 : 0
+      for (const playerId of event.playerIds) {
+        const numericId = Number(playerId)
+        if (Number.isFinite(numericId) && step !== 0) engineAdjustPlayerMorale(numericId, step)
+      }
+      engineAddMoraleEvent({
+        type: response.effects.moralDelta >= 0 ? "elogio" : "conflito",
+        description: `Vestiário: ${response.text}`,
+        impact: response.effects.moralDelta,
+      })
+    }
     replaceState(respondToEvent(saveState, eventId, responseId))
   }
 

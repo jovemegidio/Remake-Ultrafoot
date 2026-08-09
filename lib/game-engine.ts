@@ -45,6 +45,7 @@ import {
   semearParesDeHistorico,
   type AtletaNaSemana, type ParesDeEntrosamento, type PlanoDeTreino,
 } from "@/lib/treino-e-entrosamento"
+import { analyseSquadDynamics, applyWeeklyPlayingTimeMorale } from "@/lib/squad-dynamics"
 
 /**
  * Versao do formato persistido do motor. Fica numa constante porque e usada em
@@ -1248,6 +1249,25 @@ export interface MatchResult {
    */
   homePenalties?: number
   awayPenalties?: number
+  /** Estatísticas produzidas pelo motor ao vivo. Ausente em saves antigos e
+   * partidas simuladas rapidamente; o Data Hub trata os dois casos. */
+  performance?: {
+    home: MatchPerformanceStats
+    away: MatchPerformanceStats
+  }
+}
+
+export interface MatchPerformanceStats {
+  shots: number
+  shotsOnTarget: number
+  xG: number
+  corners: number
+  fouls: number
+  yellows: number
+  reds: number
+  possession: number
+  passes: number
+  passAccuracy: number
 }
 
 export interface MatchScorer {
@@ -1361,6 +1381,14 @@ export interface TeamTactics {
   // Transicoes
   counterAttack: boolean
   holdPosition: boolean
+
+  /**
+   * Estruturas por fase. `formation` no estado continua sendo a forma usada
+   * para escalar o XI; estes campos descrevem a reorganização com e sem bola.
+   * São opcionais para manter saves anteriores à 1.0.279 legíveis.
+   */
+  inPossessionFormation?: string
+  outOfPossessionFormation?: string
   
   // Bolas paradas
   cornersAggressive: boolean
@@ -2047,6 +2075,8 @@ interface GameEngineState {
   
   // Moral e vestiario
   squadMorale: SquadMorale
+  /** Semana em que cada ação coletiva foi usada. Persistido para impedir reset ao trocar de tela. */
+  groupActionCooldowns: Record<string, number>
   /**
    * Entrosamento do XI, 0-100. DERIVADO de `entrosamentoPares` desde a 1.0.223 —
    * continua aqui porque meia dezena de telas e o bonus em campo o leem, mas ja
@@ -2308,6 +2338,7 @@ interface GameEngineState {
   
   // Moral
   addMoraleEvent: (event: Omit<MoraleEvent, "week">) => void
+  performGroupAction: (action: { id: string; cooldown: number; impact: number; description: string }) => boolean
   updateSquadMorale: () => void
   
   // Conferencias
@@ -2863,6 +2894,7 @@ export const useGameEngine = create<GameEngineState>()(
         confidence: 70,
         recentEvents: []
       },
+      groupActionCooldowns: {},
       
       // Conferencias
       pressConferences: [],
@@ -3081,6 +3113,24 @@ export const useGameEngine = create<GameEngineState>()(
             
             return { ...player, energy: newEnergy }
           })
+
+          // DINAMICA DO ELENCO: o papel esperado agora tem consequencia. Um
+          // jogador-chave ignorado por varias partidas perde moral aos poucos;
+          // quem volta a receber minutos recupera confiança. Lesionados,
+          // convocados e semanas sem jogo nunca são punidos.
+          const dinamica = analyseSquadDynamics(updatedPlayers)
+          const dinamicaPorId = new Map(dinamica.players.map(item => [item.playerId, item]))
+          for (let index = 0; index < updatedPlayers.length; index++) {
+            const player = updatedPlayers[index]
+            const perfil = dinamicaPorId.get(player.id)
+            if (!perfil) continue
+            updatedPlayers[index] = applyWeeklyPlayingTimeMorale(
+              player,
+              perfil,
+              minutosDaSemana.get(player.id) ?? 0,
+              jogosNaSemana,
+            )
+          }
           
           // Fim de temporada e gerenciado por processSeasonEnd() chamado via use-game-manager
           const newSeason = s.currentSeason
@@ -6016,6 +6066,30 @@ export const useGameEngine = create<GameEngineState>()(
             }
           }
         })
+      },
+
+      performGroupAction: (action) => {
+        const state = get()
+        const lastUsed = (state.groupActionCooldowns ?? {})[action.id]
+        if (lastUsed != null && state.currentWeek - lastUsed < action.cooldown) return false
+
+        const newEvent: MoraleEvent = {
+          type: "elogio",
+          description: action.description,
+          impact: action.impact,
+          week: state.currentWeek,
+        }
+        set(s => ({
+          groupActionCooldowns: { ...(s.groupActionCooldowns ?? {}), [action.id]: s.currentWeek },
+          squadMorale: {
+            ...s.squadMorale,
+            overall: Math.max(0, Math.min(100, s.squadMorale.overall + action.impact)),
+            confidence: Math.max(0, Math.min(100, s.squadMorale.confidence + action.impact * 0.7)),
+            unity: Math.max(0, Math.min(100, s.squadMorale.unity + Math.max(1, Math.round(action.impact * 0.45)))),
+            recentEvents: [newEvent, ...s.squadMorale.recentEvents.slice(0, 9)],
+          },
+        }))
+        return true
       },
       
       updateSquadMorale: () => {

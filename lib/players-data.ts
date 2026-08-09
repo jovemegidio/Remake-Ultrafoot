@@ -51,6 +51,8 @@ export interface Player {
   preferredFoot?: "Direita" | "Esquerda" | "Ambidestro"
   reputation?: "normal" | "estrela" | "top_mundial"
   traits?: string[]
+  /** Transparência do cadastro: ausente = fonte real/curada; nunca disfarçar complemento como atleta real. */
+  generatedOrigin?: "provisional" | "academy"
 }
 
 const RAW = playersBR as Record<string, Array<{ nome: string; pos: string; idade: number; base: number }>>
@@ -830,14 +832,14 @@ function ensurePlayableSquad(team: Team, players: Player[]): Player[] {
   // goleiro. A garantia de jogabilidade precisa validar composicao, nao so quantidade.
   const withGoalkeeper = players.some((player) => player.pos === "GOL")
     ? players
-    : [{ nome: nomePreenchimento(team, 0, seenNames), pos: "GOL" as Posicao, idade: 23, base: Math.max(50, Math.min(72, Math.round(team.prestigio * 0.72))), time: team.nome }, ...players]
+    : [{ nome: nomePreenchimento(team, 0, seenNames), pos: "GOL" as Posicao, idade: 23, base: Math.max(50, Math.min(72, Math.round(team.prestigio * 0.72))), time: team.nome, generatedOrigin: "provisional" as const }, ...players]
   // Além do goleiro, garante cobertura mínima de linhas. Isso protege clubes de bases
   // incompletas sem reclassificar atletas reais: só cria uma peça de reposição quando a
   // linha inteira não existe.
   const covered = [...withGoalkeeper]
   const baseRating = Math.max(48, Math.min(68, Math.round(team.prestigio * 0.7)))
   const addMissing = (label: string, pos: Posicao, exists: (p: Player) => boolean) => {
-    if (!covered.some(exists)) covered.push({ nome: nomePreenchimento(team, covered.length + 1, seenNames), pos, idade: 22, base: baseRating, time: team.nome })
+    if (!covered.some(exists)) covered.push({ nome: nomePreenchimento(team, covered.length + 1, seenNames), pos, idade: 22, base: baseRating, time: team.nome, generatedOrigin: "provisional" })
   }
   addMissing("Zagueiro", "ZAG", p => ["ZAG", "LD", "LE"].includes(p.pos))
   addMissing("Meio-campista", "VOL", p => ["VOL", "MC", "MEI", "ME", "MD"].includes(p.pos))
@@ -845,7 +847,7 @@ function ensurePlayableSquad(team: Team, players: Player[]): Player[] {
   const ensureCount = (label: string, positions: string[], fallback: Posicao, minimum: number) => {
     while (covered.filter(p => positions.includes(p.pos)).length < minimum) {
       const n = covered.length + 1
-      covered.push({ nome: nomePreenchimento(team, n, seenNames), pos: fallback, idade: 21 + (n % 12), base: Math.max(45, baseRating - (n % 6)), time: team.nome })
+      covered.push({ nome: nomePreenchimento(team, n, seenNames), pos: fallback, idade: 21 + (n % 12), base: Math.max(45, baseRating - (n % 6)), time: team.nome, generatedOrigin: "provisional" })
     }
   }
   ensureCount("Defensor", ["ZAG", "LD", "LE"], "ZAG", 4)
@@ -853,14 +855,22 @@ function ensurePlayableSquad(team: Team, players: Player[]): Player[] {
   ensureCount("Atacante", ["ATA", "CA", "PE", "PD"], "ATA", 3)
   if (covered.length >= MIN_PLAYABLE_SQUAD_SIZE) return covered
 
+  // Usa as vagas que já seriam provisórias para fechar posições ausentes ANTES
+  // de repetir zagueiro/meia/atacante. Isso não reclassifica nenhum atleta real
+  // nem infla o plantel: apenas dá forma de elenco ao complemento. A expansão
+  // UEFA expôs o defeito porque um clube totalmente novo chegava a 18 nomes,
+  // porém podia terminar com quatro zagueiros e nenhum ponta.
+  const specialistGaps: Posicao[] = (["LD", "LE", "VOL", "PD", "PE"] as Posicao[])
+    .filter(pos => !covered.some(player => player.pos === pos))
   const fillers = Array.from({ length: MIN_PLAYABLE_SQUAD_SIZE - covered.length }, (_, index) => {
     const squadNumber = covered.length + index + 1
     return {
       nome: nomePreenchimento(team, squadNumber, seenNames),
-      pos: FILLER_POSITION_ORDER[(covered.length + index) % FILLER_POSITION_ORDER.length],
+      pos: specialistGaps[index] ?? FILLER_POSITION_ORDER[(covered.length + index) % FILLER_POSITION_ORDER.length],
       idade: 19 + ((team.prestigio + index) % 13),
       base: Math.max(45, baseRating - (index % 6)),
       time: team.nome,
+      generatedOrigin: "provisional" as const,
     }
   })
 
@@ -1267,6 +1277,7 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
         idade: 18 + ((team.prestigio + i) % 4),
         base: Math.max(40, mediaDoElenco - 6 - (i % 4)),
         time: team.nome,
+        generatedOrigin: "academy" as const,
       }))
       comTempo = [...comTempo, ...crias]
     }

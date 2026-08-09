@@ -9,11 +9,17 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "Quatro países europeus ganharam a segunda divisão",
+      "category": "Atualização",
+      "body": "Áustria, Polônia, Romênia e Suíça anunciavam rebaixamento e não tinham para onde rebaixar: a segunda divisão existia só no nome. Agora as quatro pirâmides funcionam, com o número real de acessos de cada país. A atualização também traz 66 clubes reais, 114 elencos verdadeiros ligados a clubes que usavam time inventado, e adversários que guardam moral, coesão e pressão da torcida de uma rodada para a outra.",
+      "date": "2026-08-09",
+      "pinned": true
+    },
+    {
       "title": "Suas táticas agora decidem o jogo",
       "category": "Atualização",
       "body": "Doze controles da tela de Táticas não tinham nenhum efeito em campo: dava para mudar saída de bola, pressão e marcação sem que o placar notasse. Agora todos alteram a força do time, sempre como troca — quem ganha de um lado entrega do outro. A tela também aponta contradições do esquema. Na mesma atualização: departamento médico para tratar lesionados, o capitão do time influenciando o vestiário, e a correção de dois bugs relatados por jogadores (atleta vendido que voltava ao elenco e salário sem limite na negociação com seleções).",
-      "date": "2026-08-08",
-      "pinned": true
+      "date": "2026-08-08"
     },
     {
       "title": "Neymar troca de camisa junto com o clube",
@@ -174,9 +180,21 @@
   ],
   "changelog": [
     {
+      "version": "1.0.279",
+      "data": "2026-08-09",
+      "latest": true,
+      "titulo": "Segundas divisões na Europa, elencos mais reais e adversários com memória",
+      "itens": [
+        "NOVO: Áustria, Polônia, Romênia e Suíça ganharam segunda divisão de verdade. As quatro anunciavam rebaixamento sem ter para onde rebaixar. Cada pirâmide usa o número real de acessos: Polônia 3, Romênia 2, Áustria e Suíça 1.",
+        "NOVO: 66 clubes reais adicionados e 114 identidades de clube ligadas a elencos reais que já estavam coletados.",
+        "MELHORIA: o preenchimento de elenco curto passou a priorizar laterais, volante e pontas — antes sorteava posição sem critério e criava times sem lateral. Atletas provisórios caíram de 9.378 para 9.055, e os clubes que dependem de algum complemento, de 586 para 569.",
+        "NOVO: os clubes comandados pela máquina passam a guardar moral, coesão, pressão da torcida e confiança no treinador entre as rodadas. Um vestiário tenso ou fraturado rende menos em campo.",
+        "O aviso \"O que há de novo\" volta a aparecer nesta versão — estava parado na 1.0.271."
+      ]
+    },
+    {
       "version": "1.0.277",
       "data": "2026-08-08",
-      "latest": true,
       "titulo": "Táticas que mudam o jogo, departamento médico e dois bugs relatados",
       "itens": [
         "CORRIGIDO: atleta vendido, emprestado ou leiloado voltava ao elenco ao reabrir a tela. Eram três sintomas da mesma causa — quando o elenco ficava curto, a tela remontava o time a partir do cadastro do clube e trazia todo mundo de volta.",

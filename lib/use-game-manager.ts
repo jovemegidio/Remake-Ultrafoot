@@ -8,12 +8,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, absoluteWeek, getContractStatus, isTransferWindowOpen, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, MIN_TIMES_PARA_LIGA, type Team } from "@/lib/teams-data"
+import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, initialDivision, clubDivisionKey, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, MIN_TIMES_PARA_LIGA, type Team } from "@/lib/teams-data"
 import { getGameDate, configurarDuracaoDaTemporada } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { simulateWorldTransferWindow } from "@/lib/world-market"
 import { setTemporadaDoMundo, setClubeDoUsuario } from "@/lib/temporada-do-mundo"
 import { decidirReacoesDaIA, type ReacaoDaIA } from "@/lib/ai-club-engine"
+import { evolveAIClubSocialState } from "@/lib/ai-club-social"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
 import { pedidoDaSemana, montarPedido, agenteProcuraOutroClube, chanceDePreContrato, RELACAO_INICIAL } from "@/lib/pressao-do-agente"
 import { generateOffers } from "@/lib/sponsor-engine"
@@ -27,7 +28,7 @@ import { demissoesDaRodada, manchete, tecnicoDoClube } from "@/lib/mercado-de-te
 import { addJobOffers, clearJobOffers, encerrarPassagem } from "@/lib/career-moves"
 import { hardNavigate } from "@/lib/hard-navigation"
 // Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
-import { resolveDivisionChange, evolvePyramids, type PyramidClub } from "@/lib/league-pyramid"
+import { resolveDivisionChange, evolvePyramids, PYRAMIDS, type PyramidClub } from "@/lib/league-pyramid"
 import { applySponsorDebtContribution, debtConsequences, processDebtMonth, renegotiateDebt, successorDebtBudget } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
 import { useNotifications } from "@/components/notifications-system"
@@ -45,6 +46,7 @@ import { qualificacaoReal2026 } from "@/lib/qualificacao-2026"
 import { isFifaWindowMonth, windowLabel, cyclePhase, worldCupHosts, worldCupNote } from "@/lib/national-windows"
 import { gerarScorersDaPartida } from "@/lib/competition-scorers"
 import { regionalCupForState } from "@/lib/regional-cups"
+import { getConfederation as getDivisionConfederation, getCountryCompetitions as getCountryCompetitionProfile } from "@/lib/country-competitions"
 import {
   humorDasOrganizadas, organizadasDoClube, quadroDeSocios, satisfacaoDaTorcida,
   torcidaAposTemporada, type ConquistaDaTemporada,
@@ -567,17 +569,8 @@ function seededRandom(seed: string): () => number {
 // Confederacao por divisao (para derivar competicoes continentais quando os
 // dados da liga nao as declaram explicitamente)
 function getConfederation(division: string): "uefa" | "conmebol" | "afc" | "concacaf" | null {
-  if (EUROPEAN_DIVISIONS.has(division)) return "uefa"
-  if (division === "liga_argentina" || division === "primera_a_col" ||
-      division === "primera_div_chi" || division === "primera_div_ury" ||
-      division === "primera_b_arg" || division === "torneo_betplay" ||
-      division === "primera_b_chi" || division === "segunda_div_ury") return "conmebol"
-  if (division === "saudi_pro" || division === "saudi_first_div" ||
-      division === "j_league" || division === "j2_league" ||
-      division === "k_league_1" || division === "k_league_2" ||
-      division === "chinese_super" || division === "china_league_one") return "afc"
-  if (division === "mls" || division === "liga_mx") return "concacaf"
-  return null
+  const confederation = getDivisionConfederation(division)
+  return confederation === "UNAFFILIATED" ? null : confederation.toLowerCase() as "uefa" | "conmebol" | "afc" | "concacaf"
 }
 
 // Cria um Competition sintetico (usado nos fallbacks por confederacao)
@@ -633,6 +626,13 @@ const TOP_FLIGHT_DIVISIONS = new Set([
   "russian_prem", "saudi_pro", "mls", "liga_mx", "j_league", "k_league_1",
   "chinese_super", "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury", "primera_a_ecu",
 ])
+
+/** A própria competição declara se é elite por meio das vagas continentais. */
+function isTopFlightDivision(division: string): boolean {
+  const competitions = competitionsByLeague[division as keyof typeof competitionsByLeague] ?? []
+  return TOP_FLIGHT_DIVISIONS.has(division)
+    || competitions.some(competition => competition.type === "league" && (competition.continentalSpots?.length ?? 0) > 0)
+}
 
 // Determina quais copas/continentais o time do usuario disputa e quantos jogos.
 // Usa os dados de competitionsByLeague e, quando faltam, deriva por confederacao.
@@ -691,9 +691,12 @@ export function getUserCupPlan(
   const nationalCups = comps.filter(c => c.type === "cup").sort((a, b) => b.prestige - a.prestige)
   if (nationalCups.length > 0) {
     plans.push({ competition: nationalCups[0], competitionType: "cup", matchCount: 5 })
-  } else if (NATIONAL_CUP_FALLBACK[division]) {
-    plans.push({
-      competition: makeComp(`${division}_cup`, NATIONAL_CUP_FALLBACK[division], 60, "nacional", "cup"),
+  } else {
+    const profile = getCountryCompetitionProfile(division)
+    const cupName = NATIONAL_CUP_FALLBACK[division]
+      ?? (profile.country !== "Internacional" && profile.domesticCup !== "Copa Nacional" ? profile.domesticCup : null)
+    if (cupName) plans.push({
+      competition: makeComp(`${division}_cup`, cupName, 60, "nacional", "cup"),
       competitionType: "cup",
       matchCount: 5,
     })
@@ -701,11 +704,12 @@ export function getUserCupPlan(
 
   // ── Competicao continental (apenas top flight) ─────────────────────────
   let continentals = comps.filter(c => c.type === "continental").sort((a, b) => b.prestige - a.prestige)
-  if (continentals.length === 0 && TOP_FLIGHT_DIVISIONS.has(division)) {
+  const topFlight = isTopFlightDivision(division)
+  if (continentals.length === 0 && topFlight) {
     const conf = getConfederation(division)
     if (conf) continentals = CONTINENTAL_FALLBACK[conf] ?? []
   }
-  if (continentals.length > 0 && TOP_FLIGHT_DIVISIONS.has(division)) {
+  if (continentals.length > 0 && topFlight) {
     const leagueTeams = [...getUserLeagueTeams(userTeam.curto)].sort((a, b) => b.prestigio - a.prestigio)
     const rank = leagueTeams.findIndex(t => t.curto === userTeam.curto)
     let chosen: Competition | null = null
@@ -766,7 +770,7 @@ function getUserCupMatchCount(userTeamShort: string, superCups: readonly SuperCu
 
 /** Partidas do caminho COMPLETO (ate a final) — e o que reserva as semanas. */
 export function tamanhoDoCaminho(userTeam: Team, plan: CupCompetitionPlan): number {
-  const entraTarde = TOP_FLIGHT_DIVISIONS.has(String(userTeam.divisao))
+  const entraTarde = isTopFlightDivision(String(userTeam.divisao))
   return caminhoDaCopa(plan.competition.id, plan.competition.name, plan.competitionType, entraTarde)
     .reduce((soma, etapa) => soma + etapa.jogos, 0)
 }
@@ -791,29 +795,29 @@ export function getOpponentPool(userTeam: Team, plan: CupCompetitionPlan): Team[
     // Copa nacional: todas as divisoes do MESMO pais. O código antigo usava somente
     // a liga atual; como os 19 rivais já estavam marcados como usados, o sorteio
     // liberava esses clubes novamente e criava um 3º/4º confronto na temporada.
-    const country = normalizeCompetitionClub(userTeam.pais ?? "")
-    const nationalPool = allPoolTeams.filter(t =>
-      t.curto !== userShort && country.length > 0 && normalizeCompetitionClub(t.pais ?? "") === country,
-    )
+    const profile = getCountryCompetitionProfile(String(userTeam.divisao))
+    const country = normalizeCompetitionClub(profile.country !== "Internacional" ? profile.country : userTeam.pais ?? "")
+    const nationalPool = [...allTeams, ...allPoolTeams].filter(t => {
+      if (t.curto === userShort || country.length === 0) return false
+      const teamCountry = getCountryCompetitionProfile(String(t.divisao)).country
+      return normalizeCompetitionClub(teamCountry !== "Internacional" ? teamCountry : t.pais ?? "") === country
+    })
     const fallback = isBrazilianDivision(userTeam.divisao)
       ? allBrazilianTeams.filter(t => t.curto !== userShort)
       : getTeamsByDivision(userTeam.divisao).filter(t => t.curto !== userShort)
     const source = nationalPool.length >= 4 ? nationalPool : fallback
     const seen = new Set<string>()
     return source.filter(team => {
-      const key = team.curto.trim().toLocaleLowerCase()
+      const key = (team.file_key || team.curto).trim().toLocaleLowerCase()
       if (!key || seen.has(key)) return false
       seen.add(key)
       return true
     })
   }
   // Continental: times da mesma confederacao
-  const region = plan.competition.region
-  let divisionSet: Set<string> | null = null
-  if (region === "america_sul") divisionSet = SOUTH_AMERICAN_DIVISIONS
-  else if (region === "europa") divisionSet = EUROPEAN_DIVISIONS
-  const pool = divisionSet
-    ? allTeams.filter(t => t.curto !== userShort && divisionSet!.has(String(t.divisao)))
+  const confederation = getDivisionConfederation(String(userTeam.divisao))
+  const pool = confederation !== "UNAFFILIATED"
+    ? allTeams.filter(t => t.curto !== userShort && getDivisionConfederation(String(t.divisao)) === confederation)
     : allTeams.filter(t => t.curto !== userShort)
   // Prioriza times mais fortes (campeonato continental reune a elite)
   return [...pool].sort((a, b) => b.prestigio - a.prestigio).slice(0, 60)
@@ -850,7 +854,7 @@ export function generateUserCupMatches(
   const pool = getOpponentPool(userTeam, plan)
   if (pool.length === 0) return []
 
-  const entraTarde = TOP_FLIGHT_DIVISIONS.has(String(userTeam.divisao))
+  const entraTarde = isTopFlightDivision(String(userTeam.divisao))
   const etapas = caminhoDaCopa(plan.competition.id, plan.competition.name, plan.competitionType, entraTarde)
 
   // Placares do usuario NESTA copa, em ordem de disputa.
@@ -1981,7 +1985,7 @@ export function useGameManager() {
       updatedAt: Date.now(),
       ...initialCareerState,
     }))
-  }, [gameEngine, replaceSaveState, saveState.language, saveState.controllerType, saveState.controllerBindings, saveState.commentaryEnabled, saveState.commentaryVoice, saveState.commentaryVolume, saveState.autoSaveInterval])
+  }, [gameEngine, replaceSaveState, saveState])
   
   // Calendario da temporada — ref is updated after useMemo so advanceWeek loop calls see latest fixtures
   const seasonCalendar = memoDoCalendario((): SeasonCalendar => {
@@ -2466,11 +2470,23 @@ export function useGameManager() {
       // PIRAMIDE VIVA: evolui TODOS os clubes de todas as piramides. A divisao do
       // usuario sai da classificacao real; as demais, do prestigio com ruido.
       setClubDivisions(currentState.clubDivisions)
-      const staticDiv = new Map(allTeams.map(t => [t.curto, String(t.divisao)]))
-      const pyramidClubs: PyramidClub[] = allTeams.map(t => ({
+      // Inclui os clubes do pool que completam divisões oficiais. Eles antes
+      // apareciam na tabela, mas ficavam fora do acesso/rebaixamento.
+      const pyramidTeams = new Map<string, { team: Team; division: string }>()
+      for (const pyramid of PYRAMIDS) for (const division of pyramid.tiers) {
+        for (const team of getTeamsByDivision(division)) {
+          pyramidTeams.set(clubDivisionKey(team), { team, division })
+        }
+      }
+      const staticDiv = new Map([...pyramidTeams.entries()].map(
+        ([key, { team }]) => [key, initialDivision(team)],
+      ))
+      const pyramidClubs: PyramidClub[] = [...pyramidTeams.entries()].map(([id, { team: t, division }]) => ({
+        id,
         curto: t.curto,
-        division: effectiveDivision(t),
+        division,
         prestige: t.prestigio ?? 60,
+        promotionEligible: t.promotionEligible,
       }))
       const moved = evolvePyramids({
         clubs: pyramidClubs,
@@ -2480,9 +2496,11 @@ export function useGameManager() {
       })
       // Mapa absoluto atualizado: aplica quem mudou; limpa quem voltou a estatica.
       const nextClubDivisions: Record<string, string> = { ...(currentState.clubDivisions ?? {}) }
-      for (const [curto, div] of Object.entries(moved)) {
-        if (div === staticDiv.get(curto)) delete nextClubDivisions[curto]
-        else nextClubDivisions[curto] = div
+      for (const [clubKey, div] of Object.entries(moved)) {
+        const club = pyramidTeams.get(clubKey)?.team
+        if (club) delete nextClubDivisions[club.curto]
+        if (div === staticDiv.get(clubKey)) delete nextClubDivisions[clubKey]
+        else nextClubDivisions[clubKey] = div
       }
 
       // PREMIACAO DE LIGA (creditada de verdade — antes so aparecia no painel).
@@ -2494,7 +2512,10 @@ export function useGameManager() {
       }
 
       // Divisao do usuario na proxima temporada, do MESMO resultado da piramide.
-      const userNextDivision = nextClubDivisions[userShort] ?? staticDiv.get(userShort) ?? currentDivision
+      const userClubKey = userTeamStatic ? clubDivisionKey(userTeamStatic) : userShort
+      const userNextDivision = nextClubDivisions[userClubKey]
+        ?? nextClubDivisions[userShort]
+        ?? (userTeamStatic ? initialDivision(userTeamStatic) : currentDivision)
       let nextDivisionOverride = userNextDivision === userTeamStatic?.divisao ? undefined : userNextDivision
       let divisionMovement = currentState.divisionMovement
       if (userFinalPos > 0 && userNextDivision !== currentDivision) {
@@ -2614,7 +2635,8 @@ export function useGameManager() {
           const diretor = useGameEngine.getState().staffMembers?.find(s => s.role === "diretor_marketing")
           const nivelMarketing = diretor ? Math.max(1, Math.min(5, Math.round(diretor.competence / 20))) : 1
 
-          const novas = generateOffers(userTeam?.prestigio ?? 50, nivelMarketing)
+          const prestigioAtual = getTeamByShort(currentState.selectedTeamShort ?? "")?.prestigio ?? 50
+          const novas = generateOffers(prestigioAtual, nivelMarketing)
           setSaveState({ activeSponsors: seguem, sponsorOffers: novas })
 
           if (expirados.length > 0) {
@@ -3044,7 +3066,8 @@ export function useGameManager() {
         if (Math.random() < chance) {
           const diretor = useGameEngine.getState().staffMembers?.find(st => st.role === "diretor_marketing")
           const nivelMkt = diretor ? Math.max(1, Math.min(5, Math.round(diretor.competence / 20))) : 1
-          const nova = generateOffers(userTeam?.prestigio ?? 50, nivelMkt).slice(0, 1)
+          const prestigioAtual = getTeamByShort(currentState.selectedTeamShort ?? "")?.prestigio ?? 50
+          const nova = generateOffers(prestigioAtual, nivelMkt).slice(0, 1)
           if (nova.length > 0) {
             setSaveState({ sponsorOffers: [...naMesa, ...nova] })
             addNotificationRef.current({
@@ -3247,6 +3270,7 @@ export function useGameManager() {
     // `posturasDaIA` (ver app/partida/ao-vivo), entao um rival em crise
     // realmente se fecha contra voce.
     const posturasDaIA = { ...(currentState.posturasDaIA ?? {}) }
+    const socialDaIA = { ...(currentState.socialDaIA ?? {}) }
     try {
       const formaPorClube = new Map<string, ("W" | "D" | "L")[]>()
       for (const f of updatedStateFixtures) {
@@ -3271,6 +3295,17 @@ export function useGameManager() {
             identidade: (posturasDaIA[curto] === "ofensivo" ? "ofensivo" : posturasDaIA[curto] === "defensivo" ? "retranca" : "posse") as Parameters<typeof decidirReacoesDaIA>[0][number]["identidade"],
           }
         })
+      const semanaSocial = absoluteWeek(currentState.season, newWeek)
+      for (const candidato of candidatosIA) {
+        const anterior = socialDaIA[candidato.curto]
+        const evolucao = evolveAIClubSocialState(
+          anterior,
+          candidato.ultimos,
+          semanaSocial,
+          candidato.prestigio,
+        )
+        socialDaIA[candidato.curto] = evolucao.state
+      }
       const reacoes: ReacaoDaIA[] = decidirReacoesDaIA(candidatosIA, absoluteWeek(currentState.season, newWeek))
       for (const r of reacoes) {
         posturasDaIA[r.curto] = r.novaIdentidade === "retranca" ? "defensivo" : "ofensivo"
@@ -3321,7 +3356,7 @@ export function useGameManager() {
     // Mantém também uma cópia da dívida ativa no arquivo por clube. Isso torna
     // impossível uma troca de treinador perder o saldo entre dois renders.
     if(userShort&&debt)debtByClub[userShort]=debt
-    const patchDaSemana = { week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, estadioSetores }
+    const patchDaSemana = { week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, socialDaIA, estadioSetores }
     saveStateRef.current = { ...currentState, ...patchDaSemana } as typeof currentState & { fixtures: unknown }
     // ⚠️ NAO TROQUE ISTO POR `commitGameState` (tentado em 07/08/2026 e
     // REVERTIDO: o office ficava carregando para sempre depois de escolher o
@@ -3609,6 +3644,7 @@ export function useGameManager() {
      * dado próprio e é o que decide o classificado adiante.
      */
     penalties?: { home: number; away: number } | null,
+    performance?: MatchResult["performance"],
   ) => {
     const currentState = saveStateRef.current
     // Amistoso fora: ele não passa por aqui (o resultado é gravado no save pela
@@ -3683,6 +3719,7 @@ export function useGameManager() {
       events,
       homePenalties: penalties?.home,
       awayPenalties: penalties?.away,
+      performance,
     }
 
     // So atualiza standings da liga principal (nao do estadual/copas/continentais)

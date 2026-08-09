@@ -22,6 +22,8 @@ import importedBF2026 from "@/data/seeds/imported-bf2026.json"
 import divisionOverrides2026 from "@/data/seeds/division_overrides_2026.json"
 import { repairMojibake } from "@/lib/text-normalization"
 import { getNationalKitUrl } from "@/lib/national-assets"
+import { UEFA_EXPANSION_FEDERATIONS, type UefaExpansionDivision } from "@/lib/uefa-expansion"
+import { OFFICIAL_EUROPEAN_PARTICIPANTS_2026 } from "@/lib/official-european-participants-2026"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -48,12 +50,23 @@ export type Divisao =
   | "super_lig"
   | "pro_league_bel"
   | "russian_prem"
+  | "super_league_gre"
+  | "superliga_den"
+  | "fortuna_liga_cze"
+  | "premyer_liqa_aze"
+  | "eliteserien_nor"
+  | "protathlima_cyp"
+  | "premier_liga_kaz"
   // Americas - Sul
   | "liga_argentina"
   | "primera_a_col"
   | "primera_div_chi"
   | "primera_div_ury"
   | "primera_a_ecu"
+  | "primera_div_per"
+  | "primera_div_bol"
+  | "primera_div_par"
+  | "primera_div_ven"
   // Asia
   | "k_league_1"
   | "chinese_super"
@@ -68,11 +81,19 @@ export type Divisao =
   | "challenger_pro"
   | "tff_1_lig"
   | "russian_first"
+  | "betinia_liga"
+  | "obos_ligaen"
+  | "second_div_cyp"
+  | "chance_narodni_liga"
   // 2as divisões - Americas
   | "primera_b_arg"
   | "torneo_betplay"
   | "primera_b_chi"
   | "segunda_div_ury"
+  | "liga_2_per"
+  | "copa_simon_bolivar"
+  | "division_intermedia_par"
+  | "liga_futve_2"
   // Segundas divisoes que faltavam para o pais ter rebaixamento de verdade.
   // Sao montadas com o pool do proprio pais (ver PAIS_DA_DIVISAO).
   | "scottish_champ"
@@ -87,6 +108,7 @@ export type Divisao =
   | "carioca"
   | "mineiro"
   | "gaucho"
+  | UefaExpansionDivision
 
 export type Regiao = "brasil" | "europa" | "asia" | "americas"
 
@@ -108,6 +130,11 @@ export interface Team {
   divisao: Divisao | string
   regiao?: Regiao
   pais?: string
+  /** Equipes B/reservas podem disputar a liga, mas não subir à divisão da matriz. */
+  promotionEligible?: boolean
+  reserveTeamOf?: string
+  /** Qualidade/proveniência do cadastro esportivo, exibível pelos auditores. */
+  dataQuality?: "official-verified" | "federation-snapshot" | "provisional"
 }
 
 export interface TeamUniforms {
@@ -1407,6 +1434,80 @@ export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[]
     pais: normalizeCountry(t.pais) || undefined,
   }))
 
+/** Liga oficial 2026/27 por identidade global. Diferentemente do pool antigo,
+ * esta tabela não depende de prestígio nem da ordem do seed. */
+const _officialEuropeanDivisionByFileKey: Record<string, string> = {}
+const _officialEuropeanTeamsByDivision = new Map<string, Team[]>()
+
+{
+  const candidates = [...allTeams, ...allPoolTeams]
+  const byName = new Map<string, Team[]>()
+  for (const team of candidates) {
+    const key = _normKey(team.nome)
+    const list = byName.get(key) ?? []
+    list.push(team)
+    byName.set(key, list)
+  }
+  const used = new Set<string>()
+  let generated = 0
+  const slug = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
+
+  for (const [division, snapshot] of Object.entries(OFFICIAL_EUROPEAN_PARTICIPANTS_2026)) {
+    const country = division === "premier_league" || division === "championship" ? "Inglaterra"
+      : division === "la_liga" || division === "la_liga_2" ? "Espanha"
+        : division === "primeira_liga" || division === "liga_portugal_2" ? "Portugal"
+          : division === "eredivisie" || division === "eerste_divisie" ? "Holanda"
+            : division === "super_lig" || division === "tff_1_lig" ? "Turquia"
+              : division === "russian_prem" || division === "russian_first" ? "Russia"
+      : division === "bundesliga" || division === "bundesliga_2" ? "Alemanha"
+        : division === "ligue_1" || division === "ligue_2" ? "Franca"
+          : division === "serie_a_ita" || division === "serie_b_ita" ? "Italia"
+            : division === "pro_league_bel" || division === "challenger_pro" ? "Belgica" : "Escocia"
+    const teams: Team[] = []
+    for (const participant of snapshot.participants) {
+      const aliases = [participant.name, ...(participant.aliases ?? [])]
+      let team: Team | undefined
+      for (const alias of aliases) {
+        team = (byName.get(_normKey(alias)) ?? []).find(candidate =>
+          !used.has(candidate.file_key)
+          && _normKey(normalizeCountry(candidate.pais ?? candidate.estado)) === _normKey(normalizeCountry(country)),
+        )
+        if (team) break
+      }
+      if (!team) {
+        generated++
+        team = {
+          nome: participant.name,
+          curto: `O26${String(generated).padStart(3, "0")}`,
+          cidade: participant.name,
+          estado: country,
+          pais: country,
+          cor1: "#173B57",
+          cor2: "#E8F1F7",
+          prestigio: division.includes("_2") || division === "championship" || division === "eerste_divisie" || division === "tff_1_lig" || division === "russian_first" || division === "challenger_pro" || division === "scottish_champ" ? 54 : 70,
+          torcida: 150000,
+          estadio_cap: 9000,
+          saldo: 4_000_000,
+          file_key: `${slug(participant.name)}_official_26`,
+          estadio_nome: "",
+          patrocinador: "",
+          escudo_url: "",
+          divisao: division as Divisao,
+          regiao: "europa",
+          dataQuality: "official-verified",
+        }
+        allTeams.push(team)
+        byName.set(_normKey(team.nome), [team])
+      }
+      used.add(team.file_key)
+      _officialEuropeanDivisionByFileKey[team.file_key] = division
+      teams.push(team)
+    }
+    _officialEuropeanTeamsByDivision.set(division, teams)
+  }
+}
+
 // Times por divisao
 // PIRAMIDE VIVA: override global de divisao por clube. Depois de cada temporada,
 // rivais sobem/descem (lib/league-pyramid.ts) e o resultado fica aqui — um mapa
@@ -1419,6 +1520,11 @@ export function setClubDivisions(map: Record<string, string> | undefined): void 
 }
 export function getClubDivisions(): Record<string, string> {
   return _clubDivisions
+}
+
+/** Chave global e estável usada pela pirâmide. Saves antigos por `curto` continuam legíveis. */
+export function clubDivisionKey(team: { file_key: string }): string {
+  return `club:${team.file_key}`
 }
 /**
  * DIVISOES BRASILEIRAS DE 2026 — o acesso e o rebaixamento que ja tinham
@@ -1509,6 +1615,7 @@ const PROMOVIDOS_DO_POOL: Record<string, string> = {
   itabaiana_se: "serie_c",
   barra_sc: "serie_c",            // ⚠️ por nome casaria com "Barranquilla" (Colômbia)
 }
+Object.assign(PROMOVIDOS_DO_POOL, _officialEuropeanDivisionByFileKey)
 
 /** Os clubes do pool promovidos, ja como Team, prontos para entrar na divisao. */
 const _promovidosDoPool: Team[] = allPoolTeams.filter(t => PROMOVIDOS_DO_POOL[t.file_key])
@@ -1519,8 +1626,16 @@ export function getDivisoes2026(): Record<string, string> {
 }
 
 /** Divisao ATUAL do clube: piramide do save > tabela de 2026 > divisao estatica. */
-export function effectiveDivision(team: { curto: string; divisao: string }): string {
-  return _clubDivisions[team.curto] ?? _divisoes2026[team.curto] ?? team.divisao
+export function initialDivision(team: { curto: string; divisao: string; file_key?: string }): string {
+  return (team.file_key ? _officialEuropeanDivisionByFileKey[team.file_key] : undefined)
+    ?? (team.file_key ? PROMOVIDOS_DO_POOL[team.file_key] : undefined)
+    ?? _divisoes2026[team.curto]
+    ?? team.divisao
+}
+
+export function effectiveDivision(team: { curto: string; divisao: string; file_key?: string }): string {
+  const canonical = team.file_key ? _clubDivisions[clubDivisionKey({ file_key: team.file_key })] : undefined
+  return canonical ?? _clubDivisions[team.curto] ?? initialDivision(team)
 }
 
 export function getTeamsByDivision(divisao: string): Team[] {
@@ -1529,10 +1644,14 @@ export function getTeamsByDivision(divisao: string): Team[] {
   // curado intocado evita que um `curto` repetido do pool atropele um clube
   // curado em toda tela que resolve clube por codigo.
   const doPool = _promovidosDoPool
-    .filter(t => (_clubDivisions[t.curto] ?? PROMOVIDOS_DO_POOL[t.file_key]) === divisao)
+    .filter(t => effectiveDivision(t) === divisao)
     .filter(t => !curados.some(c => c.file_key === t.file_key))
     .map(applyTeamOverride)
-  return [...curados, ...doPool]
+  const result = [...curados, ...doPool]
+  const snapshot = _officialEuropeanTeamsByDivision.get(divisao)
+  if (!snapshot || Object.keys(_clubDivisions).length > 0) return result
+  const byKey = new Map(result.map(team => [team.file_key, team]))
+  return snapshot.map(team => byKey.get(team.file_key) ?? applyTeamOverride(team))
 }
 
 /** Abaixo disto o turno-returno não sustenta um campeonato. */
@@ -1565,16 +1684,27 @@ export const TAMANHO_OFICIAL_DA_LIGA: Record<string, number> = {
   ligue_1: 18, ligue_2: 18,
   primeira_liga: 18, eredivisie: 18, scottish_prem: 12, super_lig: 18,
   pro_league_bel: 18, russian_prem: 16,
+  super_league_gre: 14, superliga_den: 12, fortuna_liga_cze: 16,
+  premyer_liqa_aze: 12, eliteserien_nor: 16, protathlima_cyp: 14,
+  premier_liga_kaz: 16,
   saudi_pro: 18, saudi_first_div: 18,
   j_league: 20, k_league_1: 12, chinese_super: 16,
   mls: 30, liga_mx: 18,
   liga_argentina: 30, primera_a_col: 20, primera_a_ecu: 16,
   primera_div_chi: 16, primera_b_chi: 16, primera_div_ury: 16,
+  primera_div_per: 18, primera_div_bol: 16, primera_div_par: 12, primera_div_ven: 14,
+  liga_2_per: 18, copa_simon_bolivar: 24, division_intermedia_par: 16, liga_futve_2: 14,
   // Segundas divisoes montadas com o pool do proprio pais (ver PAIS_DA_DIVISAO).
-  liga_portugal_2: 18, eerste_divisie: 20, challenger_pro: 16,
-  tff_1_lig: 20, russian_first: 20, primera_b_arg: 36,
+  liga_portugal_2: 18, eerste_divisie: 20, challenger_pro: 15,
+  tff_1_lig: 20, russian_first: 18, primera_b_arg: 36,
+  betinia_liga: 12, obos_ligaen: 16, second_div_cyp: 16, chance_narodni_liga: 16,
   torneo_betplay: 16, segunda_div_ury: 14, china_league_one: 16,
   scottish_champ: 10, serie_b_ecu: 10,
+  ...Object.fromEntries(UEFA_EXPANSION_FEDERATIONS.flatMap(federation =>
+    [federation.top, federation.second]
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry?.participants.length))
+      .map(entry => [entry.id, entry.participants.length]),
+  )),
 }
 
 /** Alvo de clubes para a divisao, com o padrao antigo (18) para o que nao esta na tabela. */
@@ -1601,6 +1731,9 @@ const PAIS_DA_DIVISAO: Record<string, string> = {
   tff_1_lig: "Turquia", russian_first: "Russia", primera_b_arg: "Argentina",
   torneo_betplay: "Colombia", segunda_div_ury: "Uruguai",
   china_league_one: "China", scottish_champ: "Escocia", serie_b_ecu: "Equador",
+  liga_2_per: "Peru", copa_simon_bolivar: "Bolivia",
+  division_intermedia_par: "Paraguai", liga_futve_2: "Venezuela",
+  betinia_liga: "Dinamarca", obos_ligaen: "Noruega", second_div_cyp: "Chipre", chance_narodni_liga: "Chequia",
   // ⚠️ Japao (11 clubes livres no pool), China (11) e Coreia do Sul (ZERO) nao
   // sustentam a segunda divisao que declaram. Ficam de fora de proposito: uma
   // liga com tres clubes e pior do que nenhuma.
@@ -1625,6 +1758,9 @@ const UFS_BRASIL = new Set(["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","M
 
 const APELIDOS_DE_PAIS: Record<string, string> = {
   chequia: "tchequia", "republica tcheca": "tchequia",
+  tch: "tchequia",
+  azb: "azerbaijao", aze: "azerbaijao",
+  cyp: "chipre", caz: "cazaquistao", kaz: "cazaquistao",
   holanda: "paises baixos",
   eua: "estados unidos", "estados unidos da america": "estados unidos",
   // ⚠️ O seed grava a Arabia Saudita como `ARA` (a sigla do arquivo e ARB, e a

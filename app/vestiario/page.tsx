@@ -16,9 +16,7 @@ import {
   Frown,
   Meh,
   Shield,
-  Zap,
   Trophy,
-  HandHeart,
   UserPlus,
   UserMinus,
   Siren,
@@ -28,25 +26,13 @@ import {
   Calendar
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
-import { TeamCrest } from "@/components/team-crest"
-import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
-import { useGameState } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
-import { getTeamByShort, serieATeams } from "@/lib/teams-data"
-import { useGameEngine, type MoraleEvent } from "@/lib/game-engine"
+import { useGameEngine } from "@/lib/game-engine"
 import { buildConversation, resolveChoice, type ConvTone } from "@/lib/player-conversation"
-
-// Eventos de exemplo para demonstracao
-const EXAMPLE_EVENTS: MoraleEvent[] = [
-  { week: 10, type: "vitoria", description: "Vitoria convincente no classico", impact: 10 },
-  { week: 9, type: "contratacao", description: "Chegada de reforco de peso", impact: 5 },
-  { week: 8, type: "elogio", description: "Treinador elogia dedicacao do grupo", impact: 3 },
-  { week: 7, type: "derrota", description: "Derrota em casa para rival", impact: -8 },
-  { week: 6, type: "lesao", description: "Lesao de jogador titular", impact: -5 },
-]
+import { analyseSquadDynamics, roleLabel } from "@/lib/squad-dynamics"
 
 // Acoes de grupo
 const GROUP_ACTIONS = [
@@ -133,21 +119,20 @@ export default function VestiarioPage() {
     window.addEventListener('gamepad:button', handler)
     return () => window.removeEventListener('gamepad:button', handler)
   }, [router])
-  const { state } = useGameState()
   const { team: userTeam } = useUserTeam()
   const gameEngine = useGameEngine()
   
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
   const [showConversation, setShowConversation] = useState(false)
   const [conversationResult, setConversationResult] = useState<{ success: boolean; message: string } | null>(null)
-  const [lastGroupAction, setLastGroupAction] = useState<Record<string, number>>({})
-  
-  const { squadPlayers, squadMorale, addMoraleEvent, currentWeek } = gameEngine
+  const { squadPlayers, squadMorale, addMoraleEvent, currentWeek, groupActionCooldowns, performGroupAction } = gameEngine
 
-  // Usar eventos de exemplo se nao houver eventos reais
-  const events = squadMorale.recentEvents.length > 0 
-    ? squadMorale.recentEvents 
-    : EXAMPLE_EVENTS
+  const events = squadMorale.recentEvents
+  const dynamics = useMemo(() => analyseSquadDynamics(squadPlayers), [squadPlayers])
+  const dynamicsByPlayer = useMemo(
+    () => new Map(dynamics.players.map(item => [item.playerId, item])),
+    [dynamics],
+  )
 
   // Agrupar jogadores por moral
   const playersByMorale = useMemo(() => {
@@ -226,22 +211,14 @@ export default function VestiarioPage() {
     const action = GROUP_ACTIONS.find(a => a.id === actionId)
     if (!action) return
     
-    const lastUsed = lastGroupAction[actionId] || 0
-    if (currentWeek - lastUsed < action.cooldown) return
-    
-    addMoraleEvent({
-      type: "elogio",
-      description: action.description,
-      impact: action.impact
-    })
-    
-    setLastGroupAction(prev => ({ ...prev, [actionId]: currentWeek }))
+    performGroupAction(action)
   }
 
   const canUseAction = (actionId: string) => {
     const action = GROUP_ACTIONS.find(a => a.id === actionId)
     if (!action) return false
-    const lastUsed = lastGroupAction[actionId] || 0
+    const lastUsed = groupActionCooldowns?.[actionId]
+    if (lastUsed == null) return true
     return currentWeek - lastUsed >= action.cooldown
   }
 
@@ -296,8 +273,23 @@ export default function VestiarioPage() {
               {playersByMorale.Feliz.length + playersByMorale.Motivado.length}
               <span className="text-lg text-white/50">/{squadPlayers.length}</span>
             </div>
+            <div className="mt-2 text-xs text-white/45">Satisfação com papéis: {dynamics.satisfaction}%</div>
           </div>
         </div>
+
+        {dynamics.concerns > 0 && (
+          <div className="mb-6 rounded-xl border border-orange-400/20 bg-orange-400/[0.06] p-4">
+            <div className="flex items-center gap-2 text-sm font-bold text-orange-300">
+              <AlertTriangle className="h-4 w-4" />
+              {dynamics.concerns} atleta{dynamics.concerns === 1 ? "" : "s"} questionando seu papel
+            </div>
+            <p className="mt-1 text-xs text-white/55">
+              {dynamics.unsettledLeaders > 0
+                ? `${dynamics.unsettledLeaders} liderança${dynamics.unsettledLeaders === 1 ? " está" : "s estão"} recebendo menos minutos do que o status no elenco exige.`
+                : "As reclamações estão concentradas em jogadores de rotação e reservas."}
+            </p>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Eventos Recentes */}
@@ -308,6 +300,11 @@ export default function VestiarioPage() {
             </h2>
             
             <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin">
+              {events.length === 0 && (
+                <div className="rounded-lg border border-dashed border-white/10 p-6 text-center text-sm text-white/40">
+                  Nenhum evento real registrado nesta carreira.
+                </div>
+              )}
               {events.map((event, i) => {
                 const Icon = getEventIcon(event.type)
                 return (
@@ -356,7 +353,9 @@ export default function VestiarioPage() {
                       <span className="text-xs text-white/50">({players.length})</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      {players.map(player => (
+                      {players.map(player => {
+                        const profile = dynamicsByPlayer.get(player.id)
+                        return (
                         <button
                           key={player.id}
                           onClick={() => {
@@ -370,10 +369,18 @@ export default function VestiarioPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-xs font-medium text-white truncate">{player.name}</div>
+                            {profile && (
+                              <div className={cn("text-[10px]", profile.concern ? "text-orange-300" : "text-white/35")}>
+                                {roleLabel(profile.role)} · {profile.satisfaction}%
+                              </div>
+                            )}
                           </div>
-                          <MessageCircle className="h-3 w-3 text-white/30" />
+                          {profile?.concern
+                            ? <AlertTriangle className="h-3 w-3 text-orange-300" />
+                            : <MessageCircle className="h-3 w-3 text-white/30" />}
                         </button>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 )
@@ -391,8 +398,8 @@ export default function VestiarioPage() {
             <div className="space-y-3">
               {GROUP_ACTIONS.map(action => {
                 const canUse = canUseAction(action.id)
-                const lastUsed = lastGroupAction[action.id] || 0
-                const cooldownRemaining = action.cooldown - (currentWeek - lastUsed)
+                const lastUsed = groupActionCooldowns?.[action.id]
+                const cooldownRemaining = lastUsed == null ? 0 : Math.max(0, action.cooldown - (currentWeek - lastUsed))
                 
                 return (
                   <button

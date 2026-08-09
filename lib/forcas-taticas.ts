@@ -49,6 +49,10 @@ export interface ForcasTaticas {
   coerencia: number
   /** Frases prontas do que esta brigando entre si. Vazio = plano coerente. */
   conflitos: string[]
+  /** Custo de reorganizar as duas estruturas; chega ao motor como desgaste. */
+  transitionLoad: number
+  /** Intensidade real do plano, usada pelo desgaste e pela pressão. */
+  pressingLoad: number
 }
 
 type Delta = { attack?: number; defense?: number; midfield?: number }
@@ -133,6 +137,36 @@ const DE_CHAVES: Record<string, Delta> = {
   holdPosition: { defense: 2, attack: -2 },
 }
 
+const DE_FORMA_COM_BOLA: Record<string, Delta> = {
+  "2-3-5": { attack: 4, midfield: 1, defense: -4 },
+  "3-2-5": { attack: 3, midfield: 1, defense: -2 },
+  "3-4-3": { attack: 2, midfield: 1, defense: -1 },
+  "4-2-3-1": { attack: 1, midfield: 1 },
+  "4-3-3": { attack: 1, midfield: 2, defense: -1 },
+  "4-4-2": { attack: 1, defense: 1, midfield: -1 },
+}
+
+const DE_FORMA_SEM_BOLA: Record<string, Delta> = {
+  "4-4-2": { defense: 2, midfield: 1, attack: -1 },
+  "4-1-4-1": { defense: 2, midfield: 2, attack: -2 },
+  "4-2-3-1": { defense: 1, midfield: 1 },
+  "5-3-2": { defense: 3, attack: -2 },
+  "5-4-1": { defense: 4, midfield: 1, attack: -4 },
+  "3-4-3": { midfield: 1, defense: -1 },
+}
+
+function linhas(formation?: string): number[] {
+  return String(formation ?? "").split("-").map(Number).filter(Number.isFinite)
+}
+
+function cargaDeTransicao(comBola?: string, semBola?: string): number {
+  const a = linhas(comBola), b = linhas(semBola)
+  const tamanho = Math.max(a.length, b.length)
+  let movement = 0
+  for (let i = 0; i < tamanho; i++) movement += Math.abs((a[i] ?? 0) - (b[i] ?? 0))
+  return Math.min(1, movement / 10)
+}
+
 function somar(alvo: ForcasTaticas, d: Delta): void {
   alvo.attack += d.attack ?? 0
   alvo.defense += d.defense ?? 0
@@ -176,7 +210,7 @@ function acharSinergias(t: TeamTactics): number {
  * XI titular.
  */
 export function forcasDaTatica(t: TeamTactics): ForcasTaticas {
-  const f: ForcasTaticas = { attack: 0, defense: 0, midfield: 0, coerencia: 0, conflitos: [] }
+  const f: ForcasTaticas = { attack: 0, defense: 0, midfield: 0, coerencia: 0, conflitos: [], transitionLoad: 0, pressingLoad: 0 }
 
   somar(f, DE_ESTILO[t.playingStyle] ?? {})
   somar(f, DE_PASSE[t.passingStyle] ?? {})
@@ -187,6 +221,8 @@ export function forcasDaTatica(t: TeamTactics): ForcasTaticas {
   somar(f, DE_LINHA[t.defensiveLine] ?? {})
   somar(f, DE_PRESSAO[t.pressingIntensity] ?? {})
   somar(f, DE_MARCACAO[t.markingStyle] ?? {})
+  somar(f, DE_FORMA_COM_BOLA[t.inPossessionFormation ?? ""] ?? {})
+  somar(f, DE_FORMA_SEM_BOLA[t.outOfPossessionFormation ?? ""] ?? {})
 
   if (t.shootFromDistance) somar(f, DE_CHAVES.shootFromDistance)
   if (t.playThroughBalls) somar(f, DE_CHAVES.playThroughBalls)
@@ -201,6 +237,10 @@ export function forcasDaTatica(t: TeamTactics): ForcasTaticas {
   const bruto = sinergias * 0.34 - conflitos.length * 0.5
   f.coerencia = Math.max(-1, Math.min(1, bruto))
   f.conflitos = conflitos
+  f.transitionLoad = cargaDeTransicao(t.inPossessionFormation, t.outOfPossessionFormation)
+  f.pressingLoad = t.pressingIntensity === "muito_alta" ? 1
+    : t.pressingIntensity === "alta" ? 0.72
+      : t.pressingIntensity === "media" ? 0.42 : 0.18
 
   // A coerencia multiplica o que o plano ja rende: plano confuso entrega menos
   // do que a soma das partes, plano redondo entrega um pouco mais.

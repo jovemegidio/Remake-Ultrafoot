@@ -10,6 +10,8 @@
 // mora no save como `clubDivisions: Record<curto, divisao>`, evoluido a cada
 // fim de temporada por `evolvePyramids`.
 
+import { UEFA_EXPANSION_FEDERATIONS } from "@/lib/uefa-expansion"
+
 /** Uma piramide nacional: divisoes do topo para a base e quantos clubes trocam
  *  entre cada par adjacente. swaps[i] = clubes entre tiers[i] e tiers[i+1]. */
 export interface Pyramid {
@@ -59,6 +61,27 @@ export const PYRAMIDS: readonly Pyramid[] = [
   // Coreia do Sul: a K League 2 passou a existir de verdade (17 clubes e
   // elencos importados do Transfermarkt), entao o pais volta a rebaixar.
   { country: "Coreia do Sul", tiers: ["k_league_1", "k_league_2"], swaps: [2] },
+  { country: "Peru", tiers: ["primera_div_per", "liga_2_per"], swaps: [2] },
+  { country: "Bolivia", tiers: ["primera_div_bol", "copa_simon_bolivar"], swaps: [2] },
+  { country: "Paraguai", tiers: ["primera_div_par", "division_intermedia_par"], swaps: [2] },
+  { country: "Venezuela", tiers: ["primera_div_ven", "liga_futve_2"], swaps: [2] },
+  { country: "Dinamarca", tiers: ["superliga_den", "betinia_liga"], swaps: [2] },
+  { country: "Noruega", tiers: ["eliteserien_nor", "obos_ligaen"], swaps: [2] },
+  { country: "Chipre", tiers: ["protathlima_cyp", "second_div_cyp"], swaps: [3] },
+  { country: "Chequia", tiers: ["fortuna_liga_cze", "chance_narodni_liga"], swaps: [1] },
+  // Federações da expansão só entram aqui quando os DOIS níveis têm uma
+  // fotografia explícita de participantes. O filtro evita transformar uma
+  // segunda divisão ainda aberta em uma pirâmide fictícia e liga
+  // automaticamente novas divisões verificadas nas próximas entregas.
+  ...UEFA_EXPANSION_FEDERATIONS.flatMap((federation): Pyramid[] => {
+    const { top, second } = federation
+    if (!top?.participants.length || !second?.participants.length) return []
+    return [{
+      country: federation.country,
+      tiers: [top.id, second.id],
+      swaps: [Math.min(top.relegation, second.promotion)],
+    }]
+  }),
 ]
 
 const TIER_INDEX = new Map<string, { pyramid: Pyramid; idx: number }>()
@@ -119,6 +142,18 @@ const LABELS: Record<string, string> = {
   scottish_prem: "Scottish Premiership", scottish_champ: "Scottish Championship",
   primera_a_ecu: "LigaPro Serie A", serie_b_ecu: "LigaPro Serie B",
   k_league_1: "K League 1", k_league_2: "K League 2",
+  primera_div_per: "Liga 1 Peru", liga_2_per: "Liga 2 Peru",
+  primera_div_bol: "División Profesional", copa_simon_bolivar: "Copa Simón Bolívar",
+  primera_div_par: "División de Honor", division_intermedia_par: "División Intermedia",
+  primera_div_ven: "Liga FUTVE 1", liga_futve_2: "Liga FUTVE 2",
+  superliga_den: "3F Superliga", betinia_liga: "Betinia LIGA",
+  eliteserien_nor: "Eliteserien", obos_ligaen: "OBOS-ligaen",
+  protathlima_cyp: "Cyprus League", second_div_cyp: "Cyprus Second Division",
+  fortuna_liga_cze: "Chance Liga", chance_narodni_liga: "Chance Národní Liga",
+  uefa_aut_1: "Austrian Bundesliga", uefa_aut_2: "2. Liga",
+  uefa_pol_1: "Ekstraklasa", uefa_pol_2: "I liga",
+  uefa_rou_1: "Liga I", uefa_rou_2: "Liga II",
+  uefa_sui_1: "Swiss Super League", uefa_sui_2: "Swiss Challenge League",
 }
 export function divisionLabel(division: string): string {
   return LABELS[division] ?? division
@@ -163,11 +198,15 @@ export function resolveDivisionChange(
 // ── Piramide viva: evolucao de TODOS os clubes ──────────────────────────────
 
 export interface PyramidClub {
+  /** Identidade global persistida. `curto` pode colidir entre países/pools. */
+  id?: string
   curto: string
   /** Divisao ATUAL (ja com override aplicado). */
   division: string
   /** Forca do clube — ordena as divisoes que o jogo nao simula. */
   prestige: number
+  /** `false` para equipes B/reservas impedidas de subir pelo regulamento. */
+  promotionEligible?: boolean
 }
 
 function hash(value: string): number {
@@ -236,10 +275,12 @@ export function evolvePyramids(params: {
       const lowerOrdered = finalOrder(lower, lowerClubs)
 
       // Os `swap` piores da de cima descem; os `swap` melhores da de baixo sobem.
-      const relegated = upperOrdered.slice(-swap)
-      const promoted = lowerOrdered.slice(0, swap)
-      for (const c of relegated) overrides[c.curto] = lower
-      for (const c of promoted) overrides[c.curto] = upper
+      const promoted = lowerOrdered.filter(club => club.promotionEligible !== false).slice(0, swap)
+      // Se faltarem clubes elegíveis, desce a mesma quantidade que sobe para
+      // preservar o tamanho das duas divisões.
+      const relegated = upperOrdered.slice(-promoted.length)
+      for (const c of relegated) overrides[c.id ?? c.curto] = lower
+      for (const c of promoted) overrides[c.id ?? c.curto] = upper
     }
   }
   return overrides

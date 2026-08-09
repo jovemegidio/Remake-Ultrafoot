@@ -170,6 +170,29 @@ const OFFICIAL_SOURCE_BY_ID: Partial<Record<string, string>> = {
   liga_mx: "https://subinternacional.ligamx.net/cancha/detallenoticia/46954/por-el-mundial-el-torneo-que-hoy-inicia-se-llamara-clausura-2026-con-mexico",
   liguilla: "https://subinternacional.ligamx.net/cancha/detallenoticia/46954/por-el-mundial-el-torneo-que-hoy-inicia-se-llamara-clausura-2026-con-mexico",
   primera_div_ury: "https://www.auf.org.uy/liga-auf-uruguaya/",
+  liga_1_peru: "https://liga1.pe/wp-content/uploads/2026/03/Reglamento-Liga1-Te-Apuesto-2026.pdf",
+  copa_liga_peru: "https://fpf.org.pe/libreros/reglamentos-bases/",
+  division_profesional_bol: "https://fbf.com.bo/temporada-2026-de-la-division-profesional/",
+  copa_division_profesional_bol: "https://fbf.com.bo/copa-pacena-2026/",
+  division_honor_par: "https://www.apf.org.py/noticias/listo-calendario-para-la-temporada-2026",
+  copa_paraguay: "https://www.apf.org.py/noticias/esta-es-la-hoja-de-ruta-de-la-copa-de-todos-2026",
+  liga_futve_1: "https://www.fvf.com.ve/",
+  copa_venezuela: "https://www.fvf.com.ve/articulos/vuelve-la-copa-venezuela-la-fvf-anuncia-el-inicio-de-la-edicion-2026",
+  liga_2_per: "https://fpf.org.pe/wp-content/uploads/2026/06/Reglamento-Liga2-2026-3.pdf",
+  copa_simon_bolivar: "https://fbf.com.bo/arranca-la-copa-simon-bolivar-2026/",
+  division_intermedia_par: "https://www.apf.org.py/",
+  liga_futve_2: "https://www.fvf.com.ve/articulos/vuelve-la-copa-venezuela-la-fvf-anuncia-el-inicio-de-la-edicion-2026",
+  super_league_gre: "https://www.slgr.gr/el/article/apophaseis-d-s-8-12-2025/",
+  superliga_den: "https://cms.superliga.dk/media/amockaym/datoplan-efter%C3%A5r-2026.pdf",
+  fortuna_liga_cze: "https://www.chanceliga.cz/finale/herni-model-ligy",
+  chance_narodni_liga: "https://www.chnliga.cz/text/3-o-fnl",
+  premyer_liqa_aze: "https://www.affa.az/index.php/news/affa-nn-craiyy-komitsinin-iclas-keirilib-fotolar/77594",
+  eliteserien_nor: "https://www.fotball.no/globalassets/regler-og-retningslinjer/turneringsbestemmelser/turneringsbestemmelser-eliteserien.pdf",
+  protathlima_cyp: "https://www.cfa.com.cy/Gr/news/53532",
+  premier_liga_kaz: "https://kff.kz/ru/news/27380",
+  betinia_liga: "https://www.dbu.dk/resultater/pulje/507530/stilling",
+  obos_ligaen: "https://www.fotball.no/turneringer/obosligaen/?underside=tabellen",
+  second_div_cyp: "https://cfa.com.cy/Gr/news/53529",
   serie_b_ita: "https://www.legab.it/news/elezione-figc-mandato-esplorativo-a-bedin-focus-su-contenuti-da-presentare-ai-candidati",
   segunda_div_ury: "https://auf.org.uy/se-sorteo-el-fixture-de-la-segunda-division-profesional-2026/",
 }
@@ -209,7 +232,7 @@ const OFFICIAL_SOURCE_BY_REGION: Record<string, string> = {
 }
 
 function catalogRegulation(competition: Competition): CompetitionRegulation2026 {
-  const sourceUrl = OFFICIAL_SOURCE_BY_ID[competition.id] ?? OFFICIAL_SOURCE_BY_REGION[competition.region]
+  const sourceUrl = competition.sourceUrl ?? OFFICIAL_SOURCE_BY_ID[competition.id] ?? OFFICIAL_SOURCE_BY_REGION[competition.region]
   const cycle: "2026" | "2026/27" = ["brasil", "argentina", "colombia", "chile", "uruguai", "equador", "usa", "japao", "coreia_do_sul", "china", "america_sul", "america_norte"].includes(competition.region) ? "2026" : "2026/27"
   return {
     id: competition.id,

@@ -1,11 +1,91 @@
 // Dados dos times internacionais
 import { type Team, type Divisao } from "./teams-data"
 import { getEscudoUrl } from "./escudos-map"
+import realClubsStage1 from "../data/seeds/real-clubs-stage1.json"
+import realClubsStage1LowerEurope from "../data/seeds/real-clubs-stage1-lower-europe.json"
+import realClubsStage3CzechSecond from "../data/seeds/real-clubs-stage3-czech-second.json"
+import { UEFA_EXPANSION_CLUBS } from "./uefa-expansion"
 
 // Usa a funcao centralizada de escudos que verifica primeiro os locais
 function getIntlEscudo(key: string): string {
   return getEscudoUrl(key)
 }
+
+type RealClubStage1 = {
+  nome: string
+  curto: string
+  cidade: string
+  pais: string
+  divisao: Divisao
+  file_key: string
+  promotionEligible?: boolean
+  reserveTeamOf?: string
+}
+
+/** Clubes oficiais adicionados na etapa 1. Elencos entram na etapa 4. */
+const realClubsStage1Teams: Team[] = (realClubsStage1 as RealClubStage1[]).map((club, index) => ({
+  ...club,
+  estado: club.pais,
+  cor1: "#1D3557",
+  cor2: "#F1FAEE",
+  prestigio: Math.max(42, 60 - Math.floor(index / 12)),
+  torcida: 500000,
+  estadio_cap: 10000,
+  saldo: 6000000,
+  estadio_nome: "",
+  patrocinador: "",
+  escudo_url: getIntlEscudo(club.file_key),
+  regiao: "europa",
+}))
+
+/** Elites 2026/27 corrigidas e segundas divisões oficiais do lote europeu. */
+const realClubsStage1LowerEuropeTeams: Team[] = (realClubsStage1LowerEurope as RealClubStage1[]).map((club, index) => ({
+  ...club,
+  estado: club.pais,
+  cor1: "#264653",
+  cor2: "#F4A261",
+  prestigio: Math.max(38, 59 - Math.floor(index / 16)),
+  torcida: 350000,
+  estadio_cap: 8500,
+  saldo: 4000000,
+  estadio_nome: "",
+  patrocinador: "",
+  escudo_url: getIntlEscudo(club.file_key),
+  regiao: "europa",
+}))
+
+/** Chance Národní Liga 2026/27, incluindo as duas equipes B sem direito a acesso. */
+const realClubsStage3CzechSecondTeams: Team[] = (realClubsStage3CzechSecond as RealClubStage1[]).map((club, index) => ({
+  ...club,
+  estado: club.pais,
+  cor1: "#11457E",
+  cor2: "#FFFFFF",
+  prestigio: Math.max(36, 50 - Math.floor(index / 6)),
+  torcida: 250000,
+  estadio_cap: 7500,
+  saldo: 3000000,
+  estadio_nome: "",
+  patrocinador: "",
+  escudo_url: getIntlEscudo(club.file_key),
+  regiao: "europa",
+}))
+
+/** Novas associações UEFA. Os clubes são explícitos; o status provisório fica
+ * no próprio Team para que a cobertura não seja confundida com certificação. */
+const uefaExpansionTeams: Team[] = UEFA_EXPANSION_CLUBS.map((club, index) => ({
+  ...club,
+  estado: club.pais,
+  cor1: "#173B57",
+  cor2: "#E8F1F7",
+  prestigio: Math.max(38, 61 - Math.floor(index / 36)),
+  torcida: 250000,
+  estadio_cap: 9000,
+  saldo: 4000000,
+  estadio_nome: "",
+  patrocinador: "",
+  escudo_url: getIntlEscudo(club.file_key),
+  regiao: "europa",
+}))
 
 // =============================================
 // PREMIER LEAGUE - INGLATERRA
@@ -3904,6 +3984,9 @@ export const primeiraAColTeams: Team[] = [
 // verdade — e `allInternationalTeams` continua espalhando o conteiner inteiro,
 // senao os convidados sumiriam do mundo e as competicoes continentais quebrariam.
 const chileEConvidados: Team[] = [
+  ...realClubsStage1Teams,
+  ...realClubsStage1LowerEuropeTeams,
+  ...realClubsStage3CzechSecondTeams,
   { nome: "Colo Colo", curto: "CCO", cidade: "Santiago", estado: "Chile", cor1: "#FFFFFF", cor2: "#000000", prestigio: 88, torcida: 250000000, estadio_cap: 47000, saldo: 150000000, file_key: "colo_colo", estadio_nome: "Estadio Monumental David Arellano", patrocinador: "Adidas", escudo_url: getIntlEscudo("colo_colo"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
   { nome: "Universidad Catolica", curto: "UCA", cidade: "Santiago", estado: "Chile", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 86, torcida: 220000000, estadio_cap: 20550, saldo: 130000000, file_key: "u_catolica_chi", estadio_nome: "Estadio San Carlos de Apoquindo", patrocinador: "Cruzados", escudo_url: getIntlEscudo("u_catolica_chi"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
   { nome: "Universidad de Chile", curto: "UCH", cidade: "Santiago", estado: "Chile", cor1: "#003DA5", cor2: "#CC0000", prestigio: 84, torcida: 200000000, estadio_cap: 47000, saldo: 120000000, file_key: "u_de_chile", estadio_nome: "Estadio Monumental David Arellano", patrocinador: "U de Chile", escudo_url: getIntlEscudo("u_de_chile"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
@@ -4255,6 +4338,7 @@ export const laLiga2Teams: Team[] = [
 // EXPORTACAO DE TODOS OS TIMES INTERNACIONAIS
 // =============================================
 export const allInternationalTeams = [
+  ...uefaExpansionTeams,
   ...premierLeagueTeams,
   ...laLigaTeams,
   ...serieAItaTeams,

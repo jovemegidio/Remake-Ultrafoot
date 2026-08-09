@@ -173,7 +173,7 @@ export default function ContratosPage() {
       counts[getContractStatus(p, currentWeek, currentSeason)]++
     })
     return counts
-  }, [squadPlayers, currentWeek])
+  }, [squadPlayers, currentWeek, currentSeason])
 
   useEffect(() => {
     const filterOrder: ("all" | "expiring" | "expired")[] = ["all", "expiring", "expired"]

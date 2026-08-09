@@ -59,8 +59,11 @@ import { useDiscordRPC } from "@/hooks/use-discord-rpc"
 import { useTranslation } from "@/lib/i18n"
 import { persistGameEngineNow, useGameEngine, shootingForPosition, type Player as EnginePlayer } from "@/lib/game-engine"
 import { forcasDaTatica } from "@/lib/forcas-taticas"
+import { aiTacticForClub, applyTacticModifiers, type TacticalIdentity } from "@/lib/tactics-engine"
+import { aiClubSocialMatchModifier } from "@/lib/ai-club-social"
 import { climaDoVestiario } from "@/lib/hierarquia-do-elenco"
-import { flushPersistentStore } from "@/lib/persistent-store"
+import { flushPersistentStore, storeGet } from "@/lib/persistent-store"
+import { applyMedicalRestrictionsForMatch, normalizePerformanceState, performanceStorageKey } from "@/lib/performance-center"
 import { hardNavigate } from "@/lib/hard-navigation"
 import {
   type MatchSpeed,
@@ -83,34 +86,6 @@ import { useCorDoUniforme } from "@/lib/cor-do-uniforme"
 import { useMatchSounds } from "@/hooks/use-match-sounds"
 import { clearQueue as clearCommentary, enqueueEvent, initAudio } from "@/lib/audio-commentary"
 import { applyPlayedYouthMatch } from "@/lib/youth-career-engine"
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Mock players - usados como elenco padrao quando nao houver squad real
-// ─────────────────────────────────────────────────────────────────────────────
-
-const buildSquad = (offset = 0, prefix = ""): MatchPlayer[] => [
-  { id: offset + 1, name: `${prefix}Silva`, number: 1, position: "GOL", rating: 78, stamina: 100, defending: 75, physical: 70, pace: 50, shooting: 25, passing: 60, dribbling: 35 },
-  { id: offset + 2, name: `${prefix}Santos`, number: 2, position: "LD", rating: 74, stamina: 95, pace: 82, shooting: 55, passing: 70, dribbling: 72, defending: 74, physical: 70 },
-  { id: offset + 3, name: `${prefix}Oliveira`, number: 3, position: "ZAG", rating: 77, stamina: 92, pace: 68, shooting: 45, passing: 60, dribbling: 55, defending: 80, physical: 82 },
-  { id: offset + 4, name: `${prefix}Costa`, number: 4, position: "ZAG", rating: 76, stamina: 90, pace: 70, shooting: 42, passing: 58, dribbling: 52, defending: 78, physical: 80 },
-  { id: offset + 5, name: `${prefix}Ferreira`, number: 6, position: "LE", rating: 73, stamina: 88, pace: 85, shooting: 58, passing: 72, dribbling: 75, defending: 70, physical: 68 },
-  { id: offset + 6, name: `${prefix}Souza`, number: 5, position: "VOL", rating: 76, stamina: 82, pace: 72, shooting: 60, passing: 75, dribbling: 72, defending: 76, physical: 75 },
-  { id: offset + 7, name: `${prefix}Almeida`, number: 8, position: "MEI", rating: 78, stamina: 78, pace: 75, shooting: 70, passing: 80, dribbling: 78, defending: 60, physical: 70 },
-  { id: offset + 8, name: `${prefix}Rodrigues`, number: 10, position: "MEI", rating: 82, stamina: 75, pace: 80, shooting: 75, passing: 80, dribbling: 82, defending: 55, physical: 68 },
-  { id: offset + 9, name: `${prefix}Lima`, number: 7, position: "PE", rating: 79, stamina: 76, pace: 88, shooting: 72, passing: 70, dribbling: 80, defending: 35, physical: 65 },
-  { id: offset + 10, name: `${prefix}Pereira`, number: 9, position: "ATA", rating: 84, stamina: 72, pace: 85, shooting: 86, passing: 68, dribbling: 80, defending: 32, physical: 76 },
-  { id: offset + 11, name: `${prefix}Martins`, number: 11, position: "PD", rating: 78, stamina: 78, pace: 90, shooting: 70, passing: 72, dribbling: 82, defending: 32, physical: 62 },
-]
-
-const buildBench = (offset = 100, prefix = ""): MatchPlayer[] => [
-  { id: offset + 1, name: `${prefix}Gomes`, number: 12, position: "GOL", rating: 70, stamina: 100, defending: 70, physical: 68 },
-  { id: offset + 2, name: `${prefix}Ribeiro`, number: 13, position: "ZAG", rating: 71, stamina: 100, pace: 65, shooting: 40, passing: 58, dribbling: 50, defending: 75, physical: 78 },
-  { id: offset + 3, name: `${prefix}Araujo`, number: 14, position: "VOL", rating: 73, stamina: 100, pace: 70, shooting: 55, passing: 72, dribbling: 68, defending: 74, physical: 75 },
-  { id: offset + 4, name: `${prefix}Barbosa`, number: 15, position: "MEI", rating: 74, stamina: 100, pace: 72, shooting: 68, passing: 76, dribbling: 75, defending: 50, physical: 65 },
-  { id: offset + 5, name: `${prefix}Carvalho`, number: 16, position: "ATA", rating: 76, stamina: 100, pace: 82, shooting: 80, passing: 65, dribbling: 75, defending: 30, physical: 72 },
-  { id: offset + 6, name: `${prefix}Tavares`, number: 17, position: "PD", rating: 72, stamina: 100, pace: 86, shooting: 65, passing: 68, dribbling: 78, defending: 30, physical: 62 },
-  { id: offset + 7, name: `${prefix}Mendes`, number: 18, position: "MEI", rating: 71, stamina: 100, pace: 70, shooting: 65, passing: 72, dribbling: 70, defending: 55, physical: 65 },
-]
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Converte jogadores reais para o formato MatchPlayer
@@ -588,6 +563,16 @@ export default function PartidaAoVivoPage() {
   const engineSeason = useGameEngine(s => s.currentSeason)
   const engineSetPieceTakers = useGameEngine(s => s.setPieceTakers)
   const engineTacticalAssignments = useGameEngine(s => s.tacticalAssignments)
+  const medicalRestrictions = useMemo(() => {
+    try {
+      const raw = storeGet(performanceStorageKey(userTeamId, engineSeason))
+      return normalizePerformanceState(raw ? JSON.parse(raw) : null).medicalRestrictions
+    } catch { return {} }
+  }, [userTeamId, engineSeason])
+  const matchEnginePlayers = useMemo(
+    () => applyMedicalRestrictionsForMatch(enginePlayers, medicalRestrictions),
+    [enginePlayers, medicalRestrictions],
+  )
   // Mantém a identidade da partida encerrada mesmo depois de advanceWeek trocar o
   // próximo confronto; o modal da rodada precisa dessa chave estável.
   const [finalMatch, setFinalMatch] = useState<{ home: Team; away: Team; userSide: "home" | "away" } | null>(null)
@@ -805,11 +790,12 @@ export default function PartidaAoVivoPage() {
   const [awayBench, setAwayBench] = useState<MatchPlayer[]>([])
 
   useEffect(() => {
-    // Monta um lado a partir dos dados reais (players-data), com fallback generico.
-    const buildSideFromData = (team: typeof homeTeam, offset: number, prefix: string) => {
+    // getPlayersForTeam garante um elenco jogavel e repoe lacunas por setor com
+    // atletas vinculados ao proprio clube. Nunca mascara save/dado ausente com o
+    // antigo XI fixo Silva/Santos/Oliveira, que podia aparecer numa partida real.
+    const buildSideFromData = (team: typeof homeTeam, offset: number, _prefix: string) => {
       const players = getPlayersForTeam(team)
-      if (players.length >= 11) return playersToMatchSquad(players, offset)
-      return { starters: buildSquad(offset, prefix), bench: buildBench(offset + 100, prefix) }
+      return playersToMatchSquad(players, offset)
     }
 
     // O game-engine so fornece o elenco do time do usuario. O adversario sempre
@@ -857,8 +843,8 @@ export default function PartidaAoVivoPage() {
         setAwaySquad(userSquad.starters); setAwayBench(userSquad.bench)
         setHomeSquad(opp.starters); setHomeBench(opp.bench)
       }
-    } else if (enginePlayers && enginePlayers.length > 0) {
-      const userSquad = enginePlayersToMatchSquad(enginePlayers, isHome ? 0 : 200, savedFormation ?? "4-3-3", tacticalPlayerPositions ?? {})
+    } else if (matchEnginePlayers.length > 0) {
+      const userSquad = enginePlayersToMatchSquad(matchEnginePlayers, isHome ? 0 : 200, savedFormation ?? "4-3-3", tacticalPlayerPositions ?? {})
       if (isHome) {
         const opp = buildSideFromData(awayTeam, 200, "A_")
         setHomeSquad(userSquad.starters)
@@ -881,7 +867,7 @@ export default function PartidaAoVivoPage() {
       setAwaySquad(away.starters)
       setAwayBench(away.bench)
     }
-  }, [enginePlayers, homeTeam.curto, awayTeam.curto, isHome, matchCtx.youth, matchCtx.national, selecaoConvocada, savedGame.youthPlayers, savedGame.youthCareer?.startingPlayerIds, savedFormation])
+  }, [matchEnginePlayers, homeTeam.curto, awayTeam.curto, isHome, matchCtx.youth, matchCtx.national, selecaoConvocada, savedGame.youthPlayers, savedGame.youthCareer?.startingPlayerIds, savedFormation, tacticalPlayerPositions])
 
   const toSquadPlayer = (p: MatchPlayer) => ({
     nome: p.name,
@@ -935,6 +921,27 @@ export default function PartidaAoVivoPage() {
    */
   const tacticalForces = useMemo(() => forcasDaTatica(teamTactics), [teamTactics])
 
+  /** A identidade da IA agora chega ao motor inteiro, não apenas como rótulo de
+   * mentalidade. Pressão, risco, bloco e transição variam por adversário. */
+  const cpuMatchProfile = useCallback((team: Team) => {
+    const posture = posturaDaIA(team.curto)
+    const forcedIdentity: TacticalIdentity | undefined = posture === "ofensivo"
+      ? "ofensivo"
+      : posture === "defensivo" ? "retranca" : undefined
+    const tactic = aiTacticForClub(team.curto, forcedIdentity)
+    const modifiers = applyTacticModifiers(tactic)
+    const pressingLoad = tactic.press === "tudo_ou_nada" ? 1
+      : tactic.press === "alta" ? 0.72
+        : tactic.press === "moderada" ? 0.42 : 0.12
+    const transitionLoad = tactic.identity === "pressao_alta" ? 0.9
+      : tactic.identity === "contra_ataque" || tactic.identity === "ofensivo" ? 0.7
+        : tactic.identity === "retranca" ? 0.25 : 0.45
+    const socialModifier = aiClubSocialMatchModifier(savedGame.socialDaIA?.[team.curto])
+    return { tactic, modifiers, pressingLoad, transitionLoad, socialModifier }
+  }, [posturaDaIA, savedGame.socialDaIA])
+  const homeCpuProfile = useMemo(() => cpuMatchProfile(homeTeam), [cpuMatchProfile, homeTeam])
+  const awayCpuProfile = useMemo(() => cpuMatchProfile(awayTeam), [cpuMatchProfile, awayTeam])
+
   /**
    * CLIMA DO VESTIARIO. O capitao ja era escolhivel em Elenco > Gerenciamento e
    * nao tinha nenhum efeito no jogo. Agora a moral de quem manda pesa mais que
@@ -966,7 +973,7 @@ export default function PartidaAoVivoPage() {
           morale: "Normal",
           moralePoints: 55,
         } as unknown as EnginePlayer))
-      : enginePlayers.filter(p => p.isStarter && !p.injury)
+      : matchEnginePlayers.filter(p => p.isStarter && !p.injury)
     const setor = (posicoes: string[], quantos: number) => {
       const g = xi.filter(p => posicoes.includes(p.position)).sort((a, b) => b.overall - a.overall).slice(0, quantos)
       return g.length ? g.reduce((s, p) => s + p.overall, 0) / g.length : 65
@@ -991,7 +998,7 @@ export default function PartidaAoVivoPage() {
       defense: def + tacticalForces.defense + mod,
       midfield: mid + tacticalForces.midfield + mod,
     }
-  }, [enginePlayers, selecaoConvocada, matchCtx.national, tacticalForces, climaDoElenco.efeito, userSide, homeTeam.prestigio, awayTeam.prestigio])
+  }, [matchEnginePlayers, selecaoConvocada, matchCtx.national, tacticalForces, climaDoElenco.efeito, userSide, homeTeam.prestigio, awayTeam.prestigio])
 
   // Config da simulacao
   const config = useMemo(() => ({
@@ -1003,8 +1010,8 @@ export default function PartidaAoVivoPage() {
     // mais, estilo FM). So o lado do usuario recebe; a IA fica no prestigio.
     // Rating do lado do usuario vem do OVERALL do elenco real (+entrosamento);
     // a IA segue no prestigio + pequeno ganho de preparo.
-    homeRating: userSide === "home" ? userForces.overall + bonusEntrosamento : homeTeam.prestigio + (userSide === "away" ? 2 : 0),
-    awayRating: userSide === "away" ? userForces.overall + bonusEntrosamento : awayTeam.prestigio + (userSide === "home" ? 2 : 0),
+    homeRating: userSide === "home" ? userForces.overall + bonusEntrosamento : homeTeam.prestigio + (userSide === "away" ? 2 : 0) + homeCpuProfile.socialModifier,
+    awayRating: userSide === "away" ? userForces.overall + bonusEntrosamento : awayTeam.prestigio + (userSide === "home" ? 2 : 0) + awayCpuProfile.socialModifier,
     homeSquad: homeSquad.map(toSquadPlayer),
     awaySquad: awaySquad.map(toSquadPlayer),
     durationMinutes: matchCtx.duration,
@@ -1036,16 +1043,20 @@ export default function PartidaAoVivoPage() {
     // Linha de impedimento do usuario. Sem esta ligacao o motor ate sabe gerar
     // impedimento, mas nunca ficaria sabendo que a armadilha esta armada — que
     // era exatamente o defeito antigo desta opcao.
-    homeOffsideTrap: userSide === "home" ? teamTactics?.offsideTrap : undefined,
-    awayOffsideTrap: userSide === "away" ? teamTactics?.offsideTrap : undefined,
+    homeOffsideTrap: userSide === "home" ? teamTactics?.offsideTrap : homeCpuProfile.tactic.offsideTrap,
+    awayOffsideTrap: userSide === "away" ? teamTactics?.offsideTrap : awayCpuProfile.tactic.offsideTrap,
+    homePressingLoad: userSide === "home" ? tacticalForces.pressingLoad : homeCpuProfile.pressingLoad,
+    awayPressingLoad: userSide === "away" ? tacticalForces.pressingLoad : awayCpuProfile.pressingLoad,
+    homeTransitionLoad: userSide === "home" ? tacticalForces.transitionLoad : homeCpuProfile.transitionLoad,
+    awayTransitionLoad: userSide === "away" ? tacticalForces.transitionLoad : awayCpuProfile.transitionLoad,
     // Forcas por setor do lado do usuario — do elenco real + tatica + forma/moral.
-    homeAttack: userSide === "home" ? userForces.attack : undefined,
-    homeDefense: userSide === "home" ? userForces.defense : undefined,
-    homeMidfield: userSide === "home" ? userForces.midfield : undefined,
-    awayAttack: userSide === "away" ? userForces.attack : undefined,
-    awayDefense: userSide === "away" ? userForces.defense : undefined,
-    awayMidfield: userSide === "away" ? userForces.midfield : undefined,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments, posturaDaIA, nivelDificuldade])
+    homeAttack: userSide === "home" ? userForces.attack : homeTeam.prestigio * homeCpuProfile.modifiers.attackBoost + homeCpuProfile.socialModifier,
+    homeDefense: userSide === "home" ? userForces.defense : homeTeam.prestigio * homeCpuProfile.modifiers.defenseBoost + homeCpuProfile.socialModifier,
+    homeMidfield: userSide === "home" ? userForces.midfield : homeTeam.prestigio * (0.94 + homeCpuProfile.modifiers.pressureBoost * 0.06) + homeCpuProfile.socialModifier,
+    awayAttack: userSide === "away" ? userForces.attack : awayTeam.prestigio * awayCpuProfile.modifiers.attackBoost + awayCpuProfile.socialModifier,
+    awayDefense: userSide === "away" ? userForces.defense : awayTeam.prestigio * awayCpuProfile.modifiers.defenseBoost + awayCpuProfile.socialModifier,
+    awayMidfield: userSide === "away" ? userForces.midfield : awayTeam.prestigio * (0.94 + awayCpuProfile.modifiers.pressureBoost * 0.06) + awayCpuProfile.socialModifier,
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments, posturaDaIA, nivelDificuldade, homeCpuProfile, awayCpuProfile])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty,
@@ -1544,6 +1555,20 @@ export default function PartidaAoVivoPage() {
             state.shootout?.finished
               ? { home: state.shootout.homeGoals, away: state.shootout.awayGoals }
               : null,
+            {
+              home: {
+                shots: state.home.shots, shotsOnTarget: state.home.shotsOnTarget, xG: state.home.xG,
+                corners: state.home.corners, fouls: state.home.fouls, yellows: state.home.yellows,
+                reds: state.home.reds, possession: state.home.possession, passes: state.home.passes,
+                passAccuracy: state.home.passAccuracy,
+              },
+              away: {
+                shots: state.away.shots, shotsOnTarget: state.away.shotsOnTarget, xG: state.away.xG,
+                corners: state.away.corners, fouls: state.away.fouls, yellows: state.away.yellows,
+                reds: state.away.reds, possession: state.away.possession, passes: state.away.passes,
+                passAccuracy: state.away.passAccuracy,
+              },
+            },
           )
 
           // REALISMO: nota por jogador + cartoes->suspensao. Mapeia os eventos do

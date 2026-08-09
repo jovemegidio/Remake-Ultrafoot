@@ -8,6 +8,7 @@ use std::sync::Mutex;
 use tauri::Manager;
 
 mod licenca;
+mod native_engine;
 mod online_server;
 
 /// Decodifica percent-encoding (%20, %EF%BC%82...) do caminho da URI.
@@ -555,6 +556,7 @@ pub fn run() {
             ,ler_ativacao_do_launcher
             ,ler_sessao_do_launcher
             ,licenca::verificar_licenca
+            ,native_engine::project_squad
             ,online_server::online_start_server
             ,online_server::online_stop_server
             ,online_server::online_server_status
@@ -580,6 +582,7 @@ pub fn run() {
             ,ler_ativacao_do_launcher
             ,ler_sessao_do_launcher
             ,licenca::verificar_licenca
+            ,native_engine::project_squad
             ,online_server::online_start_server
             ,online_server::online_stop_server
             ,online_server::online_server_status

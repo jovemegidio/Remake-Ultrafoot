@@ -13,7 +13,7 @@ import type { InGameUpdateOffer } from "@/lib/updater"
 
 // Versao do "o que ha de novo". Trocar SO quando houver novidade a apresentar —
 // e o que faz o modal reaparecer para quem ja viu a anterior.
-const WHATS_NEW_VERSION = "1.0.271"
+const WHATS_NEW_VERSION = "1.0.279"
 const WHATS_NEW_KEY = "ultrafoot:last-seen-whats-new"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
@@ -327,48 +327,47 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
   const [page, setPage] = useState(0)
   const pages = [
     {
-      eyebrow: "Temporada 2026 · Build 1.0.271",
-      title: "A temporada volta a virar",
-      body: "Carreiras ficavam presas no mesmo ano para sempre: os adversários da liga eram remontados a cada carregamento, então uma atualização do jogo reescrevia o campeonato no meio da temporada e o fim de ano nunca chegava — sem acesso e sem rebaixamento.",
-      accent: "CARREIRA",
+      eyebrow: "Temporada 2026 · Build 1.0.279",
+      title: "Quatro países ganharam a segunda divisão",
+      body: "Áustria, Polônia, Romênia e Suíça anunciavam rebaixamento e não tinham para onde rebaixar: a segunda divisão existia no nome e estava vazia. Agora as quatro pirâmides funcionam, cada uma com o número real de acessos.",
+      accent: "LIGAS",
       bullets: [
-        "Os adversários da temporada ficam gravados na carreira",
-        "Liga com número ímpar de clubes voltou a poder terminar",
-        "Acesso e rebaixamento aplicados de novo na virada",
+        "Polônia com 3 acessos, Romênia com 2, Áustria e Suíça com 1",
+        "Quem cai da primeira encontra clube de verdade esperando embaixo",
+        "66 clubes reais entraram no jogo",
       ],
     },
     {
-      eyebrow: "Competições brasileiras",
-      title: "Série D regulamentada, Série C completa",
-      body: "A Série D rodava com 27 clubes — número ímpar, 52 rodadas e a temporada indo até a semana 86. E a Série C tinha só 12 dos 20 clubes reais: as outras oito vagas eram sorteadas por prestígio.",
-      accent: "BRASILEIRÃO",
+      eyebrow: "Elencos",
+      title: "Menos time inventado, mais gente de verdade",
+      body: "Clubes sem elenco coletado eram completados por atletas gerados, e o preenchimento sorteava posições sem critério — daí saíam times sem lateral e com meia sobrando.",
+      accent: "PLANTEL",
       bullets: [
-        "Série D com 20 clubes e 38 rodadas",
-        "Ituano, Anápolis, Brusque, Maranhão, Maringá, Ferroviária, Itabaiana e Barra-SC na Série C",
-        "Dezembro deixou de acumular o dobro de jogos",
+        "114 clubes ligados a elencos reais que já estavam coletados",
+        "O preenchimento agora prioriza laterais, volante e pontas",
+        "Atletas provisórios caíram de 9.378 para 9.055",
       ],
     },
     {
-      eyebrow: "Prancheta e dia de jogo",
-      title: "As instruções finalmente mudam alguma coisa",
-      body: "O botão \"Com a bola / Sem a bola\" trocava apenas o próprio texto. E apagar a seta de movimentação não apagava a instrução que ela tinha gerado: mexeu uma vez, ficava para sempre.",
+      eyebrow: "Adversários",
+      title: "O rival lembra da temporada dele",
+      body: "Cada clube comandado pela máquina passa a carregar a própria história emocional entre as rodadas, em vez de entrar em campo sempre igual. Sequência ruim desgasta o grupo, e isso aparece no desempenho.",
+      accent: "IA",
+      bullets: [
+        "Moral, coesão, pressão da torcida e confiança no treinador ficam gravadas",
+        "Vestiário unido, estável, tenso ou fraturado muda o rendimento em campo",
+      ],
+    },
+    {
+      eyebrow: "Também nesta atualização",
+      title: "Táticas que mudam o jogo e departamento médico",
+      body: "Doze controles da tela de Táticas não alteravam nada no placar: dava para mexer em saída de bola, pressão e marcação sem que a partida notasse. Agora todos pesam — e toda escolha cobra algo em troca.",
       accent: "TÁTICA",
       bullets: [
-        "Com a bola / Sem a bola troca o que o arrasto edita",
-        "Botão para zerar a movimentação de um atleta ou do time",
-        "Prancheta e táticas abrem dentro do pré-jogo, sem sair da partida",
-        "Estrelas e ATA/MEI/DEF saem do elenco de verdade",
-      ],
-    },
-    {
-      eyebrow: "Controle",
-      title: "O joystick chega aos modais",
-      body: "A ponte de gamepad só enxergava um tipo de janela, e a maior parte dos modais do jogo é feita de outro jeito. Mesa de negociação, batedor de pênalti, coletiva, contrato e exame médico eram becos sem saída no controle.",
-      accent: "GAMEPAD",
-      bullets: [
-        "A aciona, B fecha e o direcional navega em 35 modais",
-        "Aviso de saída com opção selecionada e dicas do controle ligado",
-        "Leilão passou a respeitar a verba liberada pela diretoria",
+        "A faixa Efeito do plano mostra o ganho em ataque, meio e defesa",
+        "O jogo avisa quando duas ordens se contradizem",
+        "Trate lesionados no Centro de Treinamento: fisioterapia ou cirurgia",
+        "O capitão passa a importar — veja o Clima do vestiário no Elenco",
       ],
     },
   ]

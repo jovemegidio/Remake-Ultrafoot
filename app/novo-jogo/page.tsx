@@ -71,6 +71,7 @@ import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { flushPersistentStore } from "@/lib/persistent-store"
+import { UEFA_EXPANSION_FEDERATIONS } from "@/lib/uefa-expansion"
 
 const FLAG_MAP: Record<string, string> = {
   BRA: "br", ENG: "gb-eng", ESP: "es", ITA: "it",
@@ -109,7 +110,7 @@ interface CountryTab {
   leagues: LeagueTab[]
 }
 
-const COUNTRIES: CountryTab[] = [
+const CORE_COUNTRIES: CountryTab[] = [
   {
     name: "Brasil", code: "BRA", region: "brasil",
     leagues: [
@@ -273,6 +274,26 @@ const COUNTRIES: CountryTab[] = [
     ],
   },
 ]
+
+const EXPANSION_COUNTRIES: CountryTab[] = UEFA_EXPANSION_FEDERATIONS
+  .filter(federation => federation.top?.participants.length)
+  .map(federation => ({
+    name: federation.country,
+    code: federation.code.toUpperCase(),
+    region: "europa",
+    leagues: [federation.top, federation.second]
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry?.participants.length))
+      .map(entry => ({
+        key: entry.id,
+        label: entry.name,
+        short: entry.name,
+        teams: [],
+        // Resolve depois da hidratação para respeitar overrides e saves.
+        doPool: true,
+      })),
+  }))
+
+const COUNTRIES: CountryTab[] = [...CORE_COUNTRIES, ...EXPANSION_COUNTRIES]
 
 // Fundo trocado a pedido do usuario (2026-07-20): foto in-game 7.
 const STADIUM_BG = "/images/pre-jogo/in-game-7.webp"

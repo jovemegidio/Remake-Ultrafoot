@@ -39,7 +39,8 @@ import { useGameState } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { clearMatchContext, loadMatchContext, saveMatchContext } from "@/lib/match-context"
-import { flushPersistentStore } from "@/lib/persistent-store"
+import { flushPersistentStore, initPersistentStore, storeGet } from "@/lib/persistent-store"
+import { performanceStorageKey, type PerformanceCenterState } from "@/lib/performance-center"
 import { getGameDate } from "@/lib/game-date"
 import { timeDaSelecao } from "@/lib/partida-da-selecao"
 import { concluirAmistoso, ehAmistoso } from "@/lib/amistosos-calendario"
@@ -47,7 +48,6 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { simulateFullMatch, type MatchEvent as SimEvent, type MatchState } from "@/lib/match-engine"
 import { useGameEngine, type MatchEvent as EngineEvent, type Player } from "@/lib/game-engine"
 import { teamSectorRatings } from "@/lib/players-data"
-import { TacticalEditor } from "@/components/tactical-editor"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { UniformSelectorModal } from "@/components/match/uniform-selector-modal"
@@ -297,6 +297,20 @@ export default function PartidaPage() {
   // em tempo de execução, não de compilação.
   const ctxDaSelecao = useMemo(() => loadMatchContext().national ?? null, [])
   const enginePlayersPre = useGameEngine(s => s.squadPlayers)
+  const currentEngineSeason = useGameEngine(s => s.currentSeason)
+  const [medicalRestrictions, setMedicalRestrictions] = useState<PerformanceCenterState["medicalRestrictions"]>({})
+  useEffect(() => {
+    let active = true
+    const key = performanceStorageKey(userTeam.team.curto, currentEngineSeason)
+    void initPersistentStore().then(() => {
+      if (!active) return
+      try {
+        const raw = storeGet(key)
+        setMedicalRestrictions(raw ? (JSON.parse(raw).medicalRestrictions ?? {}) : {})
+      } catch { setMedicalRestrictions({}) }
+    })
+    return () => { active = false }
+  }, [userTeam.team.curto, currentEngineSeason])
   // O elenco VIVO so vale para o clube do usuario; o adversario nao tem um.
   const elencoDoUsuario = useMemo(
     () => enginePlayersPre.map(p => ({ position: p.position, overall: p.overall })),
@@ -318,14 +332,15 @@ export default function PartidaPage() {
   const titularesInvalidos = useMemo(
     () => (ctxDaSelecao
       ? []
-      : enginePlayersPre.filter(p => p.isStarter && (p.injury || (p.suspendedMatches ?? 0) > 0))),
-    [enginePlayersPre, ctxDaSelecao],
+      : enginePlayersPre.filter(p => p.isStarter && (p.injury || (p.suspendedMatches ?? 0) > 0 || medicalRestrictions[p.id] === "afastado"))),
+    [enginePlayersPre, ctxDaSelecao, medicalRestrictions],
   )
 
   /** Motivo da inelegibilidade, para a tela. */
   const motivoInelegivel = (p: Player) =>
     p.injury ? `lesionado (${p.injury.type}, ${p.injury.weeksRemaining} sem.)`
       : (p.suspendedMatches ?? 0) > 0 ? `suspenso (${p.suspendedMatches} jogo${(p.suspendedMatches ?? 0) > 1 ? "s" : ""})`
+        : medicalRestrictions[p.id] === "afastado" ? "afastado pelo departamento médico"
         : "indisponível"
 
   /** Ir para a partida — mas so depois de checar a escalacao. */
@@ -337,7 +352,7 @@ export default function PartidaPage() {
   /** Corrige automatico: para cada titular invalido, promove o melhor reserva
    *  APTO da mesma posicao (ou o melhor apto geral) e tira o invalido do XI. */
   const corrigirAutomatico = useCallback(() => {
-    const aptos = enginePlayersPre.filter(p => !p.isStarter && !p.injury && (p.suspendedMatches ?? 0) <= 0)
+    const aptos = enginePlayersPre.filter(p => !p.isStarter && !p.injury && (p.suspendedMatches ?? 0) <= 0 && medicalRestrictions[p.id] !== "afastado")
     const usados = new Set<number>()
     for (const inval of titularesInvalidos) {
       const mesmaPos = aptos
@@ -352,7 +367,7 @@ export default function PartidaPage() {
     }
     setEscalacaoInvalida(null)
     hardNavigate("/partida/ao-vivo")
-  }, [enginePlayersPre, titularesInvalidos, setStarterPre])
+  }, [enginePlayersPre, titularesInvalidos, setStarterPre, medicalRestrictions])
   const [focusedSide, setFocusedSide] = useState<"home" | "away">("home")
   const [showSettings, setShowSettings] = useState(false)
   const [showQuickSim, setShowQuickSim] = useState(false)

@@ -223,6 +223,12 @@ export interface MatchConfig {
    */
   homeOffsideTrap?: boolean
   awayOffsideTrap?: boolean
+  /** Cargas de um plano por fases. 0 = bloco estável; 1 = pressão/movimentação
+   * extrema. Entram em criação, faltas e desgaste em vez de virar bônus grátis. */
+  homePressingLoad?: number
+  awayPressingLoad?: number
+  homeTransitionLoad?: number
+  awayTransitionLoad?: number
   /**
    * Lado controlado pelo USUARIO. Quando o penalti sai para este lado, o motor para e
    * espera a escolha do batedor (resolvePendingPenalty). Sem isto, ele cobra sozinho.
@@ -507,6 +513,28 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   applyMentality(homeSt, config.homeMentality)
   applyMentality(awaySt, config.awayMentality)
 
+  // A CPU lê o placar e o relógio. Antes a postura escolhida no começo ficava
+  // congelada até o fim: um clube perdendo uma final por dois gols continuava
+  // equilibrado. A reação troca ataque por defesa (ou o inverso), sem criar
+  // força do nada e sem interferir nas partidas CPU x CPU em lote.
+  if (config.userSide && state.minute >= 60) {
+    const cpu = config.userSide === "home" ? awaySt : homeSt
+    const cpuGoals = config.userSide === "home" ? state.away.goals : state.home.goals
+    const userGoals = config.userSide === "home" ? state.home.goals : state.away.goals
+    const deficit = userGoals - cpuGoals
+    if (deficit > 0) {
+      const urgency = Math.min(7, 2 + deficit * 2 + Math.max(0, state.minute - 75) / 8)
+      cpu.attack += urgency
+      cpu.midfield += urgency * 0.55
+      cpu.defense -= urgency * 0.72
+    } else if (deficit < 0 && state.minute >= 72) {
+      const control = Math.min(5, 1.5 + Math.abs(deficit) * 1.4)
+      cpu.attack -= control * 0.65
+      cpu.defense += control
+      cpu.midfield += control * 0.25
+    }
+  }
+
   // ── Dificuldade da CPU (relatorio #4) ──────────────────────────────────────
   // Quando o USUARIO joga (userSide definido), o adversario controlado pela maquina
   // recebe um reforco MODERADO em ataque/defesa/meio/goleiro. Deixa as partidas mais
@@ -579,8 +607,19 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   ))
 
   // ── Stamina ───────────────────────────────────────────────────────────────
-  const homeStFactor = Math.max(0.72, homeSt.avgStamina / 100)
-  const awayStFactor = Math.max(0.72, awaySt.avgStamina / 100)
+  const homeLoad = Math.max(0, Math.min(1,
+    (config.homePressingLoad ?? 0) * 0.7 + (config.homeTransitionLoad ?? 0) * 0.3,
+  ))
+  const awayLoad = Math.max(0, Math.min(1,
+    (config.awayPressingLoad ?? 0) * 0.7 + (config.awayTransitionLoad ?? 0) * 0.3,
+  ))
+  // O custo tático precisa atingir quem escolheu o plano. O cálculo anterior
+  // tirava o maior load dos dois lados e não o aplicava às forças, portanto a
+  // pressão extrema criava chances sem realmente cobrar intensidade no fim.
+  const homeTacticalFatigue = 1 - Math.min(0.09, (minute / 90) * homeLoad * 0.09)
+  const awayTacticalFatigue = 1 - Math.min(0.09, (minute / 90) * awayLoad * 0.09)
+  const homeStFactor = Math.max(0.68, homeSt.avgStamina / 100 * homeTacticalFatigue)
+  const awayStFactor = Math.max(0.68, awaySt.avgStamina / 100 * awayTacticalFatigue)
 
   // ── Forças efetivas (atributo × stamina) ────────────────────────────────
   const homeAttEff = homeSt.attack * homeStFactor
@@ -619,6 +658,10 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   const midDiff = homeSt.midfield - awaySt.midfield
   const homeMidBonus = Math.max(-0.05, Math.min(0.05, midDiff * 0.0016))
   const awayMidBonus = Math.max(-0.05, Math.min(0.05, -midDiff * 0.0016))
+  // Pressionar cria recuperações altas, mas a vantagem é pequena e vem com
+  // faltas/desgaste abaixo. Não é um botão de bônus permanente.
+  const homePressBonus = Math.max(0, Math.min(1, config.homePressingLoad ?? 0)) * 0.009
+  const awayPressBonus = Math.max(0, Math.min(1, config.awayPressingLoad ?? 0)) * 0.009
 
   // ANTI-GOLEADA / gestao de resultado: o gol dava momentum ao ARTILHEIRO, que
   // ficava mais forte — bola de neve rumo a goleada. Invertido: quem esta na
@@ -656,10 +699,10 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   const wf = config.weatherFactor != null ? Math.max(0.75, Math.min(1, config.weatherFactor)) : 1
 
   const homeShotChance = Math.max(0.03, Math.min(0.24,
-    (baseShot + homeAttDiff + homeMidBonus + homeLeadAdj - homeRedShotPen - homeInjPen + homeLateBonus) * wf * (0.96 + homeAdvantage * 0.44)
+    (baseShot + homeAttDiff + homeMidBonus + homePressBonus + homeLeadAdj - homeRedShotPen - homeInjPen + homeLateBonus) * wf * (0.96 + homeAdvantage * 0.44)
   ))
   const awayShotChance = Math.max(0.03, Math.min(0.24,
-    (baseShot + awayAttDiff + awayMidBonus + awayLeadAdj - awayRedShotPen - awayInjPen + awayLateBonus) * wf * (1.06 - homeAdvantage * 0.38)
+    (baseShot + awayAttDiff + awayMidBonus + awayPressBonus + awayLeadAdj - awayRedShotPen - awayInjPen + awayLateBonus) * wf * (1.06 - homeAdvantage * 0.38)
   ))
 
   // ── Faltas e cartões ──────────────────────────────────────────────────────
@@ -695,13 +738,15 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
     if (mods.temperature > 35) staminaDrain *= 1.2
     else if (mods.temperature > 30) staminaDrain *= 1.1
   }
+  const tacticalLoad = Math.max(homeLoad, awayLoad)
+  staminaDrain *= 1 + Math.max(0, Math.min(1, tacticalLoad)) * 0.18
 
   return {
     homeShotChance,
     awayShotChance,
     homeAdvantage,
-    homeFoulChance: Math.min(0.22, baseFoul + homeFatigue),
-    awayFoulChance: Math.min(0.22, baseFoul + awayFatigue),
+    homeFoulChance: Math.min(0.22, baseFoul + homeFatigue + (config.homePressingLoad ?? 0) * 0.018),
+    awayFoulChance: Math.min(0.22, baseFoul + awayFatigue + (config.awayPressingLoad ?? 0) * 0.018),
     cardChance: Math.min(0.32, cardChance),
     staminaDrain,
     technicalPenalty,
