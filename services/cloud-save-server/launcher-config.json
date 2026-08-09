@@ -9,11 +9,17 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "As funções de jogador finalmente mudam o jogo",
+      "category": "Atualização",
+      "body": "O Ultrafoot tem 66 funções de jogador e nenhuma delas alterava o placar: dava para escalar um zagueiro lento como ponta velocista sem nenhuma consequência. Agora o que conta é a adequação — se os atributos do atleta servem à função. A qualidade dele continua contando à parte, então um craque mal empregado perde rendimento e um limitado bem empregado ganha. A atualização também corrige o bug relatado de atletas vendidos que voltavam ao elenco.",
+      "date": "2026-08-09",
+      "pinned": true
+    },
+    {
       "title": "Quatro países europeus ganharam a segunda divisão",
       "category": "Atualização",
       "body": "Áustria, Polônia, Romênia e Suíça anunciavam rebaixamento e não tinham para onde rebaixar: a segunda divisão existia só no nome. Agora as quatro pirâmides funcionam, com o número real de acessos de cada país. A atualização também traz 66 clubes reais, 114 elencos verdadeiros ligados a clubes que usavam time inventado, e adversários que guardam moral, coesão e pressão da torcida de uma rodada para a outra.",
-      "date": "2026-08-09",
-      "pinned": true
+      "date": "2026-08-09"
     },
     {
       "title": "Suas táticas agora decidem o jogo",
@@ -180,9 +186,20 @@
   ],
   "changelog": [
     {
-      "version": "1.0.279",
+      "version": "1.0.280",
       "data": "2026-08-09",
       "latest": true,
+      "titulo": "As funções individuais passaram a valer, e o atleta vendido não volta mais",
+      "itens": [
+        "CORRIGIDO: ao vender o elenco, sair da página de Elenco e voltar, os atletas reapareciam como se nada tivesse sido vendido. As telas de Elenco e de Escalações montavam o time a partir do cadastro do clube, que não sabe nada de venda, empréstimo ou leilão. A correção da versão anterior tratou o mesmo defeito em outra tela; estas duas tinham ficado de fora.",
+        "NOVO: as 66 funções de jogador (regista, mezzala, falso nove, ponta invertido, líbero, target man...) finalmente mudam a partida. O que pesa é a ADEQUAÇÃO: se os atributos do atleta servem à função que ele recebeu. Um craque lento escalado como ponta velocista rende menos do que o overall promete; um limitado bem empregado rende mais.",
+        "NOVO: as sete ordens individuais (liberdade de movimentação, infiltrações, marcação, drible, risco no passe, cruzamento e as chaves especiais) passaram a ter efeito, sempre como troca. Ordens que se anulam entre si — avançar e segurar posição ao mesmo tempo — custam rendimento e são apontadas.",
+        "NOVO: a tela de Táticas mostra quantos atletas estão bem empregados, quantos estão fora de função e nomeia os piores casos."
+      ]
+    },
+    {
+      "version": "1.0.279",
+      "data": "2026-08-09",
       "titulo": "Segundas divisões na Europa, elencos mais reais e adversários com memória",
       "itens": [
         "NOVO: Áustria, Polônia, Romênia e Suíça ganharam segunda divisão de verdade. As quatro anunciavam rebaixamento sem ter para onde rebaixar. Cada pirâmide usa o número real de acessos: Polônia 3, Romênia 2, Áustria e Suíça 1.",

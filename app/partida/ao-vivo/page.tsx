@@ -62,6 +62,7 @@ import { forcasDaTatica } from "@/lib/forcas-taticas"
 import { aiTacticForClub, applyTacticModifiers, type TacticalIdentity } from "@/lib/tactics-engine"
 import { aiClubSocialMatchModifier } from "@/lib/ai-club-social"
 import { climaDoVestiario } from "@/lib/hierarquia-do-elenco"
+import { forcasDoElenco } from "@/lib/forcas-individuais"
 import { flushPersistentStore, storeGet } from "@/lib/persistent-store"
 import { applyMedicalRestrictionsForMatch, normalizePerformanceState, performanceStorageKey } from "@/lib/performance-center"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -951,6 +952,8 @@ export default function PartidaAoVivoPage() {
     () => climaDoVestiario(enginePlayers, engineTacticalAssignments?.captain),
     [enginePlayers, engineTacticalAssignments?.captain],
   )
+  /** Instrucoes por atleta (funcao + 7 ordens). Ver lib/forcas-individuais.ts. */
+  const instrucoesIndividuais = useGameEngine(s => s.playerInstructions)
 
   // FORCA REAL DO LADO DO USUARIO — do elenco, nao do prestigio do clube.
   // Antes homeAttack/Defense/Midfield = prestigio (um numero so): um elenco
@@ -992,13 +995,21 @@ export default function PartidaAoVivoPage() {
     // a parcela de quem manda no vestiario estar acima ou abaixo do grupo — por
     // isso somar os dois nao conta moral duas vezes. Ver lib/hierarquia-do-elenco.
     const mod = (formaMedia - 70) / 9 + (moralMedia - 55) / 13 + climaDoElenco.efeito
+    /**
+     * FUNCOES INDIVIDUAIS. As 66 funcoes de `PlayerRole` e as 7 instrucoes por
+     * atleta nao chegavam ao motor — o jogador escolhia e nada mudava. Aqui
+     * entra so a ADEQUACAO (os atributos servem a funcao recebida?) e o
+     * custo/beneficio das ordens. A qualidade do atleta ja esta em `atk`/`mid`/
+     * `def` acima; medir qualidade de novo seria conta-la duas vezes.
+     */
+    const individuais = forcasDoElenco(xi as unknown as EnginePlayer[], instrucoesIndividuais)
     return {
       overall,
-      attack: atk + tacticalForces.attack + mod,
-      defense: def + tacticalForces.defense + mod,
-      midfield: mid + tacticalForces.midfield + mod,
+      attack: atk + tacticalForces.attack + individuais.attack + mod,
+      defense: def + tacticalForces.defense + individuais.defense + mod,
+      midfield: mid + tacticalForces.midfield + individuais.midfield + mod,
     }
-  }, [matchEnginePlayers, selecaoConvocada, matchCtx.national, tacticalForces, climaDoElenco.efeito, userSide, homeTeam.prestigio, awayTeam.prestigio])
+  }, [matchEnginePlayers, selecaoConvocada, matchCtx.national, tacticalForces, climaDoElenco.efeito, instrucoesIndividuais, userSide, homeTeam.prestigio, awayTeam.prestigio])
 
   // Config da simulacao
   const config = useMemo(() => ({

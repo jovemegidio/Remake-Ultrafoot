@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { getPlayersForTeam } from "@/lib/players-data"
+import { useGameEngine } from "@/lib/game-engine"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
 
@@ -125,16 +126,32 @@ export default function EscalacoesPage() {
   const { state } = useGameState()
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   
-  // Get team players
+  /**
+   * ⚠️ O ELENCO SAI DO MOTOR, NAO DO CADASTRO DO CLUBE. Ver o mesmo bloco em
+   * app/elenco/page.tsx: com `getPlayersForTeam` esta tela montava as
+   * escalacoes com atletas JA VENDIDOS, emprestados ou leiloados, porque o
+   * cadastro do clube nao sabe nada do que aconteceu na carreira.
+   *
+   * Com carreira viva o elenco do motor e a verdade, mesmo curto ou vazio.
+   */
+  const engineSquad = useGameEngine((game) => game.squadPlayers)
+  const carreiraViva = useGameEngine((game) => Boolean(game.myTeamShort))
   const teamPlayers = useMemo(() => {
-    const rawPlayers = getPlayersForTeam(userTeam)
-    return rawPlayers.map((p, idx) => ({
+    if (carreiraViva) {
+      return engineSquad.map(p => ({
+        id: p.id,
+        name: p.name,
+        pos: p.position,
+        overall: p.overall,
+      }))
+    }
+    return getPlayersForTeam(userTeam).map((p, idx) => ({
       id: idx + 1,
       name: p.nome,
       pos: p.pos,
       overall: p.base,
     }))
-  }, [userTeam])
+  }, [carreiraViva, engineSquad, userTeam])
 
   // Initial lineups
   const [lineups, setLineups] = useState<SavedLineup[]>([

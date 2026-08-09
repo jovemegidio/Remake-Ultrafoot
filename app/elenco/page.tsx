@@ -118,10 +118,32 @@ export default function ElencoHubPage() {
   const [selectedCard, setSelectedCard] = useState<number | null>(null)
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
 
-  // Obter jogadores do time
+  /**
+   * ⚠️ O ELENCO SAI DO MOTOR, NAO DO CADASTRO DO CLUBE.
+   *
+   * BUG RELATADO (jogador, 09/08/2026): "vendi o elenco todo; saindo da pagina
+   * de elenco e voltando, ele aparece de novo como se nada tivesse sido
+   * vendido". Esta tela chamava `getPlayersForTeam(userTeam)` direto, que le o
+   * cadastro do clube — ela nunca soube de venda, emprestimo ou leilao nenhum.
+   *
+   * A correcao da 1.0.277 tratou o MESMO defeito em `lib/use-user-roster.ts`,
+   * mas aquele hook so atende /elenco/gerenciamento e /partida/escalacao. Esta
+   * pagina ficou de fora, entao para o jogador o bug continuou existindo.
+   *
+   * A regra e a mesma dos outros: com carreira viva (`myTeamShort` preenchido)
+   * o elenco do motor e a verdade, mesmo curto ou vazio. Sem carreira
+   * (pre-visualizacao de time), o cadastro segue valendo.
+   */
+  const engineSquad = useGameEngine((game) => game.squadPlayers)
+  const carreiraViva = useGameEngine((game) => Boolean(game.myTeamShort))
   const teamPlayers = useMemo(() => {
-    return getPlayersForTeam(userTeam)
-  }, [userTeam])
+    if (carreiraViva) {
+      // O motor usa `overall`/`age`; o cadastro usa `base`/`idade`. Normaliza
+      // aqui para o resumo nao precisar saber de qual lado veio.
+      return engineSquad.map(p => ({ base: p.overall, idade: p.age }))
+    }
+    return getPlayersForTeam(userTeam).map(p => ({ base: p.base, idade: p.idade }))
+  }, [carreiraViva, engineSquad, userTeam])
 
   // Calcular estatisticas medias do elenco
   const squadStats = useMemo(() => {

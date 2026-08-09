@@ -13,7 +13,7 @@ import type { InGameUpdateOffer } from "@/lib/updater"
 
 // Versao do "o que ha de novo". Trocar SO quando houver novidade a apresentar —
 // e o que faz o modal reaparecer para quem ja viu a anterior.
-const WHATS_NEW_VERSION = "1.0.279"
+const WHATS_NEW_VERSION = "1.0.280"
 const WHATS_NEW_KEY = "ultrafoot:last-seen-whats-new"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
@@ -327,7 +327,29 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
   const [page, setPage] = useState(0)
   const pages = [
     {
-      eyebrow: "Temporada 2026 · Build 1.0.279",
+      eyebrow: "Temporada 2026 · Build 1.0.280",
+      title: "A função de cada atleta passou a valer em campo",
+      body: "O jogo tem 66 funções — regista, mezzala, falso nove, ponta invertido, líbero — e nenhuma delas mudava o placar: dava para escalar um zagueiro lento como ponta velocista sem consequência. Agora o que conta é se os atributos do atleta servem à função que ele recebeu.",
+      accent: "FUNÇÕES",
+      bullets: [
+        "Atleta fora de função rende menos, por melhor que seja",
+        "Um limitado bem empregado rende mais do que o overall promete",
+        "Ordens que se anulam (avançar e segurar posição) são apontadas",
+        "A tela de Táticas mostra quantos estão bem e quem está fora de função",
+      ],
+    },
+    {
+      eyebrow: "Correção relatada por jogador",
+      title: "Atleta vendido não volta mais ao elenco",
+      body: "Vender o time e reabrir a página de elenco trazia todo mundo de volta. A tela montava o time a partir do cadastro do clube, que não sabe nada do que aconteceu na carreira — venda, empréstimo ou leilão.",
+      accent: "CORREÇÃO",
+      bullets: [
+        "Corrigido na página de Elenco e também na de Escalações",
+        "As telas passam a ler o elenco real da sua carreira",
+      ],
+    },
+    {
+      eyebrow: "Build 1.0.279",
       title: "Quatro países ganharam a segunda divisão",
       body: "Áustria, Polônia, Romênia e Suíça anunciavam rebaixamento e não tinham para onde rebaixar: a segunda divisão existia no nome e estava vazia. Agora as quatro pirâmides funcionam, cada uma com o número real de acessos.",
       accent: "LIGAS",

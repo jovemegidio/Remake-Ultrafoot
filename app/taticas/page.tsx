@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { forcasDaTatica, resumoDoPlano } from "@/lib/forcas-taticas"
+import { forcasDoElenco } from "@/lib/forcas-individuais"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameEngine, persistGameEngineNow, type TeamTactics, type PlayerInstructions, type PlayerRole, PLAYER_ROLE_INFO } from "@/lib/game-engine"
@@ -141,6 +142,14 @@ export default function TaticasPage() {
   // Mesmo calculo que a partida usa — nao uma previa parecida. Se a tela
   // estimasse por conta propria, seriam duas escalas para a mesma grandeza.
   const efeitoDoPlano = useMemo(() => forcasDaTatica(teamTactics), [teamTactics])
+  /**
+   * Camada INDIVIDUAL: as 66 funcoes e as ordens por atleta. Mesmo calculo da
+   * partida — a tela nao estima por conta propria. Ver lib/forcas-individuais.
+   */
+  const efeitoIndividual = useMemo(
+    () => forcasDoElenco(squadPlayers.filter(p => p.isStarter && !p.injury), playerInstructions),
+    [squadPlayers, playerInstructions],
+  )
 
   // ── Táticas salvas (preset do CONJUNTO tático, não da escalação) ──────────
   const [taticasSalvas, setTaticasSalvas] = useState<TaticaSalva[]>([])
@@ -381,6 +390,52 @@ export default function TaticasPage() {
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* CAMADA INDIVIDUAL. As funcoes de cada atleta nao mudavam nada em
+              campo ate a 1.0.280. O que pesa aqui e ADEQUACAO — se os atributos
+              dele servem a funcao que recebeu —, nunca a qualidade, que ja conta
+              na forca do time. */}
+          {(efeitoIndividual.bemEmpregados > 0 || efeitoIndividual.malEmpregados > 0
+            || efeitoIndividual.avisos.length > 0) && (
+            <div className="mt-3 border-t border-white/[0.06] pt-3">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                  Funções individuais
+                </span>
+                <span className="text-xs text-white/40">
+                  <span className="font-bold text-[var(--brand)]">{efeitoIndividual.bemEmpregados}</span> bem
+                  {" · "}
+                  <span className={cn("font-bold", efeitoIndividual.malEmpregados > 0 ? "text-red-400" : "text-white/40")}>
+                    {efeitoIndividual.malEmpregados}
+                  </span> fora de função
+                </span>
+                {([
+                  ["Ataque", efeitoIndividual.attack],
+                  ["Meio", efeitoIndividual.midfield],
+                  ["Defesa", efeitoIndividual.defense],
+                ] as const).map(([rotulo, valor]) => (
+                  <span key={rotulo} className="flex items-baseline gap-1.5">
+                    <span className="text-xs text-white/40">{rotulo}</span>
+                    <span className={cn(
+                      "text-sm font-bold tabular-nums",
+                      valor > 0 ? "text-[var(--brand)]" : valor < 0 ? "text-red-400" : "text-white/40",
+                    )}>
+                      {valor > 0 ? `+${valor}` : valor}
+                    </span>
+                  </span>
+                ))}
+              </div>
+              {efeitoIndividual.avisos.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {efeitoIndividual.avisos.map(a => (
+                    <li key={a} className="flex gap-2 text-xs leading-relaxed text-white/55">
+                      <span className="text-amber-400">•</span>{a}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
         </div>
 
