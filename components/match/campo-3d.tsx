@@ -134,6 +134,12 @@ function aparenciaDoAtleta(atleta: AtletaVisual, indice: number) {
   }
 }
 
+/** Só devolve `jogadores3D` quando há atletas de verdade. Ver o aviso no uso. */
+function aparencias(titulares?: AtletaVisual[]) {
+  if (!titulares || titulares.length === 0) return {}
+  return { jogadores3D: titulares.map(aparenciaDoAtleta) }
+}
+
 export function Campo3D({
   eventos, velocidade = 1, pausado = false, formacao = "4-3-3", duracaoDoTempo,
   camera = "transmissao", casa, fora, titularesCasa, titularesFora, aoFalhar,
@@ -178,8 +184,19 @@ export function Campo3D({
           assets3D: { ...assetsFutebol, obrigatorio: false },
           // PASSO 7 — clube real. `casa`/`fora` já traziam nome, sigla e cores;
           // o uniforme entra pelo mesmo objeto, sem duplicar dado de clube.
-          casa: { ...casa, jogadores3D: (titularesCasa ?? []).map(aparenciaDoAtleta) },
-          fora: { ...fora, jogadores3D: (titularesFora ?? []).map(aparenciaDoAtleta) },
+          // ⚠️ LISTA VAZIA NÃO É "SEM PREFERÊNCIA": É UMA LISTA DE ZERO ATLETAS.
+          //
+          // Relato com tela: "O 3D não pôde ser usado (Cannot read properties of
+          // undefined)". Na MONTAGEM, `homeSquad`/`awaySquad` ainda são `[]` —
+          // as escalações chegam por um efeito posterior. Eu mandava
+          // `jogadores3D: []`, e o motor tentava montar os 11 a partir de uma
+          // lista sem nenhum, indexando o que não existe.
+          //
+          // Omitir o campo é diferente de mandá-lo vazio: omitido, o motor usa o
+          // fallback dele e monta os 11 genéricos. Os nomes e números reais
+          // entram depois, quando a escalação chega.
+          casa: { ...casa, ...aparencias(titularesCasa) },
+          fora: { ...fora, ...aparencias(titularesFora) },
           aoProgredir: (pct, etapa) => { if (vivo) setProgresso({ pct, etapa }) },
           aoIniciar: () => { if (vivo) setPronto(true) },
           aoFalhar: (erro) => { if (vivo) falhar.current(erro.message) },

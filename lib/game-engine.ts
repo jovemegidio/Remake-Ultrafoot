@@ -21,6 +21,7 @@ import {
 import { normalizePosition, pickStartingXI } from "@/lib/formations"
 import { aprenderPosicao, exercerFuncao, perfilDoAtleta, type ProgressoDoPerfil } from "@/lib/modelo-de-jogador"
 import { registrarLesao, riscoPorHistorico, type LesaoRegistrada } from "@/lib/historico-de-lesoes"
+import { CAMPOS_DO_CLUBE } from "@/lib/chaveamento-de-tecnico"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
 import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor, FRACAO_DO_CUSTO_OPERACIONAL, youthPromotionSalaryWeekly } from "@/lib/club-economy"
 import { reforcosEmergenciais, gerarNomeDeAtleta, ELENCO_MINIMO } from "@/lib/reposicao-emergencial"
@@ -5964,6 +5965,32 @@ export const useGameEngine = create<GameEngineState>()(
       },
       
       initializeGame: (teamShort, teamFileKey) => {
+        /**
+         * ⚠️ CARREIRA NOVA NÃO PODE HERDAR A ANTERIOR.
+         *
+         * Relato de jogador: "o jogo puxa históricos dos saves passados,
+         * negociação com jogador por exemplo". O SAVE nascia limpo — quem não
+         * nascia era o MOTOR: ele é um store persistido à parte, e este
+         * `initializeGame` zerava semana, temporada, tabela e resultados, mas
+         * deixava passar propostas, interesses de mercado, transferências
+         * pendentes, conversas com atletas e atletas descobertos. O técnico
+         * começava do zero com o mercado da carreira anterior em cima da mesa.
+         *
+         * O reset é pela lista FECHADA `CAMPOS_DO_CLUBE` — a mesma que o co-op
+         * usa para trocar de técnico, e que já é conferida por teste contra o
+         * estado real do motor. Zerar por enumeração à mão foi o que criou o
+         * defeito: `scoutedLeads` estava na conta e os seis vizinhos não.
+         * Assim, campo novo do motor entra no reset sozinho.
+         */
+        const limpos: Record<string, unknown> = {}
+        const atual = get() as unknown as Record<string, unknown>
+        for (const campo of CAMPOS_DO_CLUBE) {
+          const valor = atual[campo]
+          if (Array.isArray(valor)) limpos[campo] = []
+          else if (valor && typeof valor === "object") limpos[campo] = {}
+        }
+        set(limpos as never)
+
         const serieATeams = allTeams.filter(team => team.divisao === "serie_a").map(team => team.curto)
 
         const serieAStandings: StandingsEntry[] = serieATeams.map(team => ({
