@@ -27,6 +27,7 @@ import { AlertTriangle } from "lucide-react"
 import { performanceStore } from "@/components/performance-profile"
 import type { EventoParaEncenar, Motor, QualidadeMotor } from "@/partida-3d/partida-3d/motor"
 import { getFormationSlots } from "@/lib/formations"
+import { tipoParaCena } from "@/lib/eventos-para-3d"
 import { assetsFutebol } from "@/lib/assets-futebol"
 
 /** O que o 3D precisa saber de um atleta para desenhá-lo. Tudo opcional. */
@@ -46,6 +47,17 @@ export interface Campo3DProps {
   formacao?: string
   /** Duração de cada tempo, em minutos de jogo. Vem do contexto da partida. */
   duracaoDoTempo?: number
+  /**
+   * Câmera da transmissão. O padrão é `transmissao`, que é o plano que o
+   * jogador espera de um jogo de futebol.
+   *
+   * ⚠️ As câmeras CONTEXTUAIS (pênalti atrás do cobrador, falta em plano baixo,
+   * escanteio junto à bandeirinha) são do Director do motor e NÃO se controlam
+   * daqui — ele as assume sozinho quando o lance pede e devolve o plano normal
+   * depois. Forçar o modo por fora brigaria com ele e mataria justamente o que
+   * o V5 tem de melhor.
+   */
+  camera?: "dinamica" | "transmissao" | "tele" | "aerea"
   casa: { nome: string; sigla: string; corPrincipal: string; corSecundaria: string }
   fora: { nome: string; sigla: string; corPrincipal: string; corSecundaria: string }
   /**
@@ -124,7 +136,7 @@ function aparenciaDoAtleta(atleta: AtletaVisual, indice: number) {
 
 export function Campo3D({
   eventos, velocidade = 1, pausado = false, formacao = "4-3-3", duracaoDoTempo,
-  casa, fora, titularesCasa, titularesFora, aoFalhar,
+  camera = "transmissao", casa, fora, titularesCasa, titularesFora, aoFalhar,
 }: Campo3DProps) {
   const palco = useRef<HTMLDivElement | null>(null)
   const motor = useRef<Motor | null>(null)
@@ -176,6 +188,7 @@ export function Campo3D({
         // PASSO 10 — velocidade e pausa ja tinham ponte; a DURACAO nao tinha, e
         // sem ela o relogio da cena divergia do relogio da partida.
         if (duracaoDoTempo) instancia.definirDuracaoDoTempo(duracaoDoTempo)
+        instancia.definirCamera(camera)
         motor.current = instancia
         return instancia.iniciar()
       })
@@ -208,7 +221,32 @@ export function Campo3D({
   useEffect(() => {
     if (duracaoDoTempo) motor.current?.definirDuracaoDoTempo(duracaoDoTempo)
   }, [duracaoDoTempo])
+  useEffect(() => { motor.current?.definirCamera(camera) }, [camera])
   useEffect(() => { motor.current?.definirFormacao(getFormationSlots(formacao)) }, [formacao])
+
+  /**
+   * PAINEL DE TELEMETRIA DO 3D — passo 13.
+   *
+   * ⚠️ Existe porque LOD é INVISÍVEL quando funciona. O sistema tem três níveis
+   * (detalhe, médio, proxy) e o sintoma de estar quebrado não é erro nenhum: é o
+   * jogo ficando pesado sem motivo aparente, ou atletas distantes com detalhe de
+   * primeiro plano. Sem ler os números, "está funcionando" vira opinião.
+   *
+   * Ele também é o único lugar que denuncia `falhasAssets` — um GLB que não
+   * carregou cai no fallback procedural em silêncio, de propósito (a partida não
+   * pode virar tela preta), e sem este painel ninguém saberia que caiu.
+   *
+   * Fica atrás de `?debug3d=1`: some em produção sem precisar de build separada.
+   */
+  const [telemetria, setTelemetria] = useState<ReturnType<NonNullable<typeof motor.current>["lerTelemetria"]> | null>(null)
+  const mostrarDebug = typeof window !== "undefined"
+    && new URLSearchParams(window.location.search).get("debug3d") === "1"
+  useEffect(() => {
+    if (!mostrarDebug || !pronto) return
+    // 2 por segundo: o suficiente para acompanhar, longe de competir com a cena.
+    const id = window.setInterval(() => setTelemetria(motor.current?.lerTelemetria() ?? null), 500)
+    return () => window.clearInterval(id)
+  }, [mostrarDebug, pronto])
 
   // ── Encenação: só o que CHEGOU depois da última vez ───────────────────────
   //
@@ -234,10 +272,17 @@ export function Campo3D({
       if (!motor.current || temporizadorDaFila.current !== null) return
       const evento = fila.current.shift()
       if (!evento) return
-      const paraEncenar: EventoParaEncenar = {
-        tipo: evento.tipo, lado: evento.lado, minuto: evento.minuto,
+      // PASSO 11 — TRADUZIR, e não repassar cru. O vocabulário do motor de
+      // partida não é o da cena: `offside` e `chance` precisam de decisão, e
+      // `injury`/`card` NÃO devem virar lance nenhum (encenar cartão sem cor
+      // mostraria vermelho onde houve amarelo). Ver lib/eventos-para-3d.ts.
+      const tipoDaCena = tipoParaCena(evento.tipo)
+      if (tipoDaCena) {
+        const paraEncenar: EventoParaEncenar = {
+          tipo: tipoDaCena, lado: evento.lado, minuto: evento.minuto,
+        }
+        motor.current.encenar(paraEncenar)
       }
-      motor.current.encenar(paraEncenar)
       // Um evento precisa respirar antes do seguinte. A espera acompanha a
       // velocidade escolhida, mas nunca vira um piscar ilegível.
       const espera = Math.max(700, Math.round(2800 / Math.max(1, velocidadeAtual.current)))
@@ -256,6 +301,18 @@ export function Campo3D({
       <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-md border border-white/10 bg-black/45 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white/75 backdrop-blur-sm">
         <span className="size-1.5 animate-pulse rounded-full bg-red-500" /> transmissão 3D · câmera tática
       </div>
+      {mostrarDebug && telemetria?.render3D && (
+        <div className="pointer-events-none absolute right-3 top-3 rounded-md border border-white/15 bg-black/75 px-3 py-2 font-mono text-[10px] leading-relaxed text-white/80 backdrop-blur-sm">
+          <div className="mb-1 font-bold text-[var(--brand)]">render3D</div>
+          <div>LOD detalhe/medio/proxy: {telemetria.render3D.lodDetalhe}/{telemetria.render3D.lodMedio}/{telemetria.render3D.lodProxy}</div>
+          <div>torcida: {telemetria.render3D.crowdCount}</div>
+          <div>GLB jogador: {telemetria.render3D.jogadorGLB ? "sim" : "NAO"} · estadio: {telemetria.render3D.estadioGLB ? "sim" : "NAO"}</div>
+          <div>camera: {telemetria.render3D.cameraModo} · fov {Math.round(telemetria.render3D.fov)}</div>
+          {telemetria.render3D.falhasAssets.length > 0 && (
+            <div className="mt-1 text-amber-300">falhas: {telemetria.render3D.falhasAssets.join(", ")}</div>
+          )}
+        </div>
+      )}
       {!pronto && (
         <div className="absolute inset-0 grid place-items-center bg-black/85">
           <div className="w-64 text-center">
