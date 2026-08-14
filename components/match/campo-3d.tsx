@@ -184,13 +184,38 @@ export function Campo3D({
           aoIniciar: () => { if (vivo) setPronto(true) },
           aoFalhar: (erro) => { if (vivo) falhar.current(erro.message) },
         })
-        instancia.definirFormacao(getFormationSlots(formacao))
-        // PASSO 10 — velocidade e pausa ja tinham ponte; a DURACAO nao tinha, e
-        // sem ela o relogio da cena divergia do relogio da partida.
-        if (duracaoDoTempo) instancia.definirDuracaoDoTempo(duracaoDoTempo)
-        instancia.definirCamera(camera)
         motor.current = instancia
-        return instancia.iniciar()
+        // ⚠️ CONFIGURAR SÓ DEPOIS DE `iniciar()`, NUNCA ANTES.
+        //
+        // Relato: "O 3D não pôde ser usado nesta máquina (Cannot read properties
+        // of undefined)". A causa era esta ordem. `definirCamera` termina em
+        // `$('cam').textContent` — ele escreve no HUD interno do motor, que só
+        // passa a existir depois do `iniciar()`. E a guarda do próprio motor não
+        // protege: ela testa se o `Director` existe, não se a cena foi montada.
+        //
+        // O V4 tolerava `definirFormacao` antes de iniciar, e eu estendi essa
+        // suposição para os outros dois — que é onde ela deixou de valer.
+        return instancia.iniciar().then(() => {
+          if (!vivo) return
+          // ⚠️ FALHA DE CONFIGURAÇÃO NÃO PODE DERRUBAR A CENA INTEIRA.
+          //
+          // Sem este `try`, um erro ao definir câmera ou duração rejeita a
+          // promessa, cai no `.catch` de baixo e joga o jogador para o 2D — ou
+          // seja, o jogo troca uma cena que FUNCIONA por nenhuma, por causa de
+          // um ajuste acessório. A cena já está de pé neste ponto; o pior caso
+          // aceitável é ela seguir com a câmera padrão.
+          try {
+            instancia.definirFormacao(getFormationSlots(formacao))
+            // PASSO 10 — velocidade e pausa já tinham ponte; a DURAÇÃO não
+            // tinha, e sem ela o relógio da cena divergia do da partida.
+            if (duracaoDoTempo) instancia.definirDuracaoDoTempo(duracaoDoTempo)
+            instancia.definirCamera(camera)
+          } catch (erro) {
+            // Registrado, não engolido: o painel `?debug3d=1` e o console
+            // precisam mostrar que algo do V5 não aceitou a configuração.
+            console.error("[campo-3d] falha ao configurar a cena (segue com o padrão):", erro)
+          }
+        })
       })
       .catch((erro: Error) => {
         // Falha ao BAIXAR o módulo (chunk faltando no export estático, disco
