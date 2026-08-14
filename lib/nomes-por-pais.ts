@@ -62,6 +62,78 @@ const POR_PAIS: Record<string, ParDeNomes> = {
     pri: ["Facundo", "Mateo", "Nicolás", "Rodrigo", "Santiago", "Bruno", "Maximiliano", "Diego", "Sebastián", "Agustín"],
     ult: ["Rodríguez", "Pereira", "Silva", "González", "Fernández", "Suárez", "Cavani", "Olivera", "Bentancur", "Núñez"],
   },
+  peru: {
+    pri: ["Luis", "Diego", "Renzo", "Jairo", "Piero", "José", "Carlos", "Adrián", "Franco", "Sebastián"],
+    ult: ["Quispe", "Flores", "García", "Rojas", "Ramírez", "Chávez", "Huamán", "Vargas", "Castillo", "Paredes"],
+  },
+  bolivia: {
+    pri: ["José", "Carlos", "Miguel", "Diego", "Luis", "Ramiro", "Marcelo", "Jhon", "Bruno", "Daniel"],
+    ult: ["Mamani", "Quispe", "Flores", "Vargas", "Rojas", "Gutiérrez", "Condori", "Mendoza", "Suárez", "Fernández"],
+  },
+  paraguai: {
+    pri: ["Ángel", "Derlis", "Óscar", "Julio", "Matías", "Blas", "Hugo", "Miguel", "Diego", "Alexis"],
+    ult: ["González", "Martínez", "Benítez", "Gómez", "Romero", "Ortiz", "Villalba", "Rojas", "Cardozo", "Almirón"],
+  },
+  venezuela: {
+    pri: ["Yeferson", "Jefferson", "José", "Cristian", "Daniel", "Andrés", "Telasco", "Darwin", "Eduard", "Kevin"],
+    ult: ["Martínez", "Rondón", "Machís", "Soteldo", "Herrera", "Osorio", "Cásseres", "Navarro", "Rincón", "Aramburu"],
+  },
+  escocia: {
+    pri: ["Lewis", "Jack", "Callum", "Ryan", "Scott", "Ross", "Connor", "Liam", "Ewan", "Jamie"],
+    ult: ["Campbell", "Stewart", "Robertson", "McLean", "McGregor", "Fraser", "Murray", "Gordon", "Morrison", "Ferguson"],
+  },
+  grecia: {
+    pri: ["Giorgos", "Dimitris", "Kostas", "Nikos", "Vangelis", "Christos", "Giannis", "Manolis", "Sotiris", "Andreas"],
+    ult: ["Papadopoulos", "Georgiou", "Nikolaou", "Christodoulou", "Pappas", "Vasileiou", "Karagiannis", "Oikonomou", "Kostas", "Manolas"],
+  },
+  dinamarca: {
+    pri: ["Mikkel", "Emil", "Oliver", "Magnus", "Frederik", "Rasmus", "Christian", "Jonas", "Victor", "Andreas"],
+    ult: ["Nielsen", "Jensen", "Hansen", "Andersen", "Pedersen", "Christensen", "Larsen", "Sørensen", "Rasmussen", "Madsen"],
+  },
+  tchequia: {
+    pri: ["Tomáš", "Jan", "Jakub", "Lukáš", "Petr", "Matěj", "Adam", "Martin", "David", "Václav"],
+    ult: ["Novák", "Svoboda", "Novotný", "Dvořák", "Černý", "Procházka", "Kučera", "Veselý", "Horák", "Němec"],
+  },
+  azerbaijao: {
+    pri: ["Ali", "Elvin", "Tural", "Ramil", "Namik", "Mahir", "Emin", "Rashad", "Araz", "Nijat"],
+    ult: ["Mammadov", "Aliyev", "Huseynov", "Hasanov", "Ibrahimov", "Abbasov", "Jafarov", "Karimov", "Quliyev", "Suleymanov"],
+  },
+  noruega: {
+    pri: ["Erik", "Magnus", "Kristoffer", "Sander", "Martin", "Emil", "Oskar", "Marius", "Andreas", "Jonas"],
+    ult: ["Hansen", "Johansen", "Olsen", "Larsen", "Andersen", "Nilsen", "Pedersen", "Kristiansen", "Berg", "Solberg"],
+  },
+  chipre: {
+    pri: ["Andreas", "Giorgos", "Marios", "Christos", "Nicolas", "Michalis", "Ioannis", "Constantinos", "Panayiotis", "Sotiris"],
+    ult: ["Georgiou", "Christodoulou", "Ioannou", "Andreou", "Kyriakou", "Nicolaou", "Michael", "Charalambous", "Demetriou", "Constantinou"],
+  },
+  cazaquistao: {
+    pri: ["Abat", "Bauyrzhan", "Askhat", "Islam", "Maksim", "Serik", "Daniyar", "Bakhtiyar", "Nuraly", "Arman"],
+    ult: ["Aymbetov", "Zaynutdinov", "Tagybergen", "Alip", "Vorogovskiy", "Suyumbayev", "Orazov", "Kuat", "Maliy", "Bystrov"],
+  },
+  turquia: {
+    pri: ["Arda", "Kerem", "Emir", "Yusuf", "Mert", "Hakan", "Ozan", "Kaan", "Efe", "Burak"],
+    ult: ["Yılmaz", "Kaya", "Demir", "Şahin", "Çelik", "Yıldız", "Aydın", "Öztürk", "Arslan", "Doğan"],
+  },
+  russia: {
+    pri: ["Aleksandr", "Dmitri", "Maksim", "Ivan", "Nikita", "Mikhail", "Artem", "Kirill", "Pavel", "Andrei"],
+    ult: ["Ivanov", "Smirnov", "Kuznetsov", "Popov", "Sokolov", "Lebedev", "Kozlov", "Novikov", "Morozov", "Volkov"],
+  },
+  japao: {
+    pri: ["Haruto", "Yuto", "Sota", "Ren", "Kaito", "Daiki", "Takumi", "Riku", "Hinata", "Shota"],
+    ult: ["Sato", "Suzuki", "Takahashi", "Tanaka", "Watanabe", "Ito", "Yamamoto", "Nakamura", "Kobayashi", "Kato"],
+  },
+  "coreia do sul": {
+    pri: ["Min-jun", "Seo-jun", "Ji-ho", "Hyun-woo", "Jun-ho", "Dong-hyun", "Sung-min", "Jae-won", "Tae-yang", "Woo-jin"],
+    ult: ["Kim", "Lee", "Park", "Choi", "Jung", "Kang", "Cho", "Yoon", "Jang", "Lim"],
+  },
+  china: {
+    pri: ["Wei", "Jun", "Hao", "Tao", "Lei", "Bo", "Jian", "Peng", "Ming", "Long"],
+    ult: ["Wang", "Li", "Zhang", "Liu", "Chen", "Yang", "Huang", "Zhao", "Wu", "Zhou"],
+  },
+  "arabia saudita": {
+    pri: ["Mohammed", "Abdullah", "Fahad", "Saud", "Khalid", "Nawaf", "Salem", "Yasser", "Sultan", "Hassan"],
+    ult: ["Al-Qahtani", "Al-Dawsari", "Al-Harbi", "Al-Shammari", "Al-Ghamdi", "Al-Otaibi", "Al-Zahrani", "Al-Anazi", "Al-Mutairi", "Al-Shehri"],
+  },
 }
 
 /** Nem brasileiro nem de nenhum país específico: mistura sóbria e internacional. */
@@ -84,6 +156,14 @@ const APELIDOS: Record<string, string> = {
   "inglaterra": "inglaterra", "reino unido": "inglaterra",
   "espanha": "espanha", "alemanha": "alemanha", "portugal": "portugal",
   "brasil": "brasil", "argentina": "argentina", "uruguai": "uruguai",
+  "peru": "peru", "bolivia": "bolivia", "paraguai": "paraguai", "venezuela": "venezuela",
+  "escocia": "escocia", "grécia": "grecia", "grecia": "grecia", "dinamarca": "dinamarca",
+  "tchéquia": "tchequia", "tchequia": "tchequia", "república tcheca": "tchequia",
+  "azerbaijão": "azerbaijao", "azerbaijao": "azerbaijao", "noruega": "noruega",
+  "chipre": "chipre", "cazaquistão": "cazaquistao", "cazaquistao": "cazaquistao",
+  "turquia": "turquia", "rússia": "russia", "russia": "russia",
+  "japão": "japao", "japao": "japao", "coreia do sul": "coreia do sul",
+  "china": "china", "arábia saudita": "arabia saudita", "arabia saudita": "arabia saudita",
 }
 
 /** Listas de nome do país, ou o conjunto neutro quando não houver. */

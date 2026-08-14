@@ -11,10 +11,13 @@
 // academia, registro em `youthMarketPurchasedIds`): quem compra entra direto na
 // categoria de base, não no elenco profissional.
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Search, ShoppingCart, Sprout, Users, Briefcase } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
-import importedBF from "@/data/seeds/imported-bf2026.json"
+// Este painel só lê `nome`/`fileKey`, então o ÍNDICE (0,88 MB) basta. Antes ele
+// puxava o seed completo de 8,91 MB só por isso. Ver `lib/pool-elencos.ts`.
+import importedBF from "@/data/seeds/imported-bf2026-index.json"
+import { estimarPotencial, faixaDeCpe, rotuloDaAvaliacao } from "@/lib/cpe"
 
 // ─── ESCUDO DO CLUBE FORMADOR QUANDO ELE NAO E CURADO ────────────────────────
 //
@@ -40,7 +43,8 @@ function fileKeyDoPool(nome?: string | null): string | undefined {
   if (!nome) return undefined
   return POOL_POR_NOME.get(nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, ""))
 }
-import { formatCurrency, getTeamByName } from "@/lib/teams-data"
+import { getTeamByName } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 import type { SquadPlayer } from "@/lib/save-system"
 import {
@@ -52,6 +56,12 @@ const POSICOES = ["todas", "GOL", "ZAG", "LD", "LE", "VOL", "MEI", "PD", "PE", "
 interface Props {
   /** Promessas disponíveis (já sem as compradas). */
   prospectos: SquadPlayer[]
+  /**
+   * O quanto o clube enxerga de talento (0-100). Entra o CPE no lugar do
+   * potencial real — ver lib/cpe.ts. Sem departamento montado, o número que a
+   * tela mostra pode estar bem longe do que o garoto vai virar.
+   */
+  qualidadeDeAvaliacao?: number
   /** Vagas livres na categoria de base. */
   vagas: number
   capacidade: number
@@ -60,7 +70,7 @@ interface Props {
   onComprar: (jovem: SquadPlayer) => void
 }
 
-export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, saldo, onComprar }: Props) {
+export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, saldo, onComprar, qualidadeDeAvaliacao = 20 }: Props) {
   const [busca, setBusca] = useState("")
   const [pos, setPos] = useState<string>("todas")
   const [idadeMax, setIdadeMax] = useState(21)
@@ -68,6 +78,10 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
   const [potencialMin, setPotencialMin] = useState(0)
   const [precoMax, setPrecoMax] = useState(0)
   const [selecionado, setSelecionado] = useState<SquadPlayer | null>(null)
+  const cpeDe = useCallback(
+    (id: string | number, potencial: number) => estimarPotencial(id, potencial, qualidadeDeAvaliacao),
+    [qualidadeDeAvaliacao],
+  )
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase()
@@ -75,12 +89,14 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
       if (pos !== "todas" && p.position !== pos) return false
       if ((p.age ?? 0) > idadeMax) return false
       if ((p.overall ?? 0) < overallMin) return false
-      if ((p.potential ?? 0) < potencialMin) return false
+      // Pelo CPE, não pelo potencial real: filtrar pelo dado verdadeiro daria um
+      // raio-x do mercado — "potencial mínimo 90" listaria os craques escondidos.
+      if (potencialMin > 0 && cpeDe(p.id, p.potential ?? 0).valor < potencialMin) return false
       if (precoMax > 0 && (p.value ?? 0) > precoMax) return false
       if (termo && !p.name.toLowerCase().includes(termo) && !(p.fromTeam ?? "").toLowerCase().includes(termo)) return false
       return true
     })
-  }, [prospectos, pos, idadeMax, overallMin, potencialMin, precoMax, busca])
+  }, [prospectos, pos, idadeMax, overallMin, potencialMin, precoMax, busca, cpeDe])
 
   // A ficha aberta segue a lista: se o filtro tirou o escolhido, mostra o primeiro.
   const alvo = useMemo(() => {
@@ -183,7 +199,7 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
-                    <span className="block text-xs font-semibold text-[var(--brand)]">pot. {p.potential}</span>
+                    <span className="block text-xs font-semibold text-[var(--brand)]">CPE {faixaDeCpe(cpeDe(p.id, p.potential ?? 0))}</span>
                     <span className="block text-[11px] text-white/50">{formatCurrency(p.value ?? 0)}</span>
                   </span>
                 </button>
@@ -205,7 +221,7 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-lg font-bold text-white">{alvo.name}</p>
                   <p className="text-sm text-white/50">
-                    {alvo.position} · {alvo.age} anos · potencial <span className="text-[var(--brand)]">{alvo.potential}</span>
+                    {alvo.position} · {alvo.age} anos · CPE <span className="text-[var(--brand)]">{faixaDeCpe(cpeDe(alvo.id, alvo.potential ?? 0))}</span>
                   </p>
                 </div>
                 {/* ESCUDO DO CLUBE FORMADOR. `fromTeam` e o NOME ("Palmeiras"), e o
@@ -232,7 +248,8 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
               <div className="mt-4 space-y-1.5 rounded-lg border border-white/[0.06] bg-black/20 p-3 text-sm">
                 <Linha rotulo="Clube formador" valor={alvo.fromTeam ?? "—"} />
                 <Linha rotulo="Pedido do clube" valor={formatCurrency(alvo.value ?? 0)} destaque />
-                <Linha rotulo="Margem de evolução" valor={`+${Math.max(0, (alvo.potential ?? 0) - (alvo.overall ?? 0))}`} />
+                <Linha rotulo="Margem de evolução" valor={`+${Math.max(0, cpeDe(alvo.id, alvo.potential ?? 0).valor - (alvo.overall ?? 0))}`} />
+                <Linha rotulo="Confiança do relatório" valor={rotuloDaAvaliacao(qualidadeDeAvaliacao)} />
               </div>
 
               {/* AGENTE — a compra deixou de ser um botão. A comissão entra POR

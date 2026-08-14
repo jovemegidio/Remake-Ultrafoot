@@ -23,7 +23,10 @@ for (const competitions of Object.values(competitionsByLeague)) {
     assert(!ids.has(competition.id) || ["libertadores", "sulamericana", "champions_league", "europa_league", "conference_league"].includes(competition.id), `${competition.id}: id duplicado inesperado`)
     ids.add(competition.id)
     catalogById.set(competition.id, competition)
-    if (competition.format === "points") assert(competition.rounds === (competition.teams - 1) * 2, `${competition.id}: pontos corridos incompatível com número de rodadas`)
+    if (competition.format === "points") {
+      const cycles = competition.roundRobinCycles ?? 2
+      assert(competition.rounds === (competition.teams - 1) * cycles, `${competition.id}: pontos corridos incompatível com número de rodadas`)
+    }
   }
 }
 

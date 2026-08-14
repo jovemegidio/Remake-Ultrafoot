@@ -42,7 +42,7 @@ const REDE_SECTOR_POSITIONS: Record<string, string[]> = {
 import { announceOnlineAction } from "@/lib/online-multiplayer"
 import { markRejection, getRejectionCooldown, CARENCIA_POR_MOTIVO } from "@/lib/transfer-cooldown"
 import { confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
-import { formatCurrency, formatCurrencyFor } from "@/lib/teams-data"
+import { formatCurrency, formatCurrencyFor } from "@/lib/currency"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
 import { useGameState, type GameState, type SquadPlayer } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
@@ -67,7 +67,10 @@ import { getLeagueLogo } from "@/lib/league-logos"
 import { playerSalaryWeekly } from "@/lib/club-economy"
 import { attributesFromOverall } from "@/lib/player-attributes"
 import { canAffordTransfer, financeWithDebt, borrowingCapacity } from "@/lib/debt-engine"
+import { podeReforcar } from "@/lib/challenge-engine"
 import { MercadoJunioresPanel } from "@/components/mercado-juniores-panel"
+import { qualidadeDeAvaliacao } from "@/lib/cpe"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { CentralDeTransferencias } from "@/components/mercado/central-de-transferencias"
 import { RedeMundial } from "@/components/mercado/rede-mundial"
 import { agenteDoJovem, comissaoEmReais, responderOferta } from "@/lib/agente-do-jovem"
@@ -270,7 +273,8 @@ export default function MercadoPage() {
   // e a navegacao do jogo e um reload completo.
   useEffect(() => {
     if (typeof window === "undefined") return
-    const pedida = new URLSearchParams(window.location.search).get("aba")
+    const parametros = new URLSearchParams(window.location.search)
+    const pedida = parametros.get("aba")
     if (pedida && (MARKET_TABS as string[]).includes(pedida)) setActiveTab(pedida as MarketTab)
   }, [])
   const [selectedFilter, setSelectedFilter] = useState<FilterType | null>(null)
@@ -358,6 +362,14 @@ export default function MercadoPage() {
 
   // Search input state for real-time filtering
   const [searchQuery, setSearchQuery] = useState("")
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const jogador = new URLSearchParams(window.location.search).get("jogador")?.trim()
+    if (!jogador) return
+    setSearchQuery(jogador)
+    setNameFilter(jogador)
+    setActiveTab("buscar")
+  }, [])
 
   // Filter cards for search
   const filterCards: FilterCard[] = [
@@ -814,6 +826,10 @@ export default function MercadoPage() {
     const fimContrato = absoluteWeek(gameEngine.currentSeason, gameEngine.currentWeek) + 52 * 3
     const enginePlayer = marketPlayerToEnginePlayer(player, divisaoUsuario, salario, fimContrato)
     const resultado = gameEngine.buyPlayer(enginePlayer, 0, true)
+    if (resultado === "desafio") {
+      setMarketNotice(podeReforcar({ idade: player.age, semClube: true }).motivo ?? "O desafio ativo não permite esta contratação.")
+      return
+    }
     if (resultado === "wage_budget") {
       setMarketNotice("A diretoria vetou: o salário deste atleta estoura o teto da folha. Livre de graça ainda pesa na folha.")
       return
@@ -952,7 +968,20 @@ export default function MercadoPage() {
   //
   // Mesmas fontes que a tela da base usava: o pool deterministico do ciclo, menos
   // quem ja foi comprado. A capacidade vem do nivel da academia (motor), nao do save.
-  const nivelAcademia = useGameEngine(st => st.clubInfrastructure?.youthAcademyLevel) ?? 1
+  // ⚠️ A chave é `youth`: `youthAcademyLevel` não existe em `clubInfrastructure`
+  // e o `?? 1` escondia o engano — a academia ficava presa no nível 1 aqui e na
+  // tela da base, mesmo com o clube tendo investido nela.
+  const nivelAcademia = useGameEngine(st => st.clubInfrastructure?.youth) ?? 1
+  // O CPE do mercado de juniores usa a MESMA estrutura de avaliação da base.
+  const qualidadeDaAvaliacaoDeBase = useMemo(() => qualidadeDeAvaliacao({
+    academia: nivelAcademia,
+    centroDeObservacao: careerState.scoutingDepartment?.observationCentreLevel ?? 1,
+    centroDeDados: careerState.scoutingDepartment?.dataCentreLevel ?? 1,
+    olheiros: careerState.scoutingDepartment?.scouts?.length
+      ? careerState.scoutingDepartment.scouts.reduce((soma, o) => soma + (o.attributes?.youthDiscovery ?? 0), 0)
+        / careerState.scoutingDepartment.scouts.length
+      : 0,
+  }), [nivelAcademia, careerState.scoutingDepartment])
   const juniorescNaBase = (careerState.youthPlayers ?? []).length
   const prospectosJuniores = useMemo(() => {
     const comprados = new Set(careerState.youthMarketPurchasedIds ?? [])
@@ -1153,6 +1182,18 @@ export default function MercadoPage() {
                   >
                     Mercado de Juniores
                   </TabsTrigger>
+                  <span className="text-white/20">|</span>
+                  {/* PORTA DO TRANSFERROOM. Ele saiu do menu (era mais uma linha
+                      para "negociar atleta", tarefa que ja mora aqui) e passa a
+                      ser alcancado de dentro do Mercado — que e onde o tecnico
+                      esta quando pensa nele. Sem isto a tela ficaria orfa. */}
+                  <button
+                    type="button"
+                    onClick={() => hardNavigate("/transferroom")}
+                    className="whitespace-nowrap px-0 py-0 text-base text-white/40 transition-colors hover:text-white/60"
+                  >
+                    TransferRoom
+                  </button>
                   <span className="text-white/20">|</span>
                   <TabsTrigger
                     value="enviadas"
@@ -1840,6 +1881,7 @@ export default function MercadoPage() {
               capacidade={capacidadeDaBase(nivelAcademia)}
               naBase={juniorescNaBase}
               saldo={gameEngine.balance}
+              qualidadeDeAvaliacao={qualidadeDaAvaliacaoDeBase}
               onComprar={comprarJunior}
             />
           </TabsContent>
@@ -2179,6 +2221,25 @@ export default function MercadoPage() {
           const registrarDesfecho = (nome: string, status: SentProposalStatus) =>
             setSentProposals(atual => atual.map(p => (p.playerName === nome ? { ...p, status } : p)))
 
+          // REGRA DO DESAFIO ANTES DO DINHEIRO.
+          //
+          // O motor também recusa (é ele quem fecha todas as portas), mas a
+          // recusa dele chega TARDE demais neste caminho: logo abaixo o clube
+          // pode tomar EMPRÉSTIMO BANCÁRIO para cobrir a diferença. Sem esta
+          // porteira o técnico se endividaria por uma contratação que o desafio
+          // não deixaria acontecer.
+          const veredicto = podeReforcar({
+            idade: selectedPlayer.age,
+            semClube: !selectedPlayer.team,
+            emprestimo: negotiationType === "loan",
+          })
+          if (!veredicto.pode) {
+            setMarketNotice(veredicto.motivo ?? "O desafio ativo não permite esta contratação.")
+            registrarDesfecho(selectedPlayer.name, "rejeitada")
+            setActiveTab("enviadas")
+            return
+          }
+
           if (negotiationType === "loan") {
             // DURAÇÃO E SALÁRIO ACERTADOS NA MESA. Antes eram 26 semanas cravadas
             // e `taxa/26` de salário — a negociação de empréstimo não chegava aqui.
@@ -2239,6 +2300,12 @@ export default function MercadoPage() {
             }
             const isFreeAgent = !selectedPlayer.team
             const transferResult = gameEngine.buyPlayer(enginePlayer, fee, isFreeAgent, janelaAberta)
+            if (transferResult === "desafio") {
+              setMarketNotice(veredicto.motivo ?? "O desafio ativo não permite esta contratação.")
+              registrarDesfecho(selectedPlayer.name, "rejeitada")
+              setActiveTab("enviadas")
+              return
+            }
             if (transferResult === "wage_budget") {
               setMarketNotice(
                 "A diretoria vetou: o salário deste atleta estoura o teto da folha. Libere espaço vendendo, rescindindo ou renegociando contratos.",

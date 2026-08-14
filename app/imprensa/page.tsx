@@ -1,566 +1,117 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import {
-  MicOff,
-  MessageCircle,
-  Camera,
-  Newspaper,
-  Radio,
-  Tv,
-  CheckCircle2,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  Clock,
-  ChevronRight,
-  User,
-  Quote,
-  Sparkles,
-  Flame,
-  Shield,
-  ThumbsUp,
-  ThumbsDown,
-  Meh,
-  X
-} from "lucide-react"
-import { TeamCrest } from "@/components/team-crest"
+import { AnimatePresence, motion } from "framer-motion"
+import { Calendar, ChevronRight, Flame, History, Meh, MessageCircle, MicOff, Newspaper, Quote, Shield, ThumbsDown, ThumbsUp, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { useGameEngine, type PressConference, type PressResponse } from "@/lib/game-engine"
 import { cn } from "@/lib/utils"
-import { useGameEngine, type PressQuestion } from "@/lib/game-engine"
 
-// Perguntas de conferencia
-const PRESS_QUESTIONS: PressQuestion[] = [
-  {
-    id: 1,
-    type: "match",
-    question: "Como avalia o desempenho do time na ultima partida?",
-    options: [
-      { text: "Estou muito satisfeito, jogamos muito bem e merecemos a vitoria.", tone: "positivo", impact: 5 },
-      { text: "Foi um resultado justo, mas podemos melhorar em alguns aspectos.", tone: "neutro", impact: 0 },
-      { text: "Nao estou feliz com o que vi, precisamos reagir urgentemente.", tone: "negativo", impact: -3 }
-    ]
-  },
-  {
-    id: 2,
-    type: "player",
-    question: "O que pensa sobre o momento do seu atacante titular?",
-    options: [
-      { text: "Esta em grande fase, merece todos os elogios.", tone: "positivo", impact: 4 },
-      { text: "Confio nele, os gols vao sair naturalmente.", tone: "neutro", impact: 1 },
-      { text: "Precisa melhorar, estou cobrando mais dedicacao.", tone: "negativo", impact: -4 }
-    ]
-  },
-  {
-    id: 3,
-    type: "rival",
-    question: "O que espera do confronto contra o lider do campeonato?",
-    options: [
-      { text: "Vamos jogar para vencer, respeitamos mas nao tememos ninguem.", tone: "positivo", impact: 3 },
-      { text: "Sera um jogo muito dificil, estamos nos preparando bem.", tone: "neutro", impact: 1 },
-      { text: "Eles sao favoritos, mas podemos surpreender.", tone: "negativo", impact: -2 }
-    ]
-  },
-  {
-    id: 4,
-    type: "tactics",
-    question: "Pretende fazer mudancas taticas para o proximo jogo?",
-    options: [
-      { text: "Sempre fazemos ajustes, mas a essencia do time permanece.", tone: "neutro", impact: 1 },
-      { text: "Estamos bem como estamos, nao vejo necessidade de mudar.", tone: "positivo", impact: 2 },
-      { text: "Nao vou revelar nossa estrategia para a imprensa.", tone: "agressivo", impact: -1 }
-    ]
-  },
-  {
-    id: 5,
-    type: "transfer",
-    question: "O clube esta no mercado por reforcos nesta janela?",
-    options: [
-      { text: "Estamos sempre atentos a oportunidades que facam sentido.", tone: "positivo", impact: 2 },
-      { text: "Confio no elenco que temos, sao jogadores de qualidade.", tone: "neutro", impact: 3 },
-      { text: "Precisamos de reforcos, isso e evidente para todos.", tone: "negativo", impact: -5 }
-    ]
-  },
-  {
-    id: 6,
-    type: "injury",
-    question: "Como esta a situacao medica do elenco?",
-    options: [
-      { text: "Todos estao bem, nao temos preocupacoes nesse sentido.", tone: "positivo", impact: 2 },
-      { text: "Temos alguns jogadores em recuperacao, mas nada grave.", tone: "neutro", impact: 0 },
-      { text: "Estamos com muitos desfalques, e uma situacao complicada.", tone: "negativo", impact: -3 }
-    ]
-  },
-  {
-    id: 7,
-    type: "match",
-    question: "O time esta pressionado apos os ultimos resultados?",
-    options: [
-      { text: "Pressao faz parte do futebol, sabemos lidar com isso.", tone: "positivo", impact: 3 },
-      { text: "Estamos focados no trabalho, os resultados virao.", tone: "neutro", impact: 1 },
-      { text: "A situacao e delicada, precisamos de uma reacao imediata.", tone: "negativo", impact: -4 }
-    ]
-  },
-  {
-    id: 8,
-    type: "player",
-    question: "O que diz sobre as criticas da torcida a alguns jogadores?",
-    options: [
-      { text: "A torcida tem direito de cobrar, mas confio em todos.", tone: "positivo", impact: 4 },
-      { text: "Entendo a frustracao, estamos trabalhando para melhorar.", tone: "neutro", impact: 1 },
-      { text: "Alguns jogadores realmente precisam corresponder mais.", tone: "negativo", impact: -6 }
-    ]
+function toneFromConference(conference: PressConference): "positivo" | "neutro" | "negativo" {
+  let positive = 0
+  let negative = 0
+  for (const response of conference.responses) {
+    const question = conference.questions.find(item => item.id === response.questionId)
+    const tone = question?.options[response.selectedOption]?.tone
+    if (tone === "positivo") positive++
+    if (tone === "negativo" || tone === "agressivo") negative++
   }
-]
-
-// Tipos de jornalista
-const JOURNALIST_TYPES = [
-  { icon: Tv, name: "TV Globo", color: "text-red-400" },
-  { icon: Radio, name: "Radio CBN", color: "text-blue-400" },
-  { icon: Newspaper, name: "Folha de SP", color: "text-orange-400" },
-  { icon: Camera, name: "ESPN Brasil", color: "text-yellow-400" },
-]
-
-// Historico de conferencias
-interface ConferenceHistory {
-  week: number
-  questionsAnswered: number
-  overallTone: "positivo" | "neutro" | "negativo"
-  moraleImpact: number
-  headlines: string[]
+  return positive > negative ? "positivo" : negative > positive ? "negativo" : "neutro"
 }
 
 export default function ImprensaPage() {
   const router = useRouter()
-
-  // Gamepad support
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const btn = (e as CustomEvent).detail?.button
-      if (btn === 'B') router.back()
-    }
-    window.addEventListener('gamepad:button', handler)
-    return () => window.removeEventListener('gamepad:button', handler)
-  }, [router])
   const gameEngine = useGameEngine()
-  
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [isConferenceActive, setIsConferenceActive] = useState(false)
-  const [answeredQuestions, setAnsweredQuestions] = useState<{ questionId: number; tone: string; impact: number }[]>([])
-  const [conferenceHistory, setConferenceHistory] = useState<ConferenceHistory[]>([
-    { week: 8, questionsAnswered: 3, overallTone: "positivo", moraleImpact: 8, headlines: ["Treinador confiante apos vitoria"] },
-    { week: 4, questionsAnswered: 3, overallTone: "neutro", moraleImpact: 2, headlines: ["Tecnico pede calma a torcida"] },
-    { week: 1, questionsAnswered: 3, overallTone: "negativo", moraleImpact: -5, headlines: ["Coletiva tensa apos derrota"] },
-  ])
+  const initialized = useRef(false)
   const [showResult, setShowResult] = useState(false)
-  
-  const { currentWeek, addMoraleEvent, squadMorale } = gameEngine
+  const [lastResponses, setLastResponses] = useState<PressResponse[]>([])
+  const {
+    nextPressConference,
+    currentConferenceResponses,
+    pressConferences,
+    squadMorale,
+    generatePressConference,
+    respondToPressConference,
+  } = gameEngine
 
-  // Selecionar 3 perguntas aleatorias
-  const selectedQuestions = useMemo(() => {
-    const shuffled = [...PRESS_QUESTIONS].sort(() => Math.random() - 0.5)
-    return shuffled.slice(0, 3)
-  }, [isConferenceActive])
-
-  const currentQuestion = selectedQuestions[currentQuestionIndex]
-
-  // Iniciar conferencia
-  const startConference = () => {
-    setIsConferenceActive(true)
-    setCurrentQuestionIndex(0)
-    setAnsweredQuestions([])
-    setShowResult(false)
-  }
-
-  // Abrir direto na coletiva ao entrar na tela (sem passar pelo dashboard)
   useEffect(() => {
-    startConference()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    const handler = (event: Event) => {
+      if ((event as CustomEvent).detail?.button === "B") router.back()
+    }
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
+  }, [router])
 
-  // Responder pergunta
+  useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+    if (!nextPressConference && pressConferences.length === 0) generatePressConference()
+  }, [generatePressConference, nextPressConference, pressConferences.length])
+
+  const currentQuestion = nextPressConference?.find(
+    question => !currentConferenceResponses.some(response => response.questionId === question.id),
+  ) ?? null
+  const questionNumber = currentConferenceResponses.length + 1
+  const questionCount = nextPressConference?.length ?? Math.max(lastResponses.length, 1)
+  const totalImpact = lastResponses.reduce((sum, response) => sum + response.impact, 0)
+
+  const history = useMemo(() => [...pressConferences].reverse(), [pressConferences])
+
   const answerQuestion = (optionIndex: number) => {
+    if (!currentQuestion || !nextPressConference) return
     const option = currentQuestion.options[optionIndex]
-    
-    setAnsweredQuestions(prev => [...prev, {
-      questionId: currentQuestion.id,
-      tone: option.tone,
-      impact: option.impact
-    }])
-
-    if (currentQuestionIndex < selectedQuestions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1)
-    } else {
-      // Finalizar conferencia
-      finishConference()
-    }
+    if (!option) return
+    const response: PressResponse = { questionId: currentQuestion.id, selectedOption: optionIndex, impact: option.impact }
+    const completed = [...currentConferenceResponses, response]
+    const isLast = completed.length >= nextPressConference.length
+    if (isLast) setLastResponses(completed)
+    respondToPressConference(currentQuestion.id, optionIndex)
+    if (isLast) setShowResult(true)
   }
 
-  // Finalizar conferencia
-  const finishConference = () => {
-    const totalImpact = answeredQuestions.reduce((sum, q) => sum + q.impact, 0) + 
-      (currentQuestion ? currentQuestion.options[0].impact : 0)
-    
-    const positiveCount = answeredQuestions.filter(q => q.tone === "positivo").length
-    const negativeCount = answeredQuestions.filter(q => q.tone === "negativo").length
-    
-    let overallTone: "positivo" | "neutro" | "negativo" = "neutro"
-    if (positiveCount > negativeCount) overallTone = "positivo"
-    else if (negativeCount > positiveCount) overallTone = "negativo"
-
-    // Gerar manchetes
-    const headlines = [
-      overallTone === "positivo" 
-        ? "Treinador elogia dedicacao do grupo" 
-        : overallTone === "negativo"
-        ? "Tecnico admite problemas no elenco"
-        : "Coletiva tranquila no clube"
-    ]
-
-    // Adicionar ao historico
-    setConferenceHistory(prev => [{
-      week: currentWeek,
-      questionsAnswered: 3,
-      overallTone,
-      moraleImpact: totalImpact,
-      headlines
-    }, ...prev])
-
-    // Aplicar impacto na moral
-    addMoraleEvent({
-      type: totalImpact > 0 ? "elogio" : totalImpact < 0 ? "conflito" : "elogio",
-      description: `Conferencia de imprensa: ${headlines[0]}`,
-      impact: totalImpact
-    })
-
-    setShowResult(true)
-    setIsConferenceActive(false)
-  }
-
-  const getToneColor = (tone: string) => {
-    switch (tone) {
-      case "positivo": return "text-green-400"
-      case "neutro": return "text-yellow-400"
-      case "negativo": return "text-red-400"
-      case "agressivo": return "text-orange-400"
-      default: return "text-white/50"
-    }
-  }
-
-  const getToneIcon = (tone: string) => {
-    switch (tone) {
-      case "positivo": return ThumbsUp
-      case "neutro": return Meh
-      case "negativo": return ThumbsDown
-      case "agressivo": return Flame
-      default: return MessageCircle
-    }
+  const restartConference = () => {
+    setLastResponses([])
+    setShowResult(false)
+    generatePressConference()
   }
 
   return (
     <div className="h-screen bg-[#050508] flex flex-col overflow-hidden">
-      <main className="flex-1 p-4 md:p-6 overflow-y-auto scrollbar-premium">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6 max-w-3xl mx-auto w-full">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Sala de Imprensa</h1>
-            <p className="text-sm text-white/50">Gerencie sua relacao com a midia e imagem publica</p>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/pre-office")}
-            className="text-white/60 hover:text-white shrink-0"
-          >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Fechar</span>
-          </Button>
-        </div>
+      <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <header className="mx-auto mb-6 flex w-full max-w-3xl items-center justify-between">
+          <div><h1 className="text-2xl font-bold text-white md:text-3xl">Sala de Imprensa</h1><p className="text-sm text-white/50">As respostas alteram e ficam registradas na carreira</p></div>
+          <Button variant="ghost" size="icon" onClick={() => router.push("/pre-office")} className="text-white/60"><X className="h-5 w-5" /><span className="sr-only">Fechar</span></Button>
+        </header>
 
         <AnimatePresence mode="wait">
-          {isConferenceActive && currentQuestion ? (
-            <motion.div
-              key="conference"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-3xl mx-auto"
-            >
-              {/* Progresso */}
-              <div className="mb-6">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-white/70">Pergunta {currentQuestionIndex + 1} de {selectedQuestions.length}</span>
-                  <span className="text-primary font-medium">
-                    {Math.round(((currentQuestionIndex) / selectedQuestions.length) * 100)}%
-                  </span>
-                </div>
-                <Progress value={(currentQuestionIndex / selectedQuestions.length) * 100} className="h-2" />
-              </div>
-
-              {/* Sala de Imprensa */}
-              <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-8">
-                {/* Jornalista */}
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
-                    {(() => {
-                      const journalist = JOURNALIST_TYPES[currentQuestionIndex % JOURNALIST_TYPES.length]
-                      return <journalist.icon className={cn("h-6 w-6", journalist.color)} />
-                    })()}
-                  </div>
-                  <div>
-                    <div className="font-medium text-white">
-                      {JOURNALIST_TYPES[currentQuestionIndex % JOURNALIST_TYPES.length].name}
-                    </div>
-                    <div className="text-sm text-white/50">Jornalista</div>
-                  </div>
-                </div>
-
-                {/* Pergunta */}
-                <div className="mb-8">
-                  <div className="flex items-start gap-3">
-                    <Quote className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                    <p className="text-xl text-white leading-relaxed">
-                      {currentQuestion.question}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Opcoes de Resposta */}
+          {!showResult && currentQuestion ? (
+            <motion.section key="conference" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="mx-auto max-w-3xl">
+              <div className="mb-6"><div className="mb-2 flex justify-between text-sm"><span className="text-white/70">Pergunta {questionNumber} de {questionCount}</span><span className="font-medium text-primary">{Math.round((currentConferenceResponses.length / questionCount) * 100)}%</span></div><Progress value={(currentConferenceResponses.length / questionCount) * 100} className="h-2" /></div>
+              <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 md:p-8">
+                <div className="mb-8 flex items-center gap-4"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15"><Newspaper className="h-6 w-6 text-primary" /></div><div><p className="font-medium text-white">Jornalista credenciado</p><p className="text-sm text-white/50">Coletiva oficial · Semana {gameEngine.currentWeek}</p></div></div>
+                <div className="mb-8 flex items-start gap-3"><Quote className="mt-1 h-6 w-6 shrink-0 text-primary" /><p className="text-xl leading-relaxed text-white">{currentQuestion.question}</p></div>
                 <div className="space-y-3">
-                  {currentQuestion.options.map((option, i) => {
-                    const ToneIcon = getToneIcon(option.tone)
-                    return (
-                      <motion.button
-                        key={i}
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                        onClick={() => answerQuestion(i)}
-                        className="w-full p-4 bg-white/5 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all text-left group"
-                      >
-                        <div className="flex items-start gap-3">
-                          <ToneIcon className={cn("h-5 w-5 mt-0.5", getToneColor(option.tone))} />
-                          <div className="flex-1">
-                            <p className="text-white group-hover:text-white transition-colors">
-                              &ldquo;{option.text}&rdquo;
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className={cn(
-                                "text-xs px-2 py-0.5 rounded-full",
-                                option.tone === "positivo" ? "bg-green-500/20 text-green-400" :
-                                option.tone === "neutro" ? "bg-[#ffd700]/20 text-yellow-400" :
-                                option.tone === "negativo" ? "bg-red-500/20 text-red-400" :
-                                "bg-orange-500/20 text-orange-400"
-                              )}>
-                                {option.tone.charAt(0).toUpperCase() + option.tone.slice(1)}
-                              </span>
-                              <span className={cn(
-                                "text-xs",
-                                option.impact > 0 ? "text-green-400" : option.impact < 0 ? "text-red-400" : "text-white/50"
-                              )}>
-                                {option.impact > 0 ? "+" : ""}{option.impact} moral
-                              </span>
-                            </div>
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-white/30 group-hover:text-white/60 transition-colors" />
-                        </div>
-                      </motion.button>
-                    )
+                  {currentQuestion.options.map((option, index) => {
+                    const ToneIcon = option.tone === "positivo" ? ThumbsUp : option.tone === "neutro" ? Meh : option.tone === "agressivo" ? Flame : ThumbsDown
+                    return <motion.button key={option.text} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => answerQuestion(index)} className="w-full rounded-lg border border-white/10 bg-white/5 p-4 text-left transition-colors hover:border-white/20 hover:bg-white/10"><div className="flex items-start gap-3"><ToneIcon className={cn("mt-0.5 h-5 w-5", option.impact > 0 ? "text-green-400" : option.impact < 0 ? "text-red-400" : "text-yellow-400")} /><div className="flex-1"><p className="text-white">“{option.text}”</p><p className={cn("mt-2 text-xs", option.impact > 0 ? "text-green-400" : option.impact < 0 ? "text-red-400" : "text-white/50")}>{option.impact > 0 ? "+" : ""}{option.impact} de moral</p></div><ChevronRight className="h-5 w-5 text-white/30" /></div></motion.button>
                   })}
                 </div>
               </div>
-            </motion.div>
+            </motion.section>
           ) : showResult ? (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="max-w-2xl mx-auto"
-            >
-              <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-8 text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-                  <MicOff className="h-8 w-8 text-primary" />
-                </div>
-                
-                <h2 className="text-2xl font-bold text-white mb-2">Coletiva Encerrada</h2>
-                <p className="text-white/60 mb-8">Veja como a imprensa reagiu as suas respostas</p>
-
-                {/* Resumo */}
-                <div className="grid grid-cols-3 gap-4 mb-8">
-                  <div className="p-4 bg-white/5 rounded-lg">
-                    <div className="text-2xl font-bold text-green-400">
-                      {answeredQuestions.filter(q => q.tone === "positivo").length}
-                    </div>
-                    <div className="text-xs text-white/50">Respostas Positivas</div>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-lg">
-                    <div className="text-2xl font-bold text-yellow-400">
-                      {answeredQuestions.filter(q => q.tone === "neutro").length}
-                    </div>
-                    <div className="text-xs text-white/50">Respostas Neutras</div>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-lg">
-                    <div className="text-2xl font-bold text-red-400">
-                      {answeredQuestions.filter(q => q.tone === "negativo" || q.tone === "agressivo").length}
-                    </div>
-                    <div className="text-xs text-white/50">Respostas Negativas</div>
-                  </div>
-                </div>
-
-                {/* Impacto */}
-                <div className="p-4 bg-white/5 rounded-lg mb-6">
-                  <div className="text-sm text-white/70 mb-2">Impacto na Moral do Elenco</div>
-                  <div className={cn(
-                    "text-3xl font-bold",
-                    answeredQuestions.reduce((s, q) => s + q.impact, 0) > 0 
-                      ? "text-green-400" 
-                      : answeredQuestions.reduce((s, q) => s + q.impact, 0) < 0 
-                        ? "text-red-400" 
-                        : "text-yellow-400"
-                  )}>
-                    {answeredQuestions.reduce((s, q) => s + q.impact, 0) > 0 ? "+" : ""}
-                    {answeredQuestions.reduce((s, q) => s + q.impact, 0)}
-                  </div>
-                </div>
-
-                <Button onClick={() => router.push("/pre-office")} className="w-full">
-                  Fechar
-                </Button>
-              </div>
-            </motion.div>
+            <motion.section key="result" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-2xl rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-8 text-center">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20"><MicOff className="h-8 w-8 text-primary" /></div>
+              <h2 className="text-2xl font-bold text-white">Coletiva encerrada</h2><p className="mt-2 text-white/60">As respostas e o impacto foram gravados no histórico da carreira.</p>
+              <div className="mt-7 grid grid-cols-2 gap-4"><div className="rounded-lg bg-white/5 p-4"><p className="text-2xl font-bold text-white">{lastResponses.length}</p><p className="text-xs text-white/50">Respostas registradas</p></div><div className="rounded-lg bg-white/5 p-4"><p className={cn("text-2xl font-bold", totalImpact > 0 ? "text-green-400" : totalImpact < 0 ? "text-red-400" : "text-yellow-400")}>{totalImpact > 0 ? "+" : ""}{totalImpact}</p><p className="text-xs text-white/50">Impacto na moral</p></div></div>
+              <div className="mt-7 flex gap-3"><Button onClick={() => router.push("/pre-office")} className="flex-1">Fechar</Button><Button variant="outline" onClick={restartConference} className="flex-1 border-white/10 bg-transparent text-white">Nova coletiva</Button></div>
+            </motion.section>
           ) : (
-            <motion.div
-              key="history"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="grid lg:grid-cols-2 gap-6"
-            >
-              {/* Status Atual */}
-              <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
-                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  Reputacao na Midia
-                </h2>
-                
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="p-4 bg-white/5 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-white">{squadMorale.overall}%</div>
-                    <div className="text-xs text-white/50">Moral do Elenco</div>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-white">{conferenceHistory.length}</div>
-                    <div className="text-xs text-white/50">Coletivas Realizadas</div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <ThumbsUp className="h-4 w-4 text-green-400" />
-                      <span className="text-sm text-white/80">Coletivas Positivas</span>
-                    </div>
-                    <span className="text-sm font-bold text-green-400">
-                      {conferenceHistory.filter(c => c.overallTone === "positivo").length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Meh className="h-4 w-4 text-yellow-400" />
-                      <span className="text-sm text-white/80">Coletivas Neutras</span>
-                    </div>
-                    <span className="text-sm font-bold text-yellow-400">
-                      {conferenceHistory.filter(c => c.overallTone === "neutro").length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <ThumbsDown className="h-4 w-4 text-red-400" />
-                      <span className="text-sm text-white/80">Coletivas Negativas</span>
-                    </div>
-                    <span className="text-sm font-bold text-red-400">
-                      {conferenceHistory.filter(c => c.overallTone === "negativo").length}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Historico */}
-              <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
-                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Newspaper className="h-5 w-5 text-primary" />
-                  Histórico de Coletivas
-                </h2>
-                
-                <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin">
-                  {conferenceHistory.map((conf, i) => (
-                    <div key={i} className="p-4 bg-white/5 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-white/50" />
-                          <span className="text-sm text-white/70">Semana {conf.week}</span>
-                        </div>
-                        <span className={cn(
-                          "text-xs px-2 py-0.5 rounded-full",
-                          conf.overallTone === "positivo" ? "bg-green-500/20 text-green-400" :
-                          conf.overallTone === "negativo" ? "bg-red-500/20 text-red-400" :
-                          "bg-[#ffd700]/20 text-yellow-400"
-                        )}>
-                          {conf.overallTone.charAt(0).toUpperCase() + conf.overallTone.slice(1)}
-                        </span>
-                      </div>
-                      <div className="text-sm text-white mb-2">{conf.headlines[0]}</div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="text-white/50">{conf.questionsAnswered} perguntas</span>
-                        <span className="text-white/30">|</span>
-                        <span className={cn(
-                          conf.moraleImpact > 0 ? "text-green-400" : 
-                          conf.moraleImpact < 0 ? "text-red-400" : "text-white/50"
-                        )}>
-                          {conf.moraleImpact > 0 ? "+" : ""}{conf.moraleImpact} moral
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dicas */}
-              <div className="lg:col-span-2 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border border-primary/20 p-6">
-                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  Dicas para Coletivas
-                </h2>
-                
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-white/5 rounded-lg">
-                    <ThumbsUp className="h-6 w-6 text-green-400 mb-2" />
-                    <h3 className="font-medium text-white mb-1">Respostas Positivas</h3>
-                    <p className="text-xs text-white/60">
-                      Aumentam a moral do elenco e criam um ambiente positivo no vestiario.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-lg">
-                    <Meh className="h-6 w-6 text-yellow-400 mb-2" />
-                    <h3 className="font-medium text-white mb-1">Respostas Neutras</h3>
-                    <p className="text-xs text-white/60">
-                      Sao seguras e mantem a estabilidade, sem grandes riscos.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-lg">
-                    <Flame className="h-6 w-6 text-red-400 mb-2" />
-                    <h3 className="font-medium text-white mb-1">Respostas Agressivas</h3>
-                    <p className="text-xs text-white/60">
-                      Podem motivar alguns jogadores, mas tambem gerar conflitos.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            <motion.section key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto grid max-w-4xl gap-6 lg:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6"><h2 className="flex items-center gap-2 text-lg font-bold text-white"><Shield className="h-5 w-5 text-primary" />Situação atual</h2><div className="mt-4 grid grid-cols-2 gap-4"><div className="rounded-lg bg-white/5 p-4 text-center"><p className="text-2xl font-bold text-white">{squadMorale.overall}%</p><p className="text-xs text-white/50">Moral do elenco</p></div><div className="rounded-lg bg-white/5 p-4 text-center"><p className="text-2xl font-bold text-white">{pressConferences.length}</p><p className="text-xs text-white/50">Coletivas gravadas</p></div></div><Button onClick={restartConference} className="mt-5 w-full"><MessageCircle className="mr-2 h-4 w-4" />Iniciar coletiva</Button></div>
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6"><h2 className="flex items-center gap-2 text-lg font-bold text-white"><History className="h-5 w-5 text-primary" />Histórico real</h2><div className="mt-4 max-h-96 space-y-3 overflow-y-auto">{history.length === 0 ? <p className="rounded-lg bg-white/5 p-5 text-center text-sm text-white/40">Nenhuma coletiva concluída nesta carreira.</p> : history.map((conference, index) => { const tone = toneFromConference(conference); return <div key={`${conference.week}-${index}`} className="rounded-lg bg-white/5 p-4"><div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm text-white/70"><Calendar className="h-4 w-4" />Semana {conference.week}</span><span className={cn("text-xs", tone === "positivo" ? "text-green-400" : tone === "negativo" ? "text-red-400" : "text-yellow-400")}>{tone}</span></div><div className="mt-2 flex gap-3 text-xs text-white/45"><span>{conference.responses.length} respostas</span><span className={conference.moraleImpact >= 0 ? "text-green-400" : "text-red-400"}>{conference.moraleImpact > 0 ? "+" : ""}{conference.moraleImpact} moral</span></div></div> })}</div></div>
+            </motion.section>
           )}
         </AnimatePresence>
       </main>

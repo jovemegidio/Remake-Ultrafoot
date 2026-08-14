@@ -1,12 +1,12 @@
 {
-  "version": "1.0.268",
-  "notes": "73 clubes ganharam elenco de verdade — J-League, K-League, Ligue 2, Serie B italiana, Championship, Escocia, Equador e Chile deixaram de completar o time com atletas inventados. E o troféu que você levanta agora é o da sua competição: cada estadual, cada divisão e cada copa tem a própria taça.",
-  "sizeMb": 787,
-  "sha256": "019C3A93323861E139B0DDC94A9AE1BBACF20D6262968EAB6F0C3E3D07E4EBC9",
+  "version": "1.0.289",
+  "notes": "Correcao: o jogo travava por completo ao percorrer os times na criacao de carreira. O escudo 3D criava um contexto de video novo a cada troca de time e nunca o devolvia; o navegador suporta cerca de 16 ao mesmo tempo e, passando disso, derruba a pagina. Em computador rapido acontecia antes, porque se percorre mais times por minuto.",
+  "sizeMb": 754,
+  "sha256": "0530C0CA8E123C05B26834A14C78C87F549AFAAE29188D3B7AE8F35EABA5AE7E",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUMvYW5XaTRVZElCemJJNUliblpaOUk5MXJIc1YzL3A1ZnhiZzZWQUdRbkh3Nm5XaW5jalVUMXZzcjg0QjNrYkZwQWNEKytTSTZKN0VJdnhJNDhOZlFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1OTgzNTYzCWZpbGU6VWx0cmFmb290IDI2XzEuMC4yNjhfeDY0LXNldHVwLmV4ZQp2R1NXMEZMVEVDcEwvUWlEeisxekVEcEFqM2NUbEVMSU0rUG1lbk9rZU10S0tINVBqSURLVk51Y3N3bWlmaTMvOVMzVGM0bUVaQi8xYjJPUWJtV1VEQT09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.268_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUZOSWpXNll1S3B0N2czdUZobTVPdzM3NTdsUG1Fc1NiVSs5RDcrb29RVlM0eVRDeG1oWktXUDYxVDd5TGxGZDA3QnhQYXJaMmc2MDBXalAxditFc0FZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2NDQ1NDU0CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yODlfeDY0LXNldHVwLmV4ZQoreXJoRUFFelhJRmZsakVGZC9RdEhaTG50YXllSDNCTUlaZ1lhZHMxcjVMVnZSZGRxMEFlcTN0WDRjMG8rdXlYc1gyN2x4Rnp3VXNlUXYzOUpHdXhBdz09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.289_x64-setup.exe"
     }
   }
 }

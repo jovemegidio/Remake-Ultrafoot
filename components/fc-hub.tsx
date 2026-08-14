@@ -29,6 +29,8 @@ import {
 } from "@/lib/online-multiplayer"
 import { HubOnlineChat } from "@/components/hub-online-chat"
 import { HubCampeonato } from "@/components/hub-campeonato"
+import { HubDraft } from "@/components/hub-draft"
+import type { AtletaDoDraft } from "@/lib/draft-online"
 import { useJogoRegistrado } from "@/lib/beneficios"
 import { AvisoDeRegistro } from "@/components/registro-necessario"
 import {
@@ -107,6 +109,41 @@ export function FcHub() {
   const [internetState, setInternetState] = useState<InternetConnectionState>("closed")
   const [internetBusy, setInternetBusy] = useState(false)
   const [internetError, setInternetError] = useState("")
+  // DRAFT X DRAFT: só o host abre, e só antes de a tabela existir. Sob demanda
+  // porque o catálogo do draft vem do banco de atletas — carregá-lo sempre que o
+  // FC Hub abre traria o seed de elencos para dentro do painel social.
+  const [draftLigado, setDraftLigado] = useState(false)
+  const [elencoParaDraft, setElencoParaDraft] = useState<AtletaDoDraft[]>([])
+  useEffect(() => {
+    if (!draftLigado || elencoParaDraft.length > 0) return
+    let vivo = true
+    void (async () => {
+      const [{ allTeams }, { getPlayersForTeam }, { setorDaPosicao286 }] = await Promise.all([
+        import("@/lib/teams-data"),
+        import("@/lib/players-data"),
+        import("@/lib/universo-286"),
+      ])
+      // Um recorte dos clubes de maior prestígio: o draft quer um catálogo bom,
+      // não os 42 mil atletas do mundo — e a lista precisa caber na tela.
+      const clubes = [...allTeams].sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0)).slice(0, 24)
+      const atletas: AtletaDoDraft[] = []
+      for (const clube of clubes) {
+        for (const jogador of getPlayersForTeam(clube)) {
+          atletas.push({
+            id: String(jogador.ft ?? `${clube.curto}-${jogador.nome}`),
+            nome: jogador.nome,
+            posicao: String(jogador.pos ?? "MEI"),
+            setor: setorDaPosicao286(String(jogador.pos ?? "MEI")),
+            overall: jogador.base ?? 65,
+            idade: jogador.idade ?? 24,
+            clube: clube.nome,
+          })
+        }
+      }
+      if (vivo) setElencoParaDraft(atletas)
+    })()
+    return () => { vivo = false }
+  }, [draftLigado, elencoParaDraft.length])
   const [internetJoinCode, setInternetJoinCode] = useState("")
   const [relayUrl, setRelayUrl] = useState("")
   const [onlineLeague, setOnlineLeague] = useState("brasileirao_a")
@@ -226,6 +263,13 @@ export function FcHub() {
     const onOpen = () => setOpen(true)
     window.addEventListener("keydown", onKey, true)
     window.addEventListener("ultrafoot:fc-hub", onOpen)
+    // Quem caiu no atalho antigo dos Modos locais chega pedindo o Hub aberto.
+    try {
+      if (sessionStorage.getItem("ultrafoot:abrir-fc-hub") === "1") {
+        sessionStorage.removeItem("ultrafoot:abrir-fc-hub")
+        setOpen(true)
+      }
+    } catch { /* sem sessionStorage, o atalho apenas nao abre sozinho */ }
     return () => { window.removeEventListener("keydown", onKey, true); window.removeEventListener("ultrafoot:fc-hub", onOpen) }
   }, [])
 
@@ -393,7 +437,8 @@ export function FcHub() {
           </div>
         </div>
         {ONLINE_RELAY_ENABLED && <div id="hub-groups" className="scroll-mt-5 rounded-xl border border-violet-400/30 bg-violet-400/[.06] p-4 backdrop-blur-sm" data-testid="fc-hub-internet">
-          <div className="flex flex-wrap items-center gap-2 text-white"><Wifi className="h-4 w-4 text-violet-300"/><b>Campeonato pela internet</b><span className="ml-auto rounded bg-violet-400/10 px-2 py-0.5 text-[10px] font-bold text-violet-200">2–32 TÉCNICOS</span></div>
+          <div className="flex flex-wrap items-center gap-2 text-white"><Wifi className="h-4 w-4 text-violet-300"/><b>Liga Online Beta</b><span className="ml-auto rounded bg-violet-400/10 px-2 py-0.5 text-[10px] font-bold text-violet-200">2–32 TÉCNICOS</span></div>
+          <p className="mt-1 text-[11px] text-violet-100/55">Liga assíncrona com reconexão e confirmação dupla de placar. Não é uma carreira online compartilhada.</p>
           <p className="mt-2 text-xs leading-relaxed text-white/45">Cada técnico joga de sua própria casa. O relay WSS mantém sala, reconexão, tabela e até 16 partidas simultâneas por rodada; todos precisam da mesma versão e banco.</p>
           {!internet ? <div className="mt-4 space-y-3">
             <input value={relayUrl} onChange={event => setRelayUrl(event.target.value)} placeholder="https://relay.ultrafoot..." aria-label="Endereço do relay público" className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs text-white outline-none focus:border-violet-300/60"/>
@@ -463,6 +508,25 @@ export function FcHub() {
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Conexão</p><p className={`mt-1 text-xs font-black ${internetState === "connected" ? "text-emerald-300" : "text-amber-200"}`}>{internetState === "connected" ? "CONECTADO" : internetState.toUpperCase()}</p></div>
             </div>
             <div className="grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">{internet.room.participants.map(participant => <div key={participant.id} className="flex items-center gap-2 rounded-lg bg-black/20 p-2"><span className={`h-2 w-2 rounded-full ${participant.connected ? "bg-emerald-400" : "bg-white/20"}`}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-white">{participant.managerName}{participant.id === internet.room.hostId ? " · host" : ""}</p><p className="text-[9px] text-white/40">{participant.teamShort}</p></div><span className={`text-[9px] font-black ${participant.ready ? "text-emerald-300" : "text-white/30"}`}>{participant.ready ? "PRONTO" : "AGUARDANDO"}</span></div>)}</div>
+            {/* DRAFT X DRAFT. Vale ANTES de existir tabela: primeiro cada técnico
+                monta o elenco escolhendo na vez dele, depois a sala vira
+                campeonato. Fora do draft a sala segue como sempre foi. */}
+            {draftLigado && !internet.room.competition && (
+              <HubDraft
+                room={internet.room}
+                participantId={internet.participantId}
+                socket={socketAtivo}
+                elencoDoMundo={elencoParaDraft}
+              />
+            )}
+            {internet.room.hostId === internet.participantId && !internet.room.competition && (
+              <button
+                onClick={() => setDraftLigado(v => !v)}
+                className="w-full rounded-lg border border-violet-300/30 px-3 py-2 text-xs font-bold text-violet-200"
+              >
+                {draftLigado ? "Fechar o draft desta sala" : "Abrir draft x draft nesta sala"}
+              </button>
+            )}
             {internet.room.competition && (
               <HubCampeonato
                 room={internet.room}
@@ -512,7 +576,7 @@ export function FcHub() {
           </div>}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] text-white/35"><span className="flex items-center gap-1"><Wifi className="h-3 w-3"/>v{ONLINE_GAME_VERSION}</span><span>dados {GAME_DATA_VERSION}</span><span className="font-mono">hash {GAME_DATA_HASH.slice(0,8)}</span></div>
           {onlineError && <p className="mt-3 rounded-lg border border-red-400/20 bg-red-400/5 p-2 text-xs text-red-300">{onlineError}</p>}
-        </div> : <div className="rounded-xl border border-cyan-400/15 bg-cyan-400/[.03] p-4 text-xs text-white/50"><b className="text-white">Sala local / LAN</b><p className="mt-1">Disponível no aplicativo instalado. No navegador e no mobile, use o campeonato pela internet acima.</p></div>}
+        </div> : <div className="rounded-xl border border-cyan-400/15 bg-cyan-400/[.03] p-4 text-xs text-white/50"><b className="text-white">Sala local / LAN</b><p className="mt-1">Disponível no aplicativo instalado. No navegador e no mobile, use a Liga Online Beta acima.</p></div>}
         <div id="hub-friends" className="scroll-mt-5 rounded-xl border border-white/10 bg-white/[.03] p-4">
           <div className="flex items-center gap-2 text-white"><Users className="h-4 w-4"/><b>Amigos jogando Ultrafoot</b><span className="ml-auto rounded bg-white/10 px-2 py-0.5 text-xs">{social?.friends.filter(friend => friend.playingUltrafoot).length ?? 0}</span></div>
           {!social?.authenticated && <p className="mt-2 text-sm text-white/45">Conecte sua conta para carregar sua lista real de amigos. Nenhum usuário fictício é exibido.</p>}

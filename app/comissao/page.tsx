@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { GameHeader } from "@/components/game-header"
 import { useGameManager } from "@/lib/use-game-manager"
-import { useGameEngine, AVAILABLE_STAFF, STAFF_ROLE_LABELS, type StaffRole } from "@/lib/game-engine"
-import { formatCurrency } from "@/lib/teams-data"
+import { useGameEngine, staffCandidatesForSeason, STAFF_ROLE_LABELS, type StaffRole } from "@/lib/game-engine"
+import { formatCurrency } from "@/lib/currency"
 import { useNotifications } from "@/components/notifications-system"
 import { cn } from "@/lib/utils"
 import { Briefcase, Check, ShieldAlert, TrendingUp, Users, X } from "lucide-react"
@@ -33,8 +33,10 @@ export default function ComissaoPage() {
   const { addNotification } = useNotifications()
   const staffMembers = useGameEngine(s => s.staffMembers)
   const hireStaff = useGameEngine(s => s.hireStaff)
+  const renewStaffContract = useGameEngine(s => s.renewStaffContract)
   const fireStaff = useGameEngine(s => s.fireStaff)
   const balance = useGameEngine(s => s.balance)
+  const currentSeason = useGameEngine(s => s.currentSeason)
   const [vaga, setVaga] = useState<StaffRole | null>(null)
 
   useEffect(() => {
@@ -104,7 +106,7 @@ export default function ComissaoPage() {
           <div className="grid gap-3 md:grid-cols-2">
             {ORDEM_CARGOS.map(cargo => {
               const membro = contratados.get(cargo)
-              const candidatos = AVAILABLE_STAFF.filter(c => c.role === cargo)
+              const candidatos = staffCandidatesForSeason(currentSeason, cargo)
               return (
                 <div key={cargo} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -122,11 +124,31 @@ export default function ComissaoPage() {
                       <p className="mt-1 text-[11px] leading-4 text-white/50">{membro.passiveEffect}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/40">
                         <span>Lealdade {membro.loyalty}</span>
+                        <span>Competência {membro.competence}/{membro.potential ?? membro.competence}</span>
                         <span>{formatCurrency(membro.salary)}/sem</span>
+                        <span>Contrato até {membro.contractEndSeason ?? membro.hiredSeason + 3}</span>
+                        {(membro.marketInterest ?? 0) >= 35 && <span className="text-sky-300">assédio {membro.marketInterest}%</span>}
                         {membro.problemChance >= 0.15 && (
                           <span className="text-amber-300">risco de problema {Math.round(membro.problemChance * 100)}%</span>
                         )}
                       </div>
+                      {((membro.contractEndSeason ?? membro.hiredSeason + 3) <= currentSeason + 1 || (membro.marketInterest ?? 0) >= 35) && (
+                        <button
+                          onClick={() => {
+                            const renewed = renewStaffContract(membro.id)
+                            addNotification(renewed
+                              ? { type: "system", title: "Contrato renovado", message: `${membro.name} renovou por três temporadas e recusou o assédio externo.`, priority: "medium" }
+                              // "financial" não existe em `Notification["type"]`
+                              // (goal | match_start | match_end | transfer |
+                              // injury | achievement | news | system). Aviso de
+                              // caixa insuficiente é `system`.
+                              : { type: "system", title: "Renovação não concluída", message: "O caixa não cobre as luvas exigidas pelo profissional.", priority: "high" })
+                          }}
+                          className="mt-3 w-full rounded-lg border border-sky-400/30 py-2 text-xs font-bold text-sky-200 hover:bg-sky-400/10"
+                        >
+                          Renovar e afastar concorrentes
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           fireStaff(membro.id)
@@ -161,7 +183,7 @@ export default function ComissaoPage() {
                                   <div className="min-w-0">
                                     <p className="truncate text-xs font-semibold text-white">{candidato.name}</p>
                                     <p className="text-[10px] text-white/40">
-                                      competência {candidato.competence} · lealdade {candidato.loyalty} · {formatCurrency(candidato.salary)}/sem
+                                      competência {candidato.competence}/{candidato.potential ?? candidato.competence} · lealdade {candidato.loyalty} · {formatCurrency(candidato.salary)}/sem
                                     </p>
                                   </div>
                                   <button

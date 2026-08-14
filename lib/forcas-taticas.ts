@@ -209,7 +209,20 @@ function acharSinergias(t: TeamTactics): number {
  * O calculo completo. Recebe a tatica salva e devolve o que somar as forcas do
  * XI titular.
  */
-export function forcasDaTatica(t: TeamTactics): ForcasTaticas {
+export function forcasDaTatica(
+  t: TeamTactics,
+  /**
+   * `coerenciaTatica` de `lib/efeito-do-treinador.ts` — o atributo TÁTICA do
+   * técnico. Neutro em 1, que reproduz o comportamento anterior exatamente.
+   *
+   * ⚠️ NÃO some o técnico às forças brutas. Ele mexe só na COERÊNCIA, e por um
+   * motivo de modelo: somar daria ao técnico um bônus de placar independente do
+   * plano — o mesmo defeito de contar a qualidade duas vezes que
+   * `forcas-individuais` documenta. Mexendo na coerência, o técnico bom extrai
+   * mais DO PLANO QUE VOCÊ MONTOU, e com plano neutro não extrai nada.
+   */
+  coerenciaDoTecnico = 1,
+): ForcasTaticas {
   const f: ForcasTaticas = { attack: 0, defense: 0, midfield: 0, coerencia: 0, conflitos: [], transitionLoad: 0, pressingLoad: 0 }
 
   somar(f, DE_ESTILO[t.playingStyle] ?? {})
@@ -235,7 +248,14 @@ export function forcasDaTatica(t: TeamTactics): ForcasTaticas {
   // Conflito pesa mais que sinergia: e mais facil estragar um plano do que
   // acerta-lo, e assim o jogador sente a incoerencia antes do premio.
   const bruto = sinergias * 0.34 - conflitos.length * 0.5
-  f.coerencia = Math.max(-1, Math.min(1, bruto))
+  // ⚠️ O TÉCNICO MULTIPLICA O POSITIVO E DIVIDE O NEGATIVO — não multiplica os
+  // dois. Multiplicar direto faria o técnico bom deixar o plano contraditório
+  // AINDA PIOR, que é o oposto do que ele existe para fazer: quem entende de
+  // tática segura um plano confuso melhor do que quem não entende.
+  const comTecnico = bruto >= 0
+    ? bruto * coerenciaDoTecnico
+    : bruto / Math.max(0.5, coerenciaDoTecnico)
+  f.coerencia = Math.max(-1, Math.min(1, comTecnico))
   f.conflitos = conflitos
   f.transitionLoad = cargaDeTransicao(t.inPossessionFormation, t.outOfPossessionFormation)
   f.pressingLoad = t.pressingIntensity === "muito_alta" ? 1

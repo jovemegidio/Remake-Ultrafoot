@@ -32,6 +32,7 @@ import { storeGet, storeSet } from "@/lib/persistent-store"
 import { buscarJson } from "@/lib/buscar-json"
 import { isTauri } from "@/lib/game-asset"
 import { canalAtivo } from "@/lib/atualizacoes-preferencias"
+import { guardarImagem, resolverImagem } from "@/lib/banco-de-imagens"
 import type { TeamOverride } from "@/lib/team-overrides"
 import type { PlayerOverride } from "@/lib/player-overrides"
 
@@ -97,8 +98,37 @@ export interface AtualizacaoElencos {
   jogadores?: Record<string, PlayerOverride>
   /** Quem mudou de clube. */
   transferencias?: TransferenciaOficial[]
-  /** Ligas: pote/participantes corrigidos, por nome de competição. */
-  ligas?: Record<string, { clubes?: string[] }>
+  /** Ligas: participantes, identidade e regulamento, por nome de competição. */
+  ligas?: Record<string, LigaNoCanal>
+}
+
+/**
+ * Regulamento publicado pelo painel.
+ *
+ * Todo campo é opcional de propósito: o admin preenche o que quer corrigir e o
+ * jogo mantém o próprio valor no resto. Um regulamento pela metade não pode
+ * zerar o que não foi informado.
+ */
+export interface RegulamentoDaLiga {
+  /** 1 = turno único, 2 = ida e volta. */
+  turnos?: number
+  /** 0 ou ausente = o jogo calcula pelo número de participantes. */
+  rodadas?: number
+  pontosVitoria?: number
+  acessos?: number
+  rebaixamentos?: number
+  mataMata?: boolean
+  criteriosDesempate?: string[]
+}
+
+export interface LigaNoCanal {
+  clubes?: string[]
+  regulamento?: RegulamentoDaLiga
+  /** Nome exibido; quando a competição não é licenciada, vem o genérico. */
+  nome?: string
+  logoUrl?: string
+  /** Ausente = licenciada. Só aparece quando o painel desligou a licença. */
+  licenciado?: boolean
 }
 
 const VAZIA: AtualizacaoElencos = { versao: 0 }
@@ -293,7 +323,14 @@ export function canalTemNovidade(servidor: AtualizacaoElencos | null, canal: "el
  */
 function comCopiaLocal(url: string | undefined): string | undefined {
   if (!url || url.startsWith("data:")) return url
-  return imagensGuardadas().porUrl.get(url) ?? url
+  const copia = imagensGuardadas().porUrl.get(url)
+  if (!copia) return url
+  // A cópia agora costuma ser uma REFERÊNCIA do banco de imagens, não mais o
+  // base64 inteiro. Enquanto o arquivo não terminou de ser lido do disco,
+  // `resolverImagem` devolve null e a URL remota volta a valer — no app ela não
+  // pinta, mas é só até o evento `ultrafoot:imagem:pronta` chegar e a tela se
+  // redesenhar (o mesmo caminho que TeamCrest já usa para `store:ready`).
+  return resolverImagem(copia) ?? url
 }
 
 export function timeDoServidor(fileKey: string): TeamOverride | null {
@@ -386,10 +423,44 @@ export function temTransferencias(): boolean {
   return i.saidas.size > 0 || i.chegadas.size > 0
 }
 
+/**
+ * Chave de competição comparável.
+ *
+ * O painel é digitado à mão e o jogo pergunta por dois formatos diferentes: a
+ * divisão (`serie_a`) e o nome (`Série A`). Exigir igualdade exata faria o
+ * cadastro certo não pegar, e o sintoma seria mudo — a liga montaria pelo seed
+ * como se o canal não tivesse nada.
+ */
+function chaveDeCompeticao(bruto: string): string {
+  return bruto
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+}
+
 /** Participantes corrigidos de uma competição, se a atualização trouxer. */
 export function clubesDaLigaNoServidor(competicao: string): string[] | null {
   if (!canalAtivo("times")) return null
-  return getAtualizacao().ligas?.[competicao]?.clubes ?? null
+  return ligaNoServidor(competicao)?.clubes ?? null
+}
+
+/** Regulamento publicado para a competição (turnos, acessos, rebaixamentos…). */
+export function regulamentoDaLigaNoServidor(competicao: string): RegulamentoDaLiga | null {
+  if (!canalAtivo("times")) return null
+  return ligaNoServidor(competicao)?.regulamento ?? null
+}
+
+function ligaNoServidor(competicao: string) {
+  const ligas = getAtualizacao().ligas
+  if (!ligas || !competicao) return null
+  const exata = ligas[competicao]
+  if (exata) return exata
+  const alvo = chaveDeCompeticao(competicao)
+  if (!alvo) return null
+  for (const [chave, valor] of Object.entries(ligas)) {
+    if (chaveDeCompeticao(chave) === alvo) return valor
+  }
+  return null
 }
 
 // ─── Retratos publicados pelo servidor ───────────────────────────────────────
@@ -472,12 +543,13 @@ export function fotoDoServidor(nome: string, fileKey?: string): string | null {
     const exata = getAtualizacao().jogadores?.[chaveCompleta]?.faceDataUrl
     if (!exata) return null
     const copia = imagensGuardadas().porChave.get(chaveCompleta)
-    return copia?.u === exata ? copia.d : exata
+    return copia?.u === exata ? resolverImagem(copia.d) ?? exata : exata
   }
   const mapa = indexarFotos()
   const url = mapa.size === 0 ? undefined : mapa.get(chave)
   if (!url) return null
-  return imagensGuardadas().porUrl.get(url) ?? url
+  const copia = imagensGuardadas().porUrl.get(url)
+  return (copia ? resolverImagem(copia) : null) ?? url
 }
 
 // ─── Cópia local das imagens (para funcionar SEM internet) ───────────────────
@@ -518,7 +590,25 @@ const chaveKit = (fileKey: string, variante: string) => `kit__${fileKey}__${vari
  * imagem, comparar as duas É a verificação de validade: mudou a foto, mudou o
  * sha, mudou a URL, a cópia cai sozinha.
  */
-interface ImagemGuardada { u: string; d: string }
+interface ImagemGuardada {
+  /** URL de origem no manifesto. Termina no sha, então é o teste de validade. */
+  u: string
+  /**
+   * A imagem. Hoje é uma REFERÊNCIA do banco (`uf-img:<sha>.<ext>`, ~50 bytes);
+   * em cópias antigas — e sempre na web, que não tem disco — ainda é o base64
+   * inteiro. `resolverImagem` aceita os dois e devolve algo que `<img src>` come.
+   */
+  d: string
+  /**
+   * Tamanho REAL da imagem em bytes.
+   *
+   * Existe porque o teto abaixo era calculado com `d.length`, e isso deixou de
+   * medir qualquer coisa quando `d` virou uma referência de 50 bytes: sem este
+   * campo o orçamento acharia que nada foi gasto e baixaria o pacote inteiro a
+   * cada abertura. Ausente nas cópias antigas, onde `d.length` ainda serve.
+   */
+  b?: number
+}
 
 /**
  * ⚠️ NO APP INSTALADO A CÓPIA LOCAL NÃO É "PARA FUNCIONAR OFFLINE" — É A ÚNICA
@@ -602,9 +692,9 @@ function imagensGuardadas(): CacheImagens {
       // cópia que servia foto velha. Descartar é seguro: o retrato continua
       // vindo pela URL do manifesto e volta a ser guardado no próximo pacote.
       if (typeof valor !== "object" || valor === null) continue
-      const { u, d } = valor as Partial<ImagemGuardada>
+      const { u, d, b } = valor as Partial<ImagemGuardada>
       if (typeof u !== "string" || typeof d !== "string") continue
-      dados.porChave.set(chave, { u, d })
+      dados.porChave.set(chave, { u, d, ...(typeof b === "number" ? { b } : {}) })
       dados.porUrl.set(u, d)
     }
   } catch { /* corrompido: volta a valer a URL remota */ }
@@ -699,10 +789,13 @@ export async function guardarFotosLocalmente(
   // um tipo seria gasto de novo a cada pacote e o dos outros nunca sobraria.
   const tipoDa = (chave: string) =>
     chave.startsWith("escudo__") ? "escudo" : chave.startsWith("kit__") ? "kit" : "foto"
+  // `b` quando a imagem foi para o banco (`d` virou uma referência curta);
+  // `d.length` nas cópias antigas, que ainda carregam o base64 inteiro.
+  const pesoDe = (v: ImagemGuardada) => v.b ?? v.d.length
   const gastoDe = (tipo: string) =>
     Object.entries(guardadas)
       .filter(([c]) => tipoDa(c) === tipo)
-      .reduce((s, [c, v]) => s + v.d.length + v.u.length + c.length + 16, 0)
+      .reduce((s, [c, v]) => s + pesoDe(v) + v.u.length + c.length + 16, 0)
 
   async function baixar(tipo: keyof typeof FATIA, lista: Map<string, string>) {
     const limite = teto * FATIA[tipo]
@@ -718,7 +811,13 @@ export async function guardarFotosLocalmente(
         const r = await requisitar(url, {})
         if (!r.ok) continue
         const dados = paraDataUrl(await r.arrayBuffer(), r.headers.get("content-type") ?? "")
-        guardadas[chave] = { u: url, d: dados }
+        // Os bytes vão para um ARQUIVO e no JSON fica só a referência. Era este
+        // ponto que engordava o `ultrafoot-clubs.json` até 170 MB só de cópia de
+        // imagem — e como o persistent-store reescreve o arquivo inteiro a cada
+        // gravação, cada clique do jogo pagava por isso. Na web `guardarImagem`
+        // devolve a própria data URL e nada muda.
+        const guardada = (await guardarImagem(dados)) ?? dados
+        guardadas[chave] = { u: url, d: guardada, b: dados.length }
         bytes += dados.length + url.length + chave.length + 16
         novas++
       } catch { /* uma imagem a menos não invalida o pacote */ }

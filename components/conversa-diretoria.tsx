@@ -14,7 +14,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Building2, Send, X } from "lucide-react"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import {
   ASSUNTOS,
   PEDIDO_DE_CLAREZA,

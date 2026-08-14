@@ -6,17 +6,31 @@
 import { safeLocalSet } from "@/lib/safe-storage"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
+// Modo Desafios: a avaliação e o prêmio acontecem na virada de temporada.
+import { claimReward, evaluateChallenge } from "@/lib/challenge-engine"
+import { evoluirTreinador, registrarSemanaDoTreinador } from "@/lib/evolucao-do-treinador"
+import { competicaoHabilitada283 } from "@/lib/configuracoes-iniciais-283"
+import { atualizarAdesao282, avaliarConduta291, avaliarMetas282, negociosPorQuinzena282, normalizarGestao282, PUNICOES_CONDUTA_291, registrarTemporadaAcademia291, relatoriosDaComissao282, type EventoCarreira282 } from "@/lib/gestao-282"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, absoluteWeek, getContractStatus, isTransferWindowOpen, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, initialDivision, clubDivisionKey, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, MIN_TIMES_PARA_LIGA, type Team } from "@/lib/teams-data"
+import { getTeamsByDivision, getPlayablePoolTeams, getTeamByFileKey, getTeamByShort, setClubDivisions, effectiveDivision, initialDivision, clubDivisionKey, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, MIN_TIMES_PARA_LIGA, type Team } from "@/lib/teams-data"
 import { getGameDate, configurarDuracaoDaTemporada } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
-import { simulateWorldTransferWindow } from "@/lib/world-market"
+import { carregarElencosDoPool } from "@/lib/pool-elencos"
+import { carregarElencosReaisTM } from "@/lib/elencos-reais-tm"
+import { appendWorldTransferLog, recordWorldTransfer } from "@/lib/world-market"
 import { setTemporadaDoMundo, setClubeDoUsuario } from "@/lib/temporada-do-mundo"
 import { decidirReacoesDaIA, type ReacaoDaIA } from "@/lib/ai-club-engine"
 import { evolveAIClubSocialState } from "@/lib/ai-club-social"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
 import { UEFA_EXPANSION_COMPETITIONS } from "@/lib/uefa-expansion"
+import {
+  calendarWindowForDivision,
+  generateLeaguePairings,
+  leagueCompetitionForDivision,
+  leagueNameForDivision,
+  leagueSeasonPlan,
+} from "@/lib/domestic-league-engine"
 import { pedidoDaSemana, montarPedido, agenteProcuraOutroClube, chanceDePreContrato, RELACAO_INICIAL } from "@/lib/pressao-do-agente"
 import { generateOffers } from "@/lib/sponsor-engine"
 import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, resultadoDoConfronto, disputaDeterministica, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
@@ -42,6 +56,10 @@ import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity 
 import { calcularRenda, precosSugeridos, obraConcluida, aplicarObra } from "@/lib/stadium-sectors"
 import { leaguePrizeMoney } from "@/lib/club-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
+import {
+  promocoesDePrestigio, ROTULO_DO_PRESTIGIO, virarTemporada,
+  type FeitoDaTemporada,
+} from "@/lib/prestigio-do-atleta"
 import { berthsForSeason, continentalTitleBerth, type SuperCupBerth } from "@/lib/super-cups"
 import { qualificacaoReal2026 } from "@/lib/qualificacao-2026"
 import { isFifaWindowMonth, windowLabel, cyclePhase, worldCupHosts, worldCupNote } from "@/lib/national-windows"
@@ -52,6 +70,108 @@ import {
   humorDasOrganizadas, organizadasDoClube, quadroDeSocios, satisfacaoDaTorcida,
   torcidaAposTemporada, type ConquistaDaTemporada,
 } from "@/lib/torcida"
+import {
+  avancarUniverso286,
+  candidatosScouting286,
+  criarUniversoPersistente286,
+  definirUniversoAtivo286,
+  type NegocioUniverso286,
+  type UniversoPersistente286,
+} from "@/lib/universo-286"
+import type { ScoutCandidate } from "@/lib/scout-engine"
+import {
+  desmarcarPronto, ehMultitecnico, faltamFechar, iniciarRodada, marcarPronto, podeAvancar,
+  proximoAJogar, tecnicosDoSave, type TecnicoDoSave,
+} from "@/lib/tecnicos-do-save"
+import {
+  chaveDaLiga, guardarEstadoDaLiga, guardarEstadoDoClube, guardarEstadoDoMundo,
+  guardarEstadoDoTempo, guardarSaveDaLiga, guardarSaveDoTecnico,
+  restaurarEstadoDoClube, restaurarSaveDoTecnico,
+} from "@/lib/chaveamento-de-tecnico"
+
+/** Monta uma vez o mundo de uma carreira a partir dos elencos reais do build. */
+function semearUniverso286(temporada: number, clubeDoUsuario: string): UniversoPersistente286 {
+  // Nunca deixe o cache de outra carreira contaminar a fotografia inicial.
+  definirUniversoAtivo286(null)
+  const clubesJogaveis = [...allTeams, ...getPlayablePoolTeams()].filter((time, index, todos) =>
+    todos.findIndex(outro => outro.file_key === time.file_key) === index)
+  return criarUniversoPersistente286({
+    temporada,
+    clubeDoUsuario,
+    clubes: clubesJogaveis.map(time => ({
+      curto: time.curto,
+      nome: time.nome,
+      pais: time.pais,
+      divisao: String(effectiveDivision(time)),
+      prestigio: time.prestigio ?? 55,
+      saldo: time.saldo ?? 0,
+      jogadores: getPlayersForTeam(time).map(jogador => ({
+        id: jogador.ft,
+        nome: jogador.nome,
+        posicao: String(jogador.pos),
+        idade: jogador.idade,
+        overall: jogador.base,
+        nacionalidade: jogador.nac,
+        pace: jogador.pace,
+        shooting: jogador.shooting,
+        passing: jogador.passing,
+        dribbling: jogador.dribbling,
+        defending: jogador.defending,
+        physical: jogador.physical,
+      })),
+    })),
+  })
+}
+
+function candidatosDoUniversoParaScouting(estado?: UniversoPersistente286): ScoutCandidate[] {
+  if (!estado) return []
+  return candidatosScouting286(estado).map(jogador => {
+    const clube = jogador.clubeCurto ? estado.clubes[jogador.clubeCurto] : undefined
+    return {
+      id: jogador.id,
+      name: jogador.nome,
+      clubShort: jogador.clubeCurto,
+      clubName: clube?.nome ?? "Sem clube",
+      country: clube?.pais ?? jogador.nacionalidade ?? "Desconhecido",
+      nationality: jogador.nacionalidade,
+      position: jogador.posicao,
+      age: jogador.idade,
+      overall: jogador.overall,
+      potential: jogador.potencial,
+      value: jogador.valor,
+      weeklySalary: jogador.contrato.salarioSemanal,
+      contractEndSeason: jogador.contrato.ateTemporada,
+      currentSeason: estado.temporada,
+      morale: jogador.moral,
+      injuryWeeks: jogador.lesaoSemanas,
+      attributes: jogador.atributos,
+    }
+  })
+}
+
+/** Mantém a Central e os elencos legados sincronizados com os negócios da IA. */
+function publicarNegociosDoUniverso(negocios: NegocioUniverso286[]): void {
+  for (const negocio of negocios) {
+    recordWorldTransfer(negocio.de, negocio.para, {
+      nome: negocio.jogador,
+      pos: negocio.posicao,
+      idade: negocio.idade,
+      base: negocio.overall,
+      temporada: negocio.temporada,
+    })
+  }
+  appendWorldTransferLog(negocios.map(negocio => ({
+    atleta: negocio.jogador,
+    de: negocio.de,
+    para: negocio.para,
+    valor: negocio.valor,
+    pos: negocio.posicao,
+    idade: negocio.idade,
+    base: negocio.overall,
+    temporada: negocio.temporada,
+    semana: negocio.semana,
+  })))
+}
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -103,7 +223,7 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   ligue_1:        { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   primeira_liga:  { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   eredivisie:     { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
-  scottish_prem:  { startMonth: 7,  monthsInSeason: 10, rounds: 22 },
+  scottish_prem:  { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
   scottish_champ: { startMonth: 7,  monthsInSeason: 10, rounds: 18 },
   super_lig:      { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   // 18 clubes desde 2026/27 => 34 rodadas. Este numero TEM de acompanhar
@@ -112,7 +232,7 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   pro_league_bel: { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   russian_prem:   { startMonth: 6,  monthsInSeason: 11, rounds: 30 },
   // Americas nao-Brasil
-  mls:            { startMonth: 2,  monthsInSeason: 9,  rounds: 58 },
+  mls:            { startMonth: 2,  monthsInSeason: 9,  rounds: 34 },
   liga_mx:        { startMonth: 6,  monthsInSeason: 11, rounds: 34 },
   liga_argentina: { startMonth: 0,  monthsInSeason: 12, rounds: 46 },
   primera_a_col:  { startMonth: 1,  monthsInSeason: 11, rounds: 38 },
@@ -124,7 +244,7 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   // Asia
   saudi_pro:      { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   j_league:       { startMonth: 1,  monthsInSeason: 11, rounds: 38 },
-  k_league_1:     { startMonth: 1,  monthsInSeason: 11, rounds: 22 },
+  k_league_1:     { startMonth: 1,  monthsInSeason: 11, rounds: 38 },
   chinese_super:  { startMonth: 1,  monthsInSeason: 10, rounds: 30 },
   // 2as divisoes Europa
   championship:   { startMonth: 7,  monthsInSeason: 10, rounds: 46 },
@@ -149,6 +269,18 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   china_league_one:{ startMonth: 1, monthsInSeason: 10, rounds: 20 },
 }
 
+function leagueCalendarConfig(division: string): LeagueCalendarConfig {
+  const explicit = LEAGUE_CALENDAR[division]
+  if (explicit) return explicit
+  const competition = leagueCompetitionForDivision(division)
+  const teamCount = competition?.teams ?? 20
+  const window = calendarWindowForDivision(division)
+  return {
+    ...window,
+    rounds: leagueSeasonPlan(division, teamCount).maximumMatches,
+  }
+}
+
 // Meses que o calendario deve MOSTRAR, derivados do MESMO LEAGUE_CALENDAR que
 // posiciona os jogos (getRoundMonth). Antes a tela usava listas de regiao
 // escritas a mao que NAO batiam com os meses reais dos jogos — o time argentino
@@ -156,7 +288,7 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
 // dezembro. Derivar da fonte unica elimina o descompasso: aba e jogo sempre no
 // mesmo mes.
 export function seasonMonthsForDivision(division: string): number[] {
-  const cfg = LEAGUE_CALENDAR[division] ?? { startMonth: 3, monthsInSeason: 8, rounds: 38 }
+  const cfg = leagueCalendarConfig(division)
   // Europa (e ligas que cruzam o ano, comecando no 2o semestre): arco ago->mai.
   if (cfg.startMonth >= 6) {
     const meses: number[] = []
@@ -543,6 +675,9 @@ export function getLeagueRounds(division: string): number {
   // mantem as proximas federacoes corretas sem ninguem lembrar deste arquivo.
   const daCompeticao = UEFA_EXPANSION_COMPETITIONS[division]?.[0]?.rounds
   if (daCompeticao) return daCompeticao
+
+  const competition = leagueCompetitionForDivision(division)
+  if (competition) return leagueSeasonPlan(division, competition.teams).maximumMatches
 
   return 38
 }
@@ -1410,10 +1545,10 @@ export function generateStateChampionshipFixtures(
 // (scripts/qa-virada-de-temporada.ts) poder chamar a funcao DE VERDADE. Uma
 // copia no script testaria a copia — e o numero que esta funcao devolve e
 // exatamente o que decide se a temporada acaba.
-export function getUserLeagueTeams(teamShort: string, divisionOverride?: string): Team[] {
-  const userTeam = getTeamByShort(teamShort)
+export function getUserLeagueTeams(teamShort: string, divisionOverride?: string, teamFileKey?: string): Team[] {
+  const userTeam = (teamFileKey ? getTeamByFileKey(teamFileKey) : undefined) ?? getTeamByShort(teamShort)
   if (!userTeam) return []
-  const division = divisionOverride ?? userTeam.divisao
+  const division = divisionOverride ?? String(effectiveDivision(userTeam))
   // LIGA CURTA: onze divisoes tinham menos de oito clubes curados (sete tinham UM
   // so). Devolver a divisao como estava gerava ZERO confrontos — o calendario
   // ficava sem liga nenhuma. `completarLigaComPool` traz adversarios do MESMO
@@ -1429,7 +1564,7 @@ export function getUserLeagueTeams(teamShort: string, divisionOverride?: string)
   // turno-returno e a temporada nunca termina (ver resolveLeagueTeams). Agora o
   // clube do usuario ENTRA no lugar do mais fraco e o TAMANHO nao muda: a lista
   // que sai daqui vale exatamente o que o regulamento da divisao manda.
-  const hasUser = divisionTeams.some(t => t.curto === teamShort)
+  const hasUser = divisionTeams.some(t => t.file_key === userTeam.file_key)
   if (!hasUser) {
     const semOMaisFraco = [...divisionTeams]
       .sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0))
@@ -1489,7 +1624,8 @@ export function getLeagueName(teamShort: string, divisionOverride?: string): str
   // final do usuario virava 0. Sem posicao nao ha acesso nem rebaixamento, e
   // nenhuma mensagem aparece: era o relato "terminei em 3o na Serie D e
   // continuei na Serie D, sem aviso nenhum".
-  return LEAGUE_NAMES[divisionOverride ?? effectiveDivision(userTeam)] ?? "Liga"
+  const division = String(divisionOverride ?? effectiveDivision(userTeam))
+  return LEAGUE_NAMES[division] ?? leagueNameForDivision(division)
 }
 
 export function getDivisionLeagueTeams(teamShort: string): Team[] {
@@ -1607,53 +1743,90 @@ export function reconcilePlayedFixtures(
 
 // Gera confrontos da liga (todos contra todos, turno e returno) — dinamico por qtd de times
 // weekOffset: deslocamento de semanas para colocar a liga apos o estadual (para times brasileiros)
-export function generateBrasileirao(teams: Team[], userTeamShort: string, competition: string, division: string, weekOffset = 0): Fixture[] {
-  const fixtures: Fixture[] = []
-  let fixtureId = 1
-  const halfSeason = teams.length - 1
-  const totalRounds = halfSeason * 2
-  const calCfg = LEAGUE_CALENDAR[division] ?? { startMonth: 3, monthsInSeason: 8, rounds: 38 }
-
-  // Primeira fase - turno
-  for (let round = 1; round <= halfSeason; round++) {
-    const matchups = generateRoundMatchups(teams, round)
-    matchups.forEach(([home, away]) => {
-      fixtures.push({
-        id: fixtureId++,
-        round,
-        week: round + weekOffset,
-        homeTeam: home,
-        awayTeam: away,
-        competition,
+export function generateBrasileirao(
+  teams: Team[],
+  userTeamShort: string,
+  competition: string,
+  division: string,
+  weekOffset = 0,
+  knownResults: MatchResult[] = [],
+  season = 2026,
+): Fixture[] {
+  // O Brasil já possui calendário e regressões próprios. A internacionalização
+  // não altera a ordem histórica dos seus confrontos nem os saves existentes.
+  if (isBrazilianDivision(division)) {
+    const fixtures: Fixture[] = []
+    let fixtureId = 1
+    const halfSeason = teams.length - 1
+    const totalRounds = halfSeason * 2
+    const calCfg = leagueCalendarConfig(division)
+    for (let round = 1; round <= halfSeason; round++) {
+      const matchups = generateRoundMatchups(teams, round)
+      for (const [home, away] of matchups) fixtures.push({
+        id: fixtureId++, round, week: round + weekOffset,
+        homeTeam: home, awayTeam: away, competition,
         played: false,
         isUserMatch: home.curto === userTeamShort || away.curto === userTeamShort,
         month: getRoundMonth(round, calCfg.startMonth, calCfg.monthsInSeason, totalRounds),
         competitionType: "league",
+        stage: "temporada_regular",
       })
-    })
-  }
-
-  // Segunda fase - returno (inverte mando)
-  for (let round = halfSeason + 1; round <= totalRounds; round++) {
-    const turnoRound = round - halfSeason
-    const turnoFixtures = fixtures.filter(f => f.round === turnoRound)
-    turnoFixtures.forEach(f => {
-      fixtures.push({
-        id: fixtureId++,
-        round,
-        week: round + weekOffset,
-        homeTeam: f.awayTeam,
-        awayTeam: f.homeTeam,
-        competition,
+    }
+    for (let round = halfSeason + 1; round <= totalRounds; round++) {
+      const firstLeg = fixtures.filter(fixture => fixture.round === round - halfSeason)
+      for (const fixture of firstLeg) fixtures.push({
+        id: fixtureId++, round, week: round + weekOffset,
+        homeTeam: fixture.awayTeam, awayTeam: fixture.homeTeam, competition,
         played: false,
-        isUserMatch: f.awayTeam.curto === userTeamShort || f.homeTeam.curto === userTeamShort,
+        isUserMatch: fixture.isUserMatch,
         month: getRoundMonth(round, calCfg.startMonth, calCfg.monthsInSeason, totalRounds),
         competitionType: "league",
+        stage: "temporada_regular",
       })
+    }
+    return fixtures
+  }
+
+  const byId = new Map(teams.map(team => [team.curto, team]))
+  const scheduleTeams = teams.map(team => ({ id: team.curto, name: team.nome }))
+  const calCfg = leagueCalendarConfig(division)
+  const plan = leagueSeasonPlan(division, teams.length)
+
+  const toFixtures = (ranking?: readonly string[]): Fixture[] => {
+    const pairings = generateLeaguePairings({ division, teams: scheduleTeams, regularRanking: ranking })
+    // Mantém datas estáveis antes e depois de revelar os grupos do split. Se o
+    // divisor fosse 33 na fase regular escocesa e 38 depois do corte, todas as
+    // rodadas já disputadas mudariam de mês quando a tabela fosse regenerada.
+    const totalRounds = Math.max(1, plan.maximumMatches, ...pairings.map(pairing => pairing.round))
+    return pairings.flatMap((pairing, index) => {
+      const home = byId.get(pairing.homeId)
+      const away = byId.get(pairing.awayId)
+      if (!home || !away || home.curto === away.curto) return []
+      return [{
+        id: index + 1,
+        round: pairing.round,
+        week: pairing.round + weekOffset,
+        homeTeam: home,
+        awayTeam: away,
+        competition,
+        competitionId: plan.competitionId,
+        played: false,
+        isUserMatch: home.curto === userTeamShort || away.curto === userTeamShort,
+        month: getRoundMonth(pairing.round, calCfg.startMonth, calCfg.monthsInSeason, totalRounds),
+        competitionType: "league" as const,
+        stage: pairing.stage,
+      }]
     })
   }
 
-  return fixtures
+  const regular = toFixtures()
+  if (plan.kind !== "split" || knownResults.length === 0) return regular
+
+  const hydrated = reconcilePlayedFixtures(regular, knownResults, season)
+  if (!hydrated.length || hydrated.some(fixture => !fixture.played)) return regular
+
+  const ranking = computeStandingsFromFixtures(hydrated, competition).map(row => row.teamShort)
+  return ranking.length === teams.length ? toFixtures(ranking) : regular
 }
 
 // Algoritmo de circulo para gerar confrontos de uma rodada
@@ -1759,6 +1932,54 @@ function initializeStandings(teams: Team[]): StandingsEntry[] {
 }
 
 /**
+ * O NASCIMENTO DE UMA CARREIRA — clube, liga, divisão, calendário e tabela.
+ *
+ * ⚠️ EXISTE PARA SER CHAMADA DOS DOIS LADOS. Era daqui que vinha o defeito de
+ * fundo do co-op: `initializeNewGame` montava tudo isto para o anfitrião,
+ * enquanto o segundo técnico recebia só um `initializeGame` — elenco carregado,
+ * mas sem liga, sem calendário e sem tabela próprios. Ele "jogava", e não estava
+ * disputando campeonato nenhum.
+ *
+ * Extraída em vez de duplicada de propósito: uma cópia paralela envelheceria, e
+ * o modo voltaria a ser uma imitação da carreira solo em vez de a mesma coisa.
+ * O que sai daqui é dado puro; quem chama decide onde grava.
+ */
+export function nascimentoDeCarreira(teamShort: string, teamFileKey?: string) {
+  // `curto` não é identidade global (134 códigos se repetem). Com a escolha
+  // livre de país no co-op, resolver pelo `file_key` deixou de ser um detalhe.
+  const userTeam = (teamFileKey ? getTeamByFileKey(teamFileKey) : undefined) ?? getTeamByShort(teamShort)
+  const divisao = userTeam ? String(effectiveDivision(userTeam)) : "serie_a"
+  const leagueTeams = getUserLeagueTeams(teamShort, divisao, teamFileKey)
+  const standingsDoMotor = initializeStandings(leagueTeams)
+
+  const careerTeam = userTeam
+    ? {
+        nome: userTeam.nome, curto: userTeam.curto,
+        cor1: userTeam.cor1, cor2: userTeam.cor2,
+        prestigio: userTeam.prestigio, saldo: userTeam.saldo,
+        divisao, pais: userTeam.pais ?? "",
+        cidade: userTeam.cidade, estado: userTeam.estado,
+        torcida: userTeam.torcida, estadio_cap: userTeam.estadio_cap,
+        fileKey: userTeam.file_key, estadio: userTeam.estadio_nome ?? "",
+        patrocinador: userTeam.patrocinador, escudo: userTeam.escudo_url,
+      }
+    : null
+
+  let fixtures: import("@/lib/career-types").MatchFixture[] = []
+  let standings: import("@/lib/career-types").StandingEntry[] = []
+  if (careerTeam) {
+    const cLeagueTeams = getLeagueTeams(careerTeam)
+    // Determinístico sobre a lista de clubes: dois técnicos do MESMO campeonato
+    // recebem exatamente o mesmo calendário, e só a marca `isUserMatch` difere.
+    // É o que permite eles dividirem uma tabela só sem sincronizar nada.
+    fixtures = generateSeasonFixtures(cLeagueTeams, teamShort, 2026)
+    standings = initStandings(cLeagueTeams)
+  }
+
+  return { userTeam, careerTeam, divisao, leagueTeams, standingsDoMotor, fixtures, standings }
+}
+
+/**
  * Calcula a classificacao de UMA competicao a partir dos fixtures dela (estadual,
  * liga, etc.). Inclui todos os times que a disputam, mesmo sem jogos, e ordena por
  * pontos > saldo > gols pro. Necessario porque o engine so mantem a tabela da liga
@@ -1857,6 +2078,16 @@ export function useGameManager() {
     return unsub
   }, [])
 
+  // AQUECIMENTO DOS ELENCOS DO POOL. Este hook é usado por toda tela, então é o
+  // ponto que cobre também o caso de recarregar a página direto em /elenco ou
+  // /mercado (o `hardNavigate` faz isso). Não bloqueia a montagem: só garante
+  // que os 7,91 MB comecem a chegar antes de alguém pedir um elenco.
+  // Ver `lib/pool-elencos.ts`.
+  useEffect(() => {
+    void carregarElencosDoPool()
+    void carregarElencosReaisTM()
+  }, [])
+
   // O MUNDO PRECISA SABER EM QUE ANO ESTA. `players-data` monta o elenco de todo
   // clube da IA e envelhece esse elenco pela temporada corrente — mas nao pode
   // importar este hook (ciclo). Entao a informacao viaja por `temporada-do-mundo`,
@@ -1868,6 +2099,24 @@ export function useGameManager() {
     setTemporadaDoMundo(saveState.season)
     setClubeDoUsuario(saveState.selectedTeamShort ?? null)
   }, [hydrated, saveState.season, saveState.selectedTeamShort])
+
+  // O save é a fonte durável; players-data lê este cache para montar os elencos
+  // persistentes dos adversários sem importar hooks React.
+  useEffect(() => {
+    if (!hydrated) return
+    definirUniversoAtivo286(saveState.universo286)
+    return () => definirUniversoAtivo286(null)
+  }, [hydrated, saveState.universo286])
+
+  // Migração preguiçosa da 1.0.285: a carreira abre com os dados intactos e a
+  // primeira tela central semeia o novo universo. Não alteramos VERSION do
+  // formato-base porque o campo é opcional e safeParse já preserva extensões.
+  useEffect(() => {
+    if (!hydrated || !engineHydrated || !saveState.selectedTeamShort || saveState.universo286) return
+    const universo286 = semearUniverso286(saveState.season, saveState.selectedTeamShort)
+    definirUniversoAtivo286(universo286)
+    setSaveState({ universo286 })
+  }, [hydrated, engineHydrated, saveState.selectedTeamShort, saveState.season, saveState.universo286, setSaveState])
 
   // MIGRACAO de save antigo para o relogio ABSOLUTO de contrato. Ate a 1.0.136 o
   // endDate era comparado com a semana da temporada (que zera todo ano) e nenhum
@@ -1893,7 +2142,7 @@ export function useGameManager() {
     const teamShort = saveState.selectedTeamShort
     setClubDivisions(saveState.clubDivisions) // piramide viva antes de montar a liga
     const leagueTeams = resolveLeagueTeams(teamShort, saveState.divisionOverride, saveState.leagueTeams)
-    gameEngine.initializeGame(teamShort)
+    gameEngine.initializeGame(teamShort, saveState.selectedTeam?.fileKey)
     useGameEngine.setState({
       serieAStandings: initializeStandings(leagueTeams),
       currentWeek: saveState.week,
@@ -1924,48 +2173,220 @@ export function useGameManager() {
   }, [hydrated, engineHydrated, saveState.selectedTeamShort, saveState.leagueTeams, gameEngine.serieAStandings]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Inicializa o jogo quando o usuario seleciona um time
-  const initializeNewGame = useCallback((teamShort: string, managerName?: string, initialCareerState: Partial<GameState> = {}) => {
+  /**
+   * PASSAR O COMPUTADOR PARA OUTRO TÉCNICO DA MESA.
+   *
+   * O que acontece, em ordem, e por quê:
+   *
+   *  1. GUARDA o bolso de quem sai — as 49 propriedades de clube do motor.
+   *  2. GUARDA o mundo (rodada, temporada, tabelas, resultados) à parte.
+   *  3. Devolve o bolso de quem entra. Se ele nunca sentou, o clube dele
+   *     precisa ser CARREGADO do zero, e o único caminho para isso é o
+   *     `initializeGame`.
+   *  4. ⚠️ REPÕE O MUNDO POR CIMA. Este passo parece redundante e não é: o
+   *     `initializeGame` zera `currentWeek`, `currentSeason`, `matchResults` e
+   *     a tabela. Chamado no meio de uma carreira compartilhada, sem o passo 4,
+   *     ele mandaria os quatro técnicos de volta para a rodada zero — e o save
+   *     já teria sido gravado assim.
+   *
+   * Ver `lib/chaveamento-de-tecnico.ts` para as duas listas de campos e o teste
+   * que reprova campo novo do motor que ninguém classificou.
+   */
+  const trocarTecnicoAtivo = useCallback((tecnicoId: string) => {
+    const atual = saveStateRef.current
+    const tecnicos = tecnicosDoSave(atual.tecnicos, atual.managerName, atual.selectedTeamShort)
+    const entrando = tecnicos.find(t => t.id === tecnicoId)
+    if (!entrando) return
+    const saindoId = atual.tecnicoAtivoId ?? tecnicos[0]?.id
+    if (saindoId === tecnicoId) return
+    const saindo = tecnicos.find(t => t.id === saindoId) ?? null
+
+    const saveAtual = atual as unknown as Record<string, unknown>
+    const estadoDoMotor = useGameEngine.getState() as unknown as Record<string, unknown>
+
+    // ── 1) GUARDA quem sai: as duas metades dele ─────────────────────────────
+    const bolsos = { ...(atual.estadoPorTecnico ?? {}) }
+    const bolsosDeSave = { ...(atual.saveDoTecnico ?? {}) }
+    if (saindoId) {
+      bolsos[saindoId] = guardarEstadoDoClube(estadoDoMotor)
+      bolsosDeSave[saindoId] = guardarSaveDoTecnico(saveAtual)
+    }
+
+    // ── 2) GUARDA a liga de quem sai, e o tempo ──────────────────────────────
+    //
+    // A tabela fica arquivada pela LIGA, não por quem estava jogando: se os dois
+    // disputam o mesmo campeonato, o que um fez é o que o outro vai encontrar.
+    const arquivosDeLiga = { ...(atual.estadoPorLiga ?? {}) }
+    // A liga de quem sai é a que está NA TELA: o save ativo é o dele.
+    const doQueSai = nascimentoDeCarreira(atual.selectedTeamShort ?? "", saindo?.clubeFileKey)
+    const ligaDeQuemSai = chaveDaLiga(
+      saindo?.paisNome ?? doQueSai.userTeam?.pais,
+      atual.divisionOverride ?? doQueSai.divisao,
+    )
+    arquivosDeLiga[ligaDeQuemSai] = {
+      motor: guardarEstadoDaLiga(estadoDoMotor),
+      save: guardarSaveDaLiga(saveAtual),
+    }
+    // ⚠️ O TEMPO É INTOCÁVEL. `initializeGame`, logo abaixo, zera semana e
+    // temporada; sem repor isto por cima a mesa inteira voltaria à rodada zero,
+    // já gravada.
+    const tempo = guardarEstadoDoTempo(estadoDoMotor)
+
+    // ── 3) DEVOLVE quem entra ────────────────────────────────────────────────
+    const clubeDeQuemEntra = entrando.clubeCurto ?? ""
+    const doQueEntra = nascimentoDeCarreira(clubeDeQuemEntra, entrando.clubeFileKey)
+    const bolsoDeQuemEntra = restaurarEstadoDoClube(bolsos, tecnicoId)
+    const saveDeQuemEntra = restaurarSaveDoTecnico(bolsosDeSave, tecnicoId)
+    let patchDoSave: Record<string, unknown>
+
+    if (bolsoDeQuemEntra && saveDeQuemEntra) {
+      useGameEngine.setState(bolsoDeQuemEntra as never)
+      patchDoSave = { ...saveDeQuemEntra }
+    } else {
+      // PRIMEIRA VEZ QUE ESTA PESSOA SENTA. A carreira dela precisa NASCER — e
+      // pelo mesmo caminho da carreira solo, senão ela entra sem liga, sem
+      // calendário e sem tabela, que era o defeito do modo até a 1.0.303.
+      gameEngine.initializeGame(clubeDeQuemEntra, entrando.clubeFileKey ?? doQueEntra.userTeam?.file_key)
+      patchDoSave = {
+        selectedTeamShort: clubeDeQuemEntra,
+        selectedTeam: doQueEntra.careerTeam ?? undefined,
+        managerName: entrando.nome,
+        saveName: `Carreira de ${entrando.nome} - ${doQueEntra.userTeam?.nome || clubeDeQuemEntra}`,
+        divisionOverride: doQueEntra.divisao === String(doQueEntra.userTeam?.divisao ?? "")
+          ? undefined
+          : doQueEntra.divisao,
+        leagueTeams: doQueEntra.leagueTeams.map(time => time.curto),
+        fixtures: doQueEntra.fixtures,
+        completedFixtureKeys: [],
+        results: [],
+        finances: [],
+        seasonHistory: [],
+        injuries: [],
+        playerFatigue: {},
+        teamMorale: 70,
+        // Ele assume o clube HOJE, não na rodada zero: a mesa já andou.
+        contratadoEm: { season: atual.season, week: atual.week },
+      }
+    }
+
+    // ── 4) A LIGA DE QUEM ENTRA, e o tempo por cima ──────────────────────────
+    const ligaDeQuemEntra = chaveDaLiga(
+      entrando.paisNome ?? doQueEntra.userTeam?.pais,
+      (patchDoSave.divisionOverride as string | undefined) ?? doQueEntra.divisao,
+    )
+    const arquivoDaLiga = arquivosDeLiga[ligaDeQuemEntra]
+    if (arquivoDaLiga?.motor) {
+      useGameEngine.setState(arquivoDaLiga.motor as never)
+    } else {
+      // Campeonato que ninguém jogou ainda: tabela zerada da liga DELE.
+      useGameEngine.setState({
+        serieAStandings: doQueEntra.standingsDoMotor,
+        matchResults: [], topScorers: [], headToHeadRecords: [], copaBrasil: [],
+      } as never)
+      patchDoSave.standings = doQueEntra.standings
+    }
+    if (arquivoDaLiga?.save) Object.assign(patchDoSave, arquivoDaLiga.save)
+    // SEMPRE por último: o tempo não pertence a ninguém da mesa.
+    useGameEngine.setState(tempo as never)
+
+    setSaveState({
+      ...patchDoSave,
+      estadoPorTecnico: bolsos,
+      saveDoTecnico: bolsosDeSave,
+      estadoPorLiga: arquivosDeLiga,
+      tecnicoAtivoId: tecnicoId,
+      // Os campos singulares continuam sendo "de quem é a vez": é o que permite
+      // as dezenas de telas que leem `managerName`/`selectedTeamShort` seguirem
+      // funcionando sem alteração nenhuma.
+      managerName: entrando.nome,
+      selectedTeamShort: entrando.clubeCurto,
+    } as Parameters<typeof setSaveState>[0])
+    if (entrando.clubeCurto) setClubeDoUsuario(entrando.clubeCurto)
+  }, [gameEngine, setSaveState])
+
+  /**
+   * "FECHEI, PASSA PARA O PRÓXIMO" — o botão que faltava para o modo existir.
+   *
+   * ⚠️ SEM ISTO O CO-OP TRAVAVA PARA SEMPRE. A trava dentro do `advanceWeek` só
+   * deixa a rodada andar quando todos fecham, e nenhuma tela chamava
+   * `marcarPronto`: uma carreira com dois técnicos nunca chegava à rodada 1.
+   * A trava estava certa; era a outra metade que não tinha sido ligada.
+   *
+   * Devolve para quem chama o que aconteceu, porque a tela precisa dizer coisas
+   * diferentes em cada caso — "passe o computador para o João" ou "todos
+   * fecharam, pode avançar".
+   */
+  const fecharDecisoesEPassarAVez = useCallback((): {
+    fechou: boolean
+    proximo: TecnicoDoSave | null
+    todosFecharam: boolean
+  } => {
+    const atual = saveStateRef.current
+    const tecnicos = tecnicosDoSave(atual.tecnicos, atual.managerName, atual.selectedTeamShort)
+    if (!ehMultitecnico(tecnicos)) return { fechou: false, proximo: null, todosFecharam: true }
+
+    const euId = atual.tecnicoAtivoId ?? tecnicos[0]?.id
+    if (!euId) return { fechou: false, proximo: null, todosFecharam: false }
+
+    const rodada = marcarPronto(
+      atual.rodadaCompartilhada ?? iniciarRodada(atual.week),
+      euId,
+    )
+    // O ref precisa enxergar a rodada nova ANTES da troca: `trocarTecnicoAtivo`
+    // lê `saveStateRef.current`, e sem isto o "pronto" que acabou de ser dado
+    // seria perdido no patch dele.
+    saveStateRef.current = { ...atual, rodadaCompartilhada: rodada } as typeof atual
+    setSaveState({ rodadaCompartilhada: rodada } as Parameters<typeof setSaveState>[0])
+
+    const proximo = proximoAJogar(rodada, tecnicos)
+    if (proximo && proximo.id !== euId) trocarTecnicoAtivo(proximo.id)
+
+    return {
+      fechou: true,
+      proximo,
+      todosFecharam: podeAvancar(rodada, tecnicos),
+    }
+  }, [setSaveState, trocarTecnicoAtivo])
+
+  /** Voltei atrás: quero mexer no time antes de a rodada rodar. */
+  const reabrirMinhasDecisoes = useCallback(() => {
+    const atual = saveStateRef.current
+    const tecnicos = tecnicosDoSave(atual.tecnicos, atual.managerName, atual.selectedTeamShort)
+    if (!ehMultitecnico(tecnicos)) return
+    const euId = atual.tecnicoAtivoId ?? tecnicos[0]?.id
+    if (!euId) return
+    const rodada = desmarcarPronto(atual.rodadaCompartilhada ?? iniciarRodada(atual.week), euId)
+    saveStateRef.current = { ...atual, rodadaCompartilhada: rodada } as typeof atual
+    setSaveState({ rodadaCompartilhada: rodada } as Parameters<typeof setSaveState>[0])
+  }, [setSaveState])
+
+  const initializeNewGame = useCallback((teamShort: string, managerName?: string, initialCareerState: Partial<GameState> = {}, teamFileKey?: string) => {
     // Define a identidade ANTES de inicializar o Zustand. Assim o elenco/tatica
     // nasce no arquivo da nova carreira, nunca no slot que estava ativo antes.
     const careerId = createCareerId()
     setActiveCareerId(careerId)
-    const leagueTeams = getUserLeagueTeams(teamShort)
-    const standings = initializeStandings(leagueTeams)
-    const userTeam = getTeamByShort(teamShort)
+    setTemporadaDoMundo(2026)
+    setClubeDoUsuario(teamShort)
+    // ⚠️ MESMO CAMINHO DO CO-OP. Um técnico convidado que senta pela primeira vez
+    // passa por `nascimentoDeCarreira` também — é o que faz o modo ser a mesma
+    // carreira, e não uma imitação dela. Ver `trocarTecnicoAtivo`.
+    const nascimento = nascimentoDeCarreira(teamShort, teamFileKey)
+    const { userTeam, careerTeam, divisao: effectiveInitialDivision, leagueTeams } = nascimento
+    const initialFixtures = nascimento.fixtures
+    const initialStandings = nascimento.standings
+    const universo286 = semearUniverso286(2026, teamShort)
+    definirUniversoAtivo286(universo286)
 
     // Inicializa no game engine (carrega elenco do seed para o time)
-    gameEngine.initializeGame(teamShort)
+    gameEngine.initializeGame(teamShort, teamFileKey)
 
     // Reseta standings e semana no game engine
     useGameEngine.setState({
-      serieAStandings: standings,
+      serieAStandings: nascimento.standingsDoMotor,
       currentWeek: 0,
       currentSeason: 2026,
       matchResults: [],
     })
-
-    // Gera fixtures de carreira para persistir no save state
-    // Isso permite que ao-vivo/client.tsx rastreie quais partidas foram jogadas
-    // e detecte fim de temporada corretamente.
-    const careerTeam = userTeam
-      ? {
-          nome: userTeam.nome, curto: userTeam.curto,
-          cor1: userTeam.cor1, cor2: userTeam.cor2,
-          prestigio: userTeam.prestigio, saldo: userTeam.saldo,
-          divisao: userTeam.divisao, pais: userTeam.pais ?? "",
-          cidade: userTeam.cidade, estado: userTeam.estado,
-          torcida: userTeam.torcida, estadio_cap: userTeam.estadio_cap,
-          fileKey: userTeam.file_key, estadio: userTeam.estadio_nome ?? "",
-          patrocinador: userTeam.patrocinador, escudo: userTeam.escudo_url,
-        }
-      : null
-    let initialFixtures: import("@/lib/career-types").MatchFixture[] = []
-    let initialStandings: import("@/lib/career-types").StandingEntry[] = []
-    if (careerTeam) {
-      const cLeagueTeams = getLeagueTeams(careerTeam)
-      initialFixtures = generateSeasonFixtures(cLeagueTeams, teamShort, 2026)
-      initialStandings = initStandings(cLeagueTeams)
-    }
 
     // Nova carreira e uma SUBSTITUICAO, nao merge. O merge antigo mantinha squadPlayers,
     // selectedTeam e outros campos opcionais do primeiro save.
@@ -1979,6 +2400,10 @@ export function useGameManager() {
       careerId,
       saveName: `Carreira de ${(managerName?.trim() || "Tecnico")} - ${userTeam?.nome || teamShort}`,
       selectedTeamShort: teamShort,
+      selectedTeam: careerTeam ?? undefined,
+      divisionOverride: effectiveInitialDivision === String(userTeam?.divisao ?? "")
+        ? undefined
+        : effectiveInitialDivision,
       week: 0,
       season: 2026,
       // Data de posse do primeiro clube. Antes só trocas de emprego preenchiam
@@ -1997,6 +2422,7 @@ export function useGameManager() {
       injuries: [],
       playerFatigue: {},
       teamMorale: 70,
+      universo286,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       ...initialCareerState,
@@ -2064,12 +2490,24 @@ export function useGameManager() {
     const leagueTeams = resolveLeagueTeams(userTeamShort, saveState.divisionOverride, saveState.leagueTeams)
     const competition = LEAGUE_NAMES[division] ?? getLeagueName(userTeamShort)
     // Gera a liga com round=1..L (semana sera reatribuida ao intercalar as copas)
-    const leagueFixtures = generateBrasileirao(leagueTeams, userTeamShort, competition, division, stateChampRoundsCount)
+    const leagueFixtures = generateBrasileirao(
+      leagueTeams,
+      userTeamShort,
+      competition,
+      division,
+      stateChampRoundsCount,
+      gameEngine.matchResults.filter(result => result.season === saveState.season),
+      saveState.season,
+    )
 
     // ── Intercala copas nacionais e competicoes continentais ────────────────
     // Cada partida do usuario ocupa uma semana unica (1 jogo por semana). As
     // partidas de copa entram em "meios de semana" distribuidos ao longo da liga.
-    const leagueRoundCount = (leagueTeams.length - 1) * 2
+    // O espaçamento das copas precisa usar o formato REAL da liga. A fórmula
+    // antiga só servia para ida e volta: na MLS criava 58 semanas apesar de a
+    // fase regular ter 34 jogos; em Escócia/Coreia ignorava o split; e nas
+    // ligas de três ou quatro turnos concentrava todas as copas no começo.
+    const leagueRoundCount = getLeagueRounds(division)
     const cupMatches: Array<CupMatchDescriptor | null> = []
     if (userTeam) {
       // Um rival da mesma liga ja aparece em ida e volta. Prioriza adversarios externos
@@ -2276,12 +2714,17 @@ export function useGameManager() {
       ? playedUserMatches[playedUserMatches.length - 1]
       : null
 
-    const result = { fixtures: allFixtures, currentRound, nextUserMatch, previousUserMatch }
+    // As escolhas feitas antes da carreira alteram o motor, não apenas a tela.
+    // Partidas já jogadas são preservadas para saves migrados/auditoria histórica.
+    allFixtures = allFixtures.filter(f => f.played || competicaoHabilitada283(f, saveState.configuracoesIniciais283))
+    const nextFiltered = allFixtures.filter(f => f.isUserMatch && !f.played && f.week >= currentWeek).sort(porData)[0] || null
+    const playedFiltered = allFixtures.filter(f => f.isUserMatch && f.played).sort(porData)
+    const result = { fixtures: allFixtures, currentRound, nextUserMatch: nextFiltered, previousUserMatch: playedFiltered.at(-1) ?? null }
     seasonCalendarRef.current = result
     return result
     // divisionOverride nas deps: ao subir/cair, o calendario e os adversarios da liga
     // precisam ser recalculados para a divisao nova.
-  }, [saveState.selectedTeamShort, saveState.week, saveState.season, saveState.divisionOverride, saveState.completedFixtureKeys, saveState.amistososAgendados, gameEngine.matchResults])
+  }, [saveState.selectedTeamShort, saveState.week, saveState.season, saveState.divisionOverride, saveState.completedFixtureKeys, saveState.amistososAgendados, saveState.configuracoesIniciais283, gameEngine.matchResults])
   
   // ── MANUTENÇÃO DOS AMISTOSOS MARCADOS ─────────────────────────────────────
   //
@@ -2323,6 +2766,37 @@ export function useGameManager() {
   // Uses refs so sequential calls within a loop always read the latest week (fixes stale closure bug)
   const advanceWeek = useCallback(async () => {
     const currentState = saveStateRef.current
+
+    /**
+     * A RODADA NÃO ANDA SEM TODOS FECHAREM.
+     *
+     * ⚠️ Esta trava precisa existir AQUI, e não só no botão. Se alguma tela
+     * chamar `advanceWeek` sem consultar `podeAvancar` — e há várias que
+     * chamam —, o mundo avançaria com o time de alguém sem escalação. Essa
+     * pessoa perderia a rodada sem ter jogado, e nada no jogo diria por quê:
+     * ela veria só um resultado ruim inexplicável.
+     *
+     * Carreira de um técnico só passa direto: `tecnicosDoSave` devolve uma
+     * lista de um, e um único técnico está sempre pronto para si mesmo.
+     */
+    const tecnicosAgora = tecnicosDoSave(
+      currentState.tecnicos, currentState.managerName, currentState.selectedTeamShort,
+    )
+    if (ehMultitecnico(tecnicosAgora)) {
+      const rodada = currentState.rodadaCompartilhada ?? iniciarRodada(currentState.week)
+      if (!podeAvancar(rodada, tecnicosAgora)) {
+        const faltam = faltamFechar(rodada, tecnicosAgora)
+        addNotificationRef.current({
+          type: "system", priority: "high",
+          title: "A rodada ainda não pode andar",
+          message: faltam.length === 1
+            ? `${faltam[0].nome} ainda não fechou as decisões.`
+            : `Faltam fechar: ${faltam.map(t => t.nome).join(", ")}.`,
+        })
+        return
+      }
+    }
+
     const currentWeek = currentState.week
     // Se a partida estava numa semana futura (transição estadual -> liga ou copa),
     // avança até a semana REAL dela. Incrementar apenas +1 deixava o calendário e o
@@ -2339,9 +2813,8 @@ export function useGameManager() {
     // A temporada de liga jamais pode acabar por ter menos confrontos do que o
     // regulamento cadastrado. Em saves antigos havia bancos parciais e o cálculo
     // por `times.length` podia encerrar uma campanha antes do returno completo.
-    const leagueRoundsForEnd = Math.max(
-      getLeagueRounds(divOverride ?? (() => { const tm = getTeamByShort(userShort); return tm ? effectiveDivision(tm) : null })() ?? "serie_a"),
-      (leagueTeamsForEnd.length - 1) * 2,
+    const leagueRoundsForEnd = getLeagueRounds(
+      divOverride ?? (() => { const tm = getTeamByShort(userShort); return tm ? effectiveDivision(tm) : null })() ?? "serie_a",
     )
     // Copa em meio de semana nao alonga a temporada; o Math.max abaixo cobre a
     // sobra que porventura tenha ido para o fim.
@@ -2708,24 +3181,26 @@ export function useGameManager() {
         }
       } catch { /* aviso e extra */ }
 
-      // MERCADO DO MUNDO: a IA negocia entre si na virada da temporada. Sem isto
-      // os elencos adversarios eram os mesmos do seed para sempre. Deterministico
-      // pela temporada; conservador (poucos negocios, sempre rumo a clube maior).
+      // UNIVERSO 286: fecha estatísticas/contratos de TODAS as ligas, envelhece
+      // cada atleta e abre a janela com IA orientada por carência e orçamento.
+      // O antigo mercado escolhia apenas "clube maior compra craque de menor";
+      // agora há encaixe por setor/estilo, folha e compradores concorrentes.
+      let universo286 = currentState.universo286 ?? semearUniverso286(currentState.season, userShort)
       try {
-        const noticias = simulateWorldTransferWindow({
-          clubes: allTeams.map(t => ({ nome: t.nome, curto: t.curto, prestigio: t.prestigio ?? 60, divisao: String(t.divisao) })),
-          squadOf: (curto) => {
-            const t = getTeamByShort(curto)
-            return t ? getPlayersForTeam(t).map(p => ({ nome: p.nome, pos: String(p.pos), idade: p.idade, base: p.base, nac: p.nac })) : []
-          },
-          clubeDoUsuario: userShort,
-          temporada: currentState.season,
+        const avancado = avancarUniverso286(universo286, {
+          temporada: nextSeason,
+          semana: 0,
+          janelaAberta: true,
+          quantidadeNegocios: Math.max(8, negociosPorQuinzena282(normalizarGestao282(currentState.gestao282).modoDeMundo) * 5),
         })
-        if (noticias.length > 0) {
-          const destaque = noticias.slice(0, 3).map(n => `${n.atleta} (${n.de} → ${n.para})`).join("; ")
+        universo286 = avancado.estado
+        definirUniversoAtivo286(universo286)
+        publicarNegociosDoUniverso(avancado.novosNegocios)
+        if (avancado.novosNegocios.length > 0) {
+          const destaque = avancado.novosNegocios.slice(0, 3).map(n => `${n.jogador} (${n.de} → ${n.para})`).join("; ")
           addNotificationRef.current({
             type: "transfer", priority: "medium",
-            title: `Mercado movimentado: ${noticias.length} transferências`,
+            title: `Mercado movimentado: ${avancado.novosNegocios.length} transferências`,
             message: `A janela mexeu com os elencos rivais. Destaques: ${destaque}.`,
             href: "/mercado",
           })
@@ -2737,6 +3212,27 @@ export function useGameManager() {
       // Prêmios individuais — apurados ANTES do processSeasonEnd, que zera as
       // estatísticas da temporada e faz aposentadorias.
       const squadForAwards = useGameEngine.getState().squadPlayers
+      const criasNoProfissional = squadForAwards.filter(player => player.criaDaBase)
+      const graduadosNestaTemporada = criasNoProfissional.filter(player => player.joinedClubSeason === currentState.season)
+      const potenciaisDaBase = (currentState.youthPlayers ?? []).map(player => player.potential ?? player.overall)
+      const registroAcademia291 = registrarTemporadaAcademia291({
+        season: currentState.season,
+        clube: userTeamStatic?.nome ?? userShort,
+        nivel: useGameEngine.getState().clubInfrastructure?.youth ?? 1,
+        graduados: graduadosNestaTemporada.length,
+        minutosDeJovens: criasNoProfissional.reduce((total, player) => total + (player.seasonStats?.minutesPlayed ?? 0), 0),
+        mediaPotencial: potenciaisDaBase.length
+          ? potenciaisDaBase.reduce((total, value) => total + value, 0) / potenciaisDaBase.length
+          : 0,
+      })
+      const gestaoNaVirada291 = normalizarGestao282(currentState.gestao282)
+      const gestaoComAcademia291 = {
+        ...gestaoNaVirada291,
+        historicoAcademia291: [
+          registroAcademia291,
+          ...gestaoNaVirada291.historicoAcademia291.filter(item => item.season !== currentState.season),
+        ].slice(0, 30),
+      }
       const seasonAwards = champion ? calcSeasonAwards(
         currentState.season,
         getLeagueName(userShort, divOverride),
@@ -2756,8 +3252,52 @@ export function useGameManager() {
         })),
       ) : null
 
+      // ─── PRESTÍGIO: O FEITO VIRA REPUTAÇÃO ─────────────────────────────────
+      //
+      // Os prêmios acima já eram calculados e iam para um histórico que ninguém
+      // lia — nenhum deles mudava nada no atleta. Aqui a Bola de Ouro, a
+      // artilharia e o título viram pontos, e os pontos viram Estrela e Top
+      // Mundial (lib/prestigio-do-atleta.ts).
+      //
+      // ⚠️ Prestígio NÃO mexe no overall. Ele muda valor de mercado, salário
+      // pedido, procura do mercado e o que o jogo já sabe do atleta sem olheiro
+      // — nunca a força dele em campo. Um 89 pode ser Top Mundial e um 90 não.
+      const feitosDaTemporada: FeitoDaTemporada[] = []
+      for (const vencedor of seasonAwards?.winners ?? []) {
+        if (vencedor.playerId != null) feitosDaTemporada.push({ playerId: vencedor.playerId, feito: vencedor.award })
+      }
+      for (const escolhido of seasonAwards?.teamOfTheSeason ?? []) {
+        if (escolhido.playerId != null) feitosDaTemporada.push({ playerId: escolhido.playerId, feito: "selecao_do_campeonato" })
+      }
+      // O título é do elenco inteiro que jogou, não só de quem levou prêmio.
+      // (`ganhouALiga` só é declarado adiante, depois do processSeasonEnd — a
+      // condição é a mesma, calculada aqui para não reordenar aquele bloco.)
+      if (champion != null && champion === userShort) {
+        for (const atleta of squadForAwards) {
+          if ((atleta.seasonStats?.matchesPlayed ?? 0) >= 10) {
+            feitosDaTemporada.push({ playerId: atleta.id, feito: "titulo_nacional" })
+          }
+        }
+      }
+      const prestigioAntes = currentState.prestigioDosAtletas
+      const prestigioDepois = virarTemporada(prestigioAntes, feitosDaTemporada)
+      for (const promocao of promocoesDePrestigio(prestigioAntes, prestigioDepois)) {
+        const atleta = squadForAwards.find(p => p.id === promocao.playerId)
+        if (!atleta) continue
+        addNotificationRef.current({
+          type: "achievement", priority: "high",
+          title: `${atleta.name} agora é ${ROTULO_DO_PRESTIGIO[promocao.para]}`,
+          message: promocao.para === "top_mundial"
+            ? `O que ele fez em campo o colocou entre os nomes que o mundo inteiro conhece. Espere procura — e salário — de outro patamar.`
+            : `A temporada dele virou reputação: o mercado passa a tratá-lo como craque, e ele sabe disso.`,
+          href: "/elenco",
+        })
+      }
+
       // Processa fim de temporada: envelhece jogadores, aposentadorias, jovens da base, reseta standings
-      gameEngine.processSeasonEnd(nextSeason, newStandings, currentStandings)
+      gameEngine.processSeasonEnd(nextSeason, newStandings, currentStandings, {
+        antes: prestigioAntes, depois: prestigioDepois,
+      })
 
       // O TITULO DA LIGA tambem conta para a reputacao do tecnico
       // (coachTotalTitles) — mesmo motivo do titulo de copa: e o que abre as
@@ -2796,8 +3336,67 @@ export function useGameManager() {
         },
       )
 
+      // ─── MODO DESAFIOS: A HORA DA VERDADE ─────────────────────────────────
+      //
+      // `evaluateChallenge` existia desde a 1.0.? e NUNCA foi chamada por
+      // ninguém — o progresso do desafio ficava congelado no estado em que
+      // nasceu, nenhuma meta era cumprida e o prazo nunca estourava. É aqui que
+      // ela cabe: DEPOIS de `seasonRecord` existir, porque metade das metas lê
+      // exatamente esse registro (posição final, acesso, título).
+      //
+      // O prêmio em dinheiro entra pelo MOTOR (`addClubRevenue`), não pelo
+      // `balance` do save: o caixa que as telas mostram é o do motor.
+      let desafioPatch: Partial<GameState> = {}
+      const desafioEmCurso = currentState.activeChallenge
+      if (desafioEmCurso && !desafioEmCurso.completed && !desafioEmCurso.failed) {
+        const registrosDaTemporada = [
+          ...(currentState.seasonHistory ?? []).filter(r => r.season === currentState.season),
+          ...(seasonRecord ? [seasonRecord] : []),
+        ]
+        const elencoAtual = useGameEngine.getState().squadPlayers
+        const desafioDepois = evaluateChallenge(desafioEmCurso, {
+          season: currentState.season,
+          registrosDaTemporada,
+          transfers: currentState.transfers ?? [],
+          idadesDoElenco: elencoAtual.map(p => p.age),
+          saldo: useGameEngine.getState().balance,
+        })
+        const premio = claimReward(desafioDepois, currentState)
+        if (premio) {
+          desafioPatch = premio.patch
+          gameEngine.addClubRevenue(premio.premioEmCaixa)
+        } else {
+          desafioPatch = { activeChallenge: desafioDepois }
+        }
+      }
+
+      // ─── O TÉCNICO TAMBÉM FECHA A TEMPORADA ───────────────────────────────
+      //
+      // Mesmo lugar e mesmo motivo do desafio: `seasonRecord` já existe, e é
+      // dele que saem aproveitamento, título, acesso e queda. A trava contra
+      // creditar duas vezes está dentro de `evoluirTreinador` (a virada passa
+      // por mais de um caminho no jogo). Ver lib/evolucao-do-treinador.ts.
+      let crescimentoDoTecnico = currentState.managerGrowth26
+      if (currentState.managerProfile26) {
+        const jogos = seasonRecord ? seasonRecord.won + seasonRecord.drawn + seasonRecord.lost : 0
+        crescimentoDoTecnico = evoluirTreinador(
+          currentState.managerProfile26,
+          currentState.managerGrowth26,
+          {
+            season: currentState.season,
+            aproveitamento: jogos > 0 && seasonRecord ? seasonRecord.points / (jogos * 3) : 0,
+            campeao: Boolean(ganhouALiga),
+            promovido: Boolean(seasonRecord?.promoted),
+            rebaixado: Boolean(seasonRecord?.relegated),
+          },
+        )
+      }
+
       const patch = {
         week: 0, season: nextSeason,
+        universo286,
+        ...(crescimentoDoTecnico ? { managerGrowth26: crescimentoDoTecnico } : {}),
+        ...desafioPatch,
         fanBase: torcidaDepois,
         torcidaOrganizadas: organizadasDepois,
         divisionOverride: nextDivisionOverride,
@@ -2811,9 +3410,11 @@ export function useGameManager() {
         seasonAwards: seasonAwards
           ? [...(currentState.seasonAwards ?? []), seasonAwards]
           : currentState.seasonAwards,
+        prestigioDosAtletas: prestigioDepois,
         seasonHistory: seasonRecord
           ? [...(currentState.seasonHistory ?? []), seasonRecord]
           : currentState.seasonHistory,
+        gestao282: gestaoComAcademia291,
         // COMPETICOES DA SELECAO VOLTAM A SER JOGAVEIS (relato: "com uma selecao
         // no comando nao consigo jogar a Copa do Mundo").
         //
@@ -2988,30 +3589,35 @@ export function useGameManager() {
       )
     }
 
+    // Minutos ANTES do avanço: é o que permite saber quem realmente jogou na
+    // semana (a adesão aos princípios depende disso). Precisa ser lido de
+    // `getState()` e antes de `advanceWeek`, porque o valor de render fica
+    // desatualizado dentro deste callback.
+    const minutosAntesDaSemana = new Map(
+      useGameEngine.getState().squadPlayers.map(p => [p.id, p.seasonStats?.minutesPlayed ?? 0]),
+    )
+
     // Avanca game engine
     gameEngine.advanceWeek()
 
-    // MERCADO DO MUNDO, SEMANA A SEMANA. Antes a IA so negociava na virada da
-    // temporada — a Central de Transferencias ficava um ano parada e o mercado
-    // nao parecia vivo. Aqui saem 2 negocios por quinzena, e SO com a janela
-    // aberta (mesma regra do jogador, isTransferWindowOpen). Quinzenal e barato
-    // de proposito: cada negocio consulta o elenco do vendedor.
-    if (isTransferWindowOpen(newWeek) && newWeek % 2 === 0) {
-      try {
-        simulateWorldTransferWindow({
-          clubes: allTeams.map(t => ({ nome: t.nome, curto: t.curto, prestigio: t.prestigio ?? 60, divisao: String(t.divisao) })),
-          squadOf: (curto) => {
-            const t = getTeamByShort(curto)
-            return t ? getPlayersForTeam(t).map(p => ({ nome: p.nome, pos: String(p.pos), idade: p.idade, base: p.base, nac: p.nac })) : []
-          },
-          clubeDoUsuario: userShort,
-          temporada: currentState.season,
-          semana: newWeek,
-          quantidade: 2,
-          rotulo: "semana",
-        })
-      } catch { /* o mercado do mundo e um extra: nunca derruba o avanco da semana */ }
-    }
+    // UNIVERSO PERSISTENTE: todas as ligas e atletas da CPU avançam junto com a
+    // carreira. A janela é quinzenal, mas partidas, condição, lesões, moral e
+    // estatísticas evoluem em TODA semana.
+    let universo286 = currentState.universo286 ?? semearUniverso286(currentState.season, userShort)
+    try {
+      const janelaDoMercado = isTransferWindowOpen(newWeek) && newWeek % 2 === 0
+      const avancado = avancarUniverso286(universo286, {
+        temporada: currentState.season,
+        semana: newWeek,
+        janelaAberta: janelaDoMercado,
+        quantidadeNegocios: janelaDoMercado
+          ? negociosPorQuinzena282(normalizarGestao282(currentState.gestao282).modoDeMundo)
+          : 0,
+      })
+      universo286 = avancado.estado
+      definirUniversoAtivo286(universo286)
+      publicarNegociosDoUniverso(avancado.novosNegocios)
+    } catch { /* o mundo da CPU nunca pode impedir o avanço da carreira */ }
 
     // ── O EMPRESÁRIO LIGA ────────────────────────────────────────────────────
     //
@@ -3363,7 +3969,15 @@ export function useGameManager() {
       })
     }
 
-    const scoutingDepartment=currentState.scoutingDepartment?advanceScoutingWeek(currentState.scoutingDepartment,newWeek):undefined
+    const scoutingDepartment=currentState.scoutingDepartment
+      ?advanceScoutingWeek(
+        currentState.scoutingDepartment,
+        newWeek,
+        currentState.scoutingDepartment.missions.some(mission=>mission.status==="active")
+          ?candidatosDoUniversoParaScouting(universo286)
+          :[],
+      )
+      :undefined
     // As chaves das partidas resolvidas automaticamente entram no save junto com
     // a semana: sem isso elas voltariam a ser candidatas na próxima chamada.
     const completedFixtureKeys = completedKeysFromAuto.length > 0
@@ -3372,7 +3986,156 @@ export function useGameManager() {
     // Mantém também uma cópia da dívida ativa no arquivo por clube. Isso torna
     // impossível uma troca de treinador perder o saldo entre dois renders.
     if(userShort&&debt)debtByClub[userShort]=debt
-    const patchDaSemana = { week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, socialDaIA, estadioSetores }
+    /**
+     * CENTRAL DE GESTÃO NA VIRADA DA SEMANA.
+     *
+     * Metas individuais e adesão ao discurso eram gravadas e nunca reavaliadas:
+     * `concluida` e `falhou` jamais viravam `true` e o percentual de adesão era
+     * recalculado na tela a cada abertura. Agora a semana fecha as metas
+     * vencidas, premia as cumpridas e move a adesão conforme o que o treinador
+     * de fato fez — com a consequência caindo na moral do atleta.
+     */
+    const gestaoAtual = normalizarGestao282(currentState.gestao282)
+    // Elenco DEPOIS do avanço, pela mesma razão do snapshot acima.
+    const motorAgora = useGameEngine.getState()
+    const elencoDaSemana = motorAgora.squadPlayers
+    const disciplina = avaliarConduta291(
+      gestaoAtual.codigoConduta291,
+      elencoDaSemana,
+      currentState.season,
+      newWeek,
+    )
+    for (const incidente of disciplina.novos) {
+      const punicao = PUNICOES_CONDUTA_291[incidente.punicao]
+      if (punicao.moral) motorAgora.ajustarMoralJogador(incidente.playerId, punicao.moral)
+      addNotificationRef.current({
+        type: "system",
+        priority: incidente.tipo === "vermelho" || incidente.tipo === "rede_social" ? "high" : "low",
+        title: `Código de conduta: ${incidente.jogador}`,
+        message: `${incidente.tipo.replaceAll("_", " ")} — ${punicao.nome}${incidente.multa > 0 ? ` (${incidente.multa.toLocaleString("pt-BR")})` : ""}.`,
+        href: "/gestao-avancada?aba=disciplina",
+      })
+    }
+    // Multa disciplinar é descontada do profissional e entra no caixa do clube;
+    // tratá-la como despesa punia financeiramente quem aplicava o regulamento.
+    if (disciplina.totalMultas > 0) motorAgora.addClubRevenue(disciplina.totalMultas)
+    const jogouNaSemana = new Set(
+      elencoDaSemana
+        .filter(p => (p.seasonStats?.minutesPlayed ?? 0) > (minutosAntesDaSemana.get(p.id) ?? 0))
+        .map(p => p.id),
+    )
+
+    const metasAvaliadas = avaliarMetas282(gestaoAtual, elencoDaSemana, newWeek)
+    for (const meta of metasAvaliadas.concluidas) {
+      motorAgora.ajustarMoralJogador(meta.playerId, 2)
+      addNotificationRef.current({
+        type: "system", priority: "medium",
+        title: "Meta cumprida",
+        message: `${meta.jogador} bateu a meta de ${meta.alvo} em ${meta.tipo.replaceAll("_", " ")}.`,
+        href: "/gestao-avancada",
+      })
+    }
+    for (const meta of metasAvaliadas.falhadas) {
+      motorAgora.ajustarMoralJogador(meta.playerId, -1)
+      addNotificationRef.current({
+        type: "system", priority: "low",
+        title: "Meta vencida",
+        message: `${meta.jogador} não alcançou a meta de ${meta.alvo} em ${meta.tipo.replaceAll("_", " ")}.`,
+        href: "/gestao-avancada",
+      })
+    }
+
+    const adesaoAvaliada = atualizarAdesao282(gestaoAtual, elencoDaSemana.map(p => ({
+      id: p.id,
+      age: p.age,
+      form: p.form,
+      energy: p.energy,
+      jogouNaSemana: jogouNaSemana.has(p.id),
+    })))
+    // A adesão só cobra quando chega ao extremo: o meio da tabela não mexe na
+    // moral, senão o vestiário oscilaria toda semana sem o técnico fazer nada.
+    for (const id of adesaoAvaliada.contentes) motorAgora.ajustarMoralJogador(id, 1)
+    for (const id of adesaoAvaliada.descontentes) motorAgora.ajustarMoralJogador(id, -1)
+
+    const eventosDaGestao: EventoCarreira282[] = [
+      ...metasAvaliadas.concluidas.map(m => ({
+        id: `meta-ok-${m.id}`, season: currentState.season, week: newWeek, tipo: "elenco" as const,
+        titulo: "Meta cumprida", descricao: `${m.jogador} alcançou ${m.alvo} em ${m.tipo.replaceAll("_", " ")}.`,
+      })),
+      ...metasAvaliadas.falhadas.map(m => ({
+        id: `meta-fim-${m.id}`, season: currentState.season, week: newWeek, tipo: "elenco" as const,
+        titulo: "Meta vencida", descricao: `${m.jogador} ficou abaixo da meta de ${m.alvo}.`,
+      })),
+      ...disciplina.novos.map(incidente => ({
+        id: `conduta-${incidente.id}`, season: currentState.season, week: newWeek, tipo: "elenco" as const,
+        titulo: `Conduta: ${incidente.jogador}`,
+        descricao: `${incidente.tipo.replaceAll("_", " ")} — ${PUNICOES_CONDUTA_291[incidente.punicao].nome}.`,
+      })),
+    ]
+
+    // RELATÓRIOS DA COMISSÃO. A pauta escolhida pelo treinador só fazia sentido
+    // se existisse relatório a entregar — e não existia. Agora "resumo na caixa"
+    // vira notificação, "na reunião" fica guardado para a Central de Gestão e
+    // "ignorar" não gera nada.
+    // Primeiro jogo do usuário ainda não disputado. Não dá para filtrar por
+    // semana aqui: `MatchFixture.round` é a rodada da competição, não a semana
+    // do calendário — numa copa os dois divergem.
+    const proximoAdversarioDaSemana = updatedStateFixtures
+      .find(f => f.isUserMatch && !f.played)
+    const relatorios = relatoriosDaComissao282(gestaoAtual, {
+      elenco: elencoDaSemana,
+      proximoAdversario: proximoAdversarioDaSemana
+        ? (proximoAdversarioDaSemana.homeCurto === userShort
+          ? proximoAdversarioDaSemana.awayNome
+          : proximoAdversarioDaSemana.homeNome)
+        : undefined,
+    })
+    for (const relatorio of relatorios.filter(r => r.entrega === "resumo")) {
+      addNotificationRef.current({
+        type: "system", priority: "low",
+        title: relatorio.titulo,
+        message: relatorio.texto,
+        href: "/gestao-avancada",
+      })
+    }
+
+    const gestao282 = {
+      ...gestaoAtual,
+      metasIndividuais: metasAvaliadas.metas,
+      adesao: adesaoAvaliada.adesao,
+      relatoriosComissao: relatorios.filter(r => r.entrega === "reuniao"),
+      codigoConduta291: disciplina.codigo,
+      linhaDoTempo: eventosDaGestao.length
+        ? [...eventosDaGestao, ...gestaoAtual.linhaDoTempo].slice(0, 200)
+        : gestaoAtual.linhaDoTempo,
+    }
+
+    // ⚠️ A RODADA COMPARTILHADA RECOMEÇA AQUI, e isto não é detalhe: sem zerar
+    // os "prontos" da rodada que acabou de rodar, todos continuariam marcados
+    // para sempre e a trava do co-op nunca mais fecharia — a partir da segunda
+    // rodada o modo viraria de novo um jogo em que qualquer um avança o mundo
+    // por cima dos outros. Carreira de um técnico só não grava o campo.
+    const tecnicosDaSemana = tecnicosDoSave(
+      currentState.tecnicos, currentState.managerName, currentState.selectedTeamShort,
+    )
+    /**
+     * IDENTIDADE TÁTICA: uma semana a mais no estilo que ele de fato usou.
+     *
+     * ⚠️ Só é gravado quando MUDA de objeto — `registrarSemanaDoTreinador`
+     * devolve a mesma referência quando não há estilo, e um save de 22 MB não
+     * pode engordar por um contador que não mexeu. Mesma disciplina de
+     * `aprenderPosicao`. Ver lib/evolucao-do-treinador.ts.
+     */
+    const crescimentoDaSemana = currentState.managerProfile26
+      ? registrarSemanaDoTreinador(
+          currentState.managerGrowth26,
+          useGameEngine.getState().teamTactics?.playingStyle,
+        )
+      : undefined
+    const patchDaSemana = { week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, universo286, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, socialDaIA, estadioSetores, gestao282,
+      ...(crescimentoDaSemana && crescimentoDaSemana !== currentState.managerGrowth26
+        ? { managerGrowth26: crescimentoDaSemana } : {}),
+      ...(ehMultitecnico(tecnicosDaSemana) ? { rodadaCompartilhada: iniciarRodada(newWeek) } : {}) }
     saveStateRef.current = { ...currentState, ...patchDaSemana } as typeof currentState & { fixtures: unknown }
     // ⚠️ NAO TROQUE ISTO POR `commitGameState` (tentado em 07/08/2026 e
     // REVERTIDO: o office ficava carregando para sempre depois de escolher o
@@ -4225,6 +4988,9 @@ export function useGameManager() {
 
     // Acoes
     initializeNewGame,
+    trocarTecnicoAtivo,
+    fecharDecisoesEPassarAVez,
+    reabrirMinhasDecisoes,
     advanceWeek,
     registerUserMatchResult,
     unlockCoachSkill,

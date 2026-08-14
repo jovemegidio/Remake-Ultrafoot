@@ -105,6 +105,19 @@ export function HubCampeonato({
         REGULAMENTO OFICIAL BLOQUEADO · prazo {competicao.roundDeadlineHours}h por rodada ·
         placar confirmado pelos dois técnicos
       </p>
+      {/* ESCOPO DECLARADO. A auditoria da 3.0 pediu que o online fosse
+          "funcional e confiável, OU explicitamente beta" — e ele é o segundo. O
+          que existe é liga de pontos corridos com placar confirmado pelos dois
+          lados; não há save compartilhado nem validação autoritativa do
+          servidor, então quem quiser trapacear consegue combinar um placar.
+          Dizer isso na tela é mais barato do que descobrir jogando. */}
+      <p className="rounded-lg border border-amber-300/25 bg-amber-300/[0.06] px-2.5 py-2 text-[9px] leading-relaxed text-amber-100/70">
+        <b className="text-amber-200">LIGA ONLINE — BETA.</b> O que está pronto: liga de
+        pontos corridos, tabela, prazo por rodada e confirmação de placar pelos dois técnicos.
+        O que ainda NÃO existe: carreira online completa (mercado, elenco e temporada
+        compartilhados) e validação do resultado pelo servidor — o placar vale porque os dois
+        confirmaram, não porque a partida foi arbitrada aqui.
+      </p>
 
       {/* CAMPEÃO — o fim do campeonato tinha de significar alguma coisa. */}
       {competicao.finished && (

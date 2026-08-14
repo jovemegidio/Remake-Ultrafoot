@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
+  CloudUpload,
   Eye,
   EyeOff,
   FileClock,
@@ -38,6 +39,7 @@ import { Label } from '@/components/ui/label'
 import { Toaster } from '@/components/ui/sonner'
 import { confirmarSessao, entrar, sair, type Eu } from '@/lib/api'
 import { iniciais } from '@/lib/formato'
+import { Atualizacoes } from './painel/atualizacoes'
 import { Auditoria } from './painel/auditoria'
 import { ContextoDoPainel } from './painel/comuns'
 import { Configuracoes } from './painel/configuracoes'
@@ -62,6 +64,10 @@ const TELAS = [
   { rotulo: 'Recibos', icone: ReceiptText },
   { rotulo: 'Equipe admin', icone: UserRoundCog },
   { rotulo: 'Auditoria', icone: FileClock },
+  // O canal de atualizacoes tinha painel PROPRIO em /atualizacoes/painel: outra
+  // tela de login para a mesma conta. Como o canal valida o token contra as
+  // sessoes deste mesmo servidor, virou uma secao daqui.
+  { rotulo: 'Atualizações', icone: CloudUpload },
 ]
 
 function Marca({ compacto = false }: { compacto?: boolean }) {
@@ -386,6 +392,7 @@ function Painel({
           {tela === 'Recibos' && <Recibos />}
           {tela === 'Equipe admin' && <Equipe />}
           {tela === 'Auditoria' && <Auditoria />}
+          {tela === 'Atualizações' && <Atualizacoes />}
           {tela === 'Configurações' && <Configuracoes tema={tema} aoTrocarTema={trocarTema} />}
         </main>
       </div>

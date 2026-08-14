@@ -11,6 +11,7 @@
 
 import type { SquadPlayer } from "@/lib/save-system"
 import { nomeDeAtleta } from "@/lib/nomes-por-pais"
+import { normalizeCountry } from "@/lib/country-normalize"
 
 // As listas de nome saíram daqui para lib/nomes-por-pais: eram só brasileiras e
 // este gerador atende clube de qualquer país.
@@ -130,6 +131,7 @@ export function generateYouthProspects(
       // milissegundo (2 de 6 ainda colidiam). Ver `peneirasGeradas`.
       id: `youth_${teamShort}_${season}_${peneira}_${i}`,
       name: nomeDeAtleta(pais, rnd),
+      nationality: normalizeCountry(pais),
       position,
       age,
       overall,

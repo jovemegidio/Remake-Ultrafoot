@@ -37,6 +37,7 @@
  * nao quebra, so nao especializa. Ha teste cobrindo as 66 atuais.
  */
 import type { Player, PlayerInstructions, PlayerRole } from "./game-engine"
+import { familiaridadeComAFuncao, perfilDoAtleta } from "./modelo-de-jogador"
 
 export interface ForcasIndividuais {
   attack: number
@@ -163,6 +164,19 @@ function efeitoDasInstrucoes(instr: Partial<PlayerInstructions> | undefined): {
   return e
 }
 
+/**
+ * QUANTO A FASE COM BOLA PESA, por setor.
+ *
+ * ⚠️ Estes pesos precisam somar 1 com o complemento — quando o atleta tem a
+ * MESMA funcao nas duas fases (o caso de todo save anterior a esta versao), a
+ * media ponderada devolve exatamente a nota antiga. E assim que a funcao por
+ * fase entrou sem recalibrar uma unica partida ja jogada.
+ *
+ * Os numeros dizem uma coisa simples: errar a funcao ofensiva de um atacante
+ * custa caro, errar a defensiva dele custa pouco — e no zagueiro e o contrario.
+ */
+const PESO_COM_BOLA: Record<Setor, number> = { ATA: 0.7, MEI: 0.5, DEF: 0.3, GOL: 0.3 }
+
 const SETOR_DA_POSICAO: Record<string, Setor> = {
   GOL: "GOL",
   ZAG: "DEF", LD: "DEF", LE: "DEF", LAT: "DEF",
@@ -186,7 +200,7 @@ export function forcasDoElenco(
   const porSetor: Record<Setor, number[]> = { ATA: [], MEI: [], DEF: [], GOL: [] }
   const extras = { attack: 0, defense: 0, midfield: 0 }
   let conflitos = 0
-  const foraDeFuncao: { nome: string; nota: number }[] = []
+  const foraDeFuncao: { nome: string; nota: number; fase: string | null }[] = []
   let bem = 0
 
   for (const atleta of titulares) {
@@ -195,11 +209,37 @@ export function forcasDoElenco(
     // Sem funcao definida nao ha adequacao a medir — e o estado da maioria dos
     // saves antigos, que nunca abriram a aba de instrucoes.
     if (role) {
-      const nota = adequacaoAFuncao(atleta, role)
+      // ADEQUACAO x FAMILIARIDADE sao duas coisas. A primeira pergunta se os
+      // atributos servem para a funcao (imediata); a segunda, se ele ja se
+      // acostumou a exerce-la (so o tempo responde). Funcao nova CUSTA: o
+      // multiplicador comeca em 0,80 e sobe ate 1,00 em ~meia temporada. Fosse
+      // bonus no fim em vez de custo no comeco, trocar a funcao de todo mundo
+      // toda semana viraria vantagem. Ver lib/modelo-de-jogador.ts.
+      const perfil = perfilDoAtleta(atleta.id, atleta.position, atleta.overall, atleta.secondaryPositions ?? [])
+      // A FUNCAO SEM BOLA e opcional: ausente, e a mesma, e tudo abaixo devolve
+      // o numero de antes. Ver o comentario de PESO_COM_BOLA.
+      const roleSemBola = instr?.roleSemBola ?? role
+      const notaDaFase = (funcao: PlayerRole | string) => {
+        const habito = familiaridadeComAFuncao(atleta.perfilProgresso, String(funcao), perfil.versatilidade)
+        const bruta = adequacaoAFuncao(atleta, funcao)
+        // So a nota POSITIVA e descontada pelo habito: quem nao tem os atributos
+        // ja esta pagando o preco, e cobrar de novo puniria duas vezes.
+        return bruta > 0 ? Math.round(bruta * habito * 10) / 10 : bruta
+      }
       const setor = SETOR_DA_POSICAO[atleta.position] ?? setorDaFuncao(String(role))
+      const notaCom = notaDaFase(role)
+      const notaSem = roleSemBola === role ? notaCom : notaDaFase(roleSemBola)
+      const peso = PESO_COM_BOLA[setor]
+      const nota = Math.round((notaCom * peso + notaSem * (1 - peso)) * 100) / 100
       porSetor[setor].push(nota)
       if (nota > 0.3) bem++
-      else if (nota < -0.5) foraDeFuncao.push({ nome: atleta.name, nota })
+      else if (nota < -0.5) {
+        // O aviso precisa dizer QUAL fase esta errada — "fora de funcao" sem
+        // dizer se e com ou sem bola manda o tecnico procurar no lugar errado.
+        const fase = roleSemBola === role ? null
+          : notaCom < notaSem ? "com a bola" : "sem a bola"
+        foraDeFuncao.push({ nome: atleta.name, nota, fase })
+      }
     }
     const efeito = efeitoDasInstrucoes(instr)
     extras.attack += efeito.attack
@@ -225,8 +265,10 @@ export function forcasDoElenco(
     Math.round(Math.max(-TETO_INDIVIDUAL, Math.min(TETO_INDIVIDUAL, v - penalidade)) * 10) / 10
 
   const avisos: string[] = []
-  for (const { nome, nota } of foraDeFuncao.sort((a, b) => a.nota - b.nota).slice(0, 3)) {
-    avisos.push(`${nome} nao tem os atributos da funcao que recebeu.`)
+  for (const { nome, fase } of foraDeFuncao.sort((a, b) => a.nota - b.nota).slice(0, 3)) {
+    avisos.push(fase
+      ? `${nome} nao tem os atributos da funcao que recebeu ${fase}.`
+      : `${nome} nao tem os atributos da funcao que recebeu.`)
   }
   if (conflitos > 0) {
     avisos.push(`${conflitos} atleta(s) com ordens que se anulam — decida uma.`)

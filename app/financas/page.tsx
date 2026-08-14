@@ -25,7 +25,7 @@ import {
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
 import { useGameState } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"

@@ -8,7 +8,16 @@ import { cn } from "@/lib/utils"
 import type { Team } from "@/lib/teams-data"
 
 export interface MatchPlayer {
+  /**
+   * ⚠️ POSICIONAL (`idOffset + i + 1`), NAO o id do atleta no elenco. Serve para
+   * a UI distinguir as cartas; usar isto para mexer no elenco atinge outra
+   * pessoa. Quem precisa do atleta de verdade usa `atletaId`.
+   */
   id: number
+  /** Id REAL do atleta no elenco, quando conhecido. Chave do perfil canonico. */
+  atletaId?: number
+  /** Posicoes secundarias declaradas — entram na familiaridade do perfil. */
+  posicoesSecundarias?: string[]
   name: string
   number: number
   position: string

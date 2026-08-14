@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import Image from "next/image"
 import {
   Calendar,
@@ -32,7 +32,8 @@ import { Progress } from "@/components/ui/progress"
 import { MatchCarousel } from "@/components/match-carousel"
 import { getGameDate } from "@/lib/game-date"
 import { NewsFeed } from "@/components/news-feed"
-import { formatCurrency, formatNumber, getTeamByShort, type Team } from "@/lib/teams-data"
+import { getTeamByShort, type Team } from "@/lib/teams-data"
+import { formatCurrency, formatNumber } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { useGameEngine } from "@/lib/game-engine"
@@ -192,6 +193,33 @@ export default function DashboardPage() {
     if (!sessionActive) hardNavigate("/splash", true)
     else if (!saveState.selectedTeamShort) hardNavigate("/treinador", true)
   }, [hydrated, saveState.selectedTeamShort, sessionActive, sessionChecked])
+
+  /**
+   * ESCRITÓRIO QUE CARREGA PARA SEMPRE (relatado por jogadores).
+   *
+   * O spinner abaixo espera `hydrated && userTeam`. O efeito acima só resolve o
+   * caso de NÃO haver clube no save — mas quando há um `selectedTeamShort` que
+   * NÃO RESOLVE em clube (chave renomeada, clube que só existe no pool, save de
+   * versão antiga), `userTeam` fica nulo com a sessão ativa e nenhuma das duas
+   * saídas dispara. O jogador fica no spinner até fechar o jogo.
+   *
+   * A carência existe porque `userTeam` também é nulo por alguns instantes
+   * enquanto o motor hidrata: desistir na hora mandaria para fora quem só
+   * precisava de mais um quadro. Passado o prazo, aí sim é defeito de dado, e o
+   * lugar certo é a Área do Treinador — de onde dá para assumir um clube.
+   */
+  useEffect(() => {
+    if (!hydrated || !sessionChecked || !sessionActive) return
+    if (!saveState.selectedTeamShort || userTeam) return
+    const id = window.setTimeout(() => {
+      console.warn(
+        `[escritorio] clube "${saveState.selectedTeamShort}" nao resolveu apos a hidratacao;`
+        + " indo para a Area do Treinador em vez de girar para sempre.",
+      )
+      hardNavigate("/treinador", true)
+    }, 6000)
+    return () => window.clearTimeout(id)
+  }, [hydrated, sessionChecked, sessionActive, saveState.selectedTeamShort, userTeam])
 
   // Navegacao por controle no dashboard
   useEffect(() => {

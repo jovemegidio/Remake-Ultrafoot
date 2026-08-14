@@ -16,6 +16,17 @@ export interface PlayerAvatarProps {
    *  e atleta de nome repetido volta a ter rosto (ver getPlayerPhotoUrl). */
   fileKey?: string
   position?: string
+  /**
+   * Sem fundo, sem borda e sem o brilho de canto — só o recorte do atleta.
+   *
+   * ⚠️ Existe por causa da CARTA BRANCA da prancheta (1.0.304). O avatar pinta um
+   * degradê próprio por dentro, em `style`, e `style` ganha de qualquer classe:
+   * `className="bg-transparent"` NÃO apaga aquele fundo. Numa carta branca o
+   * bloco colorido do avatar tomava dois terços do card e a nota por cima dele
+   * ficava ilegível — ou seja, a carta deixava de ser branca justamente onde
+   * mais importa. Escolha explícita de quem chama; o padrão continua o de antes.
+   */
+  semFundo?: boolean
 }
 
 const sizeClasses = {
@@ -138,6 +149,7 @@ function PlayerAvatarBase({
   position,
   playerId,
   fileKey,
+  semFundo = false,
 }: PlayerAvatarProps & { rounded: "xl" | "full" }) {
   const [imgFailed, setImgFailed] = useState(false)
   const [photoIndex, setPhotoIndex] = useState(0)
@@ -167,9 +179,14 @@ function PlayerAvatarBase({
     resolver()
     window.addEventListener("ultrafoot:store:ready", resolver)
     window.addEventListener("ultrafoot:elencos:atualizados", resolver)
+    // Referencias `uf-img:` sao lidas do AppData sob demanda. A primeira
+    // resolucao inicia a leitura; esta segunda passagem troca o fallback pela
+    // blob URL assim que os bytes estiverem prontos.
+    window.addEventListener("ultrafoot:imagem:pronta", resolver)
     return () => {
       window.removeEventListener("ultrafoot:store:ready", resolver)
       window.removeEventListener("ultrafoot:elencos:atualizados", resolver)
+      window.removeEventListener("ultrafoot:imagem:pronta", resolver)
     }
   }, [photoUrlProp, name, playerId, fileKey])
 
@@ -205,14 +222,17 @@ function PlayerAvatarBase({
   return (
     <div
       className={cn(
-        "relative overflow-hidden flex items-center justify-center border border-white/10",
+        "relative overflow-hidden flex items-center justify-center",
+        !semFundo && "border border-white/10",
         rounded === "full" ? "rounded-full" : "rounded-xl",
         sizeClasses[size],
         className,
       )}
-      style={{ background }}
+      style={semFundo ? undefined : { background }}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.24),transparent_38%)]" />
+      {!semFundo && (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.24),transparent_38%)]" />
+      )}
 
       {showPhoto ? (
         <img
@@ -251,6 +271,7 @@ export const PlayerAvatar = memo(function PlayerAvatar({
   position,
   playerId,
   fileKey,
+  semFundo,
 }: PlayerAvatarProps) {
   return (
     <PlayerAvatarBase
@@ -259,6 +280,7 @@ export const PlayerAvatar = memo(function PlayerAvatar({
       size={size}
       className={className}
       rounded="xl"
+      semFundo={semFundo}
       photoUrl={photoUrl}
       position={position}
       playerId={playerId}

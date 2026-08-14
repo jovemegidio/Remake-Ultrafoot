@@ -31,6 +31,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { RandomEvents } from "@/components/random-events"
+import { useNotifications } from "@/components/notifications-system"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
@@ -46,19 +47,6 @@ type TabType = "vestiario" | "reunioes" | "mensagens" | "contratos" | "eventos" 
 const MORALE_SCORE: Record<string, number> = {
   Feliz: 92, Motivado: 82, Normal: 66, Insatisfeito: 48, Infeliz: 28,
 }
-
-const meetings = [
-  { type: "individual", player: "Lincoln", topic: "Renovacao de contrato", status: "pendente" },
-  { type: "coletiva", topic: "Preparacao para o classico", status: "agendada", date: "Amanha, 10h" },
-  { type: "individual", player: "Helinho", topic: "Moral baixa", status: "urgente" },
-]
-
-const messages = [
-  { from: "Diretoria", subject: "Meta de classificacao", time: "2h atras", unread: true },
-  { from: "Agente - Lincoln", subject: "Proposta de renovacao", time: "5h atras", unread: true },
-  { from: "Imprensa", subject: "Solicitacao de entrevista", time: "1 dia", unread: false },
-  { from: "Olheiro", subject: "Relatorio - Jovem promessa", time: "2 dias", unread: false },
-]
 
 // contracts / disciplineIssues / playerHierarchy eram listas FIXAS com nomes do RB
 // Bragantino (elenco-exemplo). Por isso a central mostrava "dados do Bragantino"
@@ -79,7 +67,8 @@ export default function CentralPage() {
   }, [router])
   const { state } = useGameState()
   const { team: userTeam } = useUserTeam()
-  const { squadPlayers } = useGameEngine()
+  const { squadPlayers, playerMeetings } = useGameEngine()
+  const { notifications, unreadCount, markAsRead } = useNotifications()
   const [activeTab, setActiveTab] = useState<TabType>("vestiario")
 
   // Moral REAL do elenco (vem do seu save, nao mais uma lista fixa). A tendencia sai da
@@ -181,10 +170,10 @@ export default function CentralPage() {
 
   const tabs = [
     { id: "vestiario" as TabType, label: "Vestiario", icon: Heart, count: null },
-    { id: "eventos" as TabType, label: "Eventos", icon: Zap, count: 2 },
+    { id: "eventos" as TabType, label: "Eventos", icon: Zap, count: null },
     { id: "disciplina" as TabType, label: "Disciplina", icon: Gavel, count: disciplineIssues.filter(d => !d.resolved).length },
-    { id: "reunioes" as TabType, label: "Reunioes", icon: Users, count: meetings.filter(m => m.status === "urgente").length },
-    { id: "mensagens" as TabType, label: "Mensagens", icon: Mail, count: messages.filter(m => m.unread).length },
+    { id: "reunioes" as TabType, label: "Reunioes", icon: Users, count: playerMeetings.length },
+    { id: "mensagens" as TabType, label: "Mensagens", icon: Mail, count: unreadCount },
     { id: "contratos" as TabType, label: "Contratos", icon: FileText, count: contracts.filter(c => c.status === "critico").length },
   ]
 
@@ -383,39 +372,31 @@ export default function CentralPage() {
             >
               <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-white">Reunioes Pendentes</h3>
-                  <Button size="sm" className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] text-xs">
-                    Agendar Reuniao
+                  <h3 className="text-sm font-semibold text-white">Histórico de reuniões</h3>
+                  <Button onClick={() => router.push("/reunioes")} size="sm" className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] text-xs">
+                    Abrir reuniões
                   </Button>
                 </div>
                 <div className="space-y-2">
-                  {meetings.map((meeting, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
-                      <div className={cn(
-                        "h-10 w-10 rounded-lg flex items-center justify-center",
-                        meeting.type === "individual" ? "bg-blue-500/20" : "bg-purple-500/20"
-                      )}>
-                        {meeting.type === "individual" ? (
-                          <MessageSquare className="h-5 w-5 text-blue-400" />
-                        ) : (
-                          <Users className="h-5 w-5 text-purple-400" />
-                        )}
+                  {playerMeetings.length === 0 ? (
+                    <p className="rounded-lg bg-white/[0.03] p-6 text-center text-sm text-white/40">Nenhuma reunião realizada nesta carreira.</p>
+                  ) : [...playerMeetings].reverse().slice(0, 10).map((meeting) => (
+                    <div key={meeting.id} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                      <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-blue-500/20">
+                        <MessageSquare className="h-5 w-5 text-blue-400" />
                       </div>
                       <div className="flex-1">
-                        <div className="text-sm font-medium text-white">{meeting.topic}</div>
-                        <div className="text-[10px] text-white/40">
-                          {meeting.player ? `Com ${meeting.player}` : meeting.date}
-                        </div>
+                        <div className="text-sm font-medium text-white">{meeting.playerName}</div>
+                        <div className="text-[10px] text-white/40">Semana {meeting.week} · {meeting.details}</div>
                       </div>
                       <div className={cn(
                         "px-2 py-1 rounded-md text-[10px] font-semibold",
-                        meeting.status === "urgente" ? "bg-red-500/20 text-red-400" :
-                        meeting.status === "pendente" ? "bg-[#ffd700]/20 text-yellow-400" :
-                        "bg-green-500/20 text-green-400"
+                        meeting.playerResponse === "positivo" ? "bg-green-500/20 text-green-400" :
+                        meeting.playerResponse === "negativo" ? "bg-red-500/20 text-red-400" :
+                        "bg-[#ffd700]/20 text-yellow-400"
                       )}>
-                        {meeting.status}
+                        {meeting.playerResponse}
                       </div>
-                      <ChevronRight className="h-4 w-4 text-white/30" />
                     </div>
                   ))}
                 </div>
@@ -432,33 +413,35 @@ export default function CentralPage() {
               className="space-y-4"
             >
               <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
-                <h3 className="text-sm font-semibold text-white mb-4">Caixa de Entrada</h3>
+                <div className="mb-4 flex items-center justify-between"><h3 className="text-sm font-semibold text-white">Caixa de entrada</h3><Button size="sm" onClick={() => router.push("/mensagens")} className="text-xs">Abrir mensagens</Button></div>
                 <div className="space-y-2">
-                  {messages.map((msg, idx) => (
-                    <div key={idx} className={cn(
+                  {notifications.length === 0 ? (
+                    <p className="rounded-lg bg-white/[0.03] p-6 text-center text-sm text-white/40">Nenhuma mensagem registrada nesta carreira.</p>
+                  ) : notifications.slice(0, 10).map((notification) => (
+                    <button key={notification.id} onClick={() => { markAsRead(notification.id); if (notification.href) router.push(notification.href) }} className={cn(
                       "flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer",
-                      msg.unread ? "bg-[var(--brand)]/10 hover:bg-[var(--brand)]/15" : "bg-white/[0.03] hover:bg-white/[0.06]"
+                      !notification.read ? "bg-[var(--brand)]/10 hover:bg-[var(--brand)]/15" : "bg-white/[0.03] hover:bg-white/[0.06]"
                     )}>
                       <div className={cn(
                         "h-10 w-10 rounded-lg flex items-center justify-center",
-                        msg.unread ? "bg-[var(--brand)]/20" : "bg-white/10"
+                        !notification.read ? "bg-[var(--brand)]/20" : "bg-white/10"
                       )}>
-                        <Mail className={cn("h-5 w-5", msg.unread ? "text-[var(--brand)]" : "text-white/40")} />
+                        <Mail className={cn("h-5 w-5", !notification.read ? "text-[var(--brand)]" : "text-white/40")} />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 text-left">
                         <div className="flex items-center gap-2">
-                          <span className={cn("text-sm font-medium", msg.unread ? "text-white" : "text-white/70")}>
-                            {msg.from}
+                          <span className={cn("text-sm font-medium", !notification.read ? "text-white" : "text-white/70")}>
+                            {notification.title}
                           </span>
-                          {msg.unread && <div className="h-2 w-2 rounded-full bg-[var(--brand)]" />}
+                          {!notification.read && <div className="h-2 w-2 rounded-full bg-[var(--brand)]" />}
                         </div>
-                        <div className="text-[11px] text-white/50">{msg.subject}</div>
+                        <div className="text-[11px] text-white/50">{notification.message}</div>
                       </div>
                       <div className="flex items-center gap-2 text-[10px] text-white/40">
                         <Clock className="h-3 w-3" />
-                        {msg.time}
+                        {notification.timestamp.toLocaleDateString("pt-BR")}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>

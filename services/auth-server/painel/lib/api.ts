@@ -359,3 +359,118 @@ export type FichaDaConta = {
   presenca: { nome: string; clube: string; situacao: string; visto_em: number } | null
   janela_presenca: number
 }
+
+// ─── Canal de atualizações ───────────────────────────────────────────────────
+//
+// Outro serviço (services/atualizacoes-server), atrás do MESMO nginx e do MESMO
+// login: o `conta_admin` de lá valida o token contra as sessões do servidor de
+// contas. É isso que permite ter um painel só — antes havia dois, cada um com a
+// sua tela de login, pedindo a mesma senha para a mesma pessoa.
+export const BASE_CANAL = process.env.NEXT_PUBLIC_CANAL_BASE || '/atualizacoes'
+
+async function pedirAoCanal<T>(rota: string, init: RequestInit): Promise<T> {
+  let resposta: Response
+  try {
+    resposta = await fetch(BASE_CANAL + rota, {
+      ...init,
+      headers: { ...(init.headers || {}), Authorization: 'Bearer ' + pegarToken() },
+    })
+  } catch {
+    throw new Error('sem resposta do canal de atualizações')
+  }
+  const dado = await ler(resposta)
+  if (!resposta.ok) {
+    // O canal devolve 404 (e não 403) em /admin/* para quem não é admin: quem
+    // não tem acesso nem fica sabendo que a área existe. Aqui isso vira o mesmo
+    // fim de sessão do resto do painel.
+    if (resposta.status === 401) throw new ErroDeSessao('sua sessão expirou — entre de novo')
+    if (resposta.status === 404 && rota.startsWith('/admin/')) {
+      throw new ErroDeSessao('esta conta não tem permissão de administrador')
+    }
+    throw new Error((dado.erro as string) || 'falha no canal de atualizações')
+  }
+  return dado as T
+}
+
+export function lerDoCanal<T>(rota: string): Promise<T> {
+  return pedirAoCanal<T>(rota, { method: 'GET' })
+}
+
+export function enviarAoCanal<T>(rota: string, corpo: Record<string, unknown> = {}): Promise<T> {
+  return pedirAoCanal<T>(rota, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(corpo),
+  })
+}
+
+export interface ResumoDoCanal {
+  clubes: number
+  clubes_rascunho: number
+  jogadores: number
+  transferencias: number
+  ligas: number
+  imagens: number
+  versao_publicada: number
+  ultima: { versao: number; notas: string; publicado_em: number; bytes: number } | null
+}
+
+export interface ClubeDoCanal {
+  file_key: string
+  nome: string | null
+  curto: string | null
+  cor1: string | null
+  cor2: string | null
+  escudo: string | null
+  licenciado: boolean
+  rascunho: boolean
+  atualizado_em: number
+}
+
+export interface AtributosDoCanal {
+  pace?: number
+  shooting?: number
+  passing?: number
+  dribbling?: number
+  defending?: number
+  physical?: number
+  preferredFoot?: 'Direita' | 'Esquerda' | 'Ambidestro'
+  reputation?: 'normal' | 'estrela' | 'top_mundial'
+}
+
+export interface JogadorDoCanal {
+  chave: string
+  file_key: string
+  nome_original: string
+  nome: string | null
+  pos: string | null
+  idade: number | null
+  nac: string | null
+  base: number | null
+  licenciado: boolean
+  nome_generico: string | null
+  atributos: AtributosDoCanal
+  foto: string | null
+  rascunho: boolean
+}
+
+export interface RegulamentoDoCanal {
+  turnos?: number
+  rodadas?: number
+  pontosVitoria?: number
+  acessos?: number
+  rebaixamentos?: number
+  mataMata?: boolean
+  criteriosDesempate?: string[]
+}
+
+export interface LigaDoCanal {
+  competicao: string
+  nome: string | null
+  nome_generico: string | null
+  licenciado: boolean
+  logo: string | null
+  clubes: string[]
+  regulamento: RegulamentoDoCanal
+  rascunho: boolean
+}

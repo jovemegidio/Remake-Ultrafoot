@@ -7,6 +7,20 @@ export interface InGameUpdateOffer {
 }
 
 /**
+ * BUILD DE LOJA (Steam, Epic, GOG).
+ *
+ * Ligada por `NEXT_PUBLIC_ULTRAFOOT_LOJA=1` no build — ver scripts/build-loja.mjs.
+ *
+ * Numa loja quem distribui atualização é a própria plataforma, pelos depots
+ * dela. Um jogo que busca versão nova por fora quebra a verificação de
+ * integridade da loja e é motivo de reprovação na revisão. Com a flag ligada
+ * nada aqui vai à rede: as duas funções abaixo devolvem "sem atualização" na
+ * primeira linha, então nem o aviso do boot nem a tela de Atualizações
+ * consultam nada.
+ */
+export const BUILD_DE_LOJA = process.env.NEXT_PUBLIC_ULTRAFOOT_LOJA === "1"
+
+/**
  * O jogo NÃO se atualiza mais sozinho — quem baixa e instala novas versões é o
  * Ultrafoot Launcher. Aqui só CONFERIMOS a versão publicada, por dois motivos:
  *
@@ -79,6 +93,7 @@ export interface VersaoPublicada {
  * onde a resposta é um aviso e não uma tela.
  */
 export async function consultarVersaoPublicada(): Promise<VersaoPublicada | null> {
+  if (BUILD_DE_LOJA) return null
   if (typeof window === "undefined" || !isTauri()) return null
   try {
     const { getVersion } = await import("@tauri-apps/api/app")
@@ -101,6 +116,7 @@ export async function consultarVersaoPublicada(): Promise<VersaoPublicada | null
 }
 
 export async function checkForUpdates(opts: { silent?: boolean } = {}): Promise<UpdateCheckResult> {
+  if (BUILD_DE_LOJA) return "unavailable"
   if (typeof window === "undefined" || !isTauri()) return "unavailable"
 
   try {

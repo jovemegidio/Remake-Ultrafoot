@@ -14,7 +14,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { useGameEngine, type TransferOffer } from "@/lib/game-engine"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 
 export function TransferOffers() {

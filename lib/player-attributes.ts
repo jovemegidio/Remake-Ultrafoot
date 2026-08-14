@@ -149,6 +149,51 @@ export function shiftAttributes(a: Attrs, position: string, delta: number): Attr
   return out
 }
 
+/**
+ * EVOLUCAO SEPARADA POR ATRIBUTO (1.0.293).
+ *
+ * `shiftAttributes` soma o MESMO delta em todo atributo relevante da posicao. Na
+ * pratica isso fazia o veterano de 36 perder passe na mesma medida em que perdia
+ * velocidade, e o jovem ganhar fisico tao rapido quanto tecnica — nenhuma das
+ * duas coisas parece futebol.
+ *
+ * Aqui o delta e DISTRIBUIDO com vies por idade:
+ *   - ate 23 crescendo: tecnica e leitura sobem mais rapido que o fisico, que ja
+ *     esta perto do limite biologico;
+ *   - dos 24 aos 31: crescimento parelho, com leve favorecimento do passe;
+ *   - de 32 em diante caindo: as PERNAS vao primeiro (ritmo e fisico), e passe e
+ *     defesa quase se seguram — e o veterano que "joga de cabeca".
+ *
+ * ⚠️ A MEDIA PONDERADA DO RESULTADO CONTINUA SENDO `delta`. Sem essa
+ * normalizacao, os atributos e o overall — que quem chama calcula por fora —
+ * voltariam a divergir, que e exatamente o defeito que este arquivo nasceu para
+ * corrigir. O `overallFromAttributes` e a prova, e o teste cobre.
+ */
+export function evoluirAtributos(a: Attrs, position: string, delta: number, idade: number): Attrs {
+  if (!delta) return a
+  const w = PROFILES[posFamily(position)].weight
+
+  const crescendo = delta > 0
+  const vies: Attrs = idade <= 23 && crescendo
+    ? { pace: 0.7, shooting: 1.2, passing: 1.2, dribbling: 1.25, defending: 1.15, physical: 0.85 }
+    : idade >= 32 && !crescendo
+      ? { pace: 1.6, shooting: 0.95, passing: 0.45, dribbling: 1.15, defending: 0.6, physical: 1.5 }
+      : { pace: 0.95, shooting: 1.0, passing: 1.1, dribbling: 1.0, defending: 1.05, physical: 0.95 }
+
+  // Normaliza para a media ponderada bater `delta` exatamente.
+  const somaPesos = ATTR_KEYS.reduce((s, k) => s + w[k], 0)
+  const somaViesada = ATTR_KEYS.reduce((s, k) => s + w[k] * vies[k], 0)
+  const escala = somaViesada > 0 ? somaPesos / somaViesada : 1
+
+  const out = { ...a }
+  for (const k of ATTR_KEYS) {
+    // O corte de peso continua: nao se mexe na finalizacao do zagueiro.
+    if (w[k] < 0.12) continue
+    out[k] = clamp(out[k] + Math.round(delta * vies[k] * escala))
+  }
+  return out
+}
+
 /** Overall a partir dos atributos, com o peso da POSICAO — o inverso coerente
  *  de attributesFromOverall. Um zagueiro vale pela defesa/fisico; um atacante
  *  pela finalizacao/velocidade. */

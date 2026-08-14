@@ -13,7 +13,7 @@
 
 import { useMemo, useState } from "react"
 import { Gavel, Clock, TrendingUp, XCircle, Users } from "lucide-react"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 import {
   SEMANAS_DE_LEILAO, disputaPorAnuncio, pisoMinimoDe, pisoSugeridoDe,

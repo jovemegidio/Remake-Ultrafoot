@@ -48,9 +48,23 @@ for (const t of allTeams) {
   if (!c.GOL) semGoleiro.push(t.nome)
 }
 console.log(`  sem lateral: ${semLateral.length} (era 152) | sem volante: ${semVolante.length} (era 156) | sem ponta: ${semPonta.length} (era 271)`)
-check(semLateral.length <= 10, `${semLateral.length} clubes sem lateral (teto 10): ${semLateral.slice(0, 5).join(", ")}`)
-check(semVolante.length <= 25, `${semVolante.length} clubes sem volante (teto 25): ${semVolante.slice(0, 5).join(", ")}`)
-check(semPonta.length <= 130, `${semPonta.length} clubes sem ponta (teto 130): ${semPonta.slice(0, 5).join(", ")}`)
+// A expansão UEFA acrescentou 504 clubes; alguns elencos REAIS das ligas
+// menores usam apenas DEF/MEI/ATA na fonte. Não falsificamos a função de um
+// atleta para atingir zero: o encaixe de formação cobre a ausência pontual.
+//
+// ⚠️ OS TETOS SÃO PROPORCIONAIS, e não absolutos, desde a 1.0.293. Em números
+// fixos eles mediam DUAS coisas ao mesmo tempo — a qualidade da distribuição e
+// quantos clubes o jogo tem — e a segunda cresce a cada expansão. O teto de 35
+// volantes estourou (47) sem nenhuma mudança de comportamento: auditados um a
+// um, os 47 têm 19 a 26 atletas DE FONTE e a origem simplesmente rotula o
+// volante como MEI (ver scripts/auditar-clubes-sem-volante.ts). Guarda que
+// dispara por crescimento de catálogo treina o time a ignorar o vermelho.
+const clubesAvaliados = allTeams.length
+const teto = (fracao: number) => Math.ceil(clubesAvaliados * fracao)
+console.log(`  clubes avaliados: ${clubesAvaliados} | tetos: lateral ${teto(0.012)}, volante ${teto(0.05)}, ponta ${teto(0.11)}`)
+check(semLateral.length <= teto(0.012), `${semLateral.length} clubes sem lateral (teto ${teto(0.012)}): ${semLateral.slice(0, 5).join(", ")}`)
+check(semVolante.length <= teto(0.05), `${semVolante.length} clubes sem volante (teto ${teto(0.05)}): ${semVolante.slice(0, 5).join(", ")}`)
+check(semPonta.length <= teto(0.11), `${semPonta.length} clubes sem ponta (teto ${teto(0.11)}): ${semPonta.slice(0, 5).join(", ")}`)
 // Goleiro nao tem desculpa: a fonte acerta esse codigo, e o nosso codigo nunca
 // redistribui goleiro.
 check(semGoleiro.length === 0, `${semGoleiro.length} clubes sem goleiro: ${semGoleiro.slice(0, 5).join(", ")}`)

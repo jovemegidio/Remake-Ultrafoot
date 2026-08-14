@@ -20,7 +20,8 @@
 import { useMemo, useState } from "react"
 import { X, Users, ClipboardList, Building2, ArrowRight, ShieldAlert, Repeat } from "lucide-react"
 import { useGameEngine, type TeamMentality } from "@/lib/game-engine"
-import { formatNumber, type Team } from "@/lib/teams-data"
+import type { Team } from "@/lib/teams-data"
+import { formatNumber } from "@/lib/currency"
 import { CampoEBilheteria } from "@/components/match/campo-e-bilheteria"
 import { cn } from "@/lib/utils"
 

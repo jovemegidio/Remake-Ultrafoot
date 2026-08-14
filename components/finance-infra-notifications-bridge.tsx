@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 import { isTransferWindowOpen, useGameEngine } from "@/lib/game-engine"
 import { useNotifications } from "@/components/notifications-system"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 
 /**
  * Ponte entre FINANCAS/OBRAS (game-engine) e a CENTRAL DE NOTIFICACOES.

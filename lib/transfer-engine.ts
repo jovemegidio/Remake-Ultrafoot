@@ -20,8 +20,11 @@ function fisicoDoAtleta(ft?: string): { a?: number; p?: string } | undefined {
   return ft ? FISICO_TM[ft.split("-")[0]] : undefined
 }
 import type { MarketTarget, IncomingOffer } from "@/lib/career-types"
-import importedBF from "@/data/seeds/imported-bf2026.json"
-import realSquadsTm from "@/data/seeds/real-squads-tm.json"
+// Índice leve + elencos sob demanda. O seed completo de 8,91 MB viajava no
+// chunk compartilhado de toda rota. Ver `lib/pool-elencos.ts`.
+import importedBF from "@/data/seeds/imported-bf2026-index.json"
+import { elencoDoPool, type PoolPlayerRaw } from "@/lib/pool-elencos"
+import { elencosReaisTM } from "@/lib/elencos-reais-tm"
 
 /**
  * POSICAO REAL por nome, vinda do Transfermarkt (real-squads-tm).
@@ -39,7 +42,7 @@ const _normNome = (s: string) =>
 const POSICAO_REAL_POR_NOME: Map<string, string> = (() => {
   const mapa = new Map<string, string>()
   const conflito = new Set<string>()
-  for (const elenco of Object.values(realSquadsTm as Record<string, Array<{ n?: string; p?: string }>>)) {
+  for (const elenco of Object.values(elencosReaisTM() as unknown as Record<string, Array<{ n?: string; p?: string }>>)) {
     if (!Array.isArray(elenco)) continue
     for (const j of elenco) {
       if (!j?.n || !j?.p) continue
@@ -57,6 +60,8 @@ const POSICAO_REAL_POR_NOME: Map<string, string> = (() => {
 // ─── MVP: Alvos dinâmicos do mercado ───────────────────────────────────────────
 
 interface BfTeamRaw {
+  /** Casa o clube com o seu elenco em `imported-bf2026-elencos.json`. */
+  id?: string
   nome: string
   curto: string
   cor1?: string
@@ -69,9 +74,11 @@ interface BfTeamRaw {
   saldo?: number
   escudo?: string
   fileKey?: string
-  // `nac` é assado por scripts/apply-tm-squads.mjs a partir do Transfermarkt.
-  jogadores?: Array<{ nome: string; posicao: string; overall: number; idade: number; salario?: number; nac?: string; ft?: string }>
 }
+
+// O elenco NAO mora mais no clube: vem de `elencoDoPool(team.id)`. O campo
+// `nac` continua assado por scripts/apply-tm-squads.mjs a partir do Transfermarkt.
+type BfPlayerRaw = PoolPlayerRaw
 
 const ALL_BF_TEAMS = (importedBF as { teams?: BfTeamRaw[] }).teams ?? []
 
@@ -170,10 +177,10 @@ function pickTrend(age: number): 'up' | 'down' | 'stable' {
  * excluindo o time do usuário. Refresh por temporada.
  */
 export function generateMarketTargets(userTeamCurto: string, count = 24, season = 0): MarketTarget[] {
-  const candidates: Array<{ team: BfTeamRaw; player: NonNullable<BfTeamRaw['jogadores']>[number] }> = []
+  const candidates: Array<{ team: BfTeamRaw; player: BfPlayerRaw }> = []
   for (const team of ALL_BF_TEAMS) {
     if (team.curto === userTeamCurto) continue
-    for (const j of team.jogadores ?? []) {
+    for (const j of elencoDoPool(team.id) ?? []) {
       if (j.overall >= 70) candidates.push({ team, player: j })
     }
   }
@@ -403,11 +410,11 @@ export function generateDetailedMarketTargets(
   // mercado consigo comprar o jogador do meu proprio time"). O NOME normalizado
   // e consistente entre as duas bases e fecha essa brecha.
   const nomeAlvo = normalizeClubName(userTeamNome)
-  const candidates: Array<{ team: BfTeamRaw; player: NonNullable<BfTeamRaw["jogadores"]>[number] }> = []
+  const candidates: Array<{ team: BfTeamRaw; player: BfPlayerRaw }> = []
   for (const team of ALL_BF_TEAMS) {
     if (team.curto === userTeamCurto) continue
     if (nomeAlvo && normalizeClubName(team.nome) === nomeAlvo) continue
-    for (const j of team.jogadores ?? []) candidates.push({ team, player: j })
+    for (const j of elencoDoPool(team.id) ?? []) candidates.push({ team, player: j })
   }
   if (candidates.length === 0) return []
 

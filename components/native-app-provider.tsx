@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils"
 import { ControllerButton, useGamepadConnected } from "@/components/controller-buttons"
 import { normalizeAppHref, toClientRoute } from "@/lib/hard-navigation"
 import { initPersistentStore, storeGet, storeSet } from "@/lib/persistent-store"
+import { migrarImagensParaOBanco } from "@/lib/migrar-imagens-para-o-banco"
+import { carregarMods } from "@/lib/mods"
 import { applySavedFullscreen, toggleFullscreen } from "@/lib/fullscreen"
 import { accessibilityStore } from "@/lib/accessibility-store"
 import { syncCurrencyFromStore, getCurrencyCode } from "@/lib/currency"
@@ -13,7 +15,7 @@ import type { InGameUpdateOffer } from "@/lib/updater"
 
 // Versao do "o que ha de novo". Trocar SO quando houver novidade a apresentar —
 // e o que faz o modal reaparecer para quem ja viu a anterior.
-const WHATS_NEW_VERSION = "1.0.280"
+const WHATS_NEW_VERSION = "1.0.290"
 const WHATS_NEW_KEY = "ultrafoot:last-seen-whats-new"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
@@ -190,12 +192,56 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    void initPersistentStore()
+    let cancelado = false
+    let cancelarAgendamento: (() => void) | undefined
+
+    void initPersistentStore().then(() => {
+      if (cancelado) return
+
+      // MODS: leitura de disco, mas NAO entra no requestIdleCallback abaixo. A
+      // migracao de imagens pode esperar a WebView ociosa porque so troca onde a
+      // imagem mora; mod troca DADO (elenco, nome, escudo do clube). Carregado
+      // tarde, o jogador ve o time sem o pacote e a tela se corrige na frente
+      // dele. Depende do store porque a lista de mods desligados mora la.
+      void carregarMods().catch(error => {
+        console.warn("[mods] pasta nao pode ser lida (seguindo sem mods):", error)
+      })
+
+      // O store legado podia chegar a 246 MB porque escudos, uniformes e fotos
+      // ficavam em base64 dentro do mesmo JSON. A migracao escreve cada imagem
+      // primeiro no AppData e so depois troca o base64 por uma referencia curta.
+      // Ela roda quando a WebView fica ociosa para nao disputar o primeiro frame
+      // com a splash; em navegadores sem requestIdleCallback, um pequeno atraso
+      // oferece o mesmo comportamento.
+      const iniciar = () => {
+        if (cancelado) return
+        void migrarImagensParaOBanco().catch(error => {
+          console.warn("[banco-de-imagens] migracao adiada para o proximo boot:", error)
+        })
+      }
+
+      const idleWindow = window as Window & {
+        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
+        cancelIdleCallback?: (id: number) => void
+      }
+      if (typeof idleWindow.requestIdleCallback === "function") {
+        const id = idleWindow.requestIdleCallback(iniciar, { timeout: 3_000 })
+        cancelarAgendamento = () => idleWindow.cancelIdleCallback?.(id)
+      } else {
+        const id = globalThis.setTimeout(iniciar, 1_500)
+        cancelarAgendamento = () => globalThis.clearTimeout(id)
+      }
+    })
     // Acessibilidade primeiro: reaplica fonte/contraste ANTES da UI pintar, senao o
     // usuario que aumentou a fonte veria a tela "pular" a cada boot.
     accessibilityStore.init()
     // Reaplica a tela cheia salva assim que o store carrega.
     void applySavedFullscreen()
+
+    return () => {
+      cancelado = true
+      cancelarAgendamento?.()
+    }
   }, [])
 
   useEffect(() => {
@@ -326,6 +372,105 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
 function WhatsNewDialog({ onClose }: { onClose: () => void }) {
   const [page, setPage] = useState(0)
   const pages = [
+    {
+      eyebrow: "Temporada 2026 · Build 1.0.290",
+      title: "Banco local mais leve e dados reais",
+      body: "Escudos, uniformes e fotos importadas deixaram de ocupar o JSON principal da carreira. As imagens passam a viver em arquivos locais deduplicados, preservados entre atualizações, enquanto as telas auditadas usam apenas acontecimentos e resultados registrados no save.",
+      accent: "DESEMPENHO",
+      bullets: [
+        "Imagens migradas para o AppData sem perder os arquivos importados",
+        "O armazenamento da WebView não duplica mais blobs e imagens grandes",
+        "Histórico, mensagens, imprensa e relatórios sem dados demonstrativos",
+        "Análises de adversários e atribuições calculadas a partir dos elencos reais",
+      ],
+    },
+    {
+      eyebrow: "Temporada 2026 · Build 1.0.289",
+      title: "O travamento na escolha do time acabou",
+      body: "Percorrer os times na criação de carreira travava o jogo por completo. O escudo em 3D criava um contexto de vídeo a cada time visitado e não o devolvia — o navegador aguenta cerca de dezesseis ao mesmo tempo e, ao passar disso, derruba a página inteira.",
+      accent: "CORREÇÃO",
+      bullets: [
+        "O contexto de vídeo passa a ser devolvido assim que você troca de time",
+        "Em computador rápido o travamento vinha antes, porque se percorre mais times por minuto",
+        "A demora para ABRIR as telas tem outra causa e segue em investigação",
+      ],
+    },
+    {
+      eyebrow: "Temporada 2026 · Build 1.0.288",
+      title: "A partida ficou mais leve",
+      body: "O perfil \"Equilibrado\" — o padrão de quem nunca abriu as configurações — pedia ao radar 3D a qualidade MÁXIMA do motor. Era a cena mais pesada que o jogo sabe montar, rodando para praticamente todo mundo, e a partida engasgava por isso.",
+      accent: "DESEMPENHO",
+      bullets: [
+        "Equilibrado passa a usar qualidade média: 22 mil tufos de grama no lugar de 64 mil",
+        "Sombra em 1024 no lugar de 4096",
+        "Quem tem máquina forte escolhe \"Qualidade máxima\" nas configurações",
+        "A demora para ABRIR as telas tem outra causa e será tratada na próxima versão",
+      ],
+    },
+    {
+      eyebrow: "Temporada 2026 · Build 1.0.287",
+      title: "O escritório não trava mais ao abrir",
+      body: "Alguns jogadores abriam o jogo e ficavam no carregamento sem sair do lugar. Acontecia quando o clube gravado no save não era mais encontrado — chave antiga de uma versão anterior, ou clube que só existe no elenco estendido. O jogo esperava por um dado que nunca chegaria.",
+      accent: "CORREÇÃO",
+      bullets: [
+        "Se o clube não resolver, você vai para a Área do Treinador em vez de ficar girando",
+        "Radar 3D da partida, com alternador 2D/3D",
+        "Se a placa de vídeo não suportar o 3D, a partida volta sozinha para o 2D",
+        "Menu reorganizado em quatro seções e Rankings mundiais com entrada própria",
+      ],
+    },
+    {
+      eyebrow: "Temporada 2026 · Build 1.0.284",
+      title: "Competições agora se atualizam sem reinstalar",
+      body: "Quem sobe, quem cai e quem disputa cada torneio passou a vir pelo canal de atualização. Antes isso só mudava em versão nova do jogo: virada de temporada no mundo real esperava uma build.",
+      accent: "COMPETIÇÕES",
+      bullets: [
+        "Participantes de cada competição chegam pelo canal, sem reinstalar",
+        "Turno único e ida e volta passaram a valer no calendário de verdade",
+        "Rebaixamento e acesso seguem o que for publicado, mantendo a pirâmide coerente",
+        "Clubes, atletas e torneios podem ser licenciados um a um",
+      ],
+    },
+    {
+      eyebrow: "Temporada 2026 · Build 1.0.283",
+      title: "Sua carreira agora começa com as suas regras",
+      body: "A seleção de equipes ganhou configurações iniciais persistentes. Você decide quais competições entram no calendário, como salários e força aparecem nas telas e quanto o computador deve priorizar fluidez ou qualidade visual.",
+      accent: "NOVO JOGO",
+      bullets: [
+        "Estaduais, regionais e torneios internacionais podem ser ligados separadamente",
+        "Desligar uma competição a tira do calendário de verdade, não só da tela",
+        "Salário mensal ou semanal em todas as telas de contrato e negociação",
+        "Força individual (atributos) ou clássica (nota geral) na ficha do atleta",
+        "Perfis Automático, Econômico, Equilibrado e Qualidade para o desempenho",
+      ],
+    },
+    {
+      eyebrow: "Temporada 2026 · Build 1.0.283",
+      title: "A Central de Gestão saiu do papel e entrou em campo",
+      body: "Os sistemas de gestão avançada existiam como formulário: tudo era gravado no save e nenhum motor lia. Agora cada decisão tem consequência — a rotina ensaiada muda o escanteio, a unidade de treino muda a evolução e o pedido aprovado vira dinheiro.",
+      accent: "GESTÃO",
+      bullets: [
+        "Bolas paradas ensaiadas alteram escanteio e falta, com alvo aéreo e jogador da sobra",
+        "A preparação vale só para o rival e a semana preparados",
+        "Unidade de treino coerente rende mais; jovem com mentor evolui mais rápido",
+        "Metas individuais fecham no prazo e mexem na moral do atleta",
+        "Princípios cobram coerência: prometer a base e não escalar jovem derruba a adesão",
+        "Pedido aprovado pela diretoria libera verba de transferências ou caixa",
+        "A pauta da comissão passou a gerar relatório semanal de verdade",
+        "O modo de mundo controla o quanto o mercado da IA afasta os elencos do início",
+      ],
+    },
+    {
+      eyebrow: "Correções que vieram junto",
+      title: "O cobrador designado finalmente cobra a falta",
+      body: "A tela deixava escolher o batedor de falta, o valor chegava ao motor e a cobrança sorteava um jogador por posição assim mesmo. O especialista do elenco batia por acaso.",
+      accent: "CORREÇÃO",
+      bullets: [
+        "Falta direta agora respeita o cobrador designado nas Atribuições",
+        "Salário mensal usa o mesmo fator do teto salarial da diretoria (×4)",
+        "A escolha de desempenho na criação da carreira não é mais sobrescrita pelo detector automático",
+      ],
+    },
     {
       eyebrow: "Temporada 2026 · Build 1.0.280",
       title: "A função de cada atleta passou a valer em campo",

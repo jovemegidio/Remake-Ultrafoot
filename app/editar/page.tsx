@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import { useJogoRegistrado } from "@/lib/beneficios"
 import { AvisoDeRegistro } from "@/components/registro-necessario"
 import { BandeiraPais } from "@/components/bandeira-pais"
@@ -20,6 +20,8 @@ import {
   Shield,
   Upload,
   X,
+  ArrowLeftRight,
+  AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AbasDoModal, GrupoDeCampos } from "@/components/modal-kit"
@@ -59,6 +61,15 @@ import {
 } from "@/lib/team-overrides"
 import { flushPersistentStore, initPersistentStore } from "@/lib/persistent-store"
 import { generateYouthRoster, getYouthRoster, saveYouthRoster, type YouthEditorPlayer } from "@/lib/youth-editor"
+import {
+  criarAtleta,
+  removerAtleta,
+  transferirAtleta,
+  listLocalRosterPatches,
+  normNome,
+  type AtletaCriado,
+} from "@/lib/roster-overrides"
+import { validarElenco } from "@/lib/validacao-de-elenco"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { setPlayerPhotoOverride } from "@/lib/player-photos"
 import { KitImage } from "@/components/match/kit-image"
@@ -540,6 +551,48 @@ export default function EditarPage() {
     setTimeout(() => setExportMsg(null), 4000)
   }
 
+  /**
+   * Exporta os ELENCOS editados (atletas criados, removidos e transferidos).
+   *
+   * Arquivo separado do de clubes de propósito: o outro é fundido por
+   * `merge-team-overrides.mjs` e tem outro formato. Aqui o par é
+   * `node scripts/merge-roster-overrides.mjs <arquivo>`.
+   */
+  const handleExportElencos = async () => {
+    const todos = listLocalRosterPatches()
+    const clubes = Object.keys(todos).length
+    if (clubes === 0) {
+      setExportMsg("Nenhum elenco editado para exportar.")
+      setTimeout(() => setExportMsg(null), 3000)
+      return
+    }
+    const criados = Object.values(todos).reduce((n, p) => n + (p.criados?.length ?? 0), 0)
+    const removidos = Object.values(todos).reduce((n, p) => n + (p.removidos?.length ?? 0), 0)
+    const json = JSON.stringify(todos, null, 2)
+    const aviso = `${clubes} clube(s): ${criados} atleta(s) criado(s), ${removidos} removido(s).`
+
+    if (isTauri()) {
+      const { save } = await import("@tauri-apps/plugin-dialog")
+      const { writeTextFile } = await import("@tauri-apps/plugin-fs")
+      const filePath = await save({
+        title: "Exportar elencos editados",
+        defaultPath: "elencos-editados-export.json",
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      })
+      if (!filePath) return
+      await writeTextFile(filePath as string, json)
+    } else {
+      const blob = new Blob([json], { type: "application/json" })
+      const a = document.createElement("a")
+      a.href = URL.createObjectURL(blob)
+      a.download = "elencos-editados-export.json"
+      a.click()
+      URL.revokeObjectURL(a.href)
+    }
+    setExportMsg(aviso)
+    setTimeout(() => setExportMsg(null), 4000)
+  }
+
   const handleKitImageUpload = async (variant: "home" | "away" | "third") => {
     const processFile = async (rawDataUrl: string) => {
       // Comprime ANTES de guardar: sem isto o uniforme importado ia pro save em tamanho
@@ -827,6 +880,137 @@ export default function EditarPage() {
       setSortDirection("asc")
     }
   }
+
+  // ─── ELENCO EDITADO: criar, remover e transferir ──────────────────────────
+  //
+  // Até aqui o editor só sabia MUDAR um atleta que já existia. Criar, apagar e
+  // mudar de clube são operações sobre a LISTA, e por isso moram noutro módulo
+  // (lib/roster-overrides), aplicado dentro de `players-data.getPlayersForTeam`.
+  //
+  // Os juniores seguem pelo caminho próprio deles: aquela lista inteira é
+  // guardada no save (lib/youth-editor) e não passa pelo cadastro do jogo.
+  //
+  // Seleção fica de fora: a convocação é montada a partir dos clubes
+  // (`getNationalPlayerSources`), então criar alguém "na seleção" não teria onde
+  // existir. Quem quer um atleta novo na seleção cria no clube dele.
+  const podeMexerNoElenco = activeTab !== "dados" && Boolean(selectedTeam) && !isNationalTeam(selectedTeam)
+
+  /** Nome que ainda não existe no clube — o patch recusa nome repetido. */
+  const nomeInedito = (base: string) => {
+    const usados = new Set(players.map(p => normNome(p.originalName)))
+    if (!usados.has(normNome(base))) return base
+    for (let i = 2; i < 99; i++) {
+      const tentativa = `${base} ${i}`
+      if (!usados.has(normNome(tentativa))) return tentativa
+    }
+    return `${base} ${players.length + 1}`
+  }
+
+  const adicionarAtleta = async () => {
+    if (!selectedTeam || !podeMexerNoElenco) return
+    if (activeTab === "juniores") {
+      const attrs = defaultPlayerAttributes(50, "MEI")
+      const created: YouthEditorPlayer = {
+        id: Math.max(10000, ...youthPlayers.map(player => player.id + 1)),
+        originalName: `novo_juvenil_${Date.now()}`,
+        nome: "Novo juvenil", posicao: "MEI", pais: "-", idade: 16,
+        overall: 50, caracteristica: "Em formação", lado: "D", ...attrs,
+      }
+      const next = [...youthPlayers, created]
+      setYouthPlayers(next)
+      saveYouthRoster(selectedTeam.file_key, next)
+      openPlayerEdit(created)
+      return
+    }
+    const nome = nomeInedito("Novo jogador")
+    const attrs = defaultPlayerAttributes(60, "MEI")
+    criarAtleta(selectedTeam.file_key, {
+      nome, pos: "MEI", idade: 18, base: 60,
+      nac: selectedTeam.pais || undefined, lado: "C", ...attrs,
+    })
+    await flushPersistentStore()
+    const proximos = generatePlayersForTeam(selectedTeam)
+    setPlayers(proximos)
+    // Abre o modal já no atleta criado: um "Novo jogador" de 60 na lista não é
+    // o objetivo de ninguém — o objetivo é a ficha que vem depois.
+    const criado = proximos.find(p => normNome(p.originalName) === normNome(nome))
+    if (criado) openPlayerEdit(criado)
+  }
+
+  const removerAtletaSelecionado = async () => {
+    if (!selectedTeam || !podeMexerNoElenco) return
+    const alvo = sortedPlayers[selectedPlayerIndex]
+    if (!alvo) return
+    if (activeTab === "juniores") {
+      const next = youthPlayers.filter(player => player.id !== alvo.id)
+      setYouthPlayers(next)
+      saveYouthRoster(selectedTeam.file_key, next)
+      setSelectedPlayerIndex(index => Math.max(0, Math.min(index, next.length - 1)))
+      return
+    }
+    removerAtleta(selectedTeam.file_key, alvo.originalName)
+    await flushPersistentStore()
+    const proximos = generatePlayersForTeam(selectedTeam)
+    setPlayers(proximos)
+    setSelectedPlayerIndex(index => Math.max(0, Math.min(index, proximos.length - 1)))
+  }
+
+  /** Ficha completa do atleta como ele está HOJE — é o que viaja na transferência. */
+  const fichaDoAtleta = (p: EditorPlayer): AtletaCriado => {
+    const ov = p.sourceTeamKey ? getPlayerOverride(p.sourceTeamKey, p.originalName) : null
+    return {
+      nome: p.nome, pos: p.posicao, idade: p.idade, base: p.overall,
+      nac: p.pais && p.pais !== "-" ? p.pais : undefined,
+      lado: ov?.lado, preferredFoot: ov?.preferredFoot, reputation: ov?.reputation,
+      traits: ov?.traits,
+      pace: p.pace, shooting: p.shooting, passing: p.passing,
+      dribbling: p.dribbling, defending: p.defending, physical: p.physical,
+    }
+  }
+
+  const [transferindo, setTransferindo] = useState<EditorPlayer | null>(null)
+  const [buscaDestino, setBuscaDestino] = useState("")
+  const [transferMsg, setTransferMsg] = useState<string | null>(null)
+
+  const destinosPossiveis = useMemo(() => {
+    if (!transferindo || !selectedTeam) return []
+    const termo = buscaDestino.trim().toLowerCase()
+    return resolvedTeams
+      .filter(t => t.file_key !== selectedTeam.file_key && !t.file_key.startsWith("nation_"))
+      .filter(t => !termo || t.nome.toLowerCase().includes(termo) || t.curto.toLowerCase().includes(termo))
+      .slice(0, 60)
+  }, [transferindo, selectedTeam, buscaDestino, resolvedTeams])
+
+  const confirmarTransferencia = async (destino: Team) => {
+    if (!transferindo || !selectedTeam) return
+    const ok = transferirAtleta(
+      selectedTeam.file_key,
+      destino.file_key,
+      fichaDoAtleta(transferindo),
+      transferindo.originalName,
+    )
+    await flushPersistentStore()
+    setTransferMsg(ok
+      ? `${transferindo.nome} agora é do ${destino.nome}.`
+      : `O ${destino.nome} já tem um atleta com esse nome.`)
+    setTimeout(() => setTransferMsg(null), 4000)
+    setTransferindo(null)
+    setBuscaDestino("")
+    if (!ok) return
+    const proximos = generatePlayersForTeam(selectedTeam)
+    setPlayers(proximos)
+    setSelectedPlayerIndex(index => Math.max(0, Math.min(index, proximos.length - 1)))
+  }
+
+  // Aviso de plantel. Só no elenco principal: a lista de juniores é uma seleção
+  // de garotos, não um time que vai a campo, e exigir onze de linha dela seria
+  // inventar uma regra que o jogo não tem.
+  const problemasDoElenco = useMemo(
+    () => (activeTab === "principal" && !isNationalTeam(selectedTeam)
+      ? validarElenco(players.map(p => ({ pos: p.posicao })))
+      : []),
+    [activeTab, players, selectedTeam],
+  )
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1231,27 +1415,33 @@ export default function EditarPage() {
 
                   {/* Bottom Actions */}
                   <div className="sticky bottom-0 z-20 flex min-h-16 flex-shrink-0 flex-wrap items-center justify-between gap-2 bg-black/95 px-5 py-2 border-t border-white/[0.10] shadow-[0_-8px_30px_rgba(0,0,0,.45)]">
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <span className="font-bold text-white">{displayedPlayers.length}</span>
-                      <span className="text-white/30">/55 jogadores</span>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-white">{displayedPlayers.length}</span>
+                        <span className="text-white/30">/55 jogadores</span>
+                      </div>
+                      {/* AVISO DE PLANTEL — a regra do Brasfoot: sem goleiro ou
+                          sem onze de linha, o clube não fecha um time. Erro é
+                          vermelho; o resto é conselho. */}
+                      {problemasDoElenco.slice(0, 2).map(problema => (
+                        <span
+                          key={problema.mensagem}
+                          className={cn(
+                            "flex items-center gap-1 text-[11px]",
+                            problema.nivel === "erro" ? "text-rose-400" : "text-amber-400/80",
+                          )}
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          {problema.mensagem}
+                        </span>
+                      ))}
+                      {transferMsg && <span className="text-[11px] text-[var(--brand)]">{transferMsg}</span>}
                     </div>
                     <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() => {
-                          if (activeTab !== "juniores" || !selectedTeam) return
-                          const attrs = defaultPlayerAttributes(50, "MEI")
-                          const created: YouthEditorPlayer = {
-                            id: Math.max(10000, ...youthPlayers.map(player => player.id + 1)),
-                            originalName: `novo_juvenil_${Date.now()}`,
-                            nome: "Novo juvenil", posicao: "MEI", pais: "-", idade: 16,
-                            overall: 50, caracteristica: "Em formação", lado: "D", ...attrs,
-                          }
-                          const next = [...youthPlayers, created]
-                          setYouthPlayers(next)
-                          saveYouthRoster(selectedTeam.file_key, next)
-                          openPlayerEdit(created)
-                        }}
-                        disabled={activeTab !== "juniores"}
+                        onClick={adicionarAtleta}
+                        disabled={!podeMexerNoElenco}
+                        title={podeMexerNoElenco ? "Cria um atleta neste clube" : "Não disponível para seleções"}
                         className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[var(--brand)]/10 hover:bg-[var(--brand)]/20 text-[var(--brand)] rounded-lg transition-all border border-[var(--brand)]/20 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         <Plus className="h-3 w-3" />
@@ -1268,6 +1458,24 @@ export default function EditarPage() {
                         <Pencil className="h-3 w-3" />
                         <span className="hidden sm:inline">Editar</span>
                       </button>
+                      {/* TRANSFERÊNCIA DE CADASTRO — sem proposta, sem salário,
+                          sem janela. Isso é carreira, e carreira é o outro lado
+                          do jogo. Aqui o atleta só passa a constar no outro clube. */}
+                      <button
+                        onClick={() => {
+                          if (activeTab !== "principal" || !podeMexerNoElenco) return
+                          const p = sortedPlayers[selectedPlayerIndex] as EditorPlayer | undefined
+                          if (!p) return
+                          setBuscaDestino("")
+                          setTransferindo(p)
+                        }}
+                        disabled={activeTab !== "principal" || !podeMexerNoElenco}
+                        title="Move o atleta para outro clube (cadastro, não negociação)"
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06] disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        <ArrowLeftRight className="h-3 w-3" />
+                        <span className="hidden sm:inline">Transferir</span>
+                      </button>
                       <button
                         onClick={() => {
                           if (activeTab !== "juniores" || !selectedTeam) return
@@ -1283,16 +1491,8 @@ export default function EditarPage() {
                         <span className="hidden sm:inline">Aleatorio</span>
                       </button>
                       <button
-                        onClick={() => {
-                          if (activeTab !== "juniores" || !selectedTeam) return
-                          const selected = sortedPlayers[selectedPlayerIndex]
-                          if (!selected) return
-                          const next = youthPlayers.filter(player => player.id !== selected.id)
-                          setYouthPlayers(next)
-                          saveYouthRoster(selectedTeam.file_key, next)
-                          setSelectedPlayerIndex(index => Math.max(0, Math.min(index, next.length - 1)))
-                        }}
-                        disabled={activeTab !== "juniores"}
+                        onClick={removerAtletaSelecionado}
+                        disabled={!podeMexerNoElenco}
                         className="flex items-center gap-1 px-3 py-1.5 text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 rounded-lg transition-all border border-rose-500/20 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         <Trash2 className="h-3 w-3" />
@@ -1669,6 +1869,15 @@ export default function EditarPage() {
                       >
                         Exportar edições
                       </button>
+                      {/* Elencos criados/removidos/transferidos saem noutro
+                          arquivo: o merge deles é o merge-roster-overrides.mjs. */}
+                      <button
+                        onClick={handleExportElencos}
+                        title="Exporta os atletas criados, removidos e transferidos no editor"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white/80 rounded-lg transition-all border border-white/[0.06]"
+                      >
+                        Exportar elencos
+                      </button>
                       <button
                         onClick={handleSaveOverride}
                         className={cn(
@@ -1689,6 +1898,64 @@ export default function EditarPage() {
           )}
         </main>
       </div>
+
+      {/* Modal de TRANSFERÊNCIA — escolher o clube de destino. */}
+      {transferindo && selectedTeam && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={() => setTransferindo(null)}
+        >
+          <div
+            className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f1e22]"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="shrink-0 border-b border-white/[0.07] px-6 pb-3 pt-5">
+              <h3 className="text-lg font-bold text-white">Transferir atleta</h3>
+              <p className="mt-0.5 text-xs text-white/40">
+                {transferindo.nome} sai do {selectedTeam.nome} e passa a constar no clube escolhido.
+              </p>
+              <p className="mt-1 text-[11px] text-amber-400/70">
+                Isto é cadastro: não há proposta, valor nem contrato. Negociação é dentro da carreira.
+              </p>
+              <div className="relative mt-3">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/25" />
+                <input
+                  autoFocus
+                  value={buscaDestino}
+                  onChange={e => setBuscaDestino(e.target.value)}
+                  placeholder="Buscar clube de destino..."
+                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] py-2 pl-9 pr-3 text-xs text-white placeholder-white/20 transition-all focus:border-white/20 focus:outline-none"
+                />
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
+              {destinosPossiveis.length === 0 ? (
+                <p className="px-6 py-6 text-center text-xs text-white/30">Nenhum clube encontrado.</p>
+              ) : destinosPossiveis.map(destino => (
+                <button
+                  key={destino.file_key}
+                  onClick={() => confirmarTransferencia(destino)}
+                  className="flex w-full items-center gap-3 border-b border-white/[0.04] px-5 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+                >
+                  <TeamCrest team={destino} size="xs" />
+                  <span className="min-w-0 flex-1 truncate text-xs text-white/80">{destino.nome}</span>
+                  <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/25">
+                    {formatDivisao(String(destino.divisao))}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="shrink-0 border-t border-white/[0.07] px-6 py-3 text-right">
+              <button
+                onClick={() => setTransferindo(null)}
+                className="rounded-lg border border-white/[0.06] bg-white/[0.04] px-3 py-1.5 text-xs text-white/50 transition-all hover:bg-white/[0.08] hover:text-white"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de edicao de JOGADOR (nome / posicao / overall) — persiste e viaja no build. */}
       {editingPlayer && (

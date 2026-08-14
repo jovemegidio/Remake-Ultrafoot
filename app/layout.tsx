@@ -46,8 +46,8 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "ULTRAFOOT 26 — Football Manager",
-  description: "Simulador de futebol brasileiro com visual premium estilo EA FC. Gerencie seu clube, contrate jogadores e conquiste titulos.",
+  title: "Ultrafoot 3.0 — Mundo Vivo e Dia de Jogo",
+  description: "Simulador de gestão de futebol com mundo persistente, decisões reais no dia de jogo e ligas auditáveis.",
   generator: "v0.app",
   keywords: ["football manager", "futebol", "brasileiro", "simulador", "EA FC", "ultrafoot"],
 }

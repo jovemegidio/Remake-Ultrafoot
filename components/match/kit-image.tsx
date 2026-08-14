@@ -96,10 +96,14 @@ export function KitImage({ team, variant }: { team: Team; variant: KitVariant })
     // motivo de TeamCrest e PlayerAvatar escutarem este evento). O evento nao
     // traz `key`, entao cai no ramo que atualiza qualquer clube.
     window.addEventListener("ultrafoot:elencos:atualizados", refresh)
+    // Uniforme salvo no banco chega primeiro como referencia e vira blob URL
+    // depois da leitura assíncrona do AppData.
+    window.addEventListener("ultrafoot:imagem:pronta", refresh)
     return () => {
       window.removeEventListener("ultrafoot:store:ready", refresh)
       window.removeEventListener("ultrafoot:team:changed", refresh)
       window.removeEventListener("ultrafoot:elencos:atualizados", refresh)
+      window.removeEventListener("ultrafoot:imagem:pronta", refresh)
     }
   }, [team.file_key])
 

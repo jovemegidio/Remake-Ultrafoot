@@ -6,7 +6,7 @@ import { getClubFacts } from "@/lib/club-facts"
 import { getTeamStadiumBackground } from "@/lib/pre-match-bg"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { ChevronLeft, ChevronRight, User, Play, Check, Trophy, Award, Globe, Building2, CornerDownLeft, ArrowLeft, Shuffle, Repeat } from "lucide-react"
+import { ChevronLeft, ChevronRight, User, Play, Check, Trophy, Award, Globe, Building2, CornerDownLeft, ArrowLeft, Shuffle, Repeat, Settings2, X } from "lucide-react"
 import {
   serieATeams,
   serieBTeams,
@@ -55,6 +55,7 @@ import {
   laLiga2Teams,
 } from "@/lib/international-teams"
 import { getLeagueLogo } from "@/lib/league-logos"
+import { useVersaoDoJogo } from "@/lib/versao-do-jogo"
 import { useGameManager } from "@/lib/use-game-manager"
 import { listCareerSaves } from "@/lib/save-system"
 import { contaLogada } from "@/lib/conta-ultrafoot"
@@ -70,8 +71,28 @@ import { NumeroQueConta } from "@/components/novo-jogo/numero-que-conta"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { carregarElencosDoPool } from "@/lib/pool-elencos"
+import { carregarElencosReaisTM } from "@/lib/elencos-reais-tm"
+import qualidadeDasLigas from "@/data/seeds/qualidade-das-ligas.json"
 import { flushPersistentStore } from "@/lib/persistent-store"
 import { UEFA_EXPANSION_FEDERATIONS } from "@/lib/uefa-expansion"
+import { criarEstadoGestao282, type ModoDeMundo } from "@/lib/gestao-282"
+import { CONFIGURACOES_INICIAIS_283, resolverPerfilDesempenho283, type ConfiguracoesIniciais283 } from "@/lib/configuracoes-iniciais-283"
+import { applyPerformanceProfile } from "@/components/performance-profile"
+import {
+  iniciarRodada, MAXIMO_DE_TECNICOS, validarTecnicos, type TecnicoDoSave,
+} from "@/lib/tecnicos-do-save"
+import {
+  PERFIL_TREINADOR_26_PADRAO,
+  criarPerfilTreinador26,
+  efeitosIniciaisPerfil26,
+  type AreaAnterior26,
+  type EstiloTreinador26,
+  type LicencaTreinador26,
+  type NivelComoJogador26,
+  type PersonalidadeTreinador26,
+  type RelevanciaAnterior26,
+} from "@/lib/manager-profile-26"
 
 const FLAG_MAP: Record<string, string> = {
   BRA: "br", ENG: "gb-eng", ESP: "es", ITA: "it",
@@ -79,8 +100,45 @@ const FLAG_MAP: Record<string, string> = {
   MEX: "mx", KSA: "sa", NED: "nl", SCO: "gb-sct",
   TUR: "tr", BEL: "be", RUS: "ru", ARG: "ar",
   COL: "co", CHI: "cl", URU: "uy", JPN: "jp",
-  KOR: "kr", CHN: "cn",
+  KOR: "kr", CHN: "cn", PER: "pe", BOL: "bo",
+  PAR: "py", VEN: "ve", GRE: "gr", DEN: "dk",
+  CZE: "cz", AZE: "az", NOR: "no", CYP: "cy", KAZ: "kz",
 }
+
+/**
+ * Explicações escritas à mão para os casos em que a liga NÃO tem acesso por
+ * decisão do futebol real — não por falta de dado. As duas coisas apareciam
+ * iguais na tela e não são a mesma coisa: a MLS não rebaixa ninguém na vida
+ * real; a J-League rebaixa e o jogo é que não traz a J2.
+ */
+const PYRAMID_SCOPE_291: Partial<Record<Divisao, string>> = {
+  mls: "Liga fechada: não há acesso ou rebaixamento, como no futebol norte-americano.",
+  liga_mx: "Acesso e rebaixamento suspensos; a divisão inferior não entra nesta carreira.",
+  j_league: "A segunda divisão ainda não está disponível como liga jogável nesta base.",
+  premyer_liqa_aze: "A divisão inferior ainda não está disponível como liga jogável nesta base.",
+  premier_liga_kaz: "A divisão inferior ainda não está disponível como liga jogável nesta base.",
+}
+
+/**
+ * QUALIDADE MEDIDA DA LIGA (gerada por scripts/gerar-qualidade-das-ligas.ts).
+ *
+ * Antes desta versão o mapa acima cobria CINCO ligas escolhidas à mão, enquanto
+ * a medição de 11/08/2026 achou **37 ligas jogáveis que não sobem nem descem** e
+ * **480 clubes com menos de 18 atletas de fonte real** (320 sem nenhum). O jogo
+ * preenchia o buraco com atleta gerado e a tela não dizia nada — quem escolhia a
+ * liga só descobria depois de começar a carreira.
+ *
+ * Enquanto os elencos não são importados (é trabalho de dado, não de código), a
+ * tela ao menos não promete o que não tem.
+ */
+const QUALIDADE_DAS_LIGAS = qualidadeDasLigas as Record<string, {
+  clubes: number
+  clubesComElencoReal: number
+  elenco: "real" | "parcial" | "generico"
+  piramide: "viva" | "ponta" | "isolada"
+  sobe: number
+  desce: number
+}>
 
 function getFlagUrl(code: string) {
   const key = FLAG_MAP[code] || code.toLowerCase()
@@ -125,6 +183,10 @@ const CORE_COUNTRIES: CountryTab[] = [
     leagues: [
       { key: "premier_league", label: "Premier League", short: "Premier League", teams: premierLeagueTeams },
       { key: "championship", label: "Championship", short: "Championship", teams: championshipTeams },
+      { key: "league_one_eng", label: "League One", short: "League One", teams: [], doPool: true },
+      { key: "league_two_eng", label: "League Two", short: "League Two", teams: [], doPool: true },
+      { key: "national_league_eng", label: "National League", short: "National League", teams: [], doPool: true },
+      { key: "national_league_ns_eng", label: "National League North/South", short: "National N/S", teams: [], doPool: true },
     ],
   },
   {
@@ -132,6 +194,8 @@ const CORE_COUNTRIES: CountryTab[] = [
     leagues: [
       { key: "la_liga", label: "La Liga", short: "La Liga", teams: laLigaTeams },
       { key: "la_liga_2", label: "La Liga 2", short: "La Liga 2", teams: laLiga2Teams },
+      { key: "primera_federacion_esp", label: "Primera Federacion", short: "Primera Fed.", teams: [], doPool: true },
+      { key: "segunda_federacion_esp", label: "Segunda Federacion", short: "Segunda Fed.", teams: [], doPool: true },
     ],
   },
   {
@@ -146,6 +210,7 @@ const CORE_COUNTRIES: CountryTab[] = [
     leagues: [
       { key: "bundesliga", label: "Bundesliga", short: "Bundesliga", teams: bundesligaTeams },
       { key: "bundesliga_2", label: "2. Bundesliga", short: "2. Bundesliga", teams: bundesliga2Teams },
+      { key: "dritte_liga_ger", label: "3. Liga", short: "3. Liga", teams: [], doPool: true },
     ],
   },
   {
@@ -153,6 +218,7 @@ const CORE_COUNTRIES: CountryTab[] = [
     leagues: [
       { key: "ligue_1", label: "Ligue 1", short: "Ligue 1", teams: ligue1Teams },
       { key: "ligue_2", label: "Ligue 2", short: "Ligue 2", teams: ligue2Teams },
+      { key: "national_fra", label: "Championnat National", short: "National", teams: [], doPool: true },
     ],
   },
   {
@@ -160,6 +226,8 @@ const CORE_COUNTRIES: CountryTab[] = [
     leagues: [
       { key: "primeira_liga", label: "Primeira Liga", short: "Primeira Liga", teams: primeiraLigaTeams },
       { key: "liga_portugal_2", label: "Liga Portugal 2", short: "Liga 2", teams: [], doPool: true },
+      { key: "liga_3_por", label: "Liga 3", short: "Liga 3", teams: [], doPool: true },
+      { key: "campeonato_portugal", label: "Campeonato de Portugal", short: "Campeonato", teams: [], doPool: true },
     ],
   },
   {
@@ -174,6 +242,8 @@ const CORE_COUNTRIES: CountryTab[] = [
     leagues: [
       { key: "scottish_prem", label: "Scottish Premiership", short: "Scottish Prem", teams: scottishPremTeams },
       { key: "scottish_champ", label: "Scottish Championship", short: "Championship", teams: [], doPool: true },
+      { key: "scottish_league_one", label: "Scottish League One", short: "League One", teams: [], doPool: true },
+      { key: "scottish_league_two", label: "Scottish League Two", short: "League Two", teams: [], doPool: true },
     ],
   },
   {
@@ -181,6 +251,7 @@ const CORE_COUNTRIES: CountryTab[] = [
     leagues: [
       { key: "super_lig", label: "Super Lig", short: "Super Lig", teams: superLigTeams },
       { key: "tff_1_lig", label: "TFF 1. Lig", short: "1. Lig", teams: [], doPool: true },
+      { key: "tff_2_lig", label: "TFF 2. Lig", short: "2. Lig", teams: [], doPool: true },
     ],
   },
   {
@@ -188,6 +259,7 @@ const CORE_COUNTRIES: CountryTab[] = [
     leagues: [
       { key: "pro_league_bel", label: "Belgian Pro League", short: "Pro League", teams: proLeagueBelTeams },
       { key: "challenger_pro", label: "Challenger Pro League", short: "Challenger", teams: [], doPool: true },
+      { key: "first_national_bel", label: "Belgian National Division 1", short: "National 1", teams: [], doPool: true },
     ],
   },
   {
@@ -293,7 +365,57 @@ const EXPANSION_COUNTRIES: CountryTab[] = UEFA_EXPANSION_FEDERATIONS
       })),
   }))
 
-const COUNTRIES: CountryTab[] = [...CORE_COUNTRIES, ...EXPANSION_COUNTRIES]
+/**
+ * Países que já possuíam clubes, competição e pirâmide, mas não apareciam na
+ * criação de carreira. As equipes são resolvidas do catálogo no momento da
+ * hidratação para respeitar atualização de elenco e edição do usuário.
+ */
+const CATALOG_COUNTRIES: CountryTab[] = [
+  { name: "Peru", code: "PER", region: "americas", leagues: [
+    { key: "primera_div_per", label: "Liga 1 do Peru", short: "Liga 1", teams: [], doPool: true },
+    { key: "liga_2_per", label: "Liga 2 do Peru", short: "Liga 2", teams: [], doPool: true },
+  ] },
+  { name: "Bolivia", code: "BOL", region: "americas", leagues: [
+    { key: "primera_div_bol", label: "Division Profesional", short: "Division Profesional", teams: [], doPool: true },
+    { key: "copa_simon_bolivar", label: "Copa Simon Bolivar", short: "Simon Bolivar", teams: [], doPool: true },
+  ] },
+  { name: "Paraguai", code: "PAR", region: "americas", leagues: [
+    { key: "primera_div_par", label: "Division de Honor", short: "Primera", teams: [], doPool: true },
+    { key: "division_intermedia_par", label: "Division Intermedia", short: "Intermedia", teams: [], doPool: true },
+  ] },
+  { name: "Venezuela", code: "VEN", region: "americas", leagues: [
+    { key: "primera_div_ven", label: "Liga FUTVE 1", short: "FUTVE 1", teams: [], doPool: true },
+    { key: "liga_futve_2", label: "Liga FUTVE 2", short: "FUTVE 2", teams: [], doPool: true },
+  ] },
+  { name: "Grecia", code: "GRE", region: "europa", leagues: [
+    { key: "super_league_gre", label: "Super League Greece", short: "Super League", teams: [], doPool: true },
+    { key: "super_league_2_gre", label: "Super League Greece 2", short: "Super League 2", teams: [], doPool: true },
+  ] },
+  { name: "Dinamarca", code: "DEN", region: "europa", leagues: [
+    { key: "superliga_den", label: "3F Superliga", short: "Superliga", teams: [], doPool: true },
+    { key: "betinia_liga", label: "Betinia Liga", short: "Betinia Liga", teams: [], doPool: true },
+  ] },
+  { name: "Chequia", code: "CZE", region: "europa", leagues: [
+    { key: "fortuna_liga_cze", label: "Chance Liga", short: "Chance Liga", teams: [], doPool: true },
+    { key: "chance_narodni_liga", label: "Chance Narodni Liga", short: "Narodni Liga", teams: [], doPool: true },
+  ] },
+  { name: "Azerbaijao", code: "AZE", region: "europa", leagues: [
+    { key: "premyer_liqa_aze", label: "Misli Premyer Liqasi", short: "Premyer Liqa", teams: [], doPool: true },
+  ] },
+  { name: "Noruega", code: "NOR", region: "europa", leagues: [
+    { key: "eliteserien_nor", label: "Eliteserien", short: "Eliteserien", teams: [], doPool: true },
+    { key: "obos_ligaen", label: "OBOS-ligaen", short: "OBOS-ligaen", teams: [], doPool: true },
+  ] },
+  { name: "Chipre", code: "CYP", region: "europa", leagues: [
+    { key: "protathlima_cyp", label: "Cyprus League", short: "Cyprus League", teams: [], doPool: true },
+    { key: "second_div_cyp", label: "Cyprus Second Division", short: "Second Division", teams: [], doPool: true },
+  ] },
+  { name: "Cazaquistao", code: "KAZ", region: "europa", leagues: [
+    { key: "premier_liga_kaz", label: "Kazakhstan Premier League", short: "Premier Liga", teams: [], doPool: true },
+  ] },
+]
+
+const COUNTRIES: CountryTab[] = [...CORE_COUNTRIES, ...CATALOG_COUNTRIES, ...EXPANSION_COUNTRIES]
 
 // Fundo trocado a pedido do usuario (2026-07-20): foto in-game 7.
 const STADIUM_BG = "/images/pre-jogo/in-game-7.webp"
@@ -301,6 +423,7 @@ const STADIUM_BG = "/images/pre-jogo/in-game-7.webp"
 export default function NovoJogoPage() {
   const { initializeNewGame } = useGameManager()
   const { registrado } = useJogoRegistrado()
+  const versaoDoJogo = useVersaoDoJogo()
   const [limiteDeSaves, setLimiteDeSaves] = useState(false)
   const { setTheme, setTeamColors } = useTheme()
 
@@ -360,6 +483,28 @@ export default function NovoJogoPage() {
   }, [])
   const [careerStart, setCareerStart] = useState<"professional" | "sub20">("professional")
   const [debtPreset, setDebtPreset] = useState<DebtPreset>("none")
+  const [modoDeMundo, setModoDeMundo] = useState<ModoDeMundo>("original")
+  const [showInitialSettings, setShowInitialSettings] = useState(false)
+  const [configuracoes283, setConfiguracoes283] = useState<ConfiguracoesIniciais283>(CONFIGURACOES_INICIAIS_283)
+  const [managerProfile26, setManagerProfile26] = useState(PERFIL_TREINADOR_26_PADRAO)
+  const atualizarPerfil26 = useCallback((patch: Partial<Pick<typeof managerProfile26, "nivelComoJogador" | "areaAnterior" | "relevanciaAnterior" | "licenca" | "estilos" | "personalidades">>) => {
+    setManagerProfile26(atual => criarPerfilTreinador26({
+      nivelComoJogador: patch.nivelComoJogador ?? atual.nivelComoJogador,
+      areaAnterior: patch.areaAnterior ?? atual.areaAnterior,
+      relevanciaAnterior: patch.relevanciaAnterior ?? atual.relevanciaAnterior,
+      licenca: patch.licenca ?? atual.licenca,
+      estilos: patch.estilos ?? atual.estilos,
+      personalidades: patch.personalidades ?? atual.personalidades,
+    }))
+  }, [])
+  const alternarEstilo26 = useCallback((estilo: EstiloTreinador26) => {
+    const atuais = managerProfile26.estilos
+    atualizarPerfil26({ estilos: atuais.includes(estilo) ? atuais.filter(item => item !== estilo) : atuais.length < 3 ? [...atuais, estilo] : atuais })
+  }, [managerProfile26.estilos, atualizarPerfil26])
+  const alternarPersonalidade26 = useCallback((personalidade: PersonalidadeTreinador26) => {
+    const atuais = managerProfile26.personalidades
+    atualizarPerfil26({ personalidades: atuais.includes(personalidade) ? atuais.filter(item => item !== personalidade) : atuais.length < 2 ? [...atuais, personalidade] : atuais })
+  }, [managerProfile26.personalidades, atualizarPerfil26])
   const [nameError, setNameError] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
 
@@ -393,6 +538,152 @@ export default function NovoJogoPage() {
   const activeLeague = activeCountry.leagues[Math.min(leagueIndex, activeCountry.leagues.length - 1)]
   const teams = activeLeague.teams
   const selectedTeam = teams[teamIndex]
+
+  // ── TÉCNICOS CONVIDADOS (multitécnico estilo Brasfoot) ───────────────────
+  //
+  // Um save, um mundo, até oito pessoas comandando clubes diferentes dentro
+  // dele. O anfitrião é quem está escolhendo o time aqui; os convidados entram
+  // nesta lista.
+  //
+  // ⚠️ A validação roda na CRIAÇÃO porque é a única hora barata de barrar dois
+  // técnicos no mesmo clube. Depois de a carreira existir, dois humanos no
+  // mesmo registro seriam dois elencos titulares e dois caixas disputando o
+  // mesmo clube — não é uma variante do modo, é um mundo incoerente.
+  const [convidados, setConvidados] = useState<TecnicoDoSave[]>([])
+
+  // ── O CONVIDADO ESCOLHE NA MESMA TELA QUE O ANFITRIÃO ─────────────────────
+  //
+  // Antes o convidado tinha um `<select>` com os clubes da liga em que o
+  // anfitrião por acaso estava. Isso decidia por ele duas coisas que são dele:
+  // o país e a divisão. Agora ele entra NESTA tela — escudo, uniforme, estádio,
+  // elenco, tudo — e escolhe como qualquer um.
+  //
+  // ⚠️ É a MESMA tela, e não uma cópia. Uma segunda tela de escolha nasceria
+  // desatualizada na primeira vez que esta ganhasse um campo, e o convidado
+  // passaria a escolher com menos informação do que o anfitrião — que é
+  // exatamente o que se quer evitar.
+  const [escolhaDeConvidado, setEscolhaDeConvidado] = useState<{
+    /** Índice em `convidados`, ou `null` quando é um técnico novo. */
+    indice: number | null
+    nome: string
+    /** Onde o anfitrião estava, para a tela dele voltar intacta. */
+    voltarPara: { pais: number; liga: number; time: number }
+  } | null>(null)
+  const escolhendoConvidado = escolhaDeConvidado !== null
+
+  /**
+   * O clube do ANFITRIÃO.
+   *
+   * ⚠️ Não é `selectedTeam` enquanto um convidado escolhe: aí os índices da tela
+   * são os DELE. O clube do anfitrião fica onde a tela estava quando ele passou
+   * a vez, guardado em `voltarPara`.
+   */
+  const posicaoDoAnfitriao = escolhaDeConvidado?.voltarPara
+    ?? { pais: countryIndex, liga: leagueIndex, time: teamIndex }
+  const anfitriao = useMemo(() => {
+    const pais = paises[Math.min(posicaoDoAnfitriao.pais, paises.length - 1)]
+    const liga = pais.leagues[Math.min(posicaoDoAnfitriao.liga, pais.leagues.length - 1)]
+    return { time: liga.teams[posicaoDoAnfitriao.time], liga, pais }
+  }, [paises, posicaoDoAnfitriao.pais, posicaoDoAnfitriao.liga, posicaoDoAnfitriao.time])
+
+  const tecnicosDaMesa = useMemo<TecnicoDoSave[]>(() => [
+    {
+      id: "tecnico-1",
+      nome: managerName.trim() || "Técnico",
+      clubeCurto: anfitriao.time?.curto ?? null,
+      clubeFileKey: anfitriao.time?.file_key,
+      clubeNome: anfitriao.time?.nome,
+      ligaLabel: anfitriao.liga.label,
+      paisNome: anfitriao.pais.name,
+      tipo: "humano",
+    },
+    ...convidados,
+  ], [managerName, anfitriao, convidados])
+  const errosDosTecnicos = useMemo(
+    () => (convidados.length ? validarTecnicos(tecnicosDaMesa) : []),
+    [convidados.length, tecnicosDaMesa],
+  )
+
+  /** Clubes já tomados por outra pessoa da mesa — um clube, um técnico. */
+  const clubesOcupados = useMemo(() => {
+    const tomados = new Set<string>()
+    const doAnfitriao = anfitriao.time?.file_key ?? anfitriao.time?.curto
+    if (doAnfitriao) tomados.add(doAnfitriao)
+    convidados.forEach((tec, i) => {
+      if (escolhaDeConvidado?.indice === i) return // o próprio, trocando de clube
+      const chave = tec.clubeFileKey ?? tec.clubeCurto
+      if (chave) tomados.add(chave)
+    })
+    return tomados
+  }, [anfitriao.time, convidados, escolhaDeConvidado?.indice])
+
+  const clubeJaOcupado = Boolean(
+    escolhendoConvidado && selectedTeam
+    && clubesOcupados.has(selectedTeam.file_key ?? selectedTeam.curto),
+  )
+
+  /** Abre a tela de escolha para um convidado (novo, ou trocando de clube). */
+  const escolherClubeDoConvidado = useCallback((indice: number | null, nome: string) => {
+    setEscolhaDeConvidado({
+      indice, nome,
+      voltarPara: { pais: countryIndex, liga: leagueIndex, time: teamIndex },
+    })
+    setShowInitialSettings(false)
+  }, [countryIndex, leagueIndex, teamIndex])
+
+  /** Devolve a tela ao anfitrião, exatamente onde ele a deixou. */
+  const voltarParaOAnfitriao = useCallback(() => {
+    setEscolhaDeConvidado(atual => {
+      if (atual) {
+        setCountryIndex(atual.voltarPara.pais)
+        setLeagueIndex(atual.voltarPara.liga)
+        setTeamIndex(atual.voltarPara.time)
+      }
+      return null
+    })
+    setShowInitialSettings(true)
+  }, [])
+
+  const confirmarClubeDoConvidado = useCallback(() => {
+    if (!escolhaDeConvidado || !selectedTeam || clubeJaOcupado) return
+    const dados = {
+      nome: escolhaDeConvidado.nome,
+      clubeCurto: selectedTeam.curto,
+      // ⚠️ O `file_key` é a identidade que importa: `curto` se repete entre
+      // países, e agora o convidado pode estar em qualquer um deles.
+      clubeFileKey: selectedTeam.file_key,
+      clubeNome: selectedTeam.nome,
+      ligaLabel: activeLeague.label,
+      paisNome: activeCountry.name,
+      tipo: "humano" as const,
+    }
+    setConvidados(lista => escolhaDeConvidado.indice === null
+      ? [...lista, { id: `tecnico-${lista.length + 2}`, ...dados }]
+      : lista.map((t, i) => (i === escolhaDeConvidado.indice ? { ...t, ...dados } : t)))
+    voltarParaOAnfitriao()
+  }, [escolhaDeConvidado, selectedTeam, clubeJaOcupado, activeLeague.label, activeCountry.name, voltarParaOAnfitriao])
+  const [squadQuality, setSquadQuality] = useState<{ total: number; sourced: number; provisional: number; status: "verificado" | "complementado" | "provisorio" } | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    setSquadQuality(null)
+    if (!selectedTeam) return
+    // A procedência é informativa e não deve atrasar o primeiro desenho. O
+    // módulo pesado de atletas só é solicitado depois que a escolha estabiliza.
+    const timer = window.setTimeout(() => {
+      void import("@/lib/players-data").then(({ getPlayersForTeam }) => {
+        if (cancelled) return
+        const squad = getPlayersForTeam(selectedTeam, { raw: true })
+        const provisional = squad.filter(player => player.generatedOrigin === "provisional").length
+        setSquadQuality({
+          total: squad.length,
+          sourced: squad.length - provisional,
+          provisional,
+          status: provisional === 0 && squad.length >= 18 ? "verificado" : provisional < 6 ? "complementado" : "provisorio",
+        })
+      })
+    }, 180)
+    return () => { cancelled = true; window.clearTimeout(timer) }
+  }, [selectedTeam])
 
   // Dados de perfil do clube, derivados de forma deterministica (estaveis por time)
   // Modal com a FOTO real do estádio (acervo de 1785 fotos, por nome do clube).
@@ -486,6 +777,15 @@ export default function NovoJogoPage() {
 
   const handleStart = useCallback(async () => {
     if (!selectedTeam) return
+    // ⚠️ A trava vale para TODO caminho de "começar" (botão, Enter, gamepad),
+    // por isso vive aqui e não em cada um deles.
+    //
+    // Mesa inválida não vira carreira: depois de criada, não há conserto barato.
+    if (escolhendoConvidado) return
+    if (errosDosTecnicos.length > 0) {
+      setShowInitialSettings(true)
+      return
+    }
     if (managerName.trim().length === 0) {
       setNameError(true)
       // foca o input para o usuario digitar o nome
@@ -507,16 +807,35 @@ export default function NovoJogoPage() {
       managerName: managerName.trim(),
       createdAt: Date.now(),
     }))
+    // ⚠️ ESPERA OBRIGATÓRIA. Os elencos do pool (7,91 MB) passaram a chegar sob
+    // demanda para tirar o seed do chunk de toda rota. Criar a carreira com eles
+    // frios não dá erro nenhum: dá clube inteiro com atleta GERADO no lugar do
+    // licenciado — e isso vai para o save, para sempre. Ver `lib/pool-elencos.ts`.
+    await Promise.all([carregarElencosDoPool(), carregarElencosReaisTM()])
     setTeamColors({ primary: selectedTeam.cor1, secondary: selectedTeam.cor2 })
     setTheme("team")
+    // "user" trava o detector automático: a escolha do jogador manda a partir daqui.
+    applyPerformanceProfile(resolverPerfilDesempenho283(configuracoes283.perfilDesempenho), "user")
+    const efeitosDoPerfil = efeitosIniciaisPerfil26(managerProfile26)
     initializeNewGame(selectedTeam.curto, managerName, {
+      // Só grava a lista quando há mais de um: um save de técnico único fica
+      // exatamente como sempre foi, e `tecnicosDoSave` o lê como lista de um.
+      ...(convidados.length > 0 ? {
+        tecnicos: tecnicosDaMesa,
+        tecnicoAtivoId: tecnicosDaMesa[0].id,
+        rodadaCompartilhada: iniciarRodada(0),
+      } : {}),
+      gestao282: criarEstadoGestao282(modoDeMundo),
+      configuracoesIniciais283: configuracoes283,
+      managerProfile26,
+      ...efeitosDoPerfil,
       youthCareer: undefined,
       debt: createClubDebt(debtPreset, profile?.clubValue ?? 100_000_000),
       scoutingDepartment: createScoutingDepartment(),
       stadiumPitch: createStadiumPitch(selectedTeam.prestigio, 2026),
       sponsorOffers: generateOffers(selectedTeam.prestigio, 1),
       activeSponsors: [],
-    })
+    }, selectedTeam.file_key)
     window.sessionStorage.setItem("ultrafoot:session-active", "true")
     // Cutscene de início de carreira REMOVIDA (pedido): vai DIRETO ao escritório.
     // Ainda aguardamos o plugin-store persistir — sem isso, o reload da WebView
@@ -527,7 +846,7 @@ export default function NovoJogoPage() {
       new Promise<void>(resolve => window.setTimeout(resolve, 5000)),
     ])
     hardNavigate("/?career=1")
-  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme, careerStart, debtPreset, profile])
+  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme, careerStart, debtPreset, profile, modoDeMundo, configuracoes283, managerProfile26, convidados.length, tecnicosDaMesa, errosDosTecnicos.length, escolhendoConvidado])
 
   const isNameValid = managerName.trim().length > 0
 
@@ -573,17 +892,20 @@ export default function NovoJogoPage() {
         case "ArrowRight": nextTeam(); break
         case "ArrowUp": prevCountry(); break
         case "ArrowDown": nextCountry(); break
-        case "Enter": handleStart(); break
+        // ⚠️ Com um convidado escolhendo, Enter NÃO pode iniciar a carreira: o
+        // anfitrião ainda nem voltou à tela dele, e a mesa começaria sem o clube
+        // que essa pessoa está no meio de escolher.
+        case "Enter": if (escolhendoConvidado) confirmarClubeDoConvidado(); else handleStart(); break
         // Esc NÃO volta mais à splash (relato: expulsava do seletor). Fecha o
         // modal da foto do estádio quando aberto; senão é no-op. Sair do
         // seletor fica no Backspace e no botão Voltar.
         case "Escape": setShowStadiumPhoto(false); break
-        case "Backspace": hardNavigate("/splash"); break
+        case "Backspace": if (escolhendoConvidado) voltarParaOAnfitriao(); else hardNavigate("/splash"); break
       }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleStart, prevTeam, nextTeam, prevCountry, nextCountry])
+  }, [handleStart, prevTeam, nextTeam, prevCountry, nextCountry, escolhendoConvidado, confirmarClubeDoConvidado, voltarParaOAnfitriao])
 
   useEffect(() => {
     const handleGamepadButton = (e: Event) => {
@@ -606,6 +928,7 @@ export default function NovoJogoPage() {
   }, [handleStart, prevTeam, nextTeam, prevCountry, nextCountry, prevLeague, nextLeague, selectRandomTeam])
 
   const leagueLogo = getLeagueLogo(activeLeague.key)
+  const qualidadeDaLiga = QUALIDADE_DAS_LIGAS[activeLeague.key]
   // Avaliacao em estrelas com suporte a meia-estrela (passos de 0.5)
   const ratingHalf = Math.max(0, Math.min(5, Math.round(((selectedTeam?.prestigio || 50) / 20) * 2) / 2))
   const cor1 = selectedTeam?.cor1 || "#10b981"
@@ -684,6 +1007,32 @@ export default function NovoJogoPage() {
 
       <div className="relative z-10 h-full flex flex-col">
 
+        {/* ── QUEM ESTÁ ESCOLHENDO AGORA ────────────────────────────────────
+            A tela é a mesma do anfitrião, então ela precisa dizer de quem é a
+            vez — sem isto o convidado escolheria achando que está mexendo no
+            time do dono da carreira. */}
+        {escolhaDeConvidado && (
+          <div className="shrink-0 border-b border-[var(--brand)]/25 bg-[var(--brand)]/[0.08] px-4 sm:px-8 py-2.5">
+            <div className="mx-auto flex max-w-[1480px] flex-wrap items-center gap-3">
+              <span className="rounded-md bg-[var(--brand)]/20 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-[var(--brand)]">
+                Técnico {(escolhaDeConvidado.indice ?? convidados.length) + 2} de {MAXIMO_DE_TECNICOS}
+              </span>
+              <input
+                value={escolhaDeConvidado.nome}
+                onChange={e => setEscolhaDeConvidado(a => (a ? { ...a, nome: e.target.value } : a))}
+                placeholder="Nome de quem vai comandar..."
+                maxLength={24}
+                className="h-9 w-56 rounded-lg border border-white/15 bg-black/45 px-3 text-sm text-white placeholder:text-white/30"
+              />
+              <span className="text-xs text-white/60">
+                Escolha o país, a liga e o clube. O mundo é o mesmo do
+                <strong className="text-white/80"> {managerName.trim() || "anfitrião"}</strong> —
+                só o clube é seu.
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* ── Conteudo principal: 4 zonas (estilo EA FC) ── */}
         <div className="flex-1 flex items-center justify-center px-4 sm:px-8 overflow-y-auto py-6">
           <div className="flex flex-col lg:flex-row items-stretch justify-center gap-3 lg:gap-4 w-full max-w-[1480px]">
@@ -739,6 +1088,35 @@ export default function NovoJogoPage() {
               <h1 className="text-[2.1rem] sm:text-[2.5rem] font-black uppercase tracking-[-0.02em] text-white leading-[0.95] text-balance">
                 {selectedTeam?.nome}
               </h1>
+              {squadQuality && (
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white/60" title={`${squadQuality.sourced} atletas provenientes da base e ${squadQuality.provisional} complementos provisórios`}>
+                  <span className={cn("h-2 w-2 rounded-full", squadQuality.status === "verificado" ? "bg-emerald-400" : squadQuality.status === "complementado" ? "bg-amber-300" : "bg-orange-500")} />
+                  Elenco {squadQuality.status === "verificado" ? "verificado" : squadQuality.status === "complementado" ? "complementado" : "provisório"}
+                  <span className="text-white/35">{squadQuality.sourced}/{squadQuality.total} da base</span>
+                </div>
+              )}
+              {qualidadeDaLiga && (qualidadeDaLiga.elenco !== "real" || qualidadeDaLiga.piramide !== "viva") && (
+                <div className="mt-2 max-w-sm space-y-1 rounded-lg border border-sky-400/15 bg-sky-400/[0.06] px-3 py-2 text-[10px] leading-relaxed text-sky-100/65">
+                  {qualidadeDaLiga.piramide !== "viva" && (
+                    <p>
+                      Pirâmide da liga:{" "}
+                      {PYRAMID_SCOPE_291[activeLeague.key] ?? (
+                        qualidadeDaLiga.piramide === "isolada"
+                          ? "sem acesso nem rebaixamento nesta base — os clubes desta liga não trocam de divisão."
+                          : qualidadeDaLiga.desce > 0
+                            ? `${qualidadeDaLiga.desce} rebaixados, sem divisão acima para subir.`
+                            : `${qualidadeDaLiga.sobe} promovidos, sem divisão abaixo para cair.`
+                      )}
+                    </p>
+                  )}
+                  {qualidadeDaLiga.elenco !== "real" && (
+                    <p>
+                      Elencos da liga: {qualidadeDaLiga.clubesComElencoReal} de {qualidadeDaLiga.clubes} clubes
+                      {" "}com elenco real completo — os demais entram com atletas gerados.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* ESCUDO — o elemento mais importante da tela, e agora com o
                   tamanho que isso exige. Halo duplo (cor do clube + brilho
@@ -1139,8 +1517,53 @@ export default function NovoJogoPage() {
               <span className="text-white/30 font-mono tabular-nums">{teamIndex + 1} / {teams.length}</span>
             </div>
 
-            {/* Nome do tecnico + iniciar */}
-            <div className="flex items-center gap-3">
+            {/* ESCOLHA DE CONVIDADO: os controles da carreira somem enquanto ele
+                escolhe. Dívida, modo de mundo e nome do anfitrião são decisões
+                da CARREIRA, não do clube dele — deixá-los à mão convidaria o
+                convidado a mexer no que não é dele. */}
+            {escolhaDeConvidado ? (
+              <div className="flex items-center gap-3">
+                {clubeJaOcupado && (
+                  <p className="text-[11px] font-medium text-amber-400">
+                    Este clube já é de outro técnico da mesa.
+                  </p>
+                )}
+                <button
+                  onClick={voltarParaOAnfitriao}
+                  className="h-11 rounded-xl border border-white/15 bg-black/70 px-4 text-[11px] font-bold uppercase text-white/70 hover:bg-white/10"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarClubeDoConvidado}
+                  aria-disabled={clubeJaOcupado || !escolhaDeConvidado.nome.trim()}
+                  className="relative h-11 px-6 rounded-xl font-black text-sm tracking-[0.15em] uppercase text-white transition-all active:scale-[0.97] inline-flex items-center gap-2"
+                  style={{
+                    background: `linear-gradient(135deg, ${cor1} 0%, ${cor2} 100%)`,
+                    boxShadow: `0 6px 22px ${cor1}45`,
+                    opacity: clubeJaOcupado || !escolhaDeConvidado.nome.trim() ? 0.55 : 1,
+                    filter: clubeJaOcupado || !escolhaDeConvidado.nome.trim() ? "grayscale(0.4)" : "none",
+                  }}
+                >
+                  <Check className="h-4 w-4" />
+                  Confirmar clube
+                </button>
+              </div>
+            ) : (
+            /* Nome do tecnico + iniciar */
+            /* ⚠️ ESTA LINHA IMPEDIA COMEÇAR UMA CARREIRA NO CELULAR. São cinco
+               controles em fila (configurações, modo de mundo, dívida, nome e o
+               botão de iniciar): 709px medidos numa faixa de 365px. O rodapé de
+               fora já tinha `flex-wrap`, mas quebra de linha só acontece ENTRE os
+               filhos — este filho é um só, e um só não quebra: passava direto da
+               borda levando junto o campo do nome e o botão de começar. */
+            <div className="flex flex-wrap items-center justify-center gap-3 md:flex-nowrap md:justify-end">
+              <button onClick={() => setShowInitialSettings(true)} className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/80 hover:bg-white/10 inline-flex items-center gap-2">
+                <Settings2 className="h-4 w-4" /> Configurações iniciais
+              </button>
+              <select value={modoDeMundo} onChange={event => setModoDeMundo(event.target.value as ModoDeMundo)} aria-label="Modo do mundo" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
+                <option value="original">Original</option><option value="mundo_real">Mundo Real</option><option value="seu_mundo">Seu Mundo</option>
+              </select>
               {/* O botão "Profissional" saiu daqui: era um seletor de UMA opção
                   só — `careerStart` nunca deixava de ser "professional", já que
                   não havia botão para o sub-20. Um controle que não controla
@@ -1194,10 +1617,145 @@ export default function NovoJogoPage() {
                 Iniciar carreira
               </button>
             </div>
+            )}
 
           </div>
         </footer>
       </div>
+
+      {showInitialSettings && (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" onClick={() => setShowInitialSettings(false)}>
+          <section className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#091624] p-5 sm:p-7 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="configuracoes-iniciais-titulo">
+            <div className="flex items-start justify-between gap-4">
+              {/* ⚠️ A versão vem de `useVersaoDoJogo`, não escrita à mão: este
+                  rótulo ficou preso em "1.0.283" por vinte versões, dizendo a
+                  quem criava carreira que o jogo era outro. É exatamente o que
+                  o comentário de `lib/versao-do-jogo.ts` prevê que acontece com
+                  número de versão repetido no código. */}
+              <div><p className="text-xs font-black uppercase tracking-[.25em] text-emerald-400">Ultrafoot {versaoDoJogo}</p><h2 id="configuracoes-iniciais-titulo" className="mt-1 text-2xl font-black text-white">Configurações iniciais</h2><p className="mt-1 text-sm text-white/55">Estas regras ficam vinculadas a esta carreira.</p></div>
+              <button onClick={() => setShowInitialSettings(false)} aria-label="Fechar configurações" className="rounded-xl border border-white/10 p-2 text-white/60 hover:text-white"><X className="h-5 w-5" /></button>
+            </div>
+
+            {/* TÉCNICOS NA MESA. Fica aqui, junto das outras decisões de
+                criação, porque é uma delas — e porque depois de a carreira
+                existir não há como acrescentar alguém sem refazer o mundo. */}
+            <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-white">Técnicos nesta carreira</h3>
+                  <p className="mt-0.5 text-xs text-white/45">
+                    Até {MAXIMO_DE_TECNICOS} pessoas no mesmo mundo, cada uma com seu clube.
+                    A rodada só avança quando todas fecham as decisões.
+                  </p>
+                </div>
+                {/* Leva para a TELA DE ESCOLHA, em vez de acrescentar uma linha
+                    de formulário: escolher clube é escolher país, liga e divisão,
+                    e isso não cabe num `<select>`. */}
+                <button
+                  type="button"
+                  disabled={tecnicosDaMesa.length >= MAXIMO_DE_TECNICOS}
+                  onClick={() => escolherClubeDoConvidado(null, "")}
+                  className="shrink-0 rounded-lg border border-white/15 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-white hover:bg-white/[0.12] disabled:opacity-30"
+                >
+                  + Adicionar técnico
+                </button>
+              </div>
+
+              <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--brand)]/25 bg-[var(--brand)]/[0.06] px-3 py-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--brand)]">Você</span>
+                <span className="text-sm text-white">{managerName.trim() || "Técnico"}</span>
+                <span className="ml-auto text-right text-sm text-white/60">
+                  {anfitriao.time?.nome ?? "—"}
+                  <span className="block text-[10px] text-white/35">{anfitriao.pais.name} · {anfitriao.liga.short}</span>
+                </span>
+              </div>
+
+              {convidados.map((tec, i) => (
+                <div key={tec.id} className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2.5">
+                  <input
+                    value={tec.nome}
+                    onChange={e => setConvidados(c => c.map((t, j) => j === i ? { ...t, nome: e.target.value } : t))}
+                    placeholder={`Nome do técnico ${i + 2}`}
+                    maxLength={24}
+                    className="min-w-[140px] flex-1 rounded-lg border border-white/15 bg-black/35 px-3 py-2 text-sm text-white placeholder:text-white/25"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => escolherClubeDoConvidado(i, tec.nome)}
+                    className="min-w-[170px] flex-1 rounded-lg border border-white/15 bg-black/35 px-3 py-2 text-left text-sm text-white hover:border-[var(--brand)]/50"
+                  >
+                    {tec.clubeNome ?? tec.clubeCurto ?? "Escolher clube…"}
+                    <span className="block text-[10px] text-white/35">
+                      {tec.clubeCurto ? `${tec.paisNome ?? ""} · ${tec.ligaLabel ?? ""}` : "país, liga e clube"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConvidados(c => c.filter((_, j) => j !== i))}
+                    className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/50 hover:border-red-500/40 hover:text-red-400"
+                  >
+                    Remover
+                  </button>
+                </div>
+              ))}
+
+              {errosDosTecnicos.length > 0 && (
+                <ul className="mt-3 space-y-1">
+                  {errosDosTecnicos.map((erro, i) => (
+                    <li key={i} className="text-xs text-red-400">{erro.mensagem}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <ConfigGroup title="Competições nacionais">
+                <ConfigCheck label="Jogar campeonatos estaduais" checked={configuracoes283.jogarEstaduais} onChange={v => setConfiguracoes283(c => ({ ...c, jogarEstaduais: v }))} />
+                <ConfigCheck label="Jogar competições regionais" checked={configuracoes283.jogarRegionais} onChange={v => setConfiguracoes283(c => ({ ...c, jogarRegionais: v }))} />
+              </ConfigGroup>
+              <ConfigGroup title="Competições internacionais">
+                <ConfigCheck label="Competições internacionais de clubes" checked={configuracoes283.jogarInternacionaisClubes} onChange={v => setConfiguracoes283(c => ({ ...c, jogarInternacionaisClubes: v }))} />
+                <ConfigCheck label="Competições e datas de seleções" checked={configuracoes283.jogarInternacionaisSelecoes} onChange={v => setConfiguracoes283(c => ({ ...c, jogarInternacionaisSelecoes: v }))} />
+              </ConfigGroup>
+              <ConfigGroup title="Sistema de salários">
+                <ConfigRadio label="Mensal" checked={configuracoes283.sistemaSalarios === "mensal"} onChange={() => setConfiguracoes283(c => ({ ...c, sistemaSalarios: "mensal" }))} />
+                <ConfigRadio label="Semanal" checked={configuracoes283.sistemaSalarios === "semanal"} onChange={() => setConfiguracoes283(c => ({ ...c, sistemaSalarios: "semanal" }))} />
+              </ConfigGroup>
+              <ConfigGroup title="Força dos jogadores">
+                <ConfigRadio label="Individual — atributos detalhados" checked={configuracoes283.sistemaForca === "individual"} onChange={() => setConfiguracoes283(c => ({ ...c, sistemaForca: "individual" }))} />
+                <ConfigRadio label="Clássico — nota geral" checked={configuracoes283.sistemaForca === "classico"} onChange={() => setConfiguracoes283(c => ({ ...c, sistemaForca: "classico" }))} />
+              </ConfigGroup>
+              <ConfigGroup title="Desempenho do computador">
+                <select value={configuracoes283.perfilDesempenho} onChange={e => setConfiguracoes283(c => ({ ...c, perfilDesempenho: e.target.value as ConfiguracoesIniciais283["perfilDesempenho"] }))} className="w-full rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white">
+                  <option value="automatico">Automático (recomendado)</option><option value="economico">Econômico</option><option value="equilibrado">Equilibrado</option><option value="qualidade">Qualidade máxima</option>
+                </select>
+              </ConfigGroup>
+              <ConfigGroup title="Temporada de início"><div className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-white">2026 <span className="ml-2 text-white/45">base de dados atual</span></div></ConfigGroup>
+              <div className="md:col-span-2">
+                <ConfigGroup title="Perfil e histórico do treinador — FM26">
+                  <p className="mb-4 text-xs text-white/45">Seu passado altera reputação, atributos iniciais, confiança da diretoria e reação do elenco. Escolha até três estilos e duas características.</p>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                    <label className="grid gap-1 text-xs text-white/55">Carreira como jogador<select value={managerProfile26.nivelComoJogador} onChange={e => atualizarPerfil26({ nivelComoJogador: e.target.value as NivelComoJogador26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="superastro">Superastro</option><option value="profissional">Profissional</option><option value="semiprofissional">Semiprofissional</option><option value="amador">Amador</option><option value="recreativo">Futebol recreativo</option></select></label>
+                    <label className="grid gap-1 text-xs text-white/55">Experiência anterior<select value={managerProfile26.areaAnterior} onChange={e => atualizarPerfil26({ areaAnterior: e.target.value as AreaAnterior26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="treinamento">Treinamento</option><option value="recrutamento">Operações e recrutamento</option><option value="medica">Departamento médico</option><option value="midia">Mídia e análise</option><option value="arbitragem">Arbitragem</option><option value="nenhuma">Nenhuma</option></select></label>
+                    <label className="grid gap-1 text-xs text-white/55">Reconhecimento anterior<select value={managerProfile26.relevanciaAnterior} onChange={e => atualizarPerfil26({ relevanciaAnterior: e.target.value as RelevanciaAnterior26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="internacional">Internacional</option><option value="nacional">Nacional</option><option value="regional">Regional</option><option value="anonimo">Desconhecido</option></select></label>
+                    <label className="grid gap-1 text-xs text-white/55">Licença<select value={managerProfile26.licenca} onChange={e => atualizarPerfil26({ licenca: e.target.value as LicencaTreinador26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="pro">Licença Pro</option><option value="a">Licença A</option><option value="b">Licença B</option><option value="c">Licença C</option><option value="nenhuma">Sem licença</option></select></label>
+                  </div>
+                  <div className="mt-4">
+                    <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/55">Estilos ({managerProfile26.estilos.length}/3)</p>
+                    <div className="flex flex-wrap gap-2">{([["tatico","Tático"],["motivador","Motivador"],["desenvolvedor","Desenvolvedor"],["disciplinador","Disciplinador"],["inovador","Inovador"],["gestor","Gestor"],["recrutador","Recrutador"],["fisico","Preparador físico"],["analista","Analista"]] as [EstiloTreinador26,string][]).map(([id,label]) => <button type="button" key={id} onClick={() => alternarEstilo26(id)} className={`rounded-full border px-3 py-2 text-xs font-bold ${managerProfile26.estilos.includes(id) ? "border-emerald-300 bg-emerald-400/15 text-emerald-200" : "border-white/10 bg-white/5 text-white/45"}`}>{label}</button>)}</div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/55">Personalidade ({managerProfile26.personalidades.length}/2)</p>
+                    <div className="flex flex-wrap gap-2">{([["carismatico","Carismático"],["exigente","Exigente"],["calmo","Calmo"],["ambicioso","Ambicioso"],["leal","Leal"],["pragmatico","Pragmático"]] as [PersonalidadeTreinador26,string][]).map(([id,label]) => <button type="button" key={id} onClick={() => alternarPersonalidade26(id)} className={`rounded-full border px-3 py-2 text-xs font-bold ${managerProfile26.personalidades.includes(id) ? "border-cyan-300 bg-cyan-400/15 text-cyan-200" : "border-white/10 bg-white/5 text-white/45"}`}>{label}</button>)}</div>
+                  </div>
+                  <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">{Object.entries(managerProfile26.atributos).map(([nome, valor]) => <div key={nome} className="rounded-xl bg-black/25 p-3 text-center"><b className="text-lg text-emerald-300">{valor}</b><p className="mt-1 truncate text-[9px] uppercase text-white/35">{nome.replace(/([A-Z])/g, " $1")}</p></div>)}</div>
+                </ConfigGroup>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3"><button onClick={() => { setConfiguracoes283(CONFIGURACOES_INICIAIS_283); setManagerProfile26(PERFIL_TREINADOR_26_PADRAO) }} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white/70">Restaurar padrão</button><button onClick={() => setShowInitialSettings(false)} className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-black text-black">Aplicar à carreira</button></div>
+          </section>
+        </div>
+      )}
 
       {/* Teto de carreiras de quem não registrou. Aparece ANTES de comecar mais
           uma — nunca no meio de carreira nenhuma — e sai daqui por dois caminhos:
@@ -1244,4 +1802,16 @@ export default function NovoJogoPage() {
       )}
     </main>
   )
+}
+
+function ConfigGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return <fieldset className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><legend className="px-1 text-sm font-black uppercase tracking-wide text-amber-300">{title}</legend><div className="mt-2 space-y-3">{children}</div></fieldset>
+}
+
+function ConfigCheck({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
+  return <label className="flex cursor-pointer items-center gap-3 text-sm text-white/80"><input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="h-4 w-4 accent-emerald-500" />{label}</label>
+}
+
+function ConfigRadio({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
+  return <label className="flex cursor-pointer items-center gap-3 text-sm text-white/80"><input type="radio" checked={checked} onChange={onChange} className="h-4 w-4 accent-emerald-500" />{label}</label>
 }

@@ -20,6 +20,9 @@ const ler = p => fs.readFileSync(path.join(RAIZ, p), "utf8")
 const fonte = ler("lib/international-teams.ts") + "\n" + ler("lib/teams-data.ts")
 const comps = ler("lib/international-competitions.ts")
 const pyr = ler("lib/league-pyramid.ts")
+const clubesEtapa1 = JSON.parse(ler("data/seeds/real-clubs-stage1.json"))
+const clubesEtapa1EuropaInferior = JSON.parse(ler("data/seeds/real-clubs-stage1-lower-europe.json"))
+const clubesEtapa3Chequia = JSON.parse(ler("data/seeds/real-clubs-stage3-czech-second.json"))
 
 // ─── Clubes por divisao (o campo `divisao` e a verdade) ──────────────────────
 const porDivisao = new Map()
@@ -35,6 +38,10 @@ for (const m of fonte.matchAll(/\{[^{}]*\}/g)) {
   const es = m[0].match(/estado:\s*"([^"]+)"/)
   const achado = pa?.[1] ?? (es && UF.test(es[1]) ? "Brasil" : es?.[1])
   if (achado && !paisDaDivisao.has(d[1])) paisDaDivisao.set(d[1], achado)
+}
+for (const clube of [...clubesEtapa1, ...clubesEtapa1EuropaInferior, ...clubesEtapa3Chequia]) {
+  porDivisao.set(clube.divisao, (porDivisao.get(clube.divisao) ?? 0) + 1)
+  if (!paisDaDivisao.has(clube.divisao)) paisDaDivisao.set(clube.divisao, clube.pais)
 }
 
 // ─── Tamanho JOGADO: o curado, completado pelo pool do proprio pais ──────────
@@ -104,7 +111,8 @@ for (const m of blocoComps.matchAll(/^\s{2}([a-z_0-9]+):\s*\[/gm)) {
       id: c[0].match(/id:\s*"([^"]+)"/)?.[1] ?? "?",
       teams: num("teams"), rounds: num("rounds"),
       relegation: num("relegation"), promotion: num("promotion"),
-      groups: num("groups"),
+      groups: num("groups"), seasonSegments: num("seasonSegments") ?? 1,
+      roundRobinCycles: num("roundRobinCycles") ?? 2,
     })
     break
   }
@@ -131,7 +139,7 @@ for (const div of todas) {
   const c = ligaDaDivisao.get(div)
   if (!c) continue // divisao sem competicao de liga: tratada na outra auditoria
   const jogado = tamanhoJogado(div)
-  const esperado = 2 * (jogado - 1)
+  const esperado = (c?.roundRobinCycles ?? 2) * (jogado - 1) * (c?.seasonSegments ?? 1)
   const info = infoTier.get(div)
   const swapAbaixo = info && info.i < info.p.swaps.length ? info.p.swaps[info.i] : null
   const abaixo = info ? info.p.tiers[info.i + 1] ?? "-" : "-"

@@ -1,0 +1,4622 @@
+[
+  {
+    "fileKey": "egnatia_alb",
+    "nome": "Egnatia",
+    "curto": "ALBA01",
+    "pais": "Albania",
+    "escudo": "/escudos/egnatia_alb.webp"
+  },
+  {
+    "fileKey": "vllaznia_shkoder_alb",
+    "nome": "Vllaznia Shkodër",
+    "curto": "ALBA02",
+    "pais": "Albania",
+    "escudo": "/escudos/vllaznia_shkoder_alb.webp"
+  },
+  {
+    "fileKey": "partizani_tirana_alb",
+    "nome": "Partizani Tirana",
+    "curto": "ALBA03",
+    "pais": "Albania",
+    "escudo": "/escudos/partizani_tirana_alb.webp"
+  },
+  {
+    "fileKey": "dinamo_city_alb",
+    "nome": "Dinamo City",
+    "curto": "ALBA04",
+    "pais": "Albania",
+    "escudo": "/escudos/dinamo_city_alb.webp"
+  },
+  {
+    "fileKey": "kf_tirana_alb",
+    "nome": "KF Tirana",
+    "curto": "ALBA05",
+    "pais": "Albania",
+    "escudo": "/escudos/kf_tirana_alb.webp"
+  },
+  {
+    "fileKey": "teuta_durres_alb",
+    "nome": "Teuta Durrës",
+    "curto": "ALBA06",
+    "pais": "Albania",
+    "escudo": "/escudos/teuta_durres_alb.webp"
+  },
+  {
+    "fileKey": "elbasani_alb",
+    "nome": "Elbasani",
+    "curto": "ALBA07",
+    "pais": "Albania",
+    "escudo": "/escudos/elbasani_alb.webp"
+  },
+  {
+    "fileKey": "bylis_alb",
+    "nome": "Bylis",
+    "curto": "ALBA08",
+    "pais": "Albania",
+    "escudo": "/escudos/bylis_alb.webp"
+  },
+  {
+    "fileKey": "flamurtari_alb",
+    "nome": "Flamurtari",
+    "curto": "ALBA09",
+    "pais": "Albania",
+    "escudo": "/escudos/flamurtari_alb.webp"
+  },
+  {
+    "fileKey": "vora_alb",
+    "nome": "Vora",
+    "curto": "ALBA10",
+    "pais": "Albania",
+    "escudo": "/escudos/vora_alb.webp"
+  },
+  {
+    "fileKey": "inter_d_escaldes_and",
+    "nome": "Inter d'Escaldes",
+    "curto": "ANDA01",
+    "pais": "Andorra",
+    "escudo": "/escudos/inter_d_escaldes_and.webp"
+  },
+  {
+    "fileKey": "fc_santa_coloma_and",
+    "nome": "FC Santa Coloma",
+    "curto": "ANDA02",
+    "pais": "Andorra",
+    "escudo": "/escudos/fc_santa_coloma_and.webp"
+  },
+  {
+    "fileKey": "ue_santa_coloma_and",
+    "nome": "UE Santa Coloma",
+    "curto": "ANDA03",
+    "pais": "Andorra",
+    "escudo": "/escudos/ue_santa_coloma_and.webp"
+  },
+  {
+    "fileKey": "ranger_s_and",
+    "nome": "Ranger's",
+    "curto": "ANDA04",
+    "pais": "Andorra",
+    "escudo": "/escudos/ranger_s_and.webp"
+  },
+  {
+    "fileKey": "ordino_and",
+    "nome": "Ordino",
+    "curto": "ANDA05",
+    "pais": "Andorra",
+    "escudo": "/escudos/ordino_and.webp"
+  },
+  {
+    "fileKey": "pas_de_la_casa_and",
+    "nome": "Pas de la Casa",
+    "curto": "ANDA06",
+    "pais": "Andorra",
+    "escudo": "/escudos/pas_de_la_casa_and.webp"
+  },
+  {
+    "fileKey": "penya_encarnada_and",
+    "nome": "Penya Encarnada",
+    "curto": "ANDA07",
+    "pais": "Andorra",
+    "escudo": "/escudos/penya_encarnada_and.webp"
+  },
+  {
+    "fileKey": "esperanca_d_andorra_and",
+    "nome": "Esperança d'Andorra",
+    "curto": "ANDA08",
+    "pais": "Andorra",
+    "escudo": "/escudos/esperanca_d_andorra_and.webp"
+  },
+  {
+    "fileKey": "atletic_escaldes_and",
+    "nome": "Atlètic Escaldes",
+    "curto": "ANDA09",
+    "pais": "Andorra",
+    "escudo": "/escudos/atletic_escaldes_and.webp"
+  },
+  {
+    "fileKey": "carroi_and",
+    "nome": "Carroi",
+    "curto": "ANDA10",
+    "pais": "Andorra",
+    "escudo": "/escudos/carroi_and.webp"
+  },
+  {
+    "fileKey": "ararat_armenia_arm",
+    "nome": "Ararat-Armenia",
+    "curto": "ARMA03",
+    "pais": "Armenia",
+    "escudo": "/escudos/ararat_armenia_arm.webp"
+  },
+  {
+    "fileKey": "urartu_arm",
+    "nome": "Urartu",
+    "curto": "ARMA04",
+    "pais": "Armenia",
+    "escudo": "/escudos/urartu_arm.webp"
+  },
+  {
+    "fileKey": "alashkert_arm",
+    "nome": "Alashkert",
+    "curto": "ARMA05",
+    "pais": "Armenia",
+    "escudo": "/escudos/alashkert_arm.webp"
+  },
+  {
+    "fileKey": "ararat_yerevan_arm",
+    "nome": "Ararat Yerevan",
+    "curto": "ARMA07",
+    "pais": "Armenia",
+    "escudo": "/escudos/ararat_yerevan_arm.webp"
+  },
+  {
+    "fileKey": "van_arm",
+    "nome": "Van",
+    "curto": "ARMA08",
+    "pais": "Armenia",
+    "escudo": "/escudos/van_arm.webp"
+  },
+  {
+    "fileKey": "bkma_yerevan_arm",
+    "nome": "BKMA Yerevan",
+    "curto": "ARMA09",
+    "pais": "Armenia",
+    "escudo": "/escudos/bkma_yerevan_arm.webp"
+  },
+  {
+    "fileKey": "gandzasar_arm",
+    "nome": "Gandzasar",
+    "curto": "ARMA10",
+    "pais": "Armenia",
+    "escudo": "/escudos/gandzasar_arm.webp"
+  },
+  {
+    "fileKey": "sturm_graz_aut",
+    "nome": "Sturm Graz",
+    "curto": "AUTA01",
+    "pais": "Austria",
+    "escudo": "/escudos/sturm_graz_aut.webp"
+  },
+  {
+    "fileKey": "rb_salzburg_aut",
+    "nome": "RB Salzburg",
+    "curto": "AUTA02",
+    "pais": "Austria",
+    "escudo": "/escudos/rb_salzburg_aut.webp"
+  },
+  {
+    "fileKey": "rapid_wien_aut",
+    "nome": "Rapid Wien",
+    "curto": "AUTA03",
+    "pais": "Austria",
+    "escudo": "/escudos/rapid_wien_aut.webp"
+  },
+  {
+    "fileKey": "austria_wien_aut",
+    "nome": "Austria Wien",
+    "curto": "AUTA04",
+    "pais": "Austria",
+    "escudo": "/escudos/austria_wien_aut.webp"
+  },
+  {
+    "fileKey": "wolfsberger_ac_aut",
+    "nome": "Wolfsberger AC",
+    "curto": "AUTA06",
+    "pais": "Austria",
+    "escudo": "/escudos/wolfsberger_ac_aut.webp"
+  },
+  {
+    "fileKey": "hartberg_aut",
+    "nome": "Hartberg",
+    "curto": "AUTA07",
+    "pais": "Austria",
+    "escudo": "/escudos/hartberg_aut.webp"
+  },
+  {
+    "fileKey": "austria_lustenau_aut",
+    "nome": "Austria Lustenau",
+    "curto": "AUTA08",
+    "pais": "Austria",
+    "escudo": "/escudos/austria_lustenau_aut.webp"
+  },
+  {
+    "fileKey": "rheindorf_altach_aut",
+    "nome": "Rheindorf Altach",
+    "curto": "AUTA09",
+    "pais": "Austria",
+    "escudo": "/escudos/rheindorf_altach_aut.webp"
+  },
+  {
+    "fileKey": "wsg_tirol_aut",
+    "nome": "WSG Tirol",
+    "curto": "AUTA10",
+    "pais": "Austria",
+    "escudo": "/escudos/wsg_tirol_aut.webp"
+  },
+  {
+    "fileKey": "grazer_ak_aut",
+    "nome": "Grazer AK",
+    "curto": "AUTA11",
+    "pais": "Austria",
+    "escudo": "/escudos/grazer_ak_aut.webp"
+  },
+  {
+    "fileKey": "sv_austria_salzburg_aut",
+    "nome": "SV Austria Salzburg",
+    "curto": "AUTB01",
+    "pais": "Austria",
+    "escudo": "/escudos/sv_austria_salzburg_aut.webp"
+  },
+  {
+    "fileKey": "ksv_1919_aut",
+    "nome": "KSV 1919",
+    "curto": "AUTB02",
+    "pais": "Austria",
+    "escudo": "/escudos/ksv_1919_aut.webp"
+  },
+  {
+    "fileKey": "fc_wacker_innsbruck_aut",
+    "nome": "FC Wacker Innsbruck",
+    "curto": "AUTB03",
+    "pais": "Austria",
+    "escudo": "/escudos/fc_wacker_innsbruck_aut.webp"
+  },
+  {
+    "fileKey": "ask_voitsberg_aut",
+    "nome": "ASK Voitsberg",
+    "curto": "AUTB04",
+    "pais": "Austria",
+    "escudo": "/escudos/ask_voitsberg_aut.webp"
+  },
+  {
+    "fileKey": "schwarz_weiss_bregenz_aut",
+    "nome": "Schwarz-Weiss Bregenz",
+    "curto": "AUTB05",
+    "pais": "Austria",
+    "escudo": "/escudos/schwarz_weiss_bregenz_aut.webp"
+  },
+  {
+    "fileKey": "fc_liefering_aut",
+    "nome": "FC Liefering",
+    "curto": "AUTB06",
+    "pais": "Austria",
+    "escudo": "/escudos/fc_liefering_aut.webp"
+  },
+  {
+    "fileKey": "young_violets_austria_wien_aut",
+    "nome": "Young Violets Austria Wien",
+    "curto": "AUTB07",
+    "pais": "Austria",
+    "escudo": "/escudos/young_violets_austria_wien_aut.webp"
+  },
+  {
+    "fileKey": "sku_amstetten_aut",
+    "nome": "SKU Amstetten",
+    "curto": "AUTB08",
+    "pais": "Austria",
+    "escudo": "/escudos/sku_amstetten_aut.webp"
+  },
+  {
+    "fileKey": "fc_hertha_wels_aut",
+    "nome": "FC Hertha Wels",
+    "curto": "AUTB09",
+    "pais": "Austria",
+    "escudo": "/escudos/fc_hertha_wels_aut.webp"
+  },
+  {
+    "fileKey": "skn_st_polten_aut",
+    "nome": "SKN St. Pölten",
+    "curto": "AUTB10",
+    "pais": "Austria",
+    "escudo": "/escudos/skn_st_polten_aut.webp"
+  },
+  {
+    "fileKey": "admira_wacker_aut",
+    "nome": "Admira Wacker",
+    "curto": "AUTB11",
+    "pais": "Austria",
+    "escudo": "/escudos/admira_wacker_aut.webp"
+  },
+  {
+    "fileKey": "first_vienna_fc_1894_aut",
+    "nome": "First Vienna FC 1894",
+    "curto": "AUTB12",
+    "pais": "Austria",
+    "escudo": "/escudos/first_vienna_fc_1894_aut.webp"
+  },
+  {
+    "fileKey": "sk_rapid_ii_aut",
+    "nome": "SK Rapid II",
+    "curto": "AUTB13",
+    "pais": "Austria",
+    "escudo": "/escudos/sk_rapid_ii_aut.webp"
+  },
+  {
+    "fileKey": "fac_wien_aut",
+    "nome": "FAC Wien",
+    "curto": "AUTB14",
+    "pais": "Austria",
+    "escudo": "/escudos/fac_wien_aut.webp"
+  },
+  {
+    "fileKey": "sk_sturm_graz_ii_aut",
+    "nome": "SK Sturm Graz II",
+    "curto": "AUTB15",
+    "pais": "Austria",
+    "escudo": "/escudos/sk_sturm_graz_ii_aut.webp"
+  },
+  {
+    "fileKey": "fc_blau_wei_linz_aut",
+    "nome": "FC Blau-Weiß Linz",
+    "curto": "AUTB16",
+    "pais": "Austria",
+    "escudo": "/escudos/fc_blau_wei_linz_aut.webp"
+  },
+  {
+    "fileKey": "dinamo_minsk_blr",
+    "nome": "Dinamo Minsk",
+    "curto": "BLRA01",
+    "pais": "Belarus",
+    "escudo": "/escudos/dinamo_minsk_blr.webp"
+  },
+  {
+    "fileKey": "neman_grodno_blr",
+    "nome": "Neman Grodno",
+    "curto": "BLRA02",
+    "pais": "Belarus",
+    "escudo": "/escudos/neman_grodno_blr.webp"
+  },
+  {
+    "fileKey": "torpedo_belaz_blr",
+    "nome": "Torpedo-BelAZ",
+    "curto": "BLRA03",
+    "pais": "Belarus",
+    "escudo": "/escudos/torpedo_belaz_blr.webp"
+  },
+  {
+    "fileKey": "dinamo_brest_blr",
+    "nome": "Dinamo Brest",
+    "curto": "BLRA04",
+    "pais": "Belarus",
+    "escudo": "/escudos/dinamo_brest_blr.webp"
+  },
+  {
+    "fileKey": "slavia_mozyr_blr",
+    "nome": "Slavia Mozyr",
+    "curto": "BLRA05",
+    "pais": "Belarus",
+    "escudo": "/escudos/slavia_mozyr_blr.webp"
+  },
+  {
+    "fileKey": "gomel_blr",
+    "nome": "Gomel",
+    "curto": "BLRA06",
+    "pais": "Belarus",
+    "escudo": "/escudos/gomel_blr.webp"
+  },
+  {
+    "fileKey": "vitebsk_blr",
+    "nome": "Vitebsk",
+    "curto": "BLRA07",
+    "pais": "Belarus",
+    "escudo": "/escudos/vitebsk_blr.webp"
+  },
+  {
+    "fileKey": "isloch_blr",
+    "nome": "Isloch",
+    "curto": "BLRA08",
+    "pais": "Belarus",
+    "escudo": "/escudos/isloch_blr.webp"
+  },
+  {
+    "fileKey": "bate_borisov_blr",
+    "nome": "BATE Borisov",
+    "curto": "BLRA09",
+    "pais": "Belarus",
+    "escudo": "/escudos/bate_borisov_blr.webp"
+  },
+  {
+    "fileKey": "minsk_blr",
+    "nome": "Minsk",
+    "curto": "BLRA10",
+    "pais": "Belarus",
+    "escudo": "/escudos/minsk_blr.webp"
+  },
+  {
+    "fileKey": "naftan_blr",
+    "nome": "Naftan",
+    "curto": "BLRA11",
+    "pais": "Belarus",
+    "escudo": "/escudos/naftan_blr.webp"
+  },
+  {
+    "fileKey": "smorgon_blr",
+    "nome": "Smorgon",
+    "curto": "BLRA12",
+    "pais": "Belarus",
+    "escudo": "/escudos/smorgon_blr.webp"
+  },
+  {
+    "fileKey": "arsenal_dzerzhinsk_blr",
+    "nome": "Arsenal Dzerzhinsk",
+    "curto": "BLRA13",
+    "pais": "Belarus",
+    "escudo": "/escudos/arsenal_dzerzhinsk_blr.webp"
+  },
+  {
+    "fileKey": "dnepr_mogilev_blr",
+    "nome": "Dnepr Mogilev",
+    "curto": "BLRA14",
+    "pais": "Belarus",
+    "escudo": "/escudos/dnepr_mogilev_blr.webp"
+  },
+  {
+    "fileKey": "molodechno_blr",
+    "nome": "Molodechno",
+    "curto": "BLRA15",
+    "pais": "Belarus",
+    "escudo": "/escudos/molodechno_blr.webp"
+  },
+  {
+    "fileKey": "maxline_vitebsk_blr",
+    "nome": "Maxline Vitebsk",
+    "curto": "BLRA16",
+    "pais": "Belarus",
+    "escudo": "/escudos/maxline_vitebsk_blr.webp"
+  },
+  {
+    "fileKey": "borac_banja_luka_bih",
+    "nome": "Borac Banja Luka",
+    "curto": "BIHA01",
+    "pais": "Bosnia e Herzegovina",
+    "escudo": "/escudos/borac_banja_luka_bih.webp"
+  },
+  {
+    "fileKey": "zrinjski_mostar_bih",
+    "nome": "Zrinjski Mostar",
+    "curto": "BIHA02",
+    "pais": "Bosnia e Herzegovina",
+    "escudo": "/escudos/zrinjski_mostar_bih.webp"
+  },
+  {
+    "fileKey": "sarajevo_bih",
+    "nome": "Sarajevo",
+    "curto": "BIHA03",
+    "pais": "Bosnia e Herzegovina",
+    "escudo": "/escudos/sarajevo_bih.webp"
+  },
+  {
+    "fileKey": "velez_mostar_bih",
+    "nome": "Velež Mostar",
+    "curto": "BIHA05",
+    "pais": "Bosnia e Herzegovina",
+    "escudo": "/escudos/velez_mostar_bih.webp"
+  },
+  {
+    "fileKey": "siroki_brijeg_bih",
+    "nome": "Široki Brijeg",
+    "curto": "BIHA06",
+    "pais": "Bosnia e Herzegovina",
+    "escudo": "/escudos/siroki_brijeg_bih.webp"
+  },
+  {
+    "fileKey": "posusje_bih",
+    "nome": "Posušje",
+    "curto": "BIHA07",
+    "pais": "Bosnia e Herzegovina",
+    "escudo": "/escudos/posusje_bih.webp"
+  },
+  {
+    "fileKey": "sloga_doboj_bih",
+    "nome": "Sloga Doboj",
+    "curto": "BIHA08",
+    "pais": "Bosnia e Herzegovina",
+    "escudo": "/escudos/sloga_doboj_bih.webp"
+  },
+  {
+    "fileKey": "radnik_bijeljina_bih",
+    "nome": "Radnik Bijeljina",
+    "curto": "BIHA09",
+    "pais": "Bosnia e Herzegovina",
+    "escudo": "/escudos/radnik_bijeljina_bih.webp"
+  },
+  {
+    "fileKey": "rudar_prijedor_bih",
+    "nome": "Rudar Prijedor",
+    "curto": "BIHA10",
+    "pais": "Bosnia e Herzegovina",
+    "escudo": "/escudos/rudar_prijedor_bih.webp"
+  },
+  {
+    "fileKey": "ludogorets_bgr",
+    "nome": "Ludogorets",
+    "curto": "BGRA01",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/ludogorets_bgr.webp"
+  },
+  {
+    "fileKey": "levski_sofia_bgr",
+    "nome": "Levski Sofia",
+    "curto": "BGRA02",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/levski_sofia_bgr.webp"
+  },
+  {
+    "fileKey": "cska_sofia_bgr",
+    "nome": "CSKA Sofia",
+    "curto": "BGRA03",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/cska_sofia_bgr.webp"
+  },
+  {
+    "fileKey": "cherno_more_bgr",
+    "nome": "Cherno More",
+    "curto": "BGRA04",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/cherno_more_bgr.webp"
+  },
+  {
+    "fileKey": "arda_kardzhali_bgr",
+    "nome": "Arda Kardzhali",
+    "curto": "BGRA05",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/arda_kardzhali_bgr.webp"
+  },
+  {
+    "fileKey": "botev_plovdiv_bgr",
+    "nome": "Botev Plovdiv",
+    "curto": "BGRA06",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/botev_plovdiv_bgr.webp"
+  },
+  {
+    "fileKey": "lokomotiv_plovdiv_bgr",
+    "nome": "Lokomotiv Plovdiv",
+    "curto": "BGRA07",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/lokomotiv_plovdiv_bgr.webp"
+  },
+  {
+    "fileKey": "slavia_sofia_bgr",
+    "nome": "Slavia Sofia",
+    "curto": "BGRA08",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/slavia_sofia_bgr.webp"
+  },
+  {
+    "fileKey": "cska_1948_bgr",
+    "nome": "CSKA 1948",
+    "curto": "BGRA09",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/cska_1948_bgr.webp"
+  },
+  {
+    "fileKey": "beroe_bgr",
+    "nome": "Beroe",
+    "curto": "BGRA10",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/beroe_bgr.webp"
+  },
+  {
+    "fileKey": "spartak_varna_bgr",
+    "nome": "Spartak Varna",
+    "curto": "BGRA11",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/spartak_varna_bgr.webp"
+  },
+  {
+    "fileKey": "septemvri_sofia_bgr",
+    "nome": "Septemvri Sofia",
+    "curto": "BGRA12",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/septemvri_sofia_bgr.webp"
+  },
+  {
+    "fileKey": "botev_vratsa_bgr",
+    "nome": "Botev Vratsa",
+    "curto": "BGRA13",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/botev_vratsa_bgr.webp"
+  },
+  {
+    "fileKey": "lokomotiv_sofia_bgr",
+    "nome": "Lokomotiv Sofia",
+    "curto": "BGRA14",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/lokomotiv_sofia_bgr.webp"
+  },
+  {
+    "fileKey": "montana_bgr",
+    "nome": "Montana",
+    "curto": "BGRA15",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/montana_bgr.webp"
+  },
+  {
+    "fileKey": "dobrudzha_bgr",
+    "nome": "Dobrudzha",
+    "curto": "BGRA16",
+    "pais": "Bulgaria",
+    "escudo": "/escudos/dobrudzha_bgr.webp"
+  },
+  {
+    "fileKey": "dinamo_zagreb_hrv",
+    "nome": "Dinamo Zagreb",
+    "curto": "HRVA01",
+    "pais": "Croacia",
+    "escudo": "/escudos/dinamo_zagreb_hrv.webp"
+  },
+  {
+    "fileKey": "hajduk_split_hrv",
+    "nome": "Hajduk Split",
+    "curto": "HRVA02",
+    "pais": "Croacia",
+    "escudo": "/escudos/hajduk_split_hrv.webp"
+  },
+  {
+    "fileKey": "rijeka_hrv",
+    "nome": "Rijeka",
+    "curto": "HRVA03",
+    "pais": "Croacia",
+    "escudo": "/escudos/rijeka_hrv.webp"
+  },
+  {
+    "fileKey": "osijek_hrv",
+    "nome": "Osijek",
+    "curto": "HRVA04",
+    "pais": "Croacia",
+    "escudo": "/escudos/osijek_hrv.webp"
+  },
+  {
+    "fileKey": "varazdin_hrv",
+    "nome": "Varaždin",
+    "curto": "HRVA05",
+    "pais": "Croacia",
+    "escudo": "/escudos/varazdin_hrv.webp"
+  },
+  {
+    "fileKey": "istra_1961_hrv",
+    "nome": "Istra 1961",
+    "curto": "HRVA06",
+    "pais": "Croacia",
+    "escudo": "/escudos/istra_1961_hrv.webp"
+  },
+  {
+    "fileKey": "lokomotiva_zagreb_hrv",
+    "nome": "Lokomotiva Zagreb",
+    "curto": "HRVA07",
+    "pais": "Croacia",
+    "escudo": "/escudos/lokomotiva_zagreb_hrv.webp"
+  },
+  {
+    "fileKey": "slaven_belupo_hrv",
+    "nome": "Slaven Belupo",
+    "curto": "HRVA08",
+    "pais": "Croacia",
+    "escudo": "/escudos/slaven_belupo_hrv.webp"
+  },
+  {
+    "fileKey": "gorica_hrv",
+    "nome": "Gorica",
+    "curto": "HRVA09",
+    "pais": "Croacia",
+    "escudo": "/escudos/gorica_hrv.webp"
+  },
+  {
+    "fileKey": "vukovar_1991_hrv",
+    "nome": "Vukovar 1991",
+    "curto": "HRVA10",
+    "pais": "Croacia",
+    "escudo": "/escudos/vukovar_1991_hrv.webp"
+  },
+  {
+    "fileKey": "slovan_bratislava_svk",
+    "nome": "Slovan Bratislava",
+    "curto": "SVKA01",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/slovan_bratislava_svk.webp"
+  },
+  {
+    "fileKey": "zilina_svk",
+    "nome": "Žilina",
+    "curto": "SVKA02",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/zilina_svk.webp"
+  },
+  {
+    "fileKey": "spartak_trnava_svk",
+    "nome": "Spartak Trnava",
+    "curto": "SVKA03",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/spartak_trnava_svk.webp"
+  },
+  {
+    "fileKey": "dac_dunajska_streda_svk",
+    "nome": "DAC Dunajská Streda",
+    "curto": "SVKA04",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/dac_dunajska_streda_svk.webp"
+  },
+  {
+    "fileKey": "ruzomberok_svk",
+    "nome": "Ružomberok",
+    "curto": "SVKA05",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/ruzomberok_svk.webp"
+  },
+  {
+    "fileKey": "podbrezova_svk",
+    "nome": "Podbrezová",
+    "curto": "SVKA06",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/podbrezova_svk.webp"
+  },
+  {
+    "fileKey": "kosice_svk",
+    "nome": "Košice",
+    "curto": "SVKA07",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/kosice_svk.webp"
+  },
+  {
+    "fileKey": "trencin_svk",
+    "nome": "Trenčín",
+    "curto": "SVKA08",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/trencin_svk.webp"
+  },
+  {
+    "fileKey": "skalica_svk",
+    "nome": "Skalica",
+    "curto": "SVKA09",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/skalica_svk.webp"
+  },
+  {
+    "fileKey": "komarno_svk",
+    "nome": "Komárno",
+    "curto": "SVKA10",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/komarno_svk.webp"
+  },
+  {
+    "fileKey": "tatran_presov_svk",
+    "nome": "Tatran Prešov",
+    "curto": "SVKA11",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/tatran_presov_svk.webp"
+  },
+  {
+    "fileKey": "zemplin_michalovce_svk",
+    "nome": "Zemplín Michalovce",
+    "curto": "SVKA12",
+    "pais": "Eslovaquia",
+    "escudo": "/escudos/zemplin_michalovce_svk.webp"
+  },
+  {
+    "fileKey": "olimpija_ljubljana_svn",
+    "nome": "Olimpija Ljubljana",
+    "curto": "SVNA01",
+    "pais": "Eslovenia",
+    "escudo": "/escudos/olimpija_ljubljana_svn.webp"
+  },
+  {
+    "fileKey": "maribor_svn",
+    "nome": "Maribor",
+    "curto": "SVNA02",
+    "pais": "Eslovenia",
+    "escudo": "/escudos/maribor_svn.webp"
+  },
+  {
+    "fileKey": "celje_svn",
+    "nome": "Celje",
+    "curto": "SVNA03",
+    "pais": "Eslovenia",
+    "escudo": "/escudos/celje_svn.webp"
+  },
+  {
+    "fileKey": "koper_svn",
+    "nome": "Koper",
+    "curto": "SVNA04",
+    "pais": "Eslovenia",
+    "escudo": "/escudos/koper_svn.webp"
+  },
+  {
+    "fileKey": "mura_svn",
+    "nome": "Mura",
+    "curto": "SVNA06",
+    "pais": "Eslovenia",
+    "escudo": "/escudos/mura_svn.webp"
+  },
+  {
+    "fileKey": "radomlje_svn",
+    "nome": "Radomlje",
+    "curto": "SVNA08",
+    "pais": "Eslovenia",
+    "escudo": "/escudos/radomlje_svn.webp"
+  },
+  {
+    "fileKey": "primorje_svn",
+    "nome": "Primorje",
+    "curto": "SVNA09",
+    "pais": "Eslovenia",
+    "escudo": "/escudos/primorje_svn.webp"
+  },
+  {
+    "fileKey": "aluminij_svn",
+    "nome": "Aluminij",
+    "curto": "SVNA10",
+    "pais": "Eslovenia",
+    "escudo": "/escudos/aluminij_svn.webp"
+  },
+  {
+    "fileKey": "flora_tallinn_est",
+    "nome": "Flora Tallinn",
+    "curto": "ESTA01",
+    "pais": "Estonia",
+    "escudo": "/escudos/flora_tallinn_est.webp"
+  },
+  {
+    "fileKey": "levadia_tallinn_est",
+    "nome": "Levadia Tallinn",
+    "curto": "ESTA02",
+    "pais": "Estonia",
+    "escudo": "/escudos/levadia_tallinn_est.webp"
+  },
+  {
+    "fileKey": "nomme_kalju_est",
+    "nome": "Nõmme Kalju",
+    "curto": "ESTA03",
+    "pais": "Estonia",
+    "escudo": "/escudos/nomme_kalju_est.webp"
+  },
+  {
+    "fileKey": "paide_linnameeskond_est",
+    "nome": "Paide Linnameeskond",
+    "curto": "ESTA04",
+    "pais": "Estonia",
+    "escudo": "/escudos/paide_linnameeskond_est.webp"
+  },
+  {
+    "fileKey": "narva_trans_est",
+    "nome": "Narva Trans",
+    "curto": "ESTA05",
+    "pais": "Estonia",
+    "escudo": "/escudos/narva_trans_est.webp"
+  },
+  {
+    "fileKey": "tammeka_tartu_est",
+    "nome": "Tammeka Tartu",
+    "curto": "ESTA06",
+    "pais": "Estonia",
+    "escudo": "/escudos/tammeka_tartu_est.webp"
+  },
+  {
+    "fileKey": "kuressaare_est",
+    "nome": "Kuressaare",
+    "curto": "ESTA07",
+    "pais": "Estonia",
+    "escudo": "/escudos/kuressaare_est.webp"
+  },
+  {
+    "fileKey": "parnu_vaprus_est",
+    "nome": "Pärnu Vaprus",
+    "curto": "ESTA08",
+    "pais": "Estonia",
+    "escudo": "/escudos/parnu_vaprus_est.webp"
+  },
+  {
+    "fileKey": "harju_laagri_est",
+    "nome": "Harju Laagri",
+    "curto": "ESTA09",
+    "pais": "Estonia",
+    "escudo": "/escudos/harju_laagri_est.webp"
+  },
+  {
+    "fileKey": "nomme_united_est",
+    "nome": "Nõmme United",
+    "curto": "ESTA10",
+    "pais": "Estonia",
+    "escudo": "/escudos/nomme_united_est.webp"
+  },
+  {
+    "fileKey": "hjk_helsinki_fin",
+    "nome": "HJK Helsinki",
+    "curto": "FINA02",
+    "pais": "Finlandia",
+    "escudo": "/escudos/hjk_helsinki_fin.webp"
+  },
+  {
+    "fileKey": "inter_turku_fin",
+    "nome": "Inter Turku",
+    "curto": "FINA04",
+    "pais": "Finlandia",
+    "escudo": "/escudos/inter_turku_fin.webp"
+  },
+  {
+    "fileKey": "sjk_fin",
+    "nome": "SJK",
+    "curto": "FINA05",
+    "pais": "Finlandia",
+    "escudo": "/escudos/sjk_fin.webp"
+  },
+  {
+    "fileKey": "vps_fin",
+    "nome": "VPS",
+    "curto": "FINA06",
+    "pais": "Finlandia",
+    "escudo": "/escudos/vps_fin.webp"
+  },
+  {
+    "fileKey": "haka_fin",
+    "nome": "Haka",
+    "curto": "FINA07",
+    "pais": "Finlandia",
+    "escudo": "/escudos/haka_fin.webp"
+  },
+  {
+    "fileKey": "gnistan_fin",
+    "nome": "Gnistan",
+    "curto": "FINA08",
+    "pais": "Finlandia",
+    "escudo": "/escudos/gnistan_fin.webp"
+  },
+  {
+    "fileKey": "mariehamn_fin",
+    "nome": "Mariehamn",
+    "curto": "FINA09",
+    "pais": "Finlandia",
+    "escudo": "/escudos/mariehamn_fin.webp"
+  },
+  {
+    "fileKey": "ac_oulu_fin",
+    "nome": "AC Oulu",
+    "curto": "FINA10",
+    "pais": "Finlandia",
+    "escudo": "/escudos/ac_oulu_fin.webp"
+  },
+  {
+    "fileKey": "jaro_fin",
+    "nome": "Jaro",
+    "curto": "FINA11",
+    "pais": "Finlandia",
+    "escudo": "/escudos/jaro_fin.webp"
+  },
+  {
+    "fileKey": "ktp_fin",
+    "nome": "KTP",
+    "curto": "FINA12",
+    "pais": "Finlandia",
+    "escudo": "/escudos/ktp_fin.webp"
+  },
+  {
+    "fileKey": "dinamo_tbilisi_geo",
+    "nome": "Dinamo Tbilisi",
+    "curto": "GEOA01",
+    "pais": "Georgia",
+    "escudo": "/escudos/dinamo_tbilisi_geo.webp"
+  },
+  {
+    "fileKey": "dinamo_batumi_geo",
+    "nome": "Dinamo Batumi",
+    "curto": "GEOA02",
+    "pais": "Georgia",
+    "escudo": "/escudos/dinamo_batumi_geo.webp"
+  },
+  {
+    "fileKey": "torpedo_kutaisi_geo",
+    "nome": "Torpedo Kutaisi",
+    "curto": "GEOA03",
+    "pais": "Georgia",
+    "escudo": "/escudos/torpedo_kutaisi_geo.webp"
+  },
+  {
+    "fileKey": "dila_gori_geo",
+    "nome": "Dila Gori",
+    "curto": "GEOA04",
+    "pais": "Georgia",
+    "escudo": "/escudos/dila_gori_geo.webp"
+  },
+  {
+    "fileKey": "iberia_1999_geo",
+    "nome": "Iberia 1999",
+    "curto": "GEOA05",
+    "pais": "Georgia",
+    "escudo": "/escudos/iberia_1999_geo.webp"
+  },
+  {
+    "fileKey": "samgurali_geo",
+    "nome": "Samgurali",
+    "curto": "GEOA06",
+    "pais": "Georgia",
+    "escudo": "/escudos/samgurali_geo.webp"
+  },
+  {
+    "fileKey": "gagra_geo",
+    "nome": "Gagra",
+    "curto": "GEOA07",
+    "pais": "Georgia",
+    "escudo": "/escudos/gagra_geo.webp"
+  },
+  {
+    "fileKey": "telavi_geo",
+    "nome": "Telavi",
+    "curto": "GEOA08",
+    "pais": "Georgia",
+    "escudo": "/escudos/telavi_geo.webp"
+  },
+  {
+    "fileKey": "gareji_sagarejo_geo",
+    "nome": "Gareji Sagarejo",
+    "curto": "GEOA09",
+    "pais": "Georgia",
+    "escudo": "/escudos/gareji_sagarejo_geo.webp"
+  },
+  {
+    "fileKey": "kolkheti_poti_geo",
+    "nome": "Kolkheti Poti",
+    "curto": "GEOA10",
+    "pais": "Georgia",
+    "escudo": "/escudos/kolkheti_poti_geo.webp"
+  },
+  {
+    "fileKey": "lincoln_red_imps_gib",
+    "nome": "Lincoln Red Imps",
+    "curto": "GIBA01",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/lincoln_red_imps_gib.webp"
+  },
+  {
+    "fileKey": "st_joseph_s_gib",
+    "nome": "St Joseph's",
+    "curto": "GIBA02",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/st_joseph_s_gib.webp"
+  },
+  {
+    "fileKey": "magpies_gib",
+    "nome": "Magpies",
+    "curto": "GIBA04",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/magpies_gib.webp"
+  },
+  {
+    "fileKey": "manchester_62_gib",
+    "nome": "Manchester 62",
+    "curto": "GIBA05",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/manchester_62_gib.webp"
+  },
+  {
+    "fileKey": "lions_gibraltar_gib",
+    "nome": "Lions Gibraltar",
+    "curto": "GIBA06",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/lions_gibraltar_gib.webp"
+  },
+  {
+    "fileKey": "mons_calpe_gib",
+    "nome": "Mons Calpe",
+    "curto": "GIBA07",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/mons_calpe_gib.webp"
+  },
+  {
+    "fileKey": "glacis_united_gib",
+    "nome": "Glacis United",
+    "curto": "GIBA08",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/glacis_united_gib.webp"
+  },
+  {
+    "fileKey": "college_1975_gib",
+    "nome": "College 1975",
+    "curto": "GIBA09",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/college_1975_gib.webp"
+  },
+  {
+    "fileKey": "europa_point_gib",
+    "nome": "Europa Point",
+    "curto": "GIBA10",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/europa_point_gib.webp"
+  },
+  {
+    "fileKey": "lynx_gib",
+    "nome": "Lynx",
+    "curto": "GIBA11",
+    "pais": "Gibraltar",
+    "escudo": "/escudos/lynx_gib.webp"
+  },
+  {
+    "fileKey": "puskas_akademia_hun",
+    "nome": "Puskás Akadémia",
+    "curto": "HUNA02",
+    "pais": "Hungria",
+    "escudo": "/escudos/puskas_akademia_hun.webp"
+  },
+  {
+    "fileKey": "paks_hun",
+    "nome": "Paks",
+    "curto": "HUNA03",
+    "pais": "Hungria",
+    "escudo": "/escudos/paks_hun.webp"
+  },
+  {
+    "fileKey": "mtk_budapest_hun",
+    "nome": "MTK Budapest",
+    "curto": "HUNA04",
+    "pais": "Hungria",
+    "escudo": "/escudos/mtk_budapest_hun.webp"
+  },
+  {
+    "fileKey": "ujpest_hun",
+    "nome": "Újpest",
+    "curto": "HUNA05",
+    "pais": "Hungria",
+    "escudo": "/escudos/ujpest_hun.webp"
+  },
+  {
+    "fileKey": "diosgyor_hun",
+    "nome": "Diósgyőr",
+    "curto": "HUNA07",
+    "pais": "Hungria",
+    "escudo": "/escudos/diosgyor_hun.webp"
+  },
+  {
+    "fileKey": "fehervar_hun",
+    "nome": "Fehérvár",
+    "curto": "HUNA08",
+    "pais": "Hungria",
+    "escudo": "/escudos/fehervar_hun.webp"
+  },
+  {
+    "fileKey": "zalaegerszeg_hun",
+    "nome": "Zalaegerszeg",
+    "curto": "HUNA09",
+    "pais": "Hungria",
+    "escudo": "/escudos/zalaegerszeg_hun.webp"
+  },
+  {
+    "fileKey": "kecskemet_hun",
+    "nome": "Kecskemét",
+    "curto": "HUNA10",
+    "pais": "Hungria",
+    "escudo": "/escudos/kecskemet_hun.webp"
+  },
+  {
+    "fileKey": "kisvarda_hun",
+    "nome": "Kisvárda",
+    "curto": "HUNA11",
+    "pais": "Hungria",
+    "escudo": "/escudos/kisvarda_hun.webp"
+  },
+  {
+    "fileKey": "nyiregyhaza_hun",
+    "nome": "Nyíregyháza",
+    "curto": "HUNA12",
+    "pais": "Hungria",
+    "escudo": "/escudos/nyiregyhaza_hun.webp"
+  },
+  {
+    "fileKey": "ki_klaksvik_fro",
+    "nome": "KÍ Klaksvík",
+    "curto": "FROA01",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/ki_klaksvik_fro.webp"
+  },
+  {
+    "fileKey": "hb_torshavn_fro",
+    "nome": "HB Tórshavn",
+    "curto": "FROA02",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/hb_torshavn_fro.webp"
+  },
+  {
+    "fileKey": "vikingur_g_ta_fro",
+    "nome": "Víkingur Gøta",
+    "curto": "FROA03",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/vikingur_g_ta_fro.webp"
+  },
+  {
+    "fileKey": "nsi_runavik_fro",
+    "nome": "NSÍ Runavík",
+    "curto": "FROA04",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/nsi_runavik_fro.webp"
+  },
+  {
+    "fileKey": "b36_torshavn_fro",
+    "nome": "B36 Tórshavn",
+    "curto": "FROA05",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/b36_torshavn_fro.webp"
+  },
+  {
+    "fileKey": "eb_streymur_fro",
+    "nome": "EB/Streymur",
+    "curto": "FROA06",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/eb_streymur_fro.webp"
+  },
+  {
+    "fileKey": "07_vestur_fro",
+    "nome": "07 Vestur",
+    "curto": "FROA07",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/07_vestur_fro.webp"
+  },
+  {
+    "fileKey": "b68_toftir_fro",
+    "nome": "B68 Toftir",
+    "curto": "FROA08",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/b68_toftir_fro.webp"
+  },
+  {
+    "fileKey": "tb_tv_royri_fro",
+    "nome": "TB Tvøroyri",
+    "curto": "FROA09",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/tb_tv_royri_fro.webp"
+  },
+  {
+    "fileKey": "fc_su_uroy_fro",
+    "nome": "FC Suðuroy",
+    "curto": "FROA10",
+    "pais": "Ilhas Faroe",
+    "escudo": "/escudos/fc_su_uroy_fro.webp"
+  },
+  {
+    "fileKey": "shamrock_rovers_irl",
+    "nome": "Shamrock Rovers",
+    "curto": "IRLA01",
+    "pais": "Irlanda",
+    "escudo": "/escudos/shamrock_rovers_irl.webp"
+  },
+  {
+    "fileKey": "shelbourne_irl",
+    "nome": "Shelbourne",
+    "curto": "IRLA02",
+    "pais": "Irlanda",
+    "escudo": "/escudos/shelbourne_irl.webp"
+  },
+  {
+    "fileKey": "st_patrick_s_athletic_irl",
+    "nome": "St Patrick's Athletic",
+    "curto": "IRLA04",
+    "pais": "Irlanda",
+    "escudo": "/escudos/st_patrick_s_athletic_irl.webp"
+  },
+  {
+    "fileKey": "derry_city_irl",
+    "nome": "Derry City",
+    "curto": "IRLA05",
+    "pais": "Irlanda",
+    "escudo": "/escudos/derry_city_irl.webp"
+  },
+  {
+    "fileKey": "drogheda_united_irl",
+    "nome": "Drogheda United",
+    "curto": "IRLA06",
+    "pais": "Irlanda",
+    "escudo": "/escudos/drogheda_united_irl.webp"
+  },
+  {
+    "fileKey": "waterford_irl",
+    "nome": "Waterford",
+    "curto": "IRLA07",
+    "pais": "Irlanda",
+    "escudo": "/escudos/waterford_irl.webp"
+  },
+  {
+    "fileKey": "galway_united_irl",
+    "nome": "Galway United",
+    "curto": "IRLA08",
+    "pais": "Irlanda",
+    "escudo": "/escudos/galway_united_irl.webp"
+  },
+  {
+    "fileKey": "sligo_rovers_irl",
+    "nome": "Sligo Rovers",
+    "curto": "IRLA09",
+    "pais": "Irlanda",
+    "escudo": "/escudos/sligo_rovers_irl.webp"
+  },
+  {
+    "fileKey": "cork_city_irl",
+    "nome": "Cork City",
+    "curto": "IRLA10",
+    "pais": "Irlanda",
+    "escudo": "/escudos/cork_city_irl.webp"
+  },
+  {
+    "fileKey": "linfield_nir",
+    "nome": "Linfield",
+    "curto": "NIRA01",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/linfield_nir.webp"
+  },
+  {
+    "fileKey": "larne_nir",
+    "nome": "Larne",
+    "curto": "NIRA02",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/larne_nir.webp"
+  },
+  {
+    "fileKey": "glentoran_nir",
+    "nome": "Glentoran",
+    "curto": "NIRA03",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/glentoran_nir.webp"
+  },
+  {
+    "fileKey": "cliftonville_nir",
+    "nome": "Cliftonville",
+    "curto": "NIRA04",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/cliftonville_nir.webp"
+  },
+  {
+    "fileKey": "crusaders_nir",
+    "nome": "Crusaders",
+    "curto": "NIRA05",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/crusaders_nir.webp"
+  },
+  {
+    "fileKey": "coleraine_nir",
+    "nome": "Coleraine",
+    "curto": "NIRA06",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/coleraine_nir.webp"
+  },
+  {
+    "fileKey": "ballymena_united_nir",
+    "nome": "Ballymena United",
+    "curto": "NIRA07",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/ballymena_united_nir.webp"
+  },
+  {
+    "fileKey": "dungannon_swifts_nir",
+    "nome": "Dungannon Swifts",
+    "curto": "NIRA08",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/dungannon_swifts_nir.webp"
+  },
+  {
+    "fileKey": "glenavon_nir",
+    "nome": "Glenavon",
+    "curto": "NIRA09",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/glenavon_nir.webp"
+  },
+  {
+    "fileKey": "carrick_rangers_nir",
+    "nome": "Carrick Rangers",
+    "curto": "NIRA10",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/carrick_rangers_nir.webp"
+  },
+  {
+    "fileKey": "portadown_nir",
+    "nome": "Portadown",
+    "curto": "NIRA11",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/portadown_nir.webp"
+  },
+  {
+    "fileKey": "bangor_nir",
+    "nome": "Bangor",
+    "curto": "NIRA12",
+    "pais": "Irlanda do Norte",
+    "escudo": "/escudos/bangor_nir.webp"
+  },
+  {
+    "fileKey": "vikingur_reykjavik_isl",
+    "nome": "Víkingur Reykjavík",
+    "curto": "ISLA01",
+    "pais": "Islandia",
+    "escudo": "/escudos/vikingur_reykjavik_isl.webp"
+  },
+  {
+    "fileKey": "brei_ablik_isl",
+    "nome": "Breiðablik",
+    "curto": "ISLA02",
+    "pais": "Islandia",
+    "escudo": "/escudos/brei_ablik_isl.webp"
+  },
+  {
+    "fileKey": "stjarnan_isl",
+    "nome": "Stjarnan",
+    "curto": "ISLA04",
+    "pais": "Islandia",
+    "escudo": "/escudos/stjarnan_isl.webp"
+  },
+  {
+    "fileKey": "kr_reykjavik_isl",
+    "nome": "KR Reykjavík",
+    "curto": "ISLA05",
+    "pais": "Islandia",
+    "escudo": "/escudos/kr_reykjavik_isl.webp"
+  },
+  {
+    "fileKey": "fh_isl",
+    "nome": "FH",
+    "curto": "ISLA06",
+    "pais": "Islandia",
+    "escudo": "/escudos/fh_isl.webp"
+  },
+  {
+    "fileKey": "fram_isl",
+    "nome": "Fram",
+    "curto": "ISLA07",
+    "pais": "Islandia",
+    "escudo": "/escudos/fram_isl.webp"
+  },
+  {
+    "fileKey": "ka_isl",
+    "nome": "KA",
+    "curto": "ISLA08",
+    "pais": "Islandia",
+    "escudo": "/escudos/ka_isl.webp"
+  },
+  {
+    "fileKey": "ia_akranes_isl",
+    "nome": "ÍA Akranes",
+    "curto": "ISLA09",
+    "pais": "Islandia",
+    "escudo": "/escudos/ia_akranes_isl.webp"
+  },
+  {
+    "fileKey": "vestri_isl",
+    "nome": "Vestri",
+    "curto": "ISLA10",
+    "pais": "Islandia",
+    "escudo": "/escudos/vestri_isl.webp"
+  },
+  {
+    "fileKey": "afturelding_isl",
+    "nome": "Afturelding",
+    "curto": "ISLA11",
+    "pais": "Islandia",
+    "escudo": "/escudos/afturelding_isl.webp"
+  },
+  {
+    "fileKey": "leiknir_reykjavik_isl",
+    "nome": "Leiknir Reykjavík",
+    "curto": "ISLA12",
+    "pais": "Islandia",
+    "escudo": "/escudos/leiknir_reykjavik_isl.webp"
+  },
+  {
+    "fileKey": "maccabi_tel_aviv_isr",
+    "nome": "Maccabi Tel Aviv",
+    "curto": "ISRA01",
+    "pais": "Israel",
+    "escudo": "/escudos/maccabi_tel_aviv_isr.webp"
+  },
+  {
+    "fileKey": "maccabi_haifa_isr",
+    "nome": "Maccabi Haifa",
+    "curto": "ISRA02",
+    "pais": "Israel",
+    "escudo": "/escudos/maccabi_haifa_isr.webp"
+  },
+  {
+    "fileKey": "hapoel_be_er_sheva_isr",
+    "nome": "Hapoel Be'er Sheva",
+    "curto": "ISRA03",
+    "pais": "Israel",
+    "escudo": "/escudos/hapoel_be_er_sheva_isr.webp"
+  },
+  {
+    "fileKey": "beitar_jerusalem_isr",
+    "nome": "Beitar Jerusalem",
+    "curto": "ISRA04",
+    "pais": "Israel",
+    "escudo": "/escudos/beitar_jerusalem_isr.webp"
+  },
+  {
+    "fileKey": "hapoel_tel_aviv_isr",
+    "nome": "Hapoel Tel Aviv",
+    "curto": "ISRA05",
+    "pais": "Israel",
+    "escudo": "/escudos/hapoel_tel_aviv_isr.webp"
+  },
+  {
+    "fileKey": "maccabi_netanya_isr",
+    "nome": "Maccabi Netanya",
+    "curto": "ISRA06",
+    "pais": "Israel",
+    "escudo": "/escudos/maccabi_netanya_isr.webp"
+  },
+  {
+    "fileKey": "hapoel_haifa_isr",
+    "nome": "Hapoel Haifa",
+    "curto": "ISRA07",
+    "pais": "Israel",
+    "escudo": "/escudos/hapoel_haifa_isr.webp"
+  },
+  {
+    "fileKey": "bnei_sakhnin_isr",
+    "nome": "Bnei Sakhnin",
+    "curto": "ISRA08",
+    "pais": "Israel",
+    "escudo": "/escudos/bnei_sakhnin_isr.webp"
+  },
+  {
+    "fileKey": "ashdod_isr",
+    "nome": "Ashdod",
+    "curto": "ISRA09",
+    "pais": "Israel",
+    "escudo": "/escudos/ashdod_isr.webp"
+  },
+  {
+    "fileKey": "hapoel_jerusalem_isr",
+    "nome": "Hapoel Jerusalem",
+    "curto": "ISRA10",
+    "pais": "Israel",
+    "escudo": "/escudos/hapoel_jerusalem_isr.webp"
+  },
+  {
+    "fileKey": "maccabi_petah_tikva_isr",
+    "nome": "Maccabi Petah Tikva",
+    "curto": "ISRA11",
+    "pais": "Israel",
+    "escudo": "/escudos/maccabi_petah_tikva_isr.webp"
+  },
+  {
+    "fileKey": "ironi_kiryat_shmona_isr",
+    "nome": "Ironi Kiryat Shmona",
+    "curto": "ISRA12",
+    "pais": "Israel",
+    "escudo": "/escudos/ironi_kiryat_shmona_isr.webp"
+  },
+  {
+    "fileKey": "ironi_tiberias_isr",
+    "nome": "Ironi Tiberias",
+    "curto": "ISRA13",
+    "pais": "Israel",
+    "escudo": "/escudos/ironi_tiberias_isr.webp"
+  },
+  {
+    "fileKey": "maccabi_bnei_raina_isr",
+    "nome": "Maccabi Bnei Raina",
+    "curto": "ISRA14",
+    "pais": "Israel",
+    "escudo": "/escudos/maccabi_bnei_raina_isr.webp"
+  },
+  {
+    "fileKey": "drita_kvx",
+    "nome": "Drita",
+    "curto": "KVXA01",
+    "pais": "Kosovo",
+    "escudo": "/escudos/drita_kvx.webp"
+  },
+  {
+    "fileKey": "ballkani_kvx",
+    "nome": "Ballkani",
+    "curto": "KVXA02",
+    "pais": "Kosovo",
+    "escudo": "/escudos/ballkani_kvx.webp"
+  },
+  {
+    "fileKey": "prishtina_kvx",
+    "nome": "Prishtina",
+    "curto": "KVXA03",
+    "pais": "Kosovo",
+    "escudo": "/escudos/prishtina_kvx.webp"
+  },
+  {
+    "fileKey": "gjilani_kvx",
+    "nome": "Gjilani",
+    "curto": "KVXA04",
+    "pais": "Kosovo",
+    "escudo": "/escudos/gjilani_kvx.webp"
+  },
+  {
+    "fileKey": "llapi_kvx",
+    "nome": "Llapi",
+    "curto": "KVXA05",
+    "pais": "Kosovo",
+    "escudo": "/escudos/llapi_kvx.webp"
+  },
+  {
+    "fileKey": "malisheva_kvx",
+    "nome": "Malisheva",
+    "curto": "KVXA06",
+    "pais": "Kosovo",
+    "escudo": "/escudos/malisheva_kvx.webp"
+  },
+  {
+    "fileKey": "dukagjini_kvx",
+    "nome": "Dukagjini",
+    "curto": "KVXA07",
+    "pais": "Kosovo",
+    "escudo": "/escudos/dukagjini_kvx.webp"
+  },
+  {
+    "fileKey": "ferizaj_kvx",
+    "nome": "Ferizaj",
+    "curto": "KVXA08",
+    "pais": "Kosovo",
+    "escudo": "/escudos/ferizaj_kvx.webp"
+  },
+  {
+    "fileKey": "feronikeli_kvx",
+    "nome": "Feronikeli",
+    "curto": "KVXA09",
+    "pais": "Kosovo",
+    "escudo": "/escudos/feronikeli_kvx.webp"
+  },
+  {
+    "fileKey": "prishtina_e_re_kvx",
+    "nome": "Prishtina e Re",
+    "curto": "KVXA10",
+    "pais": "Kosovo",
+    "escudo": "/escudos/prishtina_e_re_kvx.webp"
+  },
+  {
+    "fileKey": "rfs_lva",
+    "nome": "RFS",
+    "curto": "LVAA01",
+    "pais": "Letonia",
+    "escudo": "/escudos/rfs_lva.webp"
+  },
+  {
+    "fileKey": "riga_fc_lva",
+    "nome": "Riga FC",
+    "curto": "LVAA02",
+    "pais": "Letonia",
+    "escudo": "/escudos/riga_fc_lva.webp"
+  },
+  {
+    "fileKey": "valmiera_lva",
+    "nome": "Valmiera",
+    "curto": "LVAA03",
+    "pais": "Letonia",
+    "escudo": "/escudos/valmiera_lva.webp"
+  },
+  {
+    "fileKey": "auda_lva",
+    "nome": "Auda",
+    "curto": "LVAA04",
+    "pais": "Letonia",
+    "escudo": "/escudos/auda_lva.webp"
+  },
+  {
+    "fileKey": "liepaja_lva",
+    "nome": "Liepāja",
+    "curto": "LVAA05",
+    "pais": "Letonia",
+    "escudo": "/escudos/liepaja_lva.webp"
+  },
+  {
+    "fileKey": "daugavpils_lva",
+    "nome": "Daugavpils",
+    "curto": "LVAA06",
+    "pais": "Letonia",
+    "escudo": "/escudos/daugavpils_lva.webp"
+  },
+  {
+    "fileKey": "jelgava_lva",
+    "nome": "Jelgava",
+    "curto": "LVAA07",
+    "pais": "Letonia",
+    "escudo": "/escudos/jelgava_lva.webp"
+  },
+  {
+    "fileKey": "tukums_2000_lva",
+    "nome": "Tukums 2000",
+    "curto": "LVAA08",
+    "pais": "Letonia",
+    "escudo": "/escudos/tukums_2000_lva.webp"
+  },
+  {
+    "fileKey": "grobina_lva",
+    "nome": "Grobiņa",
+    "curto": "LVAA09",
+    "pais": "Letonia",
+    "escudo": "/escudos/grobina_lva.webp"
+  },
+  {
+    "fileKey": "super_nova_lva",
+    "nome": "Super Nova",
+    "curto": "LVAA10",
+    "pais": "Letonia",
+    "escudo": "/escudos/super_nova_lva.webp"
+  },
+  {
+    "fileKey": "zalgiris_ltu",
+    "nome": "Žalgiris",
+    "curto": "LTUA01",
+    "pais": "Lituania",
+    "escudo": "/escudos/zalgiris_ltu.webp"
+  },
+  {
+    "fileKey": "kauno_zalgiris_ltu",
+    "nome": "Kauno Žalgiris",
+    "curto": "LTUA02",
+    "pais": "Lituania",
+    "escudo": "/escudos/kauno_zalgiris_ltu.webp"
+  },
+  {
+    "fileKey": "hegelmann_ltu",
+    "nome": "Hegelmann",
+    "curto": "LTUA03",
+    "pais": "Lituania",
+    "escudo": "/escudos/hegelmann_ltu.webp"
+  },
+  {
+    "fileKey": "panevezys_ltu",
+    "nome": "Panevėžys",
+    "curto": "LTUA04",
+    "pais": "Lituania",
+    "escudo": "/escudos/panevezys_ltu.webp"
+  },
+  {
+    "fileKey": "suduva_ltu",
+    "nome": "Sūduva",
+    "curto": "LTUA05",
+    "pais": "Lituania",
+    "escudo": "/escudos/suduva_ltu.webp"
+  },
+  {
+    "fileKey": "banga_ltu",
+    "nome": "Banga",
+    "curto": "LTUA06",
+    "pais": "Lituania",
+    "escudo": "/escudos/banga_ltu.webp"
+  },
+  {
+    "fileKey": "dziugas_ltu",
+    "nome": "Džiugas",
+    "curto": "LTUA07",
+    "pais": "Lituania",
+    "escudo": "/escudos/dziugas_ltu.webp"
+  },
+  {
+    "fileKey": "siauliai_ltu",
+    "nome": "Šiauliai",
+    "curto": "LTUA08",
+    "pais": "Lituania",
+    "escudo": "/escudos/siauliai_ltu.webp"
+  },
+  {
+    "fileKey": "riteriai_ltu",
+    "nome": "Riteriai",
+    "curto": "LTUA09",
+    "pais": "Lituania",
+    "escudo": "/escudos/riteriai_ltu.webp"
+  },
+  {
+    "fileKey": "transinvest_ltu",
+    "nome": "TransINVEST",
+    "curto": "LTUA10",
+    "pais": "Lituania",
+    "escudo": "/escudos/transinvest_ltu.webp"
+  },
+  {
+    "fileKey": "differdange_03_lux",
+    "nome": "Differdange 03",
+    "curto": "LUXA01",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/differdange_03_lux.webp"
+  },
+  {
+    "fileKey": "f91_dudelange_lux",
+    "nome": "F91 Dudelange",
+    "curto": "LUXA02",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/f91_dudelange_lux.webp"
+  },
+  {
+    "fileKey": "swift_hesperange_lux",
+    "nome": "Swift Hesperange",
+    "curto": "LUXA03",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/swift_hesperange_lux.webp"
+  },
+  {
+    "fileKey": "racing_luxembourg_lux",
+    "nome": "Racing Luxembourg",
+    "curto": "LUXA04",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/racing_luxembourg_lux.webp"
+  },
+  {
+    "fileKey": "progres_niederkorn_lux",
+    "nome": "Progrès Niederkorn",
+    "curto": "LUXA05",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/progres_niederkorn_lux.webp"
+  },
+  {
+    "fileKey": "jeunesse_esch_lux",
+    "nome": "Jeunesse Esch",
+    "curto": "LUXA06",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/jeunesse_esch_lux.webp"
+  },
+  {
+    "fileKey": "una_strassen_lux",
+    "nome": "UNA Strassen",
+    "curto": "LUXA07",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/una_strassen_lux.webp"
+  },
+  {
+    "fileKey": "union_titus_petange_lux",
+    "nome": "Union Titus Pétange",
+    "curto": "LUXA08",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/union_titus_petange_lux.webp"
+  },
+  {
+    "fileKey": "victoria_rosport_lux",
+    "nome": "Victoria Rosport",
+    "curto": "LUXA09",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/victoria_rosport_lux.webp"
+  },
+  {
+    "fileKey": "mondorf_lux",
+    "nome": "Mondorf",
+    "curto": "LUXA10",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/mondorf_lux.webp"
+  },
+  {
+    "fileKey": "wiltz_71_lux",
+    "nome": "Wiltz 71",
+    "curto": "LUXA11",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/wiltz_71_lux.webp"
+  },
+  {
+    "fileKey": "hostert_lux",
+    "nome": "Hostert",
+    "curto": "LUXA12",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/hostert_lux.webp"
+  },
+  {
+    "fileKey": "rodange_91_lux",
+    "nome": "Rodange 91",
+    "curto": "LUXA13",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/rodange_91_lux.webp"
+  },
+  {
+    "fileKey": "fola_esch_lux",
+    "nome": "Fola Esch",
+    "curto": "LUXA14",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/fola_esch_lux.webp"
+  },
+  {
+    "fileKey": "rumelange_lux",
+    "nome": "Rumelange",
+    "curto": "LUXA15",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/rumelange_lux.webp"
+  },
+  {
+    "fileKey": "mamer_32_lux",
+    "nome": "Mamer 32",
+    "curto": "LUXA16",
+    "pais": "Luxemburgo",
+    "escudo": "/escudos/mamer_32_lux.webp"
+  },
+  {
+    "fileKey": "struga_mkd",
+    "nome": "Struga",
+    "curto": "MKDA02",
+    "pais": "Macedonia do Norte",
+    "escudo": "/escudos/struga_mkd.webp"
+  },
+  {
+    "fileKey": "vardar_mkd",
+    "nome": "Vardar",
+    "curto": "MKDA03",
+    "pais": "Macedonia do Norte",
+    "escudo": "/escudos/vardar_mkd.webp"
+  },
+  {
+    "fileKey": "rabotnicki_mkd",
+    "nome": "Rabotnički",
+    "curto": "MKDA06",
+    "pais": "Macedonia do Norte",
+    "escudo": "/escudos/rabotnicki_mkd.webp"
+  },
+  {
+    "fileKey": "tikves_mkd",
+    "nome": "Tikveš",
+    "curto": "MKDA07",
+    "pais": "Macedonia do Norte",
+    "escudo": "/escudos/tikves_mkd.webp"
+  },
+  {
+    "fileKey": "pelister_mkd",
+    "nome": "Pelister",
+    "curto": "MKDA08",
+    "pais": "Macedonia do Norte",
+    "escudo": "/escudos/pelister_mkd.webp"
+  },
+  {
+    "fileKey": "ap_brera_mkd",
+    "nome": "AP Brera",
+    "curto": "MKDA09",
+    "pais": "Macedonia do Norte",
+    "escudo": "/escudos/ap_brera_mkd.webp"
+  },
+  {
+    "fileKey": "besa_doberdoll_mkd",
+    "nome": "Besa Dobërdoll",
+    "curto": "MKDA10",
+    "pais": "Macedonia do Norte",
+    "escudo": "/escudos/besa_doberdoll_mkd.webp"
+  },
+  {
+    "fileKey": "bashkimi_mkd",
+    "nome": "Bashkimi",
+    "curto": "MKDA11",
+    "pais": "Macedonia do Norte",
+    "escudo": "/escudos/bashkimi_mkd.webp"
+  },
+  {
+    "fileKey": "arsimi_mkd",
+    "nome": "Arsimi",
+    "curto": "MKDA12",
+    "pais": "Macedonia do Norte",
+    "escudo": "/escudos/arsimi_mkd.webp"
+  },
+  {
+    "fileKey": "amrun_spartans_mlt",
+    "nome": "Ħamrun Spartans",
+    "curto": "MLTA01",
+    "pais": "Malta",
+    "escudo": "/escudos/amrun_spartans_mlt.webp"
+  },
+  {
+    "fileKey": "floriana_mlt",
+    "nome": "Floriana",
+    "curto": "MLTA02",
+    "pais": "Malta",
+    "escudo": "/escudos/floriana_mlt.webp"
+  },
+  {
+    "fileKey": "birkirkara_mlt",
+    "nome": "Birkirkara",
+    "curto": "MLTA03",
+    "pais": "Malta",
+    "escudo": "/escudos/birkirkara_mlt.webp"
+  },
+  {
+    "fileKey": "sliema_wanderers_mlt",
+    "nome": "Sliema Wanderers",
+    "curto": "MLTA04",
+    "pais": "Malta",
+    "escudo": "/escudos/sliema_wanderers_mlt.webp"
+  },
+  {
+    "fileKey": "hibernians_mlt",
+    "nome": "Hibernians",
+    "curto": "MLTA05",
+    "pais": "Malta",
+    "escudo": "/escudos/hibernians_mlt.webp"
+  },
+  {
+    "fileKey": "mosta_mlt",
+    "nome": "Mosta",
+    "curto": "MLTA06",
+    "pais": "Malta",
+    "escudo": "/escudos/mosta_mlt.webp"
+  },
+  {
+    "fileKey": "marsaxlokk_mlt",
+    "nome": "Marsaxlokk",
+    "curto": "MLTA07",
+    "pais": "Malta",
+    "escudo": "/escudos/marsaxlokk_mlt.webp"
+  },
+  {
+    "fileKey": "gzira_united_mlt",
+    "nome": "Gżira United",
+    "curto": "MLTA08",
+    "pais": "Malta",
+    "escudo": "/escudos/gzira_united_mlt.webp"
+  },
+  {
+    "fileKey": "naxxar_lions_mlt",
+    "nome": "Naxxar Lions",
+    "curto": "MLTA09",
+    "pais": "Malta",
+    "escudo": "/escudos/naxxar_lions_mlt.webp"
+  },
+  {
+    "fileKey": "zabbar_st_patrick_mlt",
+    "nome": "Żabbar St Patrick",
+    "curto": "MLTA10",
+    "pais": "Malta",
+    "escudo": "/escudos/zabbar_st_patrick_mlt.webp"
+  },
+  {
+    "fileKey": "valletta_mlt",
+    "nome": "Valletta",
+    "curto": "MLTA11",
+    "pais": "Malta",
+    "escudo": "/escudos/valletta_mlt.webp"
+  },
+  {
+    "fileKey": "tarxien_rainbows_mlt",
+    "nome": "Tarxien Rainbows",
+    "curto": "MLTA12",
+    "pais": "Malta",
+    "escudo": "/escudos/tarxien_rainbows_mlt.webp"
+  },
+  {
+    "fileKey": "sheriff_tiraspol_mda",
+    "nome": "Sheriff Tiraspol",
+    "curto": "MDAA01",
+    "pais": "Moldavia",
+    "escudo": "/escudos/sheriff_tiraspol_mda.webp"
+  },
+  {
+    "fileKey": "petrocub_mda",
+    "nome": "Petrocub",
+    "curto": "MDAA02",
+    "pais": "Moldavia",
+    "escudo": "/escudos/petrocub_mda.webp"
+  },
+  {
+    "fileKey": "zimbru_chisinau_mda",
+    "nome": "Zimbru Chișinău",
+    "curto": "MDAA03",
+    "pais": "Moldavia",
+    "escudo": "/escudos/zimbru_chisinau_mda.webp"
+  },
+  {
+    "fileKey": "milsami_orhei_mda",
+    "nome": "Milsami Orhei",
+    "curto": "MDAA04",
+    "pais": "Moldavia",
+    "escudo": "/escudos/milsami_orhei_mda.webp"
+  },
+  {
+    "fileKey": "dacia_buiucani_mda",
+    "nome": "Dacia Buiucani",
+    "curto": "MDAA05",
+    "pais": "Moldavia",
+    "escudo": "/escudos/dacia_buiucani_mda.webp"
+  },
+  {
+    "fileKey": "balti_mda",
+    "nome": "Bălți",
+    "curto": "MDAA06",
+    "pais": "Moldavia",
+    "escudo": "/escudos/balti_mda.webp"
+  },
+  {
+    "fileKey": "spartanii_sportul_mda",
+    "nome": "Spartanii Sportul",
+    "curto": "MDAA07",
+    "pais": "Moldavia",
+    "escudo": "/escudos/spartanii_sportul_mda.webp"
+  },
+  {
+    "fileKey": "floresti_mda",
+    "nome": "Florești",
+    "curto": "MDAA08",
+    "pais": "Moldavia",
+    "escudo": "/escudos/floresti_mda.webp"
+  },
+  {
+    "fileKey": "buducnost_mne",
+    "nome": "Budućnost",
+    "curto": "MNEA01",
+    "pais": "Montenegro",
+    "escudo": "/escudos/buducnost_mne.webp"
+  },
+  {
+    "fileKey": "sutjeska_mne",
+    "nome": "Sutjeska",
+    "curto": "MNEA02",
+    "pais": "Montenegro",
+    "escudo": "/escudos/sutjeska_mne.webp"
+  },
+  {
+    "fileKey": "decic_mne",
+    "nome": "Dečić",
+    "curto": "MNEA03",
+    "pais": "Montenegro",
+    "escudo": "/escudos/decic_mne.webp"
+  },
+  {
+    "fileKey": "mornar_mne",
+    "nome": "Mornar",
+    "curto": "MNEA04",
+    "pais": "Montenegro",
+    "escudo": "/escudos/mornar_mne.webp"
+  },
+  {
+    "fileKey": "petrovac_mne",
+    "nome": "Petrovac",
+    "curto": "MNEA05",
+    "pais": "Montenegro",
+    "escudo": "/escudos/petrovac_mne.webp"
+  },
+  {
+    "fileKey": "arsenal_tivat_mne",
+    "nome": "Arsenal Tivat",
+    "curto": "MNEA06",
+    "pais": "Montenegro",
+    "escudo": "/escudos/arsenal_tivat_mne.webp"
+  },
+  {
+    "fileKey": "jedinstvo_mne",
+    "nome": "Jedinstvo",
+    "curto": "MNEA07",
+    "pais": "Montenegro",
+    "escudo": "/escudos/jedinstvo_mne.webp"
+  },
+  {
+    "fileKey": "jezero_mne",
+    "nome": "Jezero",
+    "curto": "MNEA08",
+    "pais": "Montenegro",
+    "escudo": "/escudos/jezero_mne.webp"
+  },
+  {
+    "fileKey": "bokelj_mne",
+    "nome": "Bokelj",
+    "curto": "MNEA09",
+    "pais": "Montenegro",
+    "escudo": "/escudos/bokelj_mne.webp"
+  },
+  {
+    "fileKey": "otrant_olympic_mne",
+    "nome": "Otrant-Olympic",
+    "curto": "MNEA10",
+    "pais": "Montenegro",
+    "escudo": "/escudos/otrant_olympic_mne.webp"
+  },
+  {
+    "fileKey": "the_new_saints_wal",
+    "nome": "The New Saints",
+    "curto": "WALA01",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/the_new_saints_wal.webp"
+  },
+  {
+    "fileKey": "penybont_wal",
+    "nome": "Penybont",
+    "curto": "WALA02",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/penybont_wal.webp"
+  },
+  {
+    "fileKey": "haverfordwest_county_wal",
+    "nome": "Haverfordwest County",
+    "curto": "WALA03",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/haverfordwest_county_wal.webp"
+  },
+  {
+    "fileKey": "caernarfon_town_wal",
+    "nome": "Caernarfon Town",
+    "curto": "WALA04",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/caernarfon_town_wal.webp"
+  },
+  {
+    "fileKey": "cardiff_metropolitan_wal",
+    "nome": "Cardiff Metropolitan",
+    "curto": "WALA05",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/cardiff_metropolitan_wal.webp"
+  },
+  {
+    "fileKey": "bala_town_wal",
+    "nome": "Bala Town",
+    "curto": "WALA06",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/bala_town_wal.webp"
+  },
+  {
+    "fileKey": "barry_town_united_wal",
+    "nome": "Barry Town United",
+    "curto": "WALA07",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/barry_town_united_wal.webp"
+  },
+  {
+    "fileKey": "newtown_wal",
+    "nome": "Newtown",
+    "curto": "WALA08",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/newtown_wal.webp"
+  },
+  {
+    "fileKey": "connah_s_quay_wal",
+    "nome": "Connah's Quay",
+    "curto": "WALA09",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/connah_s_quay_wal.webp"
+  },
+  {
+    "fileKey": "flint_town_united_wal",
+    "nome": "Flint Town United",
+    "curto": "WALA10",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/flint_town_united_wal.webp"
+  },
+  {
+    "fileKey": "briton_ferry_wal",
+    "nome": "Briton Ferry",
+    "curto": "WALA11",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/briton_ferry_wal.webp"
+  },
+  {
+    "fileKey": "aberystwyth_town_wal",
+    "nome": "Aberystwyth Town",
+    "curto": "WALA12",
+    "pais": "Pais de Gales",
+    "escudo": "/escudos/aberystwyth_town_wal.webp"
+  },
+  {
+    "fileKey": "lech_poznan_pol",
+    "nome": "Lech Poznań",
+    "curto": "POLA01",
+    "pais": "Polonia",
+    "escudo": "/escudos/lech_poznan_pol.webp"
+  },
+  {
+    "fileKey": "legia_warszawa_pol",
+    "nome": "Legia Warszawa",
+    "curto": "POLA02",
+    "pais": "Polonia",
+    "escudo": "/escudos/legia_warszawa_pol.webp"
+  },
+  {
+    "fileKey": "rakow_czestochowa_pol",
+    "nome": "Raków Częstochowa",
+    "curto": "POLA03",
+    "pais": "Polonia",
+    "escudo": "/escudos/rakow_czestochowa_pol.webp"
+  },
+  {
+    "fileKey": "jagiellonia_bia_ystok_pol",
+    "nome": "Jagiellonia Białystok",
+    "curto": "POLA04",
+    "pais": "Polonia",
+    "escudo": "/escudos/jagiellonia_bia_ystok_pol.webp"
+  },
+  {
+    "fileKey": "pogon_szczecin_pol",
+    "nome": "Pogoń Szczecin",
+    "curto": "POLA05",
+    "pais": "Polonia",
+    "escudo": "/escudos/pogon_szczecin_pol.webp"
+  },
+  {
+    "fileKey": "cracovia_pol",
+    "nome": "Cracovia",
+    "curto": "POLA06",
+    "pais": "Polonia",
+    "escudo": "/escudos/cracovia_pol.webp"
+  },
+  {
+    "fileKey": "gornik_zabrze_pol",
+    "nome": "Górnik Zabrze",
+    "curto": "POLA07",
+    "pais": "Polonia",
+    "escudo": "/escudos/gornik_zabrze_pol.webp"
+  },
+  {
+    "fileKey": "zag_ebie_lubin_pol",
+    "nome": "Zagłębie Lubin",
+    "curto": "POLA08",
+    "pais": "Polonia",
+    "escudo": "/escudos/zag_ebie_lubin_pol.webp"
+  },
+  {
+    "fileKey": "piast_gliwice_pol",
+    "nome": "Piast Gliwice",
+    "curto": "POLA09",
+    "pais": "Polonia",
+    "escudo": "/escudos/piast_gliwice_pol.webp"
+  },
+  {
+    "fileKey": "widzew_odz_pol",
+    "nome": "Widzew Łódź",
+    "curto": "POLA10",
+    "pais": "Polonia",
+    "escudo": "/escudos/widzew_odz_pol.webp"
+  },
+  {
+    "fileKey": "motor_lublin_pol",
+    "nome": "Motor Lublin",
+    "curto": "POLA11",
+    "pais": "Polonia",
+    "escudo": "/escudos/motor_lublin_pol.webp"
+  },
+  {
+    "fileKey": "korona_kielce_pol",
+    "nome": "Korona Kielce",
+    "curto": "POLA12",
+    "pais": "Polonia",
+    "escudo": "/escudos/korona_kielce_pol.webp"
+  },
+  {
+    "fileKey": "radomiak_radom_pol",
+    "nome": "Radomiak Radom",
+    "curto": "POLA13",
+    "pais": "Polonia",
+    "escudo": "/escudos/radomiak_radom_pol.webp"
+  },
+  {
+    "fileKey": "gks_katowice_pol",
+    "nome": "GKS Katowice",
+    "curto": "POLA14",
+    "pais": "Polonia",
+    "escudo": "/escudos/gks_katowice_pol.webp"
+  },
+  {
+    "fileKey": "wis_a_p_ock_pol",
+    "nome": "Wisła Płock",
+    "curto": "POLA15",
+    "pais": "Polonia",
+    "escudo": "/escudos/wis_a_p_ock_pol.webp"
+  },
+  {
+    "fileKey": "wis_a_krakow_pol",
+    "nome": "Wisła Kraków",
+    "curto": "POLA16",
+    "pais": "Polonia",
+    "escudo": "/escudos/wis_a_krakow_pol.webp"
+  },
+  {
+    "fileKey": "slask_wroc_aw_pol",
+    "nome": "Śląsk Wrocław",
+    "curto": "POLA17",
+    "pais": "Polonia",
+    "escudo": "/escudos/slask_wroc_aw_pol.webp"
+  },
+  {
+    "fileKey": "wieczysta_krakow_pol",
+    "nome": "Wieczysta Kraków",
+    "curto": "POLA18",
+    "pais": "Polonia",
+    "escudo": "/escudos/wieczysta_krakow_pol.webp"
+  },
+  {
+    "fileKey": "arka_gdynia_pol",
+    "nome": "Arka Gdynia",
+    "curto": "POLB01",
+    "pais": "Polonia",
+    "escudo": "/escudos/arka_gdynia_pol.webp"
+  },
+  {
+    "fileKey": "bruk_bet_termalica_nieciecza_pol",
+    "nome": "Bruk-Bet Termalica Nieciecza",
+    "curto": "POLB02",
+    "pais": "Polonia",
+    "escudo": "/escudos/bruk_bet_termalica_nieciecza_pol.webp"
+  },
+  {
+    "fileKey": "chrobry_g_ogow_pol",
+    "nome": "Chrobry Głogów",
+    "curto": "POLB03",
+    "pais": "Polonia",
+    "escudo": "/escudos/chrobry_g_ogow_pol.webp"
+  },
+  {
+    "fileKey": "lechia_gdansk_pol",
+    "nome": "Lechia Gdańsk",
+    "curto": "POLB04",
+    "pais": "Polonia",
+    "escudo": "/escudos/lechia_gdansk_pol.webp"
+  },
+  {
+    "fileKey": "ks_odz_pol",
+    "nome": "ŁKS Łódź",
+    "curto": "POLB05",
+    "pais": "Polonia",
+    "escudo": "/escudos/ks_odz_pol.webp"
+  },
+  {
+    "fileKey": "miedz_legnica_pol",
+    "nome": "Miedź Legnica",
+    "curto": "POLB06",
+    "pais": "Polonia",
+    "escudo": "/escudos/miedz_legnica_pol.webp"
+  },
+  {
+    "fileKey": "odra_opole_pol",
+    "nome": "Odra Opole",
+    "curto": "POLB07",
+    "pais": "Polonia",
+    "escudo": "/escudos/odra_opole_pol.webp"
+  },
+  {
+    "fileKey": "podbeskidzie_bielsko_bia_a_pol",
+    "nome": "Podbeskidzie Bielsko-Biała",
+    "curto": "POLB08",
+    "pais": "Polonia",
+    "escudo": "/escudos/podbeskidzie_bielsko_bia_a_pol.webp"
+  },
+  {
+    "fileKey": "pogon_grodzisk_mazowiecki_pol",
+    "nome": "Pogoń Grodzisk Mazowiecki",
+    "curto": "POLB09",
+    "pais": "Polonia",
+    "escudo": "/escudos/pogon_grodzisk_mazowiecki_pol.webp"
+  },
+  {
+    "fileKey": "pogon_siedlce_pol",
+    "nome": "Pogoń Siedlce",
+    "curto": "POLB10",
+    "pais": "Polonia",
+    "escudo": "/escudos/pogon_siedlce_pol.webp"
+  },
+  {
+    "fileKey": "polonia_bytom_pol",
+    "nome": "Polonia Bytom",
+    "curto": "POLB11",
+    "pais": "Polonia",
+    "escudo": "/escudos/polonia_bytom_pol.webp"
+  },
+  {
+    "fileKey": "polonia_warszawa_pol",
+    "nome": "Polonia Warszawa",
+    "curto": "POLB12",
+    "pais": "Polonia",
+    "escudo": "/escudos/polonia_warszawa_pol.webp"
+  },
+  {
+    "fileKey": "puszcza_niepo_omice_pol",
+    "nome": "Puszcza Niepołomice",
+    "curto": "POLB13",
+    "pais": "Polonia",
+    "escudo": "/escudos/puszcza_niepo_omice_pol.webp"
+  },
+  {
+    "fileKey": "ruch_chorzow_pol",
+    "nome": "Ruch Chorzów",
+    "curto": "POLB14",
+    "pais": "Polonia",
+    "escudo": "/escudos/ruch_chorzow_pol.webp"
+  },
+  {
+    "fileKey": "stal_mielec_pol",
+    "nome": "Stal Mielec",
+    "curto": "POLB15",
+    "pais": "Polonia",
+    "escudo": "/escudos/stal_mielec_pol.webp"
+  },
+  {
+    "fileKey": "stal_rzeszow_pol",
+    "nome": "Stal Rzeszów",
+    "curto": "POLB16",
+    "pais": "Polonia",
+    "escudo": "/escudos/stal_rzeszow_pol.webp"
+  },
+  {
+    "fileKey": "unia_skierniewice_pol",
+    "nome": "Unia Skierniewice",
+    "curto": "POLB17",
+    "pais": "Polonia",
+    "escudo": "/escudos/unia_skierniewice_pol.webp"
+  },
+  {
+    "fileKey": "warta_poznan_pol",
+    "nome": "Warta Poznań",
+    "curto": "POLB18",
+    "pais": "Polonia",
+    "escudo": "/escudos/warta_poznan_pol.webp"
+  },
+  {
+    "fileKey": "universitatea_craiova_rou",
+    "nome": "Universitatea Craiova",
+    "curto": "ROUA01",
+    "pais": "Romenia",
+    "escudo": "/escudos/universitatea_craiova_rou.webp"
+  },
+  {
+    "fileKey": "universitatea_cluj_rou",
+    "nome": "Universitatea Cluj",
+    "curto": "ROUA02",
+    "pais": "Romenia",
+    "escudo": "/escudos/universitatea_cluj_rou.webp"
+  },
+  {
+    "fileKey": "cfr_cluj_rou",
+    "nome": "CFR Cluj",
+    "curto": "ROUA03",
+    "pais": "Romenia",
+    "escudo": "/escudos/cfr_cluj_rou.webp"
+  },
+  {
+    "fileKey": "dinamo_bucuresti_rou",
+    "nome": "Dinamo București",
+    "curto": "ROUA04",
+    "pais": "Romenia",
+    "escudo": "/escudos/dinamo_bucuresti_rou.webp"
+  },
+  {
+    "fileKey": "rapid_bucuresti_rou",
+    "nome": "Rapid București",
+    "curto": "ROUA05",
+    "pais": "Romenia",
+    "escudo": "/escudos/rapid_bucuresti_rou.webp"
+  },
+  {
+    "fileKey": "arges_pitesti_rou",
+    "nome": "Argeș Pitești",
+    "curto": "ROUA06",
+    "pais": "Romenia",
+    "escudo": "/escudos/arges_pitesti_rou.webp"
+  },
+  {
+    "fileKey": "uta_arad_rou",
+    "nome": "UTA Arad",
+    "curto": "ROUA07",
+    "pais": "Romenia",
+    "escudo": "/escudos/uta_arad_rou.webp"
+  },
+  {
+    "fileKey": "fcsb_rou",
+    "nome": "FCSB",
+    "curto": "ROUA08",
+    "pais": "Romenia",
+    "escudo": "/escudos/fcsb_rou.webp"
+  },
+  {
+    "fileKey": "botosani_rou",
+    "nome": "Botoșani",
+    "curto": "ROUA09",
+    "pais": "Romenia",
+    "escudo": "/escudos/botosani_rou.webp"
+  },
+  {
+    "fileKey": "otelul_galati_rou",
+    "nome": "Oțelul Galați",
+    "curto": "ROUA10",
+    "pais": "Romenia",
+    "escudo": "/escudos/otelul_galati_rou.webp"
+  },
+  {
+    "fileKey": "csikszereda_rou",
+    "nome": "Csikszereda",
+    "curto": "ROUA11",
+    "pais": "Romenia",
+    "escudo": "/escudos/csikszereda_rou.webp"
+  },
+  {
+    "fileKey": "petrolul_ploiesti_rou",
+    "nome": "Petrolul Ploiești",
+    "curto": "ROUA12",
+    "pais": "Romenia",
+    "escudo": "/escudos/petrolul_ploiesti_rou.webp"
+  },
+  {
+    "fileKey": "farul_constanta_rou",
+    "nome": "Farul Constanța",
+    "curto": "ROUA13",
+    "pais": "Romenia",
+    "escudo": "/escudos/farul_constanta_rou.webp"
+  },
+  {
+    "fileKey": "corvinul_hunedoara_rou",
+    "nome": "Corvinul Hunedoara",
+    "curto": "ROUA14",
+    "pais": "Romenia",
+    "escudo": "/escudos/corvinul_hunedoara_rou.webp"
+  },
+  {
+    "fileKey": "sepsi_rou",
+    "nome": "Sepsi",
+    "curto": "ROUA15",
+    "pais": "Romenia",
+    "escudo": "/escudos/sepsi_rou.webp"
+  },
+  {
+    "fileKey": "fc_voluntari_rou",
+    "nome": "FC Voluntari",
+    "curto": "ROUA16",
+    "pais": "Romenia",
+    "escudo": "/escudos/fc_voluntari_rou.webp"
+  },
+  {
+    "fileKey": "csm_cetatea_1932_suceava_rou",
+    "nome": "CSM Cetatea 1932 Suceava",
+    "curto": "ROUB01",
+    "pais": "Romenia",
+    "escudo": "/escudos/csm_cetatea_1932_suceava_rou.webp"
+  },
+  {
+    "fileKey": "csl_stefanestii_de_jos_rou",
+    "nome": "CSL Ștefăneștii de Jos",
+    "curto": "ROUB02",
+    "pais": "Romenia",
+    "escudo": "/escudos/csl_stefanestii_de_jos_rou.webp"
+  },
+  {
+    "fileKey": "scm_ramnicu_valcea_rou",
+    "nome": "SCM Râmnicu Vâlcea",
+    "curto": "ROUB03",
+    "pais": "Romenia",
+    "escudo": "/escudos/scm_ramnicu_valcea_rou.webp"
+  },
+  {
+    "fileKey": "politehnica_timisoara_rou",
+    "nome": "Politehnica Timișoara",
+    "curto": "ROUB04",
+    "pais": "Romenia",
+    "escudo": "/escudos/politehnica_timisoara_rou.webp"
+  },
+  {
+    "fileKey": "sc_popesti_leordeni_rou",
+    "nome": "SC Popești-Leordeni",
+    "curto": "ROUB05",
+    "pais": "Romenia",
+    "escudo": "/escudos/sc_popesti_leordeni_rou.webp"
+  },
+  {
+    "fileKey": "fc_bihor_oradea_rou",
+    "nome": "FC Bihor Oradea",
+    "curto": "ROUB06",
+    "pais": "Romenia",
+    "escudo": "/escudos/fc_bihor_oradea_rou.webp"
+  },
+  {
+    "fileKey": "steaua_bucuresti_rou",
+    "nome": "Steaua București",
+    "curto": "ROUB07",
+    "pais": "Romenia",
+    "escudo": "/escudos/steaua_bucuresti_rou.webp"
+  },
+  {
+    "fileKey": "chindia_targoviste_rou",
+    "nome": "Chindia Târgoviște",
+    "curto": "ROUB08",
+    "pais": "Romenia",
+    "escudo": "/escudos/chindia_targoviste_rou.webp"
+  },
+  {
+    "fileKey": "asa_targu_mures_rou",
+    "nome": "ASA Târgu Mureș",
+    "curto": "ROUB09",
+    "pais": "Romenia",
+    "escudo": "/escudos/asa_targu_mures_rou.webp"
+  },
+  {
+    "fileKey": "metalul_buzau_rou",
+    "nome": "Metalul Buzău",
+    "curto": "ROUB10",
+    "pais": "Romenia",
+    "escudo": "/escudos/metalul_buzau_rou.webp"
+  },
+  {
+    "fileKey": "csm_slatina_rou",
+    "nome": "CSM Slatina",
+    "curto": "ROUB11",
+    "pais": "Romenia",
+    "escudo": "/escudos/csm_slatina_rou.webp"
+  },
+  {
+    "fileKey": "gloria_bistrita_rou",
+    "nome": "Gloria Bistrița",
+    "curto": "ROUB12",
+    "pais": "Romenia",
+    "escudo": "/escudos/gloria_bistrita_rou.webp"
+  },
+  {
+    "fileKey": "fc_bacau_rou",
+    "nome": "FC Bacău",
+    "curto": "ROUB13",
+    "pais": "Romenia",
+    "escudo": "/escudos/fc_bacau_rou.webp"
+  },
+  {
+    "fileKey": "concordia_chiajna_rou",
+    "nome": "Concordia Chiajna",
+    "curto": "ROUB14",
+    "pais": "Romenia",
+    "escudo": "/escudos/concordia_chiajna_rou.webp"
+  },
+  {
+    "fileKey": "csm_resita_rou",
+    "nome": "CSM Reșița",
+    "curto": "ROUB15",
+    "pais": "Romenia",
+    "escudo": "/escudos/csm_resita_rou.webp"
+  },
+  {
+    "fileKey": "cs_afumati_rou",
+    "nome": "CS Afumați",
+    "curto": "ROUB16",
+    "pais": "Romenia",
+    "escudo": "/escudos/cs_afumati_rou.webp"
+  },
+  {
+    "fileKey": "csc_dumbravita_rou",
+    "nome": "CSC Dumbrăvița",
+    "curto": "ROUB17",
+    "pais": "Romenia",
+    "escudo": "/escudos/csc_dumbravita_rou.webp"
+  },
+  {
+    "fileKey": "csc_1599_selimbar_rou",
+    "nome": "CSC 1599 Șelimbăr",
+    "curto": "ROUB18",
+    "pais": "Romenia",
+    "escudo": "/escudos/csc_1599_selimbar_rou.webp"
+  },
+  {
+    "fileKey": "cs_dinamo_bucuresti_rou",
+    "nome": "CS Dinamo București",
+    "curto": "ROUB19",
+    "pais": "Romenia",
+    "escudo": "/escudos/cs_dinamo_bucuresti_rou.webp"
+  },
+  {
+    "fileKey": "hermannstadt_rou",
+    "nome": "Hermannstadt",
+    "curto": "ROUB20",
+    "pais": "Romenia",
+    "escudo": "/escudos/hermannstadt_rou.webp"
+  },
+  {
+    "fileKey": "unirea_slobozia_rou",
+    "nome": "Unirea Slobozia",
+    "curto": "ROUB21",
+    "pais": "Romenia",
+    "escudo": "/escudos/unirea_slobozia_rou.webp"
+  },
+  {
+    "fileKey": "metaloglobus_bucuresti_rou",
+    "nome": "Metaloglobus București",
+    "curto": "ROUB22",
+    "pais": "Romenia",
+    "escudo": "/escudos/metaloglobus_bucuresti_rou.webp"
+  },
+  {
+    "fileKey": "virtus_smr",
+    "nome": "Virtus",
+    "curto": "SMRA01",
+    "pais": "San Marino",
+    "escudo": "/escudos/virtus_smr.webp"
+  },
+  {
+    "fileKey": "la_fiorita_smr",
+    "nome": "La Fiorita",
+    "curto": "SMRA02",
+    "pais": "San Marino",
+    "escudo": "/escudos/la_fiorita_smr.webp"
+  },
+  {
+    "fileKey": "tre_penne_smr",
+    "nome": "Tre Penne",
+    "curto": "SMRA03",
+    "pais": "San Marino",
+    "escudo": "/escudos/tre_penne_smr.webp"
+  },
+  {
+    "fileKey": "tre_fiori_smr",
+    "nome": "Tre Fiori",
+    "curto": "SMRA04",
+    "pais": "San Marino",
+    "escudo": "/escudos/tre_fiori_smr.webp"
+  },
+  {
+    "fileKey": "folgore_smr",
+    "nome": "Folgore",
+    "curto": "SMRA05",
+    "pais": "San Marino",
+    "escudo": "/escudos/folgore_smr.webp"
+  },
+  {
+    "fileKey": "libertas_smr",
+    "nome": "Libertas",
+    "curto": "SMRA06",
+    "pais": "San Marino",
+    "escudo": "/escudos/libertas_smr.webp"
+  },
+  {
+    "fileKey": "cosmos_smr",
+    "nome": "Cosmos",
+    "curto": "SMRA07",
+    "pais": "San Marino",
+    "escudo": "/escudos/cosmos_smr.webp"
+  },
+  {
+    "fileKey": "murata_smr",
+    "nome": "Murata",
+    "curto": "SMRA08",
+    "pais": "San Marino",
+    "escudo": "/escudos/murata_smr.webp"
+  },
+  {
+    "fileKey": "juvenes_dogana_smr",
+    "nome": "Juvenes/Dogana",
+    "curto": "SMRA09",
+    "pais": "San Marino",
+    "escudo": "/escudos/juvenes_dogana_smr.webp"
+  },
+  {
+    "fileKey": "faetano_smr",
+    "nome": "Faetano",
+    "curto": "SMRA10",
+    "pais": "San Marino",
+    "escudo": "/escudos/faetano_smr.webp"
+  },
+  {
+    "fileKey": "domagnano_smr",
+    "nome": "Domagnano",
+    "curto": "SMRA11",
+    "pais": "San Marino",
+    "escudo": "/escudos/domagnano_smr.webp"
+  },
+  {
+    "fileKey": "fiorentino_smr",
+    "nome": "Fiorentino",
+    "curto": "SMRA12",
+    "pais": "San Marino",
+    "escudo": "/escudos/fiorentino_smr.webp"
+  },
+  {
+    "fileKey": "pennarossa_smr",
+    "nome": "Pennarossa",
+    "curto": "SMRA13",
+    "pais": "San Marino",
+    "escudo": "/escudos/pennarossa_smr.webp"
+  },
+  {
+    "fileKey": "san_giovanni_smr",
+    "nome": "San Giovanni",
+    "curto": "SMRA14",
+    "pais": "San Marino",
+    "escudo": "/escudos/san_giovanni_smr.webp"
+  },
+  {
+    "fileKey": "cailungo_smr",
+    "nome": "Cailungo",
+    "curto": "SMRA15",
+    "pais": "San Marino",
+    "escudo": "/escudos/cailungo_smr.webp"
+  },
+  {
+    "fileKey": "red_star_belgrade_srb",
+    "nome": "Red Star Belgrade",
+    "curto": "SRBA01",
+    "pais": "Servia",
+    "escudo": "/escudos/red_star_belgrade_srb.webp"
+  },
+  {
+    "fileKey": "partizan_srb",
+    "nome": "Partizan",
+    "curto": "SRBA02",
+    "pais": "Servia",
+    "escudo": "/escudos/partizan_srb.webp"
+  },
+  {
+    "fileKey": "tsc_backa_topola_srb",
+    "nome": "TSC Bačka Topola",
+    "curto": "SRBA04",
+    "pais": "Servia",
+    "escudo": "/escudos/tsc_backa_topola_srb.webp"
+  },
+  {
+    "fileKey": "radnicki_nis_srb",
+    "nome": "Radnički Niš",
+    "curto": "SRBA06",
+    "pais": "Servia",
+    "escudo": "/escudos/radnicki_nis_srb.webp"
+  },
+  {
+    "fileKey": "novi_pazar_srb",
+    "nome": "Novi Pazar",
+    "curto": "SRBA07",
+    "pais": "Servia",
+    "escudo": "/escudos/novi_pazar_srb.webp"
+  },
+  {
+    "fileKey": "mladost_lucani_srb",
+    "nome": "Mladost Lučani",
+    "curto": "SRBA08",
+    "pais": "Servia",
+    "escudo": "/escudos/mladost_lucani_srb.webp"
+  },
+  {
+    "fileKey": "zeleznicar_pancevo_srb",
+    "nome": "Železničar Pančevo",
+    "curto": "SRBA09",
+    "pais": "Servia",
+    "escudo": "/escudos/zeleznicar_pancevo_srb.webp"
+  },
+  {
+    "fileKey": "spartak_subotica_srb",
+    "nome": "Spartak Subotica",
+    "curto": "SRBA10",
+    "pais": "Servia",
+    "escudo": "/escudos/spartak_subotica_srb.webp"
+  },
+  {
+    "fileKey": "imt_srb",
+    "nome": "IMT",
+    "curto": "SRBA11",
+    "pais": "Servia",
+    "escudo": "/escudos/imt_srb.webp"
+  },
+  {
+    "fileKey": "radnicki_kragujevac_srb",
+    "nome": "Radnički Kragujevac",
+    "curto": "SRBA13",
+    "pais": "Servia",
+    "escudo": "/escudos/radnicki_kragujevac_srb.webp"
+  },
+  {
+    "fileKey": "ofk_beograd_srb",
+    "nome": "OFK Beograd",
+    "curto": "SRBA14",
+    "pais": "Servia",
+    "escudo": "/escudos/ofk_beograd_srb.webp"
+  },
+  {
+    "fileKey": "javor_ivanjica_srb",
+    "nome": "Javor Ivanjica",
+    "curto": "SRBA15",
+    "pais": "Servia",
+    "escudo": "/escudos/javor_ivanjica_srb.webp"
+  },
+  {
+    "fileKey": "dubocica_srb",
+    "nome": "Dubocica",
+    "curto": "SRBA16",
+    "pais": "Servia",
+    "escudo": "/escudos/dubocica_srb.webp"
+  },
+  {
+    "fileKey": "malmo_ff_swe",
+    "nome": "Malmö FF",
+    "curto": "SWEA01",
+    "pais": "Suecia",
+    "escudo": "/escudos/malmo_ff_swe.webp"
+  },
+  {
+    "fileKey": "djurgardens_if_swe",
+    "nome": "Djurgårdens IF",
+    "curto": "SWEA02",
+    "pais": "Suecia",
+    "escudo": "/escudos/djurgardens_if_swe.webp"
+  },
+  {
+    "fileKey": "aik_swe",
+    "nome": "AIK",
+    "curto": "SWEA03",
+    "pais": "Suecia",
+    "escudo": "/escudos/aik_swe.webp"
+  },
+  {
+    "fileKey": "hammarby_swe",
+    "nome": "Hammarby",
+    "curto": "SWEA04",
+    "pais": "Suecia",
+    "escudo": "/escudos/hammarby_swe.webp"
+  },
+  {
+    "fileKey": "bk_hacken_swe",
+    "nome": "BK Häcken",
+    "curto": "SWEA05",
+    "pais": "Suecia",
+    "escudo": "/escudos/bk_hacken_swe.webp"
+  },
+  {
+    "fileKey": "ifk_goteborg_swe",
+    "nome": "IFK Göteborg",
+    "curto": "SWEA06",
+    "pais": "Suecia",
+    "escudo": "/escudos/ifk_goteborg_swe.webp"
+  },
+  {
+    "fileKey": "ifk_norrkoping_swe",
+    "nome": "IFK Norrköping",
+    "curto": "SWEA07",
+    "pais": "Suecia",
+    "escudo": "/escudos/ifk_norrkoping_swe.webp"
+  },
+  {
+    "fileKey": "elfsborg_swe",
+    "nome": "Elfsborg",
+    "curto": "SWEA08",
+    "pais": "Suecia",
+    "escudo": "/escudos/elfsborg_swe.webp"
+  },
+  {
+    "fileKey": "mjallby_swe",
+    "nome": "Mjällby",
+    "curto": "SWEA09",
+    "pais": "Suecia",
+    "escudo": "/escudos/mjallby_swe.webp"
+  },
+  {
+    "fileKey": "sirius_swe",
+    "nome": "Sirius",
+    "curto": "SWEA10",
+    "pais": "Suecia",
+    "escudo": "/escudos/sirius_swe.webp"
+  },
+  {
+    "fileKey": "brommapojkarna_swe",
+    "nome": "Brommapojkarna",
+    "curto": "SWEA11",
+    "pais": "Suecia",
+    "escudo": "/escudos/brommapojkarna_swe.webp"
+  },
+  {
+    "fileKey": "halmstad_swe",
+    "nome": "Halmstad",
+    "curto": "SWEA12",
+    "pais": "Suecia",
+    "escudo": "/escudos/halmstad_swe.webp"
+  },
+  {
+    "fileKey": "gais_swe",
+    "nome": "GAIS",
+    "curto": "SWEA13",
+    "pais": "Suecia",
+    "escudo": "/escudos/gais_swe.webp"
+  },
+  {
+    "fileKey": "degerfors_swe",
+    "nome": "Degerfors",
+    "curto": "SWEA14",
+    "pais": "Suecia",
+    "escudo": "/escudos/degerfors_swe.webp"
+  },
+  {
+    "fileKey": "oster_swe",
+    "nome": "Öster",
+    "curto": "SWEA15",
+    "pais": "Suecia",
+    "escudo": "/escudos/oster_swe.webp"
+  },
+  {
+    "fileKey": "varnamo_swe",
+    "nome": "Värnamo",
+    "curto": "SWEA16",
+    "pais": "Suecia",
+    "escudo": "/escudos/varnamo_swe.webp"
+  },
+  {
+    "fileKey": "young_boys_sui",
+    "nome": "Young Boys",
+    "curto": "SUIA02",
+    "pais": "Suica",
+    "escudo": "/escudos/young_boys_sui.webp"
+  },
+  {
+    "fileKey": "zurich_sui",
+    "nome": "Zürich",
+    "curto": "SUIA05",
+    "pais": "Suica",
+    "escudo": "/escudos/zurich_sui.webp"
+  },
+  {
+    "fileKey": "st_gallen_sui",
+    "nome": "St. Gallen",
+    "curto": "SUIA06",
+    "pais": "Suica",
+    "escudo": "/escudos/st_gallen_sui.webp"
+  },
+  {
+    "fileKey": "lausanne_sport_sui",
+    "nome": "Lausanne-Sport",
+    "curto": "SUIA07",
+    "pais": "Suica",
+    "escudo": "/escudos/lausanne_sport_sui.webp"
+  },
+  {
+    "fileKey": "neuchatel_xamax_sui",
+    "nome": "Neuchâtel Xamax",
+    "curto": "SUIB01",
+    "pais": "Suica",
+    "escudo": "/escudos/neuchatel_xamax_sui.webp"
+  },
+  {
+    "fileKey": "sc_kriens_sui",
+    "nome": "SC Kriens",
+    "curto": "SUIB02",
+    "pais": "Suica",
+    "escudo": "/escudos/sc_kriens_sui.webp"
+  },
+  {
+    "fileKey": "fc_rapperswil_jona_sui",
+    "nome": "FC Rapperswil-Jona",
+    "curto": "SUIB03",
+    "pais": "Suica",
+    "escudo": "/escudos/fc_rapperswil_jona_sui.webp"
+  },
+  {
+    "fileKey": "fc_wil_1900_sui",
+    "nome": "FC Wil 1900",
+    "curto": "SUIB04",
+    "pais": "Suica",
+    "escudo": "/escudos/fc_wil_1900_sui.webp"
+  },
+  {
+    "fileKey": "stade_lausanne_ouchy_sui",
+    "nome": "Stade Lausanne Ouchy",
+    "curto": "SUIB05",
+    "pais": "Suica",
+    "escudo": "/escudos/stade_lausanne_ouchy_sui.webp"
+  },
+  {
+    "fileKey": "stade_nyonnais_sui",
+    "nome": "Stade Nyonnais",
+    "curto": "SUIB06",
+    "pais": "Suica",
+    "escudo": "/escudos/stade_nyonnais_sui.webp"
+  },
+  {
+    "fileKey": "etoile_carouge_sui",
+    "nome": "Étoile Carouge",
+    "curto": "SUIB07",
+    "pais": "Suica",
+    "escudo": "/escudos/etoile_carouge_sui.webp"
+  },
+  {
+    "fileKey": "fc_aarau_sui",
+    "nome": "FC Aarau",
+    "curto": "SUIB08",
+    "pais": "Suica",
+    "escudo": "/escudos/fc_aarau_sui.webp"
+  },
+  {
+    "fileKey": "yverdon_sport_sui",
+    "nome": "Yverdon Sport",
+    "curto": "SUIB10",
+    "pais": "Suica",
+    "escudo": "/escudos/yverdon_sport_sui.webp"
+  },
+  {
+    "fileKey": "dynamo_kyiv_ukr",
+    "nome": "Dynamo Kyiv",
+    "curto": "UKRA01",
+    "pais": "Ucrania",
+    "escudo": "/escudos/dynamo_kyiv_ukr.webp"
+  },
+  {
+    "fileKey": "shakhtar_donetsk_ukr",
+    "nome": "Shakhtar Donetsk",
+    "curto": "UKRA02",
+    "pais": "Ucrania",
+    "escudo": "/escudos/shakhtar_donetsk_ukr.webp"
+  },
+  {
+    "fileKey": "oleksandriya_ukr",
+    "nome": "Oleksandriya",
+    "curto": "UKRA03",
+    "pais": "Ucrania",
+    "escudo": "/escudos/oleksandriya_ukr.webp"
+  },
+  {
+    "fileKey": "polissya_zhytomyr_ukr",
+    "nome": "Polissya Zhytomyr",
+    "curto": "UKRA04",
+    "pais": "Ucrania",
+    "escudo": "/escudos/polissya_zhytomyr_ukr.webp"
+  },
+  {
+    "fileKey": "kryvbas_ukr",
+    "nome": "Kryvbas",
+    "curto": "UKRA05",
+    "pais": "Ucrania",
+    "escudo": "/escudos/kryvbas_ukr.webp"
+  },
+  {
+    "fileKey": "karpaty_lviv_ukr",
+    "nome": "Karpaty Lviv",
+    "curto": "UKRA06",
+    "pais": "Ucrania",
+    "escudo": "/escudos/karpaty_lviv_ukr.webp"
+  },
+  {
+    "fileKey": "rukh_lviv_ukr",
+    "nome": "Rukh Lviv",
+    "curto": "UKRA07",
+    "pais": "Ucrania",
+    "escudo": "/escudos/rukh_lviv_ukr.webp"
+  },
+  {
+    "fileKey": "zorya_luhansk_ukr",
+    "nome": "Zorya Luhansk",
+    "curto": "UKRA08",
+    "pais": "Ucrania",
+    "escudo": "/escudos/zorya_luhansk_ukr.webp"
+  },
+  {
+    "fileKey": "vorskla_poltava_ukr",
+    "nome": "Vorskla Poltava",
+    "curto": "UKRA09",
+    "pais": "Ucrania",
+    "escudo": "/escudos/vorskla_poltava_ukr.webp"
+  },
+  {
+    "fileKey": "chornomorets_odesa_ukr",
+    "nome": "Chornomorets Odesa",
+    "curto": "UKRA10",
+    "pais": "Ucrania",
+    "escudo": "/escudos/chornomorets_odesa_ukr.webp"
+  },
+  {
+    "fileKey": "kolos_kovalivka_ukr",
+    "nome": "Kolos Kovalivka",
+    "curto": "UKRA11",
+    "pais": "Ucrania",
+    "escudo": "/escudos/kolos_kovalivka_ukr.webp"
+  },
+  {
+    "fileKey": "obolon_kyiv_ukr",
+    "nome": "Obolon Kyiv",
+    "curto": "UKRA12",
+    "pais": "Ucrania",
+    "escudo": "/escudos/obolon_kyiv_ukr.webp"
+  },
+  {
+    "fileKey": "veres_rivne_ukr",
+    "nome": "Veres Rivne",
+    "curto": "UKRA13",
+    "pais": "Ucrania",
+    "escudo": "/escudos/veres_rivne_ukr.webp"
+  },
+  {
+    "fileKey": "lnz_cherkasy_ukr",
+    "nome": "LNZ Cherkasy",
+    "curto": "UKRA14",
+    "pais": "Ucrania",
+    "escudo": "/escudos/lnz_cherkasy_ukr.webp"
+  },
+  {
+    "fileKey": "epitsentr_ukr",
+    "nome": "Epitsentr",
+    "curto": "UKRA15",
+    "pais": "Ucrania",
+    "escudo": "/escudos/epitsentr_ukr.webp"
+  },
+  {
+    "fileKey": "metalist_1925_ukr",
+    "nome": "Metalist 1925",
+    "curto": "UKRA16",
+    "pais": "Ucrania",
+    "escudo": "/escudos/metalist_1925_ukr.webp"
+  },
+  {
+    "fileKey": "viktoria_plzen",
+    "nome": "FC Viktoria Plzen",
+    "curto": "PLZ",
+    "pais": "Chequia",
+    "escudo": "/escudos/viktoria_plzen.webp"
+  },
+  {
+    "fileKey": "hradec_kralove",
+    "nome": "FC Hradec Kralove",
+    "curto": "HKR",
+    "pais": "Chequia",
+    "escudo": "/escudos/hradec_kralove.webp"
+  },
+  {
+    "fileKey": "slovan_liberec",
+    "nome": "FC Slovan Liberec",
+    "curto": "LIB",
+    "pais": "Chequia",
+    "escudo": "/escudos/slovan_liberec.webp"
+  },
+  {
+    "fileKey": "sigma_olomouc",
+    "nome": "SK Sigma Olomouc",
+    "curto": "SIG",
+    "pais": "Chequia",
+    "escudo": "/escudos/sigma_olomouc.webp"
+  },
+  {
+    "fileKey": "artis_brno",
+    "nome": "SK Artis Brno",
+    "curto": "ART",
+    "pais": "Chequia",
+    "escudo": "/escudos/artis_brno.webp"
+  },
+  {
+    "fileKey": "fastav_zlin",
+    "nome": "FC Fastav Zlin",
+    "curto": "ZLI",
+    "pais": "Chequia",
+    "escudo": "/escudos/fastav_zlin.webp"
+  },
+  {
+    "fileKey": "bohemians_1905",
+    "nome": "Bohemians Praha 1905",
+    "curto": "BOH",
+    "pais": "Chequia",
+    "escudo": "/escudos/bohemians_1905.webp"
+  },
+  {
+    "fileKey": "banik_ostrava",
+    "nome": "FC Banik Ostrava",
+    "curto": "BANIKOST",
+    "pais": "Chequia",
+    "escudo": "/escudos/banik_ostrava.webp"
+  },
+  {
+    "fileKey": "pardubice",
+    "nome": "FK Pardubice",
+    "curto": "PARDUBIC",
+    "pais": "Chequia",
+    "escudo": "/escudos/pardubice.webp"
+  },
+  {
+    "fileKey": "mlada_boleslav",
+    "nome": "FK Mlada Boleslav",
+    "curto": "MLB",
+    "pais": "Chequia",
+    "escudo": "/escudos/mlada_boleslav.webp"
+  },
+  {
+    "fileKey": "slovacko",
+    "nome": "1. FC Slovacko",
+    "curto": "SLOVACKO",
+    "pais": "Chequia",
+    "escudo": "/escudos/slovacko.webp"
+  },
+  {
+    "fileKey": "teplice",
+    "nome": "FK Teplice",
+    "curto": "TEP",
+    "pais": "Chequia",
+    "escudo": "/escudos/teplice.webp"
+  },
+  {
+    "fileKey": "zbrojovka_brno",
+    "nome": "FC Zbrojovka Brno",
+    "curto": "ZBR",
+    "pais": "Chequia",
+    "escudo": "/escudos/zbrojovka_brno.webp"
+  },
+  {
+    "fileKey": "araz_naxcivan",
+    "nome": "Araz-Naxcivan PFK",
+    "curto": "ARA",
+    "pais": "Azerbaijao",
+    "escudo": "/escudos/araz_naxcivan.webp"
+  },
+  {
+    "fileKey": "zira_azb",
+    "nome": "Zira FK",
+    "curto": "ZIR",
+    "pais": "Azerbaijao",
+    "escudo": "/escudos/zira_azb.webp"
+  },
+  {
+    "fileKey": "kapaz",
+    "nome": "Kapaz PFK",
+    "curto": "KAP",
+    "pais": "Azerbaijao",
+    "escudo": "/escudos/kapaz.webp"
+  },
+  {
+    "fileKey": "turan_tovuz",
+    "nome": "Turan Tovuz",
+    "curto": "TUR",
+    "pais": "Azerbaijao",
+    "escudo": "/escudos/turan_tovuz.webp"
+  },
+  {
+    "fileKey": "samaxi",
+    "nome": "Samaxi FK",
+    "curto": "SAMAXI",
+    "pais": "Azerbaijao",
+    "escudo": "/escudos/samaxi.webp"
+  },
+  {
+    "fileKey": "imisli",
+    "nome": "Imisli PFK",
+    "curto": "IMISLI",
+    "pais": "Azerbaijao",
+    "escudo": "/escudos/imisli.webp"
+  },
+  {
+    "fileKey": "karvan_yevlax",
+    "nome": "Karvan-Yevlax FK",
+    "curto": "KAR",
+    "pais": "Azerbaijao",
+    "escudo": "/escudos/karvan_yevlax.webp"
+  },
+  {
+    "fileKey": "aek_larnaca",
+    "nome": "AEK Larnaca",
+    "curto": "AEK",
+    "pais": "Chipre",
+    "escudo": "/escudos/aek_larnaca.webp"
+  },
+  {
+    "fileKey": "als_omonia_29m",
+    "nome": "ALS Omonia 29M",
+    "curto": "O29",
+    "pais": "Chipre",
+    "escudo": "/escudos/als_omonia_29m.webp"
+  },
+  {
+    "fileKey": "anorthosis",
+    "nome": "Anorthosis Famagusta",
+    "curto": "ANO",
+    "pais": "Chipre",
+    "escudo": "/escudos/anorthosis.webp"
+  },
+  {
+    "fileKey": "nea_salamina",
+    "nome": "Nea Salamina Famagusta",
+    "curto": "NSA",
+    "pais": "Chipre",
+    "escudo": "/escudos/nea_salamina.webp"
+  },
+  {
+    "fileKey": "karmiotissa",
+    "nome": "Karmiotissa Polemidion",
+    "curto": "KARMIOTI",
+    "pais": "Chipre",
+    "escudo": "/escudos/karmiotissa.webp"
+  },
+  {
+    "fileKey": "olympiakos_nicosia",
+    "nome": "Olympiakos Nicosia",
+    "curto": "OLN",
+    "pais": "Chipre",
+    "escudo": "/escudos/olympiakos_nicosia.webp"
+  },
+  {
+    "fileKey": "omonia_aradippou",
+    "nome": "Omonia Aradippou",
+    "curto": "OAR",
+    "pais": "Chipre",
+    "escudo": "/escudos/omonia_aradippou.webp"
+  },
+  {
+    "fileKey": "eny_ypsonas",
+    "nome": "Krasava ENY Ypsonas",
+    "curto": "ENY",
+    "pais": "Chipre",
+    "escudo": "/escudos/eny_ypsonas.webp"
+  },
+  {
+    "fileKey": "aktobe",
+    "nome": "FC Aktobe",
+    "curto": "AKT",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/aktobe.webp"
+  },
+  {
+    "fileKey": "altai_oskemen",
+    "nome": "FC Altai",
+    "curto": "ALTAIOSK",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/altai_oskemen.webp"
+  },
+  {
+    "fileKey": "zhetysu",
+    "nome": "FC Zhetysu",
+    "curto": "ZHE",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/zhetysu.webp"
+  },
+  {
+    "fileKey": "atyrau",
+    "nome": "FC Atyrau",
+    "curto": "ATY",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/atyrau.webp"
+  },
+  {
+    "fileKey": "ulytau",
+    "nome": "FC Ulytau",
+    "curto": "ULY",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/ulytau.webp"
+  },
+  {
+    "fileKey": "zhenis",
+    "nome": "FC Zhenis",
+    "curto": "ZHENIS",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/zhenis.webp"
+  },
+  {
+    "fileKey": "qyzyljar",
+    "nome": "FC Qyzyljar",
+    "curto": "QYZ",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/qyzyljar.webp"
+  },
+  {
+    "fileKey": "caspiy",
+    "nome": "FC Caspiy",
+    "curto": "CAS",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/caspiy.webp"
+  },
+  {
+    "fileKey": "okzhetpes",
+    "nome": "FC Okzhetpes",
+    "curto": "OKZ",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/okzhetpes.webp"
+  },
+  {
+    "fileKey": "elimai",
+    "nome": "FC Elimai",
+    "curto": "ELI",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/elimai.webp"
+  },
+  {
+    "fileKey": "ertis",
+    "nome": "FC Ertis",
+    "curto": "ERT",
+    "pais": "Cazaquistao",
+    "escudo": "/escudos/ertis.webp"
+  },
+  {
+    "fileKey": "fredrikstad",
+    "nome": "Fredrikstad FK",
+    "curto": "FFK",
+    "pais": "Noruega",
+    "escudo": "/escudos/fredrikstad.webp"
+  },
+  {
+    "fileKey": "aalesund",
+    "nome": "Aalesunds FK",
+    "curto": "AAF",
+    "pais": "Noruega",
+    "escudo": "/escudos/aalesund.webp"
+  },
+  {
+    "fileKey": "lillestrom",
+    "nome": "Lillestrom SK",
+    "curto": "LSK",
+    "pais": "Noruega",
+    "escudo": "/escudos/lillestrom.webp"
+  },
+  {
+    "fileKey": "start_nor",
+    "nome": "IK Start",
+    "curto": "STA",
+    "pais": "Noruega",
+    "escudo": "/escudos/start_nor.webp"
+  },
+  {
+    "fileKey": "kongsvinger",
+    "nome": "Kongsvinger IL",
+    "curto": "KONGSVIN",
+    "pais": "Noruega",
+    "escudo": "/escudos/kongsvinger.webp"
+  },
+  {
+    "fileKey": "stabaek",
+    "nome": "Stabaek Fotball",
+    "curto": "STB",
+    "pais": "Noruega",
+    "escudo": "/escudos/stabaek.webp"
+  },
+  {
+    "fileKey": "ranheim",
+    "nome": "Ranheim TF",
+    "curto": "RAN",
+    "pais": "Noruega",
+    "escudo": "/escudos/ranheim.webp"
+  },
+  {
+    "fileKey": "hodd",
+    "nome": "IL Hodd",
+    "curto": "HOD",
+    "pais": "Noruega",
+    "escudo": "/escudos/hodd.webp"
+  },
+  {
+    "fileKey": "moss_fk",
+    "nome": "Moss FK",
+    "curto": "MOS",
+    "pais": "Noruega",
+    "escudo": "/escudos/moss_fk.webp"
+  },
+  {
+    "fileKey": "egersund",
+    "nome": "Egersunds IK",
+    "curto": "EIK",
+    "pais": "Noruega",
+    "escudo": "/escudos/egersund.webp"
+  },
+  {
+    "fileKey": "sogndal",
+    "nome": "Sogndal Fotball",
+    "curto": "SOG",
+    "pais": "Noruega",
+    "escudo": "/escudos/sogndal.webp"
+  },
+  {
+    "fileKey": "bryne",
+    "nome": "Bryne FK",
+    "curto": "BRY",
+    "pais": "Noruega",
+    "escudo": "/escudos/bryne.webp"
+  },
+  {
+    "fileKey": "sandnes_ulf",
+    "nome": "Sandnes Ulf",
+    "curto": "ULF",
+    "pais": "Noruega",
+    "escudo": "/escudos/sandnes_ulf.webp"
+  },
+  {
+    "fileKey": "lyn_1896",
+    "nome": "Lyn 1896 FK",
+    "curto": "LYN",
+    "pais": "Noruega",
+    "escudo": "/escudos/lyn_1896.webp"
+  },
+  {
+    "fileKey": "raufoss",
+    "nome": "Raufoss IL",
+    "curto": "RAU",
+    "pais": "Noruega",
+    "escudo": "/escudos/raufoss.webp"
+  },
+  {
+    "fileKey": "asane",
+    "nome": "Asane Fotball",
+    "curto": "ASA",
+    "pais": "Noruega",
+    "escudo": "/escudos/asane.webp"
+  },
+  {
+    "fileKey": "strommen",
+    "nome": "Strommen IF",
+    "curto": "STR",
+    "pais": "Noruega",
+    "escudo": "/escudos/strommen.webp"
+  },
+  {
+    "fileKey": "viborg",
+    "nome": "Viborg FF",
+    "curto": "VFF",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/viborg.webp"
+  },
+  {
+    "fileKey": "agf",
+    "nome": "AGF",
+    "curto": "AGF",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/agf.webp"
+  },
+  {
+    "fileKey": "lyngby",
+    "nome": "Lyngby BK",
+    "curto": "LBK",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/lyngby.webp"
+  },
+  {
+    "fileKey": "randers",
+    "nome": "Randers FC",
+    "curto": "RFC",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/randers.webp"
+  },
+  {
+    "fileKey": "ab_gladsaxe",
+    "nome": "Akademisk Boldklub",
+    "curto": "AB",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/ab_gladsaxe.webp"
+  },
+  {
+    "fileKey": "fredericia",
+    "nome": "FC Fredericia",
+    "curto": "FRE",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/fredericia.webp"
+  },
+  {
+    "fileKey": "hb_koge",
+    "nome": "HB Koge",
+    "curto": "HBK",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/hb_koge.webp"
+  },
+  {
+    "fileKey": "hillerod",
+    "nome": "Hillerod Fodbold",
+    "curto": "HILLEROD",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/hillerod.webp"
+  },
+  {
+    "fileKey": "hvidovre",
+    "nome": "Hvidovre IF",
+    "curto": "HVI",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/hvidovre.webp"
+  },
+  {
+    "fileKey": "kolding",
+    "nome": "Kolding IF",
+    "curto": "KOL",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/kolding.webp"
+  },
+  {
+    "fileKey": "vejle",
+    "nome": "Vejle Boldklub",
+    "curto": "VB",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/vejle.webp"
+  },
+  {
+    "fileKey": "vendsyssel",
+    "nome": "Vendsyssel FF",
+    "curto": "VEN",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/vendsyssel.webp"
+  },
+  {
+    "fileKey": "aarhus_fremad",
+    "nome": "Aarhus Fremad",
+    "curto": "AARHUSFR",
+    "pais": "Dinamarca",
+    "escudo": "/escudos/aarhus_fremad.webp"
+  },
+  {
+    "fileKey": "aep_polemidion",
+    "nome": "AEP Polemidion",
+    "curto": "AEP",
+    "pais": "Chipre",
+    "escudo": "/escudos/aep_polemidion.webp"
+  },
+  {
+    "fileKey": "akritas_chlorakas",
+    "nome": "Akritas Chlorakas",
+    "curto": "AKR",
+    "pais": "Chipre",
+    "escudo": "/escudos/akritas_chlorakas.webp"
+  },
+  {
+    "fileKey": "anagennisi_deryneia",
+    "nome": "Anagennisi Deryneia",
+    "curto": "ANAGENNI",
+    "pais": "Chipre",
+    "escudo": "/escudos/anagennisi_deryneia.webp"
+  },
+  {
+    "fileKey": "ayia_napa",
+    "nome": "AO Ayia Napa",
+    "curto": "AYA",
+    "pais": "Chipre",
+    "escudo": "/escudos/ayia_napa.webp"
+  },
+  {
+    "fileKey": "apea_akrotiri",
+    "nome": "APEA Akrotiri",
+    "curto": "APE",
+    "pais": "Chipre",
+    "escudo": "/escudos/apea_akrotiri.webp"
+  },
+  {
+    "fileKey": "asil_lysi",
+    "nome": "ASIL Lysi",
+    "curto": "ASI",
+    "pais": "Chipre",
+    "escudo": "/escudos/asil_lysi.webp"
+  },
+  {
+    "fileKey": "digenis_morphou",
+    "nome": "Digenis Akritas Morphou",
+    "curto": "DIGENISM",
+    "pais": "Chipre",
+    "escudo": "/escudos/digenis_morphou.webp"
+  },
+  {
+    "fileKey": "doxa_katokopias",
+    "nome": "Doxa Katokopias",
+    "curto": "DOX",
+    "pais": "Chipre",
+    "escudo": "/escudos/doxa_katokopias.webp"
+  },
+  {
+    "fileKey": "ethnikos_achnas",
+    "nome": "Ethnikos Achnas",
+    "curto": "ETH",
+    "pais": "Chipre",
+    "escudo": "/escudos/ethnikos_achnas.webp"
+  },
+  {
+    "fileKey": "en_paralimni",
+    "nome": "Enosis Neon Paralimni",
+    "curto": "ENP",
+    "pais": "Chipre",
+    "escudo": "/escudos/en_paralimni.webp"
+  },
+  {
+    "fileKey": "ermis_aradippou",
+    "nome": "Ermis Aradippou",
+    "curto": "ERM",
+    "pais": "Chipre",
+    "escudo": "/escudos/ermis_aradippou.webp"
+  },
+  {
+    "fileKey": "iraklis_gerolakkou",
+    "nome": "Iraklis Gerolakkou",
+    "curto": "IRA",
+    "pais": "Chipre",
+    "escudo": "/escudos/iraklis_gerolakkou.webp"
+  },
+  {
+    "fileKey": "meap_nisou",
+    "nome": "MEAP Pera Choriou Nisou",
+    "curto": "MEA",
+    "pais": "Chipre",
+    "escudo": "/escudos/meap_nisou.webp"
+  },
+  {
+    "fileKey": "paeek",
+    "nome": "PAEEK Kyrenia",
+    "curto": "PAE",
+    "pais": "Chipre",
+    "escudo": "/escudos/paeek.webp"
+  },
+  {
+    "fileKey": "spartakos_kitiou",
+    "nome": "Spartakos Kitiou",
+    "curto": "SPARTAKO",
+    "pais": "Chipre",
+    "escudo": "/escudos/spartakos_kitiou.webp"
+  },
+  {
+    "fileKey": "chalkanoras",
+    "nome": "Chalkanoras Idaliou",
+    "curto": "CHALKANO",
+    "pais": "Chipre",
+    "escudo": "/escudos/chalkanoras.webp"
+  },
+  {
+    "fileKey": "prostejov",
+    "nome": "1. SK Prostejov",
+    "curto": "PRV",
+    "pais": "Chequia",
+    "escudo": "/escudos/prostejov.webp"
+  },
+  {
+    "fileKey": "banik_ostrava_b",
+    "nome": "FC Banik Ostrava B",
+    "curto": "BOB",
+    "pais": "Chequia",
+    "escudo": "/escudos/banik_ostrava_b.webp"
+  },
+  {
+    "fileKey": "vlasim",
+    "nome": "FC Sellier & Bellot Vlasim",
+    "curto": "VLA",
+    "pais": "Chequia",
+    "escudo": "/escudos/vlasim.webp"
+  },
+  {
+    "fileKey": "taborsko",
+    "nome": "FC SILON Taborsko",
+    "curto": "TAB",
+    "pais": "Chequia",
+    "escudo": "/escudos/taborsko.webp"
+  },
+  {
+    "fileKey": "vysocina_jihlava",
+    "nome": "FC Vysocina Jihlava",
+    "curto": "JIH",
+    "pais": "Chequia",
+    "escudo": "/escudos/vysocina_jihlava.webp"
+  },
+  {
+    "fileKey": "arsenal_ceska_lipa",
+    "nome": "FK Arsenal Ceska Lipa",
+    "curto": "ACL",
+    "pais": "Chequia",
+    "escudo": "/escudos/arsenal_ceska_lipa.webp"
+  },
+  {
+    "fileKey": "dukla_praha",
+    "nome": "FK Dukla Praha",
+    "curto": "DUK",
+    "pais": "Chequia",
+    "escudo": "/escudos/dukla_praha.webp"
+  },
+  {
+    "fileKey": "trinec",
+    "nome": "FK Trinec",
+    "curto": "TRI",
+    "pais": "Chequia",
+    "escudo": "/escudos/trinec.webp"
+  },
+  {
+    "fileKey": "usti_nad_labem",
+    "nome": "FK VIAGEM Usti nad Labem",
+    "curto": "UNL",
+    "pais": "Chequia",
+    "escudo": "/escudos/usti_nad_labem.webp"
+  },
+  {
+    "fileKey": "viktoria_zizkov",
+    "nome": "FK Viktoria Zizkov",
+    "curto": "ZIZ",
+    "pais": "Chequia",
+    "escudo": "/escudos/viktoria_zizkov.webp"
+  },
+  {
+    "fileKey": "pribram",
+    "nome": "Fotbal Pribram",
+    "curto": "PRI",
+    "pais": "Chequia",
+    "escudo": "/escudos/pribram.webp"
+  },
+  {
+    "fileKey": "mfk_karvina",
+    "nome": "MFK Karvina",
+    "curto": "KRV",
+    "pais": "Chequia",
+    "escudo": "/escudos/mfk_karvina.webp"
+  },
+  {
+    "fileKey": "hanacka_slavia_kromeriz",
+    "nome": "SK Hanacka Slavia Kromeriz",
+    "curto": "KRO",
+    "pais": "Chequia",
+    "escudo": "/escudos/hanacka_slavia_kromeriz.webp"
+  },
+  {
+    "fileKey": "kladno",
+    "nome": "SK Kladno",
+    "curto": "KLA",
+    "pais": "Chequia",
+    "escudo": "/escudos/kladno.webp"
+  },
+  {
+    "fileKey": "slavia_praha_b",
+    "nome": "SK Slavia Praha B",
+    "curto": "SLB",
+    "pais": "Chequia",
+    "escudo": "/escudos/slavia_praha_b.webp"
+  },
+  {
+    "fileKey": "opava",
+    "nome": "Slezsky FC Opava",
+    "curto": "OPA",
+    "pais": "Chequia",
+    "escudo": "/escudos/opava.webp"
+  },
+  {
+    "fileKey": "u_de_concepcion",
+    "nome": "Universidad de Concepcion",
+    "curto": "UDC",
+    "pais": "Chile",
+    "escudo": "/escudos/u_de_concepcion.webp"
+  },
+  {
+    "fileKey": "dep_concepcion",
+    "nome": "Deportes Concepcion",
+    "curto": "DCO",
+    "pais": "Chile",
+    "escudo": "/escudos/dep_concepcion.webp"
+  },
+  {
+    "fileKey": "fc_anyang",
+    "nome": "FC Anyang",
+    "curto": "FCANYANG",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/fc_anyang.webp"
+  },
+  {
+    "fileKey": "bucheon_fc",
+    "nome": "Bucheon FC 1995",
+    "curto": "BUCHEONF",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/bucheon_fc.webp"
+  },
+  {
+    "fileKey": "suwon_fc",
+    "nome": "Suwon FC",
+    "curto": "SWF",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/suwon_fc.webp"
+  },
+  {
+    "fileKey": "busan_ipark",
+    "nome": "Busan IPark",
+    "curto": "BUS",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/busan_ipark.webp"
+  },
+  {
+    "fileKey": "seoul_eland",
+    "nome": "Seoul E-Land",
+    "curto": "SEL",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/seoul_eland.webp"
+  },
+  {
+    "fileKey": "jeonnam_dragons",
+    "nome": "Jeonnam Dragons",
+    "curto": "JEONNAMD",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/jeonnam_dragons.webp"
+  },
+  {
+    "fileKey": "gyeongnam_fc",
+    "nome": "Gyeongnam FC",
+    "curto": "GYE",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/gyeongnam_fc.webp"
+  },
+  {
+    "fileKey": "chungnam_asan",
+    "nome": "Chungnam Asan",
+    "curto": "CNA",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/chungnam_asan.webp"
+  },
+  {
+    "fileKey": "ansan_greeners",
+    "nome": "Ansan Greeners",
+    "curto": "ANSANGRE",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/ansan_greeners.webp"
+  },
+  {
+    "fileKey": "chungbuk_cheongju",
+    "nome": "Chungbuk Cheongju",
+    "curto": "CBC",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/chungbuk_cheongju.webp"
+  },
+  {
+    "fileKey": "cheonan_city",
+    "nome": "Cheonan City",
+    "curto": "CHC",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/cheonan_city.webp"
+  },
+  {
+    "fileKey": "gimpo_fc",
+    "nome": "Gimpo FC",
+    "curto": "GMP",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/gimpo_fc.webp"
+  },
+  {
+    "fileKey": "hwaseong_fc",
+    "nome": "Hwaseong FC",
+    "curto": "HWS",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/hwaseong_fc.webp"
+  },
+  {
+    "fileKey": "gimhae_fc",
+    "nome": "Gimhae FC",
+    "curto": "GMH",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/gimhae_fc.webp"
+  },
+  {
+    "fileKey": "yongin_fc",
+    "nome": "Yongin FC",
+    "curto": "YON",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/yongin_fc.webp"
+  },
+  {
+    "fileKey": "paju_citizen",
+    "nome": "Paju Citizen",
+    "curto": "PAJ",
+    "pais": "Coreia do Sul",
+    "escudo": "/escudos/paju_citizen.webp"
+  },
+  {
+    "fileKey": "academico_de_viseu_official_26",
+    "nome": "Académico de Viseu",
+    "curto": "O26001",
+    "pais": "Portugal",
+    "escudo": "/escudos/academico_de_viseu_official_26.webp"
+  },
+  {
+    "fileKey": "fc_alverca_official_26",
+    "nome": "FC Alverca",
+    "curto": "O26002",
+    "pais": "Portugal",
+    "escudo": "/escudos/fc_alverca_official_26.webp"
+  },
+  {
+    "fileKey": "estrela_da_amadora_official_26",
+    "nome": "Estrela da Amadora",
+    "curto": "O26003",
+    "pais": "Portugal",
+    "escudo": "/escudos/estrela_da_amadora_official_26.webp"
+  },
+  {
+    "fileKey": "santa_clara_official_26",
+    "nome": "Santa Clara",
+    "curto": "O26004",
+    "pais": "Portugal",
+    "escudo": "/escudos/santa_clara_official_26.webp"
+  },
+  {
+    "fileKey": "academica_de_coimbra_official_26",
+    "nome": "Académica de Coimbra",
+    "curto": "O26005",
+    "pais": "Portugal",
+    "escudo": "/escudos/academica_de_coimbra_official_26.webp"
+  },
+  {
+    "fileKey": "avs_official_26",
+    "nome": "AVS",
+    "curto": "O26006",
+    "pais": "Portugal",
+    "escudo": "/escudos/avs_official_26.webp"
+  },
+  {
+    "fileKey": "sporting_cp_b_official_26",
+    "nome": "Sporting CP B",
+    "curto": "O26007",
+    "pais": "Portugal",
+    "escudo": "/escudos/sporting_cp_b_official_26.webp"
+  },
+  {
+    "fileKey": "lusitania_de_lourosa_official_26",
+    "nome": "Lusitânia de Lourosa",
+    "curto": "O26008",
+    "pais": "Portugal",
+    "escudo": "/escudos/lusitania_de_lourosa_official_26.webp"
+  },
+  {
+    "fileKey": "fc_porto_b_official_26",
+    "nome": "FC Porto B",
+    "curto": "O26009",
+    "pais": "Portugal",
+    "escudo": "/escudos/fc_porto_b_official_26.webp"
+  },
+  {
+    "fileKey": "sc_cambuur_official_26",
+    "nome": "SC Cambuur",
+    "curto": "O26010",
+    "pais": "Holanda",
+    "escudo": "/escudos/sc_cambuur_official_26.webp"
+  },
+  {
+    "fileKey": "almere_city_fc_official_26",
+    "nome": "Almere City FC",
+    "curto": "O26011",
+    "pais": "Holanda",
+    "escudo": "/escudos/almere_city_fc_official_26.webp"
+  },
+  {
+    "fileKey": "fc_den_bosch_official_26",
+    "nome": "FC Den Bosch",
+    "curto": "O26012",
+    "pais": "Holanda",
+    "escudo": "/escudos/fc_den_bosch_official_26.webp"
+  },
+  {
+    "fileKey": "fc_dordrecht_official_26",
+    "nome": "FC Dordrecht",
+    "curto": "O26013",
+    "pais": "Holanda",
+    "escudo": "/escudos/fc_dordrecht_official_26.webp"
+  },
+  {
+    "fileKey": "fc_eindhoven_official_26",
+    "nome": "FC Eindhoven",
+    "curto": "O26014",
+    "pais": "Holanda",
+    "escudo": "/escudos/fc_eindhoven_official_26.webp"
+  },
+  {
+    "fileKey": "fc_volendam_official_26",
+    "nome": "FC Volendam",
+    "curto": "O26015",
+    "pais": "Holanda",
+    "escudo": "/escudos/fc_volendam_official_26.webp"
+  },
+  {
+    "fileKey": "jong_ajax_official_26",
+    "nome": "Jong Ajax",
+    "curto": "O26016",
+    "pais": "Holanda",
+    "escudo": "/escudos/jong_ajax_official_26.webp"
+  },
+  {
+    "fileKey": "jong_az_official_26",
+    "nome": "Jong AZ",
+    "curto": "O26017",
+    "pais": "Holanda",
+    "escudo": "/escudos/jong_az_official_26.webp"
+  },
+  {
+    "fileKey": "jong_psv_official_26",
+    "nome": "Jong PSV",
+    "curto": "O26018",
+    "pais": "Holanda",
+    "escudo": "/escudos/jong_psv_official_26.webp"
+  },
+  {
+    "fileKey": "jong_fc_utrecht_official_26",
+    "nome": "Jong FC Utrecht",
+    "curto": "O26019",
+    "pais": "Holanda",
+    "escudo": "/escudos/jong_fc_utrecht_official_26.webp"
+  },
+  {
+    "fileKey": "roda_jc_official_26",
+    "nome": "Roda JC",
+    "curto": "O26020",
+    "pais": "Holanda",
+    "escudo": "/escudos/roda_jc_official_26.webp"
+  },
+  {
+    "fileKey": "corum_fk_official_26",
+    "nome": "Çorum FK",
+    "curto": "O26021",
+    "pais": "Turquia",
+    "escudo": "/escudos/corum_fk_official_26.webp"
+  },
+  {
+    "fileKey": "genclerbirligi_official_26",
+    "nome": "Gençlerbirliği",
+    "curto": "O26022",
+    "pais": "Turquia",
+    "escudo": "/escudos/genclerbirligi_official_26.webp"
+  },
+  {
+    "fileKey": "erzurumspor_fk_official_26",
+    "nome": "Erzurumspor FK",
+    "curto": "O26023",
+    "pais": "Turquia",
+    "escudo": "/escudos/erzurumspor_fk_official_26.webp"
+  },
+  {
+    "fileKey": "bodrum_fk_official_26",
+    "nome": "Bodrum FK",
+    "curto": "O26024",
+    "pais": "Turquia",
+    "escudo": "/escudos/bodrum_fk_official_26.webp"
+  },
+  {
+    "fileKey": "igd_r_fk_official_26",
+    "nome": "Iğdır FK",
+    "curto": "O26025",
+    "pais": "Turquia",
+    "escudo": "/escudos/igd_r_fk_official_26.webp"
+  },
+  {
+    "fileKey": "istanbulspor_official_26",
+    "nome": "İstanbulspor",
+    "curto": "O26026",
+    "pais": "Turquia",
+    "escudo": "/escudos/istanbulspor_official_26.webp"
+  },
+  {
+    "fileKey": "vanspor_official_26",
+    "nome": "Vanspor",
+    "curto": "O26027",
+    "pais": "Turquia",
+    "escudo": "/escudos/vanspor_official_26.webp"
+  },
+  {
+    "fileKey": "mardin_1969_spor_official_26",
+    "nome": "Mardin 1969 Spor",
+    "curto": "O26028",
+    "pais": "Turquia",
+    "escudo": "/escudos/mardin_1969_spor_official_26.webp"
+  },
+  {
+    "fileKey": "dynamo_makhachkala_official_26",
+    "nome": "Dynamo Makhachkala",
+    "curto": "O26029",
+    "pais": "Russia",
+    "escudo": "/escudos/dynamo_makhachkala_official_26.webp"
+  },
+  {
+    "fileKey": "rodina_moscow_official_26",
+    "nome": "Rodina Moscow",
+    "curto": "O26030",
+    "pais": "Russia",
+    "escudo": "/escudos/rodina_moscow_official_26.webp"
+  },
+  {
+    "fileKey": "volga_ulyanovsk_official_26",
+    "nome": "Volga Ulyanovsk",
+    "curto": "O26031",
+    "pais": "Russia",
+    "escudo": "/escudos/volga_ulyanovsk_official_26.webp"
+  },
+  {
+    "fileKey": "yenisey_krasnoyarsk_official_26",
+    "nome": "Yenisey Krasnoyarsk",
+    "curto": "O26032",
+    "pais": "Russia",
+    "escudo": "/escudos/yenisey_krasnoyarsk_official_26.webp"
+  },
+  {
+    "fileKey": "racing_santander_official_26",
+    "nome": "Racing Santander",
+    "curto": "O26033",
+    "pais": "Espanha",
+    "escudo": "/escudos/racing_santander_official_26.webp"
+  },
+  {
+    "fileKey": "ce_sabadell_official_26",
+    "nome": "CE Sabadell",
+    "curto": "O26034",
+    "pais": "Espanha",
+    "escudo": "/escudos/ce_sabadell_official_26.webp"
+  },
+  {
+    "fileKey": "ud_las_palmas_official_26",
+    "nome": "UD Las Palmas",
+    "curto": "O26035",
+    "pais": "Espanha",
+    "escudo": "/escudos/ud_las_palmas_official_26.webp"
+  },
+  {
+    "fileKey": "sv_elversberg_official_26",
+    "nome": "SV Elversberg",
+    "curto": "O26036",
+    "pais": "Alemanha",
+    "escudo": "/escudos/sv_elversberg_official_26.webp"
+  },
+  {
+    "fileKey": "sc_paderborn_07_official_26",
+    "nome": "SC Paderborn 07",
+    "curto": "O26037",
+    "pais": "Alemanha",
+    "escudo": "/escudos/sc_paderborn_07_official_26.webp"
+  },
+  {
+    "fileKey": "vfl_bochum_official_26",
+    "nome": "VfL Bochum",
+    "curto": "O26038",
+    "pais": "Alemanha",
+    "escudo": "/escudos/vfl_bochum_official_26.webp"
+  },
+  {
+    "fileKey": "le_mans_fc_official_26",
+    "nome": "Le Mans FC",
+    "curto": "O26039",
+    "pais": "Franca",
+    "escudo": "/escudos/le_mans_fc_official_26.webp"
+  },
+  {
+    "fileKey": "estac_troyes_official_26",
+    "nome": "ESTAC Troyes",
+    "curto": "O26040",
+    "pais": "Franca",
+    "escudo": "/escudos/estac_troyes_official_26.webp"
+  },
+  {
+    "fileKey": "stade_de_reims_official_26",
+    "nome": "Stade de Reims",
+    "curto": "O26041",
+    "pais": "Franca",
+    "escudo": "/escudos/stade_de_reims_official_26.webp"
+  },
+  {
+    "fileKey": "arezzo_official_26",
+    "nome": "Arezzo",
+    "curto": "O26042",
+    "pais": "Italia",
+    "escudo": "/escudos/arezzo_official_26.webp"
+  },
+  {
+    "fileKey": "ascoli_official_26",
+    "nome": "Ascoli",
+    "curto": "O26043",
+    "pais": "Italia",
+    "escudo": "/escudos/ascoli_official_26.webp"
+  },
+  {
+    "fileKey": "carrarese_official_26",
+    "nome": "Carrarese",
+    "curto": "O26044",
+    "pais": "Italia",
+    "escudo": "/escudos/carrarese_official_26.webp"
+  },
+  {
+    "fileKey": "juve_stabia_official_26",
+    "nome": "Juve Stabia",
+    "curto": "O26045",
+    "pais": "Italia",
+    "escudo": "/escudos/juve_stabia_official_26.webp"
+  },
+  {
+    "fileKey": "mantova_official_26",
+    "nome": "Mantova",
+    "curto": "O26046",
+    "pais": "Italia",
+    "escudo": "/escudos/mantova_official_26.webp"
+  },
+  {
+    "fileKey": "lommel_sk_official_26",
+    "nome": "Lommel SK",
+    "curto": "O26047",
+    "pais": "Belgica",
+    "escudo": "/escudos/lommel_sk_official_26.webp"
+  },
+  {
+    "fileKey": "ksc_lokeren_official_26",
+    "nome": "KSC Lokeren",
+    "curto": "O26048",
+    "pais": "Belgica",
+    "escudo": "/escudos/ksc_lokeren_official_26.webp"
+  },
+  {
+    "fileKey": "rsca_futures_official_26",
+    "nome": "RSCA Futures",
+    "curto": "O26049",
+    "pais": "Belgica",
+    "escudo": "/escudos/rsca_futures_official_26.webp"
+  },
+  {
+    "fileKey": "jong_genk_official_26",
+    "nome": "Jong Genk",
+    "curto": "O26050",
+    "pais": "Belgica",
+    "escudo": "/escudos/jong_genk_official_26.webp"
+  },
+  {
+    "fileKey": "k_lierse_sk_official_26",
+    "nome": "K. Lierse SK",
+    "curto": "O26051",
+    "pais": "Belgica",
+    "escudo": "/escudos/k_lierse_sk_official_26.webp"
+  },
+  {
+    "fileKey": "royal_excelsior_virton_official_26",
+    "nome": "Royal Excelsior Virton",
+    "curto": "O26052",
+    "pais": "Belgica",
+    "escudo": "/escudos/royal_excelsior_virton_official_26.webp"
+  },
+  {
+    "fileKey": "k_beerschot_va_official_26",
+    "nome": "K. Beerschot VA",
+    "curto": "O26053",
+    "pais": "Belgica",
+    "escudo": "/escudos/k_beerschot_va_official_26.webp"
+  },
+  {
+    "fileKey": "jong_gent_official_26",
+    "nome": "Jong Gent",
+    "curto": "O26054",
+    "pais": "Belgica",
+    "escudo": "/escudos/jong_gent_official_26.webp"
+  },
+  {
+    "fileKey": "club_nxt_official_26",
+    "nome": "Club NXT",
+    "curto": "O26055",
+    "pais": "Belgica",
+    "escudo": "/escudos/club_nxt_official_26.webp"
+  },
+  {
+    "fileKey": "rangers_official_26",
+    "nome": "Rangers",
+    "curto": "O26056",
+    "pais": "Escocia",
+    "escudo": "/escudos/rangers_official_26.webp"
+  },
+  {
+    "fileKey": "st_mirren_official_26",
+    "nome": "St Mirren",
+    "curto": "O26057",
+    "pais": "Escocia",
+    "escudo": "/escudos/st_mirren_official_26.webp"
+  },
+  {
+    "fileKey": "aberdeen_official_26",
+    "nome": "Aberdeen",
+    "curto": "O26058",
+    "pais": "Escocia",
+    "escudo": "/escudos/aberdeen_official_26.webp"
+  },
+  {
+    "fileKey": "st_johnstone_official_26",
+    "nome": "St Johnstone",
+    "curto": "O26059",
+    "pais": "Escocia",
+    "escudo": "/escudos/st_johnstone_official_26.webp"
+  },
+  {
+    "fileKey": "kilmarnock_official_26",
+    "nome": "Kilmarnock",
+    "curto": "O26060",
+    "pais": "Escocia",
+    "escudo": "/escudos/kilmarnock_official_26.webp"
+  },
+  {
+    "fileKey": "hibernian_official_26",
+    "nome": "Hibernian",
+    "curto": "O26061",
+    "pais": "Escocia",
+    "escudo": "/escudos/hibernian_official_26.webp"
+  },
+  {
+    "fileKey": "motherwell_official_26",
+    "nome": "Motherwell",
+    "curto": "O26062",
+    "pais": "Escocia",
+    "escudo": "/escudos/motherwell_official_26.webp"
+  },
+  {
+    "fileKey": "dundee_official_26",
+    "nome": "Dundee",
+    "curto": "O26063",
+    "pais": "Escocia",
+    "escudo": "/escudos/dundee_official_26.webp"
+  },
+  {
+    "fileKey": "inverness_caledonian_thistle_official_26",
+    "nome": "Inverness Caledonian Thistle",
+    "curto": "O26064",
+    "pais": "Escocia",
+    "escudo": "/escudos/inverness_caledonian_thistle_official_26.webp"
+  },
+  {
+    "fileKey": "dunfermline_athletic_official_26",
+    "nome": "Dunfermline Athletic",
+    "curto": "O26065",
+    "pais": "Escocia",
+    "escudo": "/escudos/dunfermline_athletic_official_26.webp"
+  },
+  {
+    "fileKey": "livingston_official_26",
+    "nome": "Livingston",
+    "curto": "O26066",
+    "pais": "Escocia",
+    "escudo": "/escudos/livingston_official_26.webp"
+  },
+  {
+    "fileKey": "queen_s_park_official_26",
+    "nome": "Queen's Park",
+    "curto": "O26067",
+    "pais": "Escocia",
+    "escudo": "/escudos/queen_s_park_official_26.webp"
+  }
+]

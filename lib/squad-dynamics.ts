@@ -126,6 +126,15 @@ export function applyWeeklyPlayingTimeMorale(
   dynamics: PlayerDynamics,
   minutesThisWeek: number,
   teamMatchesThisWeek: number,
+  /**
+   * `moralSemanal` de `lib/efeito-do-treinador.ts` — o atributo MOTIVAÇÃO do
+   * técnico, mais a habilidade "Motivação no Vestiário". Neutro em 0.
+   *
+   * Este é o único canal de moral por MINUTAGEM que existe, e é onde o
+   * motivador tem de aparecer: quem sabe conversar segura o reserva insatisfeito
+   * (delta negativo vira zero) e quem não sabe perde o grupo mais rápido.
+   */
+  ajusteDoTecnico = 0,
 ): Player {
   if (teamMatchesThisWeek <= 0 || player.injury || player.calledUp) return player
 
@@ -140,7 +149,15 @@ export function applyWeeklyPlayingTimeMorale(
   else if (difference >= 15 && dynamics.satisfaction < 72) delta = 1
 
   if (delta === 0) return player
+  // ⚠️ O AJUSTE NÃO PODE INVERTER O SINAL. Um técnico motivador deixando o
+  // reserva insatisfeito FELIZ por ficar no banco seria o oposto do modelo — o
+  // que ele faz é segurar a queda. Por isso o resultado é aparado contra zero,
+  // e não simplesmente somado.
+  const ajustado = delta < 0
+    ? Math.min(0, Math.max(-3, delta + ajusteDoTecnico))
+    : Math.max(0, Math.min(2, delta + ajusteDoTecnico))
+  if (ajustado === 0) return player
   const current = player.moralePoints ?? MORALE_POINTS[player.morale] ?? 55
-  const moralePoints = Math.round(clamp(current + delta))
+  const moralePoints = Math.round(clamp(current + ajustado))
   return { ...player, moralePoints, morale: moraleLabel(moralePoints) }
 }

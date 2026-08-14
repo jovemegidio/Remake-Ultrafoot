@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 
 // A VERSAO exibida no jogo sai daqui, do package.json, e nao de uma constante
 // escrita a mao: uma constante paralela envelhece em silencio e o rodape passa a
@@ -63,12 +64,36 @@ const nextConfig = {
   // duas vezes. Um cacheGroup dedicado forca uma copia unica e compartilhada,
   // que o navegador ainda cacheia entre navegacoes.
   webpack: (config, { isServer }) => {
+    // Os seeds entram no chunk como JSON.parse("...") em vez de literal de objeto.
+    // O dado e o mesmo e o import continua sincrono — muda so o parser do V8 que
+    // atravessa os 14 MB. Medido em 11/08/2026: 1206 ms -> 558 ms neste PC, e a
+    // maquina do jogador e 3 a 5 vezes mais lenta. Ver scripts/seed-json-loader.cjs.
+    config.module.rules.push({
+      test: /[\\/]data[\\/]seeds[\\/].*\.json$/,
+      // Sem isto o webpack trata o arquivo como `type: 'json'` (o padrao para
+      // .json) e IGNORA o que o loader devolveu.
+      type: 'javascript/auto',
+      use: [{ loader: fileURLToPath(new URL('./scripts/seed-json-loader.cjs', import.meta.url)) }],
+    })
+
     if (!isServer && config.optimization?.splitChunks) {
       config.optimization.splitChunks.cacheGroups = {
         ...config.optimization.splitChunks.cacheGroups,
         seeds: {
           test: /[\\/]data[\\/]seeds[\\/].*\.json$/,
-          name: 'seeds',
+          // ⚠️ SEM `name` FIXO — E DE PROPOSITO.
+          //
+          // Com `name: 'seeds'`, todo seed virava UMA chunk de nome fixo, e o
+          // Next passava a anexa-la ao grupo de TODAS as rotas — inclusive as
+          // que nao tocam em dado de clube nenhum. A splash carregava 46 MB de
+          // JavaScript para desenhar um menu de texto, e o grafo de modulos
+          // dizia que ela nao precisava de nada disso (conferido no proprio
+          // moduleGraph do webpack em 06/08/2026).
+          //
+          // Sem o nome, o webpack ainda faz UMA copia compartilhada (o motivo
+          // original deste cacheGroup, que existe para nao duplicar o dado), mas
+          // so a entrega a quem realmente importa os seeds. Medido: splash de
+          // 46,88 MB para 0,95 MB, sem duplicacao no total do build.
           chunks: 'all',
           priority: 40,
           reuseExistingChunk: true,

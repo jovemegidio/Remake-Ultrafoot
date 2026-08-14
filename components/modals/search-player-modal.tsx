@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { Search, Filter, TrendingUp, TrendingDown, X } from "lucide-react"
-import { formatCurrency, serieATeams, getTeamByShort, type Team } from "@/lib/teams-data"
+import { serieATeams, getTeamByShort, type Team } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 
 interface Player {

@@ -140,7 +140,7 @@ export default function TaticasPage() {
     persistGameEngineNow()
     announceOnlineAction("tactic_update", { preset: selectedPreset, ...next })
     setApplied(true)
-    setTimeout(() => hardNavigate("/elenco"), 350)  // deixa o feedback aparecer
+    hardNavigate("/elenco")
   }
 
   return (

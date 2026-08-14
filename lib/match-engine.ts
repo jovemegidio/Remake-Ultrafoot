@@ -4,6 +4,7 @@
 
 import type { Team } from "@/lib/teams-data"
 import { penalidadeImprovisacao } from "@/lib/formations"
+import { confrontoEspacial286, escolherCorredor286, type CorredorEspacial286, type PerfilEspacial286 } from "@/lib/modelo-espacial-286"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos base
@@ -85,6 +86,8 @@ export interface MatchEvent {
   motivoExpulsao?: "segundo_amarelo" | "vermelho_direto"
   /** Só em `red_card` direto: agressao (pena de 4-8) em vez de falta dura. */
   expulsaoViolenta?: boolean
+  /** Corredor onde o lance nasceu. Alimenta o Data Hub e o radar. */
+  corredor?: CorredorEspacial286
 }
 
 export interface TeamStats {
@@ -99,6 +102,10 @@ export interface TeamStats {
   possession: number
   passes: number
   passAccuracy: number
+  xA: number
+  entradasNaArea: number
+  recuperacoesAltas: number
+  ataquesPorCorredor: Record<CorredorEspacial286, number>
 }
 
 export interface BallPosition {
@@ -192,6 +199,59 @@ export interface SquadPlayer {
   physical?: number
   pace?: number
   stamina?: number  // energia atual 0-100; undefined = não fornecida (trata como 100)
+
+  // ── MODELO CANONICO DO ATLETA (lib/modelo-de-jogador.ts) ─────────────────
+  //
+  // Os tres campos abaixo chegam JA CALCULADOS de proposito. O motor nao importa
+  // o modelo nem recebe o id do atleta: os ids do elenco da tela e os do motor
+  // divergem (ver o comentario de `pickSetPieceTaker`), entao derivar o perfil
+  // aqui casaria com a pessoa errada. Quem monta o `SquadPlayer` conhece o
+  // atleta de verdade e resolve o numero antes de entregar.
+  //
+  // Ausentes = comportamento anterior a 1.0.293, exatamente.
+
+  /**
+   * Familiaridade DELE com o slot em que esta escalado, 0-20.
+   * Substitui `penalidadeImprovisacao`, que so conhecia o PAR de posicoes — dois
+   * atletas diferentes improvisados no mesmo lugar rendiam igual.
+   */
+  familiaridade?: number
+  /**
+   * Forca do goleiro vinda dos atributos de goleiro (reflexo, saida, jogo aereo,
+   * posicionamento, jogo com os pes), na escala de overall. O `gkRating` saia do
+   * `defending` — um atributo de jogador de linha que nada dizia sobre defender.
+   */
+  forcaGoleiro?: number
+  /** Peso no sorteio de lesao; 1 = media. Alto = "jogador de vidro". */
+  pesoLesao?: number
+
+  // ── CARACTERISTICAS (lib/caracteristicas-do-atleta.ts, 1.0.298) ───────────
+  //
+  // Chegam JA RESOLVIDAS em pesos, pela mesma razao dos tres campos acima: o
+  // motor nao conhece o id real do atleta. Ausentes = sorteio uniforme e
+  // multiplicadores 1, ou seja, o comportamento anterior a 1.0.298 byte por byte.
+
+  /** Peso no sorteio de quem finaliza a jogada trabalhada. 1 = media. */
+  pesoFinalizar?: number
+  /** Peso no sorteio do alvo aereo em escanteio/cruzamento. 1 = media. */
+  pesoAereo?: number
+  /** Peso no sorteio de quem da a assistencia. 1 = media. */
+  pesoCriar?: number
+  /** Peso no sorteio de quem puxa o contra-ataque. 1 = media. */
+  pesoVelocidade?: number
+  /** Multiplicador do xG do chute DELE em jogada trabalhada. */
+  multChute?: number
+  /** Multiplicador do xG da cabecada DELE. */
+  multCabeceio?: number
+  /**
+   * Forca do arqueiro NA BOLA ALTA (escanteio, falta na area), escala de
+   * overall. Separada de `forcaGoleiro` porque e o unico jeito de "Saida Gol" e
+   * "Reflexo" nao se anularem: elas redistribuem as habilidades do goleiro
+   * mantendo a media, entao um escalar unico nao veria diferenca nenhuma.
+   */
+  forcaGoleiroAlto?: number
+  /** Peso do arqueiro na marca da cal. Acima de 1 = defende mais penalti. */
+  pesoPenalti?: number
 }
 
 export interface MatchConfig {
@@ -212,6 +272,9 @@ export interface MatchConfig {
   awayAttack?: number
   awayDefense?: number
   awayMidfield?: number
+  /** Intervencoes temporarias do tecnico, recalculadas a cada minuto. */
+  homeCoachEffect?: CoachDecisionEffect
+  awayCoachEffect?: CoachDecisionEffect
   // Mentalidade escolhida pela UI (pode mudar no intervalo). Ofensivo troca solidez por
   // poder de ataque; defensivo o contrario. O motor le config ao vivo, entao vale no 2o tempo.
   homeMentality?: "defensivo" | "equilibrado" | "ofensivo"
@@ -229,6 +292,9 @@ export interface MatchConfig {
   awayPressingLoad?: number
   homeTransitionLoad?: number
   awayTransitionLoad?: number
+  /** Ocupação de campo por fases da 1.0.286. */
+  homeSpatialProfile?: PerfilEspacial286
+  awaySpatialProfile?: PerfilEspacial286
   /**
    * Lado controlado pelo USUARIO. Quando o penalti sai para este lado, o motor para e
    * espera a escolha do batedor (resolvePendingPenalty). Sem isto, ele cobra sozinho.
@@ -250,6 +316,59 @@ export interface MatchConfig {
    * continua sorteando.
    */
   userSetPieceTakers?: { freeKick?: string; corner?: string; penalty?: string }
+  /**
+   * Rotinas de bola parada ENSAIADAS (Central de Gestão).
+   *
+   * Diferente de `userSetPieceTakers`, que só diz QUEM bate: aqui entra o quanto
+   * a jogada foi treinada — zona combinada, alvo aéreo e jogador da sobra. O
+   * efeito é deliberadamente pequeno (ver SET_PIECE_MAX_*): bola parada ensaiada
+   * é vantagem de margem, não bala de prata, e a calibração do motor comprime
+   * força em probabilidade. Um plano defensivo do adversário anula parte do
+   * ofensivo, então dois times bem treinados voltam perto da linha de base.
+   */
+  homeSetPiecePlan?: SetPiecePlan
+  awaySetPiecePlan?: SetPiecePlan
+}
+
+/** Forma enxuta para o motor nao depender do hook/React de decisoes. */
+export interface CoachDecisionEffect {
+  attackDelta: number
+  defenseDelta: number
+  energyDelta: number
+  moraleDelta: number
+  pressureDelta: number
+}
+
+/** Rotina de bola parada já resolvida em números pela camada de gestão. */
+export interface SetPiecePlan {
+  /** 0-1: quanto a rotina OFENSIVA está ensaiada (escanteio e falta a favor). */
+  attackQuality: number
+  /** 0-1: quanto a rotina DEFENSIVA está ensaiada (escanteio e falta contra). */
+  defenseQuality: number
+  /** Alvo aéreo designado: vira o cabeceador preferencial no escanteio. */
+  aerialTargetName?: string
+  /** Jogador da sobra: aparece na segunda bola quando o goleiro rebate. */
+  secondBallName?: string
+}
+
+// Tetos do efeito de bola parada ensaiada, em pontos de probabilidade absoluta.
+// Somados, um plano perfeito sem oposição vale ~+2,3 gols de escanteio a cada
+// 100 escanteios — perceptível numa temporada, invisível num jogo isolado.
+const SET_PIECE_MAX_CHANCE = 0.07   // sobre os 30% de virar cabeçada
+const SET_PIECE_MAX_TARGET = 0.06   // sobre os 42% de ir ao alvo
+const SET_PIECE_MAX_GOAL = 0.04     // sobre os 18% de virar gol
+
+/**
+ * Vantagem líquida da bola parada: o ensaio ofensivo de um lado menos o ensaio
+ * defensivo do outro, limitado a [-1, 1]. Sem plano dos dois lados devolve 0 e
+ * o motor se comporta exatamente como antes.
+ */
+function setPieceEdge(config: MatchConfig, side: Side): number {
+  const atacante = side === "home" ? config.homeSetPiecePlan : config.awaySetPiecePlan
+  const defensor = side === "home" ? config.awaySetPiecePlan : config.homeSetPiecePlan
+  const ataque = Math.max(0, Math.min(1, atacante?.attackQuality ?? 0))
+  const defesa = Math.max(0, Math.min(1, defensor?.defenseQuality ?? 0))
+  return Math.max(-1, Math.min(1, ataque - defesa))
 }
 
 export interface MatchModifiers {
@@ -283,6 +402,10 @@ const emptyTeamStats = (): TeamStats => ({
   possession: 50,
   passes: 0,
   passAccuracy: 80,
+  xA: 0,
+  entradasNaArea: 0,
+  recuperacoesAltas: 0,
+  ataquesPorCorredor: { esquerda: 0, centro: 0, direita: 0 },
 })
 
 export function createInitialState(): MatchState {
@@ -311,7 +434,30 @@ export function createInitialState(): MatchState {
 // Utilitários
 // ─────────────────────────────────────────────────────────────────────────────
 
-function rnd(): number { return Math.random() }
+/**
+ * SEMENTE OPCIONAL DO MOTOR — só para medição.
+ *
+ * O motor usa `Math.random()` no jogo, e isso não muda. Mas um teste que
+ * compara duas configurações medindo média de gols precisa da MESMA sequência
+ * de sorteios nas duas, senão ele mede ruído: `test-modelo-no-motor` passou e
+ * falhou alternadamente na mesma versão do código, que é o pior tipo de guarda
+ * — ela ensina a reexecutar até dar verde.
+ *
+ * `null` = comportamento normal do jogo. Nenhum caminho de produção chama
+ * `semearMotorDePartida`.
+ */
+let sementeDoMotor: (() => number) | null = null
+
+export function semearMotorDePartida(semente: number | null): void {
+  if (semente == null) { sementeDoMotor = null; return }
+  let h = (semente * 1103515245 + 12345) >>> 0
+  sementeDoMotor = () => {
+    h ^= h << 13; h ^= h >>> 17; h ^= h << 5; h >>>= 0
+    return h / 4294967296
+  }
+}
+
+function rnd(): number { return sementeDoMotor ? sementeDoMotor() : Math.random() }
 
 /**
  * Converte diferenca de forca em vantagem de chance, com saturacao.
@@ -389,6 +535,106 @@ function pickPlayerFull(side: Side, config: MatchConfig, posFilter?: string[]): 
 }
 
 /**
+ * SORTEIO PONDERADO PELA CARACTERISTICA (1.0.298).
+ *
+ * Mesma selecao de `pickPlayerFull`, mas o peso de cada atleta sai da
+ * caracteristica dele: o Cabeceio cabeceia o escanteio, o Finalizacao recebe a
+ * bola na area, o Velocidade puxa o contra-ataque. Sem peso definido, todo mundo
+ * vale 1 e o resultado e IDENTICO ao sorteio uniforme de antes — que e o caso de
+ * qualquer elenco montado sem o modelo.
+ *
+ * ⚠️ ISTO NAO CRIA CHANCE, SO ESCOLHE O PE. A quantidade de lances do time nao
+ * muda uma virgula aqui; muda quem os disputa. E o que permite gerar
+ * caracteristica para o mundo inteiro sem inflacionar o mundo inteiro.
+ */
+function pickPlayerPorPeso(
+  side: Side,
+  config: MatchConfig,
+  posFilter: string[],
+  peso: (p: SquadPlayer) => number,
+): SquadPlayer | null {
+  const squad = side === "home" ? config.homeSquad : config.awaySquad
+  if (!squad || squad.length === 0) return null
+  const pool = squad.filter(p => posFilter.includes(p.pos))
+  const src = pool.length > 0 ? pool : squad
+
+  let total = 0
+  for (const p of src) total += Math.max(0.05, peso(p))
+  if (!(total > 0)) return src[Math.floor(rnd() * src.length)]
+
+  let sorteio = rnd() * total
+  for (const p of src) {
+    sorteio -= Math.max(0.05, peso(p))
+    if (sorteio <= 0) return p
+  }
+  return src[src.length - 1]
+}
+
+/**
+ * FORCA DO ARQUEIRO NUM LANCE, na escala de overall.
+ *
+ * ⚠️ A ORDEM AQUI E O QUE FAZ O MODELO VALER. `resolveShot` lia
+ * `gkData.defending` — o atributo de JOGADOR DE LINHA do goleiro — e so caia no
+ * `gkRating` agregado quando nao havia goleiro em campo. Ou seja: melhorar o
+ * `gkRating` com os atributos de goleiro (reflexo, saida, posicionamento) nao
+ * mudava um unico chute, porque o caminho preferido nunca o consultava. O teste
+ * `test-modelo-no-motor` mediu 1,52 gol nos dois lados com goleiro 95 e 45.
+ *
+ * Agora manda o `forcaGoleiro` quando ele existe; sem ele, `defending`; sem os
+ * dois, o agregado de sempre.
+ */
+function forcaDoArqueiro(gk: SquadPlayer | null | undefined, agregado: number): number {
+  if (typeof gk?.forcaGoleiro === "number") return gk.forcaGoleiro
+  return gk?.defending ?? agregado
+}
+
+/**
+ * Igual a `forcaDoArqueiro`, mas SEM cair no `defending` individual.
+ *
+ * Cabeceio de escanteio e falta liam o `gkRating` AGREGADO, nao o goleiro em
+ * campo. Trocar isso de vez seria mais correto — e mexeria numa calibracao que
+ * ninguem pediu para mexer nesta versao. Entao o individual so entra quando o
+ * modelo canonico o fornece; sem ele, o calculo e o de antes, byte por byte.
+ */
+function forcaDeGoleiroOuAgregado(gk: SquadPlayer | null | undefined, agregado: number): number {
+  return typeof gk?.forcaGoleiro === "number" ? gk.forcaGoleiro : agregado
+}
+
+/**
+ * Forca do arqueiro NA BOLA ALTA. Cai para a de jogo corrido quando o modelo nao
+ * fornece a leitura aerea, e dai para o agregado — nesta ordem, para elenco sem
+ * modelo continuar rendendo exatamente o de antes.
+ */
+function forcaDeGoleiroNoAlto(gk: SquadPlayer | null | undefined, agregado: number): number {
+  if (typeof gk?.forcaGoleiroAlto === "number") return gk.forcaGoleiroAlto
+  return forcaDeGoleiroOuAgregado(gk, agregado)
+}
+
+/**
+ * SORTEIO PONDERADO PELA PROPENSAO A LESAO.
+ *
+ * O sorteio de quem se machuca era uniforme: todo atleta em campo tinha
+ * exatamente a mesma chance, e o "jogador de vidro" — que existe em qualquer
+ * elenco de verdade — nao existia aqui. `pesoLesao` vem do perfil canonico
+ * (0,55 a 1,45); sem ele, todo mundo pesa 1 e o resultado e o sorteio uniforme
+ * de antes, byte por byte.
+ */
+function pickPlayerPorRiscoDeLesao(side: Side, config: MatchConfig, posFilter?: string[]): SquadPlayer | null {
+  const squad = side === "home" ? config.homeSquad : config.awaySquad
+  if (!squad || squad.length === 0) return null
+  const pool = posFilter ? squad.filter(p => posFilter.includes(p.pos)) : squad
+  const src = pool.length > 0 ? pool : squad
+  const total = src.reduce((s, p) => s + (p.pesoLesao ?? 1), 0)
+  if (total <= 0) return src[Math.floor(rnd() * src.length)]
+  let sorteio = rnd() * total
+  for (const p of src) {
+    sorteio -= p.pesoLesao ?? 1
+    if (sorteio <= 0) return p
+  }
+  return src[src.length - 1]
+}
+
+/**
  * Cobrador de bola parada: o designado pelo técnico quando existe e está em
  * campo; senão cai no sorteio por posição de sempre.
  *
@@ -438,6 +684,21 @@ function deriveStrengths(squad: SquadPlayer[] | undefined, fallback: number): Sq
 
   const byPos = (positions: string[]) => squad.filter(p => positions.includes(p.pos))
 
+  /**
+   * Quanto o atleta rende NAQUELE slot, 0..1.
+   *
+   * A familiaridade individual manda quando existe; sem ela, cai na tabela de
+   * parentesco de posicoes de sempre. As duas curvas coincidem nas pontas
+   * (familiaridade 20 = 1,00, familiaridade 0 = 0,76), para nao mexer no
+   * equilibrio calibrado em 20 mil partidas.
+   */
+  const fatorDePosicao = (p: SquadPlayer): number => {
+    if (typeof p.familiaridade === "number") {
+      return 0.76 + (Math.max(0, Math.min(20, p.familiaridade)) / 20) * 0.24
+    }
+    return p.posNatural ? penalidadeImprovisacao(p.posNatural, p.pos) : 1
+  }
+
   // A PENALIDADE DE IMPROVISAÇÃO entra aqui, no ponto em que o atributo do
   // atleta vira força de setor. Antes, escalar um centroavante na zaga não tinha
   // custo nenhum: ele defendia como um zagueiro. Agora rende menos, e quanto
@@ -446,8 +707,7 @@ function deriveStrengths(squad: SquadPlayer[] | undefined, fallback: number): Sq
     if (players.length === 0) return fallback
     const soma = players.reduce((s, p) => {
       const valor = (p[attr] as number | undefined) ?? fallback
-      const fator = p.posNatural ? penalidadeImprovisacao(p.posNatural, p.pos) : 1
-      return s + valor * fator
+      return s + valor * fatorDePosicao(p)
     }, 0)
     return soma / players.length
   }
@@ -456,6 +716,18 @@ function deriveStrengths(squad: SquadPlayer[] | undefined, fallback: number): Sq
   const defenders = byPos(["ZAG", "LD", "LE"])
   const gks = byPos(["GOL"])
   const midfielders = byPos(["VOL", "MEI"])
+
+  /**
+   * Forca do arqueiro pelos atributos DE GOLEIRO, quando quem montou o elenco
+   * os forneceu. `null` quando nenhum goleiro em campo os traz — ai o calculo
+   * antigo (media de `defending`) segue valendo, e saves antigos nao mudam.
+   */
+  const forcaDosGoleiros = (goleiros: SquadPlayer[]): number | null => {
+    const comForca = goleiros.filter(p => typeof p.forcaGoleiro === "number")
+    if (comForca.length === 0) return null
+    const soma = comForca.reduce((s, p) => s + (p.forcaGoleiro as number) * fatorDePosicao(p), 0)
+    return soma / comForca.length
+  }
 
   // Stamina usa 100 como padrão quando não fornecida (undefined ≠ zero)
   const providedStaminas = squad.map(p => p.stamina).filter((v): v is number => v !== undefined)
@@ -467,7 +739,7 @@ function deriveStrengths(squad: SquadPlayer[] | undefined, fallback: number): Sq
     attack: avgAttr(attackers.length > 0 ? attackers : squad, "shooting"),
     defense: avgAttr([...defenders, ...gks].length > 0 ? [...defenders, ...gks] : squad, "defending"),
     midfield: avgAttr(midfielders.length > 0 ? midfielders : squad, "passing"),
-    gkRating: avgAttr(gks.length > 0 ? gks : squad, "defending"),
+    gkRating: forcaDosGoleiros(gks) ?? avgAttr(gks.length > 0 ? gks : squad, "defending"),
     avgStamina,
   }
 }
@@ -512,6 +784,18 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   }
   applyMentality(homeSt, config.homeMentality)
   applyMentality(awaySt, config.awayMentality)
+
+  // DECISOES DO TECNICO. Ataque/defesa/moral/pressao ficam ativos por todo o
+  // intervalo exibido na UI. Energia e cobrada no fator de stamina mais abaixo.
+  const applyCoachEffect = (st: SquadStrengths, effect?: CoachDecisionEffect) => {
+    if (!effect) return
+    st.attack += effect.attackDelta + effect.moraleDelta * 0.12
+    st.defense += effect.defenseDelta + effect.moraleDelta * 0.10
+    st.midfield += effect.pressureDelta * 0.22 + effect.moraleDelta * 0.14
+    st.gkRating += Math.max(0, effect.defenseDelta) * 0.16
+  }
+  applyCoachEffect(homeSt, config.homeCoachEffect)
+  applyCoachEffect(awaySt, config.awayCoachEffect)
 
   // A CPU lê o placar e o relógio. Antes a postura escolhida no começo ficava
   // congelada até o fim: um clube perdendo uma final por dois gols continuava
@@ -618,8 +902,10 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   // pressão extrema criava chances sem realmente cobrar intensidade no fim.
   const homeTacticalFatigue = 1 - Math.min(0.09, (minute / 90) * homeLoad * 0.09)
   const awayTacticalFatigue = 1 - Math.min(0.09, (minute / 90) * awayLoad * 0.09)
-  const homeStFactor = Math.max(0.68, homeSt.avgStamina / 100 * homeTacticalFatigue)
-  const awayStFactor = Math.max(0.68, awaySt.avgStamina / 100 * awayTacticalFatigue)
+  const homeDecisionEnergy = 1 + Math.max(-12, Math.min(8, config.homeCoachEffect?.energyDelta ?? 0)) / 100
+  const awayDecisionEnergy = 1 + Math.max(-12, Math.min(8, config.awayCoachEffect?.energyDelta ?? 0)) / 100
+  const homeStFactor = Math.max(0.68, homeSt.avgStamina / 100 * homeTacticalFatigue * homeDecisionEnergy)
+  const awayStFactor = Math.max(0.68, awaySt.avgStamina / 100 * awayTacticalFatigue * awayDecisionEnergy)
 
   // ── Forças efetivas (atributo × stamina) ────────────────────────────────
   const homeAttEff = homeSt.attack * homeStFactor
@@ -660,8 +946,15 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   const awayMidBonus = Math.max(-0.05, Math.min(0.05, -midDiff * 0.0016))
   // Pressionar cria recuperações altas, mas a vantagem é pequena e vem com
   // faltas/desgaste abaixo. Não é um botão de bônus permanente.
-  const homePressBonus = Math.max(0, Math.min(1, config.homePressingLoad ?? 0)) * 0.009
-  const awayPressBonus = Math.max(0, Math.min(1, config.awayPressingLoad ?? 0)) * 0.009
+  const homeDecisionPressure = Math.max(0, Math.min(15, config.homeCoachEffect?.pressureDelta ?? 0))
+  const awayDecisionPressure = Math.max(0, Math.min(15, config.awayCoachEffect?.pressureDelta ?? 0))
+  const homePressBonus = Math.max(0, Math.min(1, config.homePressingLoad ?? 0)) * 0.009 + homeDecisionPressure * 0.0007
+  const awayPressBonus = Math.max(0, Math.min(1, config.awayPressingLoad ?? 0)) * 0.009 + awayDecisionPressure * 0.0007
+  // A ocupação por fases entra antes do chute. Superioridade entrelinhas,
+  // amplitude contra bloco estreito e espaço às costas deixam de ser apenas
+  // rótulos e passam a alterar onde e com que frequência a progressão termina.
+  const homeSpatial = confrontoEspacial286(config.homeSpatialProfile, config.awaySpatialProfile)
+  const awaySpatial = confrontoEspacial286(config.awaySpatialProfile, config.homeSpatialProfile)
 
   // ANTI-GOLEADA / gestao de resultado: o gol dava momentum ao ARTILHEIRO, que
   // ficava mais forte — bola de neve rumo a goleada. Invertido: quem esta na
@@ -699,10 +992,10 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   const wf = config.weatherFactor != null ? Math.max(0.75, Math.min(1, config.weatherFactor)) : 1
 
   const homeShotChance = Math.max(0.03, Math.min(0.24,
-    (baseShot + homeAttDiff + homeMidBonus + homePressBonus + homeLeadAdj - homeRedShotPen - homeInjPen + homeLateBonus) * wf * (0.96 + homeAdvantage * 0.44)
+    (baseShot + homeAttDiff + homeMidBonus + homePressBonus + homeSpatial.modificadorDeChance + homeLeadAdj - homeRedShotPen - homeInjPen + homeLateBonus) * wf * (0.96 + homeAdvantage * 0.44)
   ))
   const awayShotChance = Math.max(0.03, Math.min(0.24,
-    (baseShot + awayAttDiff + awayMidBonus + awayPressBonus + awayLeadAdj - awayRedShotPen - awayInjPen + awayLateBonus) * wf * (1.06 - homeAdvantage * 0.38)
+    (baseShot + awayAttDiff + awayMidBonus + awayPressBonus + awaySpatial.modificadorDeChance + awayLeadAdj - awayRedShotPen - awayInjPen + awayLateBonus) * wf * (1.06 - homeAdvantage * 0.38)
   ))
 
   // ── Faltas e cartões ──────────────────────────────────────────────────────
@@ -745,8 +1038,8 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
     homeShotChance,
     awayShotChance,
     homeAdvantage,
-    homeFoulChance: Math.min(0.22, baseFoul + homeFatigue + (config.homePressingLoad ?? 0) * 0.018),
-    awayFoulChance: Math.min(0.22, baseFoul + awayFatigue + (config.awayPressingLoad ?? 0) * 0.018),
+    homeFoulChance: Math.min(0.22, baseFoul + homeFatigue + (config.homePressingLoad ?? 0) * 0.018 + homeDecisionPressure * 0.0009),
+    awayFoulChance: Math.min(0.22, baseFoul + awayFatigue + (config.awayPressingLoad ?? 0) * 0.018 + awayDecisionPressure * 0.0009),
     cardChance: Math.min(0.32, cardChance),
     staminaDrain,
     technicalPenalty,
@@ -789,20 +1082,37 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
   const isHome = side === "home"
   const teamStats = isHome ? state.home : state.away
   const minute = state.minute
+  const perfilAtacante = isHome ? config.homeSpatialProfile : config.awaySpatialProfile
+  const perfilDefensor = isHome ? config.awaySpatialProfile : config.homeSpatialProfile
+  const espacial = confrontoEspacial286(perfilAtacante, perfilDefensor)
+  const corredor = escolherCorredor286(perfilAtacante, rnd())
+  teamStats.ataquesPorCorredor ??= { esquerda: 0, centro: 0, direita: 0 }
+  teamStats.xA ??= 0
+  teamStats.entradasNaArea ??= 0
+  teamStats.recuperacoesAltas ??= 0
+  teamStats.ataquesPorCorredor[corredor] += 1
+  if (rnd() < espacial.chanceRecuperacaoAlta * 0.18) teamStats.recuperacoesAltas += 1
 
-  const shooterData = pickPlayerFull(side, config, ["ATA", "MEI", "PD", "PE"])
+  // QUEM FINALIZA. O peso vem da caracteristica ("Finalizacao", "Drible",
+  // "Velocidade" chutam mais); sem ela, sorteio uniforme como antes.
+  const shooterData = pickPlayerPorPeso(side, config, ["ATA", "MEI", "PD", "PE"], p => p.pesoFinalizar ?? 1)
   const shooterShooting = shooterData?.shooting ?? (isHome ? probs.homeAttStr : probs.awayAttStr)
   const shooterName = shooterData?.nome ?? pickPlayer(side, config, ["ATA", "MEI", "PD", "PE"])
 
   const gkSide: Side = isHome ? "away" : "home"
   const gkData = pickPlayerFull(gkSide, config, ["GOL"])
-  const gkDefending = gkData?.defending ?? (isHome ? probs.awayGKStr : probs.homeGKStr)
+  const gkDefending = forcaDoArqueiro(gkData, isHome ? probs.awayGKStr : probs.homeGKStr)
   const gkName = gkData?.nome ?? pickPlayer(gkSide, config, ["GOL"])
 
   teamStats.shots += 1
 
-  const xg = computeXG(shooterShooting, gkDefending, minute)
+  const bonusCorredor = corredor === espacial.corredorPreferido ? 1.035 : 0.98
+  // O finalizador nato converte melhor o que aparece. Modesto de proposito: o
+  // grosso da conversao continua saindo do `shooting` dele contra o goleiro.
+  const multChute = shooterData?.multChute ?? 1
+  const xg = Math.max(0.02, Math.min(0.72, computeXG(shooterShooting, gkDefending, minute) * espacial.multiplicadorXG * bonusCorredor * multChute))
   teamStats.xG += xg
+  if (xg >= 0.055) teamStats.entradasNaArea += 1
 
   // Pressão defensiva reduz chance de acertar o alvo
   const defStr = isHome ? probs.awayDefStr : probs.homeDefStr
@@ -819,15 +1129,17 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
       // ~72% dos gols em jogo aberto têm assistência (taxa realista)
       let assistName: string | undefined
       if (rnd() < 0.88) {
-        const assistData = pickPlayerFull(side, config, ["MEI", "VOL", "PD", "PE", "LD", "LE"])
+        // QUEM DA O PASSE. "Armacao", "Passe" e "Cruzamento" assistem mais.
+        const assistData = pickPlayerPorPeso(side, config, ["MEI", "VOL", "PD", "PE", "LD", "LE"], p => p.pesoCriar ?? 1)
         const candidate = assistData?.nome ?? pickPlayer(side, config, ["MEI", "VOL", "PD", "PE", "LD", "LE"])
         if (candidate !== shooterName) assistName = candidate
       }
       state.events = [{
         id: nameId(), minute, type: "goal", side,
         text: goalLine(shooterName, team.curto, assistName),
-        player: shooterName, assist: assistName, important: true,
+        player: shooterName, assist: assistName, important: true, corredor,
       }, ...state.events]
+      if (assistName) teamStats.xA += xg * 0.78
       state.flash = { side, type: "goal" }
       state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
       // Quem marcou fica com momentum leve (o adversário vai pressionar para empatar)
@@ -839,7 +1151,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
     state.events = [{
       id: nameId(), minute, type: "save", side,
       text: saveLine(shooterName, gkName),
-      player: shooterName,
+      player: shooterName, corredor,
     }, ...state.events]
     state.flash = { side, type: "chance" }
     state.momentum += isHome ? -10 : 10  // defesa dá momentum para quem defendeu
@@ -850,7 +1162,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
       state.events = [{
         id: nameId(), minute, type: "post", side,
         text: `${shooterName} acerta a trave!`,
-        player: shooterName, important: true,
+        player: shooterName, important: true, corredor,
       }, ...state.events]
       state.flash = { side, type: "chance" }
       state.momentum += isHome ? 14 : -14
@@ -865,18 +1177,45 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
       state.momentum += isHome ? 6 : -6
 
       // Resolução do escanteio: ~30% vira cabeçada perigosa (~4% do total de escanteios = gol)
-      if (rnd() < 0.30) {
-        const hdrData = pickPlayerFull(side, config, ["ZAG", "ATA", "VOL"])
+      // A rotina ensaiada desloca as tres probabilidades abaixo; `edge` ja desconta
+      // o ensaio DEFENSIVO do adversario.
+      const edge = setPieceEdge(config, side)
+      const plano = side === "home" ? config.homeSetPiecePlan : config.awaySetPiecePlan
+      if (rnd() < 0.30 + edge * SET_PIECE_MAX_CHANCE) {
+        // O alvo aereo designado cabeceia quando esta em campo; sem rotina, sorteio.
+        const squadDoLado = side === "home" ? config.homeSquad : config.awaySquad
+        const alvo = plano?.aerialTargetName
+          ? squadDoLado?.find(p => p.nome === plano.aerialTargetName)
+          : undefined
+        // Sem alvo designado na rotina, quem sobe e quem tem "Cabeceio" — nao
+        // mais um sorteio cego entre zagueiros, atacantes e volantes.
+        const hdrData = alvo ?? pickPlayerPorPeso(side, config, ["ZAG", "ATA", "VOL"], p => p.pesoAereo ?? 1)
         const hdrName = hdrData?.nome ?? pickPlayer(side, config, ["ZAG", "ATA", "VOL"])
         const hdrShooting = (hdrData?.shooting ?? (isHome ? probs.homeAttStr : probs.awayAttStr)) * 0.82
-        const oppGK = isHome ? probs.awayGKStr : probs.homeGKStr
+        // AQUI O GOLEIRO E LIDO PELA FORCA AEREA. "Saida Gol" finalmente vale
+        // alguma coisa: quem domina a area sofre menos em escanteio e paga a
+        // conta no chute de fora, onde a leitura e a de jogo corrido.
+        const oppGK = forcaDeGoleiroNoAlto(pickPlayerFull(isHome ? "away" : "home", config, ["GOL"]),
+          isHome ? probs.awayGKStr : probs.homeGKStr)
         teamStats.shots += 1
-        const hdrXG = computeXG(hdrShooting, oppGK, minute) * 0.72
+        const hdrXG = computeXG(hdrShooting, oppGK, minute) * 0.72 * (hdrData?.multCabeceio ?? 1)
         teamStats.xG += hdrXG
         // 42% de cabeçadas no alvo (taxa real em escanteios); 30% das no alvo = gol
-        if (rnd() < 0.42) {
+        if (rnd() < 0.42 + edge * SET_PIECE_MAX_TARGET) {
           teamStats.shotsOnTarget += 1
-          if (rnd() < 0.18) {
+          // ⚠️ A CONVERSAO DO ESCANTEIO ERA UMA CONSTANTE. O `hdrXG` acima ja era
+          // calculado com o cabeceador e o goleiro — e so alimentava a
+          // ESTATISTICA. No placar, uma cabecada de centroavante 90 contra
+          // goleiro 50 valia exatamente o mesmo que a de um zagueiro 60 contra
+          // goleiro 90: 18%. Quem descobriu foi `test-caracteristicas`, medindo
+          // que a forca aerea do arqueiro nao mudava um gol em 800 partidas.
+          //
+          // A vantagem entra COMPRIMIDA, como todo confronto direto neste motor
+          // ([[ultrafoot-calibracao-do-motor]]): um duelo equilibrado devolve os
+          // mesmos 18% de antes, e as pontas ficam limitadas a 8%-32%.
+          const vantagemAerea = comprimir(hdrShooting - oppGK) * 0.0042
+          const chanceDeGol = Math.max(0.08, Math.min(0.32, 0.18 + edge * SET_PIECE_MAX_GOAL + vantagemAerea))
+          if (rnd() < chanceDeGol) {
             teamStats.goals += 1
             const takerData = pickSetPieceTaker(side, config, "corner", ["MEI", "PD", "PE"])
             const cornerCandidate = takerData?.nome ?? pickPlayer(side, config, ["MEI", "PD", "PE"])
@@ -892,13 +1231,33 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
             state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
             state.momentum = isHome ? 20 : -20
           } else {
-            state.events = [{
-              id: nameId(), minute, type: "save", side,
-              text: `${hdrName} cabeceia no escanteio, goleiro defende!`,
-              player: hdrName,
-            }, ...state.events]
-            state.flash = { side, type: "chance" }
-            state.momentum += isHome ? -5 : 5
+            // SEGUNDA BOLA. Só existe com rotina ensaiada e com o jogador da
+            // sobra em campo: é justamente o que se treina para aproveitar o
+            // rebote. Sem rotina o lance morre na defesa, como antes.
+            const sobra = plano?.secondBallName
+              ? squadDoLado?.find(p => p.nome === plano.secondBallName)
+              : undefined
+            if (sobra && sobra.nome !== hdrName && rnd() < 0.10 + Math.max(0, edge) * 0.08) {
+              teamStats.shots += 1
+              teamStats.shotsOnTarget += 1
+              teamStats.goals += 1
+              state.events = [{
+                id: nameId(), minute, type: "goal", side,
+                text: `GOOOOL! O goleiro rebate a cabeçada de ${hdrName} e ${sobra.nome} aparece na sobra!`,
+                player: sobra.nome, assist: hdrName, important: true,
+              }, ...state.events]
+              state.flash = { side, type: "goal" }
+              state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
+              state.momentum = isHome ? 20 : -20
+            } else {
+              state.events = [{
+                id: nameId(), minute, type: "save", side,
+                text: `${hdrName} cabeceia no escanteio, goleiro defende!`,
+                player: hdrName,
+              }, ...state.events]
+              state.flash = { side, type: "chance" }
+              state.momentum += isHome ? -5 : 5
+            }
           }
         }
       }
@@ -907,7 +1266,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
       state.events = [{
         id: nameId(), minute, type: "miss", side,
         text: missLine(shooterName),
-        player: shooterName,
+        player: shooterName, corredor,
       }, ...state.events]
     }
   }
@@ -986,17 +1345,23 @@ function resolveFoul(side: Side, state: MatchState, config: MatchConfig, probs: 
   if (rnd() < 0.12) {
     const fkSide: Side = isHome ? "away" : "home"  // time que cobra a falta
     const fkIsHome = fkSide === "home"
-    const fkData = pickPlayerFull(fkSide, config, ["MEI", "ATA", "VOL"])
+    // O COBRADOR DESIGNADO passou a cobrar. `userSetPieceTakers.freeKick` era
+    // montado pela tela (Atribuições > Bola Parada) e chegava ao config, mas a
+    // falta direta sorteava por posição — o especialista do elenco batia por
+    // acaso, exatamente o que a designação existia para evitar.
+    const fkData = pickSetPieceTaker(fkSide, config, "freeKick", ["MEI", "ATA", "VOL"])
     const fkName = fkData?.nome ?? pickPlayer(fkSide, config, ["MEI", "ATA"])
     const fkShooting = (fkData?.shooting ?? (fkIsHome ? probs.homeAttStr : probs.awayAttStr)) * 0.85
-    const fkGKDef = fkIsHome ? probs.awayGKStr : probs.homeGKStr
+    const fkGKDef = forcaDeGoleiroOuAgregado(pickPlayerFull(fkIsHome ? "away" : "home", config, ["GOL"]),
+      fkIsHome ? probs.awayGKStr : probs.homeGKStr)
     const fkStats = fkIsHome ? state.home : state.away
+    const fkEdge = setPieceEdge(config, fkSide)
     fkStats.shots += 1
     const fkXG = computeXG(fkShooting, fkGKDef, minute) * 0.75
     fkStats.xG += fkXG
-    if (rnd() < Math.min(0.42, fkXG * 1.6)) {
+    if (rnd() < Math.min(0.42, fkXG * 1.6) + fkEdge * SET_PIECE_MAX_TARGET) {
       fkStats.shotsOnTarget += 1
-      if (rnd() < Math.min(0.38, fkXG * 1.4)) {
+      if (rnd() < Math.min(0.38, fkXG * 1.4) + fkEdge * SET_PIECE_MAX_GOAL) {
         fkStats.goals += 1
         state.events = [{
           id: nameId(), minute, type: "goal", side: fkSide,
@@ -1061,7 +1426,10 @@ function tentarContraAtaque(side: Side, state: MatchState, config: MatchConfig, 
   if (rnd() >= chance) return
 
   const time = side === "home" ? config.homeTeam : config.awayTeam
-  const jogador = pickPlayer(side, config, ["ATA", "MEI"])
+  // QUEM PUXA. Quem tem "Velocidade" sai na frente — e o lance em que a
+  // caracteristica mais se parece com o que se ve em campo.
+  const jogador = pickPlayerPorPeso(side, config, ["ATA", "MEI", "PD", "PE"], p => p.pesoVelocidade ?? 1)?.nome
+    ?? pickPlayer(side, config, ["ATA", "MEI"])
   state.events = [{
     id: nameId(), minute: state.minute, type: "counter_attack", side,
     text: `Contra-ataque do ${time.curto} puxado por ${jogador}`,
@@ -1109,7 +1477,8 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
   const lateMulti = minute >= 75 ? 1.5 : 1.0
   if (rnd() < baseInjury * lateMulti) {
     const injSide: Side = rnd() < probs.homeAdvantage ? "away" : "home"
-    const injured = pickPlayer(injSide, config, ["ZAG", "VOL", "MEI", "ATA", "LD", "LE"])
+    const injured = pickPlayerPorRiscoDeLesao(injSide, config, ["ZAG", "VOL", "MEI", "ATA", "LD", "LE"])?.nome
+      ?? pickPlayer(injSide, config, ["ZAG", "VOL", "MEI", "ATA", "LD", "LE"])
     // Lesao TIRA de campo: o time enfraquece um pouco pelo resto do jogo (o
     // substituto rende menos). Antes a lesao era so um flash narrativo.
     if (injSide === "home") state.homeInjuries += 1
@@ -1187,7 +1556,13 @@ function resolvePenaltyKick(
   const gkName = gkData?.nome ?? pickPlayer(gkSide, config, ["GOL"])
 
   // A escolha do batedor IMPORTA: a conversao sai do shooting dele.
-  const convRate = Math.min(0.88, 0.72 + (takerShooting - 70) * 0.003)
+  //
+  // O GOLEIRO SO ENTRA NA CONTA quando tem a caracteristica "Defesa Penalty" —
+  // e a unica coisa que ela faz, e sem isto ela seria rotulo puro (a cobranca
+  // ignorava o arqueiro por completo). Elenco sem o modelo cai em `1` e a
+  // conversao fica identica a de antes.
+  const defesaDoArqueiro = (gkData?.pesoPenalti ?? 1) - 1
+  const convRate = Math.min(0.88, 0.72 + (takerShooting - 70) * 0.003) - defesaDoArqueiro * 0.10
   teamStats.shots += 1
 
   if (rnd() < convRate) {
@@ -1240,8 +1615,8 @@ export function resolvePendingPenalty(
 
   const next: MatchState = {
     ...state,
-    home: { ...state.home },
-    away: { ...state.away },
+    home: { ...state.home, ataquesPorCorredor: { ...state.home.ataquesPorCorredor } },
+    away: { ...state.away, ataquesPorCorredor: { ...state.away.ataquesPorCorredor } },
     events: state.events.slice(),
     flash: null,
   }

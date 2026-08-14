@@ -11,6 +11,7 @@
 // trazer um novo lote coerente.
 
 import type { Team } from "@/lib/teams-data"
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
 
 export interface CoachStanding {
   /** Reputacao 0-100 de buildCareerStats (titulos + aproveitamento + acessos). */
@@ -45,7 +46,13 @@ export function coachStandingScore(s: CoachStanding): number {
   const bruto =
     s.reputation * 0.6 +
     Math.min(s.totalTitles, 12) * 3 +
-    Math.min(s.reputationLevel, 5) * 4
+    Math.min(s.reputationLevel, 5) * 4 +
+    // QUEM VOCE JA ERA ANTES DE COMECAR (`lib/efeito-do-treinador.ts`: atributo
+    // REPUTACAO do perfil). Neutro em 0. Vale ate ±15 pontos: o ex-craque com
+    // licenca Pro comeca sendo sondado por clubes que ignorariam um estreante,
+    // mas nao alcanca gigante nenhum sem ganhar titulo — o peso de titulo e
+    // reputacao CONQUISTADA continua maior.
+    efeitosDoTreinador().atracaoDoTecnico
   return Math.max(0, Math.min(100, Math.round(bruto)))
 }
 

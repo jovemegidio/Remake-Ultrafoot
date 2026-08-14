@@ -57,6 +57,44 @@ export function convertToCountryCurrency(valorEmBRL: number, pais?: string | nul
 export function getCurrency(): CurrencyDef { return _current }
 export function getCurrencyCode(): string { return _current.code }
 
+// Não usa Intl.NumberFormat: builds Node com small-icu podem produzir HTML
+// diferente do navegador e causar mismatch de hidratação. A formatação manual
+// permanece determinística nos dois ambientes.
+function groupBR(n: number): string {
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+}
+
+function compactBR(value: number, prefix: string): string {
+  const neg = value < 0 ? "-" : ""
+  const v = Math.abs(value)
+  if (v >= 1_000_000) {
+    const n = (v / 1_000_000).toFixed(1).replace(/\.0$/, "").replace(".", ",")
+    return `${neg}${prefix}${n} mi`
+  }
+  if (v >= 1_000 && prefix === "") {
+    const n = (v / 1_000).toFixed(1).replace(/\.0$/, "").replace(".", ",")
+    return `${neg}${n} mil`
+  }
+  return `${neg}${prefix}${groupBR(v)}`
+}
+
+/** Formata um valor guardado em BRL usando a moeda escolhida pelo jogador. */
+export function formatCurrency(value: number): string {
+  const c = getCurrency()
+  return compactBR(value * c.rate, `${c.symbol} `)
+}
+
+/** Formata um negócio na moeda do país da contraparte. */
+export function formatCurrencyFor(value: number, pais?: string | null): string {
+  const c = currencyForCountry(pais)
+  return compactBR(value * c.rate, `${c.symbol} `)
+}
+
+/** Formata números sem moeda com sufixos compactos. */
+export function formatNumber(value: number): string {
+  return compactBR(value, "")
+}
+
 /** Le a preferencia salva e aplica na variavel de modulo (chamar num effect, pos-mount). */
 export function syncCurrencyFromStore(): void {
   const code = typeof window === "undefined" ? null : storeGet(KEY)

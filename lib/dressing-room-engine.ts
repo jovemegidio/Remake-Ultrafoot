@@ -4,6 +4,7 @@
 import type { GameState } from "@/lib/save-system"
 import type { Player } from "@/lib/game-engine"
 import { analyseSquadDynamics, roleLabel } from "@/lib/squad-dynamics"
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
 
 export type DressingRoomEventType =
   | "bench_complaint"
@@ -79,7 +80,16 @@ export function respondToEvent(
   responseId: string,
 ): GameState {
   const next = structuredClone(state)
-  const delta = responseId === "listen" ? 4 : responseId === "promise" ? 7 : -3
+  const bruto = responseId === "listen" ? 4 : responseId === "promise" ? 7 : -3
+  // O TECNICO DE PULSO ABSORVE O BAQUE (`lib/efeito-do-treinador.ts`: atributo
+  // DISCIPLINA + habilidade "Gestao de Crise"). Neutro em 1.
+  //
+  // ⚠️ So o lado NEGATIVO passa pelo multiplicador. Se ele valesse para os dois,
+  // o disciplinador seria punido no "ouvir e conversar" — e o modelo diria que
+  // ter pulso atrapalha quem conversa, que e o oposto do que se quer dizer.
+  const delta = bruto < 0
+    ? Math.round(bruto * efeitosDoTreinador().impactoDeEventoRuim)
+    : bruto
   next.teamMorale = Math.max(0, Math.min(100, (next.teamMorale ?? 65) + delta))
   next.resolvedDressingRoomEvents = [...new Set([...(next.resolvedDressingRoomEvents ?? []), eventId])].slice(-100)
   next.updatedAt = Date.now()

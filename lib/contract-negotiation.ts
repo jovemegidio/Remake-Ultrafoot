@@ -23,6 +23,8 @@ import {
   type PersonalTerms,
   type SquadRole,
 } from "@/lib/negotiation-engine"
+import { multiplicadorDeSalario, type NivelDePrestigio } from "@/lib/prestigio-do-atleta"
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
 
 export interface ContractPlayer {
   name: string
@@ -37,6 +39,12 @@ export interface ContractPlayer {
   morale?: number
   /** Temporadas no clube. Tempo de casa desconta o pedido. */
   seasonsAtClub?: number
+  /**
+   * Nivel de prestigio (lib/prestigio-do-atleta.ts). Estrela e Top Mundial
+   * cobram acima do que o overall deles pediria — e a contrapartida de valerem
+   * mais no mercado. Ausente = "normal", o caso de quase todo atleta.
+   */
+  prestigio?: NivelDePrestigio
 }
 
 // ─── RENOVACAO ────────────────────────────────────────────────────────────────
@@ -70,7 +78,19 @@ export function computeRenewalDemands(player: ContractPlayer, clubPrestige: numb
   const feliz = ((player.morale ?? 70) - 70) / 100 * 0.10
   const fim = player.weeksLeft <= 20 ? 0.18 : player.weeksLeft <= 40 ? 0.08 : 0
 
-  const fator = 1 - casa - feliz + fim
+  // PRESTIGIO ENCARECE A RENOVACAO. O craque reconhecido sabe o que vale, e o
+  // clube que o formou paga por isso — e a outra ponta de ele valer mais numa
+  // venda. Sobe MENOS que o valor de mercado de proposito: contratar Estrela nao
+  // pode ser so armadilha de folha salarial.
+  // O TECNICO NEGOCIADOR SEGURA O PEDIDO (`lib/efeito-do-treinador.ts`: atributo
+  // NEGOCIACAO + habilidade "Fidelizador"). Neutro em 1.
+  //
+  // Lido do retrato aqui dentro, e nao passado por parametro, porque
+  // `computeRenewalDemands` tem tres chamadores (a avaliacao, a sugestao inicial
+  // e a tela) e um deles esquecido daria numeros diferentes na mesa e no aceite —
+  // exatamente o tipo de divergencia que o jogador enxerga como bug.
+  const tecnico = efeitosDoTreinador().custoDeRenovacao
+  const fator = (1 - casa - feliz + fim) * multiplicadorDeSalario(player.prestigio ?? "normal") * tecnico
   // Nunca abaixo do que ele ja ganha: ninguem renova para perder salario.
   const salary = Math.max(player.salary, Math.round(base.salary * fator))
 

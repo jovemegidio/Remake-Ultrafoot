@@ -28,61 +28,10 @@ import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
-import { useGameState } from "@/lib/save-system"
-import { getTeamByShort, serieATeams } from "@/lib/teams-data"
-import { useGameEngine, type PerformanceReport } from "@/lib/game-engine"
+import { useGameEngine } from "@/lib/game-engine"
+import { useUserTeam } from "@/lib/time-da-carreira"
 
 type TabType = "individuais" | "coletivos" | "comparativos" | "tendencias"
-
-// Gerar dados de exemplo para notas de partidas
-const generateMatchRatings = (playerId: number, count: number) => {
-  const opponents = ["FLA", "PAL", "COR", "SAO", "INT", "GRE", "BOT", "CAM"]
-  return Array.from({ length: count }, (_, i) => ({
-    week: 10 - i,
-    rating: 5 + Math.random() * 4,
-    opponent: opponents[Math.floor(Math.random() * opponents.length)]
-  }))
-}
-
-// Estatisticas coletivas de exemplo
-const TEAM_STATS = {
-  overall: {
-    matches: 15,
-    wins: 8,
-    draws: 4,
-    losses: 3,
-    goalsScored: 24,
-    goalsConceded: 14,
-    cleanSheets: 5,
-    xG: 26.4,
-    xGA: 15.2
-  },
-  attacking: {
-    shotsPerGame: 14.2,
-    shotsOnTargetPerGame: 5.8,
-    conversionRate: 11.2,
-    bigChancesCreated: 42,
-    bigChancesMissed: 18,
-    penaltiesScored: 3,
-    penaltiesMissed: 1
-  },
-  defending: {
-    tacklesPerGame: 18.4,
-    interceptions: 156,
-    clearances: 234,
-    blockedShots: 45,
-    errorLeadingToGoal: 2,
-    aerialDuelsWon: 58
-  },
-  passing: {
-    passesPerGame: 456,
-    passAccuracy: 84.2,
-    longBallsAccuracy: 62.4,
-    crossesAccuracy: 28.6,
-    throughBalls: 34,
-    keyPasses: 89
-  }
-}
 
 export default function RelatoriosPage() {
   const router = useRouter()
@@ -96,15 +45,61 @@ export default function RelatoriosPage() {
     window.addEventListener('gamepad:button', handler)
     return () => window.removeEventListener('gamepad:button', handler)
   }, [router])
-  const { state } = useGameState()
-  const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  const { team: userTeam } = useUserTeam()
   const gameEngine = useGameEngine()
   
   const [activeTab, setActiveTab] = useState<TabType>("individuais")
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
   const [reportPeriod, setReportPeriod] = useState<"semana" | "mes" | "temporada">("mes")
   
-  const { squadPlayers, generatePerformanceReport } = gameEngine
+  const { squadPlayers, generatePerformanceReport, matchResults, myTeamShort } = gameEngine
+
+  /** Estatísticas SOMENTE das súmulas persistidas do clube do jogador. */
+  const teamStats = useMemo(() => {
+    const clube = myTeamShort || userTeam.curto
+    const jogos = matchResults.filter(r => r.homeTeam === clube || r.awayTeam === clube)
+    let wins = 0, draws = 0, losses = 0, goalsScored = 0, goalsConceded = 0, cleanSheets = 0
+    let xG = 0, xGA = 0, shots = 0, shotsOnTarget = 0, oppShots = 0
+    let corners = 0, fouls = 0, yellows = 0, reds = 0, passes = 0
+    let possession = 0, passAccuracy = 0, xA = 0, boxEntries = 0, highRecoveries = 0
+    let performanceMatches = 0, xACount = 0, boxEntriesCount = 0, recoveriesCount = 0
+
+    for (const jogo of jogos) {
+      const home = jogo.homeTeam === clube
+      const pro = home ? jogo.homeScore : jogo.awayScore
+      const contra = home ? jogo.awayScore : jogo.homeScore
+      goalsScored += pro; goalsConceded += contra
+      if (pro > contra) wins++; else if (pro === contra) draws++; else losses++
+      if (contra === 0) cleanSheets++
+
+      const nossa = jogo.performance?.[home ? "home" : "away"]
+      const rival = jogo.performance?.[home ? "away" : "home"]
+      if (!nossa || !rival) continue
+      performanceMatches++
+      xG += nossa.xG; xGA += rival.xG
+      shots += nossa.shots; shotsOnTarget += nossa.shotsOnTarget; oppShots += rival.shots
+      corners += nossa.corners; fouls += nossa.fouls; yellows += nossa.yellows; reds += nossa.reds
+      passes += nossa.passes; possession += nossa.possession; passAccuracy += nossa.passAccuracy
+      if (nossa.xA != null) { xA += nossa.xA; xACount++ }
+      if (nossa.boxEntries != null) { boxEntries += nossa.boxEntries; boxEntriesCount++ }
+      if (nossa.highRecoveries != null) { highRecoveries += nossa.highRecoveries; recoveriesCount++ }
+    }
+    const media = (valor: number) => performanceMatches ? valor / performanceMatches : null
+    return {
+      matches: jogos.length, wins, draws, losses, goalsScored, goalsConceded, cleanSheets,
+      performanceMatches,
+      xG: performanceMatches ? xG : null,
+      xGA: performanceMatches ? xGA : null,
+      shotsPerGame: media(shots), shotsOnTargetPerGame: media(shotsOnTarget),
+      opponentShotsPerGame: media(oppShots), cornersPerGame: media(corners), foulsPerGame: media(fouls),
+      conversionRate: shots ? goalsScored / shots * 100 : null,
+      yellows, reds, passesPerGame: media(passes), possession: media(possession), passAccuracy: media(passAccuracy),
+      xA: xACount ? xA : null, boxEntries: boxEntriesCount ? boxEntries : null,
+      highRecoveries: recoveriesCount ? highRecoveries : null,
+    }
+  }, [matchResults, myTeamShort, userTeam.curto])
+
+  const numero = (valor: number | null, casas = 1) => valor == null ? "—" : valor.toFixed(casas)
 
   const tabs: { id: TabType; label: string; icon: typeof BarChart3 }[] = [
     { id: "individuais", label: "Individuais", icon: Users },
@@ -130,8 +125,9 @@ export default function RelatoriosPage() {
 
   // Calcular estatisticas comparativas
   const playerComparisons = useMemo(() => {
-    const avgOverall = squadPlayers.reduce((sum, p) => sum + p.overall, 0) / squadPlayers.length
-    const avgForm = squadPlayers.reduce((sum, p) => sum + p.form, 0) / squadPlayers.length
+    const divisor = Math.max(squadPlayers.length, 1)
+    const avgOverall = squadPlayers.reduce((sum, p) => sum + p.overall, 0) / divisor
+    const avgForm = squadPlayers.reduce((sum, p) => sum + p.form, 0) / divisor
     
     return {
       avgOverall,
@@ -267,8 +263,8 @@ export default function RelatoriosPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <div className={cn("text-3xl font-bold", getRatingColor(playerReport.avgRating))}>
-                          {playerReport.avgRating.toFixed(1)}
+                        <div className={cn("text-3xl font-bold", playerReport.avgRating > 0 ? getRatingColor(playerReport.avgRating) : "text-white/40")}>
+                          {playerReport.avgRating > 0 ? playerReport.avgRating.toFixed(1) : "—"}
                         </div>
                         <div className="text-xs text-white/50">Nota Media</div>
                       </div>
@@ -279,12 +275,11 @@ export default function RelatoriosPage() {
                       <div className="p-4 bg-white/5 rounded-lg text-center">
                         <div className={cn(
                           "text-xl font-bold flex items-center justify-center gap-1",
-                          playerReport.vsLastPeriod > 0 ? "text-green-400" : playerReport.vsLastPeriod < 0 ? "text-red-400" : "text-white/50"
+                          "text-white/50"
                         )}>
-                          {playerReport.vsLastPeriod > 0 ? <TrendingUp className="h-4 w-4" /> : playerReport.vsLastPeriod < 0 ? <TrendingDown className="h-4 w-4" /> : null}
-                          {playerReport.vsLastPeriod > 0 ? "+" : ""}{playerReport.vsLastPeriod}%
+                          —
                         </div>
-                        <div className="text-xs text-white/50">vs Periodo Anterior</div>
+                        <div className="text-xs text-white/50">Sem série histórica</div>
                       </div>
                       <div className="p-4 bg-white/5 rounded-lg text-center">
                         <div className={cn(
@@ -400,23 +395,23 @@ export default function RelatoriosPage() {
               {/* Visao Geral */}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-4 text-center">
-                  <div className="text-3xl font-bold text-white">{TEAM_STATS.overall.matches}</div>
+                  <div className="text-3xl font-bold text-white">{teamStats.matches}</div>
                   <div className="text-xs text-white/50">Jogos</div>
                 </div>
                 <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-xl border border-green-500/20 p-4 text-center">
-                  <div className="text-3xl font-bold text-green-400">{TEAM_STATS.overall.wins}</div>
+                  <div className="text-3xl font-bold text-green-400">{teamStats.wins}</div>
                   <div className="text-xs text-white/50">Vitorias</div>
                 </div>
                 <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 rounded-xl border border-[#ffd700]/20 p-4 text-center">
-                  <div className="text-3xl font-bold text-yellow-400">{TEAM_STATS.overall.draws}</div>
+                  <div className="text-3xl font-bold text-yellow-400">{teamStats.draws}</div>
                   <div className="text-xs text-white/50">Empates</div>
                 </div>
                 <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 rounded-xl border border-red-500/20 p-4 text-center">
-                  <div className="text-3xl font-bold text-red-400">{TEAM_STATS.overall.losses}</div>
+                  <div className="text-3xl font-bold text-red-400">{teamStats.losses}</div>
                   <div className="text-xs text-white/50">Derrotas</div>
                 </div>
                 <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border border-primary/20 p-4 text-center">
-                  <div className="text-3xl font-bold text-primary">{TEAM_STATS.overall.cleanSheets}</div>
+                  <div className="text-3xl font-bold text-primary">{teamStats.cleanSheets}</div>
                   <div className="text-xs text-white/50">Clean Sheets</div>
                 </div>
               </div>
@@ -433,27 +428,27 @@ export default function RelatoriosPage() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/70">Gols Marcados</span>
-                      <span className="font-bold text-white">{TEAM_STATS.overall.goalsScored}</span>
+                      <span className="font-bold text-white">{teamStats.goalsScored}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/70">xG</span>
-                      <span className="font-bold text-white">{TEAM_STATS.overall.xG.toFixed(1)}</span>
+                      <span className="font-bold text-white">{numero(teamStats.xG)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/70">Finalizacoes/Jogo</span>
-                      <span className="font-bold text-white">{TEAM_STATS.attacking.shotsPerGame.toFixed(1)}</span>
+                      <span className="font-bold text-white">{numero(teamStats.shotsPerGame)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/70">No Alvo/Jogo</span>
-                      <span className="font-bold text-white">{TEAM_STATS.attacking.shotsOnTargetPerGame.toFixed(1)}</span>
+                      <span className="font-bold text-white">{numero(teamStats.shotsOnTargetPerGame)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/70">Taxa Conversao</span>
-                      <span className="font-bold text-white">{TEAM_STATS.attacking.conversionRate.toFixed(1)}%</span>
+                      <span className="font-bold text-white">{teamStats.conversionRate == null ? "—" : `${numero(teamStats.conversionRate)}%`}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/70">Grandes Chances</span>
-                      <span className="font-bold text-white">{TEAM_STATS.attacking.bigChancesCreated}</span>
+                      <span className="text-sm text-white/70">Escanteios/Jogo</span>
+                      <span className="font-bold text-white">{numero(teamStats.cornersPerGame)}</span>
                     </div>
                   </div>
                 </div>
@@ -468,27 +463,27 @@ export default function RelatoriosPage() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/70">Gols Sofridos</span>
-                      <span className="font-bold text-white">{TEAM_STATS.overall.goalsConceded}</span>
+                      <span className="font-bold text-white">{teamStats.goalsConceded}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/70">xGA</span>
-                      <span className="font-bold text-white">{TEAM_STATS.overall.xGA.toFixed(1)}</span>
+                      <span className="font-bold text-white">{numero(teamStats.xGA)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/70">Desarmes/Jogo</span>
-                      <span className="font-bold text-white">{TEAM_STATS.defending.tacklesPerGame.toFixed(1)}</span>
+                      <span className="text-sm text-white/70">Finalizações rivais/Jogo</span>
+                      <span className="font-bold text-white">{numero(teamStats.opponentShotsPerGame)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/70">Interceptacoes</span>
-                      <span className="font-bold text-white">{TEAM_STATS.defending.interceptions}</span>
+                      <span className="text-sm text-white/70">Faltas/Jogo</span>
+                      <span className="font-bold text-white">{numero(teamStats.foulsPerGame)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/70">Cortes</span>
-                      <span className="font-bold text-white">{TEAM_STATS.defending.clearances}</span>
+                      <span className="text-sm text-white/70">Cartões amarelos</span>
+                      <span className="font-bold text-white">{teamStats.performanceMatches ? teamStats.yellows : "—"}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/70">Duelos Aereos</span>
-                      <span className="font-bold text-white">{TEAM_STATS.defending.aerialDuelsWon}%</span>
+                      <span className="text-sm text-white/70">Cartões vermelhos</span>
+                      <span className="font-bold text-white">{teamStats.performanceMatches ? teamStats.reds : "—"}</span>
                     </div>
                   </div>
                 </div>
@@ -503,27 +498,27 @@ export default function RelatoriosPage() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/70">Passes/Jogo</span>
-                      <span className="font-bold text-white">{TEAM_STATS.passing.passesPerGame}</span>
+                      <span className="font-bold text-white">{numero(teamStats.passesPerGame, 0)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-white/70">Precisao Passes</span>
-                      <span className="font-bold text-white">{TEAM_STATS.passing.passAccuracy.toFixed(1)}%</span>
+                      <span className="font-bold text-white">{teamStats.passAccuracy == null ? "—" : `${numero(teamStats.passAccuracy)}%`}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/70">Bolas Longas</span>
-                      <span className="font-bold text-white">{TEAM_STATS.passing.longBallsAccuracy.toFixed(1)}%</span>
+                      <span className="text-sm text-white/70">Posse média</span>
+                      <span className="font-bold text-white">{teamStats.possession == null ? "—" : `${numero(teamStats.possession)}%`}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/70">Cruzamentos</span>
-                      <span className="font-bold text-white">{TEAM_STATS.passing.crossesAccuracy.toFixed(1)}%</span>
+                      <span className="text-sm text-white/70">Assistências esperadas (xA)</span>
+                      <span className="font-bold text-white">{numero(teamStats.xA)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/70">Passes Decisivos</span>
-                      <span className="font-bold text-white">{TEAM_STATS.passing.keyPasses}</span>
+                      <span className="text-sm text-white/70">Entradas na área</span>
+                      <span className="font-bold text-white">{numero(teamStats.boxEntries, 0)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/70">Bolas Entrelinha</span>
-                      <span className="font-bold text-white">{TEAM_STATS.passing.throughBalls}</span>
+                      <span className="text-sm text-white/70">Recuperações altas</span>
+                      <span className="font-bold text-white">{numero(teamStats.highRecoveries, 0)}</span>
                     </div>
                   </div>
                 </div>

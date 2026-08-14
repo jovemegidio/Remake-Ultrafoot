@@ -11,6 +11,7 @@
 // fim de temporada por `evolvePyramids`.
 
 import { UEFA_EXPANSION_FEDERATIONS } from "@/lib/uefa-expansion"
+import { regulamentoDaLigaNoServidor } from "@/lib/atualizacao-elencos"
 
 /** Uma piramide nacional: divisoes do topo para a base e quantos clubes trocam
  *  entre cada par adjacente. swaps[i] = clubes entre tiers[i] e tiers[i+1]. */
@@ -25,11 +26,11 @@ export interface Pyramid {
 // existe no jogo, o clube simplesmente nao tem para onde descer/subir.
 export const PYRAMIDS: readonly Pyramid[] = [
   { country: "Brasil", tiers: ["serie_a", "serie_b", "serie_c", "serie_d"], swaps: [4, 4, 4] },
-  { country: "Inglaterra", tiers: ["premier_league", "championship"], swaps: [3] },
-  { country: "Espanha", tiers: ["la_liga", "la_liga_2"], swaps: [3] },
+  { country: "Inglaterra", tiers: ["premier_league", "championship", "league_one_eng", "league_two_eng", "national_league_eng", "national_league_ns_eng"], swaps: [3, 3, 4, 2, 4] },
+  { country: "Espanha", tiers: ["la_liga", "la_liga_2", "primera_federacion_esp", "segunda_federacion_esp"], swaps: [3, 4, 5] },
   { country: "Italia", tiers: ["serie_a_ita", "serie_b_ita"], swaps: [3] },
-  { country: "Alemanha", tiers: ["bundesliga", "bundesliga_2"], swaps: [3] },
-  { country: "Franca", tiers: ["ligue_1", "ligue_2"], swaps: [3] },
+  { country: "Alemanha", tiers: ["bundesliga", "bundesliga_2", "dritte_liga_ger"], swaps: [3, 3] },
+  { country: "Franca", tiers: ["ligue_1", "ligue_2", "national_fra"], swaps: [3, 3] },
   { country: "Arabia", tiers: ["saudi_pro", "saudi_first_div"], swaps: [3] },
   // Chile: as duas divisoes ja existiam com elenco (19 e 13 clubes) e nenhuma
   // delas trocava de nivel — era a unica piramide pronta que faltava ligar.
@@ -43,10 +44,10 @@ export const PYRAMIDS: readonly Pyramid[] = [
   //
   // O numero de trocas e o `relegation` que a primeira divisao ja declarava; as
   // duas listas sao conferidas pelo scripts/auditar-ligas-consistencia.mjs.
-  { country: "Portugal", tiers: ["primeira_liga", "liga_portugal_2"], swaps: [2] },
+  { country: "Portugal", tiers: ["primeira_liga", "liga_portugal_2", "liga_3_por", "campeonato_portugal"], swaps: [2, 2, 2] },
   { country: "Holanda", tiers: ["eredivisie", "eerste_divisie"], swaps: [3] },
-  { country: "Belgica", tiers: ["pro_league_bel", "challenger_pro"], swaps: [2] },
-  { country: "Turquia", tiers: ["super_lig", "tff_1_lig"], swaps: [3] },
+  { country: "Belgica", tiers: ["pro_league_bel", "challenger_pro", "first_national_bel"], swaps: [2, 2] },
+  { country: "Turquia", tiers: ["super_lig", "tff_1_lig", "tff_2_lig"], swaps: [3, 3] },
   { country: "Russia", tiers: ["russian_prem", "russian_first"], swaps: [2] },
   { country: "Argentina", tiers: ["liga_argentina", "primera_b_arg"], swaps: [2] },
   { country: "Colombia", tiers: ["primera_a_col", "torneo_betplay"], swaps: [2] },
@@ -56,7 +57,7 @@ export const PYRAMIDS: readonly Pyramid[] = [
   { country: "China", tiers: ["chinese_super", "china_league_one"], swaps: [3] },
   // Escocia e Equador nao tinham nem a divisao no tipo `Divisao`; as duas foram
   // criadas para o rebaixamento que a primeira divisao ja anunciava existir.
-  { country: "Escocia", tiers: ["scottish_prem", "scottish_champ"], swaps: [2] },
+  { country: "Escocia", tiers: ["scottish_prem", "scottish_champ", "scottish_league_one", "scottish_league_two"], swaps: [2, 2, 2] },
   { country: "Equador", tiers: ["primera_a_ecu", "serie_b_ecu"], swaps: [2] },
   // Coreia do Sul: a K League 2 passou a existir de verdade (17 clubes e
   // elencos importados do Transfermarkt), entao o pais volta a rebaixar.
@@ -69,6 +70,7 @@ export const PYRAMIDS: readonly Pyramid[] = [
   { country: "Noruega", tiers: ["eliteserien_nor", "obos_ligaen"], swaps: [2] },
   { country: "Chipre", tiers: ["protathlima_cyp", "second_div_cyp"], swaps: [3] },
   { country: "Chequia", tiers: ["fortuna_liga_cze", "chance_narodni_liga"], swaps: [1] },
+  { country: "Grecia", tiers: ["super_league_gre", "super_league_2_gre"], swaps: [2] },
   // Federações da expansão só entram aqui quando os DOIS níveis têm uma
   // fotografia explícita de participantes. O filtro evita transformar uma
   // segunda divisão ainda aberta em uma pirâmide fictícia e liga
@@ -93,14 +95,33 @@ for (const pyramid of PYRAMIDS) {
 export function relegationCount(division: string): number {
   const info = TIER_INDEX.get(division)
   if (!info) return 0
+  const doCanal = regulamentoDaLigaNoServidor(division)?.rebaixamentos
+  if (typeof doCanal === "number" && doCanal >= 0) return doCanal
   return info.idx < info.pyramid.swaps.length ? info.pyramid.swaps[info.idx] : 0
 }
 
-/** Quantos clubes SOBEM desta divisao (0 se for o topo ou fora de piramide). */
+/**
+ * Quantos clubes SOBEM desta divisao (0 se for o topo ou fora de piramide).
+ *
+ * ⚠️ O NUMERO E UM SO PARA OS DOIS LADOS. Na piramide, `swaps[i]` e ao mesmo
+ * tempo quantos caem do nivel i e quantos sobem do nivel i+1 — se cada ponta
+ * pudesse ser editada por conta propria, o painel deixaria publicar "3 caem da
+ * Serie A" com "2 sobem da Serie B" e a primeira divisao encolheria uma vaga por
+ * temporada, em silencio.
+ *
+ * Por isso o REBAIXAMENTO da divisao de cima manda. `acessos` so vale quando a
+ * divisao de cima nao foi configurada no canal.
+ */
 export function promotionCount(division: string): number {
   const info = TIER_INDEX.get(division)
   if (!info) return 0
-  return info.idx > 0 ? info.pyramid.swaps[info.idx - 1] : 0
+  if (info.idx === 0) return 0
+  const acima = info.pyramid.tiers[info.idx - 1]
+  const quedaDeCima = regulamentoDaLigaNoServidor(acima)?.rebaixamentos
+  if (typeof quedaDeCima === "number" && quedaDeCima >= 0) return quedaDeCima
+  const doCanal = regulamentoDaLigaNoServidor(division)?.acessos
+  if (typeof doCanal === "number" && doCanal >= 0) return doCanal
+  return info.pyramid.swaps[info.idx - 1]
 }
 
 export function divisionAbove(division: string): string | null {
@@ -150,6 +171,14 @@ const LABELS: Record<string, string> = {
   eliteserien_nor: "Eliteserien", obos_ligaen: "OBOS-ligaen",
   protathlima_cyp: "Cyprus League", second_div_cyp: "Cyprus Second Division",
   fortuna_liga_cze: "Chance Liga", chance_narodni_liga: "Chance Národní Liga",
+  league_one_eng: "EFL League One", league_two_eng: "EFL League Two",
+  national_league_eng: "National League", national_league_ns_eng: "National League North/South",
+  primera_federacion_esp: "Primera Federación", segunda_federacion_esp: "Segunda Federación",
+  dritte_liga_ger: "3. Liga", national_fra: "Championnat National",
+  liga_3_por: "Liga 3", campeonato_portugal: "Campeonato de Portugal",
+  scottish_league_one: "Scottish League One", scottish_league_two: "Scottish League Two",
+  first_national_bel: "Belgian National Division 1", tff_2_lig: "TFF 2. Lig",
+  super_league_2_gre: "Super League Greece 2",
   uefa_aut_1: "Austrian Bundesliga", uefa_aut_2: "2. Liga",
   uefa_pol_1: "Ekstraklasa", uefa_pol_2: "I liga",
   uefa_rou_1: "Liga I", uefa_rou_2: "Liga II",

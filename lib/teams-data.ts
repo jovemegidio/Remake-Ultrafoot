@@ -4,7 +4,7 @@
 import { gameAssetUrl, isTauri } from "@/lib/game-asset"
 import { normalizeCountry } from "@/lib/country-normalize"
 import { applyTeamOverride, getTeamOverride } from "@/lib/team-overrides"
-import { getCurrency, currencyForCountry } from "@/lib/currency"
+export { formatCurrency, formatCurrencyFor, formatNumber } from "@/lib/currency"
 // ⚠️ NAO ADIANTA TROCAR ESTE IMPORT POR UM SEED "SO DE CLUBES" (testado e
 // MEDIDO em 07/08/2026 — a mediana por tela PIOROU de 15,19 para 16,21 MB).
 //
@@ -17,7 +17,23 @@ import { getCurrency, currencyForCountry } from "@/lib/currency"
 //
 // Cortar de verdade exige tornar `players-data` assincrono (o `allPlayers` e um
 // `const` exportado, consumido de forma sincrona) — nao basta mexer aqui.
-import importedBF2026 from "@/data/seeds/imported-bf2026.json"
+/**
+ * ÍNDICE LEVE DO POOL — não o seed completo.
+ *
+ * `imported-bf2026.json` tem 8,91 MB porque cada um dos 2.994 clubes carrega o
+ * array `jogadores` embutido. Este arquivo é importado por 77 módulos, ou seja,
+ * por praticamente toda tela — e `PoolTeamRaw` (abaixo) **não lê `jogadores`**.
+ * O jogo fazia parse de 8,9 MB para descartar os elencos, e isso viajava no
+ * chunk compartilhado de TODA rota: era a causa das telas demorarem a abrir.
+ *
+ * O índice tem os mesmos 2.994 clubes sem os elencos: 0,88 MB (-90%). Quem
+ * PRECISA de elenco (players-data, player-photos) segue lendo o arquivo cheio.
+ *
+ * ⚠️ O índice é DERIVADO: gerado por `scripts/gerar-indice-do-pool.mjs`. Mudou o
+ * seed, rode o script de novo — editar o índice à mão faz o clube existir na
+ * lista e sumir do elenco.
+ */
+import importedBF2026 from "@/data/seeds/imported-bf2026-index.json"
 // Tabela de acesso/rebaixamento ja consumada em 2026. Ver `_divisoes2026`.
 import divisionOverrides2026 from "@/data/seeds/division_overrides_2026.json"
 import { repairMojibake } from "@/lib/text-normalization"
@@ -103,6 +119,22 @@ export type Divisao =
   | "j2_league"
   | "k_league_2"
   | "china_league_one"
+  // Profundidade internacional equivalente às ligas jogáveis do FM26.
+  | "league_one_eng"
+  | "league_two_eng"
+  | "national_league_eng"
+  | "national_league_ns_eng"
+  | "primera_federacion_esp"
+  | "segunda_federacion_esp"
+  | "dritte_liga_ger"
+  | "national_fra"
+  | "liga_3_por"
+  | "campeonato_portugal"
+  | "scottish_league_one"
+  | "scottish_league_two"
+  | "first_national_bel"
+  | "tff_2_lig"
+  | "super_league_2_gre"
   // Estaduais
   | "paulistao"
   | "carioca"
@@ -1522,6 +1554,13 @@ export function getClubDivisions(): Record<string, string> {
   return _clubDivisions
 }
 
+/** Clubes do pool que pertencem a alguma divisão jogável da pirâmide. */
+export function getPlayablePoolTeams(): Team[] {
+  return allPoolTeams
+    .filter(team => PROMOVIDOS_DO_POOL[team.file_key] || _poolInitialDivisionByFileKey[team.file_key])
+    .map(team => _withPlayablePoolIdentity(applyTeamOverride(team)))
+}
+
 /** Chave global e estável usada pela pirâmide. Saves antigos por `curto` continuam legíveis. */
 export function clubDivisionKey(team: { file_key: string }): string {
   return `club:${team.file_key}`
@@ -1620,6 +1659,16 @@ Object.assign(PROMOVIDOS_DO_POOL, _officialEuropeanDivisionByFileKey)
 /** Os clubes do pool promovidos, ja como Team, prontos para entrar na divisao. */
 const _promovidosDoPool: Team[] = allPoolTeams.filter(t => PROMOVIDOS_DO_POOL[t.file_key])
 
+/** Divisão inicial reservada para clubes do pool nas pirâmides profundas. */
+const _poolInitialDivisionByFileKey: Record<string, string> = {}
+const _pyramidDivisionByCountryShort: Record<string, string> = {}
+const _playableShortByFileKey: Record<string, string> = {}
+
+function _withPlayablePoolIdentity(team: Team): Team {
+  const curto = _playableShortByFileKey[team.file_key]
+  return curto && curto !== team.curto ? { ...team, curto } : team
+}
+
 /** Quanto do arquivo de 2026 casou com o catalogo curado (para o teste conferir). */
 export function getDivisoes2026(): Record<string, string> {
   return _divisoes2026
@@ -1629,6 +1678,7 @@ export function getDivisoes2026(): Record<string, string> {
 export function initialDivision(team: { curto: string; divisao: string; file_key?: string }): string {
   return (team.file_key ? _officialEuropeanDivisionByFileKey[team.file_key] : undefined)
     ?? (team.file_key ? PROMOVIDOS_DO_POOL[team.file_key] : undefined)
+    ?? (team.file_key ? _poolInitialDivisionByFileKey[team.file_key] : undefined)
     ?? _divisoes2026[team.curto]
     ?? team.divisao
 }
@@ -1643,10 +1693,11 @@ export function getTeamsByDivision(divisao: string): Team[] {
   // Os promovidos do pool entram AQUI, e nao em `allTeams`: manter o catalogo
   // curado intocado evita que um `curto` repetido do pool atropele um clube
   // curado em toda tela que resolve clube por codigo.
-  const doPool = _promovidosDoPool
+  const doPool = allPoolTeams
+    .filter(t => PROMOVIDOS_DO_POOL[t.file_key] || _poolInitialDivisionByFileKey[t.file_key])
     .filter(t => effectiveDivision(t) === divisao)
     .filter(t => !curados.some(c => c.file_key === t.file_key))
-    .map(applyTeamOverride)
+    .map(team => _withPlayablePoolIdentity(applyTeamOverride(team)))
   const result = [...curados, ...doPool]
   const snapshot = _officialEuropeanTeamsByDivision.get(divisao)
   if (!snapshot || Object.keys(_clubDivisions).length > 0) return result
@@ -1700,6 +1751,15 @@ export const TAMANHO_OFICIAL_DA_LIGA: Record<string, number> = {
   betinia_liga: 12, obos_ligaen: 16, second_div_cyp: 16, chance_narodni_liga: 16,
   torneo_betplay: 16, segunda_div_ury: 14, china_league_one: 16,
   scottish_champ: 10, serie_b_ecu: 10,
+  league_one_eng: 24, league_two_eng: 24,
+  national_league_eng: 24, national_league_ns_eng: 12,
+  primera_federacion_esp: 20, segunda_federacion_esp: 20,
+  dritte_liga_ger: 20, national_fra: 18,
+  // Divisões regionalizadas: o save carrega o grupo do clube, não todos os
+  // grupos nacionais ao mesmo tempo (mesma estratégia de desempenho do FM).
+  liga_3_por: 10, campeonato_portugal: 14,
+  scottish_league_one: 10, scottish_league_two: 10,
+  first_national_bel: 14, tff_2_lig: 18, super_league_2_gre: 16,
   ...Object.fromEntries(UEFA_EXPANSION_FEDERATIONS.flatMap(federation =>
     [federation.top, federation.second]
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry?.participants.length))
@@ -1734,6 +1794,13 @@ const PAIS_DA_DIVISAO: Record<string, string> = {
   liga_2_per: "Peru", copa_simon_bolivar: "Bolivia",
   division_intermedia_par: "Paraguai", liga_futve_2: "Venezuela",
   betinia_liga: "Dinamarca", obos_ligaen: "Noruega", second_div_cyp: "Chipre", chance_narodni_liga: "Chequia",
+  league_one_eng: "Inglaterra", league_two_eng: "Inglaterra",
+  national_league_eng: "Inglaterra", national_league_ns_eng: "Inglaterra",
+  primera_federacion_esp: "Espanha", segunda_federacion_esp: "Espanha",
+  dritte_liga_ger: "Alemanha", national_fra: "Franca",
+  liga_3_por: "Portugal", campeonato_portugal: "Portugal",
+  scottish_league_one: "Escocia", scottish_league_two: "Escocia",
+  first_national_bel: "Belgica", tff_2_lig: "Turquia", super_league_2_gre: "Grecia",
   // ⚠️ Japao (11 clubes livres no pool), China (11) e Coreia do Sul (ZERO) nao
   // sustentam a segunda divisao que declaram. Ficam de fora de proposito: uma
   // liga com tres clubes e pior do que nenhuma.
@@ -1773,6 +1840,115 @@ const APELIDOS_DE_PAIS: Record<string, string> = {
 const _paisCanonico = (p: string) => {
   const base = _paisComparavel(p)
   return APELIDOS_DE_PAIS[base] ?? base
+}
+
+/**
+ * Reserva clubes reais do pool para um único nível nacional. Sem esta partição,
+ * o mesmo clube era usado para completar a segunda, a terceira e a quarta
+ * divisão ao mesmo tempo. A ordem é do topo para a base e o prestígio decide
+ * quem ocupa cada faixa na primeira temporada.
+ */
+const PIRAMIDES_PROFUNDAS_DO_POOL: readonly { country: string; tiers: readonly string[] }[] = [
+  { country: "Inglaterra", tiers: ["premier_league", "championship", "league_one_eng", "league_two_eng", "national_league_eng", "national_league_ns_eng"] },
+  { country: "Espanha", tiers: ["la_liga", "la_liga_2", "primera_federacion_esp", "segunda_federacion_esp"] },
+  { country: "Alemanha", tiers: ["bundesliga", "bundesliga_2", "dritte_liga_ger"] },
+  { country: "Franca", tiers: ["ligue_1", "ligue_2", "national_fra"] },
+  { country: "Portugal", tiers: ["primeira_liga", "liga_portugal_2", "liga_3_por", "campeonato_portugal"] },
+  { country: "Escocia", tiers: ["scottish_prem", "scottish_champ", "scottish_league_one", "scottish_league_two"] },
+  { country: "Belgica", tiers: ["pro_league_bel", "challenger_pro", "first_national_bel"] },
+  { country: "Turquia", tiers: ["super_lig", "tff_1_lig", "tff_2_lig"] },
+  { country: "Grecia", tiers: ["super_league_gre", "super_league_2_gre"] },
+]
+
+const _nomePoolComparavel = (nome: string) =>
+  (nome ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "").trim()
+
+for (const layout of PIRAMIDES_PROFUNDAS_DO_POOL) {
+  const country = _paisCanonico(layout.country)
+  const tiers = new Set(layout.tiers)
+  const curatedNames = new Set(allTeams
+    .filter(team => _paisCanonico(String(team.pais ?? team.estado ?? "")) === country)
+    .map(team => _nomePoolComparavel(team.nome)))
+  const reservedShorts = new Set(allTeams
+    .filter(team => _paisCanonico(String(team.pais ?? team.estado ?? "")) === country)
+    .map(team => team.curto))
+  const candidateShorts = new Set<string>()
+  for (const team of allTeams.filter(team =>
+    _paisCanonico(String(team.pais ?? team.estado ?? "")) === country)) {
+    const initial = _officialEuropeanDivisionByFileKey[team.file_key]
+      ?? _divisoes2026[team.curto]
+      ?? String(team.divisao)
+    if (tiers.has(initial)) _pyramidDivisionByCountryShort[`${country}:${team.curto}`] = initial
+  }
+
+  const candidates = allPoolTeams
+    .filter(team => _paisCanonico(String(team.pais ?? "")) === country)
+    .filter(team => !curatedNames.has(_nomePoolComparavel(team.nome)))
+    .sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0) || a.file_key.localeCompare(b.file_key))
+    .filter(team => {
+      if (reservedShorts.has(team.curto) || candidateShorts.has(team.curto)) return false
+      candidateShorts.add(team.curto)
+      return true
+    })
+
+  const assigned = new Set<string>()
+  // Fotografias oficiais e promoções explícitas vencem a distribuição por força.
+  for (const team of candidates) {
+    const fixed = _officialEuropeanDivisionByFileKey[team.file_key] ?? PROMOVIDOS_DO_POOL[team.file_key]
+    if (fixed && tiers.has(fixed)) {
+      _poolInitialDivisionByFileKey[team.file_key] = fixed
+      _pyramidDivisionByCountryShort[`${country}:${team.curto}`] = fixed
+      assigned.add(team.file_key)
+    }
+  }
+
+  for (const division of layout.tiers) {
+    const curated = allTeams.filter(team => {
+      const initial = _officialEuropeanDivisionByFileKey[team.file_key]
+        ?? _divisoes2026[team.curto]
+        ?? String(team.divisao)
+      return initial === division
+    }).length
+    const fixedPool = candidates.filter(team => _poolInitialDivisionByFileKey[team.file_key] === division).length
+    let missing = Math.max(0, tamanhoDaLiga(division) - curated - fixedPool)
+    for (const team of candidates) {
+      if (missing <= 0) break
+      if (assigned.has(team.file_key)) continue
+      _poolInitialDivisionByFileKey[team.file_key] = division
+      _pyramidDivisionByCountryShort[`${country}:${team.curto}`] = division
+      assigned.add(team.file_key)
+      missing--
+    }
+  }
+
+  // `curto` participa das chaves de tabela e resultado. Equipes B do pool
+  // frequentemente repetem o código da matriz; somente nesses conflitos
+  // geramos um sufixo determinístico a partir do file_key.
+  const usedPlayableShorts = new Set(allTeams
+    .filter(team => _paisCanonico(String(team.pais ?? team.estado ?? "")) === country)
+    .map(team => team.curto))
+  const playablePool = allPoolTeams
+    .filter(team => {
+      const division = _officialEuropeanDivisionByFileKey[team.file_key]
+        ?? PROMOVIDOS_DO_POOL[team.file_key]
+        ?? _poolInitialDivisionByFileKey[team.file_key]
+      return Boolean(division && tiers.has(division))
+    })
+    .sort((a, b) => a.file_key.localeCompare(b.file_key))
+  for (const team of playablePool) {
+    let curto = team.curto
+    if (usedPlayableShorts.has(curto)) {
+      const clean = team.file_key.replace(/[^a-z0-9]/gi, "").toUpperCase()
+      const stem = curto.slice(0, 7)
+      let size = 2
+      do {
+        curto = `${stem}${clean.slice(-size)}`
+        size++
+      } while (usedPlayableShorts.has(curto))
+    }
+    _playableShortByFileKey[team.file_key] = curto
+    usedPlayableShorts.add(curto)
+  }
 }
 
 /**
@@ -1869,12 +2045,15 @@ export function completarLigaComPool(divisao: string, alvo = tamanhoDaLiga(divis
 
   const doPais = allPoolTeams
     .filter(t => !jaTem.has(t.file_key) && _paisCanonico(String(t.pais ?? "")) === paisDaLiga)
+    .filter(t => !_poolInitialDivisionByFileKey[t.file_key] || _poolInitialDivisionByFileKey[t.file_key] === divisao)
+    .filter(t => !_pyramidDivisionByCountryShort[`${paisDaLiga}:${t.curto}`]
+      || _pyramidDivisionByCountryShort[`${paisDaLiga}:${t.curto}`] === divisao)
     .sort(porPrestigio)
 
   const resultado = [...base]
   for (const t of doPais) {
     if (resultado.length >= alvo) break
-    resultado.push(t); jaTem.add(t.file_key)
+    resultado.push(_withPlayablePoolIdentity(t)); jaTem.add(t.file_key)
   }
   if (resultado.length >= MIN_TIMES_PARA_LIGA) return resultado
 
@@ -1883,10 +2062,11 @@ export function completarLigaComPool(divisao: string, alvo = tamanhoDaLiga(divis
   if (confed) {
     const vizinhos = allPoolTeams
       .filter(t => !jaTem.has(t.file_key) && _confederacao(String(t.pais ?? "")) === confed)
+      .filter(t => !_poolInitialDivisionByFileKey[t.file_key] || _poolInitialDivisionByFileKey[t.file_key] === divisao)
       .sort(porPrestigio)
     for (const t of vizinhos) {
       if (resultado.length >= MIN_TIMES_PARA_LIGA) break
-      resultado.push(t); jaTem.add(t.file_key)
+      resultado.push(_withPlayablePoolIdentity(t)); jaTem.add(t.file_key)
     }
   }
   return resultado
@@ -1905,17 +2085,19 @@ export function completarLigaComPool(divisao: string, alvo = tamanhoDaLiga(divis
  */
 export function getTeamByShort(curto: string, divisao?: string): Team | undefined {
   const curados = allTeams.map(applyTeamOverride)
+  const pool = allPoolTeams.map(team => _withPlayablePoolIdentity(applyTeamOverride(team)))
   if (divisao) {
-    return curados.find(t => t.curto === curto && t.divisao === divisao)
-      ?? allPoolTeams.find(t => t.curto === curto && t.divisao === divisao)
+    return curados.find(t => t.curto === curto && effectiveDivision(t) === divisao)
+      ?? pool.find(t => t.curto === curto && effectiveDivision(t) === divisao)
   }
-  return curados.find(t => t.curto === curto) ?? allPoolTeams.find(t => t.curto === curto)
+  return curados.find(t => t.curto === curto) ?? pool.find(t => t.curto === curto)
 }
 
 // Função para buscar time por file_key
 export function getTeamByFileKey(fileKey: string): Team | undefined {
   const team = allTeams.find(t => t.file_key === fileKey)
-  return team ? applyTeamOverride(team) : undefined
+    ?? allPoolTeams.find(t => t.file_key === fileKey)
+  return team ? _withPlayablePoolIdentity(applyTeamOverride(team)) : undefined
 }
 
 /**
@@ -2005,48 +2187,3 @@ export function getTeamUniforms(team: Team): TeamUniforms {
 // Formatacao DETERMINISTICA (sem Intl 'compact').
 //
 // Intl.NumberFormat com notation:'compact' — e ate o 'standard' quando o Node do build tem
-// small-icu (so en-US) — produz saida DIFERENTE no servidor (build estatico) e no navegador,
-// quebrando a hidratacao do React (erro #418, visto no /mercado). Aqui formatamos no padrao
-// BR na mao (ponto pra milhar, virgula decimal), igual nos dois lados.
-function groupBR(n: number): string {
-  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-}
-function compactBR(value: number, prefix: string): string {
-  const neg = value < 0 ? "-" : ""
-  const v = Math.abs(value)
-  if (v >= 1_000_000) {
-    const n = (v / 1_000_000).toFixed(1).replace(/.0$/, "").replace(".", ",")
-    return `${neg}${prefix}${n} mi`
-  }
-  if (v >= 1_000 && prefix === "") {
-    const n = (v / 1_000).toFixed(1).replace(/.0$/, "").replace(".", ",")
-    return `${neg}${n} mil`
-  }
-  return `${neg}${prefix}${groupBR(v)}`
-}
-
-/**
- * Valor formatado na moeda do PAIS da contraparte: negocio no Brasil sai em R$,
- * negocio com clube de fora sai em US$ com o valor CONVERTIDO pela taxa — nao e
- * so trocar o simbolo.
- *
- * Diferente de formatCurrency, que usa a preferencia GLOBAL do jogador e serve
- * para o caixa do clube, salarios e demais numeros "do meu mundo". Use este
- * apenas onde existe uma contraparte estrangeira concreta (mercado, propostas).
- */
-export function formatCurrencyFor(value: number, pais?: string | null): string {
-  const c = currencyForCountry(pais)
-  return compactBR(value * c.rate, `${c.symbol} `)
-}
-
-export function formatCurrency(value: number): string {
-  // getCurrency() comeca em BRL (rate 1, "R$") no build/1o render -> identico ao anterior,
-  // sem risco de hidratacao. So muda apos o provider sincronizar a preferencia pos-mount.
-  const c = getCurrency()
-  return compactBR(value * c.rate, `${c.symbol} `)
-}
-
-// Formatar número com sufixo (milhões, mil)
-export function formatNumber(value: number): string {
-  return compactBR(value, "")
-}

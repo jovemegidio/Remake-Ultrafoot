@@ -10,7 +10,7 @@ import { BENEFICIOS } from "@/lib/beneficios"
 import licencasRevogadas from "@/data/seeds/licencas-revogadas.json"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, Download, Cloud, FolderOpen, Settings, PersonStanding } from "lucide-react"
+import { Globe, Save, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, Download, Cloud, FolderOpen, Settings, PersonStanding, Loader2, Users } from "lucide-react"
 import { openSavesFolder } from "@/lib/save-folder"
 import { activateCareerSave, listCareerSaves, loadGameState, hasSave, clearAllGameData, deleteCareerSave, reconcileCareersWithFolder, useGameState } from "@/lib/save-system"
 // ⚠️ NADA DE `@/lib/game-engine` NEM `@/lib/teams-data` NO TOPO DESTE ARQUIVO.
@@ -22,10 +22,12 @@ import { useTranslation } from "@/lib/i18n"
 import { useVersaoDoJogo } from "@/lib/versao-do-jogo"
 import { isTauri } from "@/lib/game-asset"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { carregarElencosDoPool } from "@/lib/pool-elencos"
+import { carregarElencosReaisTM } from "@/lib/elencos-reais-tm"
 import { LegalConsent } from "@/components/legal-consent"
 import { MenuBackground } from "@/components/menu-background"
 import { PainelConfiguracoes, PainelAcessibilidade } from "@/components/menu-preferencias"
-import { downloadSave, getSavedCloudCode } from "@/lib/cloud-save"
+import { downloadSave, getSavedCloudCode, inspecionarCodigo } from "@/lib/cloud-save"
 import { contaLogada, listarSavesDaConta, type SaveDaConta } from "@/lib/conta-ultrafoot"
 import {
   Dialog,
@@ -116,6 +118,15 @@ export default function SplashPage() {
   // Carrega o registro do armazenamento DURAVEL (sobrevive a atualizacoes) e
   // re-le quando o store termina de hidratar do disco — senao o primeiro render
   // (antes do arquivo carregar) diria "nao registrado" a quem esta registrado.
+  // Os elencos do pool (7,91 MB) saíram do bundle e chegam sob demanda. A splash
+  // é o melhor momento para buscá-los: o usuário ainda vai escolher clube, e
+  // quando chegar em "COMEÇAR" o dado já está na memória — sem espera visível.
+  // Ver `lib/pool-elencos.ts`.
+  useEffect(() => {
+    void carregarElencosDoPool()
+    void carregarElencosReaisTM()
+  }, [])
+
   useEffect(() => {
     const aplicar = () => setIsRegistered(lerRegistro().registrado)
     aplicar()
@@ -234,6 +245,8 @@ export default function SplashPage() {
         date: career.updatedAt ? new Date(career.updatedAt).toLocaleDateString("pt-BR") : "-",
         position: `Semana ${career.week}`,
         competition: "Serie A",
+        // Carreira de mesa (co-op local). Ver `CareerSaveSummary.tecnicos`.
+        tecnicos: career.tecnicos ?? 1,
       }
   })
 
@@ -278,9 +291,9 @@ export default function SplashPage() {
   // 2,5 + barra 1,2. Cada troca de fase ainda levava 1 s de dissolucao. Ficava
   // longa e arrastada — jogo profissional abre rapido e deixa pular.
   //
-  // Agora: ~3,4 s na primeira vez, ~1,2 s nas seguintes (a abertura institucional
-  // e apresentacao, nao precisa se repetir a cada partida), e qualquer clique ou
-  // tecla corta direto para o menu.
+  // Agora: ~1,3 s somente na primeira vez. A abertura continua identificando o
+  // jogo, mas nunca se comporta como uma tela de carregamento; qualquer clique
+  // ou tecla ainda corta direto para o menu.
   const pulou = useRef(false)
 
   useEffect(() => {
@@ -319,20 +332,19 @@ export default function SplashPage() {
       const jaViu = safeLocalGet(INTRO_VISTA) === "1"
 
       if (!jaViu) {
-        if (!(await wait(200))) return
+        if (!(await wait(80))) return
         setPhase("studio-logo")
-        if (!(await wait(1300))) return
+        if (!(await wait(500))) return
         setPhase("ea-warning")
-        if (!(await wait(900))) return
+        if (!(await wait(350))) return
         setPhase("leagues")
-        if (!(await wait(1000))) return
+        if (!(await wait(350))) return
         safeLocalSet(INTRO_VISTA, "1")
       }
 
       // A TELA DE CARREGAMENTO SAIU (1.0.267, pedido). Ela era teatro: a barra
       // andava de 0 a 100 por temporizador, sem esperar carga nenhuma — o menu
       // já estava pronto. Agora a abertura vai direto para ele.
-      if (!(await wait(150))) return
       setPhase("main-menu")
     }
 
@@ -391,10 +403,7 @@ export default function SplashPage() {
     if (menuOption?.href) {
       const href = menuOption.href
       setIsExiting(true)
-      setPhase("fade-out")
-      setTimeout(() => {
-        hardNavigate(href)
-      }, 400)
+      hardNavigate(href)
     }
   }, [isExiting, mainMenuOptions, isRegistered])
 
@@ -415,10 +424,7 @@ export default function SplashPage() {
       window.sessionStorage.setItem("ultrafoot:session-active", "true")
     }
     setIsExiting(true)
-    setPhase("fade-out")
-    setTimeout(() => {
-      hardNavigate("/")
-    }, 400)
+    hardNavigate("/")
   }, [])
 
   // Funcao para validar e registrar o jogo
@@ -426,10 +432,6 @@ export default function SplashPage() {
     setRegisterError("")
     setIsValidating(true)
     
-    // A validacao e local e instantanea; a espera existe so para o campo nao
-    // piscar entre "validando" e o resultado.
-    await delay(600)
-
     // Guardado para o caso de os DOIS esquemas recusarem: a mensagem do servidor
     // ("ja esta em uso em outro computador", "indisponivel") explica melhor do
     // que o "codigo invalido" generico do esquema antigo.
@@ -448,7 +450,7 @@ export default function SplashPage() {
         gravarRegistro({ registrado: true, device: getDeviceId() })
         setIsRegistered(true)
         setIsValidating(false)
-        setTimeout(() => setShowRegisterModal(false), 2000)
+        setTimeout(() => setShowRegisterModal(false), 600)
         return
       }
       erroDoEsquemaNovo = novo.erro
@@ -477,9 +479,7 @@ export default function SplashPage() {
       })
       setIsRegistered(true)
       setIsValidating(false)
-      setTimeout(() => {
-        setShowRegisterModal(false)
-      }, 2000)
+      setTimeout(() => setShowRegisterModal(false), 600)
     } else {
       // Os DOIS esquemas recusaram. Quando o servidor deu um motivo concreto
       // ("ja em uso em outro computador", "servidor indisponivel"), ele explica
@@ -490,8 +490,9 @@ export default function SplashPage() {
   }, [serialKey])
 
   // Handler para baixar save da nuvem
-  const handleCloudDownload = useCallback(async () => {
-    if (cloudCode.length !== 6) return
+  const handleCloudDownload = useCallback(async (codigoDireto?: string) => {
+    const codigo = (codigoDireto ?? cloudCode).trim().toUpperCase()
+    if (codigo.length !== 6) return
     // Recuperar da nuvem e o outro lado do save na nuvem: extra de quem
     // registrou (lib/beneficios.ts). O save LOCAL continua livre para todos.
     if (!lerRegistro().registrado) {
@@ -503,7 +504,21 @@ export default function SplashPage() {
     setCloudSuccess("")
     setCloudSaveReady(false)
 
-    const result = await downloadSave(cloudCode)
+    // ⚠️ CÓDIGO ANTIGO (v2) APAGA AS CARREIRAS DESTE APARELHO. Ele é o retrato de
+    // uma máquina inteira, não uma carreira — restaurá-lo é voltar tudo para
+    // aquele dia. Um código novo traz UMA carreira e entra ao lado das outras.
+    // A pessoa precisa saber qual dos dois está prestes a usar.
+    const previa = await inspecionarCodigo(codigo)
+    if (previa.ok && previa.substituiTudo) {
+      const segue = window.confirm(
+        `Este é um código antigo: ele guarda o aparelho inteiro (${previa.rotulo}).\n\n`
+        + "Baixar vai SUBSTITUIR todas as carreiras que estão neste aparelho.\n\n"
+        + "Continuar?",
+      )
+      if (!segue) { setCloudLoading(false); return }
+    }
+
+    const result = await downloadSave(codigo)
 
     if (result.success) {
       setCloudSuccess(t.splash.cloudSuccess)
@@ -1278,7 +1293,20 @@ export default function SplashPage() {
                           <span className="text-xl font-bold">{save.teamName.charAt(0)}</span>
                         </div>
                         <div>
-                          <div className="font-bold text-white leading-tight">{save.teamName}</div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-white leading-tight">{save.teamName}</span>
+                            {/* CARREIRA DE MESA. Carregar uma dessas não é a
+                                mesma coisa que carregar a sua: o computador vai
+                                cair na vez de quem estava jogando, e a rodada só
+                                anda quando todos fecharem. Sem o selo, a pessoa
+                                descobre isso depois de abrir. */}
+                            {save.tecnicos > 1 && (
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-400/35 bg-amber-400/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-300">
+                                <Users className="h-2.5 w-2.5" />
+                                {save.tecnicos} técnicos
+                              </span>
+                            )}
+                          </div>
                           <div className="mt-0.5 text-xs text-white/45">{save.competition} · {save.position}</div>
                         </div>
                       </div>
@@ -1356,26 +1384,66 @@ export default function SplashPage() {
                   {nomeDaConta && <span className="font-normal text-white/35">· {nomeDaConta}</span>}
                 </div>
                 <div className="space-y-1.5">
-                  {savesDaConta.slice(0, 5).map(save => (
+                  {/* ⚠️ UM CLIQUE BAIXA. Antes ele só copiava o código para o
+                      campo abaixo, e ainda era preciso achar e apertar o botão de
+                      baixar — a lista PARECIA a forma de recuperar a carreira e
+                      não era. Cada linha é uma carreira, com o código dela. */}
+                  {savesDaConta.slice(0, 8).map(save => (
                     <button
                       key={save.codigo}
-                      onClick={() => { setCloudCode(save.codigo); setCloudError(""); setCloudSuccess("") }}
-                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[var(--brand)]/30 hover:bg-black/50"
+                      disabled={cloudLoading}
+                      onClick={() => {
+                        setCloudCode(save.codigo)
+                        setCloudError("")
+                        setCloudSuccess("")
+                        void handleCloudDownload(save.codigo)
+                      }}
+                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[var(--brand)]/30 hover:bg-black/50 disabled:opacity-50"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-sm text-white">
+                        {/* Rótulo antigo (carreira enviada antes de ele existir)
+                            fica CINZA: assim "Carreira salva" se lê como "sem
+                            informação", e não como o nome da carreira. */}
+                        <span className={cn(
+                          "block truncate text-sm",
+                          save.rotulo ? "text-white" : "italic text-white/40",
+                        )}>
                           {save.rotulo || "Carreira salva"}
                         </span>
-                        <span className="block text-[11px] text-white/35">
-                          {new Date(save.atualizado_em * 1000).toLocaleDateString("pt-BR")}
+                        {/* ⚠️ A HORA NÃO É ENFEITE. Sem ela, quem salva várias
+                            vezes no mesmo dia vê linhas idênticas e não tem como
+                            escolher — era o caso de 5 das 8 desta lista. */}
+                        <span className="block text-[11px] tabular-nums text-white/35">
+                          {new Date(save.atualizado_em * 1000).toLocaleString("pt-BR", {
+                            day: "2-digit", month: "2-digit", year: "numeric",
+                            hour: "2-digit", minute: "2-digit",
+                          })}
                         </span>
                       </span>
-                      <span className="shrink-0 font-mono text-xs tracking-widest text-[var(--brand)]">
-                        {save.codigo}
+                      <span className="flex shrink-0 items-center gap-2.5">
+                        {/* O código serve para DIGITAR noutro computador, não para
+                            escolher aqui — por isso deixou de ser o elemento mais
+                            colorido da linha. Quem manda na cor é a ação. */}
+                        <span className="font-mono text-[11px] tracking-widest text-white/25">
+                          {save.codigo}
+                        </span>
+                        {cloudLoading && cloudCode === save.codigo
+                          ? <Loader2 className="h-4 w-4 animate-spin text-[var(--brand)]" />
+                          : <Download className="h-4 w-4 text-[var(--brand)]/70" />}
                       </span>
                     </button>
                   ))}
                 </div>
+                {/* A lista mostra 8. Sem esta linha, a nona carreira simplesmente
+                    não existia para quem olha — e o campo de código abaixo é
+                    justamente como alcançá-la. */}
+                {savesDaConta.length > 8 && (
+                  <p className="mt-2 text-[11px] text-white/30">
+                    +{savesDaConta.length - 8} carreira{savesDaConta.length - 8 > 1 ? "s" : ""} mais
+                    antiga{savesDaConta.length - 8 > 1 ? "s" : ""} — use o código abaixo para baixá-la
+                    {savesDaConta.length - 8 > 1 ? "s" : ""}.
+                  </p>
+                )}
               </div>
             )}
             <label className="text-sm text-white/60 font-medium">{t.splash.cloudCodeLabel}</label>
@@ -1394,6 +1462,10 @@ export default function SplashPage() {
                 disabled={cloudLoading}
                 className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/30 focus:border-[var(--brand)]/40 font-mono tracking-[0.3em] uppercase transition-all"
               />
+              {/* ⚠️ O botao de baixar chama `handleCloudDownload()` dentro de uma
+                  seta: passado direto como `onClick={handleCloudDownload}`, o
+                  React entregaria o EVENTO de clique no primeiro parametro — que
+                  agora e o codigo do save. */}
               {cloudSaveReady ? (
                 <button
                   onClick={() => {
@@ -1407,7 +1479,7 @@ export default function SplashPage() {
                 </button>
               ) : (
                 <button
-                  onClick={handleCloudDownload}
+                  onClick={() => { void handleCloudDownload() }}
                   disabled={cloudCode.length !== 6 || cloudLoading}
                   className="px-4 py-3 rounded-xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] text-black font-semibold text-sm shadow-lg shadow-[var(--brand)]/25 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2 hover:opacity-90 transition-opacity"
                 >

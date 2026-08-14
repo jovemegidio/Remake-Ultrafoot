@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import { Trophy, ChevronRight, Star, Zap } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"

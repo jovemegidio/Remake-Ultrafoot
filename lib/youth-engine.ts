@@ -4,6 +4,7 @@
 
 import type { GameState } from "@/lib/save-system"
 import type { SquadPlayer } from "@/lib/save-system"
+import { evoluirSemana, type JovemBase } from "@/lib/youth-academy-rules"
 
 export type YouthCategory = "sub17" | "sub20"
 
@@ -137,13 +138,54 @@ export function loanYouth(state: GameState, playerId: string, toClub: string): G
   }
 }
 
-/** Avança 1 mês de evolução: experiência, atributos, lesões da base. */
-export function advanceYouthMonth(state: GameState): { state: GameState; report: YouthMonthlyReport } {
+/** Quantas semanas de trabalho cabem no botão "Evoluir um mês". */
+export const SEMANAS_NO_MES = 4
+
+/**
+ * UM MÊS DE BASE = QUATRO SEMANAS DA MESMA REGRA.
+ *
+ * ⚠️ RELATO DE JOGADOR (13/08/2026): "acompanhar uma semana está funcionando
+ * mais que evoluir um mês". Estava certo, e a causa era grave — existiam DUAS
+ * fórmulas para a mesma coisa:
+ *
+ *   - `evoluirSemana` (youth-academy-rules): chance
+ *     `min(0,5; 0,10 + margem × 0,012) × fator`, com o fator indo de 0,75 a 1,75
+ *     conforme o nível da academia. Ou seja, leva em conta quanto o garoto ainda
+ *     tem para crescer E quanto o clube investiu na base.
+ *   - o mês, aqui: `Math.random() > 0.35`. Chance fixa, UMA vez no mês inteiro,
+ *     cega para a academia e para a margem.
+ *
+ * Com academia nível 3 e um garoto de margem 20, UMA semana valia 42,5% contra
+ * os 35% do mês inteiro; quatro semanas rendiam ~1,7 evoluções contra no máximo
+ * uma. Investir na academia não mexia no botão do mês, e quem clicava em
+ * "Evoluir um mês" era punido por escolher a opção que parece a maior.
+ *
+ * O conserto não é calibrar a constante: é **apagar a segunda fórmula**. O mês
+ * roda quatro vezes a semana, então "um mês nunca rende menos que uma semana"
+ * deixa de ser algo a torcer e passa a ser consequência da estrutura — ver
+ * `scripts/test-base-semana-vs-mes.ts`.
+ */
+export function advanceYouthMonth(
+  state: GameState,
+  nivelAcademia = 1,
+  rng: () => number = Math.random,
+): { state: GameState; report: YouthMonthlyReport } {
+  const antes = new Map((state.youthPlayers ?? []).map(p => [p.id, p.overall]))
+
+  let jovens = (state.youthPlayers ?? []) as unknown as JovemBase[]
+  for (let semana = 0; semana < SEMANAS_NO_MES; semana++) {
+    jovens = evoluirSemana(jovens, nivelAcademia, rng).jovens
+  }
+
   const highlights: YouthMonthlyReport["highlights"] = []
-  const youthPlayers = (state.youthPlayers ?? []).map(player => {
-    if (player.overall >= player.potential || Math.random() > 0.35) return player
-    highlights.push({ playerId: player.id, reason: "Evoluiu após um bom mês de treinamento na base." })
-    return { ...player, overall: Math.min(player.potential, player.overall + 1), trend: "up" as const }
+  const youthPlayers = (jovens as unknown as SquadPlayer[]).map(player => {
+    const ganho = player.overall - (antes.get(player.id) ?? player.overall)
+    if (ganho <= 0) return player
+    highlights.push({
+      playerId: player.id,
+      reason: `Evoluiu ${ganho} ponto(s) no mês de trabalho na base.`,
+    })
+    return { ...player, trend: "up" as const }
   })
   const nextState = { ...state, youthPlayers, updatedAt: Date.now() }
   return {

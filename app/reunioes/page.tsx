@@ -28,7 +28,8 @@ import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
-import { getTeamByShort, serieATeams, formatCurrency } from "@/lib/teams-data"
+import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { useGameEngine, MEETING_OPTIONS, type MeetingType, type PlayerMeeting } from "@/lib/game-engine"
 
 const MEETING_ICONS: Record<string, typeof ThumbsUp> = {

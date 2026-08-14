@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import {
   Flag,
   Trophy,

@@ -9,7 +9,7 @@
 // o entrosamento antes da janela.
 
 import { useMemo, useState } from "react"
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import { Search, Swords, Users, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { NationalCrest, strengthTone } from "@/components/national/national-crest"

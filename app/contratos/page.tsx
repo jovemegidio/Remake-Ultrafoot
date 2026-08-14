@@ -19,12 +19,13 @@ import { GameHeader } from "@/components/game-header"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
 import { useGameState } from "@/lib/save-system"
+import { useSalario } from "@/lib/usar-salario"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { aplicarResposta, RELACAO_INICIAL, type RespostaDoClube } from "@/lib/pressao-do-agente"
 import { ConversaAgente } from "@/components/conversa-agente"
 import { type EstadoDoAgente, type DesfechoDoAgente, type PerfilDoAgente } from "@/lib/conversa-agente"
 import { useGameEngine, type Player, getContractStatus, formatWeeksToDate, absoluteWeek } from "@/lib/game-engine"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 
 export default function ContratosPage() {
@@ -42,6 +43,7 @@ export default function ContratosPage() {
   // sobe o salário (aumento). Sem isso o "aceitar" seria um botão que só faz o
   // agente calar a boca, e a negociação não valeria nada.
   const { state: saveState, setState: setSaveState } = useGameState()
+  const salario = useSalario()
   const pedidoDeAgente = saveState.pedidoDeAgente ?? null
 
   // ── CONVERSA COM O EMPRESARIO ───────────────────────────────────────────
@@ -434,8 +436,8 @@ export default function ContratosPage() {
 
                   {/* Salario */}
                   <div className="text-sm text-white/70">
-                    {player.contract ? formatCurrency(player.contract.salary) : "-"}
-                    <span className="text-[10px] text-white/40">/sem</span>
+                    {player.contract ? formatCurrency(salario.valor(player.contract.salary)) : "-"}
+                    <span className="text-[10px] text-white/40">{salario.sufixo}</span>
                   </div>
 
                   {/* Expira em */}
@@ -518,7 +520,7 @@ export default function ContratosPage() {
                   <div className="font-semibold text-white text-lg">{selectedPlayer.name}</div>
                   <div className="text-sm text-white/50">{selectedPlayer.position} · {selectedPlayer.age} anos</div>
                   <div className="text-xs text-white/40 mt-1">
-                    Salario atual: {formatCurrency(selectedPlayer.contract?.salary || 0)}/sem
+                    Salario atual: {salario.formatar(selectedPlayer.contract?.salary || 0)}
                   </div>
                 </div>
               </div>

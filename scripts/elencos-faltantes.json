@@ -1,713 +1,4960 @@
 [
  {
-  "nome": "Shonan Bellmare",
-  "curto": "SBM",
-  "pais": "Japao",
-  "divisao": "j_league",
+  "nome": "SV Elversberg",
+  "curto": "O26036",
+  "file_key": "sv_elversberg_official_26",
+  "pais": "Alemanha",
+  "divisao": "bundesliga",
   "gerados": 18,
   "total": 18
  },
  {
-  "nome": "Jubilo Iwata",
-  "curto": "JBI",
-  "pais": "Japao",
-  "divisao": "j_league",
+  "nome": "SC Paderborn 07",
+  "curto": "O26037",
+  "file_key": "sc_paderborn_07_official_26",
+  "pais": "Alemanha",
+  "divisao": "bundesliga",
   "gerados": 18,
   "total": 18
  },
  {
-  "nome": "Machida Zelvia",
-  "curto": "MCZ",
-  "pais": "Japao",
-  "divisao": "j_league",
+  "nome": "Le Mans FC",
+  "curto": "O26039",
+  "file_key": "le_mans_fc_official_26",
+  "pais": "Franca",
+  "divisao": "ligue_1",
   "gerados": 18,
   "total": 18
  },
  {
-  "nome": "Independiente de Cauquenes",
-  "curto": "ICA",
+  "nome": "ESTAC Troyes",
+  "curto": "O26040",
+  "file_key": "estac_troyes_official_26",
+  "pais": "Franca",
+  "divisao": "ligue_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Académico de Viseu",
+  "curto": "O26001",
+  "file_key": "academico_de_viseu_official_26",
+  "pais": "Portugal",
+  "divisao": "primeira_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Alverca",
+  "curto": "O26002",
+  "file_key": "fc_alverca_official_26",
+  "pais": "Portugal",
+  "divisao": "primeira_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Estrela da Amadora",
+  "curto": "O26003",
+  "file_key": "estrela_da_amadora_official_26",
+  "pais": "Portugal",
+  "divisao": "primeira_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ohud",
+  "curto": "OHD",
+  "file_key": "ohud_fc",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Al-Jalala",
+  "curto": "JAL",
+  "file_key": "al_jalala",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Al-Afaq",
+  "curto": "AFQ",
+  "file_key": "al_afaq",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Querétaro",
+  "curto": "QRO",
+  "file_key": "queretaro",
+  "pais": "Mexico",
+  "divisao": "liga_mx",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SC Cambuur",
+  "curto": "O26010",
+  "file_key": "sc_cambuur_official_26",
+  "pais": "Holanda",
+  "divisao": "eredivisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Kilmarnock",
+  "curto": "O26060",
+  "file_key": "kilmarnock_official_26",
+  "pais": "Escocia",
+  "divisao": "scottish_prem",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dundee",
+  "curto": "O26063",
+  "file_key": "dundee_official_26",
+  "pais": "Escocia",
+  "divisao": "scottish_prem",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Çorum FK",
+  "curto": "O26021",
+  "file_key": "corum_fk_official_26",
+  "pais": "Turquia",
+  "divisao": "super_lig",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gençlerbirliği",
+  "curto": "O26022",
+  "file_key": "genclerbirligi_official_26",
+  "pais": "Turquia",
+  "divisao": "super_lig",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Erzurumspor FK",
+  "curto": "O26023",
+  "file_key": "erzurumspor_fk_official_26",
+  "pais": "Turquia",
+  "divisao": "super_lig",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lommel SK",
+  "curto": "O26047",
+  "file_key": "lommel_sk_official_26",
+  "pais": "Belgica",
+  "divisao": "pro_league_bel",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dynamo Makhachkala",
+  "curto": "O26029",
+  "file_key": "dynamo_makhachkala_official_26",
+  "pais": "Russia",
+  "divisao": "russian_prem",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Rodina Moscow",
+  "curto": "O26030",
+  "file_key": "rodina_moscow_official_26",
+  "pais": "Russia",
+  "divisao": "russian_prem",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Deportes Limache",
+  "curto": "LIM",
+  "file_key": "dep_limache",
   "pais": "Chile",
-  "divisao": "primera_b_chi",
+  "divisao": "primera_div_chi",
   "gerados": 18,
   "total": 18
  },
  {
   "nome": "Universidad de Concepcion",
   "curto": "UDC",
+  "file_key": "u_de_concepcion",
   "pais": "Chile",
   "divisao": "primera_div_chi",
   "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "Jeju United",
-  "curto": "JEU",
-  "pais": "Coreia do Sul",
-  "divisao": "k_league_1",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "Incheon United",
-  "curto": "INC",
-  "pais": "Coreia do Sul",
-  "divisao": "k_league_1",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "Gimcheon Sangmu",
-  "curto": "GCS",
-  "pais": "Coreia do Sul",
-  "divisao": "k_league_1",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "Clermont Foot 63",
-  "curto": "CF6",
-  "pais": "Franca",
-  "divisao": "ligue_2",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "Dijon FCO",
-  "curto": "DF",
-  "pais": "Franca",
-  "divisao": "ligue_2",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "Grenoble Foot 38",
-  "curto": "GF3",
-  "pais": "Franca",
-  "divisao": "ligue_2",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "AS Nancy-Lorraine",
-  "curto": "NANCYLOR",
-  "pais": "Franca",
-  "divisao": "ligue_2",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "Red Star FC",
-  "curto": "RSF",
-  "pais": "Franca",
-  "divisao": "ligue_2",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "Rodez AF",
-  "curto": "RA",
-  "pais": "Franca",
-  "divisao": "ligue_2",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "FC Sochaux-Montbéliard",
-  "curto": "SOCHAUXM",
-  "pais": "Franca",
-  "divisao": "ligue_2",
-  "gerados": 18,
-  "total": 18
- },
- {
-  "nome": "Kashiwa Reysol",
-  "curto": "KWR",
-  "pais": "Japao",
-  "divisao": "j_league",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "Avispa Fukuoka",
-  "curto": "AVF",
-  "pais": "Japao",
-  "divisao": "j_league",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "Sagan Tosu",
-  "curto": "SGT",
-  "pais": "Japao",
-  "divisao": "j_league",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "Albirex Niigata",
-  "curto": "ALN",
-  "pais": "Japao",
-  "divisao": "j_league",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "Tokyo Verdy",
-  "curto": "TKV",
-  "pais": "Japao",
-  "divisao": "j_league",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "Sint-Truiden",
-  "curto": "STT",
-  "pais": "Belgica",
-  "divisao": "pro_league_bel",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "Deportes Iberia",
-  "curto": "IBE",
-  "pais": "Chile",
-  "divisao": "primera_b_chi",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "FC Copenhagen",
-  "curto": "COP",
-  "pais": "Dinamarca",
-  "divisao": "superliga_den",
-  "gerados": 17,
   "total": 18
  },
  {
   "nome": "Cerro Montevideo",
   "curto": "CER",
+  "file_key": "cerro_ury",
   "pais": "Uruguai",
   "divisao": "primera_div_ury",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "Daejeon Citizen",
-  "curto": "DAE",
-  "pais": "Coreia do Sul",
-  "divisao": "k_league_1",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "Changchun Yatai",
-  "curto": "CHY",
-  "pais": "China",
-  "divisao": "chinese_super",
-  "gerados": 17,
-  "total": 18
- },
- {
-  "nome": "Ohud",
-  "curto": "OHD",
-  "pais": "Arabia Saudita",
-  "divisao": "saudi_first_div",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Al-Jandal",
-  "curto": "JND",
-  "pais": "Arabia Saudita",
-  "divisao": "saudi_first_div",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Kilmarnock FC",
-  "curto": "KIL",
-  "pais": "Escocia",
-  "divisao": "scottish_prem",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Deportes Limache",
-  "curto": "LIM",
-  "pais": "Chile",
-  "divisao": "primera_div_chi",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Cusco FC",
-  "curto": "CUS",
-  "pais": "Peru",
-  "divisao": "primera_div_per",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Olympiacos",
-  "curto": "OLY",
-  "pais": "Grecia",
-  "divisao": "super_league_gre",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Qarabag",
-  "curto": "QAR",
-  "pais": "Azerbaijao",
-  "divisao": "premyer_liqa_aze",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Kairat",
-  "curto": "KAI",
-  "pais": "Cazaquistao",
-  "divisao": "premier_liga_kaz",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Delfin SC",
-  "curto": "DEL",
-  "pais": "Equador",
-  "divisao": "primera_a_ecu",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Libertad FC",
-  "curto": "LIB",
-  "pais": "Equador",
-  "divisao": "primera_a_ecu",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Guayaquil City",
-  "curto": "GYC",
-  "pais": "Equador",
-  "divisao": "primera_a_ecu",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Gwangju FC",
-  "curto": "GWA",
-  "pais": "Coreia do Sul",
-  "divisao": "k_league_1",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Seongnam FC",
-  "curto": "SEO",
-  "pais": "Coreia do Sul",
-  "divisao": "k_league_2",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Cangzhou Mighty Lions",
-  "curto": "CZM",
-  "pais": "China",
-  "divisao": "chinese_super",
-  "gerados": 16,
-  "total": 18
- },
- {
-  "nome": "Al-Adalah",
-  "curto": "ADA",
-  "pais": "Arabia Saudita",
-  "divisao": "saudi_first_div",
-  "gerados": 15,
-  "total": 18
- },
- {
-  "nome": "Al-Jalala",
-  "curto": "JAL",
-  "pais": "Arabia Saudita",
-  "divisao": "saudi_first_div",
-  "gerados": 15,
-  "total": 18
- },
- {
-  "nome": "Al-Afaq",
-  "curto": "AFQ",
-  "pais": "Arabia Saudita",
-  "divisao": "saudi_first_div",
-  "gerados": 15,
-  "total": 18
- },
- {
-  "nome": "Escuela de Futbol de Macul",
-  "curto": "MAC",
-  "pais": "Chile",
-  "divisao": "primera_b_chi",
-  "gerados": 15,
-  "total": 18
- },
- {
-  "nome": "Libertad",
-  "curto": "LBP",
-  "pais": "Paraguai",
-  "divisao": "primera_div_par",
-  "gerados": 15,
-  "total": 18
- },
- {
-  "nome": "Bodo Glimt",
-  "curto": "BOD",
-  "pais": "Noruega",
-  "divisao": "eliteserien_nor",
-  "gerados": 15,
+  "gerados": 18,
   "total": 18
  },
  {
   "nome": "Barcelona SC",
   "curto": "BSC",
+  "file_key": "barcelona_sc",
   "pais": "Equador",
   "divisao": "primera_a_ecu",
-  "gerados": 15,
+  "gerados": 18,
   "total": 18
  },
  {
-  "nome": "Leones del Norte",
-  "curto": "LEONESDE",
+  "nome": "Libertad FC",
+  "curto": "LIBERTAD",
+  "file_key": "libertad_fc",
   "pais": "Equador",
   "divisao": "primera_a_ecu",
-  "gerados": 15,
+  "gerados": 18,
   "total": 18
  },
  {
-  "nome": "Lincoln City",
-  "curto": "LC",
-  "pais": "Inglaterra",
-  "divisao": "championship",
-  "gerados": 15,
+  "nome": "Daejeon Citizen",
+  "curto": "DAE",
+  "file_key": "daejeon_citizen",
+  "pais": "Coreia do Sul",
+  "divisao": "k_league_1",
+  "gerados": 18,
   "total": 18
  },
  {
-  "nome": "West Bromwich Albion",
-  "curto": "WBA",
-  "pais": "Inglaterra",
-  "divisao": "championship",
-  "gerados": 15,
+  "nome": "Cangzhou Mighty Lions",
+  "curto": "CZM",
+  "file_key": "cangzhou_mighty",
+  "pais": "China",
+  "divisao": "chinese_super",
+  "gerados": 18,
   "total": 18
  },
  {
-  "nome": "Wrexham",
-  "curto": "WRE",
-  "pais": "Inglaterra",
-  "divisao": "championship",
-  "gerados": 15,
-  "total": 18
- },
- {
-  "nome": "Al-Sahel",
-  "curto": "SAH",
-  "pais": "Arabia Saudita",
-  "divisao": "saudi_first_div",
-  "gerados": 14,
-  "total": 18
- },
- {
-  "nome": "Al-Nojoom",
-  "curto": "NOJ",
-  "pais": "Arabia Saudita",
-  "divisao": "saudi_first_div",
-  "gerados": 14,
-  "total": 18
- },
- {
-  "nome": "Cádiz CF",
-  "curto": "CADIZCF",
+  "nome": "CE Sabadell",
+  "curto": "O26034",
+  "file_key": "ce_sabadell_official_26",
   "pais": "Espanha",
   "divisao": "la_liga_2",
-  "gerados": 13,
-  "total": 18
- },
- {
-  "nome": "Real Sporting de Gijon",
-  "curto": "RSD",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 13,
-  "total": 18
- },
- {
-  "nome": "CD Castellón",
-  "curto": "CDCASTEL",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 12,
+  "gerados": 18,
   "total": 18
  },
  {
   "nome": "RC Celta Fortuna",
   "curto": "CELTAFOR",
+  "file_key": "celta_fortuna",
   "pais": "Espanha",
   "divisao": "la_liga_2",
-  "gerados": 12,
-  "total": 18
- },
- {
-  "nome": "Guarany de Sobral",
-  "curto": "GUA",
-  "pais": "Brasil",
-  "divisao": "serie_d",
-  "gerados": 11,
-  "total": 28
- },
- {
-  "nome": "SD Eibar",
-  "curto": "SE",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 11,
-  "total": 18
- },
- {
-  "nome": "CD Eldense",
-  "curto": "CE",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 11,
-  "total": 18
- },
- {
-  "nome": "Granada CF",
-  "curto": "GC",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 11,
-  "total": 18
- },
- {
-  "nome": "CE Sabadell FC",
-  "curto": "CSF",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 11,
-  "total": 18
- },
- {
-  "nome": "Al-Raed",
-  "curto": "RAE",
-  "pais": "Arabia Saudita",
-  "divisao": "saudi_pro",
-  "gerados": 10,
-  "total": 18
- },
- {
-  "nome": "UD Almería",
-  "curto": "UA",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 10,
-  "total": 18
- },
- {
-  "nome": "AD Ceuta FC",
-  "curto": "ACF",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 10,
-  "total": 18
- },
- {
-  "nome": "Córdoba CF",
-  "curto": "CORDOBAC",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 10,
-  "total": 18
- },
- {
-  "nome": "Mantova 1911",
-  "curto": "M1",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
-  "gerados": 9,
-  "total": 18
- },
- {
-  "nome": "Burgos CF",
-  "curto": "BURGOSCF",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
-  "gerados": 9,
+  "gerados": 18,
   "total": 18
  },
  {
   "nome": "Real Sociedad B",
   "curto": "RSB",
+  "file_key": "real_sociedad_b",
   "pais": "Espanha",
   "divisao": "la_liga_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "UD Las Palmas",
+  "curto": "O26035",
+  "file_key": "ud_las_palmas_official_26",
+  "pais": "Espanha",
+  "divisao": "la_liga_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "VfL Bochum",
+  "curto": "O26038",
+  "file_key": "vfl_bochum_official_26",
+  "pais": "Alemanha",
+  "divisao": "bundesliga_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Stade de Reims",
+  "curto": "O26041",
+  "file_key": "stade_de_reims_official_26",
+  "pais": "Franca",
+  "divisao": "ligue_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Académica de Coimbra",
+  "curto": "O26005",
+  "file_key": "academica_de_coimbra_official_26",
+  "pais": "Portugal",
+  "divisao": "liga_portugal_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "AVS",
+  "curto": "O26006",
+  "file_key": "avs_official_26",
+  "pais": "Portugal",
+  "divisao": "liga_portugal_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Sporting CP B",
+  "curto": "O26007",
+  "file_key": "sporting_cp_b_official_26",
+  "pais": "Portugal",
+  "divisao": "liga_portugal_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lusitânia de Lourosa",
+  "curto": "O26008",
+  "file_key": "lusitania_de_lourosa_official_26",
+  "pais": "Portugal",
+  "divisao": "liga_portugal_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Porto B",
+  "curto": "O26009",
+  "file_key": "fc_porto_b_official_26",
+  "pais": "Portugal",
+  "divisao": "liga_portugal_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Almere City FC",
+  "curto": "O26011",
+  "file_key": "almere_city_fc_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Den Bosch",
+  "curto": "O26012",
+  "file_key": "fc_den_bosch_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Dordrecht",
+  "curto": "O26013",
+  "file_key": "fc_dordrecht_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Eindhoven",
+  "curto": "O26014",
+  "file_key": "fc_eindhoven_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Volendam",
+  "curto": "O26015",
+  "file_key": "fc_volendam_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jong Ajax",
+  "curto": "O26016",
+  "file_key": "jong_ajax_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jong AZ",
+  "curto": "O26017",
+  "file_key": "jong_az_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jong PSV",
+  "curto": "O26018",
+  "file_key": "jong_psv_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jong FC Utrecht",
+  "curto": "O26019",
+  "file_key": "jong_fc_utrecht_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Roda JC",
+  "curto": "O26020",
+  "file_key": "roda_jc_official_26",
+  "pais": "Holanda",
+  "divisao": "eerste_divisie",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "KSC Lokeren",
+  "curto": "O26048",
+  "file_key": "ksc_lokeren_official_26",
+  "pais": "Belgica",
+  "divisao": "challenger_pro",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "RSCA Futures",
+  "curto": "O26049",
+  "file_key": "rsca_futures_official_26",
+  "pais": "Belgica",
+  "divisao": "challenger_pro",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jong Genk",
+  "curto": "O26050",
+  "file_key": "jong_genk_official_26",
+  "pais": "Belgica",
+  "divisao": "challenger_pro",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "K. Lierse SK",
+  "curto": "O26051",
+  "file_key": "k_lierse_sk_official_26",
+  "pais": "Belgica",
+  "divisao": "challenger_pro",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Royal Excelsior Virton",
+  "curto": "O26052",
+  "file_key": "royal_excelsior_virton_official_26",
+  "pais": "Belgica",
+  "divisao": "challenger_pro",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "K. Beerschot VA",
+  "curto": "O26053",
+  "file_key": "k_beerschot_va_official_26",
+  "pais": "Belgica",
+  "divisao": "challenger_pro",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jong Gent",
+  "curto": "O26054",
+  "file_key": "jong_gent_official_26",
+  "pais": "Belgica",
+  "divisao": "challenger_pro",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Club NXT",
+  "curto": "O26055",
+  "file_key": "club_nxt_official_26",
+  "pais": "Belgica",
+  "divisao": "challenger_pro",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bodrum FK",
+  "curto": "O26024",
+  "file_key": "bodrum_fk_official_26",
+  "pais": "Turquia",
+  "divisao": "tff_1_lig",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Iğdır FK",
+  "curto": "O26025",
+  "file_key": "igd_r_fk_official_26",
+  "pais": "Turquia",
+  "divisao": "tff_1_lig",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "İstanbulspor",
+  "curto": "O26026",
+  "file_key": "istanbulspor_official_26",
+  "pais": "Turquia",
+  "divisao": "tff_1_lig",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Vanspor",
+  "curto": "O26027",
+  "file_key": "vanspor_official_26",
+  "pais": "Turquia",
+  "divisao": "tff_1_lig",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Mardin 1969 Spor",
+  "curto": "O26028",
+  "file_key": "mardin_1969_spor_official_26",
+  "pais": "Turquia",
+  "divisao": "tff_1_lig",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Volga Ulyanovsk",
+  "curto": "O26031",
+  "file_key": "volga_ulyanovsk_official_26",
+  "pais": "Russia",
+  "divisao": "russian_first",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Yenisey Krasnoyarsk",
+  "curto": "O26032",
+  "file_key": "yenisey_krasnoyarsk_official_26",
+  "pais": "Russia",
+  "divisao": "russian_first",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "CAI",
+  "curto": "CALXARG",
+  "file_key": "CAL_Arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Independiente de Cauquenes",
+  "curto": "ICA",
+  "file_key": "ind_cauquenes",
+  "pais": "Chile",
+  "divisao": "primera_b_chi",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Inverness Caledonian Thistle",
+  "curto": "O26064",
+  "file_key": "inverness_caledonian_thistle_official_26",
+  "pais": "Escocia",
+  "divisao": "scottish_champ",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dunfermline Athletic",
+  "curto": "O26065",
+  "file_key": "dunfermline_athletic_official_26",
+  "pais": "Escocia",
+  "divisao": "scottish_champ",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Queen's Park",
+  "curto": "O26067",
+  "file_key": "queen_s_park_official_26",
+  "pais": "Escocia",
+  "divisao": "scottish_champ",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Libertad",
+  "curto": "LBP",
+  "file_key": "libertad_par",
+  "pais": "Paraguai",
+  "divisao": "primera_div_par",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "AGF",
+  "curto": "AGF",
+  "file_key": "agf",
+  "pais": "Dinamarca",
+  "divisao": "superliga_den",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lyngby BK",
+  "curto": "LBK",
+  "file_key": "lyngby",
+  "pais": "Dinamarca",
+  "divisao": "superliga_den",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Hradec Kralove",
+  "curto": "HKR",
+  "file_key": "hradec_kralove",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SK Sigma Olomouc",
+  "curto": "SIG",
+  "file_key": "sigma_olomouc",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SK Artis Brno",
+  "curto": "ART",
+  "file_key": "artis_brno",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Fastav Zlin",
+  "curto": "ZLI",
+  "file_key": "fastav_zlin",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bohemians Praha 1905",
+  "curto": "BOH",
+  "file_key": "bohemians_1905",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FK Pardubice",
+  "curto": "PARDUBIC",
+  "file_key": "pardubice",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FK Mlada Boleslav",
+  "curto": "MLB",
+  "file_key": "mlada_boleslav",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "1. FC Slovacko",
+  "curto": "SLOVACKO",
+  "file_key": "slovacko",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FK Teplice",
+  "curto": "TEP",
+  "file_key": "teplice",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Zbrojovka Brno",
+  "curto": "ZBR",
+  "file_key": "zbrojovka_brno",
+  "pais": "Chequia",
+  "divisao": "fortuna_liga_cze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Araz-Naxcivan PFK",
+  "curto": "ARA",
+  "file_key": "araz_naxcivan",
+  "pais": "Azerbaijao",
+  "divisao": "premyer_liqa_aze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Kapaz PFK",
+  "curto": "KAP",
+  "file_key": "kapaz",
+  "pais": "Azerbaijao",
+  "divisao": "premyer_liqa_aze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Turan Tovuz",
+  "curto": "TUR",
+  "file_key": "turan_tovuz",
+  "pais": "Azerbaijao",
+  "divisao": "premyer_liqa_aze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Samaxi FK",
+  "curto": "SAMAXI",
+  "file_key": "samaxi",
+  "pais": "Azerbaijao",
+  "divisao": "premyer_liqa_aze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Imisli PFK",
+  "curto": "IMISLI",
+  "file_key": "imisli",
+  "pais": "Azerbaijao",
+  "divisao": "premyer_liqa_aze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Karvan-Yevlax FK",
+  "curto": "KAR",
+  "file_key": "karvan_yevlax",
+  "pais": "Azerbaijao",
+  "divisao": "premyer_liqa_aze",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Fredrikstad FK",
+  "curto": "FFK",
+  "file_key": "fredrikstad",
+  "pais": "Noruega",
+  "divisao": "eliteserien_nor",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Aalesunds FK",
+  "curto": "AAF",
+  "file_key": "aalesund",
+  "pais": "Noruega",
+  "divisao": "eliteserien_nor",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lillestrom SK",
+  "curto": "LSK",
+  "file_key": "lillestrom",
+  "pais": "Noruega",
+  "divisao": "eliteserien_nor",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "IK Start",
+  "curto": "STA",
+  "file_key": "start_nor",
+  "pais": "Noruega",
+  "divisao": "eliteserien_nor",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "ALS Omonia 29M",
+  "curto": "O29",
+  "file_key": "als_omonia_29m",
+  "pais": "Chipre",
+  "divisao": "protathlima_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Anorthosis Famagusta",
+  "curto": "ANO",
+  "file_key": "anorthosis",
+  "pais": "Chipre",
+  "divisao": "protathlima_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Nea Salamina Famagusta",
+  "curto": "NSA",
+  "file_key": "nea_salamina",
+  "pais": "Chipre",
+  "divisao": "protathlima_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Karmiotissa Polemidion",
+  "curto": "KARMIOTI",
+  "file_key": "karmiotissa",
+  "pais": "Chipre",
+  "divisao": "protathlima_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Olympiakos Nicosia",
+  "curto": "OLN",
+  "file_key": "olympiakos_nicosia",
+  "pais": "Chipre",
+  "divisao": "protathlima_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Omonia Aradippou",
+  "curto": "OAR",
+  "file_key": "omonia_aradippou",
+  "pais": "Chipre",
+  "divisao": "protathlima_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Krasava ENY Ypsonas",
+  "curto": "ENY",
+  "file_key": "eny_ypsonas",
+  "pais": "Chipre",
+  "divisao": "protathlima_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Aktobe",
+  "curto": "AKT",
+  "file_key": "aktobe",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Altai",
+  "curto": "ALTAIOSK",
+  "file_key": "altai_oskemen",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Zhetysu",
+  "curto": "ZHE",
+  "file_key": "zhetysu",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Atyrau",
+  "curto": "ATY",
+  "file_key": "atyrau",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Ulytau",
+  "curto": "ULY",
+  "file_key": "ulytau",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Zhenis",
+  "curto": "ZHENIS",
+  "file_key": "zhenis",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Qyzyljar",
+  "curto": "QYZ",
+  "file_key": "qyzyljar",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Caspiy",
+  "curto": "CAS",
+  "file_key": "caspiy",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Okzhetpes",
+  "curto": "OKZ",
+  "file_key": "okzhetpes",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Elimai",
+  "curto": "ELI",
+  "file_key": "elimai",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Ertis",
+  "curto": "ERT",
+  "file_key": "ertis",
+  "pais": "Cazaquistao",
+  "divisao": "premier_liga_kaz",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Akademisk Boldklub",
+  "curto": "AB",
+  "file_key": "ab_gladsaxe",
+  "pais": "Dinamarca",
+  "divisao": "betinia_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Fredericia",
+  "curto": "FRE",
+  "file_key": "fredericia",
+  "pais": "Dinamarca",
+  "divisao": "betinia_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "HB Koge",
+  "curto": "HBK",
+  "file_key": "hb_koge",
+  "pais": "Dinamarca",
+  "divisao": "betinia_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Hillerod Fodbold",
+  "curto": "HILLEROD",
+  "file_key": "hillerod",
+  "pais": "Dinamarca",
+  "divisao": "betinia_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Hvidovre IF",
+  "curto": "HVI",
+  "file_key": "hvidovre",
+  "pais": "Dinamarca",
+  "divisao": "betinia_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Kolding IF",
+  "curto": "KOL",
+  "file_key": "kolding",
+  "pais": "Dinamarca",
+  "divisao": "betinia_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Vendsyssel FF",
+  "curto": "VEN",
+  "file_key": "vendsyssel",
+  "pais": "Dinamarca",
+  "divisao": "betinia_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Aarhus Fremad",
+  "curto": "AARHUSFR",
+  "file_key": "aarhus_fremad",
+  "pais": "Dinamarca",
+  "divisao": "betinia_liga",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Kongsvinger IL",
+  "curto": "KONGSVIN",
+  "file_key": "kongsvinger",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Stabaek Fotball",
+  "curto": "STB",
+  "file_key": "stabaek",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ranheim TF",
+  "curto": "RAN",
+  "file_key": "ranheim",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "IL Hodd",
+  "curto": "HOD",
+  "file_key": "hodd",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Moss FK",
+  "curto": "MOS",
+  "file_key": "moss_fk",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Egersunds IK",
+  "curto": "EIK",
+  "file_key": "egersund",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Sogndal Fotball",
+  "curto": "SOG",
+  "file_key": "sogndal",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bryne FK",
+  "curto": "BRY",
+  "file_key": "bryne",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Sandnes Ulf",
+  "curto": "ULF",
+  "file_key": "sandnes_ulf",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lyn 1896 FK",
+  "curto": "LYN",
+  "file_key": "lyn_1896",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Raufoss IL",
+  "curto": "RAU",
+  "file_key": "raufoss",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Strommen IF",
+  "curto": "STR",
+  "file_key": "strommen",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "AEP Polemidion",
+  "curto": "AEP",
+  "file_key": "aep_polemidion",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Akritas Chlorakas",
+  "curto": "AKR",
+  "file_key": "akritas_chlorakas",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Anagennisi Deryneia",
+  "curto": "ANAGENNI",
+  "file_key": "anagennisi_deryneia",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "AO Ayia Napa",
+  "curto": "AYA",
+  "file_key": "ayia_napa",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "APEA Akrotiri",
+  "curto": "APE",
+  "file_key": "apea_akrotiri",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "ASIL Lysi",
+  "curto": "ASI",
+  "file_key": "asil_lysi",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Digenis Akritas Morphou",
+  "curto": "DIGENISM",
+  "file_key": "digenis_morphou",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Doxa Katokopias",
+  "curto": "DOX",
+  "file_key": "doxa_katokopias",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ethnikos Achnas",
+  "curto": "ETH",
+  "file_key": "ethnikos_achnas",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Enosis Neon Paralimni",
+  "curto": "ENP",
+  "file_key": "en_paralimni",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ermis Aradippou",
+  "curto": "ERM",
+  "file_key": "ermis_aradippou",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Iraklis Gerolakkou",
+  "curto": "IRA",
+  "file_key": "iraklis_gerolakkou",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "MEAP Pera Choriou Nisou",
+  "curto": "MEA",
+  "file_key": "meap_nisou",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "PAEEK Kyrenia",
+  "curto": "PAE",
+  "file_key": "paeek",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Spartakos Kitiou",
+  "curto": "SPARTAKO",
+  "file_key": "spartakos_kitiou",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Chalkanoras Idaliou",
+  "curto": "CHALKANO",
+  "file_key": "chalkanoras",
+  "pais": "Chipre",
+  "divisao": "second_div_cyp",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Egnatia",
+  "curto": "ALBA01",
+  "file_key": "egnatia_alb",
+  "pais": "Albania",
+  "divisao": "uefa_alb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Vllaznia Shkodër",
+  "curto": "ALBA02",
+  "file_key": "vllaznia_shkoder_alb",
+  "pais": "Albania",
+  "divisao": "uefa_alb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Partizani Tirana",
+  "curto": "ALBA03",
+  "file_key": "partizani_tirana_alb",
+  "pais": "Albania",
+  "divisao": "uefa_alb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Teuta Durrës",
+  "curto": "ALBA06",
+  "file_key": "teuta_durres_alb",
+  "pais": "Albania",
+  "divisao": "uefa_alb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Elbasani",
+  "curto": "ALBA07",
+  "file_key": "elbasani_alb",
+  "pais": "Albania",
+  "divisao": "uefa_alb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bylis",
+  "curto": "ALBA08",
+  "file_key": "bylis_alb",
+  "pais": "Albania",
+  "divisao": "uefa_alb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Flamurtari",
+  "curto": "ALBA09",
+  "file_key": "flamurtari_alb",
+  "pais": "Albania",
+  "divisao": "uefa_alb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Vora",
+  "curto": "ALBA10",
+  "file_key": "vora_alb",
+  "pais": "Albania",
+  "divisao": "uefa_alb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Santa Coloma",
+  "curto": "ANDA02",
+  "file_key": "fc_santa_coloma_and",
+  "pais": "Andorra",
+  "divisao": "uefa_and_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "UE Santa Coloma",
+  "curto": "ANDA03",
+  "file_key": "ue_santa_coloma_and",
+  "pais": "Andorra",
+  "divisao": "uefa_and_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ordino",
+  "curto": "ANDA05",
+  "file_key": "ordino_and",
+  "pais": "Andorra",
+  "divisao": "uefa_and_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Pas de la Casa",
+  "curto": "ANDA06",
+  "file_key": "pas_de_la_casa_and",
+  "pais": "Andorra",
+  "divisao": "uefa_and_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Penya Encarnada",
+  "curto": "ANDA07",
+  "file_key": "penya_encarnada_and",
+  "pais": "Andorra",
+  "divisao": "uefa_and_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Esperança d'Andorra",
+  "curto": "ANDA08",
+  "file_key": "esperanca_d_andorra_and",
+  "pais": "Andorra",
+  "divisao": "uefa_and_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Atlètic Escaldes",
+  "curto": "ANDA09",
+  "file_key": "atletic_escaldes_and",
+  "pais": "Andorra",
+  "divisao": "uefa_and_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Carroi",
+  "curto": "ANDA10",
+  "file_key": "carroi_and",
+  "pais": "Andorra",
+  "divisao": "uefa_and_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Urartu",
+  "curto": "ARMA04",
+  "file_key": "urartu_arm",
+  "pais": "Armenia",
+  "divisao": "uefa_arm_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Alashkert",
+  "curto": "ARMA05",
+  "file_key": "alashkert_arm",
+  "pais": "Armenia",
+  "divisao": "uefa_arm_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ararat Yerevan",
+  "curto": "ARMA07",
+  "file_key": "ararat_yerevan_arm",
+  "pais": "Armenia",
+  "divisao": "uefa_arm_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Van",
+  "curto": "ARMA08",
+  "file_key": "van_arm",
+  "pais": "Armenia",
+  "divisao": "uefa_arm_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "BKMA Yerevan",
+  "curto": "ARMA09",
+  "file_key": "bkma_yerevan_arm",
+  "pais": "Armenia",
+  "divisao": "uefa_arm_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gandzasar",
+  "curto": "ARMA10",
+  "file_key": "gandzasar_arm",
+  "pais": "Armenia",
+  "divisao": "uefa_arm_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Rapid Wien",
+  "curto": "AUTA03",
+  "file_key": "rapid_wien_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Grazer AK",
+  "curto": "AUTA11",
+  "file_key": "grazer_ak_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SV Austria Salzburg",
+  "curto": "AUTB01",
+  "file_key": "sv_austria_salzburg_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "KSV 1919",
+  "curto": "AUTB02",
+  "file_key": "ksv_1919_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Wacker Innsbruck",
+  "curto": "AUTB03",
+  "file_key": "fc_wacker_innsbruck_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "ASK Voitsberg",
+  "curto": "AUTB04",
+  "file_key": "ask_voitsberg_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Schwarz-Weiss Bregenz",
+  "curto": "AUTB05",
+  "file_key": "schwarz_weiss_bregenz_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Young Violets Austria Wien",
+  "curto": "AUTB07",
+  "file_key": "young_violets_austria_wien_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Hertha Wels",
+  "curto": "AUTB09",
+  "file_key": "fc_hertha_wels_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SKN St. Pölten",
+  "curto": "AUTB10",
+  "file_key": "skn_st_polten_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "First Vienna FC 1894",
+  "curto": "AUTB12",
+  "file_key": "first_vienna_fc_1894_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SK Rapid II",
+  "curto": "AUTB13",
+  "file_key": "sk_rapid_ii_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FAC Wien",
+  "curto": "AUTB14",
+  "file_key": "fac_wien_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SK Sturm Graz II",
+  "curto": "AUTB15",
+  "file_key": "sk_sturm_graz_ii_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Blau-Weiß Linz",
+  "curto": "AUTB16",
+  "file_key": "fc_blau_wei_linz_aut",
+  "pais": "Austria",
+  "divisao": "uefa_aut_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Neman Grodno",
+  "curto": "BLRA02",
+  "file_key": "neman_grodno_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dinamo Brest",
+  "curto": "BLRA04",
+  "file_key": "dinamo_brest_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Slavia Mozyr",
+  "curto": "BLRA05",
+  "file_key": "slavia_mozyr_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gomel",
+  "curto": "BLRA06",
+  "file_key": "gomel_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Isloch",
+  "curto": "BLRA08",
+  "file_key": "isloch_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Naftan",
+  "curto": "BLRA11",
+  "file_key": "naftan_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Smorgon",
+  "curto": "BLRA12",
+  "file_key": "smorgon_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Arsenal Dzerzhinsk",
+  "curto": "BLRA13",
+  "file_key": "arsenal_dzerzhinsk_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dnepr Mogilev",
+  "curto": "BLRA14",
+  "file_key": "dnepr_mogilev_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Molodechno",
+  "curto": "BLRA15",
+  "file_key": "molodechno_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Maxline Vitebsk",
+  "curto": "BLRA16",
+  "file_key": "maxline_vitebsk_blr",
+  "pais": "Belarus",
+  "divisao": "uefa_blr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Zrinjski Mostar",
+  "curto": "BIHA02",
+  "file_key": "zrinjski_mostar_bih",
+  "pais": "Bosnia e Herzegovina",
+  "divisao": "uefa_bih_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Velež Mostar",
+  "curto": "BIHA05",
+  "file_key": "velez_mostar_bih",
+  "pais": "Bosnia e Herzegovina",
+  "divisao": "uefa_bih_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Široki Brijeg",
+  "curto": "BIHA06",
+  "file_key": "siroki_brijeg_bih",
+  "pais": "Bosnia e Herzegovina",
+  "divisao": "uefa_bih_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Posušje",
+  "curto": "BIHA07",
+  "file_key": "posusje_bih",
+  "pais": "Bosnia e Herzegovina",
+  "divisao": "uefa_bih_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Sloga Doboj",
+  "curto": "BIHA08",
+  "file_key": "sloga_doboj_bih",
+  "pais": "Bosnia e Herzegovina",
+  "divisao": "uefa_bih_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Radnik Bijeljina",
+  "curto": "BIHA09",
+  "file_key": "radnik_bijeljina_bih",
+  "pais": "Bosnia e Herzegovina",
+  "divisao": "uefa_bih_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Rudar Prijedor",
+  "curto": "BIHA10",
+  "file_key": "rudar_prijedor_bih",
+  "pais": "Bosnia e Herzegovina",
+  "divisao": "uefa_bih_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ludogorets",
+  "curto": "BGRA01",
+  "file_key": "ludogorets_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Cherno More",
+  "curto": "BGRA04",
+  "file_key": "cherno_more_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Arda Kardzhali",
+  "curto": "BGRA05",
+  "file_key": "arda_kardzhali_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lokomotiv Plovdiv",
+  "curto": "BGRA07",
+  "file_key": "lokomotiv_plovdiv_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Beroe",
+  "curto": "BGRA10",
+  "file_key": "beroe_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Spartak Varna",
+  "curto": "BGRA11",
+  "file_key": "spartak_varna_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Septemvri Sofia",
+  "curto": "BGRA12",
+  "file_key": "septemvri_sofia_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Botev Vratsa",
+  "curto": "BGRA13",
+  "file_key": "botev_vratsa_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lokomotiv Sofia",
+  "curto": "BGRA14",
+  "file_key": "lokomotiv_sofia_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Montana",
+  "curto": "BGRA15",
+  "file_key": "montana_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dobrudzha",
+  "curto": "BGRA16",
+  "file_key": "dobrudzha_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Rijeka",
+  "curto": "HRVA03",
+  "file_key": "rijeka_hrv",
+  "pais": "Croacia",
+  "divisao": "uefa_hrv_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Osijek",
+  "curto": "HRVA04",
+  "file_key": "osijek_hrv",
+  "pais": "Croacia",
+  "divisao": "uefa_hrv_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Istra 1961",
+  "curto": "HRVA06",
+  "file_key": "istra_1961_hrv",
+  "pais": "Croacia",
+  "divisao": "uefa_hrv_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lokomotiva Zagreb",
+  "curto": "HRVA07",
+  "file_key": "lokomotiva_zagreb_hrv",
+  "pais": "Croacia",
+  "divisao": "uefa_hrv_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gorica",
+  "curto": "HRVA09",
+  "file_key": "gorica_hrv",
+  "pais": "Croacia",
+  "divisao": "uefa_hrv_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Vukovar 1991",
+  "curto": "HRVA10",
+  "file_key": "vukovar_1991_hrv",
+  "pais": "Croacia",
+  "divisao": "uefa_hrv_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "DAC Dunajská Streda",
+  "curto": "SVKA04",
+  "file_key": "dac_dunajska_streda_svk",
+  "pais": "Eslovaquia",
+  "divisao": "uefa_svk_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Podbrezová",
+  "curto": "SVKA06",
+  "file_key": "podbrezova_svk",
+  "pais": "Eslovaquia",
+  "divisao": "uefa_svk_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Košice",
+  "curto": "SVKA07",
+  "file_key": "kosice_svk",
+  "pais": "Eslovaquia",
+  "divisao": "uefa_svk_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Skalica",
+  "curto": "SVKA09",
+  "file_key": "skalica_svk",
+  "pais": "Eslovaquia",
+  "divisao": "uefa_svk_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Komárno",
+  "curto": "SVKA10",
+  "file_key": "komarno_svk",
+  "pais": "Eslovaquia",
+  "divisao": "uefa_svk_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Tatran Prešov",
+  "curto": "SVKA11",
+  "file_key": "tatran_presov_svk",
+  "pais": "Eslovaquia",
+  "divisao": "uefa_svk_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Celje",
+  "curto": "SVNA03",
+  "file_key": "celje_svn",
+  "pais": "Eslovenia",
+  "divisao": "uefa_svn_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Koper",
+  "curto": "SVNA04",
+  "file_key": "koper_svn",
+  "pais": "Eslovenia",
+  "divisao": "uefa_svn_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Radomlje",
+  "curto": "SVNA08",
+  "file_key": "radomlje_svn",
+  "pais": "Eslovenia",
+  "divisao": "uefa_svn_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Primorje",
+  "curto": "SVNA09",
+  "file_key": "primorje_svn",
+  "pais": "Eslovenia",
+  "divisao": "uefa_svn_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Aluminij",
+  "curto": "SVNA10",
+  "file_key": "aluminij_svn",
+  "pais": "Eslovenia",
+  "divisao": "uefa_svn_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Levadia Tallinn",
+  "curto": "ESTA02",
+  "file_key": "levadia_tallinn_est",
+  "pais": "Estonia",
+  "divisao": "uefa_est_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Nõmme Kalju",
+  "curto": "ESTA03",
+  "file_key": "nomme_kalju_est",
+  "pais": "Estonia",
+  "divisao": "uefa_est_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Narva Trans",
+  "curto": "ESTA05",
+  "file_key": "narva_trans_est",
+  "pais": "Estonia",
+  "divisao": "uefa_est_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Tammeka Tartu",
+  "curto": "ESTA06",
+  "file_key": "tammeka_tartu_est",
+  "pais": "Estonia",
+  "divisao": "uefa_est_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Kuressaare",
+  "curto": "ESTA07",
+  "file_key": "kuressaare_est",
+  "pais": "Estonia",
+  "divisao": "uefa_est_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Pärnu Vaprus",
+  "curto": "ESTA08",
+  "file_key": "parnu_vaprus_est",
+  "pais": "Estonia",
+  "divisao": "uefa_est_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Harju Laagri",
+  "curto": "ESTA09",
+  "file_key": "harju_laagri_est",
+  "pais": "Estonia",
+  "divisao": "uefa_est_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Nõmme United",
+  "curto": "ESTA10",
+  "file_key": "nomme_united_est",
+  "pais": "Estonia",
+  "divisao": "uefa_est_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SJK",
+  "curto": "FINA05",
+  "file_key": "sjk_fin",
+  "pais": "Finlandia",
+  "divisao": "uefa_fin_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "VPS",
+  "curto": "FINA06",
+  "file_key": "vps_fin",
+  "pais": "Finlandia",
+  "divisao": "uefa_fin_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Haka",
+  "curto": "FINA07",
+  "file_key": "haka_fin",
+  "pais": "Finlandia",
+  "divisao": "uefa_fin_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gnistan",
+  "curto": "FINA08",
+  "file_key": "gnistan_fin",
+  "pais": "Finlandia",
+  "divisao": "uefa_fin_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Mariehamn",
+  "curto": "FINA09",
+  "file_key": "mariehamn_fin",
+  "pais": "Finlandia",
+  "divisao": "uefa_fin_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "AC Oulu",
+  "curto": "FINA10",
+  "file_key": "ac_oulu_fin",
+  "pais": "Finlandia",
+  "divisao": "uefa_fin_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jaro",
+  "curto": "FINA11",
+  "file_key": "jaro_fin",
+  "pais": "Finlandia",
+  "divisao": "uefa_fin_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "KTP",
+  "curto": "FINA12",
+  "file_key": "ktp_fin",
+  "pais": "Finlandia",
+  "divisao": "uefa_fin_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Iberia 1999",
+  "curto": "GEOA05",
+  "file_key": "iberia_1999_geo",
+  "pais": "Georgia",
+  "divisao": "uefa_geo_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Samgurali",
+  "curto": "GEOA06",
+  "file_key": "samgurali_geo",
+  "pais": "Georgia",
+  "divisao": "uefa_geo_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gagra",
+  "curto": "GEOA07",
+  "file_key": "gagra_geo",
+  "pais": "Georgia",
+  "divisao": "uefa_geo_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Telavi",
+  "curto": "GEOA08",
+  "file_key": "telavi_geo",
+  "pais": "Georgia",
+  "divisao": "uefa_geo_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gareji Sagarejo",
+  "curto": "GEOA09",
+  "file_key": "gareji_sagarejo_geo",
+  "pais": "Georgia",
+  "divisao": "uefa_geo_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Kolkheti Poti",
+  "curto": "GEOA10",
+  "file_key": "kolkheti_poti_geo",
+  "pais": "Georgia",
+  "divisao": "uefa_geo_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lincoln Red Imps",
+  "curto": "GIBA01",
+  "file_key": "lincoln_red_imps_gib",
+  "pais": "Gibraltar",
+  "divisao": "uefa_gib_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Magpies",
+  "curto": "GIBA04",
+  "file_key": "magpies_gib",
+  "pais": "Gibraltar",
+  "divisao": "uefa_gib_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Manchester 62",
+  "curto": "GIBA05",
+  "file_key": "manchester_62_gib",
+  "pais": "Gibraltar",
+  "divisao": "uefa_gib_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lions Gibraltar",
+  "curto": "GIBA06",
+  "file_key": "lions_gibraltar_gib",
+  "pais": "Gibraltar",
+  "divisao": "uefa_gib_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Glacis United",
+  "curto": "GIBA08",
+  "file_key": "glacis_united_gib",
+  "pais": "Gibraltar",
+  "divisao": "uefa_gib_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "College 1975",
+  "curto": "GIBA09",
+  "file_key": "college_1975_gib",
+  "pais": "Gibraltar",
+  "divisao": "uefa_gib_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Europa Point",
+  "curto": "GIBA10",
+  "file_key": "europa_point_gib",
+  "pais": "Gibraltar",
+  "divisao": "uefa_gib_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lynx",
+  "curto": "GIBA11",
+  "file_key": "lynx_gib",
+  "pais": "Gibraltar",
+  "divisao": "uefa_gib_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Paks",
+  "curto": "HUNA03",
+  "file_key": "paks_hun",
+  "pais": "Hungria",
+  "divisao": "uefa_hun_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "MTK Budapest",
+  "curto": "HUNA04",
+  "file_key": "mtk_budapest_hun",
+  "pais": "Hungria",
+  "divisao": "uefa_hun_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Újpest",
+  "curto": "HUNA05",
+  "file_key": "ujpest_hun",
+  "pais": "Hungria",
+  "divisao": "uefa_hun_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Diósgyőr",
+  "curto": "HUNA07",
+  "file_key": "diosgyor_hun",
+  "pais": "Hungria",
+  "divisao": "uefa_hun_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Zalaegerszeg",
+  "curto": "HUNA09",
+  "file_key": "zalaegerszeg_hun",
+  "pais": "Hungria",
+  "divisao": "uefa_hun_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Kecskemét",
+  "curto": "HUNA10",
+  "file_key": "kecskemet_hun",
+  "pais": "Hungria",
+  "divisao": "uefa_hun_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Nyíregyháza",
+  "curto": "HUNA12",
+  "file_key": "nyiregyhaza_hun",
+  "pais": "Hungria",
+  "divisao": "uefa_hun_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "KÍ Klaksvík",
+  "curto": "FROA01",
+  "file_key": "ki_klaksvik_fro",
+  "pais": "Ilhas Faroe",
+  "divisao": "uefa_fro_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "EB/Streymur",
+  "curto": "FROA06",
+  "file_key": "eb_streymur_fro",
+  "pais": "Ilhas Faroe",
+  "divisao": "uefa_fro_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "07 Vestur",
+  "curto": "FROA07",
+  "file_key": "07_vestur_fro",
+  "pais": "Ilhas Faroe",
+  "divisao": "uefa_fro_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "B68 Toftir",
+  "curto": "FROA08",
+  "file_key": "b68_toftir_fro",
+  "pais": "Ilhas Faroe",
+  "divisao": "uefa_fro_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "TB Tvøroyri",
+  "curto": "FROA09",
+  "file_key": "tb_tv_royri_fro",
+  "pais": "Ilhas Faroe",
+  "divisao": "uefa_fro_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Suðuroy",
+  "curto": "FROA10",
+  "file_key": "fc_su_uroy_fro",
+  "pais": "Ilhas Faroe",
+  "divisao": "uefa_fro_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Shelbourne",
+  "curto": "IRLA02",
+  "file_key": "shelbourne_irl",
+  "pais": "Irlanda",
+  "divisao": "uefa_irl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Drogheda United",
+  "curto": "IRLA06",
+  "file_key": "drogheda_united_irl",
+  "pais": "Irlanda",
+  "divisao": "uefa_irl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Waterford",
+  "curto": "IRLA07",
+  "file_key": "waterford_irl",
+  "pais": "Irlanda",
+  "divisao": "uefa_irl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Galway United",
+  "curto": "IRLA08",
+  "file_key": "galway_united_irl",
+  "pais": "Irlanda",
+  "divisao": "uefa_irl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Sligo Rovers",
+  "curto": "IRLA09",
+  "file_key": "sligo_rovers_irl",
+  "pais": "Irlanda",
+  "divisao": "uefa_irl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Cork City",
+  "curto": "IRLA10",
+  "file_key": "cork_city_irl",
+  "pais": "Irlanda",
+  "divisao": "uefa_irl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Larne",
+  "curto": "NIRA02",
+  "file_key": "larne_nir",
+  "pais": "Irlanda do Norte",
+  "divisao": "uefa_nir_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Cliftonville",
+  "curto": "NIRA04",
+  "file_key": "cliftonville_nir",
+  "pais": "Irlanda do Norte",
+  "divisao": "uefa_nir_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Crusaders",
+  "curto": "NIRA05",
+  "file_key": "crusaders_nir",
+  "pais": "Irlanda do Norte",
+  "divisao": "uefa_nir_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ballymena United",
+  "curto": "NIRA07",
+  "file_key": "ballymena_united_nir",
+  "pais": "Irlanda do Norte",
+  "divisao": "uefa_nir_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dungannon Swifts",
+  "curto": "NIRA08",
+  "file_key": "dungannon_swifts_nir",
+  "pais": "Irlanda do Norte",
+  "divisao": "uefa_nir_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Glenavon",
+  "curto": "NIRA09",
+  "file_key": "glenavon_nir",
+  "pais": "Irlanda do Norte",
+  "divisao": "uefa_nir_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Carrick Rangers",
+  "curto": "NIRA10",
+  "file_key": "carrick_rangers_nir",
+  "pais": "Irlanda do Norte",
+  "divisao": "uefa_nir_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Portadown",
+  "curto": "NIRA11",
+  "file_key": "portadown_nir",
+  "pais": "Irlanda do Norte",
+  "divisao": "uefa_nir_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bangor",
+  "curto": "NIRA12",
+  "file_key": "bangor_nir",
+  "pais": "Irlanda do Norte",
+  "divisao": "uefa_nir_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Víkingur Reykjavík",
+  "curto": "ISLA01",
+  "file_key": "vikingur_reykjavik_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Breiðablik",
+  "curto": "ISLA02",
+  "file_key": "brei_ablik_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Stjarnan",
+  "curto": "ISLA04",
+  "file_key": "stjarnan_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FH",
+  "curto": "ISLA06",
+  "file_key": "fh_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Fram",
+  "curto": "ISLA07",
+  "file_key": "fram_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "KA",
+  "curto": "ISLA08",
+  "file_key": "ka_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "ÍA Akranes",
+  "curto": "ISLA09",
+  "file_key": "ia_akranes_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Vestri",
+  "curto": "ISLA10",
+  "file_key": "vestri_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Afturelding",
+  "curto": "ISLA11",
+  "file_key": "afturelding_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Leiknir Reykjavík",
+  "curto": "ISLA12",
+  "file_key": "leiknir_reykjavik_isl",
+  "pais": "Islandia",
+  "divisao": "uefa_isl_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Hapoel Haifa",
+  "curto": "ISRA07",
+  "file_key": "hapoel_haifa_isr",
+  "pais": "Israel",
+  "divisao": "uefa_isr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bnei Sakhnin",
+  "curto": "ISRA08",
+  "file_key": "bnei_sakhnin_isr",
+  "pais": "Israel",
+  "divisao": "uefa_isr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ashdod",
+  "curto": "ISRA09",
+  "file_key": "ashdod_isr",
+  "pais": "Israel",
+  "divisao": "uefa_isr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Hapoel Jerusalem",
+  "curto": "ISRA10",
+  "file_key": "hapoel_jerusalem_isr",
+  "pais": "Israel",
+  "divisao": "uefa_isr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Maccabi Petah Tikva",
+  "curto": "ISRA11",
+  "file_key": "maccabi_petah_tikva_isr",
+  "pais": "Israel",
+  "divisao": "uefa_isr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ironi Kiryat Shmona",
+  "curto": "ISRA12",
+  "file_key": "ironi_kiryat_shmona_isr",
+  "pais": "Israel",
+  "divisao": "uefa_isr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ironi Tiberias",
+  "curto": "ISRA13",
+  "file_key": "ironi_tiberias_isr",
+  "pais": "Israel",
+  "divisao": "uefa_isr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Maccabi Bnei Raina",
+  "curto": "ISRA14",
+  "file_key": "maccabi_bnei_raina_isr",
+  "pais": "Israel",
+  "divisao": "uefa_isr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Drita",
+  "curto": "KVXA01",
+  "file_key": "drita_kvx",
+  "pais": "Kosovo",
+  "divisao": "uefa_kvx_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Prishtina",
+  "curto": "KVXA03",
+  "file_key": "prishtina_kvx",
+  "pais": "Kosovo",
+  "divisao": "uefa_kvx_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Llapi",
+  "curto": "KVXA05",
+  "file_key": "llapi_kvx",
+  "pais": "Kosovo",
+  "divisao": "uefa_kvx_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Malisheva",
+  "curto": "KVXA06",
+  "file_key": "malisheva_kvx",
+  "pais": "Kosovo",
+  "divisao": "uefa_kvx_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dukagjini",
+  "curto": "KVXA07",
+  "file_key": "dukagjini_kvx",
+  "pais": "Kosovo",
+  "divisao": "uefa_kvx_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ferizaj",
+  "curto": "KVXA08",
+  "file_key": "ferizaj_kvx",
+  "pais": "Kosovo",
+  "divisao": "uefa_kvx_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Feronikeli",
+  "curto": "KVXA09",
+  "file_key": "feronikeli_kvx",
+  "pais": "Kosovo",
+  "divisao": "uefa_kvx_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Prishtina e Re",
+  "curto": "KVXA10",
+  "file_key": "prishtina_e_re_kvx",
+  "pais": "Kosovo",
+  "divisao": "uefa_kvx_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "RFS",
+  "curto": "LVAA01",
+  "file_key": "rfs_lva",
+  "pais": "Letonia",
+  "divisao": "uefa_lva_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Riga FC",
+  "curto": "LVAA02",
+  "file_key": "riga_fc_lva",
+  "pais": "Letonia",
+  "divisao": "uefa_lva_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Auda",
+  "curto": "LVAA04",
+  "file_key": "auda_lva",
+  "pais": "Letonia",
+  "divisao": "uefa_lva_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Liepāja",
+  "curto": "LVAA05",
+  "file_key": "liepaja_lva",
+  "pais": "Letonia",
+  "divisao": "uefa_lva_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Daugavpils",
+  "curto": "LVAA06",
+  "file_key": "daugavpils_lva",
+  "pais": "Letonia",
+  "divisao": "uefa_lva_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jelgava",
+  "curto": "LVAA07",
+  "file_key": "jelgava_lva",
+  "pais": "Letonia",
+  "divisao": "uefa_lva_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Tukums 2000",
+  "curto": "LVAA08",
+  "file_key": "tukums_2000_lva",
+  "pais": "Letonia",
+  "divisao": "uefa_lva_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Grobiņa",
+  "curto": "LVAA09",
+  "file_key": "grobina_lva",
+  "pais": "Letonia",
+  "divisao": "uefa_lva_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Super Nova",
+  "curto": "LVAA10",
+  "file_key": "super_nova_lva",
+  "pais": "Letonia",
+  "divisao": "uefa_lva_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Hegelmann",
+  "curto": "LTUA03",
+  "file_key": "hegelmann_ltu",
+  "pais": "Lituania",
+  "divisao": "uefa_ltu_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Panevėžys",
+  "curto": "LTUA04",
+  "file_key": "panevezys_ltu",
+  "pais": "Lituania",
+  "divisao": "uefa_ltu_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Banga",
+  "curto": "LTUA06",
+  "file_key": "banga_ltu",
+  "pais": "Lituania",
+  "divisao": "uefa_ltu_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Džiugas",
+  "curto": "LTUA07",
+  "file_key": "dziugas_ltu",
+  "pais": "Lituania",
+  "divisao": "uefa_ltu_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Šiauliai",
+  "curto": "LTUA08",
+  "file_key": "siauliai_ltu",
+  "pais": "Lituania",
+  "divisao": "uefa_ltu_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "TransINVEST",
+  "curto": "LTUA10",
+  "file_key": "transinvest_ltu",
+  "pais": "Lituania",
+  "divisao": "uefa_ltu_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "F91 Dudelange",
+  "curto": "LUXA02",
+  "file_key": "f91_dudelange_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Swift Hesperange",
+  "curto": "LUXA03",
+  "file_key": "swift_hesperange_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Racing Luxembourg",
+  "curto": "LUXA04",
+  "file_key": "racing_luxembourg_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jeunesse Esch",
+  "curto": "LUXA06",
+  "file_key": "jeunesse_esch_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "UNA Strassen",
+  "curto": "LUXA07",
+  "file_key": "una_strassen_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Union Titus Pétange",
+  "curto": "LUXA08",
+  "file_key": "union_titus_petange_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Victoria Rosport",
+  "curto": "LUXA09",
+  "file_key": "victoria_rosport_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Mondorf",
+  "curto": "LUXA10",
+  "file_key": "mondorf_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Wiltz 71",
+  "curto": "LUXA11",
+  "file_key": "wiltz_71_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Hostert",
+  "curto": "LUXA12",
+  "file_key": "hostert_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Rodange 91",
+  "curto": "LUXA13",
+  "file_key": "rodange_91_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Rumelange",
+  "curto": "LUXA15",
+  "file_key": "rumelange_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Mamer 32",
+  "curto": "LUXA16",
+  "file_key": "mamer_32_lux",
+  "pais": "Luxemburgo",
+  "divisao": "uefa_lux_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Struga",
+  "curto": "MKDA02",
+  "file_key": "struga_mkd",
+  "pais": "Macedonia do Norte",
+  "divisao": "uefa_mkd_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Vardar",
+  "curto": "MKDA03",
+  "file_key": "vardar_mkd",
+  "pais": "Macedonia do Norte",
+  "divisao": "uefa_mkd_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Rabotnički",
+  "curto": "MKDA06",
+  "file_key": "rabotnicki_mkd",
+  "pais": "Macedonia do Norte",
+  "divisao": "uefa_mkd_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Tikveš",
+  "curto": "MKDA07",
+  "file_key": "tikves_mkd",
+  "pais": "Macedonia do Norte",
+  "divisao": "uefa_mkd_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Pelister",
+  "curto": "MKDA08",
+  "file_key": "pelister_mkd",
+  "pais": "Macedonia do Norte",
+  "divisao": "uefa_mkd_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "AP Brera",
+  "curto": "MKDA09",
+  "file_key": "ap_brera_mkd",
+  "pais": "Macedonia do Norte",
+  "divisao": "uefa_mkd_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Besa Dobërdoll",
+  "curto": "MKDA10",
+  "file_key": "besa_doberdoll_mkd",
+  "pais": "Macedonia do Norte",
+  "divisao": "uefa_mkd_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bashkimi",
+  "curto": "MKDA11",
+  "file_key": "bashkimi_mkd",
+  "pais": "Macedonia do Norte",
+  "divisao": "uefa_mkd_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Arsimi",
+  "curto": "MKDA12",
+  "file_key": "arsimi_mkd",
+  "pais": "Macedonia do Norte",
+  "divisao": "uefa_mkd_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ħamrun Spartans",
+  "curto": "MLTA01",
+  "file_key": "amrun_spartans_mlt",
+  "pais": "Malta",
+  "divisao": "uefa_mlt_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Birkirkara",
+  "curto": "MLTA03",
+  "file_key": "birkirkara_mlt",
+  "pais": "Malta",
+  "divisao": "uefa_mlt_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Sliema Wanderers",
+  "curto": "MLTA04",
+  "file_key": "sliema_wanderers_mlt",
+  "pais": "Malta",
+  "divisao": "uefa_mlt_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Mosta",
+  "curto": "MLTA06",
+  "file_key": "mosta_mlt",
+  "pais": "Malta",
+  "divisao": "uefa_mlt_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Marsaxlokk",
+  "curto": "MLTA07",
+  "file_key": "marsaxlokk_mlt",
+  "pais": "Malta",
+  "divisao": "uefa_mlt_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gżira United",
+  "curto": "MLTA08",
+  "file_key": "gzira_united_mlt",
+  "pais": "Malta",
+  "divisao": "uefa_mlt_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Naxxar Lions",
+  "curto": "MLTA09",
+  "file_key": "naxxar_lions_mlt",
+  "pais": "Malta",
+  "divisao": "uefa_mlt_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Żabbar St Patrick",
+  "curto": "MLTA10",
+  "file_key": "zabbar_st_patrick_mlt",
+  "pais": "Malta",
+  "divisao": "uefa_mlt_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Tarxien Rainbows",
+  "curto": "MLTA12",
+  "file_key": "tarxien_rainbows_mlt",
+  "pais": "Malta",
+  "divisao": "uefa_mlt_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Zimbru Chișinău",
+  "curto": "MDAA03",
+  "file_key": "zimbru_chisinau_mda",
+  "pais": "Moldavia",
+  "divisao": "uefa_mda_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Milsami Orhei",
+  "curto": "MDAA04",
+  "file_key": "milsami_orhei_mda",
+  "pais": "Moldavia",
+  "divisao": "uefa_mda_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dacia Buiucani",
+  "curto": "MDAA05",
+  "file_key": "dacia_buiucani_mda",
+  "pais": "Moldavia",
+  "divisao": "uefa_mda_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bălți",
+  "curto": "MDAA06",
+  "file_key": "balti_mda",
+  "pais": "Moldavia",
+  "divisao": "uefa_mda_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Spartanii Sportul",
+  "curto": "MDAA07",
+  "file_key": "spartanii_sportul_mda",
+  "pais": "Moldavia",
+  "divisao": "uefa_mda_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Florești",
+  "curto": "MDAA08",
+  "file_key": "floresti_mda",
+  "pais": "Moldavia",
+  "divisao": "uefa_mda_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dečić",
+  "curto": "MNEA03",
+  "file_key": "decic_mne",
+  "pais": "Montenegro",
+  "divisao": "uefa_mne_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Mornar",
+  "curto": "MNEA04",
+  "file_key": "mornar_mne",
+  "pais": "Montenegro",
+  "divisao": "uefa_mne_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Petrovac",
+  "curto": "MNEA05",
+  "file_key": "petrovac_mne",
+  "pais": "Montenegro",
+  "divisao": "uefa_mne_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Arsenal Tivat",
+  "curto": "MNEA06",
+  "file_key": "arsenal_tivat_mne",
+  "pais": "Montenegro",
+  "divisao": "uefa_mne_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jedinstvo",
+  "curto": "MNEA07",
+  "file_key": "jedinstvo_mne",
+  "pais": "Montenegro",
+  "divisao": "uefa_mne_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jezero",
+  "curto": "MNEA08",
+  "file_key": "jezero_mne",
+  "pais": "Montenegro",
+  "divisao": "uefa_mne_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bokelj",
+  "curto": "MNEA09",
+  "file_key": "bokelj_mne",
+  "pais": "Montenegro",
+  "divisao": "uefa_mne_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Otrant-Olympic",
+  "curto": "MNEA10",
+  "file_key": "otrant_olympic_mne",
+  "pais": "Montenegro",
+  "divisao": "uefa_mne_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Penybont",
+  "curto": "WALA02",
+  "file_key": "penybont_wal",
+  "pais": "Pais de Gales",
+  "divisao": "uefa_wal_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Haverfordwest County",
+  "curto": "WALA03",
+  "file_key": "haverfordwest_county_wal",
+  "pais": "Pais de Gales",
+  "divisao": "uefa_wal_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Caernarfon Town",
+  "curto": "WALA04",
+  "file_key": "caernarfon_town_wal",
+  "pais": "Pais de Gales",
+  "divisao": "uefa_wal_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Cardiff Metropolitan",
+  "curto": "WALA05",
+  "file_key": "cardiff_metropolitan_wal",
+  "pais": "Pais de Gales",
+  "divisao": "uefa_wal_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Barry Town United",
+  "curto": "WALA07",
+  "file_key": "barry_town_united_wal",
+  "pais": "Pais de Gales",
+  "divisao": "uefa_wal_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Newtown",
+  "curto": "WALA08",
+  "file_key": "newtown_wal",
+  "pais": "Pais de Gales",
+  "divisao": "uefa_wal_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Flint Town United",
+  "curto": "WALA10",
+  "file_key": "flint_town_united_wal",
+  "pais": "Pais de Gales",
+  "divisao": "uefa_wal_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Briton Ferry",
+  "curto": "WALA11",
+  "file_key": "briton_ferry_wal",
+  "pais": "Pais de Gales",
+  "divisao": "uefa_wal_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Aberystwyth Town",
+  "curto": "WALA12",
+  "file_key": "aberystwyth_town_wal",
+  "pais": "Pais de Gales",
+  "divisao": "uefa_wal_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lech Poznań",
+  "curto": "POLA01",
+  "file_key": "lech_poznan_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Legia Warszawa",
+  "curto": "POLA02",
+  "file_key": "legia_warszawa_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Raków Częstochowa",
+  "curto": "POLA03",
+  "file_key": "rakow_czestochowa_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Jagiellonia Białystok",
+  "curto": "POLA04",
+  "file_key": "jagiellonia_bia_ystok_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Zagłębie Lubin",
+  "curto": "POLA08",
+  "file_key": "zag_ebie_lubin_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Widzew Łódź",
+  "curto": "POLA10",
+  "file_key": "widzew_odz_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Motor Lublin",
+  "curto": "POLA11",
+  "file_key": "motor_lublin_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Korona Kielce",
+  "curto": "POLA12",
+  "file_key": "korona_kielce_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Radomiak Radom",
+  "curto": "POLA13",
+  "file_key": "radomiak_radom_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "GKS Katowice",
+  "curto": "POLA14",
+  "file_key": "gks_katowice_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Wisła Kraków",
+  "curto": "POLA16",
+  "file_key": "wis_a_krakow_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Śląsk Wrocław",
+  "curto": "POLA17",
+  "file_key": "slask_wroc_aw_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Wieczysta Kraków",
+  "curto": "POLA18",
+  "file_key": "wieczysta_krakow_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Arka Gdynia",
+  "curto": "POLB01",
+  "file_key": "arka_gdynia_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Bruk-Bet Termalica Nieciecza",
+  "curto": "POLB02",
+  "file_key": "bruk_bet_termalica_nieciecza_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Chrobry Głogów",
+  "curto": "POLB03",
+  "file_key": "chrobry_g_ogow_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lechia Gdańsk",
+  "curto": "POLB04",
+  "file_key": "lechia_gdansk_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "ŁKS Łódź",
+  "curto": "POLB05",
+  "file_key": "ks_odz_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Miedź Legnica",
+  "curto": "POLB06",
+  "file_key": "miedz_legnica_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Odra Opole",
+  "curto": "POLB07",
+  "file_key": "odra_opole_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Podbeskidzie Bielsko-Biała",
+  "curto": "POLB08",
+  "file_key": "podbeskidzie_bielsko_bia_a_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Pogoń Grodzisk Mazowiecki",
+  "curto": "POLB09",
+  "file_key": "pogon_grodzisk_mazowiecki_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Pogoń Siedlce",
+  "curto": "POLB10",
+  "file_key": "pogon_siedlce_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Polonia Bytom",
+  "curto": "POLB11",
+  "file_key": "polonia_bytom_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Polonia Warszawa",
+  "curto": "POLB12",
+  "file_key": "polonia_warszawa_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Puszcza Niepołomice",
+  "curto": "POLB13",
+  "file_key": "puszcza_niepo_omice_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Ruch Chorzów",
+  "curto": "POLB14",
+  "file_key": "ruch_chorzow_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Stal Mielec",
+  "curto": "POLB15",
+  "file_key": "stal_mielec_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Stal Rzeszów",
+  "curto": "POLB16",
+  "file_key": "stal_rzeszow_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Unia Skierniewice",
+  "curto": "POLB17",
+  "file_key": "unia_skierniewice_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Warta Poznań",
+  "curto": "POLB18",
+  "file_key": "warta_poznan_pol",
+  "pais": "Polonia",
+  "divisao": "uefa_pol_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Universitatea Cluj",
+  "curto": "ROUA02",
+  "file_key": "universitatea_cluj_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Rapid București",
+  "curto": "ROUA05",
+  "file_key": "rapid_bucuresti_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Argeș Pitești",
+  "curto": "ROUA06",
+  "file_key": "arges_pitesti_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "UTA Arad",
+  "curto": "ROUA07",
+  "file_key": "uta_arad_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FCSB",
+  "curto": "ROUA08",
+  "file_key": "fcsb_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Oțelul Galați",
+  "curto": "ROUA10",
+  "file_key": "otelul_galati_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Csikszereda",
+  "curto": "ROUA11",
+  "file_key": "csikszereda_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Petrolul Ploiești",
+  "curto": "ROUA12",
+  "file_key": "petrolul_ploiesti_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Farul Constanța",
+  "curto": "ROUA13",
+  "file_key": "farul_constanta_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Corvinul Hunedoara",
+  "curto": "ROUA14",
+  "file_key": "corvinul_hunedoara_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Sepsi",
+  "curto": "ROUA15",
+  "file_key": "sepsi_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Voluntari",
+  "curto": "ROUA16",
+  "file_key": "fc_voluntari_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "CSM Cetatea 1932 Suceava",
+  "curto": "ROUB01",
+  "file_key": "csm_cetatea_1932_suceava_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "CSL Ștefăneștii de Jos",
+  "curto": "ROUB02",
+  "file_key": "csl_stefanestii_de_jos_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SCM Râmnicu Vâlcea",
+  "curto": "ROUB03",
+  "file_key": "scm_ramnicu_valcea_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Politehnica Timișoara",
+  "curto": "ROUB04",
+  "file_key": "politehnica_timisoara_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "SC Popești-Leordeni",
+  "curto": "ROUB05",
+  "file_key": "sc_popesti_leordeni_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Bihor Oradea",
+  "curto": "ROUB06",
+  "file_key": "fc_bihor_oradea_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Chindia Târgoviște",
+  "curto": "ROUB08",
+  "file_key": "chindia_targoviste_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "ASA Târgu Mureș",
+  "curto": "ROUB09",
+  "file_key": "asa_targu_mures_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Metalul Buzău",
+  "curto": "ROUB10",
+  "file_key": "metalul_buzau_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "CSM Slatina",
+  "curto": "ROUB11",
+  "file_key": "csm_slatina_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Gloria Bistrița",
+  "curto": "ROUB12",
+  "file_key": "gloria_bistrita_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "FC Bacău",
+  "curto": "ROUB13",
+  "file_key": "fc_bacau_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Concordia Chiajna",
+  "curto": "ROUB14",
+  "file_key": "concordia_chiajna_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "CSM Reșița",
+  "curto": "ROUB15",
+  "file_key": "csm_resita_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "CS Afumați",
+  "curto": "ROUB16",
+  "file_key": "cs_afumati_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "CSC Dumbrăvița",
+  "curto": "ROUB17",
+  "file_key": "csc_dumbravita_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "CSC 1599 Șelimbăr",
+  "curto": "ROUB18",
+  "file_key": "csc_1599_selimbar_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "CS Dinamo București",
+  "curto": "ROUB19",
+  "file_key": "cs_dinamo_bucuresti_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Hermannstadt",
+  "curto": "ROUB20",
+  "file_key": "hermannstadt_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Unirea Slobozia",
+  "curto": "ROUB21",
+  "file_key": "unirea_slobozia_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Metaloglobus București",
+  "curto": "ROUB22",
+  "file_key": "metaloglobus_bucuresti_rou",
+  "pais": "Romenia",
+  "divisao": "uefa_rou_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Virtus",
+  "curto": "SMRA01",
+  "file_key": "virtus_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Folgore",
+  "curto": "SMRA05",
+  "file_key": "folgore_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Libertas",
+  "curto": "SMRA06",
+  "file_key": "libertas_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Cosmos",
+  "curto": "SMRA07",
+  "file_key": "cosmos_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Murata",
+  "curto": "SMRA08",
+  "file_key": "murata_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Juvenes/Dogana",
+  "curto": "SMRA09",
+  "file_key": "juvenes_dogana_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Faetano",
+  "curto": "SMRA10",
+  "file_key": "faetano_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Domagnano",
+  "curto": "SMRA11",
+  "file_key": "domagnano_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Fiorentino",
+  "curto": "SMRA12",
+  "file_key": "fiorentino_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Pennarossa",
+  "curto": "SMRA13",
+  "file_key": "pennarossa_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "San Giovanni",
+  "curto": "SMRA14",
+  "file_key": "san_giovanni_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Cailungo",
+  "curto": "SMRA15",
+  "file_key": "cailungo_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Red Star Belgrade",
+  "curto": "SRBA01",
+  "file_key": "red_star_belgrade_srb",
+  "pais": "Servia",
+  "divisao": "uefa_srb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "TSC Bačka Topola",
+  "curto": "SRBA04",
+  "file_key": "tsc_backa_topola_srb",
+  "pais": "Servia",
+  "divisao": "uefa_srb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Železničar Pančevo",
+  "curto": "SRBA09",
+  "file_key": "zeleznicar_pancevo_srb",
+  "pais": "Servia",
+  "divisao": "uefa_srb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "IMT",
+  "curto": "SRBA11",
+  "file_key": "imt_srb",
+  "pais": "Servia",
+  "divisao": "uefa_srb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "OFK Beograd",
+  "curto": "SRBA14",
+  "file_key": "ofk_beograd_srb",
+  "pais": "Servia",
+  "divisao": "uefa_srb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dubocica",
+  "curto": "SRBA16",
+  "file_key": "dubocica_srb",
+  "pais": "Servia",
+  "divisao": "uefa_srb_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Mjällby",
+  "curto": "SWEA09",
+  "file_key": "mjallby_swe",
+  "pais": "Suecia",
+  "divisao": "uefa_swe_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Sirius",
+  "curto": "SWEA10",
+  "file_key": "sirius_swe",
+  "pais": "Suecia",
+  "divisao": "uefa_swe_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Brommapojkarna",
+  "curto": "SWEA11",
+  "file_key": "brommapojkarna_swe",
+  "pais": "Suecia",
+  "divisao": "uefa_swe_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "GAIS",
+  "curto": "SWEA13",
+  "file_key": "gais_swe",
+  "pais": "Suecia",
+  "divisao": "uefa_swe_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Degerfors",
+  "curto": "SWEA14",
+  "file_key": "degerfors_swe",
+  "pais": "Suecia",
+  "divisao": "uefa_swe_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Öster",
+  "curto": "SWEA15",
+  "file_key": "oster_swe",
+  "pais": "Suecia",
+  "divisao": "uefa_swe_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Zürich",
+  "curto": "SUIA05",
+  "file_key": "zurich_sui",
+  "pais": "Suica",
+  "divisao": "uefa_sui_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Lausanne-Sport",
+  "curto": "SUIA07",
+  "file_key": "lausanne_sport_sui",
+  "pais": "Suica",
+  "divisao": "uefa_sui_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Stade Lausanne Ouchy",
+  "curto": "SUIB05",
+  "file_key": "stade_lausanne_ouchy_sui",
+  "pais": "Suica",
+  "divisao": "uefa_sui_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Stade Nyonnais",
+  "curto": "SUIB06",
+  "file_key": "stade_nyonnais_sui",
+  "pais": "Suica",
+  "divisao": "uefa_sui_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Étoile Carouge",
+  "curto": "SUIB07",
+  "file_key": "etoile_carouge_sui",
+  "pais": "Suica",
+  "divisao": "uefa_sui_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Yverdon Sport",
+  "curto": "SUIB10",
+  "file_key": "yverdon_sport_sui",
+  "pais": "Suica",
+  "divisao": "uefa_sui_2",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Dynamo Kyiv",
+  "curto": "UKRA01",
+  "file_key": "dynamo_kyiv_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Polissya Zhytomyr",
+  "curto": "UKRA04",
+  "file_key": "polissya_zhytomyr_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Kryvbas",
+  "curto": "UKRA05",
+  "file_key": "kryvbas_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Karpaty Lviv",
+  "curto": "UKRA06",
+  "file_key": "karpaty_lviv_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Zorya Luhansk",
+  "curto": "UKRA08",
+  "file_key": "zorya_luhansk_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Vorskla Poltava",
+  "curto": "UKRA09",
+  "file_key": "vorskla_poltava_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Chornomorets Odesa",
+  "curto": "UKRA10",
+  "file_key": "chornomorets_odesa_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Obolon Kyiv",
+  "curto": "UKRA12",
+  "file_key": "obolon_kyiv_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Veres Rivne",
+  "curto": "UKRA13",
+  "file_key": "veres_rivne_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "LNZ Cherkasy",
+  "curto": "UKRA14",
+  "file_key": "lnz_cherkasy_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Epitsentr",
+  "curto": "UKRA15",
+  "file_key": "epitsentr_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 18,
+  "total": 18
+ },
+ {
+  "nome": "Independiente Neuquen",
+  "curto": "INDEPEND",
+  "file_key": "IndependienteDeNeuquen_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "JJ Urquiza",
+  "curto": "JJURQUIZ",
+  "file_key": "JJUrquiza_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Argentino Quilmes",
+  "curto": "ARGENTIN",
+  "file_key": "ArgentinoDeQuilmes_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Ridavia Venado",
+  "curto": "RIDAVIAD",
+  "file_key": "RidaviaDeVenado_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "AH Zapla",
+  "curto": "AHZAPLAX",
+  "file_key": "AhZapla_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 17,
+  "total": 18
+ },
+ {
+  "nome": "Nardoni",
+  "curto": "LAEMILIA",
+  "file_key": "LaEmilia_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "El Provenir",
+  "curto": "ELPROVEN",
+  "file_key": "ElProvenir_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Alfonso Ugarte",
+  "curto": "ALFONSOU",
+  "file_key": "alfonsougarte_per",
+  "pais": "Peru",
+  "divisao": "pool:Peru",
+  "gerados": 16,
+  "total": 18
+ },
+ {
+  "nome": "Gimnasia Concepción",
+  "curto": "GIMNASIE",
+  "file_key": "GimnasiEsgrima_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Coronel Bolognesi",
+  "curto": "BOLOGNES",
+  "file_key": "bolognesi_per",
+  "pais": "Peru",
+  "divisao": "pool:Peru",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Unión Tarapoto",
+  "curto": "UNIONTAR",
+  "file_key": "uniontarapoto_per",
+  "pais": "Peru",
+  "divisao": "pool:Peru",
+  "gerados": 15,
+  "total": 18
+ },
+ {
+  "nome": "Deportivo Liberación",
+  "curto": "DEPORTIV",
+  "file_key": "deportivoliberacion_par",
+  "pais": "Paraguai",
+  "divisao": "pool:Paraguai",
+  "gerados": 14,
+  "total": 18
+ },
+ {
+  "nome": "Fort Lauderdale Strikers",
+  "curto": "STRIKERS",
+  "file_key": "strikers_eua",
+  "pais": "Estados Unidos",
+  "divisao": "pool:Estados Unidos",
+  "gerados": 13,
+  "total": 18
+ },
+ {
+  "nome": "Deportivo Hualgayoc",
+  "curto": "DEPORTIV",
+  "file_key": "deportivohualgayoc_per",
+  "pais": "Peru",
+  "divisao": "pool:Peru",
+  "gerados": 13,
+  "total": 18
+ },
+ {
+  "nome": "Atlético Minero",
+  "curto": "ATLETICO",
+  "file_key": "atleticominero_per",
+  "pais": "Peru",
+  "divisao": "pool:Peru",
+  "gerados": 13,
+  "total": 18
+ },
+ {
+  "nome": "Atyrá",
+  "curto": "ATYRAXPA",
+  "file_key": "atyra_par",
+  "pais": "Paraguai",
+  "divisao": "pool:Paraguai",
+  "gerados": 13,
+  "total": 18
+ },
+ {
+  "nome": "Deportivo Caaguazú",
+  "curto": "DEPORTIV",
+  "file_key": "deportivocaaguazu_par",
+  "pais": "Paraguai",
+  "divisao": "pool:Paraguai",
+  "gerados": 13,
+  "total": 18
+ },
+ {
+  "nome": "R.I. 3 Corrales",
+  "curto": "RI3CORRA",
+  "file_key": "ri3corrales_par",
+  "pais": "Paraguai",
+  "divisao": "pool:Paraguai",
+  "gerados": 12,
+  "total": 18
+ },
+ {
+  "nome": "Al-Raed",
+  "curto": "RAE",
+  "file_key": "al_raed",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_pro",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "Juventud Unida",
+  "curto": "JUVENTUD",
+  "file_key": "juventudunida_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "Atlético Porteño",
+  "curto": "ATLETICO",
+  "file_key": "atleticoporteno_equ",
+  "pais": "Equador",
+  "divisao": "pool:Equador",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "José Gálvez",
+  "curto": "JOSEGALV",
+  "file_key": "josegalvez_per",
+  "pais": "Peru",
+  "divisao": "pool:Peru",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "Sport Victoria",
+  "curto": "SPORTVIC",
+  "file_key": "sportvictoria_per",
+  "pais": "Peru",
+  "divisao": "pool:Peru",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "Royal Pari",
+  "curto": "ROYALPAR",
+  "file_key": "royalpari_bol",
+  "pais": "Bolívia",
+  "divisao": "pool:Bolívia",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "Karaiskakis",
+  "curto": "KARAISKA",
+  "file_key": "karaiskakis_gre",
+  "pais": "Grécia",
+  "divisao": "pool:Grécia",
+  "gerados": 11,
+  "total": 18
+ },
+ {
+  "nome": "Ovetense",
+  "curto": "OVETENSE",
+  "file_key": "ovetense_par",
+  "pais": "Paraguai",
+  "divisao": "pool:Paraguai",
+  "gerados": 10,
+  "total": 18
+ },
+ {
+  "nome": "PAE Chania",
+  "curto": "PAECHANI",
+  "file_key": "paechania_gre",
+  "pais": "Grécia",
+  "divisao": "pool:Grécia",
+  "gerados": 10,
+  "total": 18
+ },
+ {
+  "nome": "Bangu",
+  "curto": "BGU",
+  "file_key": "bangu",
+  "pais": "Brasil",
+  "divisao": "serie_d",
   "gerados": 9,
   "total": 18
  },
  {
-  "nome": "CD Tenerife",
-  "curto": "CT",
-  "pais": "Espanha",
-  "divisao": "la_liga_2",
+  "nome": "Unión Santiago",
+  "curto": "UNIONSAN",
+  "file_key": "UnionSantiago_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
   "gerados": 9,
   "total": 18
  },
  {
-  "nome": "Empoli FC",
-  "curto": "EF",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
+  "nome": "Clan Juvenil",
+  "curto": "CLANJUVE",
+  "file_key": "clanjuvenil_equ",
+  "pais": "Equador",
+  "divisao": "pool:Equador",
+  "gerados": 9,
+  "total": 18
+ },
+ {
+  "nome": "Ohod Club",
+  "curto": "OHODXARA",
+  "file_key": "ohod_ara",
+  "pais": "Arábia Saudita",
+  "divisao": "pool:Arábia Saudita",
   "gerados": 8,
   "total": 18
  },
  {
-  "nome": "Modena FC",
-  "curto": "MF",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
+  "nome": "Atlético Torino",
+  "curto": "ATLETICO",
+  "file_key": "atleticotorino_per",
+  "pais": "Peru",
+  "divisao": "pool:Peru",
   "gerados": 8,
   "total": 18
  },
  {
-  "nome": "Cesena FC",
-  "curto": "CF",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
+  "nome": "General Díaz",
+  "curto": "GENERALD",
+  "file_key": "generaldiaz_par",
+  "pais": "Paraguai",
+  "divisao": "pool:Paraguai",
   "gerados": 8,
   "total": 18
  },
  {
-  "nome": "Calcio Padova",
-  "curto": "CP",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
+  "nome": "Levadiakos",
+  "curto": "LEVADIAK",
+  "file_key": "levadiakos_gre",
+  "pais": "Grécia",
+  "divisao": "pool:Grécia",
   "gerados": 8,
   "total": 18
  },
  {
-  "nome": "US Avellino 1912",
-  "curto": "A1",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
+  "nome": "Apollon Larisas",
+  "curto": "APOLLONL",
+  "file_key": "apollonlarissa_gre",
+  "pais": "Grécia",
+  "divisao": "pool:Grécia",
   "gerados": 8,
   "total": 18
  },
  {
-  "nome": "Querétaro",
-  "curto": "QRO",
-  "pais": "Mexico",
-  "divisao": "liga_mx",
-  "gerados": 7,
+  "nome": "Rukh Lviv",
+  "curto": "UKRA07",
+  "file_key": "rukh_lviv_ukr",
+  "pais": "Ucrania",
+  "divisao": "uefa_ukr_1",
+  "gerados": 8,
   "total": 18
  },
  {
   "nome": "Municipal Mejillones",
   "curto": "MEJ",
+  "file_key": "mun_mejillones",
   "pais": "Chile",
   "divisao": "primera_b_chi",
   "gerados": 7,
   "total": 18
  },
  {
-  "nome": "Palermo FC",
-  "curto": "PF",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
+  "nome": "Ionikos Nikeas",
+  "curto": "IONIKOSX",
+  "file_key": "ionikos_gre",
+  "pais": "Grécia",
+  "divisao": "pool:Grécia",
   "gerados": 7,
+  "total": 18
+ },
+ {
+  "nome": "Def. de Pronunciamento",
+  "curto": "DEFENSOR",
+  "file_key": "DefensoresDe_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 6,
   "total": 18
  },
  {
   "nome": "Fernandez Vial",
   "curto": "FVL",
+  "file_key": "fernandez_vial",
   "pais": "Chile",
   "divisao": "primera_b_chi",
   "gerados": 6,
   "total": 18
  },
  {
-  "nome": "UC Sampdoria",
-  "curto": "US",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
+  "nome": "Hunan Billows",
+  "curto": "HUNANBIL",
+  "file_key": "HunanBillows_chn",
+  "pais": "China",
+  "divisao": "pool:China",
   "gerados": 6,
   "total": 18
  },
  {
-  "nome": "Ascoli Calcio 1898",
-  "curto": "AC1",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
+  "nome": "Ramiro Castillo",
+  "curto": "RAMIROCA",
+  "file_key": "ramirocastillo_bol",
+  "pais": "Bolívia",
+  "divisao": "pool:Bolívia",
   "gerados": 6,
   "total": 18
  },
  {
-  "nome": "Pisa Sporting Club",
-  "curto": "PISASPOR",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
-  "gerados": 5,
+  "nome": "12 de Octubre",
+  "curto": "12DEOCTU",
+  "file_key": "12deoctubre_par",
+  "pais": "Paraguai",
+  "divisao": "pool:Paraguai",
+  "gerados": 6,
   "total": 18
  },
  {
-  "nome": "US Catanzaro 1929",
-  "curto": "C1",
-  "pais": "Italia",
-  "divisao": "serie_b_ita",
+  "nome": "Apollon Smyrnis",
+  "curto": "APOLLONS",
+  "file_key": "apollonsmyrnis_gre",
+  "pais": "Grécia",
+  "divisao": "pool:Grécia",
+  "gerados": 6,
+  "total": 18
+ },
+ {
+  "nome": "Asane Fotball",
+  "curto": "ASA",
+  "file_key": "asane",
+  "pais": "Noruega",
+  "divisao": "obos_ligaen",
+  "gerados": 6,
+  "total": 18
+ },
+ {
+  "nome": "Atletico Madrid",
+  "curto": "ATM",
+  "file_key": "atletico_madrid",
+  "pais": "Espanha",
+  "divisao": "la_liga",
   "gerados": 5,
   "total": 18
  },
  {
   "nome": "Villarreal CF",
   "curto": "VLR",
+  "file_key": "villarreal",
   "pais": "Espanha",
   "divisao": "la_liga",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "Najran",
+  "curto": "NAJRANXA",
+  "file_key": "najran_ara",
+  "pais": "Arábia Saudita",
+  "divisao": "pool:Arábia Saudita",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "Al-Nojoom",
+  "curto": "NOJ",
+  "file_key": "al_nojoom",
+  "pais": "Arabia Saudita",
+  "divisao": "saudi_first_div",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "Avellino",
+  "curto": "AVELLINO",
+  "file_key": "avellino_ita",
+  "pais": "Itália",
+  "divisao": "pool:Itália",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "Boluspor",
+  "curto": "BOLUSPOR",
+  "file_key": "Boluspor_tur",
+  "pais": "Turquia",
+  "divisao": "pool:Turquia",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "San Martin San Juan",
+  "curto": "SMJ",
+  "file_key": "san_martin_sj",
+  "pais": "Argentina",
+  "divisao": "primera_b_arg",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "Hainan Boying",
+  "curto": "HAINANBO",
+  "file_key": "HainanBoying_chn",
+  "pais": "China",
+  "divisao": "pool:China",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "Ningxia Helanshan",
+  "curto": "NINGXIAH",
+  "file_key": "NingxiaHelanshan_chn",
+  "pais": "China",
+  "divisao": "pool:China",
+  "gerados": 5,
+  "total": 18
+ },
+ {
+  "nome": "Jorge Wilstermann",
+  "curto": "JORGEWIL",
+  "file_key": "jorgewil_bol",
+  "pais": "Bolívia",
+  "divisao": "pool:Bolívia",
   "gerados": 4,
+  "total": 18
+ },
+ {
+  "nome": "Universitario Beni",
+  "curto": "UNIVERSI",
+  "file_key": "universitariobeni_bol",
+  "pais": "Bolívia",
+  "divisao": "pool:Bolívia",
+  "gerados": 4,
+  "total": 18
+ },
+ {
+  "nome": "Tre Penne",
+  "curto": "SMRA03",
+  "file_key": "tre_penne_smr",
+  "pais": "San Marino",
+  "divisao": "uefa_smr_1",
+  "gerados": 4,
+  "total": 18
+ },
+ {
+  "nome": "Real Sociedad",
+  "curto": "RSO",
+  "file_key": "real_sociedad",
+  "pais": "Espanha",
+  "divisao": "la_liga",
+  "gerados": 3,
   "total": 18
  },
  {
   "nome": "Al-Kawkab",
   "curto": "KAW",
+  "file_key": "al_kawkab",
   "pais": "Arabia Saudita",
   "divisao": "saudi_first_div",
-  "gerados": 4,
-  "total": 18
- },
- {
-  "nome": "Ypiranga-RS",
-  "curto": "YPI",
-  "pais": "Brasil",
-  "divisao": "serie_c",
-  "gerados": 3,
-  "total": 20
- },
- {
-  "nome": "Bangu",
-  "curto": "BGU",
-  "pais": "Brasil",
-  "divisao": "serie_d",
   "gerados": 3,
   "total": 18
  },
  {
-  "nome": "Sampaio Correa-RJ",
-  "curto": "SCR",
-  "pais": "Brasil",
-  "divisao": "serie_d",
+  "nome": "Benevento",
+  "curto": "BENEVENT",
+  "file_key": "benevento_ita",
+  "pais": "Itália",
+  "divisao": "pool:Itália",
   "gerados": 3,
   "total": 18
  },
  {
-  "nome": "Atletico Madrid",
-  "curto": "ATM",
-  "pais": "Espanha",
-  "divisao": "la_liga",
+  "nome": "Tekstilshchik",
+  "curto": "TEKSTILS",
+  "file_key": "tekstilshchik_rus",
+  "pais": "Rússia",
+  "divisao": "pool:Rússia",
+  "gerados": 3,
+  "total": 18
+ },
+ {
+  "nome": "Central Ballester",
+  "curto": "CENTRALB",
+  "file_key": "CentralBallester_arg",
+  "pais": "Argentina",
+  "divisao": "pool:Argentina",
+  "gerados": 3,
+  "total": 18
+ },
+ {
+  "nome": "Deportivo La Guaira",
+  "curto": "DLG",
+  "file_key": "dep_la_guaira",
+  "pais": "Venezuela",
+  "divisao": "primera_div_ven",
+  "gerados": 3,
+  "total": 18
+ },
+ {
+  "nome": "Atlético Palmaflor",
+  "curto": "ATLETICO",
+  "file_key": "atleticopalmaflor_bol",
+  "pais": "Bolívia",
+  "divisao": "pool:Bolívia",
+  "gerados": 3,
+  "total": 18
+ },
+ {
+  "nome": "Levski Sofia",
+  "curto": "BGRA02",
+  "file_key": "levski_sofia_bgr",
+  "pais": "Bulgaria",
+  "divisao": "uefa_bgr_1",
   "gerados": 3,
   "total": 18
  }

@@ -29,7 +29,8 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { forcasDaTatica, resumoDoPlano } from "@/lib/forcas-taticas"
-import { forcasDoElenco } from "@/lib/forcas-individuais"
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
+import { adequacaoAFuncao, forcasDoElenco } from "@/lib/forcas-individuais"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameEngine, persistGameEngineNow, type TeamTactics, type PlayerInstructions, type PlayerRole, PLAYER_ROLE_INFO } from "@/lib/game-engine"
@@ -54,6 +55,8 @@ const STYLE_INFO: Record<string, { label: string; desc: string }> = {
   jogo_direto: { label: "Jogo Direto", desc: "Bolas longas para os atacantes" },
   jogo_posicional: { label: "Jogo Posicional", desc: "Movimentacao estruturada" },
 }
+
+const PHASE_FORMATIONS = ["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2", "4-1-4-1", "3-4-3", "2-3-5"]
 
 const ROLE_INFO: Record<PlayerRole, { label: string; desc: string; positions: string[] }> = {
   goleiro_defensor: { label: "Goleiro Defensor", desc: "Foca em defender o gol", positions: ["GOL"] },
@@ -141,7 +144,12 @@ export default function TaticasPage() {
   const { teamTactics, setTeamTactics, playerInstructions, setPlayerInstructions, squadPlayers } = gameEngine
   // Mesmo calculo que a partida usa — nao uma previa parecida. Se a tela
   // estimasse por conta propria, seriam duas escalas para a mesma grandeza.
-  const efeitoDoPlano = useMemo(() => forcasDaTatica(teamTactics), [teamTactics])
+  // Mesmo cálculo da partida, técnico incluído: a faixa "Efeito do plano" não
+  // pode prometer uma coerência que o jogo não vai usar.
+  const efeitoDoPlano = useMemo(
+    () => forcasDaTatica(teamTactics, efeitosDoTreinador().coerenciaTatica),
+    [teamTactics],
+  )
   /**
    * Camada INDIVIDUAL: as 66 funcoes e as ordens por atleta. Mesmo calculo da
    * partida — a tela nao estima por conta propria. Ver lib/forcas-individuais.
@@ -225,6 +233,9 @@ export default function TaticasPage() {
     return playerInstructions[selectedPlayerId] || null
   }, [selectedPlayerId, playerInstructions])
 
+  /** Qual fase o seletor de funcao esta editando. Ver o bloco "Funcao no Time". */
+  const [faseDaFuncao, setFaseDaFuncao] = useState<"com" | "sem">("com")
+
   const router = useRouter()
   const tabOrder: TabType[] = ["mentalidade", "comBola", "semBola", "instrucoes", "adversario"]
 
@@ -250,6 +261,13 @@ export default function TaticasPage() {
             const idx = squadPlayers.findIndex(p => p.id === prev)
             return squadPlayers[Math.max(0, idx - 1)]?.id ?? prev
           })
+        } else if (btn === "DPAD_LEFT") {
+          // Alterna COM BOLA / SEM BOLA. Sem isto, o unico controle da tela
+          // inalcancavel pelo gamepad seria justamente o novo — e quem joga de
+          // controle nunca descobriria que a funcao sem bola existe.
+          setFaseDaFuncao("com")
+        } else if (btn === "DPAD_RIGHT") {
+          setFaseDaFuncao("sem")
         }
       }
     }
@@ -508,6 +526,37 @@ export default function TaticasPage() {
                       </button>
                     )
                   })}
+                </div>
+              </div>
+
+              {/* Uma escalação, três organizações: o XI não muda, só os espaços
+                  ocupados em cada momento do jogo. */}
+              <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/[0.08] to-white/[0.02] p-6">
+                <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+                  <RotateCcw className="h-5 w-5 text-primary" />
+                  Forma Tática Dinâmica
+                </h2>
+                <p className="mt-1 text-sm text-white/50">
+                  O time se reorganiza automaticamente na saída, ao controlar a bola e depois de perdê-la.
+                </p>
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  {([
+                    ["buildUpFormation", "Construção", "Reposição do goleiro e saída curta", gameEngine.formation ?? "4-3-3"],
+                    ["inPossessionFormation", "Ataque", "Posse estabelecida no campo rival", "2-3-5"],
+                    ["outOfPossessionFormation", "Defesa", "Perda da bola e bloco organizado", "4-4-2"],
+                  ] as const).map(([field, title, description, fallback]) => (
+                    <label key={field} className="rounded-lg border border-white/10 bg-black/20 p-4">
+                      <span className="block text-sm font-bold text-white">{title}</span>
+                      <span className="mt-0.5 block min-h-8 text-[11px] leading-4 text-white/40">{description}</span>
+                      <select
+                        value={teamTactics[field] ?? fallback}
+                        onChange={event => setTeamTactics({ [field]: event.target.value })}
+                        className="mt-3 w-full rounded-lg border border-white/10 bg-[#12131a] px-3 py-2 text-sm font-black text-white"
+                      >
+                        {PHASE_FORMATIONS.map(formation => <option key={formation}>{formation}</option>)}
+                      </select>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -909,6 +958,25 @@ export default function TaticasPage() {
                   cobrança, o motor escolhe um substituto pela posição.
                 </p>
               </div>
+              <div className="rounded-xl border border-white/10 bg-[#0c0c10] p-5">
+                <h3 className="text-lg font-bold text-white">Defesa de lançamentos laterais</h3>
+                <p className="mt-1 text-sm text-white/50">
+                  Define como os defensores ocupam a primeira bola, a linha de fundo e a sobra, evitando marcações automáticas amontoadas.
+                </p>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {([
+                    ["zona", "Zona compacta", "Protege área e segunda bola"],
+                    ["mista", "Mista", "Dois encaixes e cobertura por zona"],
+                    ["individual", "Individual", "Persegue os alvos mais perigosos"],
+                  ] as const).map(([shape, label, hint]) => (
+                    <button key={shape} type="button" onClick={() => setTeamTactics({ defensiveThrowInShape: shape })}
+                      className={cn("rounded-lg border p-4 text-left transition-colors", (teamTactics.defensiveThrowInShape ?? "mista") === shape ? "border-primary bg-primary/15" : "border-white/10 bg-white/[0.03] hover:border-white/25")}>
+                      <span className="block text-sm font-bold text-white">{label}</span>
+                      <span className="mt-1 block text-xs text-white/45">{hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -964,27 +1032,87 @@ export default function TaticasPage() {
                     </h2>
                     
                     <div className="grid gap-6">
-                      {/* Funcao */}
+                      {/* FUNCAO POR FASE.
+                          Posicao, funcao e fase sao tres coisas: o mesmo PD pode
+                          ser ponta invertido com a bola e lateral sem ela. A aba
+                          "sem a bola" so grava `roleSemBola` quando o tecnico
+                          escolhe algo DIFERENTE — deixar as duas iguais devolve
+                          exatamente o comportamento antigo. Ver
+                          lib/forcas-individuais.ts. */}
                       <div>
-                        <label className="text-sm text-white/70 mb-3 block">Funcao no Time</label>
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                          <label className="text-sm text-white/70">Funcao no Time</label>
+                          <div className="ml-auto flex gap-1 rounded-lg bg-black/30 p-1">
+                            {([["com", "Com a bola"], ["sem", "Sem a bola"]] as const).map(([id, rotulo]) => (
+                              <button
+                                key={id}
+                                onClick={() => setFaseDaFuncao(id)}
+                                className={cn(
+                                  "rounded-md px-3 py-1 text-xs font-bold transition-all",
+                                  faseDaFuncao === id ? "bg-primary text-white" : "text-white/50 hover:text-white/80",
+                                )}
+                              >
+                                {rotulo}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {faseDaFuncao === "sem" && (
+                          <p className="mb-2 text-xs text-white/45">
+                            Sem escolha propria, ele defende na mesma funcao que exerce com a bola.
+                            {currentPlayerInstructions?.roleSemBola && (
+                              <button
+                                onClick={() => setPlayerInstructions(selectedPlayer.id, { roleSemBola: undefined })}
+                                className="ml-2 font-bold text-primary underline"
+                              >
+                                usar a mesma
+                              </button>
+                            )}
+                          </p>
+                        )}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[200px] overflow-y-auto scrollbar-thin">
                           {Object.entries(ROLE_INFO)
                             .filter(([_, info]) => info.positions.includes(selectedPlayer.position))
-                            .map(([key, info]) => (
-                              <button
-                                key={key}
-                                onClick={() => setPlayerInstructions(selectedPlayer.id, { role: key as PlayerRole })}
-                                className={cn(
-                                  "p-3 rounded-lg text-left transition-all",
-                                  currentPlayerInstructions?.role === key
-                                    ? "bg-primary/20 border border-primary"
-                                    : "bg-white/5 border border-white/10 hover:border-white/20"
-                                )}
-                              >
-                                <div className="text-sm font-medium text-white">{info.label}</div>
-                                <div className="text-xs text-white/50 mt-1">{info.desc}</div>
-                              </button>
-                            ))}
+                            .map(([key, info]) => {
+                              const ativa = faseDaFuncao === "com"
+                                ? currentPlayerInstructions?.role === key
+                                : (currentPlayerInstructions?.roleSemBola ?? currentPlayerInstructions?.role) === key
+                              // ADEQUACAO A FUNCAO, em estrelas. E a MESMA conta
+                              // que o motor faz (`adequacaoAFuncao`, -2 a +2), so
+                              // que visivel ANTES de escalar. Sem ela o tecnico
+                              // escolhia entre 66 nomes sem nenhuma pista de qual
+                              // servia ao atleta que estava na mao.
+                              const encaixe = adequacaoAFuncao(selectedPlayer, key as PlayerRole)
+                              const estrelas = Math.max(1, Math.min(5, Math.round(3 + encaixe)))
+                              return (
+                                <button
+                                  key={key}
+                                  onClick={() => setPlayerInstructions(selectedPlayer.id, faseDaFuncao === "com"
+                                    ? { role: key as PlayerRole }
+                                    : { roleSemBola: key as PlayerRole })}
+                                  className={cn(
+                                    "p-3 rounded-lg text-left transition-all",
+                                    ativa
+                                      ? "bg-primary/20 border border-primary"
+                                      : "bg-white/5 border border-white/10 hover:border-white/20"
+                                  )}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="text-sm font-medium text-white">{info.label}</div>
+                                    <span
+                                      title={`Adequação ${encaixe > 0 ? "+" : ""}${encaixe} — os atributos dele servem a esta função?`}
+                                      className={cn(
+                                        "shrink-0 text-[10px] tracking-tight",
+                                        estrelas >= 4 ? "text-emerald-300" : estrelas <= 2 ? "text-red-300" : "text-white/40",
+                                      )}
+                                    >
+                                      {"★".repeat(estrelas)}<span className="text-white/15">{"★".repeat(5 - estrelas)}</span>
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-white/50 mt-1">{info.desc}</div>
+                                </button>
+                              )
+                            })}
                         </div>
                       </div>
 

@@ -42,7 +42,9 @@ import { ContractNegotiationModal } from "@/components/squad/contract-negotiatio
 import { RenovacaoEmprestimoModal } from "@/components/squad/renovacao-emprestimo-modal"
 import { artilheiros, cartoes } from "@/lib/leaderboards"
 import { FORMATIONS, assignPlayersToFormation, detectarFormacao, normalizePosition, penalidadeImprovisacao, posicaoPelaCoordenada, pickStartingXI } from "@/lib/formations"
-import { formatCurrency, getCamisaUrl, isKitVariantAvailable, getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { getCamisaUrl, isKitVariantAvailable, getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
+import { useSalario } from "@/lib/usar-salario"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { absoluteWeek, CONTRACT_EPOCH_SEASON, defaultRoleForPosition, getContractStatus, isTransferWindowOpen, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
@@ -55,6 +57,9 @@ import { useTranslation } from "@/lib/i18n"
 import { announceOnlineAction } from "@/lib/online-multiplayer"
 import { generateRetirementSuccessor } from "@/lib/youth-academy"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { familiaridadeEm, perfilDoAtleta, rendimentoNaPosicao } from "@/lib/modelo-de-jogador"
+import { caracteristicaPorId, caracteristicasDoAtleta } from "@/lib/caracteristicas-do-atleta"
+import { prestigioDe } from "@/lib/prestigio-do-atleta"
 
 // FORMATIONS agora vive em lib/formations.ts (compartilhado com a Central de Transferencias).
 
@@ -134,26 +139,49 @@ function faixaPorOverall(overall: number): FaixaDaCarta {
   return "bronze"
 }
 
-const ESTILO_DA_FAIXA: Record<FaixaDaCarta, { anel: string; fundo: string; texto: string; brilho: string }> = {
+/**
+ * ⚠️ A CARTA É BRANCA — e isto é a decisão de desenho, não um valor a ajustar.
+ *
+ * O protótipo (`Nova pasta/cartoes-eafc`) tinha o acabamento do EA FC: fundo em
+ * degradê metálico, brilho diagonal e listras. Sobre o gramado, onze desses
+ * fundos brigavam entre si e com o campo — o que dava para ler de relance era o
+ * BRILHO, não o atleta. Com a carta branca sobra exatamente um lugar para onde
+ * a vista vai, e é onde a informação está: o NOME e os ATRIBUTOS.
+ *
+ * Por isso a faixa (o patamar do atleta) não colore mais a carta inteira: ela
+ * colore só a tarja do nome e o número dos atributos. A leitura "craque /
+ * titular / resto" continua imediata, e sem repintar o card.
+ */
+const ESTILO_DA_FAIXA: Record<FaixaDaCarta, { destaque: string; tintaNaTarja: string; texto: string }> = {
   preta: {
-    anel: "#e8e8ec",
-    fundo: "linear-gradient(160deg,#2b2b33 0%,#0b0b0f 55%,#1a1a20 100%)",
-    texto: "#f2f2f6",
-    brilho: "0 0 12px rgba(230,230,240,0.45)",
+    // Grafite: o patamar mais alto é o mais sóbrio, como na referência.
+    destaque: "#171820",
+    tintaNaTarja: "#f4f5f7",
+    texto: "#171820",
   },
   dourada: {
-    anel: "#f5c542",
-    fundo: "linear-gradient(160deg,#8a6b16 0%,#3a2c07 55%,#6b520f 100%)",
-    texto: "#ffe9a8",
-    brilho: "0 0 12px rgba(245,197,66,0.45)",
+    destaque: "#b8860b",
+    tintaNaTarja: "#fff8e1",
+    texto: "#7a5a06",
   },
   bronze: {
-    anel: "#c07b46",
-    fundo: "linear-gradient(160deg,#6b452a 0%,#2c1c11 55%,#54361f 100%)",
-    texto: "#f0cfae",
-    brilho: "0 0 10px rgba(192,123,70,0.35)",
+    destaque: "#9a5b2d",
+    tintaNaTarja: "#fdf1e6",
+    texto: "#7c4620",
   },
 }
+
+/**
+ * O RECORTE DA CARTA — o octógono alongado da referência.
+ *
+ * Vive fora do componente porque é usado no `clip-path` da casca E na moldura
+ * interna (`::before` do protótipo, aqui um segundo elemento): as duas PRECISAM
+ * ser o mesmo polígono, e duas cópias divergiriam no primeiro ajuste.
+ */
+const RECORTE_DA_CARTA = "polygon(14% 8%, 27% 3%, 73% 3%, 87% 8%, 97% 22%, 97% 79%, 87% 91%, 50% 99%, 13% 91%, 3% 79%, 3% 22%)"
+
+/** As seis siglas do card, na ordem do EA FC. */
+const SIGLAS_DOS_ATRIBUTOS = ["RIT", "FIN", "PAS", "CON", "DEF", "FIS"] as const
 
 /**
  * CARTA DO ATLETA — o card da prancheta HORIZONTAL, no estilo da referência.
@@ -172,7 +200,7 @@ const ESTILO_DA_FAIXA: Record<FaixaDaCarta, { anel: string; fundo: string; texto
  * na hora de escalar — o técnico só descobria pelo resultado.
  */
 function CartaDeJogador({
-  nome, fileKey, posicao, slot, overall, numero, selecionado, funcao, promessa, pills, emTreino,
+  nome, fileKey, posicao, slot, overall, numero, selecionado, funcao, promessa, pills, emTreino, atributos,
 }: {
   nome: string
   fileKey: string
@@ -187,6 +215,8 @@ function CartaDeJogador({
   promessa: boolean
   pills: { key: string; label: string; cls: string }[]
   emTreino?: boolean
+  /** RIT, FIN, PAS, CON, DEF, FIS — na ordem de `SIGLAS_DOS_ATRIBUTOS`. */
+  atributos: readonly number[]
 }) {
   const fator = penalidadeImprovisacao(posicao, slot)
   const improvisado = fator < 1
@@ -194,72 +224,122 @@ function CartaDeJogador({
   // A FAIXA segue o overall EFETIVO: um craque improvisado no gol deixa de ser
   // carta preta, porque ali ele não joga como craque.
   const estilo = ESTILO_DA_FAIXA[faixaPorOverall(overallEfetivo)]
+  // "Chico da Costa" não cabe em 92px: na tarja vale o último nome, que é como
+  // o atleta é chamado. O nome inteiro fica no `title`.
+  const nomeCurto = nome.split(" ").pop() ?? nome
 
   return (
     <div className="relative flex flex-col items-center">
-      {/* A BOLA: rosto ao centro, overall à esquerda e posição à direita, com o
-          anel na cor da faixa — o formato da referência. Redonda em vez de
-          retangular porque onze retratos redondos se distinguem melhor sobre o
-          gramado do que onze retângulos colados. */}
+      {/* ── A CARTA ──────────────────────────────────────────────────────────
+          O octógono do EA FC, em BRANCO. Sem degradê, sem brilho diagonal e sem
+          listras: sobre o gramado, onze fundos metálicos disputavam a atenção
+          com o campo e entre si. Branca, a carta some como suporte e sobra o
+          que interessa — a tarja do nome e a grade de atributos, únicos dois
+          lugares que recebem a cor da faixa. */}
       <div
-        className={cn(
-          "relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-2 transition-all md:h-[60px] md:w-[60px]",
-        )}
+        className="relative h-[104px] w-[74px] transition-all md:h-[124px] md:w-[88px]"
         style={{
-          background: estilo.fundo,
-          borderColor: selecionado ? "var(--brand)" : estilo.anel,
-          boxShadow: selecionado ? "0 0 14px var(--brand)" : estilo.brilho,
+          filter: selecionado
+            ? "drop-shadow(0 0 3px var(--brand)) drop-shadow(0 0 10px var(--brand)) drop-shadow(0 6px 6px rgba(0,0,0,0.55))"
+            : "drop-shadow(0 5px 5px rgba(0,0,0,0.5))",
         }}
+        title={improvisado
+          ? `${nome} — improvisado: ${posicao} jogando de ${slot}. Rende ${overallEfetivo} em vez de ${overall}.`
+          : nome}
       >
-        <PlayerAvatar
-          name={nome}
-          fileKey={fileKey}
-          position={posicao}
-          size="lg"
-          className="h-[44px] w-[44px] rounded-full border-0 bg-transparent md:h-[52px] md:w-[52px]"
+        <div
+          className="absolute inset-0 bg-white"
+          style={{ clipPath: RECORTE_DA_CARTA }}
+        />
+        {/* Moldura interna: a linha fina que dá o acabamento de carta. Na cor da
+            faixa, a 25% — é acabamento, não destaque. */}
+        <div
+          className="pointer-events-none absolute inset-[3px] border"
+          style={{ clipPath: RECORTE_DA_CARTA, borderColor: `${estilo.destaque}40` }}
         />
 
-        {/* OVERALL EFETIVO. Improvisado, ele aparece em âmbar e com o valor de
-            origem riscado ao lado — é a diferença que explica por que o time
+        {/* OVERALL EFETIVO + slot, no canto que a referência usa.
+            Improvisado vira âmbar: é a diferença que explica por que o time
             rendeu menos, e ela precisa ser vista ANTES do apito. */}
-        <span
-          className={cn(
-            "absolute -left-1 -top-1 flex min-w-[19px] items-center justify-center rounded-full px-1 text-[10px] font-black leading-[15px] md:text-[11px]",
-            improvisado ? "bg-amber-400 text-black" : "text-black",
+        <div className="absolute left-[9px] top-[10px] z-10 flex flex-col items-center leading-none">
+          <span
+            className="text-[17px] font-black tracking-[-.06em] md:text-[20px]"
+            style={{ color: improvisado ? "#b45309" : estilo.texto }}
+          >
+            {overallEfetivo}
+          </span>
+          <span
+            className="mt-[1px] text-[7px] font-black uppercase md:text-[8px]"
+            style={{ color: improvisado ? "#b45309" : estilo.texto }}
+          >
+            {slot}
+          </span>
+          {improvisado && (
+            <span className="text-[6px] font-bold leading-none text-black/35 line-through md:text-[7px]">
+              {overall}
+            </span>
           )}
-          style={improvisado ? undefined : { background: estilo.anel }}
-          title={improvisado
-            ? `Improvisado: ${posicao} jogando de ${slot}. Rende ${overallEfetivo} em vez de ${overall}.`
-            : undefined}
-        >
-          {overallEfetivo}
-        </span>
+        </div>
 
-        {/* A posição mostrada é o SLOT — é onde ele vai jogar. */}
-        <span
-          className="absolute -bottom-1 -right-1 rounded-full px-1 text-[8px] font-black uppercase leading-[14px] text-black md:text-[9px]"
-          style={{ background: estilo.anel }}
+        {/* O RETRATO. Duas diferenças em relação ao protótipo, as duas por causa
+            do fundo branco:
+              · `semFundo` — sem ele o avatar pinta um degradê próprio e o card
+                deixa de ser branco onde mais aparece (ver PlayerAvatar);
+              · sem `mix-blend-mode: multiply`, que era o truque para o rosto
+                assentar no fundo escuro e sobre branco apagaria a foto.
+            Fica deslocado à DIREITA para a nota ter branco atrás de si: por trás
+            do retrato ela era ilegível. A máscara em degradê evita o corte reto
+            no pé da foto. */}
+        <div
+          className="absolute right-[6px] top-[5px] z-[5]"
+          style={{
+            WebkitMaskImage: "linear-gradient(to bottom, #000 74%, transparent 99%)",
+            maskImage: "linear-gradient(to bottom, #000 74%, transparent 99%)",
+          }}
         >
-          {slot}
-        </span>
+          {/* `size="xl"` é pelo desenho da SILHUETA (o caso sem foto): ela tem
+              tamanho próprio por `size` e não acompanha o `className`, então em
+              "lg" fica ainda menor no meio do branco. A caixa quem define é o
+              `className`, que vence no `cn`. Com foto de verdade o retrato
+              preenche o espaço; a silhueta continua pequena para o tamanho da
+              carta, e é uma folga conhecida deste card. */}
+          <PlayerAvatar
+            name={nome}
+            fileKey={fileKey}
+            position={posicao}
+            size="xl"
+            semFundo
+            className="h-[52px] w-[52px] rounded-none md:h-[62px] md:w-[62px]"
+          />
+        </div>
 
+        {/* A camisa fica ABAIXO da nota, na coluna branca: no canto direito ela
+            caía sobre o retrato e sumia. */}
         {numero != null && (
-          <span className="absolute -top-1 right-0 text-[8px] font-black text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.95)]">
+          <span className="absolute left-[10px] top-[40px] z-10 text-[7px] font-black text-black/35 md:top-[48px] md:text-[8px]">
             {numero}
           </span>
         )}
-      </div>
 
-      {/* Nome + o aviso de improvisação (a origem riscada). */}
-      <div className="mt-0.5 max-w-[86px] rounded bg-black/55 px-1 text-center">
-        <div className="truncate text-[9px] font-black uppercase tracking-wide" style={{ color: estilo.texto }}>
-          {nome.split(" ").pop()}
+        {/* ── DESTAQUE 1: A TARJA DO NOME ──────────────────────────────────── */}
+        <div
+          className="absolute inset-x-[8px] top-[60px] z-10 truncate px-1 text-center text-[7px] font-black uppercase leading-[13px] md:top-[73px] md:text-[8px] md:leading-[15px]"
+          style={{ background: estilo.destaque, color: estilo.tintaNaTarja }}
+        >
+          {nomeCurto}
         </div>
-        {improvisado && (
-          <div className="text-[7px] font-bold leading-tight text-amber-300">
-            {posicao} <span className="text-white/40 line-through">{overall}</span>
-          </div>
-        )}
+
+        {/* ── DESTAQUE 2: OS ATRIBUTOS ─────────────────────────────────────── */}
+        <div className="absolute inset-x-[9px] top-[76px] z-10 grid grid-cols-3 gap-x-[3px] gap-y-[1px] md:top-[91px]">
+          {SIGLAS_DOS_ATRIBUTOS.map((sigla, i) => (
+            <span key={sigla} className="flex items-baseline justify-center gap-[1px] leading-none">
+              <b className="text-[7px] font-black md:text-[8px]" style={{ color: estilo.destaque }}>
+                {atributos[i] ?? "—"}
+              </b>
+              <small className="text-[4px] font-black text-black/40 md:text-[5px]">{sigla}</small>
+            </span>
+          ))}
+        </div>
       </div>
 
       {promessa && (
@@ -296,6 +376,7 @@ export default function ElencoPage() {
   useRequireClub()
   const router = useRouter()
   const { state, setState } = useGameState()
+  const salario = useSalario()
   const { addNotification } = useNotifications()
   const engineFormation = useGameEngine(s => s.formation)
   const engineSetFormation = useGameEngine(s => s.setFormation)
@@ -380,7 +461,13 @@ export default function ElencoPage() {
   const [activeTab, setActiveTab] = useState<"elenco" | "condicao" | "taticas" | "atribuicoes">("elenco")
   const formation = engineFormation ?? "4-3-3"
   const setFormation = engineSetFormation
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number>(1)
+  // Idem: a busca global aponta para um atleta com `?atleta=<id>`. Sem isto o
+  // resultado da busca abriria a tela e mostraria outra pessoa.
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number>(() => {
+    if (typeof window === "undefined") return 1
+    const pedido = Number(new URLSearchParams(window.location.search).get("atleta"))
+    return Number.isFinite(pedido) && pedido > 0 ? pedido : 1
+  })
   // Banco de reservas fechado por padrao — ele so aparece quando o tecnico pede
   // (pedido). Com 23 reservas aberto de cara, o campo ficava espremido.
   const [bancoAberto, setBancoAberto] = useState(false)
@@ -1611,7 +1698,13 @@ export default function ElencoPage() {
           </div>
           
           {/* Formation controls */}
-          <div className="flex items-center gap-2 justify-center md:justify-end">
+          {/* ⚠️ `justify-center` COM CONTEÚDO MAIOR QUE A CAIXA CORTA DOS DOIS
+              LADOS. Esta linha pedia 408px numa faixa de 372px no celular, e o
+              excedente saía metade para cada lado: o "Salvar", primeiro da fila,
+              terminava com a borda esquerda em -26px — invisível e sem toque
+              possível. `flex-wrap` resolve na raiz (quebra a linha em vez de
+              transbordar) e no monitor não muda nada, porque lá sobra espaço. */}
+          <div className="flex flex-wrap items-center gap-2 justify-center md:flex-nowrap md:justify-end">
             <button
               onClick={handleSaveTacticalSetup}
               title="Salvar tática e escalação"
@@ -1948,6 +2041,10 @@ export default function ElencoPage() {
                       promessa={player.potential > player.overall + 3}
                       pills={badgesStatus(player.name)}
                       emTreino={statusFor(player.name).training}
+                      atributos={[
+                        player.pace, player.shooting, player.passing,
+                        player.dribbling, player.defending, player.physical,
+                      ]}
                     />
                   ) : (
                   <div className="relative flex flex-col items-center">
@@ -2988,6 +3085,136 @@ export default function ElencoPage() {
                 ))}
               </div>
 
+              {/* PERFIL CANÔNICO (1.0.293). Atributos de goleiro, pé fraco,
+                  tendências e familiaridade por posição — tudo derivado do id do
+                  atleta, nada gravado no save exceto o que ele APRENDEU jogando
+                  fora de posição. Ver lib/modelo-de-jogador.ts. */}
+              {(() => {
+                const ep = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
+                const perfil = perfilDoAtleta(
+                  ep?.id ?? selectedPlayer.id,
+                  selectedPlayer.position,
+                  selectedPlayer.overall,
+                  ep?.secondaryPositions ?? [],
+                )
+                /**
+                 * NOTA POR POSIÇÃO — a mesma que o motor aplica em campo.
+                 *
+                 * A ficha mostrava a familiaridade crua (0-20), um número que só
+                 * quem leu o código entende. `rendimentoNaPosicao` é o fator que
+                 * a partida de fato usa (1,00 na posição natural, ~0,76 num
+                 * improviso completo); multiplicado pelo overall, ele vira o que
+                 * o jogador quer saber: "de zagueiro ele é um 71".
+                 *
+                 * ⚠️ NÃO é uma escala nova. Inventar aqui um "overall por
+                 * posição" próprio seria a terceira vez que este projeto mede a
+                 * mesma grandeza de dois jeitos — ver o histórico de leilão,
+                 * caixa dos clubes e Championship.
+                 */
+                const familiares = Object.keys(perfil.familiaridadeBase)
+                  .map(pos => ({
+                    pos,
+                    valor: familiaridadeEm(perfil, ep?.perfilProgresso, pos),
+                    nota: Math.round(selectedPlayer.overall * rendimentoNaPosicao(perfil, ep?.perfilProgresso, pos)),
+                  }))
+                  .filter(f => f.valor >= 8)
+                  .sort((a, b) => b.valor - a.valor)
+                  .slice(0, 5)
+                return (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Perfil</span>
+                      {/* PRESTÍGIO (1.0.298). Ganho em campo — Bola de Ouro,
+                          artilharia, título — e não editado à mão. Não soma
+                          overall nenhum: muda preço, salário e o quanto o mundo
+                          já sabe dele. Ver lib/prestigio-do-atleta.ts. */}
+                      {(() => {
+                        const nivel = prestigioDe(state.prestigioDosAtletas, ep?.id ?? -1)
+                        if (nivel === "normal") return null
+                        return (
+                          <span
+                            title={`${state.prestigioDosAtletas?.[ep?.id ?? -1] ?? 0} pontos de prestígio — conquistados em campo`}
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider",
+                              nivel === "top_mundial"
+                                ? "bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/40"
+                                : "bg-sky-400/15 text-sky-300 ring-1 ring-sky-400/40",
+                            )}
+                          >
+                            {nivel === "top_mundial" ? "★ Top Mundial" : "★ Estrela"}
+                          </span>
+                        )
+                      })()}
+                    </div>
+                    {perfil.goleiro && (
+                      <div className="mb-2 grid grid-cols-5 gap-2">
+                        {[
+                          { label: "Reflexo", value: perfil.goleiro.reflexos },
+                          { label: "Saída", value: perfil.goleiro.saidaDoGol },
+                          { label: "Aéreo", value: perfil.goleiro.jogoAereo },
+                          { label: "Pés", value: perfil.goleiro.jogoComOsPes },
+                          { label: "Posic.", value: perfil.goleiro.posicionamento },
+                        ].map(g => (
+                          <div key={g.label} className="rounded-lg bg-white/5 p-2 text-center">
+                            <div className="text-sm font-bold text-[var(--brand)]">{g.value}</div>
+                            <div className="text-[9px] text-white/40">{g.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] text-white/50">
+                      <span className="rounded bg-white/5 px-2 py-1">Pé fraco {"★".repeat(perfil.pesFraco)}<span className="text-white/20">{"★".repeat(5 - perfil.pesFraco)}</span></span>
+                      {familiares.map(f => (
+                        <span
+                          key={f.pos}
+                          title={`Familiaridade ${f.valor}/20 — rende ${f.nota} de ${selectedPlayer.overall} nesta posição`}
+                          className="rounded bg-white/5 px-2 py-1"
+                        >
+                          {f.pos} <b className={f.valor >= 20 ? "text-emerald-300" : f.valor >= 15 ? "text-sky-300" : "text-white/60"}>{f.nota}</b>
+                          <span className="ml-1 text-white/25">{f.valor}/20</span>
+                        </span>
+                      ))}
+                    </div>
+                    {/* CARACTERÍSTICAS (1.0.298). Substituem as "tendências", que
+                        eram rótulo sem efeito nenhum no motor e concorriam com
+                        estas. Aqui o que a ficha promete é o que o motor lê:
+                        Cabeceio sobe no escanteio, Velocidade puxa o
+                        contra-ataque. Ver lib/caracteristicas-do-atleta.ts. */}
+                    {(() => {
+                      const caracteristicas = caracteristicasDoAtleta(
+                        ep?.id ?? selectedPlayer.id,
+                        selectedPlayer.position,
+                        {
+                          pace: selectedPlayer.pace, shooting: selectedPlayer.shooting,
+                          passing: selectedPlayer.passing, dribbling: selectedPlayer.dribbling,
+                          defending: selectedPlayer.defending, physical: selectedPlayer.physical,
+                        },
+                        selectedPlayer.overall,
+                        ep?.traits,
+                      )
+                      if (caracteristicas.length === 0) return null
+                      return (
+                        <div className="flex flex-wrap gap-1.5">
+                          {caracteristicas.map(id => {
+                            const c = caracteristicaPorId(id)
+                            if (!c) return null
+                            return (
+                              <span
+                                key={id}
+                                title={c.descricao}
+                                className="rounded-full border border-[var(--brand)]/25 bg-[var(--brand)]/10 px-2 py-1 text-[10px] text-[var(--brand)]"
+                              >
+                                {c.nome}
+                              </span>
+                            )
+                          })}
+                        </div>
+                      )
+                    })()}
+                  </div>
+                )
+              })()}
+
               {/* Resumo da temporada: gols, assistências, cartões e jogos, do
                   seasonStats REAL do engine (era um dado que o jogo acumulava mas
                   nenhuma tela mostrava no perfil do atleta). */}
@@ -3492,12 +3719,16 @@ export default function ElencoPage() {
                 marketValue: Math.round(Math.pow(selectedPlayer.overall / 60, 3) * 5_000_000),
                 weeksLeft: semanasRestantes,
                 morale: moralNum,
+                // O que ele CONQUISTOU pesa no que ele pede. Sem esta linha, a
+                // Bola de Ouro valorizaria o atleta na venda e não custaria nada
+                // na renovação — o clube lucraria com a fama sem pagar por ela.
+                prestigio: prestigioDe(state.prestigioDosAtletas, ep.id),
               }}
               onClose={() => setNegociacao(null)}
               onRenew={terms => {
                 engineRenewContract(ep.id, terms.salary, terms.contractYears * 52)
                 addNotification({ type: "system", priority: "low", title: "Contrato renovado",
-                  message: `${selectedPlayer.name} renovou por ${terms.contractYears} ano(s) a ${formatCurrency(terms.salary)}/mes.` })
+                  message: `${selectedPlayer.name} renovou por ${terms.contractYears} ano(s) a ${salario.formatar(terms.salary)}.` })
                 setNegociacao(null)
               }}
               onRescind={valor => {

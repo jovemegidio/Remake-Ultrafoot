@@ -3,6 +3,17 @@ import { GAME_DATA_HASH, GAME_DATA_VERSION, ONLINE_PROTOCOL_VERSION } from "@/li
 
 export type InternetConnectionState = "connecting" | "connected" | "reconnecting" | "closed" | "error"
 
+/** Escopo público da 3.0: liga assíncrona confiável, ainda não carreira online. */
+export const ONLINE_PRODUCT_NAME = "Liga Online Beta"
+export const ONLINE_BETA_CAPABILITIES = {
+  format: "league_only",
+  sharedCareer: false,
+  authoritativeSimulation: false,
+  resultDoubleConfirmation: true,
+  reconnect: true,
+  spectators: true,
+} as const
+
 export interface InternetParticipant {
   id: string
   managerName: string
@@ -58,6 +69,22 @@ export interface InternetLeagueSettings {
   allowSpectators: boolean
 }
 
+/**
+ * Comando genérico replicado pelo relay, com ordem autoritativa (`sequence`).
+ *
+ * O relay SEMPRE mandou isto no snapshot (`publicRoom` devolve os últimos 200),
+ * mas o tipo do cliente não declarava o campo — então nenhuma tela conseguia
+ * ler. É este canal que o Draft online usa para as escolhas, o que permitiu
+ * fazer um modo novo sem ensinar o protocolo do draft ao servidor.
+ */
+export interface ComandoDaSala {
+  sequence: number
+  participantId: string
+  commandType: string
+  payload?: unknown
+  createdAt: number
+}
+
 export interface InternetRoom {
   code: string
   mode: "career" | "tournament"
@@ -70,6 +97,8 @@ export interface InternetRoom {
   participants: InternetParticipant[]
   competition: InternetCompetition | null
   leagueSettings: InternetLeagueSettings
+  /** Log ordenado de comandos (últimos 200). Ver `ComandoDaSala`. */
+  commands?: ComandoDaSala[]
   sequence: number
 }
 

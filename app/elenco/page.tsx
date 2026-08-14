@@ -193,9 +193,7 @@ export default function ElencoHubPage() {
 
   const handleCardClick = (card: typeof cards[0]) => {
     setSelectedCard(card.id)
-    setTimeout(() => {
-      hardNavigate(card.route)
-    }, 150)
+    hardNavigate(card.route)
   }
 
   // Save ainda hidratando: nao ha time. Melhor um loading rapido do que mostrar o

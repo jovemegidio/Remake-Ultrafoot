@@ -42,14 +42,21 @@ export interface IdiomaRegistrado {
   variantes?: string[]
   /** Escrita da direita para a esquerda (árabe, hebraico). */
   rtl?: boolean
+  /** Cobertura editorial da versão 1.0.291. */
+  releaseStatus: "official" | "preview"
 }
 
 export const IDIOMAS: IdiomaRegistrado[] = [
-  { id: "pt-BR", label: "Português", flag: "BR", textos: ptBR, variantes: ["pt-PT"] },
-  { id: "en-US", label: "English", flag: "US", textos: enUS, variantes: ["en-GB"] },
-  { id: "es-ES", label: "Español", flag: "ES", textos: esES, variantes: ["es-MX"] },
-  { id: "it-IT", label: "Italiano", flag: "IT", textos: itIT },
+  { id: "pt-BR", label: "Português", flag: "BR", textos: ptBR, variantes: ["pt-PT"], releaseStatus: "official" },
+  { id: "en-US", label: "English", flag: "US", textos: enUS, variantes: ["en-GB"], releaseStatus: "preview" },
+  { id: "es-ES", label: "Español", flag: "ES", textos: esES, variantes: ["es-MX"], releaseStatus: "preview" },
+  { id: "it-IT", label: "Italiano", flag: "IT", textos: itIT, releaseStatus: "preview" },
 ]
+
+export const RELEASE_LANGUAGE_POLICY_291 = {
+  official: ["pt-BR"],
+  previews: ["en-US", "es-ES", "it-IT"],
+} as const
 
 const map: Record<string, Translations> = Object.fromEntries(
   IDIOMAS.flatMap(i => [[i.id, i.textos] as const, ...(i.variantes ?? []).map(v => [v, i.textos] as const)]),

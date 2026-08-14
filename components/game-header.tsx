@@ -1,22 +1,32 @@
 "use client"
 
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
-import { useState, useRef, useEffect, useMemo } from "react"
-import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout, Flag, Swords, Gavel, Heart, Building2 } from "lucide-react"
+import { Fragment, useState, useRef, useEffect, useMemo, useSyncExternalStore } from "react"
+import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Users, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout, Flag, Swords, Gavel, Heart, Building2, Target, BarChart3, ArrowLeftRight } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { ManagerAvatar } from "@/components/manager-avatar"
-import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { competitionsByLeague } from "@/lib/international-competitions"
+import { agrupar, buscar, ROTULO_DO_TIPO, type ItemBuscavel } from "@/lib/busca-global"
 import { podeSalvarCarreira, useGameState } from "@/lib/save-system"
 import { useManagingNational } from "@/lib/time-da-carreira"
 import { salvarTudo } from "@/lib/salvar-tudo"
 import { useGameManager } from "@/lib/use-game-manager"
+import { useGameEngine } from "@/lib/game-engine"
 import { clearJobOffers } from "@/lib/career-moves"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { getGameDate } from "@/lib/game-date"
 import { useTranslation } from "@/lib/i18n"
+import { performanceStore } from "@/components/performance-profile"
+import { FM26CommandCenter } from "@/components/fm26-command-center"
+import { TrocaDeVez } from "@/components/troca-de-vez"
+import { PassagemDeVez } from "@/components/passagem-de-vez"
+import {
+  ehMultitecnico, faltamFechar, iniciarRodada, tecnicosDoSave, type TecnicoDoSave,
+} from "@/lib/tecnicos-do-save"
 
 const MONTHS_SHORT = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
 
@@ -35,8 +45,8 @@ interface RouteMeta {
 }
 const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/central", meta: { parent: "Inicio", parentHref: "/", title: "Central" } },
-  { prefix: "/notificacoes", meta: { parent: "Notificacoes", parentHref: "/notificacoes", title: "Caixa de Entrada" } },
-  { prefix: "/mensagens", meta: { parent: "Notificacoes", parentHref: "/notificacoes", title: "Mensagens" } },
+  { prefix: "/notificacoes", meta: { parent: "Caixa de entrada", parentHref: "/mensagens", title: "Notificacoes" } },
+  { prefix: "/mensagens", meta: { parent: "Caixa de entrada", parentHref: "/mensagens", title: "Mensagens" } },
   { prefix: "/elenco/gerenciamento", meta: { parent: "Elenco", parentHref: "/elenco", title: "Gerenciamento" } },
   { prefix: "/elenco/taticas", meta: { parent: "Elenco", parentHref: "/elenco", title: "Taticas" } },
   { prefix: "/elenco/escalacoes", meta: { parent: "Elenco", parentHref: "/elenco", title: "Escalacoes" } },
@@ -45,11 +55,13 @@ const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/vestiario", meta: { parent: "Elenco", parentHref: "/elenco", title: "Vestiario" } },
   { prefix: "/adversarios", meta: { parent: "Elenco", parentHref: "/elenco", title: "Adversarios" } },
   { prefix: "/transferencias", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Visao Geral" } },
+  { prefix: "/transferroom", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "TransferRoom" } },
   { prefix: "/mercado", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Buscar Atletas" } },
   { prefix: "/olheiros", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Olheiros" } },
   { prefix: "/relatorios", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Relatorios" } },
   { prefix: "/contratos", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Contratos" } },
   { prefix: "/treinamento", meta: { parent: "Academia", parentHref: "/treinamento", title: "Treinamento" } },
+  { prefix: "/gestao-avancada", meta: { parent: "Treinador", parentHref: "/treinador", title: "Gestao Avancada" } },
   { prefix: "/financas", meta: { parent: "Escritorio", parentHref: "/financas", title: "Financas" } },
   { prefix: "/estatisticas", meta: { parent: "Escritorio", parentHref: "/financas", title: "Estatisticas: Atletas" } },
   { prefix: "/competicoes", meta: { parent: "Escritorio", parentHref: "/financas", title: "Competicoes" } },
@@ -101,13 +113,17 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const pathname = usePathname()
   const router = useRouter()
   const { state, setState } = useGameState()
-  const { advanceWeek: advanceGameWeek, currentWeek, currentSeason, seasonCalendar } = useGameManager()
+  const {
+    advanceWeek: advanceGameWeek, currentWeek, currentSeason, seasonCalendar,
+    fecharDecisoesEPassarAVez, trocarTecnicoAtivo,
+  } = useGameManager()
   const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   const routeMeta = getRouteMeta(pathname)
   // Dirigindo uma selecao o menu perde os itens de clube (mercado, financas,
   // juniores...) e recebe os da selecao. Ver buildNavMenuItems.
   const { isNational: emModoSelecao } = useManagingNational()
   const navMenuItems = useMemo(() => buildNavMenuItems(emModoSelecao), [emModoSelecao])
+
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -117,6 +133,90 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [showCoachDropdown, setShowCoachDropdown] = useState(false)
   const [showNavMenu, setShowNavMenu] = useState(false)
   const [showResignConfirm, setShowResignConfirm] = useState(false)
+
+  // ── CO-OP LOCAL: a mesa e a vez ──────────────────────────────────────────
+  //
+  // Tudo isto e inerte numa carreira de um tecnico so: `tecnicosDoSave` devolve
+  // uma lista de um, `ehMultitecnico` da falso e nada aparece na tela.
+  const tecnicosDaMesa = useMemo(
+    () => tecnicosDoSave(state.tecnicos, state.managerName, state.selectedTeamShort),
+    [state.tecnicos, state.managerName, state.selectedTeamShort],
+  )
+  const euNaMesa = useMemo(() => {
+    const meuId = state.tecnicoAtivoId ?? tecnicosDaMesa[0]?.id
+    return tecnicosDaMesa.find(t => t.id === meuId) ?? null
+  }, [tecnicosDaMesa, state.tecnicoAtivoId])
+  const euJaFechei = Boolean(
+    euNaMesa && (state.rodadaCompartilhada?.prontos ?? []).includes(euNaMesa.id),
+  )
+  const faltamNaMesa = useMemo(
+    () => faltamFechar(state.rodadaCompartilhada ?? iniciarRodada(state.week), tecnicosDaMesa),
+    [state.rodadaCompartilhada, state.week, tecnicosDaMesa],
+  )
+  /**
+   * O "Avancar" vira "Passar a vez"?
+   *
+   * So quando falta MAIS ALGUEM alem de mim. Se eu sou o ultimo, clicar avanca a
+   * rodada de verdade — e prometer "passar a vez" ali seria mentira.
+   */
+  const passarAVezEmVezDeAvancar = ehMultitecnico(tecnicosDaMesa)
+    && !euJaFechei
+    && faltamNaMesa.some(t => t.id !== euNaMesa?.id)
+  const [passagem, setPassagem] = useState<{
+    para: TecnicoDoSave
+    de: TecnicoDoSave | null
+    novaRodada: boolean
+    /** Rota a abrir DEPOIS da confirmacao, quando houver. */
+    irPara?: string | null
+  } | null>(null)
+
+  // ── BUSCA GLOBAL, dentro deste mesmo menu ────────────────────────────────
+  //
+  // Nao existe tela de busca, e e de proposito: o menu da tecla W JA e o lugar
+  // onde se procura para onde ir. Com o campo vazio ele continua identico ao que
+  // sempre foi; digitando, a lista troca as telas por resultados de quatro tipos.
+  // Uma rota `/busca` obrigaria a NAVEGAR ATE A BUSCA para poder navegar.
+  const [termoBusca, setTermoBusca] = useState("")
+  // Assina a REFERENCIA do elenco, nao cada atleta: o cabecalho e desenhado em
+  // toda tela e nao pode redesenhar a cada ponto de moral que muda.
+  const squadParaBusca = useGameEngine(s => s.squadPlayers)
+
+  // ⚠️ O catalogo so e montado com o menu ABERTO e com termo digitado. Este
+  // componente e desenhado em TODA tela: montar 1.350 clubes a cada render seria
+  // repetir a causa da lentidao que a 1.0.292 corrigiu.
+  const catalogoBusca = useMemo<ItemBuscavel[]>(() => {
+    if (!showNavMenu || termoBusca.trim().length < 2) return []
+    const itens: ItemBuscavel[] = navMenuItems.map(item => ({
+      tipo: "tela" as const, titulo: item.label, detalhe: item.secao, href: item.href,
+    }))
+    for (const time of allTeams) {
+      itens.push({
+        tipo: "clube", titulo: time.nome, detalhe: (time as { pais?: string }).pais || time.divisao,
+        href: `/adversarios?clube=${encodeURIComponent(time.curto)}`,
+        sinonimos: [time.curto, time.file_key],
+      })
+    }
+    // Atletas: o elenco do usuario. O pool de 66 mil vive num pedaco carregado
+    // sob demanda e puxa-lo aqui devolveria o peso ao cabecalho.
+    for (const atleta of squadParaBusca) {
+      itens.push({
+        tipo: "atleta", titulo: atleta.name, detalhe: atleta.position,
+        href: `/elenco/gerenciamento?atleta=${atleta.id}`,
+      })
+    }
+    for (const [divisao, competicoes] of Object.entries(competitionsByLeague)) {
+      for (const c of competicoes) {
+        itens.push({ tipo: "competicao", titulo: c.name, detalhe: divisao, href: "/competicoes" })
+      }
+    }
+    return itens
+  }, [showNavMenu, termoBusca, navMenuItems, squadParaBusca])
+
+  const resultadosBusca = useMemo(
+    () => buscar(catalogoBusca, termoBusca),
+    [catalogoBusca, termoBusca],
+  )
+  const buscando = termoBusca.trim().length >= 2
 
   /**
    * Pedir demissão: sai do CLUBE e volta ao menu.
@@ -144,17 +244,54 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [navMenuIndex, setNavMenuIndex] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // No export estático as páginas são baixadas na primeira visita. Aquecemos as
-  // rotas mais usadas depois que o cabeçalho já desenhou, sem bloquear a tela nem
-  // desperdiçar memória com todas as páginas do jogo.
+  /**
+   * AQUECIMENTO DE ROTAS — e por que ele depende do computador.
+   *
+   * No export estático a página só é baixada na primeira visita, então aquecer
+   * as mais usadas tira o engasgo da primeira navegação. Isso é bom numa máquina
+   * folgada e é ruim numa apertada: medindo com browser de verdade (13/08/2026),
+   * as telas pintavam em ~200 ms e continuavam trabalhando por até 6 s — o
+   * aquecimento baixa e COMPILA o JavaScript de outras cinco páginas enquanto a
+   * pessoa ainda está lendo esta. Compilar JS é trabalho de CPU na mesma thread
+   * que desenha a tela.
+   *
+   * Por isso agora ele segue o perfil de desempenho, que é a resposta que o
+   * próprio jogo já tem para "que computador é este":
+   *   - econômico  → não aquece nada (a primeira navegação custa um pouco mais,
+   *                  e todas as outras deixam de disputar CPU);
+   *   - equilibrado→ aquece as duas rotas mais visitadas;
+   *   - qualidade  → aquece as cinco, como antes.
+   *
+   * ⚠️ O `requestIdleCallback` é o ponto: sem ele o aquecimento acontece no meio
+   * do trabalho de renderização, que é justamente o que se quer evitar.
+   */
+  const perfilDesempenho = useSyncExternalStore(
+    performanceStore.subscribe,
+    performanceStore.getSnapshot,
+    performanceStore.getServerSnapshot,
+  )
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      for (const href of ["/", "/elenco", "/mercado", "/calendario", "/competicoes"]) {
-        router.prefetch(href)
-      }
-    }, 700)
-    return () => window.clearTimeout(timer)
-  }, [router])
+    const rotas = perfilDesempenho === "economy" ? []
+      : perfilDesempenho === "balanced" ? ["/", "/elenco"]
+      : ["/", "/elenco", "/mercado", "/calendario", "/competicoes"]
+    if (rotas.length === 0) return
+
+    let cancelado = false
+    const aquecer = () => {
+      if (cancelado) return
+      for (const href of rotas) router.prefetch(href)
+    }
+    // `requestIdleCallback` não existe em toda webview; o timeout é a saída.
+    const temOcioso = typeof window.requestIdleCallback === "function"
+    const id = temOcioso
+      ? window.requestIdleCallback(aquecer, { timeout: 3000 })
+      : window.setTimeout(aquecer, 700)
+    return () => {
+      cancelado = true
+      if (temOcioso) window.cancelIdleCallback?.(id as number)
+      else window.clearTimeout(id as number)
+    }
+  }, [router, perfilDesempenho])
 
   // Atalho "W": abre o MENU de navegacao (o keycap [W] sempre existiu, mas a tecla nao
   // fazia nada). Antes W ia direto para a secao pai; o usuario pediu um menu com as
@@ -198,7 +335,11 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     if (!showNavMenu) return
     const onPad = (e: Event) => {
       const { button } = (e as CustomEvent<{ button: string }>).detail
-      const last = navMenuItems.length - 1
+      // Buscando, o cursor do controle anda pelos RESULTADOS. Sem isto, `A`
+      // abriria a tela do indice N da lista de telas enquanto a tela mostra
+      // resultados — ou seja, levaria para outro lugar do que o destacado.
+      const lista: { href: string }[] = buscando ? resultadosBusca : navMenuItems
+      const last = lista.length - 1
       // O menu e uma grade de 3 colunas (sm:grid-cols-3).
       const COLS = 3
       switch (button) {
@@ -211,8 +352,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         case "DPAD_DOWN":
           setNavMenuIndex((i) => Math.min(last, i + COLS)); break
         case "A": {
-          const item = navMenuItems[navMenuIndex]
-          if (item) { setShowNavMenu(false); hardNavigate(item.href) }
+          const item = lista[navMenuIndex]
+          if (item) { setShowNavMenu(false); setTermoBusca(""); hardNavigate(item.href) }
           break
         }
         case "B":
@@ -222,7 +363,13 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     }
     window.addEventListener("gamepad:button", onPad)
     return () => window.removeEventListener("gamepad:button", onPad)
-  }, [showNavMenu, navMenuIndex, navMenuItems])
+  }, [showNavMenu, navMenuIndex, navMenuItems, buscando, resultadosBusca])
+
+  // O termo nao sobrevive ao fechamento: reabrir o menu tem de mostrar o menu,
+  // nao a ultima busca de meia hora atras.
+  useEffect(() => {
+    if (!showNavMenu) setTermoBusca("")
+  }, [showNavMenu])
 
   // Ao abrir o menu, comeca no item da secao atual (nao sempre no primeiro).
   useEffect(() => {
@@ -362,6 +509,26 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       return
     }
 
+    // ── CO-OP: FECHAR E PASSAR A VEZ E O PROPRIO "AVANCAR" ──────────────────
+    //
+    // ⚠️ ANTES ISTO EXIGIA ACHAR UM MENU. O jogador clicava "Avancar", recebia
+    // "fulano ainda nao fechou as decisoes" e ficava sem saida visivel — a acao
+    // que destravava a rodada morava dentro de um dropdown que nada indicava.
+    // Um modo em que o botao principal so sabe dizer "nao" nao esta pronto.
+    //
+    // Agora "Avancar" significa a mesma coisa que sempre significou: EU ACABEI.
+    // Numa mesa de um tecnico so, avanca a semana. Numa mesa de varios, fecha as
+    // minhas decisoes e entrega o computador para o proximo; quando o ultimo
+    // fecha, a rodada roda sozinha na sequencia, sem ninguem clicar de novo.
+    if (ehMultitecnico(tecnicosDaMesa) && !euJaFechei) {
+      const r = fecharDecisoesEPassarAVez()
+      if (!r.todosFecharam && r.proximo) {
+        setPassagem({ para: r.proximo, de: euNaMesa, novaRodada: false })
+        return
+      }
+      // Todos fecharam: segue direto para o avanco, sem passo intermediario.
+    }
+
     setAdvancing(true)
 
     // A data corre os 7 dias antes de a rodada ser simulada. Eram 95ms por dia =
@@ -381,6 +548,27 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     const resultado = await advanceGameWeek()
     setAdvanceDate(null)
     setAdvancing(false)
+
+    // A rodada rodou: a vez volta para o primeiro da mesa e a tela de troca
+    // aparece de novo. Sem isto o computador ficaria na mao de quem fechou por
+    // ultimo, que passaria a jogar a rodada seguinte inteira sozinho — e os
+    // outros perderiam a vez sem nada dizer por que.
+    if (ehMultitecnico(tecnicosDaMesa)) {
+      const primeiro = tecnicosDaMesa[0]
+      if (primeiro && primeiro.id !== (state.tecnicoAtivoId ?? tecnicosDaMesa[0]?.id)) {
+        trocarTecnicoAtivo(primeiro.id)
+      }
+      if (primeiro) {
+        // A navegacao espera a confirmacao: navegar agora desenharia a tela do
+        // proximo tecnico ATRAS da tela de troca, que e o que ela impede.
+        setPassagem({
+          para: primeiro, de: null, novaRodada: true,
+          irPara: resultado?.newSeason ? null : "/partida",
+        })
+        return
+      }
+    }
+
     if (!resultado?.newSeason) {
       hardNavigate("/partida")
     }
@@ -443,6 +631,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
       {/* Direita: acoes + widget do clube */}
       <div className="flex items-center gap-3 shrink-0">
+        <FM26CommandCenter />
         {/* Info temporada/calendario (data real, nao contador de rodada).
             O chip mostra "09 ABR" por falta de espaco; a data COMPLETA aparece ao
             passar o mouse (pedido) — junto com o dia da semana, que e o que diz
@@ -477,13 +666,25 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
         </button>
 
+        {/* A VEZ DA MESA (co-op local). Fica COLADO no "Avancar" de proposito: a
+            rodada nao anda enquanto todos nao fecharem, e o lugar de descobrir
+            isso e ao lado do botao que nao vai funcionar. Em carreira de um
+            tecnico so, o componente nao desenha nada. */}
+        <TrocaDeVez />
+
         {/* Avancar — ou JOGAR, quando a partida da semana ainda e sua para disputar.
             Trocar o rotulo resolve o mal-entendido na raiz: o jogador clicava
             "avancar" achando que ia ATE o dia do jogo, e o jogo passava. */}
         <button
           onClick={handleAdvance}
           disabled={advancing}
-          title={partidaPendenteAgora ? "Voce tem partida nesta semana — ir para o jogo" : "Avancar uma semana"}
+          title={
+            partidaPendenteAgora
+              ? "Voce tem partida nesta semana — ir para o jogo"
+              : passarAVezEmVezDeAvancar
+                ? `Fechar suas decisoes e passar o computador (${faltamNaMesa.length} ainda nao fecharam)`
+                : "Avancar uma semana"
+          }
           className={cn(
             "eafc-btn flex items-center gap-2 px-4 py-2 text-[11px] font-bold tracking-wider uppercase",
             advancing && "opacity-50 cursor-wait",
@@ -493,8 +694,15 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             ? <Loader2 className="h-4 w-4 animate-spin" />
             : partidaPendenteAgora
               ? <Play className="h-4 w-4 fill-current" />
-              : <FastForward className="h-4 w-4" />}
-          <span className="hidden sm:inline">{partidaPendenteAgora ? "Jogar" : "Avancar"}</span>
+              : passarAVezEmVezDeAvancar
+                ? <Users className="h-4 w-4" />
+                : <FastForward className="h-4 w-4" />}
+          {/* Numa mesa o botao nao avanca o mundo: ele encerra a MINHA vez. O
+              rotulo tem de dizer isso, senao a pessoa clica esperando ver a
+              rodada correr e recebe a tela de troca sem entender por que. */}
+          <span className="hidden sm:inline">
+            {partidaPendenteAgora ? "Jogar" : passarAVezEmVezDeAvancar ? "Passar a vez" : "Avancar"}
+          </span>
         </button>
 
         {/* O sino abria um drawer que sumia a cada navegação e passava
@@ -640,15 +848,85 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           className="absolute left-5 top-16 flex max-h-[calc(100vh-4rem)] w-[min(292px,88vw)] flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black/10 backdrop-blur-sm"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* CAMPO DE BUSCA. Fica no topo do menu que ja existia; vazio, nada
+                muda. `autoFocus` porque quem abre com a tecla W ja esta com a
+                mao no teclado — mas o menu segue utilizavel so com o controle,
+                que continua andando pela lista por indice. */}
+            <div className="border-b border-white/[0.06] px-3 pb-2 pt-3">
+              <input
+                type="search"
+                value={termoBusca}
+                autoFocus
+                onChange={(e) => { setTermoBusca(e.target.value); setNavMenuIndex(0) }}
+                placeholder="Buscar tela, clube, atleta ou competição"
+                aria-label="Buscar no jogo"
+                className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[var(--brand)]/60 focus:outline-none"
+              />
+              {buscando && (
+                <p className="px-1 pt-1.5 text-[10px] uppercase tracking-wider text-white/30">
+                  {resultadosBusca.length === 0
+                    ? "nada encontrado"
+                    : `${resultadosBusca.length} resultado${resultadosBusca.length > 1 ? "s" : ""}`}
+                </p>
+              )}
+            </div>
+
+            {buscando ? (
+              <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
+                {agrupar(resultadosBusca).map((grupo) => (
+                  <Fragment key={grupo.tipo}>
+                    <p className="px-3 pb-1 pt-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/30">
+                      {ROTULO_DO_TIPO[grupo.tipo]}
+                    </p>
+                    {grupo.itens.map((r) => {
+                      const i = resultadosBusca.indexOf(r)
+                      const focused = i === navMenuIndex
+                      return (
+                        <button
+                          key={`${r.tipo}-${r.href}-${r.titulo}`}
+                          onClick={() => { setShowNavMenu(false); setTermoBusca(""); hardNavigate(r.href) }}
+                          onMouseEnter={() => setNavMenuIndex(i)}
+                          className={cn(
+                            "relative flex w-full items-center justify-between gap-3 border-l-2 px-3 py-2.5 text-left transition-all",
+                            focused
+                              ? "border-l-[var(--brand)] bg-gradient-to-r from-[var(--brand)]/16 to-transparent"
+                              : "border-l-transparent hover:border-l-white/25 hover:bg-white/[0.035]",
+                          )}
+                        >
+                          <span className={cn("truncate text-sm font-semibold", focused ? "text-white" : "text-white/60")}>
+                            {r.titulo}
+                          </span>
+                          {r.detalhe && (
+                            <span className="shrink-0 text-[10px] uppercase tracking-wider text-white/30">{r.detalhe}</span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </Fragment>
+                ))}
+              </div>
+            ) : (
             <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
               {navMenuItems.map((item, i) => {
                 const Icon = item.icon
-                const active = pathname.startsWith(item.href) && item.href !== "/"
+                // Cabecalho aparece no PRIMEIRO item de cada secao. Ele e irmao
+                // do botao (Fragment), nunca um item da lista: o cursor do
+                // controle anda por indice e pararia num titulo inerte.
+                const abreSecao = i === 0 || navMenuItems[i - 1].secao !== item.secao
+                // Compara só o CAMINHO: item com `?aba=` no href nunca acenderia
+                // se a comparação fosse pela URL inteira.
+                const caminho = item.href.split("?")[0]
+                const active = pathname.startsWith(caminho) && caminho !== "/"
                 // Item sob o cursor do CONTROLE (no mouse, o hover ja indica).
                 const focused = i === navMenuIndex
                 return (
+                  <Fragment key={item.href}>
+                  {abreSecao && (
+                    <p className="px-3 pb-1 pt-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/30">
+                      {item.secao}
+                    </p>
+                  )}
                   <button
-                    key={item.href}
                     onClick={() => { setShowNavMenu(false); hardNavigate(item.href) }}
                     onMouseEnter={() => setNavMenuIndex(i)}
                     className={cn(
@@ -663,9 +941,11 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                     <Icon className={cn("h-4 w-4 shrink-0", focused || active ? "text-[var(--brand)]" : "text-white/50")} />
                     <span className={cn("text-sm font-semibold", focused || active ? "text-white" : "text-white/55")}>{item.label}</span>
                   </button>
+                  </Fragment>
                 )
               })}
             </div>
+            )}
 
             {/* Pedir demissao — acao destrutiva, separada da grade de navegacao.
                 SOME no modo selecao: ali este botao demitia do CLUBE, e quem
@@ -693,6 +973,24 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           teamName={userTeam.nome}
           onCancel={() => setShowResignConfirm(false)}
           onConfirm={handleResign}
+        />
+      )}
+
+      {/* A TROCA DE MAOS. Fica no cabecalho porque o cabecalho esta em toda tela
+          — a vez pode virar de qualquer lugar do jogo, nao so do escritorio. */}
+      {passagem && (
+        <PassagemDeVez
+          para={passagem.para}
+          de={passagem.de}
+          rodada={state.rodadaCompartilhada?.numero ?? currentWeek}
+          fecharam={(state.rodadaCompartilhada?.prontos ?? []).length}
+          total={tecnicosDaMesa.filter(t => t.tipo === "humano").length}
+          novaRodada={passagem.novaRodada}
+          onConfirmar={() => {
+            const destino = passagem.irPara
+            setPassagem(null)
+            if (destino) hardNavigate(destino)
+          }}
         />
       )}
     </header>
@@ -756,14 +1054,40 @@ function ResignConfirmDialog({ teamName, onCancel, onConfirm }: { teamName: stri
 // para gerir — esses itens levavam a telas que ou redirecionam ou mostram os
 // dados do clube que ficou por baixo. Em vez de esconder na mao em cada tela,
 // o menu deixa de oferece-los e ganha os itens da SELECAO.
-type NavMenuItem = { label: string; href: string; icon: typeof Save; clubOnly?: boolean }
+/**
+ * `secao` agrupa VISUALMENTE sem quebrar a navegacao.
+ *
+ * O menu tinha 15 itens de clube numa lista corrida, e o jogador lia todos toda
+ * vez para achar um. Os cabecalhos NAO entram no array: ele continua plano
+ * porque o controle e o teclado andam por INDICE (`navMenuIndex`) — meter
+ * separador aqui faria a seta parar em cima de um titulo que nao abre nada.
+ * O cabecalho e desenhado quando a secao muda de um item para o outro.
+ */
+type NavMenuItem = {
+  label: string; href: string; icon: typeof Save; clubOnly?: boolean; secao: string
+}
 
 const NAV_MENU_ITEMS: NavMenuItem[] = [
-  { label: "Escritorio", href: "/", icon: Trophy },
-  { label: "Area do Treinador", href: "/treinador", icon: User },
-  { label: "Notificacoes", href: "/notificacoes", icon: Bell },
-  { label: "Elenco", href: "/elenco", icon: User, clubOnly: true },
-  { label: "Juniores", href: "/base", icon: Sprout, clubOnly: true },
+  { secao: "Clube", label: "Escritorio", href: "/", icon: Trophy },
+  { secao: "Clube", label: "Central do Clube", href: "/central", icon: Heart, clubOnly: true },
+  { secao: "Clube", label: "Financas", href: "/financas", icon: TrendingUp, clubOnly: true },
+  // INFRAESTRUTURA ganhou entrada PROPRIA (pedido antigo): existia so dentro de
+  // Configuracoes, e quem quer mexer em bilheteria ou obra do estadio nao
+  // procura isso em "configuracoes do jogo".
+  { secao: "Clube", label: "Infraestrutura", href: "/infraestrutura", icon: Building2, clubOnly: true },
+
+  { secao: "Elenco", label: "Elenco", href: "/elenco", icon: User, clubOnly: true },
+  { secao: "Elenco", label: "Treinamento", href: "/treinamento", icon: User, clubOnly: true },
+  { secao: "Elenco", label: "Juniores", href: "/base", icon: Sprout, clubOnly: true },
+  // MERCADO absorve o TransferRoom: os dois sao a mesma tarefa (negociar
+  // atleta), e o TransferRoom ja e alcancado de dentro do Mercado. Duas linhas
+  // no menu para a mesma decisao so faziam o tecnico escolher por qual porta
+  // entrar antes de escolher o que fazer.
+  { secao: "Elenco", label: "Mercado", href: "/mercado", icon: TrendingUp, clubOnly: true },
+  // Performance Center e a unica porta para as "Fases do jogo", o planejamento
+  // plurianual e o Data Hub. Tirar do menu deixaria as quatro abas sem entrada
+  // nenhuma — nenhuma outra tela linka para ca.
+  { secao: "Elenco", label: "Performance Center", href: "/performance", icon: Heart, clubOnly: true },
   // ⚠️ TATICAS E LEILOES SAIRAM DO MENU (pedido).
   //
   // Taticas: a prancheta pertence ao PRE-JOGO. Alcancavel pelo menu a qualquer
@@ -773,29 +1097,39 @@ const NAV_MENU_ITEMS: NavMenuItem[] = [
   // proprio pre-jogo (ver components/match/ajustes-finais).
   // Leiloes: a tela continua existindo e e alcancada pelo pos-partida e pelo
   // Mercado; o que sai e a entrada do menu.
-  { label: "Mercado", href: "/mercado", icon: TrendingUp, clubOnly: true },
-  { label: "Central do Clube", href: "/central", icon: Heart, clubOnly: true },
-  { label: "Calendario", href: "/calendario", icon: Calendar, clubOnly: true },
+  { secao: "Competicao", label: "Calendario", href: "/calendario", icon: Calendar, clubOnly: true },
   // Competicoes e Classificacao apontavam para a MESMA rota — eram duas
   // entradas para a mesma tela. Viraram uma so.
-  { label: "Competicoes e Classificacao", href: "/competicoes", icon: Trophy, clubOnly: true },
-  { label: "Financas", href: "/financas", icon: TrendingUp, clubOnly: true },
-  { label: "Performance Center", href: "/performance", icon: Heart, clubOnly: true },
-  // INFRAESTRUTURA ganhou entrada PROPRIA aqui (pedido). Ela existia so dentro
-  // de Configuracoes, o que a escondia: quem quer mexer em bilheteria, obra do
-  // estadio ou nivel do CT nao vai procurar isso em "configuracoes do jogo".
-  // E decisao de gestao, e mora junto das outras.
-  { label: "Infraestrutura do Clube", href: "/infraestrutura", icon: Building2, clubOnly: true },
-  { label: "Treinamento", href: "/treinamento", icon: User, clubOnly: true },
-  { label: "Configuracoes", href: "/configuracoes", icon: Settings },
+  { secao: "Competicao", label: "Competicoes e Classificacao", href: "/competicoes", icon: Trophy, clubOnly: true },
+
+  { secao: "Voce", label: "Area do Treinador", href: "/treinador", icon: User },
+  // DESAFIOS. A tela existia desde a fase 3 e NENHUM menu linkava para ela: o
+  // modo inteiro era inalcancavel dentro do jogo. Fica em "Voce" porque o
+  // desafio e do TECNICO — ele atravessa clube e temporada.
+  { secao: "Voce", label: "Desafios", href: "/desafios", icon: Trophy, clubOnly: true },
+  // ⚠️ GESTAO E RANKINGS SAO DUAS COISAS, e voltaram a ser duas entradas.
+  //
+  // Elas foram fundidas num item so ("Gestao e rankings") porque os rankings
+  // eram uma ABA da Central de Gestao e ninguem os achava. Mas um rotulo que
+  // precisa explicar onde a coisa esta e sintoma de ela estar no lugar errado:
+  // gestao e o que o tecnico DECIDE (bolas paradas, metas, comissao,
+  // disciplina); ranking e o que ele CONSULTA. Juntas, ver uma tabela custava
+  // atravessar onze abas de decisao.
+  { secao: "Voce", label: "Gestao", href: "/gestao-avancada", icon: Target },
+  { secao: "Voce", label: "Rankings", href: "/rankings", icon: BarChart3 },
+  // CAIXA DE ENTRADA sai do menu porque ela ja tem porta PROPRIA e melhor: o
+  // sino do cabecalho, que ainda mostra quantas mensagens ha por ler. Ninguem
+  // abre o menu para ver recado quando o contador esta piscando ao lado.
+  // (As telas /mensagens e /notificacoes continuam existindo e ligadas entre si.)
+  { secao: "Voce", label: "Configuracoes", href: "/configuracoes", icon: Settings },
 ]
 
 // Itens que substituem os de clube no modo selecao (entram antes de Configuracoes).
 const NAV_MENU_NATIONAL_ITEMS: NavMenuItem[] = [
-  { label: "Convocacao", href: "/selecao/convocacao", icon: User },
-  { label: "Competicoes da selecao", href: "/selecao/competicoes", icon: Trophy },
-  { label: "Amistosos de preparacao", href: "/selecao/amistosos", icon: Swords },
-  { label: "Contrato e gestao", href: "/selecao", icon: Flag },
+  { secao: "Selecao", label: "Convocacao", href: "/selecao/convocacao", icon: User },
+  { secao: "Selecao", label: "Competicoes da selecao", href: "/selecao/competicoes", icon: Trophy },
+  { secao: "Selecao", label: "Amistosos de preparacao", href: "/selecao/amistosos", icon: Swords },
+  { secao: "Selecao", label: "Contrato e gestao", href: "/selecao", icon: Flag },
 ]
 
 function buildNavMenuItems(isNational: boolean): NavMenuItem[] {

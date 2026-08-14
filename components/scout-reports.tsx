@@ -19,7 +19,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { useGameEngine, type Scout, AVAILABLE_SCOUTS, type ScoutedPlayer } from "@/lib/game-engine"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 import { Progress } from "@/components/ui/progress"
 

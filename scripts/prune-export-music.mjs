@@ -30,6 +30,13 @@ const HEAVY_DIRS = [
   "out/escudos-selecoes", // ~224 national team shields
   "out/selecoes",     // selecoes assets
   "out/trofeus",      // trophy images
+  // ⚠️ VIAJAVA DUAS VEZES NO INSTALADOR (medido em 13/08/2026): 57 MB dentro do
+  // `out/` embutido no `ultrafoot.exe` E 57 MB como pasta solta de *resources*.
+  // O jogo só lê pela segunda: `lib/teams-data.ts` monta a URL com
+  // `gameAssetUrl("/kits-imported/...")`, que vira `game-asset://` dentro do
+  // Tauri — exatamente como `jogadores` e `escudos`, que já estavam aqui. A
+  // cópia embutida nunca era aberta; só engordava o executável.
+  "out/kits-imported", // ~4.5k uniformes — ja viajam como resources
 ]
 
 let dirsPruned = 0

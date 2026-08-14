@@ -2,18 +2,26 @@
 // Origem: https://github.com/jovemegidio/Ultrafoot (data/seeds/players_br.json)
 
 import playersBR from "@/data/seeds/players_br.json"
-import importedBF2026 from "@/data/seeds/imported-bf2026.json"
+// ÍNDICE (0,88 MB, estático) + elencos sob demanda (7,91 MB). O seed completo de
+// 8,91 MB saía daqui para o chunk COMPARTILHADO de toda rota, porque este módulo
+// é importado por `game-engine` e `use-game-manager`. Ver `lib/pool-elencos.ts`.
+import importedBF2026 from "@/data/seeds/imported-bf2026-index.json"
+import { elencoDoPool, poolElencosProntos, todosOsElencosDoPool, type PoolPlayerRaw } from "@/lib/pool-elencos"
 // Elencos REAIS por clube (gerado por scripts/import-real-positions.mjs a partir dos
 // CSVs). Corrige as posicoes que o seed atribui por indice E o elenco desatualizado.
 import realSquadsJson from "@/data/seeds/real-positions.json"
 import { allTeams, type Team } from "@/lib/teams-data"
-import realSquadsTM from "@/data/seeds/real-squads-tm.json"
+// Sob demanda, como o pool: eram 4,31 MB no JS de TODA tela. Ver
+// `lib/elencos-reais-tm.ts`.
+import { elencosReaisTM, elencosTMProntos } from "@/lib/elencos-reais-tm"
 import { getPlayerOverride, bonusDasCaracteristicas } from "@/lib/player-overrides"
+import { aplicarPatchDeElenco } from "@/lib/roster-overrides"
 import { hasDeparted } from "@/lib/departed-players"
 import { getArrivals, hasAnyArrival } from "@/lib/world-market"
 import { saiuDoClube, chegouAoClube, temTransferencias } from "@/lib/atualizacao-elencos"
 import { envelhecerElenco } from "@/lib/mundo-vivo"
 import { temporadasDesdeOSeed, getClubeDoUsuario } from "@/lib/temporada-do-mundo"
+import { elencoPersistente286 } from "@/lib/universo-286"
 
 const REAL_SQUADS = realSquadsJson as unknown as Record<
   string,
@@ -51,8 +59,12 @@ export interface Player {
   preferredFoot?: "Direita" | "Esquerda" | "Ambidestro"
   reputation?: "normal" | "estrela" | "top_mundial"
   traits?: string[]
-  /** Transparência do cadastro: ausente = fonte real/curada; nunca disfarçar complemento como atleta real. */
-  generatedOrigin?: "provisional" | "academy"
+  /**
+   * Transparência do cadastro: ausente = fonte real/curada; nunca disfarçar complemento como atleta real.
+   * `editor` = criado à mão em lib/roster-overrides — e é a marca que faz a
+   * calibração respeitar o overall digitado.
+   */
+  generatedOrigin?: "provisional" | "academy" | "editor"
 }
 
 const RAW = playersBR as Record<string, Array<{ nome: string; pos: string; idade: number; base: number }>>
@@ -61,8 +73,19 @@ const IMPORTED = importedBF2026 as {
     id?: string
     nome: string
     curto?: string
-    jogadores?: Array<{ nome: string; posicao: string; idade: number; overall: number; nac?: string; ft?: string }>
   }>
+}
+
+/**
+ * Elenco de um clube do índice. Substitui o antigo `time.jogadores`, que só
+ * existia porque o seed inteiro viajava no bundle.
+ *
+ * Devolve lista VAZIA enquanto os elencos não chegaram (só no navegador, e só
+ * antes do primeiro carregamento). Quem grava dado derivado disto tem de esperar
+ * `carregarElencosDoPool()` — ver o aviso em `lib/pool-elencos.ts`.
+ */
+function elencoImportado(time: { id?: string } | undefined): PoolPlayerRaw[] {
+  return elencoDoPool(time?.id) ?? []
 }
 
 function normalizeTeamName(value: string): string {
@@ -171,18 +194,24 @@ for (const team of importedTeams) {
 // Indice global evita perder idade/overall quando o CSV atualizado move o atleta para
 // outro clube, mas o seed antigo ainda o guarda no time anterior. So usamos nomes com
 // uma unica combinacao de idade para nao confundir homonimos.
-const globalImportedPlayers = new Map<string, Array<{ idade: number; overall: number; nac?: string; ft?: string }>>()
-for (const importedTeam of importedTeams) {
-  for (const player of importedTeam.jogadores ?? []) {
-    const key = normalizeTeamName(player.nome)
-    const list = globalImportedPlayers.get(key) ?? []
-    list.push({ idade: player.idade, overall: player.overall, nac: player.nac, ft: player.ft })
-    globalImportedPlayers.set(key, list)
+// ⚠️ `preguicosoQuandoHouverElenco` e não `preguicoso`: se o índice fosse
+// construído com os elencos ainda frios, o mapa VAZIO ficaria memorizado para
+// sempre e todo atleta perderia idade/overall/nacionalidade em silêncio.
+const globalImportedPlayers = preguicosoQuandoHouverElenco(() => {
+  const index = new Map<string, Array<{ idade: number; overall: number; nac?: string; ft?: string }>>()
+  for (const jogadores of Object.values(todosOsElencosDoPool())) {
+    for (const player of jogadores) {
+      const key = normalizeTeamName(player.nome)
+      const list = index.get(key) ?? []
+      list.push({ idade: player.idade, overall: player.overall, nac: player.nac, ft: player.ft })
+      index.set(key, list)
+    }
   }
-}
+  return index
+})
 
 function findUniqueImportedPlayer(name: string): { idade: number; overall: number; nac?: string; ft?: string } | undefined {
-  const candidates = globalImportedPlayers.get(normalizeTeamName(name)) ?? []
+  const candidates = globalImportedPlayers().get(normalizeTeamName(name)) ?? []
   const unique = new Map(candidates.map(p => [`${p.idade}:${p.overall}`, p]))
   return unique.size === 1 ? [...unique.values()][0] : undefined
 }
@@ -215,6 +244,44 @@ function preguicoso<T>(construir: () => T): () => T {
 }
 
 /**
+ * Igual ao `preguicoso`, mas só MEMORIZA depois que os elencos do pool chegaram.
+ *
+ * Existe por causa de um modo de falha silencioso: os índices derivados do seed
+ * (idade, overall, nacionalidade por nome) são construídos na primeira leitura.
+ * Como os elencos passaram a chegar sob demanda, a primeira leitura pode cair
+ * antes deles — e o `preguicoso` normal congelaria o resultado vazio pelo resto
+ * da sessão, sem erro nenhum na tela.
+ */
+/** Igual ao de cima, para o seed do Transfermarkt. Mesmo modo de falha. */
+function preguicosoQuandoHouverTM<T>(construir: () => T): () => T {
+  let valor: T | undefined
+  let memorizado = false
+  return () => {
+    if (memorizado) return valor as T
+    const resultado = construir()
+    if (elencosTMProntos()) {
+      valor = resultado
+      memorizado = true
+    }
+    return resultado
+  }
+}
+
+function preguicosoQuandoHouverElenco<T>(construir: () => T): () => T {
+  let valor: T | undefined
+  let memorizado = false
+  return () => {
+    if (memorizado) return valor as T
+    const resultado = construir()
+    if (poolElencosProntos()) {
+      valor = resultado
+      memorizado = true
+    }
+    return resultado
+  }
+}
+
+/**
  * NACIONALIDADE REAL por nome, vinda do Transfermarkt (real-squads-tm, campo
  * `c`). O seed do pool so traz `nac` para uma fatia dos atletas — auditoria de
  * 23/07/2026: apenas 18% do elenco curado tinha pais, e 461 dos 542 clubes
@@ -223,10 +290,10 @@ function preguicoso<T>(construir: () => T): () => T {
  * Nome com DUAS nacionalidades diferentes e descartado — melhor vazio do que
  * atribuir a bandeira errada a um homonimo.
  */
-const nacionalidadePorNome = preguicoso((): Map<string, string> => {
+const nacionalidadePorNome = preguicosoQuandoHouverTM((): Map<string, string> => {
   const mapa = new Map<string, string>()
   const conflito = new Set<string>()
-  for (const elenco of Object.values(realSquadsTM as Record<string, Array<{ n?: string; c?: string }>>)) {
+  for (const elenco of Object.values(elencosReaisTM() as unknown as Record<string, Array<{ n?: string; c?: string }>>)) {
     if (!Array.isArray(elenco)) continue
     for (const j of elenco) {
       if (!j?.n || !j?.c) continue
@@ -257,10 +324,10 @@ const nacionalidadePorNome = preguicoso((): Map<string, string> => {
  * Nome com DUAS posicoes diferentes e descartado: melhor manter o valor
  * grosseiro do que chutar a posicao de um homonimo.
  */
-const posicaoRealPorNome = preguicoso((): Map<string, string> => {
+const posicaoRealPorNome = preguicosoQuandoHouverTM((): Map<string, string> => {
   const mapa = new Map<string, string>()
   const conflito = new Set<string>()
-  for (const elenco of Object.values(realSquadsTM as Record<string, Array<{ n?: string; p?: string }>>)) {
+  for (const elenco of Object.values(elencosReaisTM() as unknown as Record<string, Array<{ n?: string; p?: string }>>)) {
     if (!Array.isArray(elenco)) continue
     for (const j of elenco) {
       if (!j?.n || !j?.p) continue
@@ -415,7 +482,7 @@ const nacPorClube = preguicoso((): Map<string, Map<string, string>> => {
   const porCurto = new Map<string, Map<string, string> | null>()
 
   for (const [chaveClube, elenco] of Object.entries(
-    realSquadsTM as Record<string, Array<{ n?: string; c?: string }>>,
+    elencosReaisTM() as unknown as Record<string, Array<{ n?: string; c?: string }>>,
   )) {
     if (!Array.isArray(elenco)) continue
     const porNome = new Map<string, string>()
@@ -887,13 +954,12 @@ function getImportedTeamRaw(team: Team): (typeof importedTeams)[number] | undefi
   ]
   return aliases
     .map((alias) => importedTeamMap.get(normalizeTeamName(alias)))
-    .find((match) => match && match.jogadores?.length)
+    .find((match) => match && elencoImportado(match).length)
 }
 
 function getImportedPlayersForTeam(team: Team): Player[] {
   const importedTeam = getImportedTeamRaw(team)
-
-  if (!importedTeam?.jogadores?.length) return []
+  const elencoBruto = elencoImportado(importedTeam)
 
   // ── ELENCO REAL (CSV) tem prioridade sobre o seed ────────────────────────
   //
@@ -915,13 +981,28 @@ function getImportedPlayersForTeam(team: Team): Player[] {
   ]
   const realSquad = findRealSquad(team, aliases)
 
+  // ⚠️ ESTA GUARDA JA FOI `if (!elencoBruto.length) return []`, e ficava ANTES
+  // de olhar o overlay do CSV. O efeito era invisivel e caro:
+  //
+  //   1. `getPlayersForTeam` calcula `temOverlayCsv` e, quando ele existe,
+  //      DESLIGA o caminho do Transfermarkt de proposito (o CSV e mais atual);
+  //   2. o unico consumidor desse overlay e esta funcao — que devolvia lista
+  //      vazia por o clube nao estar no pool, antes de sequer ler o CSV;
+  //   3. resultado: clube com elenco real em DOIS lugares (CSV e TM) entrava
+  //      com atletas gerados, e o TM ficava bloqueado pelo CSV que ninguem usou.
+  //
+  // Medido em 11/08/2026: 15 clubes nessa situacao — Kilmarnock, Dundee,
+  // SV Elversberg, FC Alverca, Queretaro, Rodina Moscow, entre outros.
+  // `scripts/diagnostico-elenco-nao-lido.ts` reproduz.
+  if (!elencoBruto.length && !realSquad?.length) return []
+
   const seedByName = new Map(
-    importedTeam.jogadores.map((p) => [normalizeTeamName(p.nome), p]),
+    elencoBruto.map((p) => [normalizeTeamName(p.nome), p]),
   )
 
   if (realSquad?.length) {
     // Base para estimar o overall de quem nao esta no seed: mediana do clube.
-    const seedOveralls = importedTeam.jogadores
+    const seedOveralls = elencoBruto
       .map((p) => Math.min(p.overall, MAX_IMPORTED_OVERALL))
       .sort((a, b) => a - b)
     const median = seedOveralls.length
@@ -946,7 +1027,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
     if (converted.some((player) => player.pos === "GOL")) return converted
 
     // O CSV pode omitir goleiros; recupera os nomes reais do seed do próprio clube.
-    const seedGoalkeepers = importedTeam.jogadores
+    const seedGoalkeepers = elencoBruto
       .filter((player) => toPlayerPosition(player.posicao) === "GOL")
       .map((player) => ({
         nome: player.nome,
@@ -963,7 +1044,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
   // Sem CSV para este clube: segue o seed como antes. É o caminho que carrega a
   // nacionalidade real (`nac`), assada no seed pelo apply-tm-squads — a coluna
   // PAÍS do editor lia sempre "-" porque este dado nunca era propagado.
-  return importedTeam.jogadores
+  return elencoBruto
     .map((player, index) => ({
       nome: player.nome,
       // "BAN" significa apenas banco no arquivo de origem, não uma posição. Antes esses
@@ -1012,10 +1093,20 @@ function findRealSquad(
   return undefined
 }
 
-const importedPlayersByTeam: Record<string, Player[]> = Object.fromEntries(
-  allTeams.map((team) => [team.nome, getImportedPlayersForTeam(team)])
-    .filter(([, players]) => players.length > 0)
-)
+// Elencos importados por clube, materializados sob demanda. Antes esta linha
+// convertia os ~3 mil clubes no import do módulo, mesmo quando a tela só queria
+// um único elenco. O cache mantém a API síncrona do motor e paga o custo apenas
+// para os clubes efetivamente simulados/abertos.
+const teamByName = new Map(allTeams.map(team => [team.nome, team]))
+const importedPlayersByTeam = new Map<string, Player[]>()
+function importedPlayersFor(teamName: string): Player[] {
+  const cached = importedPlayersByTeam.get(teamName)
+  if (cached) return cached
+  const team = teamByName.get(teamName)
+  const players = team ? getImportedPlayersForTeam(team) : []
+  importedPlayersByTeam.set(teamName, players)
+  return players
+}
 
 function getCuratedPlayersByTeam(teamName: string): Player[] {
   const direct = playersByTeam[teamName]
@@ -1043,11 +1134,11 @@ function getCuratedPlayersByTeam(teamName: string): Player[] {
  */
 export const getAllPlayers = preguicoso((): Player[] => [
   ...Object.values(playersByTeam).flat(),
-  ...Object.entries(importedPlayersByTeam)
-    .filter(([teamName]) => !getCuratedPlayersByTeam(teamName).length)
-    .flatMap(([, players]) => players),
+  ...allTeams
+    .filter(team => !getCuratedPlayersByTeam(team.nome).length)
+    .flatMap(team => importedPlayersFor(team.nome)),
   ...Object.entries(manualPlayersByTeam)
-    .filter(([teamName]) => !getCuratedPlayersByTeam(teamName).length && !importedPlayersByTeam[teamName]?.length)
+    .filter(([teamName]) => !getCuratedPlayersByTeam(teamName).length && !importedPlayersFor(teamName).length)
     .flatMap(([, players]) => players),
 ])
 
@@ -1055,7 +1146,8 @@ export function getPlayersByTeam(teamName: string): Player[] {
   const curated = getCuratedPlayersByTeam(teamName)
   if (curated.length) return curated
 
-  return importedPlayersByTeam[teamName] ?? manualPlayersByTeam[teamName] ?? []
+  const imported = importedPlayersFor(teamName)
+  return imported.length ? imported : manualPlayersByTeam[teamName] ?? []
 }
 
 const DIVISION_RATING_CAP: Record<string, number> = {
@@ -1096,6 +1188,10 @@ function calibrateSquadRatings(team: Team, players: Player[]): Player[] {
   return players.map(player => {
     const official = OFFICIAL_RATING_OVERRIDES[normalizeTeamName(player.nome)]
     if (official != null) return { ...player, base: official }
+    // Atleta criado no editor sai intacto. Calibrar quem foi digitado à mão é
+    // desfazer a edição: um craque de 90 criado num clube da Série D voltaria
+    // com 62 e o editor pareceria não ter funcionado.
+    if (player.generatedOrigin === "editor") return player
     const percentile = players.length <= 1 ? 0.5 : (rank.get(player) ?? 0) / (players.length - 1)
     const rankAdjustment = Math.round(7 - percentile * 13)
     const sourceSignal = Math.max(-2, Math.min(2, Math.round((player.base - middle) * 0.15)))
@@ -1114,7 +1210,7 @@ function calibrateSquadRatings(team: Team, players: Player[]): Player[] {
  */
 function enrichWithSeedNationality(team: Team, players: Player[]): Player[] {
   if (players.every(p => p.nac)) return players
-  const seedPlayers = getImportedTeamRaw(team)?.jogadores ?? []
+  const seedPlayers = elencoImportado(getImportedTeamRaw(team))
   if (!seedPlayers.length) return players
   const byName = new Map(seedPlayers.map(p => [normalizeTeamName(p.nome), p]))
   return players.map(p => {
@@ -1133,7 +1229,8 @@ function enrichWithSeedNationality(team: Team, players: Player[]): Player[] {
 // Chaves curtas para nao inchar o bundle (45 mil atletas):
 // n=nome p=posicao c=nacionalidade f=foto i=idade o=overall
 interface RealSquadPlayerTM { n: string; p: string; c?: string; f?: string; i: number; o: number }
-const REAL_SQUADS_TM = realSquadsTM as Record<string, RealSquadPlayerTM[]>
+/** Acesso ao mapa carregado sob demanda. Vazio antes de chegar. */
+const REAL_SQUADS_TM = () => elencosReaisTM() as Record<string, RealSquadPlayerTM[]>
 
 /**
  * Elenco real indexado por NOME do clube, para quando a chave composta falha.
@@ -1147,10 +1244,10 @@ const REAL_SQUADS_TM = realSquadsTM as Record<string, RealSquadPlayerTM[]>
  * Nome que aparece em MAIS DE UM clube (Botafogo RJ/SP/PB) fica de fora deste
  * indice — carregar o elenco do clube errado seria pior do que nao carregar.
  */
-const REAL_SQUADS_POR_NOME = preguicoso((): Map<string, RealSquadPlayerTM[]> => {
+const REAL_SQUADS_POR_NOME = preguicosoQuandoHouverTM((): Map<string, RealSquadPlayerTM[]> => {
   const mapa = new Map<string, RealSquadPlayerTM[]>()
   const duplicados = new Set<string>()
-  for (const [chave, roster] of Object.entries(REAL_SQUADS_TM)) {
+  for (const [chave, roster] of Object.entries(REAL_SQUADS_TM())) {
     const nome = normalizeTeamName(chave.split("|")[1] ?? "")
     if (!nome || !roster?.length) continue
     if (mapa.has(nome)) duplicados.add(nome)
@@ -1161,7 +1258,7 @@ const REAL_SQUADS_POR_NOME = preguicoso((): Map<string, RealSquadPlayerTM[]> => 
 })
 
 function getRealSquad(team: Team): Player[] | null {
-  const roster = REAL_SQUADS_TM[`${team.curto}|${normalizeTeamName(team.nome)}`]
+  const roster = REAL_SQUADS_TM()[`${team.curto}|${normalizeTeamName(team.nome)}`]
     ?? REAL_SQUADS_POR_NOME().get(normalizeTeamName(team.nome))
     ?? (teamAliasOverrides[team.file_key ?? ""] ?? [])
       .map(a => REAL_SQUADS_POR_NOME().get(normalizeTeamName(a)))
@@ -1232,10 +1329,35 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
       })()
     : sourceRaw
 
+  // 1.0.286: para a CPU, o save passa a ser a fonte do elenco. O seed continua
+  // sendo a origem na criação da carreira e o fallback de saves antigos, mas
+  // depois disso idade, contrato, lesão, moral e transferências pertencem ao
+  // universo persistente. `raw` permanece intocado para o editor.
+  const elencoDoUniverso = opts?.raw ? null : elencoPersistente286(team.curto)
+  const basePersistente = elencoDoUniverso
+    ? elencoDoUniverso.map(jogador => ({
+        nome: jogador.nome,
+        pos: jogador.posicao as Player["pos"],
+        idade: jogador.idade,
+        base: jogador.overall,
+        time: team.nome,
+        nac: jogador.nacionalidade,
+        pace: jogador.atributos.pace,
+        shooting: jogador.atributos.shooting,
+        passing: jogador.atributos.passing,
+        dribbling: jogador.atributos.dribbling,
+        defending: jogador.atributos.defending,
+        physical: jogador.atributos.physical,
+      }))
+    : comAtualizacaoOficial
+
   const source = opts?.raw
     ? comAtualizacaoOficial
     : (() => {
-        const semSaidas = comAtualizacaoOficial.filter(p => !hasDeparted(team.nome, p.nome))
+        // Saídas/chegadas do clube do usuário continuam sendo o journal do
+        // mercado legado e são aplicadas por cima do universo. Assim uma compra
+        // feita nesta tela já some do adversário antes do próximo avanço semanal.
+        const semSaidas = basePersistente.filter(p => !hasDeparted(team.nome, p.nome))
         if (!hasAnyArrival()) return semSaidas
         const chegadas = getArrivals(team.nome)
         if (chegadas.length === 0) return semSaidas
@@ -1258,7 +1380,9 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
   const temporadasPassadas = opts?.raw ? 0 : temporadasDesdeOSeed()
   const doUsuario = temporadasPassadas > 0 && team.curto === getClubeDoUsuario()
   let comTempo = source
-  if (temporadasPassadas > 0 && !doUsuario) {
+  // O universo 286 já envelhece na virada. Aplicar a curva do seed novamente
+  // somaria os anos duas vezes (um atleta de 30 apareceria com 34 em 2028).
+  if (temporadasPassadas > 0 && !doUsuario && !elencoDoUniverso) {
     const envelhecido = envelhecerElenco(source, temporadasPassadas, team.file_key ?? team.curto)
     comTempo = envelhecido.elenco
     // QUEM SE APOSENTA ABRE VAGA NA BASE. Sem esta reposicao o mundo encolheria
@@ -1282,7 +1406,17 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
       comTempo = [...comTempo, ...crias]
     }
   }
-  const players = calibrateSquadRatings(team, ensurePlayableSquad(team, comTempo))
+  // ELENCO EDITADO (criar / excluir / transferir pelo editor).
+  //
+  // Entra ANTES de `ensurePlayableSquad` de propósito: quem apaga meio elenco
+  // deixa o clube impossível de escalar, e é o preenchimento que o mantém
+  // jogável. Depois dele, a remoção viraria um time de sete. O editor mostra o
+  // aviso de plantel inválido (lib/validacao-de-elenco) para a pessoa saber que
+  // aquelas vagas foram completadas.
+  //
+  // Vale também no modo `raw`: sem isso o editor não veria o que acabou de criar.
+  const comEdicoes = aplicarPatchDeElenco(team.file_key, comTempo, team.nome)
+  const players = calibrateSquadRatings(team, ensurePlayableSquad(team, comEdicoes))
   const cap = DIVISION_RATING_CAP[team.divisao as string] ?? 92
   const capped = cap >= 92 ? players : players.map(p => p.base > cap ? { ...p, base: cap } : p)
   // raw = sem overrides (o editor precisa dos NOMES ORIGINAIS para chavear as edicoes).

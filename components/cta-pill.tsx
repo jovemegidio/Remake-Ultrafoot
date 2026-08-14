@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 

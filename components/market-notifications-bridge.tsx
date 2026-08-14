@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 import { useGameEngine } from "@/lib/game-engine"
 import { useNotifications } from "@/components/notifications-system"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 
 /**
  * Ponte entre o MERCADO (game-engine, Zustand) e a CENTRAL DE NOTIFICAÇÕES

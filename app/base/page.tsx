@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { Sprout, Star, ArrowUp, AlertTriangle, RefreshCw, Send, ShoppingCart } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
@@ -11,7 +11,7 @@ import { useGameState, commitGameState, type GameState, type SquadPlayer } from 
 import { useGameManager } from "@/lib/use-game-manager"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { flushPersistentStore } from "@/lib/persistent-store"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { generateYouthMarketProspects, generateYouthProspects } from "@/lib/youth-academy"
 import { advanceYouthMonth, loanYouth, runTryout } from "@/lib/youth-engine"
 import {
@@ -23,6 +23,7 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { useNotifications } from "@/components/notifications-system"
 import { avisar as avisarNoJogo, confirmar as confirmarNoJogo, pedirTexto as pedirTextoNoJogo } from "@/lib/dialogo-do-jogo"
 import { isTransferWindowOpen, useGameEngine } from "@/lib/game-engine"
+import { estimarPotencial, faixaDeCpe, qualidadeDeAvaliacao, rotuloDaAvaliacao } from "@/lib/cpe"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { useRequireClub } from "@/lib/use-require-team"
 
@@ -138,7 +139,28 @@ export default function BasePage() {
   const balance = state.balance && state.balance > 0 ? state.balance : team.saldo
   // Capacidade da base escala com a academia (ate 100 no nivel 5). O nivel vive
   // no game-engine (infraestrutura), nao no save da carreira.
-  const nivelAcademia = useGameEngine(st => st.clubInfrastructure?.youthAcademyLevel) ?? 1
+  // ⚠️ A CHAVE É `youth`. Isto lia `youthAcademyLevel`, que NÃO EXISTE em
+  // `clubInfrastructure` — o mesmo engano que o game-engine já tinha corrigido do
+  // lado dele (ver a nota em `youthAcadLevel`). Na tela ninguém percebeu porque o
+  // `?? 1` devolvia um número plausível: a academia ficava eternamente no nível 1
+  // e investir na base não aumentava a capacidade nem a qualidade da avaliação.
+  const nivelAcademia = useGameEngine(st => st.clubInfrastructure?.youth) ?? 1
+  // CPE — a coordenação AVALIA o garoto, e a avaliação erra (ver lib/cpe.ts).
+  // O potencial real continua no dado; ele é que não vai mais para a tela.
+  const departamento = state.scoutingDepartment
+  const estruturaDeAvaliacao = useMemo(() => ({
+    academia: nivelAcademia,
+    centroDeObservacao: departamento?.observationCentreLevel ?? 1,
+    centroDeDados: departamento?.dataCentreLevel ?? 1,
+    olheiros: departamento?.scouts?.length
+      ? departamento.scouts.reduce((soma, o) => soma + (o.attributes?.youthDiscovery ?? 0), 0) / departamento.scouts.length
+      : 0,
+  }), [nivelAcademia, departamento])
+  const qualidadeDaAvaliacao = useMemo(() => qualidadeDeAvaliacao(estruturaDeAvaliacao), [estruturaDeAvaliacao])
+  const cpeDe = useCallback(
+    (id: string | number, potencial: number) => estimarPotencial(id, potencial, qualidadeDaAvaliacao),
+    [qualidadeDaAvaliacao],
+  )
   // Elenco e caixa vivem no MOTOR, nao no save. Escrever em state.squadPlayers /
   // state.balance (como era) nao aparecia em lugar nenhum: o Elenco le de
   // players-data, o Gerenciamento le do motor e o caixa do cabecalho tambem.
@@ -181,12 +203,15 @@ export default function BasePage() {
       if (fPos !== "todas" && p.position !== fPos) return false
       if ((p.age ?? 0) > fIdadeMax) return false
       if ((p.overall ?? 0) < fOverallMin) return false
-      if ((p.potential ?? 0) < fPotencialMin) return false
+      // Filtra pelo CPE, não pelo potencial real: um filtro que enxerga o dado
+      // verdadeiro seria um raio-x — bastaria arrastar "potencial mínimo 90"
+      // para o mercado revelar exatamente quem são os craques escondidos.
+      if (fPotencialMin > 0 && cpeDe(p.id, p.potential ?? 0).valor < fPotencialMin) return false
       if (fPrecoMax > 0 && (p.value ?? 0) > fPrecoMax) return false
       if (termo && !p.name.toLowerCase().includes(termo) && !(p.fromTeam ?? "").toLowerCase().includes(termo)) return false
       return true
     })
-  }, [youthMarketPool, fPos, fIdadeMax, fOverallMin, fPotencialMin, fPrecoMax, fBusca])
+  }, [youthMarketPool, fPos, fIdadeMax, fOverallMin, fPotencialMin, fPrecoMax, fBusca, cpeDe])
 
   // REPARO DOS SAVES JA CONTAMINADOS.
   //
@@ -542,7 +567,9 @@ export default function BasePage() {
     // lista inteira, entao um fechamento velho apagaria contratacoes recentes.
     let evoluidos = 0
     aplicarNaBase(setState, s => {
-      const result = advanceYouthMonth(s)
+      // O nível da academia entra AQUI: sem ele o mês voltaria a ser cego ao
+      // investimento do clube, que era metade do defeito relatado.
+      const result = advanceYouthMonth(s, nivelAcademia)
       evoluidos = result.report.highlights.length
       return { youthPlayers: result.state.youthPlayers, updatedAt: result.state.updatedAt }
     })
@@ -786,7 +813,10 @@ export default function BasePage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {youth.map(p => {
-              const isGem = p.potential >= 85
+              const cpe = cpeDe(p.id, p.potential)
+              // A borda dourada segue a AVALIAÇÃO, não o talento: marcá-la pelo
+              // potencial real entregaria de graça o que o CPE existe para esconder.
+              const isGem = cpe.valor >= 85
               return (
                 <div
                   key={p.id}
@@ -813,15 +843,17 @@ export default function BasePage() {
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <div className="rounded-lg bg-white/5 px-3 py-2">
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider">Potencial</div>
+                    <div className="rounded-lg bg-white/5 px-3 py-2" title={rotuloDaAvaliacao(cpe.qualidade)}>
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider">CPE</div>
                       <div className={cn("text-lg font-bold tabular-nums", isGem ? "text-yellow-400" : "text-[#1db954]")}>
-                        {p.potential}
+                        {faixaDeCpe(cpe)}
                       </div>
                     </div>
                     <div className="rounded-lg bg-white/5 px-3 py-2">
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider">Crescimento</div>
-                      <div className="text-lg font-bold tabular-nums text-white">+{p.potential - p.overall}</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider">Margem</div>
+                      <div className="text-lg font-bold tabular-nums text-white">
+                        {cpe.valor > p.overall ? `+${cpe.valor - p.overall}` : "—"}
+                      </div>
                     </div>
                   </div>
 

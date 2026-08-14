@@ -28,6 +28,9 @@ const lerJson = p => JSON.parse(ler(p))
 const fonte = ler("lib/international-teams.ts") + "\n" + ler("lib/teams-data.ts")
 const comps = ler("lib/international-competitions.ts")
 const pyr = ler("lib/league-pyramid.ts")
+const clubesEtapa1 = lerJson("data/seeds/real-clubs-stage1.json")
+const clubesEtapa1EuropaInferior = lerJson("data/seeds/real-clubs-stage1-lower-europe.json")
+const clubesEtapa3Chequia = lerJson("data/seeds/real-clubs-stage3-czech-second.json")
 
 // ─── Todos os clubes CURADOS, com divisao e pais ─────────────────────────────
 const clubes = []
@@ -39,6 +42,9 @@ for (const m of fonte.matchAll(/\{[^{}]*\}/g)) {
   const pais = b.match(/pais:\s*"([^"]+)"/)
   const estado = b.match(/estado:\s*"([^"]+)"/)
   clubes.push({ fk: fk[1], divisao: div[1], pais: pais?.[1] ?? estado?.[1] ?? "?" })
+}
+for (const clube of [...clubesEtapa1, ...clubesEtapa1EuropaInferior, ...clubesEtapa3Chequia]) {
+  clubes.push({ fk: clube.file_key, divisao: clube.divisao, pais: clube.pais })
 }
 
 // ─── Pais e nivel de cada divisao ────────────────────────────────────────────
@@ -66,6 +72,10 @@ const PAIS_TIER = {
   primera_b_arg: ["Argentina", 2], torneo_betplay: ["Colombia", 2],
   segunda_div_ury: ["Uruguai", 2], china_league_one: ["China", 2],
   scottish_champ: ["Escocia", 2], serie_b_ecu: ["Equador", 2],
+  liga_2_per: ["Peru", 2], copa_simon_bolivar: ["Bolivia", 2],
+  division_intermedia_par: ["Paraguai", 2], liga_futve_2: ["Venezuela", 2],
+  betinia_liga: ["Dinamarca", 2], obos_ligaen: ["Noruega", 2], second_div_cyp: ["Chipre", 2],
+  chance_narodni_liga: ["Chequia", 2],
 }
 
 const naPiramide = new Set()

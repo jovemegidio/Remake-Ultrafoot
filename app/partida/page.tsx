@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import Image from "next/image"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"

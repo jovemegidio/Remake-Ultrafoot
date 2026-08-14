@@ -42,68 +42,53 @@ export function TimeAdvanceButton({ onWeekAdvanced }: TimeAdvanceProps) {
 
   const handleAdvanceWeek = () => {
     setIsAdvancing(true)
-    
-    // Simular processamento
-    setTimeout(() => {
-      // Gerar eventos aleatorios da semana
-      const events: WeekEvent[] = []
-      
-      // Evento de partida
-      if (Math.random() > 0.3) {
-        events.push({
-          type: "match",
-          title: "Proxima Partida",
-          description: "RB Bragantino vs Palmeiras - Rodada 16",
-          icon: Trophy,
-          color: "text-[#ffd700]"
-        })
-      }
-      
-      // Evento de lesao
-      if (Math.random() > 0.8) {
-        events.push({
-          type: "injury",
-          title: "Lesao no Treino",
-          description: "Eduardo Santos sofreu uma leve distensao",
-          icon: AlertTriangle,
-          color: "text-red-500"
-        })
-      }
-      
-      // Evento de contrato
-      if (Math.random() > 0.85) {
-        events.push({
-          type: "contract",
-          title: "Contrato Expirando",
-          description: "O contrato de Eduardo Sasha expira em 6 meses",
-          icon: Users,
-          color: "text-orange-500"
-        })
-      }
-      
-      // Evento de selecao
-      const currentWeek = state.week + 1
-      const fifaDates = [10, 11, 22, 23, 36, 37, 40, 41]
-      if (fifaDates.includes(currentWeek)) {
-        events.push({
-          type: "nationalTeam",
-          title: "Data FIFA",
-          description: "Lincoln foi convocado para a Selecao Brasileira",
-          icon: Flag,
-          color: "text-green-500"
-        })
-      }
-      
-      // Atualizar semana
-      gameEngine.advanceWeek()
-      setState({ week: state.week + 1 })
-      
-      setWeekEvents(events)
-      setIsAdvancing(false)
-      setShowEvents(true)
-      
-      onWeekAdvanced?.()
-    }, 1500)
+
+    const currentWeek = (state.week ?? 0) + 1
+    gameEngine.advanceWeek()
+    setState({ week: currentWeek })
+
+    const updated = useGameEngine.getState()
+    const events: WeekEvent[] = []
+    const nextFixture = (state.fixtures ?? [])
+      .filter(fixture => !fixture.played && fixture.round >= currentWeek)
+      .sort((a, b) => a.round - b.round)[0]
+    if (nextFixture) events.push({
+      type: "match",
+      title: "Próxima partida",
+      description: `${nextFixture.homeNome} x ${nextFixture.awayNome} · ${nextFixture.competition} · Rodada ${nextFixture.round}`,
+      icon: Trophy,
+      color: "text-[#ffd700]",
+    })
+
+    for (const player of updated.squadPlayers.filter(player => player.injury)) events.push({
+      type: "injury",
+      title: "Departamento médico",
+      description: `${player.name}: ${player.injury!.type} (${player.injury!.weeksRemaining} semana(s))`,
+      icon: AlertTriangle,
+      color: "text-red-500",
+    })
+
+    const absoluteWeek = ((state.season ?? 2026) - 2026) * 46 + currentWeek
+    for (const player of updated.squadPlayers.filter(player => player.contract && player.contract.endDate >= absoluteWeek && player.contract.endDate - absoluteWeek <= 26)) events.push({
+      type: "contract",
+      title: "Contrato próximo do fim",
+      description: `${player.name}: ${player.contract!.endDate - absoluteWeek} semana(s) restantes`,
+      icon: Users,
+      color: "text-orange-500",
+    })
+
+    for (const call of updated.nationalTeamCalls) events.push({
+      type: "nationalTeam",
+      title: "Convocação registrada",
+      description: `${call.playerName} · ${call.country} · ${call.competition}`,
+      icon: Flag,
+      color: "text-green-500",
+    })
+
+    setWeekEvents(events)
+    setIsAdvancing(false)
+    setShowEvents(true)
+    onWeekAdvanced?.()
   }
 
   const closeEvents = () => {

@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 

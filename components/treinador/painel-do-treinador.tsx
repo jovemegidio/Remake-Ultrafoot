@@ -14,7 +14,7 @@
 // porque o mercado também o considera necessário — as duas leituras não brigam.
 
 import { Target, Wallet, ClipboardCheck, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { perfilDeElenco, necessidadeNaPosicao, type AtletaDoElenco } from "@/lib/mercado-realista"
 import { cn } from "@/lib/utils"
 

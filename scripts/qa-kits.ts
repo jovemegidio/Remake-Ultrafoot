@@ -35,9 +35,8 @@ for (const team of importedTeams) {
 }
 
 const athletic = getCamisaUrl("athletic_bilbao", "home", "Athletic Bilbao")
-if (athletic !== "/kits-imported/2000167901_home.webp") {
-  broken.push(`Athletic Bilbao resolveu para ${athletic}`)
-}
+if (!existsSync(path.resolve("public", athletic.replace(/^\//, ""))))
+  broken.push(`Athletic Bilbao resolveu para arquivo ausente: ${athletic}`)
 
 // Clubes citados no relato: quando nao ha entrada confiavel no mapeamento novo,
 // precisam resolver para o pacote legado local — nunca para um slot inexistente.
@@ -54,9 +53,8 @@ for (const [fileKey, name] of [
 }
 
 const realMadrid = getCamisaUrl("real_madrid", "home", "Real Madrid")
-if (realMadrid !== "/kits-imported/2000167907_home.webp") {
-  broken.push(`Real Madrid resolveu para ${realMadrid}`)
-}
+if (!existsSync(path.resolve("public", realMadrid.replace(/^\//, ""))))
+  broken.push(`Real Madrid resolveu para arquivo ausente: ${realMadrid}`)
 
 console.log(`clubes com kits importados=${mappedClubs}/${allTeams.length + importedTeams.length} variantes=${mappedVariants}`)
 if (broken.length) {

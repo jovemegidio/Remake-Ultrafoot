@@ -9,6 +9,48 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "O leilão parou de sequestrar a sua tela",
+      "category": "Correção",
+      "body": "Dois relatos de jogadores, duas correções. O leilão abria sozinho e tirava você do que estivesse fazendo: ele é aberto ao fim da coletiva pós-jogo, mas só depois de o jogo avançar a semana e gravar o save — e quem saía da partida nesses segundos era levado ao leilão do mesmo jeito, porque a ida já estava a caminho. E simular muitas partidas pelo calendário travava na contagem de dias, porque a tela redesenhava o calendário inteiro a cada dia simulado, mais de duzentas vezes numa simulação longa.",
+      "date": "2026-08-13"
+    },
+    {
+      "title": "A base voltava atrás quando você evoluía um mês",
+      "category": "Correção",
+      "body": "Um jogador relatou que acompanhar uma semana na base rendia mais que evoluir um mês inteiro, e estava certo. Existiam duas fórmulas para a mesma coisa: a da semana levava em conta o quanto o garoto ainda tinha para crescer e o quanto o clube investiu na academia; a do mês era uma chance fixa de 35%, uma única vez, ignorando os dois. Quem clicava na opção que parece maior era punido, e quem investia na academia não via diferença nenhuma no mês. Agora o mês é quatro semanas da mesma regra — nunca rende menos que uma semana, e a academia conta.",
+      "date": "2026-08-13"
+    },
+    {
+      "title": "Jogue a mesma carreira com até oito pessoas",
+      "category": "Novidade",
+      "body": "O co-op local chegou: até oito técnicos humanos comandam clubes diferentes dentro de um único mundo, revezando o computador. O mercado é um só — o reforço que um contratar some para os outros —, mas o caixa é de cada clube. A rodada só corre quando todos fecham as decisões, e quando dois da mesa se enfrentam a partida é simulada com o elenco e a tática que cada um montou, em vez de ser dirigida ao vivo por um só.",
+      "date": "2026-08-13"
+    },
+    {
+      "title": "O travamento na escolha do time acabou",
+      "category": "Correção",
+      "body": "Percorrer os times na criação de carreira travava o jogo por completo. O escudo em 3D criava um contexto de vídeo a cada time visitado e não o devolvia — o navegador aguenta cerca de dezesseis ao mesmo tempo e, ao passar disso, derruba a página inteira. Em máquina rápida acontecia mais cedo, porque dá para percorrer mais times por minuto.",
+      "date": "2026-08-11"
+    },
+    {
+      "title": "A partida ficou mais leve",
+      "category": "Desempenho",
+      "body": "O perfil de desempenho \"Equilibrado\" — o padrão de quem nunca abriu as configurações — estava pedindo ao radar 3D a qualidade máxima do motor: 64 mil tufos de grama e sombra em 4096. Era a cena mais pesada que o jogo sabe montar, rodando para praticamente todo mundo. Agora ele usa a qualidade média. Quem tem máquina forte e quer o visual completo escolhe \"Qualidade máxima\".",
+      "date": "2026-08-10"
+    },
+    {
+      "title": "O escritório não trava mais ao abrir",
+      "category": "Correção",
+      "body": "Alguns jogadores abriam o jogo e ficavam no símbolo de carregamento sem sair do lugar. Acontecia quando o clube gravado no save não era mais encontrado — chave antiga de uma versão anterior, ou clube que só existe no elenco estendido. O jogo esperava por um dado que nunca chegaria. Agora, se o clube não resolver, você é levado à Área do Treinador, de onde dá para assumir um time.",
+      "date": "2026-08-10"
+    },
+    {
+      "title": "Competições agora se atualizam pelo canal",
+      "category": "Atualização",
+      "body": "Quem sobe, quem cai e quem disputa cada torneio passou a vir pelo canal de atualização. Antes isso só mudava em versão nova do jogo: uma virada de temporada no mundo real esperava uma build. Junto vem o turno único, que não tinha como existir porque o calendário somava o returno sempre, e a licença individual de clube, atleta e competição.",
+      "date": "2026-08-10"
+    },
+    {
       "title": "As funções de jogador finalmente mudam o jogo",
       "category": "Atualização",
       "body": "O Ultrafoot tem 66 funções de jogador e nenhuma delas alterava o placar: dava para escalar um zagueiro lento como ponta velocista sem nenhuma consequência. Agora o que conta é a adequação — se os atributos do atleta servem à função. A qualidade dele continua contando à parte, então um craque mal empregado perde rendimento e um limitado bem empregado ganha. A atualização também corrige o bug relatado de atletas vendidos que voltavam ao elenco.",
@@ -186,9 +228,134 @@
   ],
   "changelog": [
     {
+      "version": "1.0.308",
+      "data": "2026-08-13",
+      "latest": true,
+      "titulo": "O leilão que aparecia do nada e o calendário que travava",
+      "itens": [
+        "CORREÇÃO (relato de jogador): o leilão abria sozinho e tirava você da partida — ou de qualquer outra tela que estivesse aberta. A tela de leilões é aberta ao fim da coletiva pós-jogo, mas isso só acontece depois de o jogo avançar a semana e gravar o save, o que leva alguns segundos. Quem saía da partida nesse intervalo era levado ao leilão mesmo assim, porque a ida já estava a caminho e nada a cancelava. Agora, se você saiu, a ida é cancelada.",
+        "CORREÇÃO (relato de jogador): simular muitas partidas pelo calendário travava na contagem de dias. A tela redesenhava o calendário inteiro a CADA dia simulado — numa simulação longa, mais de duzentas vezes —, e isso se somava ao trabalho pesado de cada semana. A contagem agora é desenhada quinze vezes por segundo, o que reduz o redesenho em cerca de quatro vezes sem mudar nada do que você vê."
+      ]
+    },
+    {
+      "version": "1.0.307",
+      "data": "2026-08-13",
+      "titulo": "Jogo mais leve e a base voltando a fazer sentido",
+      "itens": [
+        "CORREÇÃO (relato de jogador): acompanhar uma semana na base rendia MAIS que evoluir um mês. Havia duas contas diferentes para a mesma coisa — a da semana pesava o quanto o garoto ainda tem para crescer e o nível da academia; a do mês era uma chance fixa, uma única vez, cega para os dois. Agora o mês é literalmente quatro semanas da mesma regra, e investir na academia passa a valer no botão do mês também.",
+        "MAIS LEVE: o aplicativo instalado caiu de 917 MB para 739 MB, e o executável que carrega o jogo inteiro de 228 MB para 145 MB. As imagens de estádio foram para WebP (115 MB → 49 MB) e os uniformes deixaram de viajar duas vezes dentro do instalador.",
+        "MAIS RÁPIDO EM MÁQUINA MODESTA: o jogo carregava outras cinco telas em segundo plano enquanto você lia a atual, disputando processador com o que estava na sua frente. Agora isso segue o perfil de desempenho — no Econômico não acontece, e nos demais só em tempo ocioso. Medido: as telas lentas caíram de 11 para 8.",
+        "As carreiras salvas na nuvem agora mostram hora além da data, e as novas gravam clube, temporada e semana — antes a lista era uma pilha de linhas idênticas chamadas \"Carreira salva\"."
+      ]
+    },
+    {
+      "version": "1.0.304",
+      "data": "2026-08-13",
+      "titulo": "Co-op local funcionando de verdade, e as cartas do elenco",
+      "itens": [
+        "O co-op local estava TRAVADO: a rodada so anda quando todos fecham as decisoes, mas nao havia botao para fechar. Uma carreira com dois tecnicos nunca saia da rodada zero. Agora o cabecalho tem \"fechar e passar a vez\", com a lista de quem ja fechou.",
+        "Ao adicionar um tecnico convidado, ele vai para a MESMA tela de escolha de time do anfitriao e escolhe o pais, a liga e o clube que quiser — antes ficava preso a um menu com os clubes da liga do anfitriao.",
+        "Cada tecnico passa a ter a carreira dele por inteiro: calendario, liga, divisao, tabela e financas proprias. Antes o segundo tecnico jogava com o elenco dele e o CALENDARIO do primeiro.",
+        "Dois tecnicos no mesmo campeonato dividem a mesma tabela; em campeonatos diferentes, cada um tem a sua. Clubes de paises diferentes com a mesma sigla deixaram de ser confundidos.",
+        "As cartas do elenco na prancheta horizontal ganharam o desenho novo: fundo branco, sem brilho, com o destaque no nome e nos atributos do atleta.",
+        "A tela de configuracoes iniciais mostrava \"1.0.283\" havia vinte versoes; agora mostra a versao real do jogo."
+      ]
+    },
+    {
+      "version": "1.0.302",
+      "data": "2026-08-13",
+      "titulo": "Co-op local: até oito técnicos no mesmo mundo",
+      "itens": [
+        "NOVIDADE: uma carreira aceita até OITO técnicos humanos, cada um com seu clube, dentro do MESMO mundo — mercado, tabelas e calendário são únicos. Se um comprar um atacante, ele deixa de existir para os outros. Criam-se em Novo Jogo, nas configurações iniciais.",
+        "A rodada não avança enquanto todos não fecharem as decisões. Sem isso alguém perderia a rodada sem ter escalado, e nada na tela diria por quê.",
+        "Ao passar o computador, o jogo troca o que é do clube (elenco, caixa, tática, olheiros, negociações) e mantém o que é do mundo (rodada, temporada, tabelas, artilharia). Um técnico nunca vê o elenco do outro.",
+        "Confronto entre dois técnicos da mesa não é dirigido ao vivo — seria injusto com quem assiste. É simulado com o que cada um já decidiu, e cada lado entra com a FORÇA DO SEU ELENCO, não com o prestígio do escudo.",
+        "Traz também o acumulado das versões desde a 1.0.289."
+      ]
+    },
+    {
+      "version": "1.0.289",
+      "data": "2026-08-11",
+      "titulo": "Travamento na seleção de equipes",
+      "itens": [
+        "CORREÇÃO: o jogo travava por completo ao percorrer os times na criação de carreira. O escudo 3D criava um contexto de vídeo novo a cada troca de time e nunca o devolvia; o navegador suporta cerca de 16 ao mesmo tempo e, passando disso, derruba a página.",
+        "Em computador rápido acontecia antes, porque se percorre mais times por minuto.",
+        "Em investigação: a demora para ABRIR as telas tem outra causa (a base de clubes viaja inteira no JavaScript)."
+      ]
+    },
+    {
+      "version": "1.0.288",
+      "data": "2026-08-10",
+      "titulo": "Partida mais leve no perfil equilibrado",
+      "itens": [
+        "CORREÇÃO: o perfil de desempenho \"Equilibrado\" pedia ao radar 3D a qualidade MÁXIMA (64 mil tufos de grama e sombra 4096). Como ele é o padrão, quase todo jogador rodava a cena mais pesada do motor — e a partida engasgava.",
+        "Agora \"Equilibrado\" usa a qualidade média (22 mil tufos, sombra 1024). Quem quiser a cena cheia escolhe \"Qualidade máxima\" nas configurações.",
+        "Em investigação: a demora para ABRIR as telas tem outra causa (a base de clubes viaja inteira no JavaScript) e será tratada na próxima versão."
+      ]
+    },
+    {
+      "version": "1.0.287",
+      "data": "2026-08-10",
+      "titulo": "Escritório que não carregava, radar 3D na partida e menu reorganizado",
+      "itens": [
+        "CORREÇÃO: o escritório podia ficar carregando para sempre quando o clube salvo não era encontrado (chave antiga ou clube fora do elenco base). Agora o jogo leva você à Área do Treinador em vez de girar.",
+        "NOVO: radar 3D da partida, com alternador 2D/3D e retorno automático ao 2D se a placa de vídeo não suportar.",
+        "NOVO: menu reorganizado em quatro seções (Clube, Elenco, Competição, Você).",
+        "NOVO: Rankings mundiais com entrada própria no menu.",
+        "Uniformes da Arábia Saudita disponíveis pelo canal de atualização."
+      ]
+    },
+    {
+      "version": "1.0.284",
+      "data": "2026-08-10",
+      "titulo": "Competições se atualizam sem reinstalar",
+      "itens": [
+        "NOVO: participantes de cada competição chegam pelo canal de atualização — promovido e rebaixado entram sem versão nova.",
+        "NOVO: turno único e ida e volta passaram a valer no calendário; antes o returno era somado sempre.",
+        "NOVO: rebaixamento e acesso seguem o que for publicado, mantendo a pirâmide coerente.",
+        "NOVO: clubes, atletas e torneios podem ser licenciados um a um; sem licença o jogo usa identidade genérica.",
+        "NOVO: atributos, rosto, idade, posição e nacionalidade de atleta editáveis pelo canal.",
+        "CORREÇÃO: a lista de clubes do painel administrativo voltou a carregar."
+      ]
+    },
+    {
+      "version": "1.0.283",
+      "data": "2026-08-09",
+      "titulo": "Configurações iniciais, desempenho adaptativo e preparação para lojas",
+      "itens": [
+        "NOVO: escolha estaduais, regionais, competições internacionais de clubes e seleções antes de iniciar.",
+        "NOVO: sistemas mensal/semanal de salários e individual/clássico de força ficam gravados por carreira.",
+        "NOVO: perfis Automático, Econômico, Equilibrado e Qualidade adaptam efeitos ao computador.",
+        "MELHORIA: regras escolhidas filtram o calendário real e atualizações preservam dados e preferências do save.",
+        "MELHORIA: modal O que há de novo atualizado e mantido com exibição única por versão."
+      ]
+    },
+    {
+      "version": "1.0.282",
+      "data": "2026-08-09",
+      "titulo": "Gestão avançada: preparação, cultura, mercado e rankings mundiais",
+      "itens": [
+        "NOVO: criador de bolas paradas com quatro cenários, zonas de cobrança e papéis por atleta.",
+        "NOVO: preparação do próximo adversário combina foco tático, bola parada e bônus de sessão.",
+        "NOVO: intermediários consultam mercados interessados e sugerem uma faixa de venda contextual.",
+        "NOVO: metas individuais de gols, assistências, treino e jogos em empréstimo, com valor inicial e prazo.",
+        "NOVO: três princípios do treinador, adesão individual, unidades de treino e grupos de mentoria.",
+        "NOVO: pedidos contextuais à diretoria, com uma prioridade por temporada, e reuniões de comissão configuráveis.",
+        "NOVO: carreiras podem começar em Original, Mundo Real ou Seu Mundo.",
+        "NOVO: linha do tempo dinâmica e rankings de técnicos, clubes e seleções derivados da carreira."
+      ]
+    },
+    {
+      "version": "1.0.281",
+      "data": "2026-08-09",
+      "titulo": "Atualizações menores sem reenviar fotos, escudos e uniformes",
+      "itens": [
+        "MELHORIA: o canal diferencial agora consulta o manifesto já publicado antes de preparar uma versão. Fotos de jogadores, escudos, uniformes e outros arquivos inalterados permanecem na VPS e no computador do jogador; somente conteúdo novo ou alterado entra no próximo envio."
+      ]
+    },
+    {
       "version": "1.0.280",
       "data": "2026-08-09",
-      "latest": true,
       "titulo": "As funções individuais passaram a valer, e o atleta vendido não volta mais",
       "itens": [
         "CORRIGIDO: ao vender o elenco, sair da página de Elenco e voltar, os atletas reapareciam como se nada tivesse sido vendido. As telas de Elenco e de Escalações montavam o time a partir do cadastro do clube, que não sabe nada de venda, empréstimo ou leilão. A correção da versão anterior tratou o mesmo defeito em outra tela; estas duas tinham ficado de fora.",

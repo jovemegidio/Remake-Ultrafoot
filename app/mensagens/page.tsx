@@ -1,557 +1,144 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import {
-  Mail,
-  MailOpen,
-  Star,
-  Trash2,
-  Archive,
-  Clock,
-  User,
-  Building2,
-  Trophy,
-  ShoppingCart,
-  ChevronRight,
-  Reply,
-  Search,
-  Send,
-  X,
-  ArchiveRestore,
-  Inbox,
-} from "lucide-react"
+import { AlertTriangle, Bell, Clock, DollarSign, Goal, Info, Mail, Search, Star, Trash2, Trophy, X, Zap } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
-import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useNotifications, type Notification } from "@/components/notifications-system"
 import { useGameState } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameEngine } from "@/lib/game-engine"
 import { acceptOffer, counterSponsorOffer, generateOffers } from "@/lib/sponsor-engine"
 import { cn } from "@/lib/utils"
 
-// Message type
-interface Message {
-  id: number
-  from: string
-  subject: string
-  preview: string
-  fullContent: string
-  date: string
-  read: boolean
-  starred: boolean
-  archived: boolean
-  deleted: boolean
-  category: string
-  icon: React.ComponentType<{ className?: string }>
-}
+type MessageFilter = "all" | "unread" | "important"
 
-// Initial messages data
-const initialMessages: Message[] = [
-  {
-    id: 1,
-    from: "Diretoria",
-    subject: "Bem-vindo a nova temporada!",
-    preview: "A diretoria do clube deseja a voce uma excelente temporada 2026. Contamos com seu trabalho...",
-    fullContent: "A diretoria do clube deseja a voce uma excelente temporada 2026. Contamos com seu trabalho para levar o time ao topo do futebol brasileiro.\n\nNossas metas para esta temporada sao ambiciosas: queremos conquistar o titulo do Brasileirao e chegar longe na Copa do Brasil. O orcamento foi ajustado para permitir contratacoes estrategicas.\n\nBoa sorte, tecnico!",
-    date: "Hoje",
-    read: false,
-    starred: true,
-    archived: false,
-    deleted: false,
-    category: "diretoria",
-    icon: Building2,
-  },
-  {
-    id: 2,
-    from: "Comissao Tecnica",
-    subject: "Relatorio de pre-temporada",
-    preview: "Segue o relatorio completo da pre-temporada. Os jogadores estao em otimas condicoes...",
-    fullContent: "Segue o relatorio completo da pre-temporada. Os jogadores estao em otimas condicoes fisicas e prontos para o inicio do campeonato.\n\nDestaques:\n- O departamento medico nao registrou lesoes graves\n- Os testes fisicos mostraram melhoria de 15% no condicionamento geral\n- Os treinos taticos foram bem absorvidos pelo grupo\n\nRecomendamos manter a intensidade dos treinos nas proximas semanas.",
-    date: "Ontem",
-    read: false,
-    starred: false,
-    archived: false,
-    deleted: false,
-    category: "staff",
-    icon: User,
-  },
-  {
-    id: 3,
-    from: "Departamento de Futebol",
-    subject: "Proposta recebida - Jogador X",
-    preview: "Recebemos uma proposta do exterior para um de nossos jogadores. Favor analisar...",
-    fullContent: "Recebemos uma proposta do exterior para um de nossos jogadores. Favor analisar os termos e nos dar um retorno.\n\nDetalhes da proposta:\n- Clube interessado: AC Milan (Italia)\n- Jogador: Lincoln\n- Valor oferecido: EUR 15.000.000\n- Condicoes: 70% a vista, 30% em bonificacoes\n\nAguardamos sua decisao para prosseguir com as negociacoes.",
-    date: "2 dias",
-    read: true,
-    starred: true,
-    archived: false,
-    deleted: false,
-    category: "mercado",
-    icon: ShoppingCart,
-  },
-  {
-    id: 4,
-    from: "CBF",
-    subject: "Calendario oficial Serie A 2026",
-    preview: "Informamos que o calendario oficial da Serie A 2026 foi divulgado. Confira as datas...",
-    fullContent: "Informamos que o calendario oficial da Serie A 2026 foi divulgado.\n\nDatas importantes:\n- Inicio: 15 de janeiro de 2026\n- Termino: 8 de dezembro de 2026\n- Pausa para Copa America: 10 de junho a 15 de julho\n\nO calendario completo esta disponivel no site oficial da CBF. Fique atento aos prazos de inscricao de jogadores.",
-    date: "3 dias",
-    read: true,
-    starred: false,
-    archived: false,
-    deleted: false,
-    category: "competicao",
-    icon: Trophy,
-  },
-  {
-    id: 5,
-    from: "Patrocinador Master",
-    subject: "Renovacao de contrato",
-    preview: "Gostaramos de discutir a renovacao do contrato de patrocinio para a proxima temporada...",
-    fullContent: "Gostaramos de discutir a renovacao do contrato de patrocinio para a proxima temporada.\n\nEstamos satisfeitos com os resultados da parceria e queremos ampliar nosso investimento no clube. Nossa proposta inclui:\n\n- Aumento de 25% no valor do patrocinio\n- Extensao do contrato por 3 anos\n- Bonus por metas de desempenho\n\nPor favor, agende uma reuniao com nosso departamento comercial.",
-    date: "5 dias",
-    read: true,
-    starred: false,
-    archived: false,
-    deleted: false,
-    category: "diretoria",
-    icon: Building2,
-  },
-]
+const notificationIcons = {
+  goal: Goal,
+  match_start: Clock,
+  match_end: Trophy,
+  transfer: DollarSign,
+  injury: AlertTriangle,
+  achievement: Star,
+  news: Zap,
+  system: Info,
+} satisfies Record<Notification["type"], typeof Bell>
+
+function formatDate(value: Date) {
+  if (Number.isNaN(value.getTime())) return "Data não disponível"
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(value)
+}
 
 export default function MensagensPage() {
   const router = useRouter()
-  const {team:userTeam}=useUserTeam()
-  const {state:saveState,setState:setSaveState}=useGameState()
-  const gameEngine=useGameEngine()
-  const sponsorOffers=saveState.sponsorOffers??[]
-  const [counteringSponsor,setCounteringSponsor]=useState<string|null>(null)
-  const [counterMonthly,setCounterMonthly]=useState(0)
-  const [counterDuration,setCounterDuration]=useState(2)
-  useEffect(()=>{if(saveState.selectedTeamShort&&saveState.sponsorOffers===undefined)setSaveState({sponsorOffers:generateOffers(userTeam.prestigio,1),activeSponsors:saveState.activeSponsors??[]})},[saveState.selectedTeamShort,saveState.sponsorOffers,saveState.activeSponsors,setSaveState,userTeam.prestigio])
-  const acceptSponsor=(id:string)=>{const offer=sponsorOffers.find(item=>item.sponsor.id===id);if(!offer)return;setSaveState({activeSponsors:acceptOffer(offer,saveState.activeSponsors??[]),sponsorOffers:sponsorOffers.filter(item=>item.sponsor.id!==id)});gameEngine.addClubRevenue(offer.sponsor.monthlyValue)}
-  const counterSponsor=(id:string)=>{const offer=sponsorOffers.find(item=>item.sponsor.id===id);if(!offer)return;const result=counterSponsorOffer(offer,counterMonthly,counterDuration);setSaveState({sponsorOffers:sponsorOffers.map(item=>item.sponsor.id===id?result.offer:item)});setCounteringSponsor(null)}
-
-  // Gamepad support
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const btn = (e as CustomEvent).detail?.button
-      if (btn === 'B') router.back()
-    }
-    window.addEventListener('gamepad:button', handler)
-    return () => window.removeEventListener('gamepad:button', handler)
-  }, [router])
-  const [filter, setFilter] = useState("all")
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(messages[0])
+  const { team: userTeam } = useUserTeam()
+  const { state: saveState, setState: setSaveState } = useGameState()
+  const gameEngine = useGameEngine()
+  const { notifications, unreadCount, markAsRead, removeNotification } = useNotifications()
+  const sponsorOffers = saveState.sponsorOffers ?? []
+  const [filter, setFilter] = useState<MessageFilter>("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const [replyModalOpen, setReplyModalOpen] = useState(false)
-  const [replyText, setReplyText] = useState("")
-  const [replySent, setReplySent] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [counteringSponsor, setCounteringSponsor] = useState<string | null>(null)
+  const [counterMonthly, setCounterMonthly] = useState(0)
+  const [counterDuration, setCounterDuration] = useState(2)
 
-  // Counts
-  const unreadCount = useMemo(() => messages.filter(m => !m.read && !m.archived && !m.deleted).length, [messages])
-  const starredCount = useMemo(() => messages.filter(m => m.starred && !m.archived && !m.deleted).length, [messages])
-  const archivedCount = useMemo(() => messages.filter(m => m.archived && !m.deleted).length, [messages])
+  useEffect(() => {
+    if (saveState.selectedTeamShort && saveState.sponsorOffers === undefined) {
+      setSaveState({ sponsorOffers: generateOffers(userTeam.prestigio, 1), activeSponsors: saveState.activeSponsors ?? [] })
+    }
+  }, [saveState.selectedTeamShort, saveState.sponsorOffers, saveState.activeSponsors, setSaveState, userTeam.prestigio])
 
-  // Filtered messages
+  useEffect(() => {
+    const handler = (event: Event) => {
+      if ((event as CustomEvent).detail?.button === "B") router.back()
+    }
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
+  }, [router])
+
   const filteredMessages = useMemo(() => {
-    return messages.filter(m => {
-      // Never show deleted messages
-      if (m.deleted) return false
-      
-      // Filter by tab
-      const matchesFilter = 
-        filter === "all" ? !m.archived :
-        filter === "unread" ? !m.read && !m.archived :
-        filter === "starred" ? m.starred && !m.archived :
-        filter === "archived" ? m.archived :
-        filter === "diretoria" ? m.category === "diretoria" && !m.archived :
-        !m.archived
-      
-      // Filter by search
-      const matchesSearch = searchQuery === "" || 
-        m.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.preview.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      return matchesFilter && matchesSearch
+    const query = searchQuery.trim().toLocaleLowerCase("pt-BR")
+    return notifications.filter(notification => {
+      if (filter === "unread" && notification.read) return false
+      if (filter === "important" && !["high", "urgent"].includes(notification.priority ?? "low")) return false
+      return !query || `${notification.title} ${notification.message}`.toLocaleLowerCase("pt-BR").includes(query)
     })
-  }, [messages, filter, searchQuery])
+  }, [filter, notifications, searchQuery])
 
-  // Mark as read when selecting
-  const handleSelectMessage = (message: Message) => {
-    setSelectedMessage(message)
-    if (!message.read) {
-      setMessages(prev => prev.map(m => 
-        m.id === message.id ? { ...m, read: true } : m
-      ))
-    }
+  const selectedMessage = notifications.find(notification => notification.id === selectedId) ?? filteredMessages[0] ?? null
+
+  const selectMessage = (notification: Notification) => {
+    setSelectedId(notification.id)
+    if (!notification.read) markAsRead(notification.id)
   }
 
-  // Toggle starred
-  const handleToggleStar = (messageId: number) => {
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, starred: !m.starred } : m
-    ))
-    if (selectedMessage?.id === messageId) {
-      setSelectedMessage(prev => prev ? { ...prev, starred: !prev.starred } : null)
-    }
+  const deleteMessage = (id: string) => {
+    removeNotification(id)
+    if (selectedId === id) setSelectedId(null)
   }
 
-  // Archive message
-  const handleArchive = (messageId: number) => {
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, archived: true } : m
-    ))
-    // Select next message if current was archived
-    if (selectedMessage?.id === messageId) {
-      const remaining = filteredMessages.filter(m => m.id !== messageId)
-      setSelectedMessage(remaining[0] || null)
-    }
+  const acceptSponsor = (id: string) => {
+    const offer = sponsorOffers.find(item => item.sponsor.id === id)
+    if (!offer) return
+    setSaveState({
+      activeSponsors: acceptOffer(offer, saveState.activeSponsors ?? []),
+      sponsorOffers: sponsorOffers.filter(item => item.sponsor.id !== id),
+    })
+    gameEngine.addClubRevenue(offer.sponsor.monthlyValue)
   }
 
-  // Unarchive message
-  const handleUnarchive = (messageId: number) => {
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, archived: false } : m
-    ))
-  }
-
-  // Delete message
-  const handleDelete = (messageId: number) => {
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, deleted: true } : m
-    ))
-    // Select next message if current was deleted
-    if (selectedMessage?.id === messageId) {
-      const remaining = filteredMessages.filter(m => m.id !== messageId)
-      setSelectedMessage(remaining[0] || null)
-    }
-  }
-
-  // Reply to message
-  const handleReply = () => {
-    setReplyModalOpen(true)
-    setReplyText("")
-    setReplySent(false)
-  }
-
-  const handleSendReply = () => {
-    if (!replyText.trim()) return
-    setReplySent(true)
-    setTimeout(() => {
-      setReplyModalOpen(false)
-      setReplySent(false)
-      setReplyText("")
-    }, 1500)
+  const counterSponsor = (id: string) => {
+    const offer = sponsorOffers.find(item => item.sponsor.id === id)
+    if (!offer) return
+    const result = counterSponsorOffer(offer, counterMonthly, counterDuration)
+    setSaveState({ sponsorOffers: sponsorOffers.map(item => item.sponsor.id === id ? result.offer : item) })
+    setCounteringSponsor(null)
   }
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen bg-[#050508] flex flex-col overflow-hidden pb-20 md:pb-0">
       <GameHeader team={userTeam} />
-
-      <main className="flex-1 p-4 overflow-y-auto">
-        {sponsorOffers.filter(offer=>offer.status!=="rejected").length>0&&<section className="mb-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4"><h2 className="font-bold text-amber-200">Propostas comerciais recebidas</h2><p className="mt-1 text-xs text-white/45">Os contratos aceitos entram na receita mensal do clube.</p><div className="mt-3 grid gap-3 lg:grid-cols-3">{sponsorOffers.filter(offer=>offer.status!=="rejected").map(offer=><div key={offer.sponsor.id} className="rounded-lg bg-black/30 p-3"><div className="flex justify-between gap-2"><b>{offer.sponsor.name}</b><span className="text-[var(--brand)]">R$ {offer.sponsor.monthlyValue.toLocaleString("pt-BR")}/mês</span></div><p className="mt-1 text-[11px] text-white/45">{offer.durationSeasons} temporada(s) · bônus por título R$ {(offer.sponsor.bonuses.titleBonus??0).toLocaleString("pt-BR")}</p>{offer.message&&<p className="mt-2 text-xs text-amber-200">{offer.message}</p>}{counteringSponsor===offer.sponsor.id&&<div className="mt-2 grid grid-cols-2 gap-2"><input type="number" value={counterMonthly} onChange={e=>setCounterMonthly(Number(e.target.value))} className="rounded bg-white/10 p-2 text-xs"/><input type="number" min={1} max={5} value={counterDuration} onChange={e=>setCounterDuration(Number(e.target.value))} className="rounded bg-white/10 p-2 text-xs"/></div>}<div className="mt-3 flex gap-2"><button onClick={()=>acceptSponsor(offer.sponsor.id)} className="flex-1 rounded bg-[var(--brand)] px-2 py-1.5 text-xs font-bold text-[var(--brand-ink)]">Aceitar</button><button onClick={()=>{if(counteringSponsor===offer.sponsor.id)counterSponsor(offer.sponsor.id);else{setCounteringSponsor(offer.sponsor.id);setCounterMonthly(Math.round(offer.sponsor.monthlyValue*1.1));setCounterDuration(offer.durationSeasons)}}} className="flex-1 rounded bg-amber-400/15 px-2 py-1.5 text-xs text-amber-200">{counteringSponsor===offer.sponsor.id?"Enviar":"Contraproposta"}</button></div></div>)}</div></section>}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Message List */}
-          <section className="lg:col-span-1 space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold text-white tracking-tight">Mensagens</h1>
-                <p className="text-sm text-white/50 mt-1">{unreadCount} nao lidas</p>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-              <input
-                type="text"
-                placeholder="Buscar mensagens..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 rounded-lg bg-[#1a1a1a] border border-white/10 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-white/20"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Filters */}
-            <Tabs value={filter} onValueChange={setFilter} className="w-full">
-              <TabsList className="bg-[#1a1a1a] border border-white/10 p-1 h-auto grid grid-cols-4">
-                <TabsTrigger value="all" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-2 py-1.5">
-                  <Inbox className="h-3 w-3 mr-1" />
-                  Todas
-                </TabsTrigger>
-                <TabsTrigger value="unread" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-2 py-1.5">
-                  Nao lidas
-                  {unreadCount > 0 && (
-                    <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand)] text-[8px] text-[var(--brand-ink)] font-bold">
-                      {unreadCount}
-                    </span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="starred" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-2 py-1.5">
-                  <Star className="h-3 w-3 mr-1" />
-                  Favoritas
-                </TabsTrigger>
-                <TabsTrigger value="archived" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-2 py-1.5">
-                  <Archive className="h-3 w-3 mr-1" />
-                  Arquivo
-                  {archivedCount > 0 && (
-                    <span className="ml-1 text-[10px] text-white/40">
-                      {archivedCount}
-                    </span>
-                  )}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {/* Messages List */}
-            <div className="space-y-2 max-h-[calc(100vh-340px)] overflow-y-auto">
-              {filteredMessages.length === 0 ? (
-                <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-8 text-center">
-                  <Mail className="h-10 w-10 mx-auto text-white/20 mb-3" />
-                  <p className="text-sm text-white/50">
-                    {searchQuery ? "Nenhuma mensagem encontrada" : 
-                     filter === "archived" ? "Nenhuma mensagem arquivada" :
-                     filter === "starred" ? "Nenhuma mensagem favorita" :
-                     "Caixa de entrada vazia"}
-                  </p>
+      <main className="flex-1 overflow-y-auto p-4">
+        {sponsorOffers.some(offer => offer.status !== "rejected") && (
+          <section className="mb-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4">
+            <h2 className="font-bold text-amber-200">Propostas comerciais recebidas</h2>
+            <p className="mt-1 text-xs text-white/45">Os contratos aceitos entram na receita mensal do clube.</p>
+            <div className="mt-3 grid gap-3 lg:grid-cols-3">
+              {sponsorOffers.filter(offer => offer.status !== "rejected").map(offer => (
+                <div key={offer.sponsor.id} className="rounded-lg bg-black/30 p-3">
+                  <div className="flex justify-between gap-2"><b>{offer.sponsor.name}</b><span className="text-[var(--brand)]">R$ {offer.sponsor.monthlyValue.toLocaleString("pt-BR")}/mês</span></div>
+                  <p className="mt-1 text-[11px] text-white/45">{offer.durationSeasons} temporada(s) · bônus por título R$ {(offer.sponsor.bonuses.titleBonus ?? 0).toLocaleString("pt-BR")}</p>
+                  {offer.message && <p className="mt-2 text-xs text-amber-200">{offer.message}</p>}
+                  {counteringSponsor === offer.sponsor.id && <div className="mt-2 grid grid-cols-2 gap-2"><input aria-label="Valor mensal da contraproposta" type="number" value={counterMonthly} onChange={event => setCounterMonthly(Number(event.target.value))} className="rounded bg-white/10 p-2 text-xs" /><input aria-label="Duração da contraproposta" type="number" min={1} max={5} value={counterDuration} onChange={event => setCounterDuration(Number(event.target.value))} className="rounded bg-white/10 p-2 text-xs" /></div>}
+                  <div className="mt-3 flex gap-2"><button onClick={() => acceptSponsor(offer.sponsor.id)} className="flex-1 rounded bg-[var(--brand)] px-2 py-1.5 text-xs font-bold text-[var(--brand-ink)]">Aceitar</button><button onClick={() => { if (counteringSponsor === offer.sponsor.id) counterSponsor(offer.sponsor.id); else { setCounteringSponsor(offer.sponsor.id); setCounterMonthly(Math.round(offer.sponsor.monthlyValue * 1.1)); setCounterDuration(offer.durationSeasons) } }} className="flex-1 rounded bg-amber-400/15 px-2 py-1.5 text-xs text-amber-200">{counteringSponsor === offer.sponsor.id ? "Enviar" : "Contraproposta"}</button></div>
                 </div>
-              ) : (
-                filteredMessages.map((message) => (
-                  <button
-                    key={message.id}
-                    onClick={() => handleSelectMessage(message)}
-                    className={cn(
-                      "w-full rounded-xl border p-4 text-left transition-all",
-                      selectedMessage?.id === message.id 
-                        ? "border-[var(--brand)] bg-[var(--brand)]/5" 
-                        : "border-white/[0.04] bg-[#0c0c10] hover:border-white/10",
-                      !message.read && "bg-[var(--brand)]/5"
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={cn(
-                        "h-10 w-10 rounded-lg flex items-center justify-center shrink-0",
-                        message.category === "diretoria" ? "bg-yellow-400/20 text-yellow-400" :
-                        message.category === "staff" ? "bg-blue-400/20 text-blue-400" :
-                        message.category === "mercado" ? "bg-[var(--brand)]/20 text-[var(--brand)]" :
-                        "bg-purple-400/20 text-purple-400"
-                      )}>
-                        <message.icon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={cn(
-                            "text-sm truncate",
-                            !message.read ? "font-semibold text-white" : "text-white/80"
-                          )}>
-                            {message.from}
-                          </span>
-                          <div className="flex items-center gap-1 shrink-0">
-                            {message.starred && <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />}
-                            {!message.read && <span className="h-2 w-2 rounded-full bg-[var(--brand)]" />}
-                          </div>
-                        </div>
-                        <div className={cn(
-                          "text-xs mt-0.5 truncate",
-                          !message.read ? "text-white/80" : "text-white/50"
-                        )}>
-                          {message.subject}
-                        </div>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-[10px] text-white/40 truncate pr-2">
-                            {message.preview.slice(0, 40)}...
-                          </span>
-                          <span className="text-[10px] text-white/40 shrink-0">
-                            {message.date}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                ))
-              )}
+              ))}
+            </div>
+          </section>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <section className="space-y-4 lg:col-span-1">
+            <div><h1 className="text-2xl font-semibold text-white">Mensagens da carreira</h1><p className="mt-1 text-sm text-white/50">{unreadCount} não lidas</p></div>
+            <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" /><input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Buscar mensagens..." className="h-10 w-full rounded-lg border border-white/10 bg-[#1a1a1a] pl-10 pr-9 text-sm text-white" />{searchQuery && <button aria-label="Limpar busca" onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40"><X className="h-4 w-4" /></button>}</div>
+            <div className="grid grid-cols-3 gap-2">
+              {([['all', 'Todas'], ['unread', 'Não lidas'], ['important', 'Importantes']] as const).map(([id, label]) => <button key={id} onClick={() => setFilter(id)} className={cn("rounded-lg border px-2 py-2 text-xs", filter === id ? "border-[var(--brand)] bg-[var(--brand)]/10 text-white" : "border-white/10 bg-[#1a1a1a] text-white/50")}>{label}</button>)}
+            </div>
+            <div className="max-h-[calc(100vh-310px)] space-y-2 overflow-y-auto">
+              {filteredMessages.length === 0 ? <div className="rounded-xl border border-white/[0.04] bg-[#0c0c10] p-8 text-center"><Mail className="mx-auto mb-3 h-10 w-10 text-white/20" /><p className="text-sm text-white/50">Nenhuma mensagem real registrada nesta carreira.</p></div> : filteredMessages.map(notification => {
+                const Icon = notificationIcons[notification.type]
+                return <button key={notification.id} onClick={() => selectMessage(notification)} className={cn("w-full rounded-xl border p-4 text-left", selectedMessage?.id === notification.id ? "border-[var(--brand)] bg-[var(--brand)]/5" : "border-white/[0.04] bg-[#0c0c10]", !notification.read && "bg-[var(--brand)]/5")}><div className="flex gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5"><Icon className="h-5 w-5 text-[var(--brand)]" /></div><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className={cn("truncate text-sm", !notification.read ? "font-semibold text-white" : "text-white/70")}>{notification.title}</span>{!notification.read && <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--brand)]" />}</div><p className="mt-1 truncate text-xs text-white/45">{notification.message}</p><p className="mt-1 text-[10px] text-white/30">{formatDate(notification.timestamp)}</p></div></div></button>
+              })}
             </div>
           </section>
 
-          {/* Message Detail */}
           <section className="lg:col-span-2">
-            {selectedMessage ? (
-              <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden h-full">
-                {/* Message Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04] bg-white/[0.02]">
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "h-12 w-12 rounded-lg flex items-center justify-center",
-                      selectedMessage.category === "diretoria" ? "bg-yellow-400/20 text-yellow-400" :
-                      selectedMessage.category === "staff" ? "bg-blue-400/20 text-blue-400" :
-                      selectedMessage.category === "mercado" ? "bg-[var(--brand)]/20 text-[var(--brand)]" :
-                      "bg-purple-400/20 text-purple-400"
-                    )}>
-                      <selectedMessage.icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-white">{selectedMessage.subject}</h2>
-                      <div className="flex items-center gap-2 text-sm text-white/50">
-                        <span>De: {selectedMessage.from}</span>
-                        <span className="text-white/20">|</span>
-                        <Clock className="h-3 w-3" />
-                        <span>{selectedMessage.date}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleToggleStar(selectedMessage.id)}
-                      className="h-8 w-8 text-white/50 hover:text-yellow-400 hover:bg-white/5"
-                    >
-                      <Star className={cn("h-4 w-4", selectedMessage.starred && "text-yellow-400 fill-yellow-400")} />
-                    </Button>
-                    {selectedMessage.archived ? (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleUnarchive(selectedMessage.id)}
-                        className="h-8 w-8 text-white/50 hover:text-[var(--brand)] hover:bg-white/5"
-                        title="Desarquivar"
-                      >
-                        <ArchiveRestore className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleArchive(selectedMessage.id)}
-                        className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/5"
-                        title="Arquivar"
-                      >
-                        <Archive className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleDelete(selectedMessage.id)}
-                      className="h-8 w-8 text-white/50 hover:text-red-400 hover:bg-white/5"
-                      title="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Message Body */}
-                <div className="p-6">
-                  <div className="space-y-4 whitespace-pre-line">
-                    <p className="text-white/80 leading-relaxed">
-                      {selectedMessage.fullContent}
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="mt-8 pt-6 border-t border-white/[0.04] flex items-center gap-3">
-                    <Button 
-                      onClick={handleReply}
-                      className="text-xs bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
-                    >
-                      <Reply className="mr-2 h-4 w-4" />
-                      Responder
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => handleArchive(selectedMessage.id)}
-                      className="text-xs border-white/10 bg-transparent text-white/70 hover:bg-white/5 hover:text-white"
-                    >
-                      <Archive className="mr-2 h-4 w-4" />
-                      Arquivar
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center h-full flex flex-col items-center justify-center">
-                <MailOpen className="h-16 w-16 text-white/20 mb-4" />
-                <h3 className="font-semibold text-white">Nenhuma mensagem selecionada</h3>
-                <p className="text-sm text-white/50 mt-2">
-                  Selecione uma mensagem para visualizar
-                </p>
-              </div>
-            )}
+            {selectedMessage ? <div className="h-full overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]"><div className="flex items-center justify-between gap-3 border-b border-white/[0.04] px-6 py-4"><div><h2 className="text-lg font-semibold text-white">{selectedMessage.title}</h2><p className="mt-1 flex items-center gap-1 text-xs text-white/40"><Clock className="h-3 w-3" />{formatDate(selectedMessage.timestamp)}</p></div><Button variant="ghost" size="icon" onClick={() => deleteMessage(selectedMessage.id)} className="text-white/50 hover:text-red-400"><Trash2 className="h-4 w-4" /></Button></div><div className="p-6"><p className="whitespace-pre-line leading-relaxed text-white/80">{selectedMessage.message}</p><div className="mt-8 flex gap-3 border-t border-white/[0.04] pt-6">{selectedMessage.href && <Button onClick={() => router.push(selectedMessage.href!)} className="bg-[var(--brand)] text-[var(--brand-ink)]">Abrir área relacionada</Button>}<Button variant="outline" onClick={() => deleteMessage(selectedMessage.id)} className="border-white/10 bg-transparent text-white/70"><Trash2 className="mr-2 h-4 w-4" />Excluir</Button></div></div></div> : <div className="flex h-full min-h-80 flex-col items-center justify-center rounded-xl border border-white/[0.04] bg-[#0c0c10] p-12 text-center"><Bell className="mb-4 h-16 w-16 text-white/20" /><h3 className="font-semibold text-white">Caixa de entrada vazia</h3><p className="mt-2 text-sm text-white/50">Os eventos reais da sua carreira aparecerão aqui.</p></div>}
           </section>
         </div>
       </main>
-
-
-      {/* Reply Modal */}
-      <Dialog open={replyModalOpen} onOpenChange={setReplyModalOpen}>
-        <DialogContent className="bg-[#1a1a1a] border-white/10 text-white max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-white">
-              {replySent ? "Mensagem Enviada" : `Responder: ${selectedMessage?.from}`}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {replySent ? (
-            <div className="py-8 text-center">
-              <div className="h-16 w-16 mx-auto rounded-full bg-[var(--brand)]/20 flex items-center justify-center mb-4">
-                <Send className="h-8 w-8 text-[var(--brand)]" />
-              </div>
-              <p className="text-white/70">Sua resposta foi enviada com sucesso!</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="rounded-lg bg-white/5 border border-white/10 p-3">
-                <div className="text-xs text-white/40 mb-1">Assunto</div>
-                <div className="text-sm text-white">RE: {selectedMessage?.subject}</div>
-              </div>
-              
-              <div>
-                <label className="text-xs text-white/40 mb-2 block">Sua resposta</label>
-                <textarea
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Digite sua resposta..."
-                  className="w-full h-32 p-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-white/20 resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setReplyModalOpen(false)}
-                  className="border-white/10 text-white/70"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleSendReply}
-                  disabled={!replyText.trim()}
-                  className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] disabled:opacity-50"
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  Enviar
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

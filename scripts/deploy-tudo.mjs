@@ -212,6 +212,18 @@ if (!publicar) {
 //
 // Chamando `node` (que E um .exe) com o caminho do modulo local, o gate roda.
 const GATES = [
+  // Primeiro de todos porque custa milissegundos e reprova por um motivo que os
+  // outros gates nao veem: o Tauri batiza o instalador com a versao do
+  // `tauri.conf.json`, mas o VERSAO_JOGO daqui sai do `package.json`. Divergindo,
+  // o EXE existe com outro nome e o deploy so diz "SEM INSTALADOR" la na frente,
+  // depois de ~2 min de type-check. O `EXIGIR_VERSAO` cruza as duas arvores: o
+  // gate roda no DISCO e compara com a versao lida no REPOSITORIO.
+  {
+    nome: "versoes do jogo alinhadas",
+    cmd: "node",
+    args: ["scripts/qa-versao-do-jogo.mjs"],
+    env: { EXIGIR_VERSAO: VERSAO_JOGO },
+  },
   { nome: "type-check", cmd: "node", args: ["node_modules/typescript/bin/tsc", "--noEmit", "-p", "tsconfig.json"] },
   { nome: "lint", cmd: "node", args: ["node_modules/eslint/bin/eslint.js", "app", "components", "lib", "hooks"] },
   { nome: "lacunas de funcionalidade", cmd: "node", args: ["scripts/audit-feature-gaps.mjs"] },
@@ -224,6 +236,11 @@ const GATES = [
   // Escudo/uniforme que nao resolve no app instalado passou TRES versoes no ar
   // (1.0.266 a 1.0.268) sem ninguem perceber no build. Ver o cabecalho do teste.
   { nome: "escudo e uniforme no app instalado", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-escudo-no-app-instalado.ts"] },
+  // Mod de terceiro entra no MESMO funil do canal e do editor. A mescla que
+  // apaga o que o outro nao citou ja custou 263 uniformes por outro caminho, e
+  // "qual mod venceu" sem desempate explicito vira sorteio do sistema de
+  // arquivos. Ver docs/MODS.md.
+  { nome: "precedencia dos mods", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-mods.ts"] },
   // A rotina da semana modula CARGA DE TREINO e RECUPERACAO de todo o elenco.
   // Um erro aqui nao aparece na tela: aparece semanas depois, no elenco moido ou
   // no elenco que nunca evolui. A trava que mais importa e "vespera de jogo nunca
@@ -247,7 +264,11 @@ if (!pularGates) {
   for (const gate of GATES) {
     passo(`gate: ${gate.nome}`)
     try {
-      rodar(gate.cmd, gate.args, { cwd: DISCO, stdio: "inherit" })
+      rodar(gate.cmd, gate.args, {
+        cwd: DISCO,
+        stdio: "inherit",
+        ...(gate.env ? { env: { ...process.env, ...gate.env } } : {}),
+      })
     } catch {
       console.error(`\nGATE REPROVADO: ${gate.nome}. Nada foi publicado.`)
       console.error("Se precisar publicar assim mesmo, rode com --pular-gates e assuma o risco.")
@@ -377,11 +398,32 @@ if (!soLauncher) {
 
   // A VPS precisa do MESMO manifesto apontando para ela mesma — e do sha256 e do
   // tamanho, que o launcher usa para mostrar o progresso do download.
+  // VERSÕES ANTERIORES — o que habilita "jogar uma versão antiga" no launcher.
+  //
+  // `versoes_anteriores()` (Launcher/src-tauri/src/lib.rs) já lê este campo desde
+  // que foi escrito, e nunca teve o que ler: ninguém nunca publicou `anteriores`.
+  // O comando existia, a tela não o chamava, e o manifesto não o trazia — três
+  // pontas soltas do mesmo recurso.
+  //
+  // Falhar aqui NÃO derruba a publicação: sem a lista, o launcher simplesmente
+  // não oferece versões antigas, que é exatamente o comportamento de hoje.
+  let anteriores = []
+  try {
+    const bruto = execFileSync("node", [path.join(RAIZ, "scripts/listar-versoes-anteriores.mjs"), "--limite", "10"], {
+      encoding: "utf-8", maxBuffer: 32 * 1024 * 1024, cwd: RAIZ,
+    })
+    anteriores = JSON.parse(bruto).filter(v => v.version !== VERSAO_JOGO)
+    console.log(`  versoes anteriores oferecidas: ${anteriores.length}`)
+  } catch (e) {
+    console.log(`  sem lista de versoes anteriores (${String(e).split("\n")[0]}) — o launcher segue so com a atual`)
+  }
+
   const manifestoVps = {
     version: VERSAO_JOGO,
     notes: NOTAS_DO_JOGO,
     sizeMb: tamanhoMb,
     sha256: hash.toUpperCase(),
+    ...(anteriores.length ? { anteriores } : {}),
     platforms: {
       "windows-x86_64": {
         signature: readFileSync(sigPath, "utf-8").trim(),

@@ -14,7 +14,8 @@
 import Image from "next/image"
 import { Building2, Users, Ticket, Banknote } from "lucide-react"
 import { getTeamStadiumBackground } from "@/lib/pre-match-bg"
-import { formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
+import type { Team } from "@/lib/teams-data"
+import { formatCurrency, formatNumber } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 
 interface Atleta {

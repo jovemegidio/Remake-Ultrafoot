@@ -144,7 +144,11 @@ export default function SalvarPage() {
       </div>
 
       {/* Cabecalho: emblema mc + trilha Personalizar > Salvar + sub-abas */}
-      <header className="relative z-10 flex h-20 shrink-0 items-center gap-5 px-10">
+      {/* `px-10` são 80px de recuo — um quinto de um celular de 393px, gasto
+          antes de escrever qualquer coisa. Com os itens todos `shrink-0`, era o
+          recuo que empurrava a trilha para fora (76px medidos). No monitor o
+          espaçamento largo continua igual. */}
+      <header className="relative z-10 flex h-20 shrink-0 items-center gap-3 px-4 md:gap-5 md:px-10">
         <button
           onClick={() => hardNavigate("/")}
           aria-label="Inicio"

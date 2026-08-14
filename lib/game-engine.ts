@@ -5,8 +5,9 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { createTauriZustandStorage, storeSet } from "@/lib/persistent-store"
-import { getCareerScopedKey } from "@/lib/save-system"
-import { allTeams, getTeamByShort, effectiveDivision } from "@/lib/teams-data"
+import { getCareerScopedKey, loadGameState } from "@/lib/save-system"
+import { bonusMentoria282, normalizarGestao282, rendimentoUnidade282 } from "@/lib/gestao-282"
+import { allTeams, getTeamByFileKey, getTeamByShort, effectiveDivision } from "@/lib/teams-data"
 import {
   type PlayerPersona, gerarPersona, contribuicoesPorJogador, calcularNota, suspensaoPorCartoes,
   rotuloDaMoral, pontosDoRotulo,
@@ -17,15 +18,22 @@ import {
   avaliarCompra, decisaoDoAtleta, papelPrevisto, perfilDeElenco, ROTULO_DO_PAPEL, sondagemDe,
   type AtletaAlvo, type AvaliacaoDeCompra, type ClubeComprador, type PapelPrevisto, type Sondagem,
 } from "@/lib/mercado-realista"
-import { pickStartingXI } from "@/lib/formations"
+import { normalizePosition, pickStartingXI } from "@/lib/formations"
+import { aprenderPosicao, exercerFuncao, perfilDoAtleta, type ProgressoDoPerfil } from "@/lib/modelo-de-jogador"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
 import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor, FRACAO_DO_CUSTO_OPERACIONAL, youthPromotionSalaryWeekly } from "@/lib/club-economy"
 import { reforcosEmergenciais, gerarNomeDeAtleta, ELENCO_MINIMO } from "@/lib/reposicao-emergencial"
 import { decidirRenovacoes, decidirContratacoes } from "@/lib/diretoria"
+import { nomeDeAtleta } from "@/lib/nomes-por-pais"
+import { normalizeCountry, PAIS_DESCONHECIDO } from "@/lib/country-normalize"
+// Fiscalização do Modo Desafios. O módulo só guarda dados e funções puras (os
+// TIPOS que ele importa do save-system somem na compilação), então não há ciclo.
+import { podeReforcar } from "@/lib/challenge-engine"
 
 /** Prazo minimo que um reforco assina ao chegar. Ver o contrato em `buyPlayer`. */
 const PRAZO_MINIMO_DE_CONTRATO_ANOS = 2
-import { attributesFromOverall, overallFromAttributes, shiftAttributes } from "@/lib/player-attributes"
+import { attributesFromOverall, evoluirAtributos, overallFromAttributes } from "@/lib/player-attributes"
+import { multiplicadorDeValor, prestigioDe, type PrestigioDosAtletas } from "@/lib/prestigio-do-atleta"
 // Modulo puro (sem imports proprios): entra aqui sem risco de ciclo. Serve para
 // o promovido da base chegar ao elenco valendo o MESMO que valia na base.
 import { valorDeMercadoJovem } from "@/lib/youth-academy-rules"
@@ -46,6 +54,9 @@ import {
   type AtletaNaSemana, type ParesDeEntrosamento, type PlanoDeTreino,
 } from "@/lib/treino-e-entrosamento"
 import { analyseSquadDynamics, applyWeeklyPlayingTimeMorale } from "@/lib/squad-dynamics"
+// O TÉCNICO EM NÚMEROS. Retrato publicado pelo save-system — o motor não pode
+// importar o save (ciclo), como já acontece com o Modo Desafios.
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
 
 /**
  * Versao do formato persistido do motor. Fica numa constante porque e usada em
@@ -373,6 +384,12 @@ export interface StaffMember {
   hiredSeason: number
   // Chance de causar problemas se competencia baixa
   problemChance: number // 0-1
+  /** Evolucao da carreira da comissao (1.0.291). Opcionais em saves antigos. */
+  potential?: number
+  experienceWeeks?: number
+  contractEndSeason?: number
+  marketInterest?: number
+  generatedCandidate?: boolean
 }
 
 export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
@@ -398,6 +415,48 @@ export const AVAILABLE_STAFF: Omit<StaffMember, "hiredWeek" | "hiredSeason">[] =
   { id: 111, name: "Júnior Santos", role: "coordenador_base", competence: 80, loyalty: 85, passiveEffect: "Jovens gerados pela base chegam com +5 overall e +8 potencial.", salary: 40000, problemChance: 0.04 },
   { id: 112, name: "Marcos Oliveira", role: "coordenador_base", competence: 60, loyalty: 70, passiveEffect: "Leve melhora na qualidade dos jovens da base.", salary: 25000, problemChance: 0.12 },
 ]
+
+const STAFF_FIRST_NAMES = ["Alex", "Bruno", "Caio", "Daniel", "Felipe", "Gustavo", "Henrique", "Igor", "João", "Lucas", "Mateus", "Nicolas"]
+const STAFF_LAST_NAMES = ["Azevedo", "Barbosa", "Cardoso", "Duarte", "Esteves", "Freitas", "Gomes", "Lopes", "Moura", "Nunes", "Ribeiro", "Tavares"]
+
+function staffSeed(value: string): number {
+  let hash = 2166136261
+  for (let index = 0; index < value.length; index++) hash = Math.imul(hash ^ value.charCodeAt(index), 16777619)
+  return hash >>> 0
+}
+
+/** Mercado renovavel: dois candidatos novos por cargo a cada temporada. */
+export function staffCandidatesForSeason(
+  season: number,
+  role?: StaffRole,
+): Omit<StaffMember, "hiredWeek" | "hiredSeason">[] {
+  const allRoles = Object.keys(STAFF_ROLE_LABELS) as StaffRole[]
+  const roles = allRoles.filter(item => !role || item === role)
+  const generated = roles.flatMap((candidateRole) => Array.from({ length: 2 }, (_, slot) => {
+    const seed = staffSeed(`${season}:${candidateRole}:${slot}`)
+    const competence = 52 + seed % 34
+    const potential = Math.min(96, competence + 5 + ((seed >>> 8) % 12))
+    return {
+      id: season * 100 + allRoles.indexOf(candidateRole) * 2 + slot + 1,
+      name: `${STAFF_FIRST_NAMES[seed % STAFF_FIRST_NAMES.length]} ${STAFF_LAST_NAMES[(seed >>> 5) % STAFF_LAST_NAMES.length]}`,
+      role: candidateRole,
+      competence,
+      potential,
+      loyalty: 48 + ((seed >>> 11) % 48),
+      passiveEffect: `${STAFF_ROLE_LABELS[candidateRole]} em ascensão; potencial ${potential}.`,
+      salary: Math.round((12_000 + competence ** 2 * 8) / 500) * 500,
+      problemChance: Math.max(0.02, (78 - competence) / 180),
+      experienceWeeks: 0,
+      contractEndSeason: season + 3,
+      marketInterest: 0,
+      generatedCandidate: true,
+    }
+  }))
+  const base = AVAILABLE_STAFF
+    .filter(item => !role || item.role === role)
+    .map(item => ({ ...item, potential: Math.min(96, item.competence + 7), experienceWeeks: 0, contractEndSeason: season + 3, marketInterest: 0 }))
+  return [...base, ...generated]
+}
 
 // Historico de confrontos entre times
 export interface HeadToHead {
@@ -476,6 +535,20 @@ export interface PlayerTraining {
   currentFocus: string | null // atributo sendo treinado
   weeksTrained: number
   lastTrainingWeek: number
+  /**
+   * POSICAO que o atleta esta aprendendo (normalizada: "ZAG", "VOL"...).
+   *
+   * Ate esta versao so se aprendia uma posicao JOGANDO nela (`aprenderPosicao`,
+   * creditado pelos minutos oficiais) — ou seja, para adaptar um lateral a
+   * zagueiro era preciso escala-lo fora de posicao em jogo valendo pontos, e
+   * pagar o preco disso rodada apos rodada. Nao havia como preparar a mudanca no
+   * CT, que e como um clube de verdade faz.
+   *
+   * ⚠️ EXCLUSIVO com `currentFocus`: e o MESMO slot de treino individual. Deixar
+   * os dois ativos daria dois treinos pelo preco de um, e o atleta ganharia
+   * atributo e posicao na mesma semana pagando so uma vez de energia.
+   */
+  positionFocus?: string | null
 }
 
 export interface Player {
@@ -569,6 +642,26 @@ export interface Player {
    * consistencia, reacao a moral e negociacao. Gerados uma vez por atleta.
    */
   persona?: PlayerPersona
+  /**
+   * O QUE EVOLUI do perfil canonico (lib/modelo-de-jogador.ts): familiaridade
+   * ganha jogando fora da posicao natural.
+   *
+   * O resto do perfil — atributos de goleiro, pe fraco, tendencias, os quatro
+   * ocultos — NAO fica aqui: e derivado do `id` a cada leitura, como a persona,
+   * e por isso nao ocupa um byte do save. Ausente = ninguem ainda jogou fora de
+   * posicao, que e o caso da esmagadora maioria dos atletas.
+   */
+  perfilProgresso?: ProgressoDoPerfil
+  /**
+   * CARACTERISTICAS marcadas A MAO no editor (lib/caracteristicas-do-atleta.ts).
+   *
+   * Ausente — o caso da esmagadora maioria — significa "ninguem editou", e NAO
+   * "sem caracteristica": `caracteristicasDoAtleta` deriva 0 a 2 do id, da
+   * posicao e do perfil de atributos dele, sem gravar nada. Este campo existe so
+   * para a escolha manual do editor sobreviver a viagem pool -> motor, senao a
+   * ficha do atleta prometeria "Cabeceio" e o motor sortearia outra coisa.
+   */
+  traits?: string[]
 
   // Status Effects permanentes/temporarios (traumas, virtudes, momentum)
   statusEffects?: StatusEffect[]
@@ -1268,6 +1361,11 @@ export interface MatchPerformanceStats {
   possession: number
   passes: number
   passAccuracy: number
+  /** Métricas espaciais produzidas pelo motor 1.0.286. Opcionais em saves antigos. */
+  xA?: number
+  boxEntries?: number
+  highRecoveries?: number
+  attacksByChannel?: { left: number; center: number; right: number }
 }
 
 export interface MatchScorer {
@@ -1387,8 +1485,12 @@ export interface TeamTactics {
    * para escalar o XI; estes campos descrevem a reorganização com e sem bola.
    * São opcionais para manter saves anteriores à 1.0.279 legíveis.
    */
+  buildUpFormation?: string
   inPossessionFormation?: string
   outOfPossessionFormation?: string
+
+  /** Organização da última linha ao defender laterais no próprio campo. */
+  defensiveThrowInShape?: "zona" | "mista" | "individual"
   
   // Bolas paradas
   cornersAggressive: boolean
@@ -1530,8 +1632,22 @@ export function defaultRoleForPosition(position: string | undefined): PlayerRole
 }
 
 export interface PlayerInstructions {
+  /**
+   * Funcao COM A BOLA. Continua chamando-se `role` (e nao `roleComBola`) porque
+   * e o campo que todo save existente ja tem gravado — renomear exigiria
+   * migracao para nao apagar as instrucoes de quem ja jogava.
+   */
   role: PlayerRole
-  
+  /**
+   * Funcao SEM A BOLA. Ausente = a mesma de cima, que e o comportamento de
+   * antes desta versao, numero por numero.
+   *
+   * Existe porque posicao, funcao e FASE sao tres coisas: o mesmo PD pode ser
+   * `ponta_invertido` com a bola e `lateral_defensivo` sem ela, e era isso que o
+   * jogo nao sabia representar — ver lib/forcas-individuais.ts.
+   */
+  roleSemBola?: PlayerRole
+
   // Movimentacao
   roaming: "ficar_posicao" | "liberdade_moderada" | "liberdade_total"
   runs: "raramente" | "as_vezes" | "frequentemente"
@@ -2171,6 +2287,8 @@ interface GameEngineState {
   respondToOffer: (offerId: number, accept: boolean) => { ok: boolean; motivo?: string }
   counterTransferOffer: (offerId: number, amount: number, wageCoverage?: number, loanWeeks?: number) => "accepted" | "revised" | "rejected"
   trainPlayer: (playerId: number, attribute: string) => void
+  /** Poe o atleta para aprender uma posicao no CT. `null` encerra o treino. */
+  treinarPosicao: (playerId: number, posicao: string | null) => void
   setStarter: (playerId: number, isStarter: boolean) => void
   /**
    * Grava o XI INTEIRO de uma vez.
@@ -2213,12 +2331,22 @@ interface GameEngineState {
    * Devolve false quando falta caixa.
    */
   promoverDaBase: (jovem: {
-    name: string; position: string; age: number; overall: number; potential: number
+    name: string; position: string; age: number; overall: number; potential: number; nationality?: string
     pace?: number; shooting?: number; passing?: number; dribbling?: number; defending?: number; physical?: number
   }, taxa: number, divisao?: string) => boolean
   /** Entrada de caixa da venda de um atleta da base. */
   receberPorJovem: (valor: number, vendaId?: string) => void
   ajustarMoralJogador: (playerId: number, degraus: number) => void
+  /**
+   * APRENDER A POSICAO JOGANDO NELA (1.0.293).
+   *
+   * A improvisacao custava o mesmo no primeiro e no trigesimo jogo: nao havia
+   * como um lateral virar zagueiro razoavel a forca de ser escalado ali. Cada
+   * partida credita familiaridade no slot em que o atleta atuou.
+   */
+  registrarPosicoesJogadas: (minutos: Array<{ id: number; posicao: string; minutos: number; funcao?: string; funcaoSemBola?: string }>) => void
+  /** Verba liberada pela diretoria num pedido aprovado (ver Central de Gestão). */
+  liberarVerbaDaDiretoria: (valor: number, destino: "transferencias" | "caixa") => void
   /** "wage_budget" = recusado pela diretoria por estourar o teto salarial. */
   /**
    * `janelaAberta` vem de FORA de proposito. O motor conhece `currentWeek`, que
@@ -2234,7 +2362,7 @@ interface GameEngineState {
    * Esta descricao dizia o contrario e foi a origem de quatro gravadores que
    * faziam o atleta sair de graca (corrigido na v5 do save).
    */
-  buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean, janelaAberta?: boolean) => "joined" | "pending" | "failed" | "wage_budget"
+  buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean, janelaAberta?: boolean) => "joined" | "pending" | "failed" | "wage_budget" | "desafio"
   /**
    * Desiste de um reforco que ainda espera a janela e DEVOLVE o dinheiro.
    *
@@ -2253,7 +2381,7 @@ interface GameEngineState {
    * Sem ela a taxa negociada era apenas um número na tela: o empréstimo não
    * tirava um centavo do caixa, por mais caro que fosse o acordo.
    */
-  loanPlayer: (player: Player, weeks: number, salary: number, fee?: number, janelaAberta?: boolean, opcaoDeCompra?: number) => "joined" | "pending" | "failed" | "no_cash"
+  loanPlayer: (player: Player, weeks: number, salary: number, fee?: number, janelaAberta?: boolean, opcaoDeCompra?: number) => "joined" | "pending" | "failed" | "no_cash" | "desafio"
   /**
    * EXERCE A OPÇÃO DE COMPRA de um atleta que chegou por empréstimo.
    *
@@ -2320,7 +2448,7 @@ interface GameEngineState {
   injurePlayer: (playerId: number, injury: PlayerInjury) => void
   tratarLesao: (playerId: number, tratamento: TratamentoMedico) => ResultadoDoTratamento
   healPlayer: (playerId: number) => void
-  initializeGame: (teamShort: string) => void
+  initializeGame: (teamShort: string, teamFileKey?: string) => void
   updateHeadToHead: (result: MatchResult) => void
   getHeadToHead: (team1: string, team2: string) => HeadToHead | null
   checkContractBonuses: (playerId: number) => void
@@ -2367,6 +2495,8 @@ interface GameEngineState {
   // Gestao de staff
   staffMembers: StaffMember[]
   hireStaff: (staffId: number) => void
+  /** Renova por três temporadas; assédio alto encarece luvas e salário. */
+  renewStaffContract: (staffId: number) => boolean
   fireStaff: (staffId: number) => void
 
   // Status effects (traumas e virtudes)
@@ -2434,7 +2564,12 @@ interface GameEngineState {
   renovarEmprestimo: (playerId: number, semanas: number, salarioSemanal?: number) => boolean
 
   // Processar fim de temporada (envelhecimento, aposentadoria, jovens da base)
-  processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => void
+  /**
+   * Fim de temporada. `prestigio` traz os mapas ANTES e DEPOIS da virada — os
+   * dois, porque o preco do atleta e ajustado pela MUDANCA de nivel e nao pelo
+   * nivel absoluto (senao a estrela encareceria de novo a cada temporada).
+   */
+  processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[], prestigio?: { antes?: PrestigioDosAtletas; depois?: PrestigioDosAtletas }) => void
 }
 
 export interface InvestmentFundOffer {
@@ -2870,6 +3005,10 @@ export const useGameEngine = create<GameEngineState>()(
         counterPress: true,
         counterAttack: true,
         holdPosition: false,
+        buildUpFormation: "4-3-3",
+        inPossessionFormation: "4-3-3",
+        outOfPossessionFormation: "4-4-2",
+        defensiveThrowInShape: "mista",
         cornersAggressive: false,
         freekickSpecialist: null,
         penaltyTaker: 10, // Sasha
@@ -2937,7 +3076,14 @@ export const useGameEngine = create<GameEngineState>()(
          * extrato. Mesmo padrao de `expiredDepartures`, logo acima.
          */
         const movimentacoesDaSemana: Array<Parameters<typeof registrarMovimentacao>[0]> = []
-        
+
+        // CENTRAL DE GESTÃO NO TREINO. As unidades (goleiros/defesa/ataque) e os
+        // grupos de mentoria ficavam gravados no save e o treino semanal nunca os
+        // consultava. A leitura sai daqui, e não de dentro do `set`, pela mesma
+        // razão do bloco acima: o updater pode ser reexecutado. Save ainda não
+        // hidratado devolve o estado vazio e o treino se comporta como antes.
+        const gestaoDoSave = normalizarGestao282(loadGameState().gestao282)
+
         set((s) => {
           // Chance de o treino render +1 no atributo. Antes era 0.7 fixo; agora o Centro de
           // Treinamento (clubInfrastructure.training, nivel 1-5) mexe na %: nivel 2 (padrao)
@@ -3003,7 +3149,9 @@ export const useGameEngine = create<GameEngineState>()(
             minutosJogados: minutosDaSemana.get(p.id) ?? 0,
             resistencia: p.physical ?? 70,
             lesionado: Boolean(p.injury),
-            emTreinoIndividual: Boolean(p.training.currentFocus),
+            // O treino de POSICAO ocupa o mesmo slot e cobra a mesma energia —
+            // senao adaptar o elenco inteiro sairia de graca.
+            emTreinoIndividual: Boolean(p.training.currentFocus || p.training.positionFocus),
             focoIndividual: p.training.currentFocus ?? null,
           }))
           // ── A SEMANA TEM DIAS (ver lib/rotina-da-semana.ts) ─────────────
@@ -3022,9 +3170,14 @@ export const useGameEngine = create<GameEngineState>()(
           const resumoTreino = aplicarSemanaDeTreino(entrada, plano, {
             centroDeTreinamento: trainingLvl,
             centroMedico: medicalLvl,
+            treinador: efeitosDoTreinador(),
           }, rotina.fatorDeCarga, rotina.recuperacaoExtra)
           const efeitoPorId = new Map(resumoTreino.efeitos.map(e => [e.id, e]))
           const lesionadosNoTreino: string[] = []
+
+          // O save é a fonte única das unidades e mentorias — espelhar no motor
+          // criaria o segundo cofre de sempre. `gestaoDoSave` é lido acima.
+          const idsNoElenco = new Set(s.squadPlayers.map(p => p.id))
 
           const updatedPlayers = s.squadPlayers.map(player => {
             const efeito = efeitoPorId.get(player.id)
@@ -3057,6 +3210,45 @@ export const useGameEngine = create<GameEngineState>()(
 
             const newEnergy = Math.round(efeito?.energia ?? Math.min(100, player.energy + 10))
 
+            /**
+             * TREINO DE POSICAO — a semana no CT vale menos que a partida.
+             *
+             * 70 minutos equivalentes contra os 90 de um jogo inteiro, de
+             * proposito: o gramado continua sendo o melhor professor, e
+             * escalar o atleta fora de posicao segue valendo a pena para quem
+             * tem pressa. O que muda e que agora existe o caminho lento e sem
+             * risco — que e o que um clube de verdade faz na pre-temporada.
+             *
+             * Quando a familiaridade satura, a posicao entra nas SECUNDARIAS e
+             * o treino se encerra sozinho: sem isso o slot ficaria ocupado para
+             * sempre num atleta que ja aprendeu tudo o que podia.
+             */
+            if (player.training.positionFocus) {
+              const alvo = player.training.positionFocus
+              const perfilDoAluno = perfilDoAtleta(player.id, player.position, player.overall, player.secondaryPositions ?? [])
+              const rendimento = efeito?.rendimentoIndividual ?? 1
+              const progresso = aprenderPosicao(
+                perfilDoAluno, player.perfilProgresso, alvo, 70 * rendimento,
+              )
+              const aprendeuTudo = progresso === player.perfilProgresso
+              const jaSecundaria = (player.secondaryPositions ?? []).some(p => normalizePosition(p) === alvo)
+              return {
+                ...player,
+                energy: newEnergy,
+                perfilProgresso: progresso,
+                // `aprenderPosicao` devolve o MESMO objeto quando bateu no teto —
+                // e a deixa de que nao ha mais o que ensinar.
+                ...(aprendeuTudo ? {
+                  training: { ...player.training, positionFocus: null, weeksTrained: 0 },
+                  secondaryPositions: jaSecundaria
+                    ? player.secondaryPositions
+                    : [...(player.secondaryPositions ?? []), alvo],
+                } : {
+                  training: { ...player.training, weeksTrained: player.training.weeksTrained + 1 },
+                }),
+              }
+            }
+
             // Processar treinamento (lastTrainingWeek check removed — would never match since currentWeek already advanced)
             if (player.training.currentFocus) {
               const weeksTrained = player.training.weeksTrained + 1
@@ -3081,7 +3273,17 @@ export const useGameEngine = create<GameEngineState>()(
                 // so tinha custo (fadiga) e nenhum beneficio — ninguem escolheria
                 // "alta" nunca.
                 const rendimento = efeito?.rendimentoIndividual ?? 1
-                const chance = Math.min(0.95, trainImproveChance * fatorIdade * rendimento)
+                // Unidade coerente com o atributo treinado rende mais; o jovem
+                // orientado por um veterano do elenco rende mais ainda.
+                const rendimentoUnidade = rendimentoUnidade282(
+                  gestaoDoSave.unidadesTreino[player.id],
+                  player.training.currentFocus,
+                )
+                const rendimentoMentoria = bonusMentoria282(gestaoDoSave, player.id, idsNoElenco)
+                const chance = Math.min(
+                  0.95,
+                  trainImproveChance * fatorIdade * rendimento * rendimentoUnidade * rendimentoMentoria,
+                )
                 const ganho = Math.random() < chance ? (player.age <= 20 && Math.random() < 0.3 ? 2 : 1) : 0
                 if (ganho === 0) {
                   return { ...player, energy: newEnergy, training: { ...player.training, weeksTrained: 0 } }
@@ -3129,6 +3331,7 @@ export const useGameEngine = create<GameEngineState>()(
               perfil,
               minutosDaSemana.get(player.id) ?? 0,
               jogosNaSemana,
+              efeitosDoTreinador().moralSemanal,
             )
           }
           
@@ -3655,6 +3858,27 @@ export const useGameEngine = create<GameEngineState>()(
           // `weeklyExpenses` tambem carrega comissao tecnica e olheiros.
           const ajusteDaFolhaSemanal = folhaSemanal(playersAfterNT) - folhaSemanal(s.squadPlayers)
 
+          // COMISSAO VIVA (1.0.291). Trabalhar gera experiencia; a cada bloco
+          // de 18 semanas o profissional pode subir um ponto, sem ultrapassar
+          // o potencial. Competencia alta + lealdade baixa chama concorrentes.
+          const staffEvoluido = s.staffMembers.map(member => {
+            const experienceWeeks = (member.experienceWeeks ?? 0) + 1
+            const potential = Math.max(member.competence, member.potential ?? Math.min(96, member.competence + 6))
+            const develops = experienceWeeks % 18 === 0 && member.competence < potential
+            const competence = develops ? member.competence + 1 : member.competence
+            const marketInterest = Math.max(0, Math.min(100,
+              Math.round((competence - 70) * 2 + (70 - member.loyalty) * 0.7 + experienceWeeks / 13),
+            ))
+            return {
+              ...member,
+              competence,
+              potential,
+              experienceWeeks,
+              contractEndSeason: member.contractEndSeason ?? member.hiredSeason + 3,
+              marketInterest,
+            }
+          })
+
           return {
             ...s,
             currentWeek: finalWeek,
@@ -3665,6 +3889,7 @@ export const useGameEngine = create<GameEngineState>()(
             squadCohesion: entrosamentoDaSemana,
             fadigaCronica: fadigaAtualizada,
             minutosNaViradaDaSemana: minutosDepois,
+            staffMembers: staffEvoluido,
             ultimoTreino: {
               carga: resumoTreino.carga,
               energiaMedia: resumoTreino.energiaMedia,
@@ -3774,6 +3999,10 @@ export const useGameEngine = create<GameEngineState>()(
                   ...p,
                   training: {
                     currentFocus: attribute,
+                    // ⚠️ Escolher atributo CANCELA o treino de posicao: e o mesmo
+                    // slot. Sem esta linha o atleta acumularia os dois e ganharia
+                    // duas evolucoes pagando uma so de energia.
+                    positionFocus: null,
                     weeksTrained: 0,
                     lastTrainingWeek: s.currentWeek
                   },
@@ -3781,6 +4010,37 @@ export const useGameEngine = create<GameEngineState>()(
                 }
               : p
           )
+        }))
+      },
+
+      /**
+       * Poe o atleta para APRENDER UMA POSICAO no CT. `posicao` nula encerra.
+       *
+       * A contrapartida de `trainPlayer`, e exclusiva com ela pelo mesmo motivo.
+       * Quem manda no ganho semanal e `aprenderPosicao` (lib/modelo-de-jogador),
+       * a mesma funcao que credita os minutos jogados fora de posicao — duas
+       * fontes para a mesma familiaridade seriam duas escalas para a mesma
+       * grandeza, o defeito recorrente deste projeto.
+       */
+      treinarPosicao: (playerId, posicao) => {
+        const alvo = posicao ? normalizePosition(posicao) : null
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p => {
+            if (p.id !== playerId) return p
+            // Treinar a POSICAO NATURAL nao faz sentido: ela ja e 20.
+            if (alvo && normalizePosition(p.position) === alvo) return p
+            return {
+              ...p,
+              training: {
+                ...p.training,
+                currentFocus: alvo ? null : p.training.currentFocus,
+                positionFocus: alvo,
+                weeksTrained: 0,
+                lastTrainingWeek: s.currentWeek,
+              },
+              energy: alvo ? Math.max(0, p.energy - 10) : p.energy,
+            }
+          }),
         }))
       },
 
@@ -3949,7 +4209,8 @@ export const useGameEngine = create<GameEngineState>()(
         // profissional (overall + divisão) com o desconto de primeiro contrato
         // de cria. A divisão vem da tela (que conhece o acesso/rebaixamento em
         // `divisionOverride`); sem ela, do cadastro do clube.
-        const divisaoDoClube = divisao ?? String(getTeamByShort(state.myTeamShort ?? "")?.divisao ?? "serie_a")
+        const clubeDaBase = getTeamByShort(state.myTeamShort ?? "")
+        const divisaoDoClube = divisao ?? String(clubeDaBase?.divisao ?? "serie_a")
         const salario = youthPromotionSalaryWeekly(base, divisaoDoClube)
         const novo: Player = {
           id: Math.max(Date.now(), ...state.squadPlayers.map(p => p.id + 1)),
@@ -3958,7 +4219,10 @@ export const useGameEngine = create<GameEngineState>()(
           age: jovem.age,
           overall: jovem.overall,
           potential: Math.max(jovem.potential, jovem.overall),
-          nationality: "Brasil",
+          nationality: jovem.nationality
+            ?? (normalizeCountry(clubeDaBase?.pais) === PAIS_DESCONHECIDO
+              ? "Brasil"
+              : normalizeCountry(clubeDaBase?.pais)),
           pace: ou(jovem.pace, 4), shooting: ou(jovem.shooting, -3), passing: ou(jovem.passing, -1),
           dribbling: ou(jovem.dribbling, 2), defending: ou(jovem.defending, -5), physical: ou(jovem.physical, -4),
           energy: 100, morale: "Motivado", form: 70,
@@ -4063,6 +4327,53 @@ export const useGameEngine = create<GameEngineState>()(
             return { ...p, morale: escala[novo] }
           }),
         }))
+      },
+
+      registrarPosicoesJogadas: (minutos) => {
+        if (!minutos.length) return
+        const porId = new Map(minutos.map(m => [m.id, m]))
+        set((s) => {
+          let mudou = false
+          const squadPlayers = s.squadPlayers.map(p => {
+            const entrada = porId.get(p.id)
+            if (!entrada || entrada.minutos <= 0) return p
+            const perfil = perfilDoAtleta(p.id, p.position, p.overall, p.secondaryPositions ?? [])
+            const aprendeu = aprenderPosicao(perfil, p.perfilProgresso, entrada.posicao, entrada.minutos)
+            // A FUNCAO tambem se aprende exercendo — e por partida, nao por
+            // minuto: assentar numa funcao e questao de repeticao de jogo.
+            // AS DUAS FASES CONTAM. A funcao sem bola tambem se assenta com
+            // repeticao — se so a com bola contasse, o tecnico que usa funcoes
+            // diferentes nas duas fases pagaria eterno preco de novidade em uma
+            // delas. `exercerFuncao` devolve o mesmo objeto quando nao ha o que
+            // creditar, entao a segunda chamada e de graca no caso comum.
+            const comBola = exercerFuncao(aprendeu, entrada.funcao)
+            const progresso = entrada.funcaoSemBola && entrada.funcaoSemBola !== entrada.funcao
+              ? exercerFuncao(comBola, entrada.funcaoSemBola)
+              : comBola
+            // As duas devolvem o MESMO objeto quando nada mudou (posicao
+            // natural, funcao ja saturada, teto atingido). Comparar por
+            // referencia evita reescrever o save inteiro a cada partida.
+            if (progresso === p.perfilProgresso) return p
+            mudou = true
+            return { ...p, perfilProgresso: progresso }
+          })
+          return mudou ? { squadPlayers } : {}
+        })
+      },
+
+      /**
+       * Verba liberada pela diretoria depois de um pedido APROVADO.
+       *
+       * Existe porque o pedido aprovado na Central de Gestao nao mexia em
+       * dinheiro nenhum: a tela dizia "aprovado" e nada mudava. Pedido de
+       * orcamento cai na verba de transferencias; obra e estrutura caem no
+       * caixa, que e de onde `startInfrastructureUpgrade` tira o custo.
+       */
+      liberarVerbaDaDiretoria: (valor, destino) => {
+        if (!Number.isFinite(valor) || valor <= 0) return
+        set((s) => destino === "transferencias"
+          ? { transferBudget: Math.max(0, s.transferBudget + valor) }
+          : { balance: s.balance + valor })
       },
 
       /**
@@ -4185,6 +4496,11 @@ export const useGameEngine = create<GameEngineState>()(
 
       buyPlayer: (player, fee, isFreeAgent = false, janelaAberta) => {
         const state = get()
+        // REGRA DO DESAFIO ANTES DE QUALQUER COISA. É a única barreira que vale
+        // para TODOS os caminhos de contratação (mercado, rede mundial, leilão,
+        // scripts): fiscalizar tela por tela deixaria a tela esquecida como
+        // brecha. Sem desafio ativo, `podeReforcar` devolve true e não custa nada.
+        if (!podeReforcar({ idade: player.age, semClube: isFreeAgent }).pode) return "desafio"
         if (state.balance < fee) return "failed"
         // Teto salarial: a tela de Finanças já avisava "limite salarial excedido",
         // mas nada impedia a contratação — o orçamento era decorativo e o clube
@@ -4307,6 +4623,9 @@ export const useGameEngine = create<GameEngineState>()(
       
       loanPlayer: (player, weeks, salary, fee = 0, janelaAberta, opcaoDeCompra = 0) => {
         const state = get()
+        // Empréstimo é reforço: sem esta linha, "proibido contratar" teria a
+        // brecha óbvia de trazer o mesmo atleta por empréstimo.
+        if (!podeReforcar({ idade: player.age, emprestimo: true }).pode) return "desafio"
         const normalizedName = player.name.trim().toLocaleLowerCase("pt-BR")
         if (state.squadPlayers.some(p => p.name.trim().toLocaleLowerCase("pt-BR") === normalizedName) || state.pendingIncomingTransfers.some(p => p.player.name.trim().toLocaleLowerCase("pt-BR") === normalizedName)) return "failed"
         // A TAXA SAI DO CAIXA. Antes o empréstimo era de graça: o valor acertado
@@ -5610,7 +5929,7 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
       
-      initializeGame: (teamShort) => {
+      initializeGame: (teamShort, teamFileKey) => {
         const serieATeams = allTeams.filter(team => team.divisao === "serie_a").map(team => team.curto)
 
         const serieAStandings: StandingsEntry[] = serieATeams.map(team => ({
@@ -5626,7 +5945,11 @@ export const useGameEngine = create<GameEngineState>()(
         }))
 
         // Carrega elenco do time escolhido a partir dos dados de seed
-        const chosenTeam = getTeamByShort(teamShort)
+        // `curto` não é identidade global: 134 códigos se repetem no banco.
+        // A criação de carreira passa o file_key para o clube do pool não ser
+        // trocado silenciosamente por um homônimo curado.
+        const chosenTeam = (teamFileKey ? getTeamByFileKey(teamFileKey) : undefined)
+          ?? getTeamByShort(teamShort)
         // DIVISAO EFETIVA (a de 2026 / a da piramide do save), nao o campo estatico
         // do cadastro. Os dois divergem em varios clubes — o ABC tem `serie_c`
         // gravado e joga a `serie_d` — e a carreira inteira nascia torta: salario,
@@ -5652,11 +5975,18 @@ export const useGameEngine = create<GameEngineState>()(
               age: sp.idade,
               overall: base,
               potential: Math.min(99, base + Math.floor(Math.random() * 8)),
-              nationality: "Brasil",
+              nationality: sp.nac
+                ?? (normalizeCountry(chosenTeam.pais) === PAIS_DESCONHECIDO
+                  ? "Internacional"
+                  : normalizeCountry(chosenTeam.pais)),
               // Atributos COERENTES com a posicao e reconciliados com o overall
               // (zagueiro: defesa alta/finalizacao baixa; atacante o inverso).
               // Antes so shooting respeitava a posicao; o resto saia cego a ela.
               ...atributosPorPosicao(base, position, sp.nome),
+              // A escolha do EDITOR viaja junto. Sem ela o motor derivaria a
+              // caracteristica do perfil de atributos e poderia discordar da
+              // ficha que a tela mostra.
+              ...(sp.traits?.length ? { traits: sp.traits } : {}),
               energy: 100,
               morale: "Normal" as const,
               form: base,
@@ -5965,84 +6295,68 @@ export const useGameEngine = create<GameEngineState>()(
       analyzeOpponent: (teamShort: string) => {
         const state = get()
         const existing = state.opponentAnalyses.find(a => a.teamShort === teamShort)
-        
         if (existing && existing.analysisProgress >= 100) return
-        
-        const teamNames: Record<string, string> = {
-          FLA: "Flamengo", PAL: "Palmeiras", COR: "Corinthians", SAO: "Sao Paulo",
-          INT: "Internacional", GRE: "Gremio", CAM: "Atletico-MG", FLU: "Fluminense",
-          BOT: "Botafogo", BAH: "Bahia", CRU: "Cruzeiro", FOR: "Fortaleza",
-          VAS: "Vasco", CAP: "Athletico-PR", SAN: "Santos", VIT: "Vitoria",
-          JUV: "Juventude", MIR: "Mirassol", SPT: "Sport", CEA: "Ceara"
+        const team = getTeamByShort(teamShort)
+        if (!team) return
+        const squad = getPlayersForTeam(team)
+        const average = (positions: string[]) => {
+          const line = squad.filter(player => positions.includes(player.pos))
+          return line.length ? line.reduce((sum, player) => sum + player.base, 0) / line.length : 0
         }
-        
-        set((s) => {
-          if (existing) {
-            return {
-              opponentAnalyses: s.opponentAnalyses.map(a => 
-                a.teamShort === teamShort 
-                  ? { ...a, analysisProgress: Math.min(100, a.analysisProgress + 25) }
-                  : a
-              )
-            }
-          }
-          
-          const newAnalysis: OpponentAnalysis = {
-            teamShort,
-            teamName: teamNames[teamShort] || teamShort,
-            analyzedWeek: s.currentWeek,
-            analysisProgress: 25,
-            formation: null,
-            mentality: null,
-            keyPlayers: [],
-            weaknesses: [],
-            strengths: [],
-            avgGoalsScored: 0,
-            avgGoalsConceded: 0,
-            homeRecord: { w: 0, d: 0, l: 0 },
-            awayRecord: { w: 0, d: 0, l: 0 }
-          }
-          
-          return {
-            opponentAnalyses: [...s.opponentAnalyses, newAnalysis]
-          }
-        })
+        const attack = average(["ATA", "CA", "SA", "PE", "PD"])
+        const midfield = average(["VOL", "MEI", "MO", "MC", "ME", "MD"])
+        const defense = average(["ZAG", "LD", "LE", "ALD", "ALE"])
+        const results = state.matchResults.filter(result => result.homeTeam === teamShort || result.awayTeam === teamShort)
+        const homeRecord = { w: 0, d: 0, l: 0 }
+        const awayRecord = { w: 0, d: 0, l: 0 }
+        let goalsFor = 0
+        let goalsAgainst = 0
+        for (const result of results) {
+          const home = result.homeTeam === teamShort
+          const scored = home ? result.homeScore : result.awayScore
+          const conceded = home ? result.awayScore : result.homeScore
+          goalsFor += scored
+          goalsAgainst += conceded
+          const record = home ? homeRecord : awayRecord
+          if (scored > conceded) record.w++
+          else if (scored < conceded) record.l++
+          else record.d++
+        }
+        const strengths: string[] = []
+        const weaknesses: string[] = []
+        if (attack >= 78) strengths.push("Ataque de alto nível")
+        if (midfield >= 78) strengths.push("Meio-campo de alto nível")
+        if (defense >= 78) strengths.push("Defesa de alto nível")
+        if (attack > 0 && attack < 72) weaknesses.push("Produção ofensiva limitada")
+        if (midfield > 0 && midfield < 72) weaknesses.push("Meio-campo abaixo da média")
+        if (defense > 0 && defense < 72) weaknesses.push("Linha defensiva vulnerável")
+
+        const analysis: OpponentAnalysis = {
+          teamShort,
+          teamName: team.nome,
+          analyzedWeek: state.currentWeek,
+          analysisProgress: 100,
+          // O jogo ainda não registra a formação usada pela IA em súmula.
+          formation: null,
+          mentality: attack - defense >= 3 ? "ofensivo" : defense - attack >= 3 ? "defensivo" : "equilibrado",
+          keyPlayers: [...squad].sort((a, b) => b.base - a.base).slice(0, 4).map(player => ({ name: player.nome, position: player.pos, threat: player.base })),
+          weaknesses,
+          strengths,
+          avgGoalsScored: results.length ? goalsFor / results.length : 0,
+          avgGoalsConceded: results.length ? goalsAgainst / results.length : 0,
+          homeRecord,
+          awayRecord,
+        }
+        set(s => ({
+          opponentAnalyses: existing
+            ? s.opponentAnalyses.map(item => item.teamShort === teamShort ? analysis : item)
+            : [...s.opponentAnalyses, analysis],
+        }))
       },
       
       updateOpponentAnalysis: () => {
-        set((s) => ({
-          opponentAnalyses: s.opponentAnalyses.map(analysis => {
-            if (analysis.analysisProgress < 100) {
-              const progress = Math.min(100, analysis.analysisProgress + 10)
-              
-              // Revela informacoes conforme progresso
-              let updates: Partial<OpponentAnalysis> = { analysisProgress: progress }
-              
-              if (progress >= 50 && !analysis.formation) {
-                const formations = ["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2"]
-                updates.formation = formations[Math.floor(Math.random() * formations.length)]
-              }
-              
-              if (progress >= 75 && !analysis.mentality) {
-                const mentalities: TeamMentality[] = ["defensivo", "equilibrado", "ofensivo"]
-                updates.mentality = mentalities[Math.floor(Math.random() * mentalities.length)]
-              }
-              
-              if (progress >= 100) {
-                const weaknessPool = ["Vulneravel em contra-ataques", "Laterais sobem muito", "Goleiro inseguro", "Bola aerea defensiva", "Saida de bola ruim"]
-                const strengthPool = ["Forte no jogo aereo", "Transicao rapida", "Meio-campo criativo", "Defesa solida", "Pressao alta eficiente"]
-                
-                updates.weaknesses = [weaknessPool[Math.floor(Math.random() * weaknessPool.length)]]
-                updates.strengths = [strengthPool[Math.floor(Math.random() * strengthPool.length)]]
-                updates.avgGoalsScored = 1 + Math.random() * 1.5
-                updates.avgGoalsConceded = 0.8 + Math.random() * 1.2
-              }
-              
-              return { ...analysis, ...updates }
-            }
-            return analysis
-          })
-        }))
+        // Mantida por compatibilidade com saves/telas antigas. A análise agora
+        // é calculada integralmente a partir do elenco e das súmulas em analyzeOpponent.
       },
       
       // ============================================
@@ -6442,7 +6756,7 @@ export const useGameEngine = create<GameEngineState>()(
         }
         const selectedQuestions = shuffled.slice(0, 3)
         
-        set({ nextPressConference: selectedQuestions })
+        set({ nextPressConference: selectedQuestions, currentConferenceResponses: [] })
       },
       
       respondToPressConference: (questionId: number, optionIndex: number) => {
@@ -6452,7 +6766,11 @@ export const useGameEngine = create<GameEngineState>()(
         const question = state.nextPressConference.find(q => q.id === questionId)
         if (!question) return
 
+        // Impede clique duplo de aplicar o mesmo efeito duas vezes.
+        if (state.currentConferenceResponses.some(response => response.questionId === questionId)) return
+
         const option = question.options[optionIndex]
+        if (!option) return
 
         get().addMoraleEvent({
           type: option.tone === "positivo" ? "elogio" : option.tone === "negativo" ? "conflito" : "elogio",
@@ -6463,17 +6781,20 @@ export const useGameEngine = create<GameEngineState>()(
         const newResponse = { questionId, selectedOption: optionIndex, impact: option.impact }
 
         set((s) => {
-          const remaining = s.nextPressConference?.filter(q => q.id !== questionId) || []
           const accumulated = [...s.currentConferenceResponses, newResponse]
+          const questions = s.nextPressConference ?? []
+          const remaining = questions.filter(q => !accumulated.some(response => response.questionId === q.id))
           const isLast = remaining.length === 0
 
           return {
-            nextPressConference: isLast ? null : remaining,
+            // Mantemos o conjunto completo enquanto a coletiva esta aberta.
+            // Assim o historico consegue persistir as perguntas realmente feitas.
+            nextPressConference: isLast ? null : questions,
             currentConferenceResponses: isLast ? [] : accumulated,
             pressConferences: isLast
               ? [...s.pressConferences, {
                   week: s.currentWeek,
-                  questions: s.nextPressConference ?? [],
+                  questions,
                   responses: accumulated,
                   moraleImpact: accumulated.reduce((sum, r) => sum + r.impact, 0)
                 }]
@@ -6506,8 +6827,21 @@ export const useGameEngine = create<GameEngineState>()(
           }
         }
         
-        // Calcula nota media baseada em atributos e forma
-        const avgRating = (player.overall + player.form) / 20
+        // Nota de DESEMPENHO precisa vir de partida. Overall e forma nao sao
+        // uma sumula e nao podem ser apresentados como se fossem nota media.
+        // Saves antigos podem nao ter a serie historica; nesse caso exibimos 0
+        // (a UI traduz para "sem registro") em vez de fabricar uma avaliacao.
+        const avgRating = player.avgMatchRating ?? player.lastMatchRating ?? 0
+        const avaliados = state.squadPlayers.filter(p => (p.avgMatchRating ?? p.lastMatchRating) != null)
+        const mediaElenco = avaliados.length
+          ? avaliados.reduce((soma, p) => soma + (p.avgMatchRating ?? p.lastMatchRating ?? 0), 0) / avaliados.length
+          : 0
+        const mesmaPosicao = avaliados.filter(p => p.position === player.position)
+        const mediaPosicao = mesmaPosicao.length
+          ? mesmaPosicao.reduce((soma, p) => soma + (p.avgMatchRating ?? p.lastMatchRating ?? 0), 0) / mesmaPosicao.length
+          : 0
+        const diferencaPercentual = (valor: number, referencia: number) =>
+          valor > 0 && referencia > 0 ? Math.round(((valor - referencia) / referencia) * 100) : 0
         
         // Identifica pontos fortes
         const strengths: string[] = []
@@ -6537,9 +6871,11 @@ export const useGameEngine = create<GameEngineState>()(
           period,
           avgRating,
           matchRatings: [],
-          vsLastPeriod: Math.round((Math.random() - 0.5) * 20),
-          vsSquadAvg: Math.round((avgRating - 7) * 10),
-          vsPositionAvg: Math.round((Math.random() - 0.3) * 15),
+          // O motor ainda nao guarda uma serie por periodo. Inventar a variacao
+          // com Math.random fazia o mesmo atleta "melhorar" ao reabrir a tela.
+          vsLastPeriod: 0,
+          vsSquadAvg: diferencaPercentual(avgRating, mediaElenco),
+          vsPositionAvg: diferencaPercentual(avgRating, mediaPosicao),
           strengths,
           weaknesses,
           recommendation
@@ -6928,7 +7264,7 @@ export const useGameEngine = create<GameEngineState>()(
 
       hireStaff: (staffId: number) => {
         const state = get()
-        const template = AVAILABLE_STAFF.find(s => s.id === staffId)
+        const template = staffCandidatesForSeason(state.currentSeason).find(s => s.id === staffId)
         if (!template) return
         // Nao pode ter dois no mesmo cargo
         if (state.staffMembers.some(s => s.role === template.role)) return
@@ -6936,11 +7272,37 @@ export const useGameEngine = create<GameEngineState>()(
           ...template,
           hiredWeek: state.currentWeek,
           hiredSeason: state.currentSeason,
+          potential: template.potential ?? Math.min(96, template.competence + 6),
+          experienceWeeks: 0,
+          contractEndSeason: state.currentSeason + 3,
+          marketInterest: 0,
         }
         set((s) => ({
           staffMembers: [...s.staffMembers, member],
           weeklyExpenses: s.weeklyExpenses + member.salary,
         }))
+      },
+
+      renewStaffContract: (staffId: number) => {
+        const state = get()
+        const member = state.staffMembers.find(item => item.id === staffId)
+        if (!member) return false
+        const interest = member.marketInterest ?? 0
+        const signingBonus = Math.round(member.salary * (8 + interest / 20))
+        if (state.balance < signingBonus) return false
+        const newSalary = Math.round(member.salary * (1.04 + interest / 500) / 500) * 500
+        set(current => ({
+          balance: current.balance - signingBonus,
+          weeklyExpenses: current.weeklyExpenses + (newSalary - member.salary),
+          staffMembers: current.staffMembers.map(item => item.id === staffId ? {
+            ...item,
+            salary: newSalary,
+            contractEndSeason: current.currentSeason + 3,
+            marketInterest: 0,
+            loyalty: Math.min(100, item.loyalty + 8),
+          } : item),
+        }))
+        return true
       },
 
       fireStaff: (staffId: number) => {
@@ -6996,7 +7358,7 @@ export const useGameEngine = create<GameEngineState>()(
       // Chamado por use-game-manager quando a rodada final e concluida
       // ============================================
 
-      processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => {
+      processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[], prestigio?: { antes?: PrestigioDosAtletas; depois?: PrestigioDosAtletas }) => {
         set((s) => {
           // Envelhece jogadores e reseta stats da temporada
           const agedPlayers = s.squadPlayers.map(p => {
@@ -7018,7 +7380,22 @@ export const useGameEngine = create<GameEngineState>()(
               const jogos = p.seasonStats?.matchesPlayed ?? 0
               const ritmo = age <= 19 ? 4 : age <= 21 ? 3 : 2
               const ganhoBase = ritmo + Math.floor(jogos / 12)
-              const ganho = Math.min(margem, Math.max(1, Math.round(ganhoBase * fatorPersona)))
+              // A ESCALA RESISTE NO TOPO (1.0.298). Subir de 50 para 60 e uma
+              // temporada boa; de 90 para 95, uma carreira inteira. Antes o
+              // ganho so dependia da idade e do potencial, entao um garoto de 19
+              // com potencial 95 andava de 88 para 92 no mesmo passo com que
+              // andaria de 58 para 62 — e a diferenca entre um bom jogador e um
+              // fenomeno virava so uma questao de tempo.
+              //
+              // O piso de 1 ponto tambem cai a partir de 82: acima disso a
+              // temporada pode nao render NADA, que e o que faz "estagnou" ser
+              // um destino possivel em vez de um degrau garantido por ano.
+              const resistencia = p.overall >= 88 ? 0.25
+                : p.overall >= 82 ? 0.45
+                  : p.overall >= 75 ? 0.7
+                    : p.overall >= 65 ? 0.9 : 1
+              const piso = p.overall >= 82 ? 0 : 1
+              const ganho = Math.min(margem, Math.max(piso, Math.round(ganhoBase * fatorPersona * resistencia)))
               overall = Math.min(p.potential, p.overall + ganho)
             } else if (age >= 32) {
               // Declinio do veterano — mais forte a cada ano apos os 32. Antes o
@@ -7030,10 +7407,13 @@ export const useGameEngine = create<GameEngineState>()(
             // Overall mudou -> desloca os atributos para acompanhar (mantem overall
             // e atributos reconciliados; senao voltariam a divergir).
             const deltaOverall = overall - p.overall
+            // A virada de ano distribui o delta com VIES POR IDADE: o veterano
+            // perde as pernas antes da cabeca, o jovem cresce mais em tecnica do
+            // que em fisico. `shiftAttributes` somava o mesmo numero em tudo.
             const attrsAjustados = deltaOverall !== 0
-              ? shiftAttributes(
+              ? evoluirAtributos(
                   { pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical },
-                  p.position, deltaOverall,
+                  p.position, deltaOverall, age,
                 )
               : null
             return {
@@ -7062,7 +7442,17 @@ export const useGameEngine = create<GameEngineState>()(
             if (p.age >= 34) mult = 0.78
             else if (p.age >= 31) mult = 0.92
             else if (p.age <= 22 && p.potential > p.overall + 5) mult = 1.08
-            return { ...p, marketValue: Math.round(p.marketValue * mult) }
+            // PRESTIGIO NO PRECO (1.0.298). Comprar um Top Mundial e comprar um
+            // NOME, e isso custa acima do que o overall dele sozinho pediria.
+            //
+            // ⚠️ Aplicado sobre o valor JA REESCALADO do ano anterior, e nao
+            // acumulado: quem era estrela na temporada passada e continua estrela
+            // nesta paga o mesmo 1,35, nao 1,35². Por isso a razao entre o nivel
+            // de agora e o de antes, e nao o multiplicador cru.
+            const nivelAgora = prestigioDe(prestigio?.depois, p.id)
+            const nivelAntes = prestigioDe(prestigio?.antes, p.id)
+            const ajuste = multiplicadorDeValor(nivelAgora) / multiplicadorDeValor(nivelAntes)
+            return { ...p, marketValue: Math.round(p.marketValue * mult * ajuste) }
           })
 
           // Gera jovens da base para substituir aposentados. A academia de base e
@@ -7092,6 +7482,8 @@ export const useGameEngine = create<GameEngineState>()(
             5: { names: YOUTH_NAMES, nationality: "Brasil", physBonus: 4, techBonus: 6 },
           }
           const region = REGIONS_BY_LEVEL[Math.min(5, youthAcadLevel)]
+          const paisDaBase = normalizeCountry(timeDoClube?.pais)
+          const baseEstrangeira = paisDaBase !== "Brasil" && paisDaBase !== PAIS_DESCONHECIDO
           const FALLBACK_POSITIONS = ["GOL","ZAG","ZAG","LAT","LAT","VOL","VOL","MEI","MEI","ATA","PD","PE"]
           // ⚠️ IMPRESSORA DE DINHEIRO — leia antes de mexer.
           //
@@ -7125,25 +7517,28 @@ export const useGameEngine = create<GameEngineState>()(
           const potentialBonus = youthAcadLevel * 3 + coordBonus
 
           const youthPlayers: Player[] = Array.from({ length: needed }).map((_, i) => {
-            const firstName = region.names[Math.floor(Math.random() * region.names.length)]
-            const lastName = YOUTH_SURNAMES[Math.floor(Math.random() * YOUTH_SURNAMES.length)]
+            const nomeCompleto = baseEstrangeira
+              ? nomeDeAtleta(paisDaBase, Math.random)
+              : `${region.names[Math.floor(Math.random() * region.names.length)]} ${YOUTH_SURNAMES[Math.floor(Math.random() * YOUTH_SURNAMES.length)]}`
             const pos = retiredPositions[i] ?? FALLBACK_POSITIONS[i % FALLBACK_POSITIONS.length]
             const age = 17 + Math.floor(Math.random() * 4)
             const base = Math.min(82, baseMin + Math.floor(Math.random() * baseRange))
             const potential = Math.min(95, base + 8 + potentialBonus + Math.floor(Math.random() * 12))
-            const nationality = region.nationality === "Misto"
-              ? (Math.random() > 0.5 ? "Brasil" : "Internacional")
-              : region.nationality
+            const nationality = baseEstrangeira
+              ? paisDaBase
+              : region.nationality === "Misto"
+                ? (Math.random() > 0.5 ? "Brasil" : "Internacional")
+                : region.nationality
             return {
               id: Date.now() + i * 7 + 5000,
-              name: `${firstName} ${lastName}`,
+              name: nomeCompleto,
               position: pos,
               age,
               overall: base,
               potential,
               nationality,
               // Atributos por posicao, reconciliados com o overall (como no elenco).
-              ...atributosPorPosicao(base, pos, `${firstName} ${lastName}`),
+              ...atributosPorPosicao(base, pos, nomeCompleto),
               energy: 100,
               morale: "Motivado" as const,
               form: base - 5,

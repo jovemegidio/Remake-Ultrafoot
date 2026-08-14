@@ -33,8 +33,20 @@ export function calcularEfeitoColetiva(input: {
   tons: TomResposta[]
   venceu: boolean
   perdeu: boolean
+  /**
+   * `impactoDaColetiva` de `lib/efeito-do-treinador.ts` — o atributo COMUNICAÇÃO
+   * do técnico. Neutro em 1.
+   *
+   * ⚠️ Amplifica o ACERTO e amortece o ERRO, nunca os dois no mesmo sentido.
+   * Multiplicar tudo faria o comunicador nato estragar mais fundo quando falasse
+   * besteira, que é justamente o contrário de saber falar.
+   */
+  comunicacao?: number
 }): EfeitoColetiva {
   const { moraleImpact, tons, venceu, perdeu } = input
+  const comunicacao = Math.max(0.5, input.comunicacao ?? 1)
+  const pelaVoz = (valor: number) =>
+    valor >= 0 ? valor * comunicacao : valor / comunicacao
   if (tons.length === 0) {
     return { moralDelta: 0, diretoriaDelta: 0, recadoElenco: null, recadoDiretoria: null }
   }
@@ -49,7 +61,9 @@ export function calcularEfeitoColetiva(input: {
   // O silencio pesa no elenco: o grupo esperava ser defendido (ou cobrado) e
   // ouviu o tecnico travar. Alem do impacto negativo que a propria resposta ja
   // carrega, cada omissao tira mais um ponto.
-  const moralDelta = Math.max(-12, Math.min(12, moraleImpact - agressivas * 2 - omissas))
+  const moralDelta = Math.round(
+    Math.max(-12, Math.min(12, pelaVoz(moraleImpact - agressivas * 2 - omissas))),
+  )
 
   /**
    * A diretoria NAO e o espelho do elenco. Ela valoriza quem assume
@@ -71,7 +85,7 @@ export function calcularEfeitoColetiva(input: {
   // defender: um tecnico que emudece na coletiva vira manchete sozinho. Pesa em
   // qualquer resultado — inclusive na vitoria, onde havia so o que colher.
   diretoriaDelta -= omissas * 2
-  diretoriaDelta = Math.max(-8, Math.min(8, diretoriaDelta))
+  diretoriaDelta = Math.round(Math.max(-8, Math.min(8, pelaVoz(diretoriaDelta))))
 
   // Recado proprio quando o problema FOI o silencio: sem isto o tecnico levava
   // um "caiu mal no vestiario" sem entender que o motivo foi nao ter respondido.

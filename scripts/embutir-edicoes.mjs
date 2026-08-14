@@ -50,6 +50,10 @@ try {
   // Fotos de jogador importadas no editor. Sem esta etapa elas ficavam so na
   // maquina de quem editou — o elenco "licenciado" nao chegava a ninguem.
   rodar("bake-user-player-photos.mjs")
+  // Elencos editados (atletas criados/removidos/transferidos, 1.0.299). Mesma
+  // razao das linhas acima: o que fica so no save local nunca chega a quem
+  // instala o jogo.
+  rodar("bake-user-rosters.mjs")
   rodar("split-override-assets.mjs")
 } catch (e) {
   // NUNCA derruba o build por causa disto: um bake que falha significa "sem

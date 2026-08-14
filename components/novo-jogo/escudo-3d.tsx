@@ -219,6 +219,22 @@ export function Escudo3D({ src, cor1 = "#22d3ee", cor2 = "#0ea5e9", className, o
       limpezaEventos?.()
       for (const d of descartaveis) d.dispose()
       renderer.dispose()
+      /**
+       * ⚠️ `dispose()` NÃO DEVOLVE O CONTEXTO WEBGL.
+       *
+       * Ele libera os recursos internos do three.js, mas o contexto continua
+       * vivo preso ao canvas até o coletor de lixo decidir agir — e o navegador
+       * tem teto RÍGIDO de ~16 contextos simultâneos. Passando disso ele começa
+       * a derrubar os antigos à força e a página morre.
+       *
+       * Este componente remonta a CADA troca de time (`key={escudo3dUrl}` em
+       * app/novo-jogo), então eram 16 cliques na seleção de equipes até o jogo
+       * travar por completo. Em máquina rápida acontecia ANTES, porque o
+       * jogador percorre mais times por minuto.
+       *
+       * `forceContextLoss()` devolve o contexto na hora, de forma determinística.
+       */
+      renderer.forceContextLoss()
       renderer.domElement.remove()
     }
   }, [src, cor1, cor2])

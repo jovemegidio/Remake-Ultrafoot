@@ -14,7 +14,9 @@ import { Slider } from "@/components/ui/slider"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { TrilhaDePassos, GrupoDeCampos } from "@/components/modal-kit"
-import { formatCurrency, type Team } from "@/lib/teams-data"
+import type { Team } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
+import { useSalario } from "@/lib/usar-salario"
 import {
   evaluatePlayerDecision,
   computeAgentDemands,
@@ -104,6 +106,7 @@ export function NegotiationModal({
   onConfirm,
   onNegotiationResult,
 }: NegotiationModalProps) {
+  const salario = useSalario()
   const [offer, setOffer] = useState(player?.value || 0)
   // "terms"      = mesa com o AGENTE (compra).
   // "loan_terms" = mesa com o CLUBE DONO (empréstimo): duração, folha, minutagem
@@ -873,7 +876,7 @@ export function NegotiationModal({
                   Ele exige
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs text-white/80">
-                  <div>Salario: <b>{formatCurrency(agentResponse.counter.salary)}</b>/mes</div>
+                  <div>Salario: <b>{formatCurrency(salario.valor(agentResponse.counter.salary))}</b>{salario.sufixo}</div>
                   <div>Luvas: <b>{formatCurrency(agentResponse.counter.signingBonus)}</b></div>
                   <div>Contrato: <b>{agentResponse.counter.contractYears} anos</b></div>
                   <div>Papel: <b>{ROLE_LABEL[agentResponse.counter.role]}</b></div>
@@ -888,11 +891,13 @@ export function NegotiationModal({
               </div>
             )}
 
-            {/* Salario mensal */}
+            {/* Salário no período que o jogador escolheu na criação da carreira.
+                O slider continua operando na unidade SEMANAL do motor: só o
+                número mostrado muda, nunca o valor enviado à negociação. */}
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-white/50">Salario mensal</span>
-                <span className="font-bold text-white">{formatCurrency(salary)}</span>
+                <span className="text-white/50">{salario.sistema === "mensal" ? "Salario mensal" : "Salario semanal"}</span>
+                <span className="font-bold text-white">{formatCurrency(salario.valor(salary))}</span>
               </div>
               <Slider
                 value={[salary]}
@@ -902,7 +907,7 @@ export function NegotiationModal({
                 onValueChange={(v) => setSalary(v[0])}
               />
               <div className="mt-1 text-[10px] text-white/35">
-                Ele pede {formatCurrency(agentDemands.salary)}/mes
+                Ele pede {salario.formatar(agentDemands.salary)}
               </div>
             </div>
 

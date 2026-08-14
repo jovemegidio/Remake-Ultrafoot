@@ -10,9 +10,11 @@
 // sobreviver mesmo depois de voce renomear o jogador.
 
 import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
+import { guardarImagem, resolverImagem } from "@/lib/banco-de-imagens"
 import { attributesFromOverall } from "@/lib/player-attributes"
 import bundled from "@/data/seeds/player-overrides.json"
 import { jogadorDoServidor } from "@/lib/atualizacao-elencos"
+import { jogadorDoMod } from "@/lib/mods"
 
 export interface PlayerOverride {
   nome?: string
@@ -44,77 +46,24 @@ export interface PlayerOverride {
 
 // ─── Caracteristicas ─────────────────────────────────────────────────────────
 //
-// Duas por atleta, no maximo. Sao o "tempero" do jogador: onde ele e melhor do
-// que o overall sozinho diria. Cada uma aponta para o atributo que reforca, e e
-// assim que ela vira efeito de verdade na partida em vez de virar so um rotulo.
-
-export const MAX_CARACTERISTICAS = 2
-
-export interface Caracteristica {
-  id: string
-  nome: string
-  /** Atributo reforcado. `null` = efeito amplo, tratado a parte. */
-  atributo: "pace" | "shooting" | "passing" | "dribbling" | "defending" | "physical" | null
-  descricao: string
-}
-
-/** Caracteristicas de goleiro. */
-export const CARACTERISTICAS_GOLEIRO: Caracteristica[] = [
-  { id: "colocacao", nome: "Colocação", atributo: "defending", descricao: "Escolhe bem a posição e encurta o ângulo do atacante." },
-  { id: "defesa_penalty", nome: "Defesa Penalty", atributo: "defending", descricao: "Lê a cobrança e cresce na marca da cal." },
-  { id: "reflexo", nome: "Reflexo", atributo: "pace", descricao: "Reage a finalização de curta distância." },
-  { id: "saida_gol", nome: "Saída Gol", atributo: "physical", descricao: "Sai bem do gol e domina a área alta." },
-  { id: "reposicao", nome: "Reposição", atributo: "passing", descricao: "Começa a jogada com o pé, não só chuta para frente." },
-]
-
-/** Caracteristicas de quem joga na linha — as mesmas para todas as posições. */
-export const CARACTERISTICAS_LINHA: Caracteristica[] = [
-  { id: "armacao", nome: "Armação", atributo: "passing", descricao: "Organiza a saída e acha o passe que quebra a linha." },
-  { id: "cabeceio", nome: "Cabeceio", atributo: "physical", descricao: "Ganha a bola aérea nas duas áreas." },
-  { id: "cruzamento", nome: "Cruzamento", atributo: "passing", descricao: "Bola na área com precisão pelos lados." },
-  { id: "desarme", nome: "Desarme", atributo: "defending", descricao: "Chega no carrinho e no bote com limpeza." },
-  { id: "drible", nome: "Drible", atributo: "dribbling", descricao: "Encara o marcador no um contra um." },
-  { id: "finalizacao", nome: "Finalização", atributo: "shooting", descricao: "Converte o que aparece dentro e fora da área." },
-  { id: "marcacao", nome: "Marcação", atributo: "defending", descricao: "Fecha espaço e não larga o homem." },
-  { id: "passe", nome: "Passe", atributo: "passing", descricao: "Troca de bola limpa e sem perder a posse." },
-  { id: "resistencia", nome: "Resistência", atributo: "physical", descricao: "Mantém o ritmo os noventa minutos." },
-  { id: "velocidade", nome: "Velocidade", atributo: "pace", descricao: "Ganha no primeiro passo e no espaço aberto." },
-  { id: "lideranca", nome: "Liderança", atributo: null, descricao: "Puxa o time quando o jogo aperta." },
-]
-
-/** O catálogo certo para a posição. Goleiro tem o seu; o resto compartilha. */
-export function caracteristicasDaPosicao(posicao: string): Caracteristica[] {
-  return posicao === "GOL" ? CARACTERISTICAS_GOLEIRO : CARACTERISTICAS_LINHA
-}
-
-const POR_ID = new Map(
-  [...CARACTERISTICAS_GOLEIRO, ...CARACTERISTICAS_LINHA].map(c => [c.id, c]),
-)
-
-export function caracteristicaPorId(id: string): Caracteristica | undefined {
-  return POR_ID.get(id)
-}
-
-/**
- * Quanto cada característica soma no atributo que reforça.
- *
- * Existe para a característica NAO ser enfeite. O valor é modesto de propósito:
- * ela desempata, não substitui o overall. Duas características somam no máximo
- * +12 num mesmo atributo — o suficiente para o atleta ter cara própria.
- */
-export const BONUS_CARACTERISTICA = 6
-
-export function bonusDasCaracteristicas(
-  traits: string[] | undefined,
-): Partial<Record<"pace" | "shooting" | "passing" | "dribbling" | "defending" | "physical", number>> {
-  const saida: Partial<Record<"pace" | "shooting" | "passing" | "dribbling" | "defending" | "physical", number>> = {}
-  for (const id of (traits ?? []).slice(0, MAX_CARACTERISTICAS)) {
-    const c = POR_ID.get(id)
-    if (!c?.atributo) continue
-    saida[c.atributo] = (saida[c.atributo] ?? 0) + BONUS_CARACTERISTICA
-  }
-  return saida
-}
+// O CATALOGO MUDOU DE CASA na 1.0.298: agora vive em
+// `lib/caracteristicas-do-atleta.ts`, que e um modulo PURO. Este arquivo e
+// `"use client"` e importa store/banco de imagens, entao o motor de partida nao
+// podia le-lo — e sem o motor a caracteristica nunca sairia de rotulo.
+//
+// A reexportacao abaixo existe para todo import antigo (`from
+// "@/lib/player-overrides"`) continuar valendo. Codigo novo deve importar do
+// modulo puro.
+export {
+  MAX_CARACTERISTICAS,
+  BONUS_CARACTERISTICA,
+  CARACTERISTICAS_GOLEIRO,
+  CARACTERISTICAS_LINHA,
+  caracteristicasDaPosicao,
+  caracteristicaPorId,
+  bonusDasCaracteristicas,
+} from "@/lib/caracteristicas-do-atleta"
+export type { Caracteristica } from "@/lib/caracteristicas-do-atleta"
 
 /**
  * Bonus de atributos por reputacao. Estrela e top mundial nao sao so um selo —
@@ -150,14 +99,20 @@ export function playerOverrideKey(fileKey: string, originalName: string): string
 
 export function getPlayerOverride(fileKey: string, originalName: string): PlayerOverride | null {
   const k = playerOverrideKey(fileKey, originalName)
-  // Embutido < servidor < local. Mesma ordem de team-overrides.
+  // Embutido < servidor < mod < local. Mesma ordem de team-overrides.
   const servidor = jogadorDoServidor(k)
-  const base = BUNDLED[k] || servidor ? { ...BUNDLED[k], ...servidor } : null
+  const mod = jogadorDoMod(k)
+  const base = BUNDLED[k] || servidor || mod ? { ...BUNDLED[k], ...servidor, ...mod } : null
   const raw = typeof window === "undefined" ? null : storeGet(KEY(k))
   if (raw) {
     try {
       const local = JSON.parse(raw) as PlayerOverride
-      return { ...base, ...local }
+      const junto = { ...base, ...local }
+      // O rosto importado agora mora num arquivo; `resolverImagem` devolve
+      // intacto o que não for referência (o do canal e o do seed embutido).
+      return junto.faceDataUrl
+        ? { ...junto, faceDataUrl: resolverImagem(junto.faceDataUrl) ?? undefined }
+        : junto
     } catch { /* save corrompido: cai na base */ }
   }
   return base
@@ -165,9 +120,25 @@ export function getPlayerOverride(fileKey: string, originalName: string): Player
 
 export function setPlayerOverride(fileKey: string, originalName: string, ov: PlayerOverride): void {
   if (!fileKey || !originalName) return
-  storeSet(KEY(playerOverrideKey(fileKey, originalName)), JSON.stringify(ov))
-  if (typeof window !== "undefined")
-    window.dispatchEvent(new CustomEvent("ultrafoot:player:changed", { detail: { fileKey, originalName } }))
+  const chave = KEY(playerOverrideKey(fileKey, originalName))
+  const inline = JSON.stringify(ov)
+  // Inline primeiro, banco depois (ver `setCustomLogoUrl`). O rosto em base64
+  // dentro do override foi o que estourou a cota do save antes: agora ele vira
+  // um arquivo e aqui fica só a referência.
+  storeSet(chave, inline)
+  const avisar = () => {
+    if (typeof window !== "undefined")
+      window.dispatchEvent(new CustomEvent("ultrafoot:player:changed", { detail: { fileKey, originalName } }))
+  }
+  avisar()
+
+  if (!ov.faceDataUrl) return
+  void guardarImagem(ov.faceDataUrl).then(ref => {
+    if (!ref || ref === ov.faceDataUrl) return
+    if (storeGet(chave) !== inline) return // editado de novo no meio-tempo
+    storeSet(chave, JSON.stringify({ ...ov, faceDataUrl: ref }))
+    avisar()
+  })
 }
 
 export function clearPlayerOverride(fileKey: string, originalName: string): void {

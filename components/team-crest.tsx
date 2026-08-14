@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils"
 import { getEscudoUrl, getTeamByShort, type Team } from "@/lib/teams-data"
 import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
 import { escudoDoServidor } from "@/lib/atualizacao-elencos"
+import { escudoDoMod } from "@/lib/mods"
+import { guardarImagem, resolverImagem } from "@/lib/banco-de-imagens"
 import { gameAssetUrl, gameAssetUrlAlternativa, isTauri } from "@/lib/game-asset"
 import { getLocalEscudoPath } from "@/lib/escudos-map"
 // Escudos EMBUTIDOS no build (viajam no mesmo seed dos overrides, campo logoUrl). E por
@@ -63,7 +65,13 @@ const CUSTOM_LOGO_KEY = (key: string) => `ultrafoot:logo:${key}`
  */
 export function getLocalCustomLogoUrl(fileKey: string): string | null {
   if (typeof window === "undefined") return null
-  return storeGet(CUSTOM_LOGO_KEY(fileKey)) ?? null
+  const guardado = storeGet(CUSTOM_LOGO_KEY(fileKey))
+  if (!guardado) return null
+  // O escudo importado agora mora num ARQUIVO e o store guarda só a referência.
+  // Enquanto o arquivo não voltou do disco, `resolverImagem` devolve null e o
+  // clube cai no escudo do canal/build por um instante — o evento
+  // `ultrafoot:imagem:pronta` traz a versão do jogador em seguida.
+  return resolverImagem(guardado)
 }
 
 export function getCustomLogoUrl(fileKey: string): string | null {
@@ -75,7 +83,18 @@ export function getCustomLogoUrl(fileKey: string): string | null {
   // gravado no disco, e NUNCA aparecia na tela, porque TeamCrest e quem desenha todo
   // escudo do jogo e passa por aqui (nao por getTeamOverride). Sem erro nenhum: o
   // escudo velho continuava no lugar. Irmao do descasamento dos retratos do DF11.
-  return getLocalCustomLogoUrl(fileKey) ?? escudoDoServidor(fileKey) ?? BUNDLED_LOGOS[fileKey]?.logoUrl ?? null
+  //
+  // O MOD entra entre o save local e o canal (ver lib/mods.ts). Esta linha e a
+  // que faz o escudo de um pacote APARECER: quem desenha escudo no jogo inteiro
+  // passa por aqui, nao por getTeamOverride — foi assim que o escudo do canal
+  // ficou tres versoes chegando ao disco e nunca a tela.
+  return (
+    getLocalCustomLogoUrl(fileKey) ??
+    escudoDoMod(fileKey) ??
+    escudoDoServidor(fileKey) ??
+    BUNDLED_LOGOS[fileKey]?.logoUrl ??
+    null
+  )
 }
 
 /** Escudos custom no save local (ultrafoot:logo:*), por fileKey — usado pelo editor ao exportar. */
@@ -92,8 +111,23 @@ export function listLocalCustomLogos(): Record<string, string> {
 }
 
 export function setCustomLogoUrl(fileKey: string, dataUrl: string): void {
+  // GRAVA INLINE PRIMEIRO, PROMOVE PARA O BANCO DEPOIS.
+  //
+  // A gravação no banco é assíncrona (calcula sha, escreve arquivo) e esta
+  // função é chamada de dentro de um handler do editor. Se ela esperasse o
+  // disco, um fechamento de tela no meio perderia o escudo que o jogador acabou
+  // de importar. Assim o valor válido está no store desde a primeira linha; a
+  // promoção só troca o base64 pela referência curta quando o arquivo existe.
   storeSet(CUSTOM_LOGO_KEY(fileKey), dataUrl)
   window.dispatchEvent(new CustomEvent("ultrafoot:logo:changed", { detail: { key: fileKey } }))
+
+  void guardarImagem(dataUrl).then(ref => {
+    if (!ref || ref === dataUrl) return // web, ou o disco recusou: fica inline
+    // Só promove se ninguém trocou o escudo nesse meio-tempo.
+    if (storeGet(CUSTOM_LOGO_KEY(fileKey)) !== dataUrl) return
+    storeSet(CUSTOM_LOGO_KEY(fileKey), ref)
+    window.dispatchEvent(new CustomEvent("ultrafoot:logo:changed", { detail: { key: fileKey } }))
+  })
 }
 
 export function removeCustomLogoUrl(fileKey: string): void {
@@ -110,13 +144,13 @@ export function TeamCrest({
   showFallback = true,
 }: TeamCrestProps) {
   const imgRef = useRef<HTMLImageElement>(null)
+  const localFailedRef = useRef(false)
+  const baseFailedRef = useRef(false)
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
   /** 0 = URL como veio; 1 = a OUTRA forma (caminho <-> game-asset://). Ver handleError. */
   const [formaDaUrl, setFormaDaUrl] = useState(0)
   const [customLogo, setCustomLogo] = useState<string | null>(null)
-  const MAX_RETRIES = 4
 
   // Resolve team data
   const resolvedTeam = team || (teamShort ? getTeamByShort(teamShort) : undefined)
@@ -153,10 +187,20 @@ export function TeamCrest({
     // novo seria baixado e gravado, e a tela continuaria com o antigo ate reabrir
     // o jogo (o mesmo motivo de PlayerAvatar escutar este evento).
     window.addEventListener("ultrafoot:elencos:atualizados", refresh)
+    // O escudo do jogador virou ARQUIVO: a primeira leitura devolve null
+    // (`resolverImagem`) e o arquivo chega logo depois. Sem escutar isto, o
+    // clube ficaria com o escudo de fallback ate a proxima navegacao — o mesmo
+    // sintoma de quando faltava a camada do canal aqui.
+    window.addEventListener("ultrafoot:imagem:pronta", refresh)
+    // Mods sao lidos do DISCO no boot, entao chegam depois da primeira pintura —
+    // e depois de o jogador ligar/desligar um pacote na tela de mods.
+    window.addEventListener("ultrafoot:mods:prontos", refresh)
     return () => {
       window.removeEventListener("ultrafoot:logo:changed", handler)
       window.removeEventListener("ultrafoot:store:ready", refresh)
       window.removeEventListener("ultrafoot:elencos:atualizados", refresh)
+      window.removeEventListener("ultrafoot:imagem:pronta", refresh)
+      window.removeEventListener("ultrafoot:mods:prontos", refresh)
     }
   }, [escudoKey])
 
@@ -166,7 +210,8 @@ export function TeamCrest({
   useEffect(() => {
     setImageError(false)
     setImageLoaded(false)
-    setRetryCount(0)
+    localFailedRef.current = false
+    baseFailedRef.current = false
     // ⚠️ NO APP INSTALADO COMECA JA PELO ARQUIVO EMPACOTADO.
     //
     // O `src` do HTML pre-renderizado e sempre a URL REMOTA (no build `window`
@@ -177,9 +222,11 @@ export function TeamCrest({
     // nao existe com esse nome), a cadeia acabava no ESCUDO DESENHADO. Era o
     // relato "apareceu a versao desenhada".
     //
-    // Depois da hidratacao `isTauri()` responde a verdade, e o arquivo local
-    // esta garantido: `public/escudos/**/*` inteiro vai em bundle.resources.
-    setFormaDaUrl(isTauri() && escudoKey && !customLogo ? 1 : 0)
+    // Depois da hidratacao usamos primeiro o arquivo EMPACOTADO também na web:
+    // `public/escudos/**/*` existe no export e evita depender do GitHub para
+    // desenhar cada tabela. Se o clube não tiver arquivo local, handleError
+    // tenta a URL base/remota uma única vez.
+    setFormaDaUrl(escudoKey && !customLogo ? 1 : 0)
   }, [escudoUrl, customLogo, escudoKey])
 
   /**
@@ -196,7 +243,7 @@ export function TeamCrest({
   useEffect(() => {
     const img = imgRef.current
     if (img?.complete && img.naturalWidth > 0) setImageLoaded(true)
-  }, [escudoUrl, customLogo, retryCount, formaDaUrl])
+  }, [escudoUrl, customLogo, formaDaUrl])
 
   // SELEÇÃO (Task 2): o "time" de uma seleção usa file_key `nation_<id>`, que NÃO
   // existe no mapa de escudos de clubes. Nesse caso o escudo real vem do próprio
@@ -232,23 +279,30 @@ export function TeamCrest({
   // de um repositorio de terceiros: sem rede (ou com ele fora do ar), 404 ->
   // escudo generico.
   //
-  // Repetir a MESMA url quatro vezes, que era o que este handler fazia, nunca
-  // resolveria: o problema nao e instabilidade, e a url errada.
-  //
-  // A saida e cair no CAMINHO EMPACOTADO, que existe no disco do jogador
-  // independentemente de ambiente (`getLocalEscudoPath` — o mesmo que o
-  // preflight de release usa). So depois disso desistimos para o desenho.
+  // Repetir a MESMA URL quatro vezes nunca resolve 404/ORB e fazia telas com
+  // muitos clubes demorarem segundos para estabilizar. Cada origem é tentada
+  // uma vez: local primeiro; remoto/base apenas quando o local não existe.
   const handleError = () => {
-    if (retryCount < MAX_RETRIES) {
-      setTimeout(() => setRetryCount((c) => c + 1), 120)
-      return
-    }
-    if (formaDaUrl === 0 && proximaForma) {
-      setFormaDaUrl(1)
-      setRetryCount(0)
-      return
+    if (formaDaUrl === 1) {
+      localFailedRef.current = true
+      if (!baseFailedRef.current && urlBase && urlBase !== activeUrl) {
+        setFormaDaUrl(0)
+        return
+      }
+    } else {
+      baseFailedRef.current = true
+      if (!localFailedRef.current && proximaForma && proximaForma !== urlBase) {
+        setFormaDaUrl(1)
+        return
+      }
     }
     setImageError(true)
+  }
+
+  const handleLoad = () => {
+    if (formaDaUrl === 1) localFailedRef.current = false
+    else baseFailedRef.current = false
+    setImageLoaded(true)
   }
 
   // Professional fallback shield component
@@ -360,7 +414,7 @@ export function TeamCrest({
 
       <Image
         ref={imgRef}
-        key={`${escudoKey ?? ""}-${retryCount}-${formaDaUrl}-${customLogo ? "custom" : "default"}`}
+        key={`${escudoKey ?? ""}-${formaDaUrl}-${customLogo ? "custom" : "default"}`}
         src={activeUrl}
         alt={`Escudo ${resolvedTeam?.nome || 'Time'}`}
         width={pixels}
@@ -372,7 +426,7 @@ export function TeamCrest({
         style={{
           filter: imageLoaded ? "drop-shadow(0 4px 12px rgba(0,0,0,0.4))" : undefined,
         }}
-        onLoad={() => setImageLoaded(true)}
+        onLoad={handleLoad}
         onError={handleError}
         unoptimized
       />

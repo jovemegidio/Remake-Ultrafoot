@@ -7,7 +7,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { CarouselDots } from "@/components/controller-buttons"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/lib/teams-data"
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 
 interface Match {
   home: Team

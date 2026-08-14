@@ -6,7 +6,8 @@
 //
 //   npx tsx scripts/listar-elencos-faltantes.ts
 //   → escreve scripts/elencos-faltantes.json
-import { allTeams } from "../lib/teams-data"
+import { completarLigaComPool, type Team } from "../lib/teams-data"
+import { competitionsByLeague } from "../lib/international-competitions"
 import { getPlayersForTeam } from "../lib/players-data"
 import fs from "node:fs"
 
@@ -25,22 +26,28 @@ for (const lista of Object.values(rp) as { nome?: string; n?: string }[][]) {
 const br = JSON.parse(fs.readFileSync("data/seeds/players_br.json", "utf8"))
 for (const p of (Array.isArray(br) ? br : br.players ?? [])) reais.add(norm(p.nome ?? p.name ?? ""))
 
-const faltantes: { nome: string; curto: string; pais: string; divisao: string; gerados: number; total: number }[] = []
+const faltantes: { nome: string; curto: string; file_key: string; pais: string; divisao: string; gerados: number; total: number; promotionEligible?: boolean }[] = []
 let totalAtletas = 0, totalGerados = 0
 
-for (const t of allTeams) {
+const jogaveis = new Map<string, Team>()
+for (const divisao of Object.keys(competitionsByLeague)) {
+  for (const team of completarLigaComPool(divisao)) jogaveis.set(team.file_key, team)
+}
+
+for (const t of jogaveis.values()) {
   let elenco
   try { elenco = getPlayersForTeam(t) } catch { continue }
   if (!elenco.length) continue
-  const g = elenco.filter(p => !reais.has(norm(p.nome))).length
+  const g = elenco.filter(p => p.generatedOrigin === "provisional").length
   totalAtletas += elenco.length
   totalGerados += g
   // 3+ gerados: abaixo disso é ruído de grafia, não elenco faltando.
   if (g >= 3) {
     faltantes.push({
-      nome: t.nome, curto: t.curto,
+      nome: t.nome, curto: t.curto, file_key: t.file_key,
       pais: String(t.pais ?? t.estado ?? ""),
       divisao: String(t.divisao), gerados: g, total: elenco.length,
+      ...(t.promotionEligible === false ? { promotionEligible: false } : {}),
     })
   }
 }
@@ -48,7 +55,7 @@ for (const t of allTeams) {
 faltantes.sort((a, b) => b.gerados - a.gerados)
 fs.writeFileSync("scripts/elencos-faltantes.json", JSON.stringify(faltantes, null, 1))
 
-console.log(`ligas jogaveis: ${allTeams.length} clubes | atletas ${totalAtletas} | gerados ${totalGerados} (${(totalGerados / totalAtletas * 100).toFixed(1)}%)`)
+console.log(`ligas jogaveis: ${jogaveis.size} clubes | atletas ${totalAtletas} | gerados ${totalGerados} (${(totalGerados / totalAtletas * 100).toFixed(1)}%)`)
 console.log(`clubes com 3+ gerados: ${faltantes.length}`)
 const porDiv = new Map<string, number>()
 for (const f of faltantes) porDiv.set(f.divisao, (porDiv.get(f.divisao) ?? 0) + 1)

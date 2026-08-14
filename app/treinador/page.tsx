@@ -17,7 +17,7 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { isFifaWindowMonth, windowLabel } from "@/lib/national-windows"
 import { rotuloDaSemana, semanasLivresParaAmistoso } from "@/lib/amistosos-calendario"
 import { avaliarConvite, chanceDoConvite, contaDoAmistoso } from "@/lib/amistosos-negociacao"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
 import { getGameDate } from "@/lib/game-date"
 import { PISO_ENTROSAMENTO } from "@/lib/treino-e-entrosamento"
@@ -28,6 +28,11 @@ import { BlocoRecolhivel } from "@/components/bloco-recolhivel"
 import { analisarComComissao } from "@/lib/comissao-tecnica"
 import { ReuniaoDaComissao } from "@/components/treinador/reuniao-da-comissao"
 import { cn } from "@/lib/utils"
+import { normalizarPerfilTreinador26 } from "@/lib/manager-profile-26"
+import {
+  identidadeTatica, normalizarProgressoDoTreinador, perfilComProgresso,
+  resumoDaIdentidade, ROTULO_DO_ESTILO_DE_JOGO,
+} from "@/lib/evolucao-do-treinador"
 import { Award, Briefcase, ClipboardList, Star, TrendingDown, TrendingUp, Trophy, UserCircle, Swords, Home, Plane, Dumbbell, Users, X } from "lucide-react"
 
 // `proximosSabados` saiu daqui na 1.0.223: ele oferecia SEIS sábados seguidos,
@@ -53,6 +58,18 @@ export default function TreinadorPage() {
   const classificacao = useGameEngine(s => s.serieAStandings)
   const initializeGame = useGameEngine(s => s.initializeGame)
   const squadCohesion = useGameEngine(s => s.squadCohesion)
+  // ⚠️ O perfil da tela tem de ser o EFETIVO — `normalizarPerfilTreinador26`
+  // reconstrói os atributos a partir das escolhas e ignora o que a carreira
+  // somou. Ver lib/evolucao-do-treinador.ts.
+  const crescimento = useMemo(
+    () => normalizarProgressoDoTreinador(state.managerGrowth26),
+    [state.managerGrowth26],
+  )
+  const perfil26 = state.managerProfile26
+    ? perfilComProgresso(normalizarPerfilTreinador26(state.managerProfile26), crescimento)
+    : null
+  const identidade = useMemo(() => identidadeTatica(crescimento), [crescimento])
+  const rotuloDaIdentidade = useMemo(() => resumoDaIdentidade(identidade), [identidade])
 
   // Aceitar a proposta AQUI (antes so dava para recusar; aceitar exigia ir ao
   // Escritorio). Mesma troca de emprego, pela funcao compartilhada.
@@ -544,6 +561,49 @@ export default function TreinadorPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
+          {perfil26 && (
+            <section className="mb-5 rounded-2xl border border-cyan-400/15 bg-cyan-400/[.045] p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">Identidade do treinador</p>
+                  <h2 className="mt-1 font-black capitalize">{perfil26.nivelComoJogador} · {perfil26.areaAnterior}</h2>
+                  <p className="mt-1 text-xs text-white/45">{perfil26.tendencias.join(" · ")}</p>
+                  {rotuloDaIdentidade && <p className="mt-1 text-xs font-bold text-emerald-300">{rotuloDaIdentidade}</p>}
+                </div>
+                {/* Os atributos mostrados sao os EFETIVOS (escolha + carreira), os
+                    mesmos que o motor usa. Mostrar o cru aqui e o somado no jogo
+                    faria a tela mentir. O `+n` diz quanto a carreira acrescentou. */}
+                <div className="flex flex-wrap gap-2">{Object.entries(perfil26.atributos).map(([nome, valor]) => {
+                  const ganho = Math.round(crescimento.ganhos[nome as keyof typeof crescimento.ganhos] ?? 0)
+                  return (
+                    <div key={nome} className="min-w-20 rounded-xl bg-black/25 px-3 py-2 text-center">
+                      <b className="text-cyan-200">{valor}</b>
+                      {ganho !== 0 && <b className={ganho > 0 ? "ml-1 text-[10px] text-emerald-300" : "ml-1 text-[10px] text-red-300"}>{ganho > 0 ? `+${ganho}` : ganho}</b>}
+                      <p className="text-[8px] uppercase text-white/35">{nome.replace(/([A-Z])/g, " $1")}</p>
+                    </div>
+                  )
+                })}</div>
+              </div>
+              {/* COMO VOCE JOGA DE VERDADE. Nao e o estilo que voce declarou na
+                  criacao — e a conta das semanas em que cada estilo foi usado. */}
+              {identidade.length > 0 && (
+                <div className="mt-4 border-t border-white/10 pt-3">
+                  <p className="text-[10px] font-black uppercase tracking-[.2em] text-white/45">Como você joga</p>
+                  <div className="mt-2 grid gap-2">
+                    {identidade.slice(0, 5).map(fatia => (
+                      <div key={fatia.estilo} className="flex items-center gap-3">
+                        <span className="w-32 shrink-0 text-xs text-white/70">{ROTULO_DO_ESTILO_DE_JOGO[fatia.estilo] ?? fatia.estilo}</span>
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/35">
+                          <div className="h-full rounded-full bg-cyan-400/70" style={{ width: `${fatia.percentual}%` }} />
+                        </div>
+                        <span className="w-16 shrink-0 text-right text-[10px] text-white/45">{fatia.percentual}% · {fatia.semanas} sem</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
           {/* PAINEL DO TREINADOR — metas, dinheiro e carencias, nesta ordem.
               As tres perguntas que ele faz ao sentar na mesa moravam em telas
               diferentes (escritorio, financas e lugar nenhum). Ver

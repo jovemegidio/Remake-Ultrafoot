@@ -28,12 +28,16 @@ import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameEngine, type Player, type TratamentoMedico } from "@/lib/game-engine"
 import { MedicalModal } from "@/components/modals/medical-modal"
 import { avisar as avisarNoJogo } from "@/lib/dialogo-do-jogo"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
+import { useSalario, useSistemaForca } from "@/lib/usar-salario"
 import {
   aplicarSemanaDeTreino, duplasDoGrupo, PISO_ENTROSAMENTO, PLANO_PADRAO,
-  ROTULO_DO_FOCO, rotuloDaCarga,
-  type FocoColetivo, type IntensidadeTreino,
+  ROTULO_DA_SESSAO, ROTULO_DO_FOCO, rotuloDaCarga, SEMANA_PADRAO,
+  type FocoColetivo, type IntensidadeTreino, type SessaoDoDia,
 } from "@/lib/treino-e-entrosamento"
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
+import { familiaridadeEm, perfilDoAtleta } from "@/lib/modelo-de-jogador"
+import { normalizePosition } from "@/lib/formations"
 import { montarRotina, ROTULO_DO_DIA } from "@/lib/rotina-da-semana"
 import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
@@ -129,7 +133,7 @@ const FOCOS: { id: FocoColetivo; nota: string }[] = [
 
 export default function TreinamentoPage() {
   const { team: userTeam } = useUserTeam()
-  const { squadPlayers, trainPlayer, currentWeek, clubInfrastructure } = useGameEngine()
+  const { squadPlayers, trainPlayer, treinarPosicao, currentWeek, clubInfrastructure } = useGameEngine()
   // O calendario e quem diz quantos jogos ha na semana — nao um palpite da tela.
   const { seasonCalendar } = useGameManager()
   const planoDeTreino = useGameEngine(s => s.planoDeTreino) ?? PLANO_PADRAO
@@ -224,7 +228,13 @@ export default function TreinamentoPage() {
       focoIndividual: p.training.currentFocus ?? null,
     })),
     planoDeTreino,
-    { centroDeTreinamento: trainingLvl, centroMedico: clubInfrastructure?.medical ?? 2 },
+    // A prévia precisa usar o MESMO técnico que o avanço de semana vai usar —
+    // senão a tela promete uma energia e a semana entrega outra.
+    {
+      centroDeTreinamento: trainingLvl,
+      centroMedico: clubInfrastructure?.medical ?? 2,
+      treinador: efeitosDoTreinador(),
+    },
   ), [squadPlayers, fadigaCronica, planoDeTreino, trainingLvl, clubInfrastructure?.medical])
 
   // Duplas do onze titular: o rosto humano do entrosamento. "Quem ainda nao se
@@ -243,10 +253,15 @@ export default function TreinamentoPage() {
   const filteredPlayers = useMemo(() => {
     let players = [...squadPlayers]
     
+    // ⚠️ O treino de POSICAO conta como treino nos dois filtros. Olhar so
+    // `currentFocus` deixaria quem esta aprendendo uma posicao aparecendo como
+    // "disponivel" — e o tecnico o poria para treinar atributo por engano,
+    // cancelando o trabalho de posicao sem entender por que.
+    const emTreino = (p: Player) => Boolean(p.training.currentFocus || p.training.positionFocus)
     if (filter === "available") {
-      players = players.filter(p => !p.training.currentFocus && !p.injury)
+      players = players.filter(p => !emTreino(p) && !p.injury)
     } else if (filter === "training") {
-      players = players.filter(p => p.training.currentFocus)
+      players = players.filter(emTreino)
     }
     
     // Ordenacao escolhida pelo usuario (antes era fixo por overall).
@@ -294,7 +309,33 @@ export default function TreinamentoPage() {
   }, [router, selectedPlayer, inspectPlayer, filteredPlayers])
 
   // Contagem de jogadores em treinamento
-  const playersInTraining = squadPlayers.filter(p => p.training.currentFocus).length
+  const playersInTraining = squadPlayers.filter(p => p.training.currentFocus || p.training.positionFocus).length
+
+  /**
+   * Posicoes que VALE a pena ensinar a este atleta, da mais proxima a mais
+   * distante. Sai da mesma familiaridade que o motor usa em campo — inventar
+   * outra escala aqui seria a terceira vez que este projeto mede a mesma
+   * grandeza de dois jeitos. Ver lib/modelo-de-jogador.ts.
+   */
+  const posicoesParaAprender = useMemo(() => {
+    if (!selectedPlayer) return []
+    const perfil = perfilDoAtleta(
+      selectedPlayer.id, selectedPlayer.position, selectedPlayer.overall,
+      selectedPlayer.secondaryPositions ?? [],
+    )
+    const natural = normalizePosition(selectedPlayer.position)
+    return Object.keys(perfil.familiaridadeBase)
+      .filter(pos => pos !== natural)
+      .map(pos => ({
+        pos,
+        familiaridade: familiaridadeEm(perfil, selectedPlayer.perfilProgresso, pos),
+        emTreino: selectedPlayer.training.positionFocus === pos,
+      }))
+      // Ja dominadas saem da lista: nao ha o que treinar num 20/20.
+      .filter(item => item.familiaridade < 20)
+      .sort((a, b) => b.familiaridade - a.familiaridade)
+      .slice(0, 6)
+  }, [selectedPlayer])
 
   // Inicia treinamento
   const handleStartTraining = () => {
@@ -327,6 +368,7 @@ export default function TreinamentoPage() {
     if (player.injury) return "Lesionado"
     if ((player.energy ?? 100) < 30) return "Energia baixa"
     if (player.training.currentFocus) return "Ja em treino"
+    if (player.training.positionFocus) return `Aprendendo ${player.training.positionFocus}`
     return null
   }
 
@@ -454,6 +496,53 @@ export default function TreinamentoPage() {
               Carga de treino da semana: {Math.round(rotina.fatorDeCarga * 100)}% do normal
               {rotina.recuperacaoExtra > 0 && ` · +${rotina.recuperacaoExtra} de energia pelo descanso`}
             </p>
+          </div>
+
+          {/* SEMANA DIA A DIA. Fica nesta mesma tela, logo acima da intensidade,
+              porque é o mesmo assunto — não é tela nova. A intensidade passou a
+              ser o VOLUME de cada sessão; os dias dizem o QUE se treina.
+              Sem semana escrita, o plano agregado antigo continua valendo. */}
+          <div className="mt-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-[10px] uppercase tracking-wider text-white/40">Semana de treino</div>
+              <button
+                onClick={() => definirPlanoDeTreino({ semana: planoDeTreino.semana ? undefined : [...SEMANA_PADRAO] })}
+                className="rounded-md border border-white/10 px-2 py-1 text-[10px] font-semibold text-white/60 hover:border-white/25 hover:text-white"
+              >
+                {planoDeTreino.semana ? "Voltar ao plano semanal" : "Programar dia a dia"}
+              </button>
+            </div>
+            {planoDeTreino.semana ? (
+              <div className="grid grid-cols-7 gap-1.5">
+                {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((rotulo, dia) => {
+                  const atual = planoDeTreino.semana?.[dia] ?? "descanso"
+                  return (
+                    <div key={rotulo} className="rounded-lg border border-white/[0.06] bg-black/20 p-1.5">
+                      <div className="mb-1 text-center text-[10px] font-bold uppercase tracking-wider text-white/40">{rotulo}</div>
+                      <select
+                        value={atual}
+                        onChange={(e) => {
+                          const nova = [...(planoDeTreino.semana ?? SEMANA_PADRAO)]
+                          nova[dia] = e.target.value as SessaoDoDia
+                          definirPlanoDeTreino({ semana: nova })
+                        }}
+                        aria-label={`Sessão de ${rotulo}`}
+                        className="w-full rounded border border-white/10 bg-black/40 px-1 py-1 text-[10px] text-white"
+                      >
+                        {(Object.keys(ROTULO_DA_SESSAO) as SessaoDoDia[]).map(op => (
+                          <option key={op} value={op}>{ROTULO_DA_SESSAO[op]}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-[11px] leading-relaxed text-white/40">
+                O elenco treina a semana inteira na mesma intensidade e no mesmo foco. Programe dia a dia para puxar no
+                começo da semana, afinar a bola parada na véspera e soltar depois do jogo.
+              </p>
+            )}
           </div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -636,7 +725,9 @@ export default function TreinamentoPage() {
             <div className="divide-y divide-white/5">
               {filteredPlayers.map(player => {
                 const isSelected = selectedPlayer?.id === player.id
-                const isTraining = !!player.training.currentFocus
+                // Atributo OU posicao: os dois ocupam o mesmo slot de treino
+                // individual, entao a lista tem de mostrar os dois.
+                const isTraining = !!(player.training.currentFocus || player.training.positionFocus)
                 const canPlayerTrain = canTrain(player)
                 const recommended = getRecommendedTraining(player.position)
                 const reason = blockedReason(player)
@@ -724,7 +815,9 @@ export default function TreinamentoPage() {
                         <div className="flex items-center gap-2 justify-end">
                           <Timer className="h-4 w-4 text-[#ffd700]" />
                           <span className="text-xs text-[#ffd700]">
-                            {player.training.currentFocus} ({player.training.weeksTrained}/4 sem)
+                            {player.training.positionFocus
+                              ? `aprendendo ${player.training.positionFocus}`
+                              : `${player.training.currentFocus} (${player.training.weeksTrained}/4 sem)`}
                           </span>
                         </div>
                       ) : player.injury ? (
@@ -882,6 +975,54 @@ export default function TreinamentoPage() {
               </div>
             </div>
 
+            {/* APRENDER UMA POSICAO.
+                Ate esta versao so se aprendia posicao JOGANDO nela — para adaptar
+                um lateral a zagueiro era preciso escala-lo fora de posicao em jogo
+                valendo pontos. Aqui existe o caminho do CT: mais lento que o
+                gramado (70 minutos equivalentes contra 90), mas sem risco.
+                ⚠️ Ocupa o MESMO slot do treino de atributo. */}
+            {selectedPlayer && (
+              <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+                <div className="mb-4 flex items-center gap-2 text-xs font-medium text-white/60">
+                  <Dumbbell className="h-4 w-4 text-cyan-300" />
+                  APRENDER UMA POSICAO
+                </div>
+                {posicoesParaAprender.length === 0 ? (
+                  <p className="text-xs text-white/40">Este atleta já domina as posições ao alcance dele.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {posicoesParaAprender.map(({ pos, familiaridade, emTreino }) => (
+                      <button
+                        key={pos}
+                        onClick={() => {
+                          treinarPosicao(selectedPlayer.id, emTreino ? null : pos)
+                          setFeedback(emTreino
+                            ? `${selectedPlayer.name} encerrou o treino de ${pos}.`
+                            : `${selectedPlayer.name} começou a aprender ${pos}.`)
+                          if (feedbackTimer.current) clearTimeout(feedbackTimer.current)
+                          feedbackTimer.current = setTimeout(() => setFeedback(null), 3000)
+                        }}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
+                          emTreino
+                            ? "border-cyan-400 bg-cyan-400/10"
+                            : "border-white/[0.04] hover:border-white/10 hover:bg-white/5",
+                        )}
+                      >
+                        <span className="w-10 shrink-0 text-sm font-bold text-white">{pos}</span>
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                          <div className="h-full rounded-full bg-cyan-400/70" style={{ width: `${(familiaridade / 20) * 100}%` }} />
+                        </div>
+                        <span className="w-16 shrink-0 text-right text-[10px] text-white/45">
+                          {emTreino ? "treinando" : `${Math.round((familiaridade / 20) * 100)}%`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Botao de Iniciar */}
             <button
               onClick={handleStartTraining}
@@ -934,6 +1075,8 @@ export default function TreinamentoPage() {
 
 // Perfil completo do jogador ("inspecionar"): atributos, status, contrato e estatisticas.
 function PlayerInspectModal({ player, currentWeek, onClose }: { player: Player; currentWeek: number; onClose: () => void }) {
+  const salario = useSalario()
+  const sistemaForca = useSistemaForca()
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); onClose() } }
     document.addEventListener("keydown", onKey)
@@ -979,7 +1122,20 @@ function PlayerInspectModal({ player, currentWeek, onClose }: { player: Player; 
           </button>
         </div>
 
-        {/* Atributos */}
+        {/* Atributos.
+            No sistema de força CLÁSSICO (escolhido na criação da carreira) o
+            atleta é uma nota só, como no futebol de gerência antigo: a régua
+            por atributo desaparece e fica o geral. O dado continua o mesmo — o
+            motor sempre usa os atributos —, muda apenas o que se vê. */}
+        {sistemaForca === "classico" ? (
+          <div className="p-5">
+            <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Força</div>
+            <div className="flex items-baseline gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+              <span className="text-4xl font-black text-white tabular-nums">{player.overall}</span>
+              <span className="text-sm text-white/50">geral · potencial {player.potential}</span>
+            </div>
+          </div>
+        ) : (
         <div className="p-5 space-y-2.5">
           <div className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Atributos</div>
           {attrs.map((a) => {
@@ -995,6 +1151,7 @@ function PlayerInspectModal({ player, currentWeek, onClose }: { player: Player; 
             )
           })}
         </div>
+        )}
 
         {/* Status + contrato */}
         <div className="px-5 pb-5 grid grid-cols-2 gap-3">
@@ -1002,10 +1159,11 @@ function PlayerInspectModal({ player, currentWeek, onClose }: { player: Player; 
           <InfoTile label="Moral" value={player.morale} />
           <InfoTile label="Forma" value={`${player.form}%`} />
           <InfoTile label="Valor de mercado" value={formatCurrency(player.marketValue)} />
-          {player.contract && <InfoTile label="Salario (sem.)" value={formatCurrency(player.contract.salary)} />}
+          {player.contract && <InfoTile label={salario.sistema === "mensal" ? "Salario (mês)" : "Salario (sem.)"} value={formatCurrency(salario.valor(player.contract.salary))} />}
           {weeksLeft !== null && <InfoTile label="Contrato" value={weeksLeft > 0 ? `${weeksLeft} sem restantes` : "Expira"} />}
           {player.injury && <InfoTile label="Lesao" value={`${player.injury.weeksRemaining} sem`} accent="text-red-400" />}
           {player.training.currentFocus && <InfoTile label="Em treino" value={`${player.training.currentFocus} (${player.training.weeksTrained}/4)`} accent="text-[#ffd700]" />}
+          {player.training.positionFocus && <InfoTile label="Aprendendo posicao" value={player.training.positionFocus} accent="text-cyan-300" />}
         </div>
 
         {/* Estatisticas da temporada */}

@@ -20,7 +20,7 @@ import { useMemo, useState } from "react"
 import { Gavel, TrendingUp, Trophy, XCircle, Clock } from "lucide-react"
 import { useGameEngine } from "@/lib/game-engine"
 import { TeamCrest } from "@/components/team-crest"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 import {
   chaveLeilao, emLeilaoNaSemana, semanaDeEncerramento, semanaDeAbertura, valorMinimoDe,

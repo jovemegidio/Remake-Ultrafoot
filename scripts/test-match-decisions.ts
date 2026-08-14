@@ -7,7 +7,7 @@
 //
 // Rodar: npx tsx scripts/test-match-decisions.ts
 
-import { applyDecision, pruneExpired, suggestDecision } from "../lib/match-decisions"
+import { applyDecision, pruneExpired, saldoDeMoralDaPartida, suggestDecision } from "../lib/match-decisions"
 import { createInitialState } from "../lib/match-engine"
 
 let falhas = 0
@@ -25,9 +25,19 @@ const pressionar = applyDecision(base, "pressionar")
 check("pressionar aumenta o momentum", pressionar.state.momentum > base.momentum,
   `${base.momentum} -> ${pressionar.state.momentum}`)
 
+// ⚠️ `recuar` NAO mexe no momentum, e isso e o desenho, nao um defeito. O
+// momentum e movido por moral e pressao (`moraleDelta`/`pressureDelta`), e recuar
+// nao tem nenhum dos dois: ele troca ataque por defesa. Este teste afirmava
+// "recuar reduz o momentum" e falhava desde que as decisoes passaram a cobrar os
+// cinco eixos no motor (1.0.291) — o TESTE e que estava desatualizado, nao a
+// decisao. O que se cobra agora e o efeito esportivo.
 const recuar = applyDecision(base, "recuar")
-check("recuar reduz o momentum", recuar.state.momentum < base.momentum,
+check("recuar nao mexe no momentum (ele troca ataque por defesa)",
+  recuar.state.momentum === base.momentum,
   `${base.momentum} -> ${recuar.state.momentum}`)
+check("recuar reforca a defesa e abre mao do ataque",
+  recuar.active.effect.defenseDelta > 0 && recuar.active.effect.attackDelta < 0,
+  `def=${recuar.active.effect.defenseDelta} atq=${recuar.active.effect.attackDelta}`)
 
 const tudo = applyDecision(base, "tudo_ou_nada")
 check("tudo ou nada e a decisao mais agressiva",
@@ -45,6 +55,23 @@ check("decisao continua valendo dentro da duracao",
   pruneExpired([aplicada], 60 + aplicada.effect.durationMinutes - 1).length === 1)
 check("decisao expira ao fim da duracao",
   pruneExpired([aplicada], 60 + aplicada.effect.durationMinutes).length === 0)
+
+console.log("\nSaldo de moral depois do apito\n")
+
+// O que o tecnico faz em campo passou a valer alguma coisa na semana seguinte.
+const gritou = applyDecision(base, "gritar").active
+const segurou = applyDecision(base, "segurar_resultado").active
+check("cobrar e vencer rende moral", saldoDeMoralDaPartida([gritou], "vitoria") > 0,
+  `${saldoDeMoralDaPartida([gritou], "vitoria")}`)
+check("cobrar e perder custa moral", saldoDeMoralDaPartida([gritou], "derrota") < 0,
+  `${saldoDeMoralDaPartida([gritou], "derrota")}`)
+check("segurar resultado e perder e mal-visto", saldoDeMoralDaPartida([segurou], "derrota") < 0,
+  `${saldoDeMoralDaPartida([segurou], "derrota")}`)
+check("nao decidir nada nao mexe em nada", saldoDeMoralDaPartida([], "vitoria") === 0)
+check("teto de 2 degraus", saldoDeMoralDaPartida(Array(20).fill(gritou), "vitoria") <= 2,
+  `${saldoDeMoralDaPartida(Array(20).fill(gritou), "vitoria")}`)
+check("piso de -2 degraus", saldoDeMoralDaPartida(Array(20).fill(gritou), "derrota") >= -2,
+  `${saldoDeMoralDaPartida(Array(20).fill(gritou), "derrota")}`)
 
 console.log("\nSugestão do auxiliar\n")
 

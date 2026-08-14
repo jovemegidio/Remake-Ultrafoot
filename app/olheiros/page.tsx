@@ -203,9 +203,9 @@ export default function OlheirosPage() {
             >
               <tab.icon className="h-4 w-4" />
               {tab.label}
-              {tab.id === "descobertos" && discoveredPlayers.length > 0 && (
+              {tab.id === "descobertos" && discoveredPlayers.length + department.reports.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[var(--brand)] text-[var(--brand-ink)] text-[10px] font-bold">
-                  {discoveredPlayers.length}
+                  {discoveredPlayers.length + department.reports.length}
                 </span>
               )}
             </button>
@@ -569,13 +569,55 @@ export default function OlheirosPage() {
                   </p>
                 </div>
 
-                {discoveredPlayers.length === 0 ? (
+                {department.reports.length > 0 && (
+                  <section className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Relatórios do universo 286</h3>
+                        <p className="mt-1 text-[11px] text-white/40">O mesmo atleta e clube persistem entre observações, partidas e janelas.</p>
+                      </div>
+                      <span className="rounded-full bg-[var(--brand)]/15 px-2.5 py-1 text-[10px] font-bold text-[var(--brand)]">{department.reports.length} monitorados</span>
+                    </div>
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      {[...department.reports].sort((a,b)=>b.generatedAt-a.generatedAt).map(report => (
+                        <article key={report.id} className="rounded-xl border border-[var(--brand)]/15 bg-[#111] p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className="truncate font-bold text-white">{report.playerName}</h4>
+                                <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-bold text-white/60">{report.position ?? "?"}</span>
+                                <span className={cn("rounded px-1.5 py-0.5 text-[9px] font-bold uppercase", report.stage === "complete" ? "bg-emerald-500/15 text-emerald-300" : report.stage === "partial" ? "bg-amber-500/15 text-amber-300" : "bg-white/10 text-white/45")}>{report.stage === "complete" ? "completo" : report.stage === "partial" ? "parcial" : "inicial"}</span>
+                              </div>
+                              <p className="mt-1 text-xs text-white/45">{report.age ?? "?"} anos · {report.clubName ?? "Clube não confirmado"} · {report.nationality ?? report.country ?? "nacionalidade desconhecida"}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[9px] uppercase text-white/35">Potencial estimado</p>
+                              <p className="text-lg font-black text-amber-300">{report.potentialEstimate.min}–{report.potentialEstimate.max}</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]">
+                            <div className="rounded-lg bg-black/30 p-2"><p className="text-white/35">Overall</p><b className="text-white">{report.knownAttributes.overall ?? "?"}</b></div>
+                            <div className="rounded-lg bg-black/30 p-2"><p className="text-white/35">Encaixe</p><b className="text-white">{report.tacticalFit != null ? `${report.tacticalFit}%` : "?"}</b></div>
+                            <div className="rounded-lg bg-black/30 p-2"><p className="text-white/35">Custo</p><b className="text-white">{report.estimatedTransferCost != null ? `R$ ${(report.estimatedTransferCost/1_000_000).toFixed(1)} mi` : "?"}</b></div>
+                          </div>
+                          <p className="mt-3 text-[11px] leading-relaxed text-white/45">{report.notes}</p>
+                          <div className="mt-3 flex items-center justify-between gap-2">
+                            <span className={cn("text-[10px] font-bold uppercase",report.recommendation === "sign" ? "text-emerald-300" : report.recommendation === "monitor" ? "text-amber-300" : "text-white/35")}>{report.recommendation === "sign" ? "recomenda contratar" : report.recommendation === "monitor" ? "manter monitorado" : "não recomendado"}</span>
+                            <Button size="sm" onClick={()=>router.push(`/mercado?aba=buscar&jogador=${encodeURIComponent(report.playerName)}`)} className="bg-[var(--brand)] text-[10px] font-bold text-[var(--brand-ink)]"><Target className="mr-1 h-3 w-3"/>Abrir no mercado</Button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {discoveredPlayers.length === 0 && department.reports.length === 0 ? (
                   <div className="p-8 rounded-xl bg-[#111] border border-white/[0.04] text-center">
                     <Eye className="h-12 w-12 mx-auto text-white/20 mb-3" />
                     <p className="text-white/50">Nenhum jogador descoberto ainda</p>
                     <p className="text-white/30 text-sm mt-1">Envie seus olheiros para buscar talentos</p>
                   </div>
-                ) : (
+                ) : discoveredPlayers.length > 0 ? (
                   <div className="grid gap-3">
                     {discoveredPlayers.map((player) => (
                       <div
@@ -670,7 +712,7 @@ export default function OlheirosPage() {
                       </div>
                     ))}
                   </div>
-                )}
+                ) : null}
               </motion.div>
             )}
           </AnimatePresence>

@@ -180,12 +180,71 @@ export type FocoColetivo =
   | "bola_parada"
   | "recuperacao"
 
+/**
+ * SESSÃO DE UM DIA. A semana deixou de ser um bloco só.
+ *
+ * O plano antigo era `{intensidade, foco}` para os SETE dias: o técnico escolhia
+ * "médio + ofensivo" e era isso de domingo a sábado. Não dava para fazer o que
+ * todo técnico faz — puxar no começo da semana, afinar a bola parada na véspera,
+ * soltar no dia seguinte ao jogo.
+ */
+export type SessaoDoDia =
+  | "descanso"
+  | "recuperacao"
+  | "fisico"
+  | "tecnico"
+  | "tatico"
+  | "bola_parada"
+
+/** Peso de cada sessão na carga do dia (0-100 na escala da carga semanal). */
+const CARGA_DA_SESSAO: Record<SessaoDoDia, number> = {
+  descanso: 0,
+  recuperacao: 12,
+  tecnico: 52,
+  tatico: 58,
+  bola_parada: 44,
+  fisico: 88,
+}
+
+export const ROTULO_DA_SESSAO: Record<SessaoDoDia, string> = {
+  descanso: "Descanso",
+  recuperacao: "Recuperação",
+  fisico: "Físico",
+  tecnico: "Técnico",
+  tatico: "Tático",
+  bola_parada: "Bola parada",
+}
+
+/** Atributo que cada sessão reforça — o par diário do ATRIBUTO_DO_FOCO. */
+export const ATRIBUTO_DA_SESSAO: Record<SessaoDoDia, string | null> = {
+  descanso: null,
+  recuperacao: null,
+  fisico: "physical",
+  tecnico: "dribbling",
+  tatico: "passing",
+  bola_parada: "shooting",
+}
+
 export interface PlanoDeTreino {
   intensidade: IntensidadeTreino
   foco: FocoColetivo
+  /**
+   * As sete sessões, de domingo a sábado. **Opcional de propósito**: save antigo
+   * não tem, e ali o plano semanal agregado continua valendo exatamente como
+   * antes. Quem tem, manda — a carga passa a sair dos dias.
+   */
+  semana?: SessaoDoDia[]
 }
 
 export const PLANO_PADRAO: PlanoDeTreino = { intensidade: "media", foco: "entrosamento" }
+
+/**
+ * Semana padrão para quem liga o treino diário: puxa no início, afina antes do
+ * fim de semana e descansa no dia seguinte ao jogo. Domingo é o índice 0.
+ */
+export const SEMANA_PADRAO: SessaoDoDia[] = [
+  "descanso", "recuperacao", "fisico", "tatico", "tecnico", "bola_parada", "descanso",
+]
 
 /** Atributo do Centro de Treinamento que cada foco coletivo reforça. */
 export const ATRIBUTO_DO_FOCO: Record<FocoColetivo, string | null> = {
@@ -216,10 +275,31 @@ const PESO_INTENSIDADE: Record<IntensidadeTreino, number> = { leve: 30, media: 5
  * Por isso ele entra reduzindo a carga PERCEBIDA, não a real.
  */
 export function cargaDoPlano(plano: PlanoDeTreino, nivelCentroDeTreinamento = 2): number {
+  const ganhoEstrutura = 1 - Math.max(0, nivelCentroDeTreinamento - 1) * 0.04 // até -16%
+
+  // ── TREINO DIÁRIO ────────────────────────────────────────────────────────
+  // Com as sete sessões escritas, a carga da semana é a MÉDIA dos dias, e não
+  // mais um número escolhido de uma vez. A intensidade vira o volume de cada
+  // sessão: "alta" com três descansos ainda é uma semana leve, e é justamente
+  // essa combinação que o plano agregado não sabia representar.
+  if (plano.semana?.length) {
+    const media = plano.semana.reduce((soma, dia) => soma + (CARGA_DA_SESSAO[dia] ?? 0), 0) / plano.semana.length
+    const volume = PESO_INTENSIDADE[plano.intensidade] / PESO_INTENSIDADE.media
+    return Math.max(0, Math.min(100, Math.round(media * volume * ganhoEstrutura)))
+  }
+
   const base = PESO_INTENSIDADE[plano.intensidade]
   const ajusteFoco = plano.foco === "fisico" ? 12 : plano.foco === "recuperacao" ? -26 : 0
-  const ganhoEstrutura = 1 - Math.max(0, nivelCentroDeTreinamento - 1) * 0.04 // até -16%
   return Math.max(5, Math.min(100, Math.round((base + ajusteFoco) * ganhoEstrutura)))
+}
+
+/**
+ * Dias de descanso na semana. A recuperação olha para isto: descansar dois dias
+ * repõe de verdade, e era o que o plano agregado não conseguia dizer.
+ */
+export function diasDeDescanso(plano: PlanoDeTreino): number {
+  if (!plano.semana?.length) return plano.foco === "recuperacao" ? 2 : 0
+  return plano.semana.filter(d => d === "descanso").length
 }
 
 export interface AtletaNaSemana {
@@ -237,6 +317,13 @@ export interface AtletaNaSemana {
   emTreinoIndividual: boolean
   /** Atributo do treino individual, para casar (ou não) com o foco coletivo. */
   focoIndividual?: string | null
+  /**
+   * CARGA INDIVIDUAL. O elenco inteiro treinava na mesma intensidade: não havia
+   * como poupar o veterano de 34 e puxar o jovem que precisa de fôlego, que é
+   * metade do trabalho de uma comissão. Ausente = "normal", ou seja, o
+   * comportamento de antes.
+   */
+  cargaIndividual?: "poupado" | "normal" | "reforcado" 
 }
 
 export interface EfeitoDaSemana {
@@ -273,7 +360,17 @@ export interface ResumoDaSemana {
 export function aplicarSemanaDeTreino(
   atletas: readonly AtletaNaSemana[],
   plano: PlanoDeTreino,
-  infra: { centroDeTreinamento?: number; centroMedico?: number } = {},
+  /**
+   * `treinador` são os efeitos de `lib/efeito-do-treinador.ts`. Chegam por
+   * parâmetro (e não por import) para esta função continuar PURA e testável sem
+   * store: os neutros — 1, 0 e 1 — reproduzem o comportamento anterior número
+   * por número, então nenhum chamador que não os passe muda de resultado.
+   */
+  infra: {
+    centroDeTreinamento?: number
+    centroMedico?: number
+    treinador?: { rendimentoDeTreino: number; recuperacaoSemanal: number; riscoDeLesao: number }
+  } = {},
   /**
    * Quanto da semana foi de fato TREINO (ver lib/rotina-da-semana.ts).
    * 1 = a semana de referencia (quatro dias de treino). Menos dias, menos carga:
@@ -285,6 +382,7 @@ export function aplicarSemanaDeTreino(
 ): ResumoDaSemana {
   const carga = cargaDoPlano(plano, infra.centroDeTreinamento ?? 2) * fatorDeCarga
   const medico = infra.centroMedico ?? 2
+  const tecnico = infra.treinador ?? { rendimentoDeTreino: 1, recuperacaoSemanal: 0, riscoDeLesao: 1 }
   const efeitos: EfeitoDaSemana[] = []
 
   for (const a of atletas) {
@@ -311,7 +409,12 @@ export function aplicarSemanaDeTreino(
     // custa ~14 e a semana de treino médio ~7: jogo e o dobro do treino, e uma
     // semana com DOIS jogos (meio de semana) custa ~29 e derruba o titular, que
     // é exatamente quando um técnico de verdade roda o elenco.
-    const desgaste = carga * 0.13 + a.minutosJogados * 0.16
+    // A carga individual multiplica só a parte de TREINO do desgaste — o que o
+    // jogo cobrou não muda por decisão de comissão técnica.
+    const fatorCarga = a.cargaIndividual === "poupado" ? 0.55
+      : a.cargaIndividual === "reforcado" ? 1.4
+      : 1
+    const desgaste = carga * 0.13 * fatorCarga + a.minutosJogados * 0.16
 
     // RECUPERAÇÃO: idade, fôlego, estrutura médica e o foco da semana.
     //
@@ -332,6 +435,10 @@ export function aplicarSemanaDeTreino(
       + (a.resistencia - 70) * 0.10
       + (plano.foco === "recuperacao" ? 10 : 0)
       + (a.emTreinoIndividual ? -3 : 0) // treino extra também cobra
+      // PREPARO FÍSICO DO TÉCNICO: ±3 pontos por semana. Entra na recuperação e
+      // não no desgaste porque quem sabe dosar não faz o jogo cansar menos —
+      // faz o corpo repor melhor entre um jogo e outro.
+      + tecnico.recuperacaoSemanal
 
     // `recuperacaoExtra` sao os dias de DESCANSO da semana (ver rotina-da-semana).
     // Entra aqui, e nao no desgaste, porque poupar nao desfaz o jogo que ja
@@ -352,8 +459,11 @@ export function aplicarSemanaDeTreino(
     // O Centro de Treinamento reduz o risco de verdade (o de verdade é o que
     // um clube compra quando reforma o CT).
     const estruturaMult = 1 - Math.max(0, (infra.centroDeTreinamento ?? 2) - 1) * 0.06
+    // ⚠️ O TETO É APLICADO DEPOIS do técnico, não antes: o `Math.min` antes do
+    // multiplicador faria o preparador físico bom não valer nada justamente no
+    // elenco moído, que é onde ele importa.
     const risco = Math.min(0.14,
-      (carga / 100) * 0.030 * fadigaMult * energiaMult * idadeMult * estruturaMult,
+      (carga / 100) * 0.030 * fadigaMult * energiaMult * idadeMult * estruturaMult * tecnico.riscoDeLesao,
     )
 
     // RENDIMENTO do treino individual: carga alta ensina mais, mas só a quem
@@ -366,6 +476,21 @@ export function aplicarSemanaDeTreino(
     // Treino individual ALINHADO ao foco coletivo rende mais: o time inteiro
     // está fazendo o mesmo trabalho.
     if (a.focoIndividual && a.focoIndividual === ATRIBUTO_DO_FOCO[plano.foco]) rendimento *= 1.3
+    // Com semana diária, o casamento é com o que ele TREINOU nos dias, não com
+    // um foco único: quem faz duas sessões táticas aprende passe, ainda que o
+    // rótulo semanal diga outra coisa.
+    if (a.focoIndividual && plano.semana?.length) {
+      const sessoesDoAtributo = plano.semana.filter(d => ATRIBUTO_DA_SESSAO[d] === a.focoIndividual).length
+      if (sessoesDoAtributo > 0) rendimento *= 1 + Math.min(0.3, sessoesDoAtributo * 0.12)
+    }
+    // Poupado aprende menos; reforçado aprende mais. É a troca que faz a decisão
+    // ter os dois lados — senão poupar seria de graça.
+    if (a.cargaIndividual === "poupado") rendimento *= 0.7
+    else if (a.cargaIndividual === "reforcado") rendimento *= 1.25
+    // DESENVOLVIMENTO DO TÉCNICO: ±30%. É o atributo que separa quem forma de
+    // quem só escala — e é o último fator de propósito, para multiplicar o
+    // rendimento que a semana de fato produziu.
+    rendimento *= tecnico.rendimentoDeTreino
 
     efeitos.push({ id: a.id, energia, fadigaCronica, risco, rendimentoIndividual: rendimento })
   }

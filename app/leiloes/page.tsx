@@ -27,7 +27,7 @@ import { chaveLeilao, resolverLancesPendentes, type DesfechoDeLeilao } from "@/l
 import { resolverLeiloesDeVenda, type DesfechoDaVenda, type LeilaoDeVenda } from "@/lib/leilao-de-venda"
 import { ELENCO_MINIMO } from "@/lib/reposicao-emergencial"
 import { cn } from "@/lib/utils"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { markDeparted } from "@/lib/departed-players"
 
 export default function LeiloesPage() {

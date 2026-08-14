@@ -153,6 +153,28 @@ export const FORMATIONS: Record<string, { name: string; positions: FormationSlot
       { pos: "ATA", x: 50, y: 14 },
     ],
   },
+  "4-1-4-1": {
+    name: "4-1-4-1",
+    positions: [
+      { pos: "GOL", x: 50, y: 92 },
+      { pos: "LD", x: 85, y: 75 }, { pos: "ZAG", x: 65, y: 80 },
+      { pos: "ZAG", x: 35, y: 80 }, { pos: "LE", x: 15, y: 75 },
+      { pos: "VOL", x: 50, y: 61 },
+      { pos: "MD", x: 86, y: 43 }, { pos: "MEI", x: 62, y: 45 },
+      { pos: "MEI", x: 38, y: 45 }, { pos: "ME", x: 14, y: 43 },
+      { pos: "ATA", x: 50, y: 13 },
+    ],
+  },
+  "2-3-5": {
+    name: "2-3-5",
+    positions: [
+      { pos: "GOL", x: 50, y: 92 },
+      { pos: "ZAG", x: 65, y: 77 }, { pos: "ZAG", x: 35, y: 77 },
+      { pos: "VOL", x: 72, y: 57 }, { pos: "VOL", x: 50, y: 60 }, { pos: "VOL", x: 28, y: 57 },
+      { pos: "PD", x: 91, y: 22 }, { pos: "MEI", x: 70, y: 27 },
+      { pos: "ATA", x: 50, y: 15 }, { pos: "MEI", x: 30, y: 27 }, { pos: "PE", x: 9, y: 22 },
+    ],
+  },
 }
 
 // ── DETECCAO DE FORMACAO A PARTIR DO CAMPO ───────────────────────────────────

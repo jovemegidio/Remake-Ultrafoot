@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import { ArrowLeft, Scale, ShieldCheck } from "lucide-react"
 import { LEGAL_CONTACT, LEGAL_VERSION, PRIVACY_POLICY, TERMS_OF_USE } from "@/lib/legal"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"

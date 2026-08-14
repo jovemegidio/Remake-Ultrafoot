@@ -21,6 +21,22 @@ let _initialized = false
 let _initPromise: Promise<void> | null = null
 let _tauriStore: TauriStore | null = null
 
+// O localStorage e apenas um espelho de compatibilidade. Nunca duplicamos nele
+// blobs/base64 nem valores grandes: isso fazia a WebView manter outra copia de
+// centenas de MB na memoria e no disco durante o boot.
+const MAX_LOCAL_MIRROR_LENGTH = 512 * 1024
+
+function _mirrorToLocalStorage(key: string, value: string): void {
+  if (typeof window === "undefined") return
+  try {
+    const isHeavy = value.length > MAX_LOCAL_MIRROR_LENGTH || value.includes("data:image/")
+    if (_isTauri() && isHeavy) localStorage.removeItem(key)
+    else localStorage.setItem(key, value)
+  } catch {
+    // Quota/privacidade: o plugin-store e o cache continuam sendo a fonte.
+  }
+}
+
 function _isTauri(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -98,7 +114,7 @@ async function _init(): Promise<void> {
           // listLocalTeamOverrides() varria o localStorage e concluia que nao havia
           // nenhuma edicao. O espelho tambem serve como recuperacao se o arquivo do
           // plugin ficar temporariamente indisponivel.
-          try { localStorage.setItem(k, v) } catch { /* quota/privacidade: cache segue valido */ }
+          _mirrorToLocalStorage(k, v)
         }
       }
 
@@ -161,7 +177,7 @@ export function storeSet(key: string, value: string): void {
   // Espelha imediatamente: a UI e os exportadores enxergam a mesma versao antes
   // mesmo do commit assincrono do plugin-store terminar.
   if (typeof window !== "undefined") {
-    try { localStorage.setItem(key, value) } catch { /* plugin-store continua sendo a fonte */ }
+    _mirrorToLocalStorage(key, value)
   }
   _dispatch(key)
   // O plugin-store usa um unico arquivo. Gravacoes paralelas de save, motor e
@@ -171,6 +187,52 @@ export function storeSet(key: string, value: string): void {
   writeQueue = operation.catch(() => undefined)
   pendingOperations.add(operation)
   void operation.finally(() => pendingOperations.delete(operation))
+}
+
+/**
+ * Grava VÁRIAS chaves com UM commit no disco.
+ *
+ * `storeSet` chama `store.save()` a cada chave, e `save()` reescreve o arquivo
+ * inteiro. Para uma gravação isolada tudo bem; para um lote é quadrático — a
+ * migração de imagens toca ~3.500 chaves, e uma por uma seriam 3.500 reescritas
+ * de um arquivo que chegou a 245 MB. Aqui as chaves entram todas e o disco é
+ * tocado uma vez só, no fim.
+ */
+export function storeSetMany(entries: Iterable<[string, string]>): Promise<void> {
+  const lista = [...entries]
+  if (lista.length === 0) return Promise.resolve()
+
+  for (const [key, value] of lista) {
+    cache.set(key, value)
+    if (typeof window !== "undefined") {
+      _mirrorToLocalStorage(key, value)
+    }
+    _dispatch(key)
+  }
+
+  const operation = writeQueue.then(async () => {
+    if (typeof window === "undefined") return
+    try {
+      if (_isTauri()) {
+        const store = await _getStore()
+        for (const [key, value] of lista) await store.set(key, value)
+        await store.save()
+      } else {
+        for (const [key, value] of lista) localStorage.setItem(key, value)
+      }
+    } catch (e) {
+      console.warn("[persistent-store] gravacao em lote falhou:", e)
+    }
+  })
+  writeQueue = operation.catch(() => undefined)
+  pendingOperations.add(operation)
+  void operation.finally(() => pendingOperations.delete(operation))
+  return operation
+}
+
+/** Todas as chaves `ultrafoot:` conhecidas pelo cache (já vindas do disco). */
+export function storeKeys(): string[] {
+  return [...cache.keys()]
 }
 
 export function storeRemove(key: string): void {

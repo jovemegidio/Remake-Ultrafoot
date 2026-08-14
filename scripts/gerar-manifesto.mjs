@@ -23,6 +23,12 @@
  *     --versao 1.0.241 \
  *     --saida .\\dist-patch
  *
+ * Por padrao o gerador consulta o manifesto que esta no `latest.json` da VPS.
+ * Um hash que ja aparece nele nao e recriado na pasta de saida: o blob ja esta
+ * no servidor. Assim a pasta de upload contem somente conteudo novo, mesmo que
+ * `--saida` esteja vazia. Use `--sem-manifesto-anterior` apenas para reconstruir
+ * o armazem do zero.
+ *
  * A PASTA TEM DE SER A DO JOGO INSTALADO — não a de build. O que o manifesto
  * descreve é o resultado final na máquina do jogador; qualquer diferença entre
  * as duas viraria "arquivo corrompido" na verificação de integridade de todo
@@ -45,7 +51,16 @@ import { pipeline } from "node:stream/promises"
 // versão; os `.ultrafoot-*` são o estado do próprio launcher. Incluir qualquer
 // um dos dois faria o launcher tentar "consertar" para sempre um arquivo que
 // nunca vai bater com o manifesto.
-const IGNORAR = [/^uninstall\.exe$/i, /^\.ultrafoot-/, /\.log$/i, /^\.ultrafoot-patch\//]
+const IGNORAR = [
+  /^uninstall\.exe$/i,
+  /^\.ultrafoot-/,
+  /\.log$/i,
+  /^\.ultrafoot-patch\//,
+  // Cópias de trabalho locais não pertencem a uma versão. Na instalação de
+  // desenvolvimento elas somavam quase 480 MB e seriam publicadas como blobs.
+  /^ultrafoot\.exe\.(?:anterior|com-minhas-mudancas|bak|backup)$/i,
+  /\.(?:bak|backup|old)$/i,
+]
 
 function argumento(nome, padrao = null) {
   const i = process.argv.indexOf(`--${nome}`)
@@ -85,6 +100,25 @@ function humano(bytes) {
   return `${(bytes / 1024).toFixed(0)} KB`
 }
 
+async function hashesJaPublicados(urlLatest) {
+  if (argumento("sem-manifesto-anterior", false)) return new Set()
+  try {
+    const latest = await fetch(urlLatest, { signal: AbortSignal.timeout(10_000) })
+    if (!latest.ok) throw new Error(`latest.json respondeu ${latest.status}`)
+    const plataforma = (await latest.json())?.platforms?.["windows-x86_64"]
+    if (!plataforma?.manifesto) return new Set()
+    const resposta = await fetch(plataforma.manifesto, { signal: AbortSignal.timeout(20_000) })
+    if (!resposta.ok) throw new Error(`manifesto anterior respondeu ${resposta.status}`)
+    const anterior = await resposta.json()
+    const hashes = new Set((anterior.arquivos ?? []).map((a) => a.sha256).filter(Boolean))
+    console.log(`→ manifesto anterior: ${anterior.versao ?? "?"} (${hashes.size} conteúdos já publicados)`)
+    return hashes
+  } catch (erro) {
+    console.warn(`⚠ manifesto anterior indisponível; os blobs serão conferidos apenas na pasta local (${erro.message})`)
+    return new Set()
+  }
+}
+
 async function main() {
   const pasta = argumento("pasta")
   const versao = argumento("versao")
@@ -93,6 +127,10 @@ async function main() {
   const baseDosBlobs = argumento(
     "blobs",
     "https://ultrafoot.179-198-103-30.sslip.io/downloads/blobs/",
+  )
+  const latest = argumento(
+    "latest",
+    "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json",
   )
 
   if (!pasta || !versao) {
@@ -119,6 +157,9 @@ async function main() {
   let blobsNovos = 0
   let bytesNovos = 0
   let reaproveitados = 0
+  let jaNaVps = 0
+
+  const hashesRemotos = await hashesJaPublicados(latest)
 
   console.log(`→ varrendo ${raiz}`)
   for await (const relativo of varrer(raiz)) {
@@ -136,6 +177,14 @@ async function main() {
       hash.slice(0, 2),
       comprimir ? `${hash}.gz` : hash,
     )
+    // Se o manifesto atualmente publicado ja referencia este conteudo, o blob
+    // necessariamente chegou antes dele (a publicacao envia blobs primeiro).
+    // Nao o recriar e o que impede fotos, escudos e kits inalterados de serem
+    // preparados e enviados de novo a cada release.
+    if (hashesRemotos.has(hash)) {
+      jaNaVps++
+      continue
+    }
     // BLOB QUE JÁ EXISTE NÃO É REESCRITO. É o coração da economia: entre duas
     // versões, a esmagadora maioria dos arquivos é idêntica, e o mesmo conteúdo
     // sempre gera o mesmo nome.
@@ -180,7 +229,8 @@ async function main() {
   console.log(`✔ manifesto:      ${arquivoDoManifesto}`)
   console.log(`  arquivos:       ${arquivos.length} (${humano(bytesDaVersao)})`)
   console.log(`  blobs novos:    ${blobsNovos} (${humano(bytesNovos)} a subir)`)
-  console.log(`  já publicados:  ${reaproveitados}`)
+  console.log(`  já na saída:     ${reaproveitados}`)
+  console.log(`  já na VPS:       ${jaNaVps}`)
   console.log("")
   console.log("Próximos passos:")
   console.log(`  1) subir os blobs:      rsync -av ${path.join(saida, "blobs")}/ vps:/var/www/ultrafoot/downloads/blobs/`)

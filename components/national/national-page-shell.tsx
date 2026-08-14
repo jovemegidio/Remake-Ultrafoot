@@ -7,7 +7,7 @@
 // pode cair numa tela vazia, volta para /selecao (onde as propostas aparecem).
 
 import { useEffect, type ReactNode } from "react"
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import { ArrowLeft, type LucideIcon } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { NationalCrest } from "@/components/national/national-crest"

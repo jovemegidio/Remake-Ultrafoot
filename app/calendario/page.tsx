@@ -12,7 +12,7 @@ import {
   Play,
   Square,
 } from "lucide-react"
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import Image from "next/image"
 import { GamepadButton } from "@/components/gamepad-icons"
 import { TeamCrest } from "@/components/team-crest"
@@ -21,7 +21,8 @@ import { getIntroForCompetition, logoDaCompeticao } from "@/lib/competition-intr
 import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { GameHeader } from "@/components/game-header"
-import { useGameManager, seasonMonthsForDivision, type Fixture } from "@/lib/use-game-manager"
+import { useGameManager, seasonMonthsForDivision, getCalendarFixtureKey, type Fixture } from "@/lib/use-game-manager"
+import { useGameEngine, type MatchResult } from "@/lib/game-engine"
 import { diaDaPartida, ehAmistoso } from "@/lib/amistosos-calendario"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { getGameDate } from "@/lib/game-date"
@@ -124,6 +125,8 @@ export default function CalendarioPage() {
     setCurrentMonth(mesDoJogo)
   }, [mesDoJogo])
   const [isSimulating, setIsSimulating] = useState(false)
+  /** Placar da partida que acabou de ser simulada, para o resultado rápido. */
+  const [resultadoRapido, setResultadoRapido] = useState<MatchResult | null>(null)
   const [showChampionScreen, setShowChampionScreen] = useState(false)
   const [championTeam, setChampionTeam] = useState<string | null>(null)
 
@@ -182,7 +185,7 @@ export default function CalendarioPage() {
   }, [filaPendentes, selectedFixture])
 
   const simulateUntilMatch = useCallback(
-    async (target: Fixture) => {
+    async (target: Fixture, incluindoEsta = false) => {
       if (isSimulating) return
       pedidoDeParar.current = false
       setParando(false)
@@ -210,10 +213,31 @@ export default function CalendarioPage() {
       // segurança, e o finally SEMPRE devolve a tela ao estado normal.
       let advanced = 0
       let falhou = false
+      // ⚠️ A ANIMAÇÃO DE DIAS ERA PARTE DO TRAVAMENTO (relato: "ao simular uma
+      // certa quantidade de partidas trava na simulação de dias").
+      //
+      // `simDate` e `simProgress` são estado DESTA página, que tem 1.134 linhas
+      // e desenha a grade inteira do calendário. Atualizá-los a cada dia
+      // simulado — até ~250 vezes numa simulação longa — redesenhava a página
+      // toda outras tantas vezes, e isso ia se somar ao trabalho pesado de cada
+      // semana (só o avanço do universo custa 81 ms, medido em
+      // `scripts/medir-universo-286.ts`). Quanto mais longe a data, mais dias,
+      // mais redesenhos: exatamente o "depois de um tempo, trava".
+      //
+      // Desenhar 15 vezes por segundo é mais do que suficiente para um contador
+      // de data, e corta os redesenhos em ~4x sem mudar nada do que o jogador vê.
+      const INTERVALO_DE_DESENHO = 66
+      let ultimoDesenho = 0
       try {
         for (let d = 1; d <= totalDays && !falhou && !pedidoDeParar.current; d++) {
-          setSimDate(new Date(start.getTime() + d * 86_400_000))
-          setSimProgress(Math.round((d / totalDays) * 100))
+          const agora = Date.now()
+          // O último dia sempre desenha: senão a barra pararia em 97% e a data
+          // final ficaria um passo atrás da real.
+          if (d === totalDays || agora - ultimoDesenho >= INTERVALO_DE_DESENHO) {
+            ultimoDesenho = agora
+            setSimDate(new Date(start.getTime() + d * 86_400_000))
+            setSimProgress(Math.round((d / totalDays) * 100))
+          }
 
           if (advanced < weeks && d >= Math.round((advanced + 1) * perWeek)) {
             try {
@@ -273,6 +297,30 @@ export default function CalendarioPage() {
         })
         return
       }
+      // ⚠️ SIMULAR A PARTIDA É AVANÇAR UMA SEMANA A MAIS.
+      //
+      // Não existe (nem deve existir) um simulador paralelo para o jogo do
+      // usuário: quem resolve a partida dele é o `advanceWeek`, pelo mesmo
+      // `simulateMatchResult` que resolve as dos rivais. Um atalho próprio aqui
+      // daria dois resultados possíveis para o mesmo jogo, dependendo do botão
+      // clicado — que é exatamente o defeito que o modo co-op evitou ao não
+      // deixar o adversário humano entrar como CPU.
+      //
+      // Então "simular esta" = deixar a semana dela passar. O motor a resolve
+      // sozinho (`selectOverdueUserFixtures`) e nós só lemos o placar depois.
+      if (incluindoEsta) {
+        const chave = getCalendarFixtureKey(target, currentSeason)
+        try { await advanceWeek() } catch { /* o resultado abaixo dirá se saiu */ }
+        const r = useGameEngine.getState().matchResults.find(m => m.fixtureKey === chave)
+        if (r) { setResultadoRapido(r); return }
+        addNotification({
+          type: "system", priority: "medium",
+          title: "Partida simulada",
+          message: "A semana avançou, mas o placar não foi encontrado para exibir aqui. Veja em Histórico.",
+        })
+        return
+      }
+
       hardNavigate("/partida")
     },
     [advanceWeek, currentWeek, currentSeason, isSimulating, addNotification],
@@ -406,9 +454,17 @@ export default function CalendarioPage() {
     )
   }
 
-  // Data atual formatada usando month do fixture
-  const matchMonth = nextUserMatch ? nextUserMatch.month : seasonMonths[0]
-  const matchDay = nextUserMatch ? diaDaPartida(nextUserMatch) : 15
+  // ⚠️ A DATA SEGUE A PARTIDA SELECIONADA, não a próxima.
+  //
+  // Este bloco lia `nextUserMatch` enquanto TODO o resto do painel (adversário,
+  // competição, botão de simular) lia `selectedFixture`. Bastava clicar num jogo
+  // futuro para o painel virar uma mistura de duas partidas: escudo e nome do
+  // Santos de 28 de dezembro sob o cabeçalho "SEXTA-FEIRA JAN 23", que é a data
+  // do jogo seguinte. Quem lesse a data acreditaria estar simulando até janeiro
+  // enquanto o botão ao lado oferecia simular 54 partidas até dezembro.
+  const partidaDoPainel = selectedFixture ?? nextUserMatch
+  const matchMonth = partidaDoPainel ? partidaDoPainel.month : seasonMonths[0]
+  const matchDay = partidaDoPainel ? diaDaPartida(partidaDoPainel) : 15
   // Mesmo motivo da grade acima: fora de 2026 o dia da semana do proximo jogo
   // sairia errado com o ano cravado.
   const matchDate = new Date(currentSeason, matchMonth, matchDay)
@@ -559,47 +615,60 @@ export default function CalendarioPage() {
       <div className="relative z-20"><GameHeader team={userTeam} /></div>
 
       {/* Top Navigation Bar */}
-      <header className="relative z-10 flex items-center justify-between h-12 px-6 bg-black/30 backdrop-blur-sm border-b border-white/10">
-        <div className="flex items-center gap-6">
-          <span className="text-white/60 text-sm font-medium">Escritorio</span>
-          <span className="text-white text-sm font-bold">Calendario</span>
+      {/* ⚠️ ESTE CABEÇALHO MEDIA 1.128px NUM CELULAR DE 393px (13/08/2026).
+          Como o container do alto é `overflow-hidden`, os 735px que sobravam não
+          viravam rolagem: sumiam. Na prática, no telefone dava para ver os três
+          primeiros meses e mais nada — trocar para outubro era impossível, e o
+          nome do clube nunca aparecia. Agora os rótulos fixos saem no estreito,
+          a tira de meses ROLA com o dedo e as setas ficam de fora dela, para não
+          rolarem junto e sumirem também. */}
+      <header className="relative z-10 flex items-center justify-between gap-2 h-12 px-3 md:px-6 bg-black/30 backdrop-blur-sm border-b border-white/10">
+        <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-6">
+          <span className="hidden shrink-0 text-white/60 text-sm font-medium md:inline">Escritorio</span>
+          <span className="shrink-0 text-white text-sm font-bold">Calendario</span>
           {/* A TEMPORADA, escrita. O calendario nao mostrava o ano em canto
               nenhum — so os nomes dos meses —, entao virar de 2026 para 2027 nao
               tinha nenhum sinal na tela e parecia que nada havia mudado. */}
-          <span className="rounded bg-white/10 px-2 py-0.5 text-xs font-bold tabular-nums text-white/80">
+          <span className="shrink-0 rounded bg-white/10 px-2 py-0.5 text-xs font-bold tabular-nums text-white/80">
             {currentSeason}
           </span>
           {/* Month Tabs */}
-          <div className="flex items-center gap-1 ml-4">
+          <div className="flex min-w-0 flex-1 items-center gap-1 md:ml-4 md:flex-none">
             <button
               onClick={() => setCurrentMonth(m => {
                 const idx = seasonMonths.indexOf(m)
                 return seasonMonths[(idx - 1 + seasonMonths.length) % seasonMonths.length]
               })}
-              className="p-1 text-white/40 hover:text-white"
+              className="shrink-0 p-1 text-white/40 hover:text-white"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            {seasonMonths.map((monthIndex) => (
-              <button
-                key={monthIndex}
-                onClick={() => setCurrentMonth(monthIndex)}
-                className={cn(
-                  "px-3 py-1 text-xs font-medium transition-all rounded",
-                  monthIndex === currentMonth
-                    ? "bg-white/20 text-white"
-                    : "text-white/50 hover:text-white/80"
-                )}
-              >
-                {MONTH_NAMES[monthIndex]}
-              </button>
-            ))}
+            {/* Os 12 meses não cabem em 393px e nunca vão caber. Rolar com o dedo
+                é a resposta certa aqui: some a informação escondida, não a
+                capacidade de alcançá-la. `shrink-0` em cada mês é o que impede o
+                flex de espremer "Setembro" até virar um risco. */}
+            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scrollbar-none md:flex-none md:overflow-x-visible">
+              {seasonMonths.map((monthIndex) => (
+                <button
+                  key={monthIndex}
+                  onClick={() => setCurrentMonth(monthIndex)}
+                  className={cn(
+                    "shrink-0 px-3 py-1 text-xs font-medium transition-all rounded",
+                    monthIndex === currentMonth
+                      ? "bg-white/20 text-white"
+                      : "text-white/50 hover:text-white/80"
+                  )}
+                >
+                  {MONTH_NAMES[monthIndex]}
+                </button>
+              ))}
+            </div>
             <button
               onClick={() => setCurrentMonth(m => {
                 const idx = seasonMonths.indexOf(m)
                 return seasonMonths[(idx + 1) % seasonMonths.length]
               })}
-              className="p-1 text-white/40 hover:text-white"
+              className="shrink-0 p-1 text-white/40 hover:text-white"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -607,16 +676,22 @@ export default function CalendarioPage() {
         </div>
 
         {/* User Team */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <TeamCrest team={userTeam} size="xs" />
-          <span className="text-white text-sm font-medium">{userTeam.nome}</span>
+          <span className="hidden text-white text-sm font-medium md:inline">{userTeam.nome}</span>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="relative z-10 flex min-h-0 flex-1 p-6 gap-6">
+      {/* ⚠️ DUAS COLUNAS NÃO CABEM EM 393px. Com o painel de 224px fixo ao lado,
+          sobravam 132px para a grade de SETE colunas — 19px por dia, medido. No
+          celular as duas viram uma pilha que rola; no monitor nada muda.
+          `overflow-x-hidden` junto do `overflow-y-auto` não é enfeite: pela regra
+          do CSS, um eixo não-`visible` faz o outro virar `auto`, e era assim que
+          nascia a rolagem lateral em outras telas. */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-3 md:flex-row md:gap-6 md:overflow-visible md:p-6">
         {/* Left Panel - Match Info (EA FC Style) */}
-        <aside className="w-56 flex-shrink-0 flex flex-col">
+        <aside className="flex w-full flex-shrink-0 flex-col md:w-56">
           {/* Current Date - Large */}
           <div className="mb-8">
             <div className="text-white/60 text-xs font-medium tracking-wider uppercase mb-1">
@@ -738,6 +813,26 @@ export default function CalendarioPage() {
             </button>
           )}
 
+          {/* SIMULAR SEM JOGAR, com o placar na hora.
+              O motor já resolvia a partida do usuário quando a semana passava —
+              só que o resultado saía numa NOTIFICAÇÃO, que quase ninguém abre.
+              Quem queria pular um jogo tinha de avançar a semana e ir caçar o
+              placar no histórico. */}
+          {selectedFixture && !selectedFixture.played && selectedFixture.isUserMatch && (
+            <button
+              onClick={() => simulateUntilMatch(selectedFixture, true)}
+              disabled={isSimulating}
+              className={cn(
+                "-mt-4 mb-6 flex w-full items-center justify-center gap-2 rounded-xl border border-white/12 px-4 py-2.5",
+                "text-xs font-semibold text-white/70 transition-colors hover:border-white/25 hover:text-white",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            >
+              <FastForward className="h-3.5 w-3.5" />
+              Simular esta partida e ver o resultado
+            </button>
+          )}
+
           {/* Spacer */}
           <div className="flex-1" />
 
@@ -786,7 +881,10 @@ export default function CalendarioPage() {
         </aside>
 
         {/* Calendar Grid (EA FC Glassmorphism Style) */}
-        <main className="flex-1 flex flex-col">
+        {/* O piso de altura é para o celular: empilhado, o `flex-1` não tem contra
+            o que crescer dentro de um pai que rola, e a grade encolheria até
+            virar uma tira de dias sem espaço para o jogo do dia. */}
+        <main className="flex min-h-[24rem] flex-1 flex-col md:min-h-0">
           <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
             {/* Week days header */}
             <div className="grid grid-cols-7 border-b border-white/10">
@@ -1008,6 +1106,47 @@ export default function CalendarioPage() {
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-white" />
             <span className="text-white font-medium">Simulando...</span>
+          </div>
+        </div>
+      )}
+
+      {/* RESULTADO RÁPIDO. Placar do jogo que acabou de ser simulado — o mesmo
+          que o motor gravou, não um número recalculado para a tela. */}
+      {resultadoRapido && (
+        <div
+          className="fixed inset-0 z-[120] grid place-items-center bg-black/85 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setResultadoRapido(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0b0e14] p-6 text-center shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="text-[10px] font-black uppercase tracking-[.25em] text-white/35">
+              Partida simulada
+            </p>
+            <p className="mt-1 text-xs text-white/45">{resultadoRapido.competition}</p>
+
+            <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+              <span className="truncate text-right text-sm font-bold text-white">
+                {getTeamByShort(resultadoRapido.homeTeam)?.nome ?? resultadoRapido.homeTeam}
+              </span>
+              <span className="rounded-lg bg-white/[0.06] px-3 py-1.5 text-2xl font-black tabular-nums text-white">
+                {resultadoRapido.homeScore} <span className="text-white/30">×</span> {resultadoRapido.awayScore}
+              </span>
+              <span className="truncate text-left text-sm font-bold text-white">
+                {getTeamByShort(resultadoRapido.awayTeam)?.nome ?? resultadoRapido.awayTeam}
+              </span>
+            </div>
+
+            <button
+              onClick={() => setResultadoRapido(null)}
+              autoFocus
+              className="mt-6 w-full rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-black uppercase tracking-wider text-[var(--brand-ink)]"
+            >
+              Continuar
+            </button>
           </div>
         </div>
       )}

@@ -83,7 +83,7 @@ const menuCards = [
 // A lista de idiomas vem do REGISTRO (lib/i18n): era mantida aqui à mão, em
 // paralelo ao mapa de traduções — duas listas para a mesma coisa. Agora um
 // idioma novo aparece no seletor no momento em que o arquivo dele existe.
-const languageOptions = IDIOMAS.map(i => ({ id: i.id, label: i.label, flag: i.flag }))
+const languageOptions = IDIOMAS.map(i => ({ id: i.id, label: i.label, flag: i.flag, releaseStatus: i.releaseStatus }))
 
 // "Padrão" deixou de ser um narrador: os sete efeitos curtos dele agora tocam
 // SEMPRE, por baixo de qualquer voz (lib/audio-commentary.ts). Escolher "Padrão"
@@ -651,6 +651,7 @@ export default function ConfiguracoesPage() {
                 <Globe className="h-4 w-4 text-primary" />
                 {t.settings.language}
               </h3>
+              <p className="text-xs leading-relaxed text-white/45">Português é o idioma oficialmente suportado. English, Español e Italiano são prévias: o dicionário cobre 402 textos, e 13 das 227 telas do jogo estão ligadas a ele — o resto continua aparecendo em português. A cobertura completa é um trabalho de tradução em andamento, não um defeito da escolha de idioma.</p>
               <div className="grid grid-cols-1 gap-2">
                 {languageOptions.map((lang) => (
                   <button
@@ -676,6 +677,7 @@ export default function ConfiguracoesPage() {
                       />
                     </span>
                     <span className="text-sm text-white">{lang.label}</span>
+                    <span className={cn("rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide", lang.releaseStatus === "official" ? "bg-emerald-400/10 text-emerald-300" : "bg-amber-400/10 text-amber-200")}>{lang.releaseStatus === "official" ? "Oficial" : "Prévia"}</span>
                     {language === lang.id && <Check className="h-4 w-4 text-primary ml-auto" />}
                   </button>
                 ))}

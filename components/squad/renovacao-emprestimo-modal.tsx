@@ -9,7 +9,7 @@
 
 import { useMemo, useState } from "react"
 import { ArrowLeftRight, Check, Handshake, X } from "lucide-react"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import {
   pedidoInicial,
   responderRenovacao,

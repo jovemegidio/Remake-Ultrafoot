@@ -2,7 +2,7 @@
 
 import { safeLocalSet } from "@/lib/safe-storage"
 import { useEffect, useState } from "react"
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import { ShieldCheck } from "lucide-react"
 import { ACCEPTANCE_KEY, LEGAL_VERSION } from "@/lib/legal"
 

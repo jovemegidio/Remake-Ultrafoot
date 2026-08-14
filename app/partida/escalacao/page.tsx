@@ -143,6 +143,16 @@ export default function PartidaEscalacaoPage() {
 
   const TABS: Array<"elenco" | "taticas" | "atribuicoes"> = ["elenco", "taticas", "atribuicoes"]
   const allPlayers = useMemo(() => [...players, ...bench], [players, bench])
+  const roleAssignments = useMemo(() => {
+    const bestBy = (score: (player: (typeof allPlayers)[number]) => number) =>
+      [...allPlayers].sort((a, b) => score(b) - score(a))[0]?.name ?? "Não definido"
+    return {
+      corners: bestBy(player => player.passing + player.dribbling),
+      freeKicks: bestBy(player => player.shooting + player.passing),
+      penalties: bestBy(player => player.shooting + player.overall * 0.25),
+      captain: bestBy(player => player.overall + player.age * 0.35),
+    }
+  }, [allPlayers])
 
   // Match notifications should only show during actual matches (simulations)
   // This would be triggered by the match simulation system
@@ -1258,19 +1268,19 @@ export default function PartidaEscalacaoPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.cornerKicker}</span>
-                        <span className="text-xs font-medium text-[var(--brand)]">Eric Ramires</span>
+                        <span className="text-xs font-medium text-[var(--brand)]">{roleAssignments.corners}</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.freeKickKicker}</span>
-                        <span className="text-xs font-medium text-[var(--brand)]">Lincoln</span>
+                        <span className="text-xs font-medium text-[var(--brand)]">{roleAssignments.freeKicks}</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.penaltyKicker}</span>
-                        <span className="text-xs font-medium text-[var(--brand)]">Eduardo Sasha</span>
+                        <span className="text-xs font-medium text-[var(--brand)]">{roleAssignments.penalties}</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.captain}</span>
-                        <span className="text-xs font-medium text-[var(--brand)]">Pedro Henrique</span>
+                        <span className="text-xs font-medium text-[var(--brand)]">{roleAssignments.captain}</span>
                       </div>
                     </div>
                   </div>

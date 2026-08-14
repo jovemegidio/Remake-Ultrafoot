@@ -1,10 +1,14 @@
 import manifest from "@/data/seeds/faces-manifest.json"
-import importedBF from "@/data/seeds/imported-bf2026.json"
-import realSquadsTM from "@/data/seeds/real-squads-tm.json"
+// Índice leve + elencos sob demanda: o seed completo de 8,91 MB caía no chunk
+// compartilhado de toda rota. Ver `lib/pool-elencos.ts`.
+import importedBF from "@/data/seeds/imported-bf2026-index.json"
+import { elencoDoPool, poolElencosProntos } from "@/lib/pool-elencos"
+import { elencosReaisTM, elencosTMProntos } from "@/lib/elencos-reais-tm"
 import tmPhotos from "@/data/seeds/tm-photos.json"
 import { gameAssetUrl } from "@/lib/game-asset"
 import { fotoDoServidor } from "@/lib/atualizacao-elencos"
 import { storeGet, storeSet } from "@/lib/persistent-store"
+import { guardarImagem, resolverImagem } from "@/lib/banco-de-imagens"
 
 // O manifesto contém apenas arquivos fisicamente empacotados. O mapa editorial é
 // maior e inclui fotos planejadas; consultá-lo gerava milhares de 404 e prejudicava
@@ -31,7 +35,8 @@ const TM_LOCAL = new Set((fotosLocais as { fts: string[] }).fts)
 const TM_PORTRAIT = "https://img.a.transfermarkt.technology/portrait/medium/"
 
 interface SeedPlayerFt { nome: string; ft?: string }
-interface SeedTeamFt { jogadores?: SeedPlayerFt[] }
+/** Clube do ÍNDICE do pool: o elenco vem de `elencoDoPool(id)`, não mais embutido. */
+interface SeedTeamPool { id?: string; nome?: string }
 
 let tmFotoMap: Map<string, string> | null = null
 /**
@@ -56,12 +61,12 @@ function getTmFotoMap(): Map<string, string> {
     if (!atual || overall > atual.overall) melhor.set(k, { ft, overall })
   }
   // Elencos REAIS primeiro: e a foto do roster que o jogo de fato usa.
-  for (const roster of Object.values(realSquadsTM as Record<string, { n: string; f?: string; o?: number }[]>)) {
+  for (const roster of Object.values(elencosReaisTM() as unknown as Record<string, { n: string; f?: string; o?: number }[]>)) {
     for (const p of roster) add(p.n, p.f, p.o ?? 0)
   }
   // Seed importado depois (clubes ficticios que nao viraram elenco real).
-  for (const team of ((importedBF as { teams?: SeedTeamFt[] }).teams) ?? []) {
-    for (const j of team.jogadores ?? []) add(j.nome, j.ft, (j as { overall?: number }).overall ?? 0)
+  for (const team of ((importedBF as { teams?: SeedTeamPool[] }).teams) ?? []) {
+    for (const j of elencoDoPool(team.id) ?? []) add(j.nome, j.ft, j.overall ?? 0)
   }
   // CACHE DO TRANSFERMARKT por ultimo (menor prioridade, so preenche o que
   // faltou). Clubes CURADOS — Liverpool, Bayern — sao servidos pelo overlay de
@@ -70,7 +75,12 @@ function getTmFotoMap(): Map<string, string> {
   for (const [chave, ft] of Object.entries(tmPhotos as Record<string, string>)) {
     if (!melhor.has(chave)) melhor.set(chave, { ft, overall: -1 })
   }
-  tmFotoMap = new Map([...melhor].map(([k, v]) => [k, v.ft]))
+  const construido = new Map([...melhor].map(([k, v]) => [k, v.ft]))
+  // So MEMORIZA depois que os elencos do pool chegaram. Congelar o mapa com o
+  // pool frio deixaria milhares de atletas sem foto pelo resto da sessao, sem
+  // erro nenhum na tela — o modo de falha mais caro deste arquivo.
+  if (!poolElencosProntos() || !elencosTMProntos()) return construido
+  tmFotoMap = construido
   return tmFotoMap
 }
 
@@ -179,13 +189,14 @@ function getNomesAmbiguos(): Set<string> {
     if (anterior === undefined) doClube.set(k, c)
     else if (anterior !== c) repetidos.add(k)
   }
-  for (const [chave, roster] of Object.entries(realSquadsTM as Record<string, { n: string }[]>)) {
+  for (const [chave, roster] of Object.entries(elencosReaisTM() as unknown as Record<string, { n: string }[]>)) {
     const clube = chave.split("|")[1] ?? chave
     for (const p of roster ?? []) ver(p.n, clube)
   }
-  for (const team of ((importedBF as { teams?: (SeedTeamFt & { nome?: string })[] }).teams) ?? []) {
-    for (const j of team.jogadores ?? []) ver(j.nome, team.nome ?? "")
+  for (const team of ((importedBF as { teams?: SeedTeamPool[] }).teams) ?? []) {
+    for (const j of elencoDoPool(team.id) ?? []) ver(j.nome, team.nome ?? "")
   }
+  if (!poolElencosProntos() || !elencosTMProntos()) return repetidos
   nomesAmbiguos = repetidos
   return repetidos
 }
@@ -197,7 +208,7 @@ function getOfficialPlayerPhotoUrl(name: string, playerId?: string): string | un
   const custom = !ambiguo && typeof window !== "undefined"
     ? storeGet(`ultrafoot:player-photo:${normalizePlayerKey(name)}`)
     : null
-  if (custom) return custom
+  if (custom) return resolverImagem(custom) ?? undefined
   const doServidor = !ambiguo && typeof window !== "undefined" ? fotoDoServidor(name) : null
   if (doServidor) return doServidor
   const rawUrl = ambiguo
@@ -240,5 +251,16 @@ export function getPlayerPhotoUrl(name: string, playerId?: string, fileKey?: str
 
 export function setPlayerPhotoOverride(name: string, dataUrl: string): void {
   if (!name || !dataUrl.startsWith("data:image/")) return
-  storeSet(`ultrafoot:player-photo:${normalizePlayerKey(name)}`, dataUrl)
+  const chave = `ultrafoot:player-photo:${normalizePlayerKey(name)}`
+  // Primeiro preserva o valor original; depois que o arquivo existir no
+  // AppData, deixa no store apenas a referencia curta. Fechar o jogo durante a
+  // escrita nunca perde o retrato que acabou de ser importado.
+  storeSet(chave, dataUrl)
+  void guardarImagem(dataUrl).then(ref => {
+    if (!ref || ref === dataUrl || storeGet(chave) !== dataUrl) return
+    storeSet(chave, ref)
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("ultrafoot:imagem:pronta", { detail: { ref } }))
+    }
+  })
 }

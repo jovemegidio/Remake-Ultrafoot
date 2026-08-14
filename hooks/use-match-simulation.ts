@@ -22,12 +22,17 @@ import {
   type Side,
 } from "@/lib/match-engine"
 import {
+  aggregateDecisionEffects,
   applyDecision,
   pruneExpired,
   suggestDecision,
   type ActiveDecision,
+  type DecisionEffect,
   type MatchDecisionId,
 } from "@/lib/match-decisions"
+// Habilidade "Fechamento de Casinha" — ver lib/efeito-do-treinador.ts. Lida aqui
+// porque este e o unico ponto do jogo recalculado minuto a minuto.
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
 
 export interface UseMatchSimulation {
   state: MatchState
@@ -50,6 +55,15 @@ export interface UseMatchSimulation {
    * ligado: a única alavanca ao vivo era a mentalidade.
    */
   activeDecisions: ActiveDecision[]
+  /**
+   * TODAS as decisões tomadas na partida, inclusive as já expiradas.
+   * `activeDecisions` só guarda as que ainda valem neste minuto, então não serve
+   * para o balanço do fim de jogo — o técnico que gritou aos 20' teria feito
+   * nada aos 90'. Ver `saldoDeMoralDaPartida`.
+   */
+  decisionHistory: ActiveDecision[]
+  /** Efeito agregado que o motor esta usando neste minuto. */
+  decisionEffect: DecisionEffect
   /** Sugestão do auxiliar para o momento atual — null quando não há nada a fazer. */
   suggestedDecision: MatchDecisionId | null
   applyCoachDecision: (id: MatchDecisionId) => void
@@ -99,13 +113,16 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
   const [speed, setSpeed] = useState<MatchSpeed>(() => velocidadeInicial())
   const [isRunning, setIsRunning] = useState(false)
   const [activeDecisions, setActiveDecisions] = useState<ActiveDecision[]>([])
+  const [decisionHistory, setDecisionHistory] = useState<ActiveDecision[]>([])
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const stateRef = useRef(state)
   const configRef = useRef(config)
+  const activeDecisionsRef = useRef(activeDecisions)
 
   useEffect(() => { stateRef.current = state }, [state])
   useEffect(() => { configRef.current = config }, [config])
+  useEffect(() => { activeDecisionsRef.current = activeDecisions }, [activeDecisions])
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -129,12 +146,17 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
         return
       }
       // No intervalo, tickMinute devolve o relogio para 45' e sai do halftime num tick.
-      const next = tickMinute(current, cfg)
+      const effect = aggregateDecisionEffects(activeDecisionsRef.current, current.minute, efeitosDoTreinador().defesaNoFinal)
+      const liveConfig = cfg.userSide === "away"
+        ? { ...cfg, awayCoachEffect: effect }
+        : { ...cfg, homeCoachEffect: effect }
+      const next = tickMinute(current, liveConfig)
       stateRef.current = next
       setState(next)
       // Decisões têm duração: expiram sozinhas conforme o relógio anda.
       setActiveDecisions(prev => {
         const kept = pruneExpired(prev, next.minute)
+        activeDecisionsRef.current = kept
         return kept.length === prev.length ? prev : kept
       })
     }, intervalMs)
@@ -177,6 +199,8 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     const fresh = createInitialState()
     stateRef.current = fresh
     setState(fresh)
+    setActiveDecisions([])
+    setDecisionHistory([])
     setIsRunning(false)
   }, [stopTimer])
 
@@ -244,16 +268,23 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     // "penaltis" tambem encerra o laco: a disputa avanca por cobranca, e sem esta
     // saida o "avancar" giraria em falso ate estourar o safety.
     while (cur.phase !== "fulltime" && cur.phase !== "penaltis" && safety-- > 0) {
+      const kept = pruneExpired(activeDecisionsRef.current, cur.minute)
+      activeDecisionsRef.current = kept
+      const effect = aggregateDecisionEffects(kept, cur.minute, efeitosDoTreinador().defesaNoFinal)
+      const liveConfig = cfg.userSide === "away"
+        ? { ...cfg, awayCoachEffect: effect }
+        : { ...cfg, homeCoachEffect: effect }
       // tickMinute nao avanca enquanto houver penalti pendente — sem resolver aqui,
       // o "avancar" ficaria girando em falso ate estourar o safety. O motor bate.
       if (cur.pendingPenalty) {
-        cur = resolvePendingPenalty(cur, cfg, null).state
+        cur = resolvePendingPenalty(cur, liveConfig, null).state
         continue
       }
-      cur = tickMinute(cur, cfg)
+      cur = tickMinute(cur, liveConfig)
     }
     stateRef.current = cur
     setState(cur)
+    setActiveDecisions(activeDecisionsRef.current)
     setIsRunning(false)
   }, [stopTimer])
 
@@ -322,7 +353,12 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     const { state: next, active } = applyDecision(current, id)
     stateRef.current = next
     setState(next)
-    setActiveDecisions(prev => [...pruneExpired(prev, next.minute).filter(d => d.id !== id), active])
+    setDecisionHistory(prev => [...prev, active])
+    setActiveDecisions(prev => {
+      const updated = [...pruneExpired(prev, next.minute).filter(d => d.id !== id), active]
+      activeDecisionsRef.current = updated
+      return updated
+    })
   }, [])
 
   // Sugestão do auxiliar: recalculada a cada minuto a partir do placar/momentum.
@@ -335,6 +371,8 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     speed,
     isRunning,
     activeDecisions,
+    decisionHistory,
+    decisionEffect: aggregateDecisionEffects(activeDecisions, state.minute, efeitosDoTreinador().defesaNoFinal),
     suggestedDecision,
     applyCoachDecision,
     start,

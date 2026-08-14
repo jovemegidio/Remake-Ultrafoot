@@ -20,10 +20,23 @@ import type { ScoutingDepartmentState } from "@/lib/scout-engine"
 import type { StadiumPitch } from "@/lib/infrastructure-engine"
 import type { SeasonAwards } from "@/lib/awards-engine"
 import type { Sponsor, SponsorOffer } from "@/lib/sponsor-engine"
-import type { ChallengeProgress } from "@/lib/challenge-engine"
+// Valor E tipo: `sincronizarDesafioAtivo` publica a regra do desafio para o
+// motor. Não há ciclo em tempo de execução — challenge-engine só importa TIPOS
+// daqui, e `import type` é apagado na compilação.
+import { sincronizarDesafioAtivo, type ChallengeProgress } from "@/lib/challenge-engine"
+// Mesmo arranjo do desafio, pelo mesmo motivo: os efeitos do TÉCNICO moram no
+// save e são lidos por motores que não podem importar este arquivo.
+import { sincronizarTreinador } from "@/lib/efeito-do-treinador"
+import type { ProgressoDoTreinador26 } from "@/lib/evolucao-do-treinador"
 import type { NivelDeDificuldade } from "@/lib/dificuldade"
 import type { PorSetor, ObraDoEstadio } from "@/lib/stadium-sectors"
 import type { AIClubSocialState } from "@/lib/ai-club-social"
+import type { EstadoGestao282 } from "@/lib/gestao-282"
+import type { RodadaCompartilhada, TecnicoDoSave } from "@/lib/tecnicos-do-save"
+import type { ConfiguracoesIniciais283 } from "@/lib/configuracoes-iniciais-283"
+import type { UniversoPersistente286 } from "@/lib/universo-286"
+import type { EstadoTransferRoom26 } from "@/lib/transferroom-26"
+import type { PerfilTreinador26 } from "@/lib/manager-profile-26"
 
 const LEGACY_STORAGE_KEY = "ultrafoot:save"
 const ACTIVE_CAREER_KEY = "ultrafoot:active-career"
@@ -43,6 +56,8 @@ export interface SquadPlayer {
   overall: number
   potential: number
   value: number
+  /** Nacionalidade do jovem; opcional para compatibilidade com saves antigos. */
+  nationality?: string
   pace?: number
   shooting?: number
   passing?: number
@@ -381,11 +396,67 @@ export interface GameState {
   selectedTeamShort: string | null
   managerName: string
   /**
+   * TÉCNICOS HUMANOS DESTE SAVE (co-op local, estilo Brasfoot).
+   *
+   * Ausente = carreira de um técnico só, que é todo save existente: os campos
+   * `managerName` e `selectedTeamShort` continuam sendo a verdade. Quando a
+   * lista existe, esses dois passam a significar "de quem é a vez" — é o que
+   * permite as dezenas de telas que os leem seguirem funcionando sem alteração
+   * nenhuma. Ver `lib/tecnicos-do-save.ts`.
+   */
+  tecnicos?: TecnicoDoSave[]
+  /** Id do técnico que está com o computador agora. */
+  tecnicoAtivoId?: string
+  /** Estado da rodada compartilhada: quem já fechou as decisões. */
+  rodadaCompartilhada?: RodadaCompartilhada
+  /**
+   * Estado de clube guardado de cada técnico, para o revezamento.
+   *
+   * ⚠️ É AQUI que mora o risco do modo: se o chaveamento errar, um técnico abre
+   * o jogo e vê o elenco do outro. Por isso o que entra aqui é uma lista FECHADA
+   * de campos, conferida por teste contra o estado do motor — ver
+   * `lib/chaveamento-de-tecnico.ts`.
+   */
+  estadoPorTecnico?: Record<string, Record<string, unknown>>
+  /**
+   * A CARREIRA de cada técnico — a outra metade do revezamento.
+   *
+   * ⚠️ Trocar só o motor (`estadoPorTecnico`) não bastava, e era por isso que o
+   * modo não funcionava: o calendário, a liga, a divisão e as finanças moram
+   * NESTE save, não no motor. Sem este bolso o segundo técnico sentava com o
+   * elenco dele e o CALENDÁRIO do primeiro — jogava os jogos do rival.
+   * Ver `CAMPOS_DE_SAVE_DO_TECNICO` em `lib/chaveamento-de-tecnico.ts`.
+   */
+  saveDoTecnico?: Record<string, Record<string, unknown>>
+  /**
+   * O que é da LIGA, arquivado por liga (`chaveDaLiga`) e não por técnico.
+   *
+   * Dois técnicos no mesmo campeonato dividem a mesma tabela; dois em
+   * campeonatos diferentes não dividem nada. Guardar isto por técnico daria a
+   * cada um a sua versão do próprio campeonato; guardar no mundo daria ao
+   * técnico da Premier League a tabela do Brasileirão do vizinho.
+   */
+  estadoPorLiga?: Record<string, { motor?: Record<string, unknown>; save?: Record<string, unknown> }>
+  /**
    * Foto do tecnico, como data URI ja reduzida (128px, JPEG). Fica no save e nao
    * num arquivo porque e por CARREIRA: duas carreiras podem ter tecnicos
    * diferentes, e exportar o save leva a foto junto.
    */
   managerAvatar: string
+  /** Histórico, estilos, personalidade e atributos escolhidos no criador FM26. */
+  managerProfile26?: PerfilTreinador26
+  /**
+   * O que a CARREIRA acrescentou ao técnico: pontos ganhos por atributo e o
+   * contador de estilos de jogo efetivamente usados.
+   *
+   * ⚠️ Vive separado de `managerProfile26` de propósito —
+   * `normalizarPerfilTreinador26` recalcula os atributos a partir das escolhas a
+   * cada leitura, então um ganho gravado lá dentro seria apagado em silêncio.
+   * Ver lib/evolucao-do-treinador.ts.
+   */
+  managerGrowth26?: ProgressoDoTreinador26
+  /** Atalhos configuráveis do cabeçalho/Portal, limitados a oito entradas. */
+  bookmarks26?: string[]
   season: number
   week: number
   language: string
@@ -399,6 +470,18 @@ export interface GameState {
   campoHorizontal?: boolean
   createdAt: number
   updatedAt: number
+  /** Sistemas de gestão introduzidos na 1.0.282. Opcional para saves antigos. */
+  gestao282?: EstadoGestao282
+  /** Regras escolhidas antes de iniciar a carreira (1.0.283). */
+  configuracoesIniciais283?: ConfiguracoesIniciais283
+  /**
+   * Mundo de clubes da CPU introduzido na 1.0.286. É opcional para permitir que
+   * uma carreira antiga abra imediatamente; use-game-manager semeia o universo
+   * na primeira hidratação e passa a gravá-lo dentro do mesmo save protegido.
+   */
+  universo286?: UniversoPersistente286
+  /** Anúncios, respostas e ofertas diretas do mercado entre clubes (FM26). */
+  transferRoom26?: EstadoTransferRoom26
   // Multiplayer
   multiplayerEnabled: boolean
   managers: ManagerProfile[]
@@ -674,6 +757,15 @@ export interface GameState {
   planoDeSocio?: import("@/lib/torcida").PlanoDeSocio
   /** Prêmios individuais apurados ao fim de cada temporada. */
   seasonAwards?: SeasonAwards[]
+  /**
+   * PRESTÍGIO acumulado por atleta (id → pontos). Normal / Estrela / Top
+   * Mundial saem daqui — ver lib/prestigio-do-atleta.ts.
+   *
+   * Guarda SÓ quem tem ponto, e a entrada some quando o decaimento a zera, então
+   * um save de vinte temporadas tem algumas dezenas de linhas. Ausente = ninguém
+   * ganhou nada ainda (todo save anterior à 1.0.298).
+   */
+  prestigioDosAtletas?: import("@/lib/prestigio-do-atleta").PrestigioDosAtletas
   sponsorOffers?: SponsorOffer[]
   activeSponsors?: Sponsor[]
   // Divisao ATUAL do clube do usuario quando ela difere da estatica (teams-data), por
@@ -766,6 +858,17 @@ export interface GameState {
    */
   boardConfidence?: number
   activeChallenge?: ChallengeProgress
+  /**
+   * Desafios já concluídos nesta carreira. É o que sobra depois de a recompensa
+   * ser paga e o desafio sair de `activeChallenge` — sem isto, terminar um
+   * desafio não deixaria rastro nenhum e o técnico não teria o que exibir.
+   */
+  desafiosConcluidos?: {
+    challengeId: string
+    season: number
+    titulo: string
+    em: number
+  }[]
 }
 
 export const DEFAULT_COACH_LEGACY: CoachLegacy = {
@@ -852,6 +955,13 @@ export interface CareerSaveSummary {
   season: number
   week: number
   updatedAt: number
+  /**
+   * Quantos técnicos HUMANOS há nesta carreira (co-op local).
+   *
+   * Ausente ou 1 = carreira normal. Existe para a tela de carregar distinguir
+   * as duas sem abrir o save — ver `updateCareerIndex`.
+   */
+  tecnicos?: number
 }
 
 function makeCareerId(): string {
@@ -880,6 +990,64 @@ function saveKey(careerId: string): string {
 
 function backupKey(careerId: string): string {
   return `${saveKey(careerId)}:backup`
+}
+
+// ─── O UNIVERSO DA CPU MORA FORA DO SAVE ─────────────────────────────────────
+//
+// ⚠️ POR QUE ISTO EXISTE (1.0.301, continuação da trava do apito final).
+//
+// `universo286` é o mundo persistente inteiro: 1.715 clubes, 42 mil atletas,
+// 112 ligas — **22 MB de JSON**. Ele era um campo do `GameState`, e por isso
+// entrava em TODA gravação e TODA leitura do save:
+//
+//   • `saveGameState` serializava 22 MB a cada patch (medido: 1,2 a 2 s), e
+//     ainda copiava o texto anterior para o backup — 44 MB por gravação;
+//   • `loadGameState` reinterpretava 22 MB a cada `ultrafoot:store:changed`.
+//
+// Agora ele tem chave própria, como `ultrafoot-game-engine:<careerId>`, e o
+// `GameState` volta a ser pequeno. A separação é INVISÍVEL para quem usa: quem
+// lê continua recebendo `state.universo286`, quem grava continua mandando o
+// campo — a troca acontece só na fronteira do disco, aqui.
+//
+// A gravação do universo é POR REFERÊNCIA: ele só é reserializado quando
+// `avancarUniverso286` devolve um objeto novo (uma vez por semana), não a cada
+// patch de moral ou de caixa.
+const CAREER_UNIVERSE_PREFIX = "ultrafoot:universo:"
+
+function universeKey(careerId: string): string {
+  return `${CAREER_UNIVERSE_PREFIX}${careerId}`
+}
+
+/** Último universo que ESTE processo gravou/leu, por carreira. */
+let universoEmMemoria: { careerId: string; estado: UniversoPersistente286 } | null = null
+/** Texto já interpretado, para não repetir o `JSON.parse` de 22 MB. */
+let universoRawLido: { careerId: string; raw: string } | null = null
+
+function lerUniverso(careerId: string): UniversoPersistente286 | undefined {
+  const raw = storeGet(universeKey(careerId))
+  if (!raw) return undefined
+  if (universoEmMemoria?.careerId === careerId && universoRawLido?.careerId === careerId && universoRawLido.raw === raw) {
+    return universoEmMemoria.estado
+  }
+  try {
+    const estado = JSON.parse(raw) as UniversoPersistente286
+    universoEmMemoria = { careerId, estado }
+    universoRawLido = { careerId, raw }
+    return estado
+  } catch {
+    // Universo ilegível não pode derrubar a carreira: ele é reconstruído do zero
+    // pela semeadura (1,8 s) e o resto do save continua íntegro.
+    return undefined
+  }
+}
+
+function gravarUniverso(careerId: string, estado: UniversoPersistente286 | undefined): void {
+  if (!estado) return
+  if (universoEmMemoria?.careerId === careerId && universoEmMemoria.estado === estado) return
+  const raw = JSON.stringify(estado)
+  storeSet(universeKey(careerId), raw)
+  universoEmMemoria = { careerId, estado }
+  universoRawLido = { careerId, raw }
 }
 
 // ─── SAVE À PROVA DE ATUALIZAÇÃO ─────────────────────────────────────────────
@@ -1019,6 +1187,14 @@ function updateCareerIndex(state: GameState): void {
     season: state.season,
     week: state.week,
     updatedAt: state.updatedAt,
+    // ⚠️ A CONTAGEM ENTRA NO ÍNDICE, e não é lida do save na hora de listar.
+    // A tela de carregar precisa distinguir uma carreira de mesa de uma normal,
+    // e abrir cada save só para descobrir isso custaria um `JSON.parse` de
+    // dezenas de MB por carreira — a mesma conta que travava o jogo no apito
+    // final. Save anterior à 1.0.305 não tem o campo e simplesmente não ganha o
+    // selo até ser salvo de novo; ausência aqui nunca vira "não é co-op" no
+    // motor, só na etiqueta.
+    ...(state.tecnicos?.length ? { tecnicos: state.tecnicos.filter(t => t.tipo === "humano").length } : {}),
   }
   const next = [summary, ...readCareerIndex().filter(item => item.id !== summary.id)]
     .sort((a, b) => b.updatedAt - a.updatedAt)
@@ -1036,8 +1212,42 @@ export function activateCareerSave(careerId: string): boolean {
   return true
 }
 
+/**
+ * ÚLTIMO TEXTO INTERPRETADO, E O QUE SAIU DELE.
+ *
+ * ⚠️ POR QUE ISTO EXISTE (mesmo relato do congelamento no apito final).
+ *
+ * `loadGameState` é chamado a CADA `ultrafoot:store:changed`, por cada tela
+ * montada — e o avanço de semana dispara vários. Com o universo persistente
+ * dentro do save, o texto passa de 20 MB e cada leitura custava de 100 a 600 ms
+ * só de `JSON.parse`: medidas do navegador mostram trinta leituras seguidas do
+ * MESMO conteúdo depois de um jogo, tudo na thread da interface.
+ *
+ * Interpretar duas vezes o mesmo texto não muda o resultado, então guardamos o
+ * par (texto, estado). Quando o save muda de verdade, o texto muda e o cache cai
+ * sozinho — não há como servir dado velho.
+ */
+let ultimoRawInterpretado: string | null = null
+let ultimoEstadoInterpretado: GameState | null = null
+
 function safeParse(raw: string | null): GameState | null {
   if (!raw) return null
+  if (raw === ultimoRawInterpretado && ultimoEstadoInterpretado) {
+    // Cópia rasa: quem recebe pode espalhar um patch por cima sem contaminar o
+    // cache. O miolo é compartilhado — o save é tratado como imutável em todo o
+    // jogo, e quem precisa mexer (o universo da CPU) já clona antes.
+    return { ...ultimoEstadoInterpretado }
+  }
+  const estado = interpretarSave(raw)
+  if (estado) {
+    ultimoRawInterpretado = raw
+    ultimoEstadoInterpretado = estado
+    return { ...estado }
+  }
+  return estado
+}
+
+function interpretarSave(raw: string): GameState | null {
   try {
     const parsed = JSON.parse(raw) as GameState
     // Carreira que JA existia em disco nasceu antes da trava do pre-office. Se
@@ -1126,14 +1336,43 @@ function safeParse(raw: string | null): GameState | null {
 // que SOBREVIVE a reinstalacoes/updates — ao contrario do localStorage da webview,
 // que era limpo ao atualizar e fazia o jogo "sumir" (calendario/partidas em mock).
 // storeGet/storeSet leem/escrevem no cache sincrono; a persistencia em disco e async.
+/**
+ * Publica TODOS os retratos que os motores leem sem poder importar este arquivo.
+ *
+ * Existe como função única de propósito: eram três pontos de chamada (duas
+ * cargas e a gravação) e um retrato novo publicado em dois deles ficaria
+ * dessincronizado exatamente no terceiro — que é a carga pelo backup, a mais
+ * difícil de reproduzir.
+ */
+function publicarRetratos(state: GameState): void {
+  sincronizarDesafioAtivo(state)
+  sincronizarTreinador(state)
+}
+
 export function loadGameState(): GameState {
   if (typeof window === "undefined") return DEFAULT_STATE
   const activeId = getActiveCareerId()
   if (activeId) {
+    // O universo volta a se juntar ao estado na LEITURA. Save antigo ainda o traz
+    // embutido — nesse caso o de dentro vence, e a próxima gravação o separa
+    // sozinha. É a migração inteira: não há passo manual nenhum.
+    const comUniverso = (estado: GameState): GameState => ({
+      ...estado,
+      careerId: activeId,
+      universo286: estado.universo286 ?? lerUniverso(activeId),
+    })
     const current = safeParse(storeGet(saveKey(activeId)))
-    if (current) return { ...current, careerId: activeId }
+    // A regra do desafio vale desde a CARGA, não só a partir da primeira
+    // gravação: quem abre a carreira e vai direto ao mercado já cai na trava.
+    if (current) {
+      publicarRetratos(current)
+      return comUniverso(current)
+    }
     const backup = safeParse(storeGet(backupKey(activeId)))
-    if (backup) return { ...backup, careerId: activeId }
+    if (backup) {
+      publicarRetratos(backup)
+      return comUniverso(backup)
+    }
   }
 
   // Migracao unica do save global usado ate a 1.0.81.
@@ -1206,9 +1445,19 @@ export function saveGameState(state: GameState): void {
   // Snapshot anterior permite recuperar fechamento/queda de energia durante a gravacao.
   if (previous) storeSet(backupKey(resolvedId), previous)
   setActiveCareerId(resolvedId)
-  const serialized = JSON.stringify(next)
+  // O universo da CPU sai daqui e vai para a chave dele. Ver CAREER_UNIVERSE_PREFIX.
+  const { universo286, ...semUniverso } = next
+  gravarUniverso(resolvedId, universo286)
+  const serialized = JSON.stringify(semUniverso)
   storeSet(key, serialized)
   updateCareerIndex(next)
+  // O MOTOR PRECISA SABER A REGRA DO DESAFIO.
+  //
+  // `game-engine` é um store separado e não pode importar este arquivo (ciclo).
+  // Publicar o retrato aqui, na gravação, é o que garante que a fiscalização do
+  // mercado valha SEM depender de nenhuma tela específica estar montada — se
+  // dependesse, a tela esquecida seria a brecha. Ver lib/challenge-engine.
+  publicarRetratos(next)
   // Espelho na pasta VISÍVEL do Windows (Documentos\Ultrafoot 26 Saves). Throttle
   // de 15s por carreira: saveGameState roda a cada setState; sem isto gravaria um
   // arquivo a cada tecla. Fire-and-forget — nunca bloqueia nem quebra o save real.
@@ -1226,7 +1475,14 @@ export async function saveGameStateAndFlush(state: GameState): Promise<void> {
   // Checkpoint (navegação): garante o espelho na pasta do Windows atualizado,
   // sem esperar o throttle de 15s do saveGameState.
   const id = state.careerId || getActiveCareerId()
-  if (id) { _lastMirror[id] = Date.now(); void mirrorSaveToFolder(state.saveName, id, JSON.stringify({ ...state, careerId: id, version: VERSION })) }
+  // Sem o universo, como na gravação normal: o espelho é um arquivo de leitura
+  // humana na pasta do Windows, e 22 MB de mundo da CPU dentro dele só fariam
+  // cada navegação escrever um arquivo enorme.
+  if (id) {
+    _lastMirror[id] = Date.now()
+    const { universo286: _universo, ...semUniverso } = state
+    void mirrorSaveToFolder(state.saveName, id, JSON.stringify({ ...semUniverso, careerId: id, version: VERSION }))
+  }
 }
 
 /**
@@ -1250,6 +1506,7 @@ export function clearGameState(): void {
     storeRemove(versaoQueGravouKey(careerId))
     storeSet(CAREER_INDEX_KEY, JSON.stringify(readCareerIndex().filter(item => item.id !== careerId)))
     storeRemove(`ultrafoot-game-engine:${careerId}`)
+    storeRemove(universeKey(careerId))
   } else {
     storeRemove(LEGACY_STORAGE_KEY)
   }
@@ -1269,6 +1526,7 @@ export function deleteCareerSave(careerId: string): void {
   storeRemove(preAtualizacaoKey(careerId))
   storeRemove(versaoQueGravouKey(careerId))
   storeRemove(`ultrafoot-game-engine:${careerId}`)
+  storeRemove(universeKey(careerId))
   storeSet(CAREER_INDEX_KEY, JSON.stringify(readCareerIndex().filter(item => item.id !== careerId)))
   if (getActiveCareerId() === careerId) storeRemove(ACTIVE_CAREER_KEY)
   void deleteSaveFromFolder(summary?.name ?? "", careerId)
@@ -1294,6 +1552,7 @@ export async function reconcileCareersWithFolder(): Promise<number> {
       storeRemove(saveKey(item.id))
       storeRemove(backupKey(item.id))
       storeRemove(`ultrafoot-game-engine:${item.id}`)
+    storeRemove(universeKey(item.id))
       if (getActiveCareerId() === item.id) storeRemove(ACTIVE_CAREER_KEY)
     }
     storeSet(CAREER_INDEX_KEY, JSON.stringify(mantidos))
@@ -1312,6 +1571,7 @@ export function clearAllGameData(): void {
     storeRemove(saveKey(item.id))
     storeRemove(backupKey(item.id))
     storeRemove(`ultrafoot-game-engine:${item.id}`)
+    storeRemove(universeKey(item.id))
   }
   storeRemove(CAREER_INDEX_KEY)
   storeRemove(LEGACY_STORAGE_KEY)

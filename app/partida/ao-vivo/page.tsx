@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LinkLeve as Link } from "@/components/link-leve"
 import { safeLocalSet } from "@/lib/safe-storage"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNationalTeam } from "@/lib/use-national-team"
@@ -39,10 +39,12 @@ import { TeamCrest } from "@/components/team-crest"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getTeamByShort, serieATeams, formatCurrency, type Team } from "@/lib/teams-data"
+import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/currency"
 import { avancarMataMata, campeaoMataMata } from "@/lib/torneio-amistoso"
 import { loadGameState, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
+import { bonusPreparacaoAplicavel282, normalizarGestao282, planoDeBolaParada282 } from "@/lib/gestao-282"
 import { calcularEfeitoColetiva } from "@/lib/press-effects"
 import { useNotifications } from "@/components/notifications-system"
 import { getPlayersForTeam, type Player } from "@/lib/players-data"
@@ -58,11 +60,19 @@ import { outrosEstaduaisDaRodada } from "@/lib/parallel-rounds"
 import { useDiscordRPC } from "@/hooks/use-discord-rpc"
 import { useTranslation } from "@/lib/i18n"
 import { persistGameEngineNow, useGameEngine, shootingForPosition, type Player as EnginePlayer } from "@/lib/game-engine"
+import { saldoDeMoralDaPartida } from "@/lib/match-decisions"
+import { familiaridadeEm, forcaDeGoleiro, forcaDeGoleiroNoAlto, perfilDoAtleta, pesoDeLesao, type ProgressoDoPerfil } from "@/lib/modelo-de-jogador"
+import { caracteristicasDoAtleta, pesoDePenalti, pesosDeLance } from "@/lib/caracteristicas-do-atleta"
 import { forcasDaTatica } from "@/lib/forcas-taticas"
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
+import { forcasDoPlantel, ladoAdversarioEmCampo, titularesAptos, type AtletaEmCampo } from "@/lib/forca-do-plantel"
+import { tecnicoDoClube, tecnicosDoSave } from "@/lib/tecnicos-do-save"
+import type { TeamTactics } from "@/lib/game-engine"
 import { aiTacticForClub, applyTacticModifiers, type TacticalIdentity } from "@/lib/tactics-engine"
 import { aiClubSocialMatchModifier } from "@/lib/ai-club-social"
 import { climaDoVestiario } from "@/lib/hierarquia-do-elenco"
 import { forcasDoElenco } from "@/lib/forcas-individuais"
+import { perfilEspacial286 } from "@/lib/modelo-espacial-286"
 import { flushPersistentStore, storeGet } from "@/lib/persistent-store"
 import { applyMedicalRestrictionsForMatch, normalizePerformanceState, performanceStorageKey } from "@/lib/performance-center"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -82,6 +92,7 @@ import { RivaisAoVivoPainel } from "@/components/match/rivais-ao-vivo-painel"
 import { jogosQueImportam } from "@/lib/rivais-ao-vivo"
 import { ShootoutModal } from "@/components/match/shootout-modal"
 import { MatchRadar } from "@/components/match/match-radar"
+import { AvisoQuedaPara2D, Campo3D } from "@/components/match/campo-3d"
 import { selecionarEventoDoRadar } from "@/lib/radar-evento"
 import { useCorDoUniforme } from "@/lib/cor-do-uniforme"
 import { useMatchSounds } from "@/hooks/use-match-sounds"
@@ -209,6 +220,8 @@ function enginePlayersToMatchSquad(
   const slotted = assignPlayersToFormation(xi, formation, porId)
   const starters: MatchPlayer[] = slotted.map((p, i) => ({
     id: idOffset + i + 1,
+    atletaId: p.id,
+    posicoesSecundarias: p.secondaryPositions,
     name: p.name,
     number: num(p.shirtNumber, p.position),
     position: p.position,
@@ -237,6 +250,8 @@ function enginePlayersToMatchSquad(
 
   const bench: MatchPlayer[] = benchPool.map((p, i) => ({
     id: idOffset + 100 + i + 1,
+    atletaId: p.id,
+    posicoesSecundarias: p.secondaryPositions,
     name: p.name,
     number: num(p.shirtNumber, p.position),
     position: p.position,
@@ -870,7 +885,50 @@ export default function PartidaAoVivoPage() {
     }
   }, [matchEnginePlayers, homeTeam.curto, awayTeam.curto, isHome, matchCtx.youth, matchCtx.national, selecaoConvocada, savedGame.youthPlayers, savedGame.youthCareer?.startingPlayerIds, savedFormation, tacticalPlayerPositions])
 
-  const toSquadPlayer = (p: MatchPlayer) => ({
+  // Familiaridade JA APRENDIDA por atleta. So o que evoluiu mora no save; o
+  // resto do perfil e derivado do id a cada leitura (lib/modelo-de-jogador.ts).
+  const progressoDePerfil = useMemo(() => {
+    const mapa: Record<number, ProgressoDoPerfil | undefined> = {}
+    for (const atleta of matchEnginePlayers) mapa[atleta.id] = atleta.perfilProgresso
+    return mapa
+  }, [matchEnginePlayers])
+
+  // CARACTERISTICAS marcadas a mao no editor, por atleta do NOSSO elenco. O que
+  // nao estiver aqui e derivado do id + perfil de atributos, dentro de
+  // `toSquadPlayer`. Ver lib/caracteristicas-do-atleta.ts.
+  const traitsDoEditor = useMemo(() => {
+    const mapa: Record<number, string[] | undefined> = {}
+    for (const atleta of matchEnginePlayers) mapa[atleta.id] = atleta.traits
+    return mapa
+  }, [matchEnginePlayers])
+
+  const toSquadPlayer = (p: MatchPlayer) => {
+    // PERFIL CANONICO (1.0.293). Sem `atletaId` nada disto e calculado e o motor
+    // volta ao comportamento anterior — e o caso dos elencos gerados na hora
+    // (amistoso rapido, adversario sem elenco no save).
+    const slot = p.formationPosition ?? p.position
+    const perfil = typeof p.atletaId === "number"
+      ? perfilDoAtleta(p.atletaId, p.position, p.rating, p.posicoesSecundarias ?? [])
+      : null
+    const progresso = typeof p.atletaId === "number" ? progressoDePerfil[p.atletaId] : undefined
+    // CARACTERISTICAS (1.0.298). Derivadas do id + perfil de atributos dele, com
+    // a marcacao do editor vencendo quando existe. Viram PESO DE SORTEIO no
+    // motor — quem cabeceia o escanteio, quem puxa o contra-ataque — e nao
+    // qualidade extra: a conta de forca do time nao muda uma virgula.
+    const caracteristicas = typeof p.atletaId === "number"
+      ? caracteristicasDoAtleta(
+          p.atletaId, p.position,
+          {
+            pace: p.pace ?? p.rating, shooting: p.shooting ?? p.rating,
+            passing: p.passing ?? p.rating, dribbling: p.dribbling ?? p.rating,
+            defending: p.defending ?? p.rating, physical: p.physical ?? p.rating,
+          },
+          p.rating,
+          traitsDoEditor[p.atletaId],
+        )
+      : []
+    const pesos = pesosDeLance(caracteristicas)
+    return {
     nome: p.name,
     // `pos` = onde ele ESTA jogando (slot da formacao, quando conhecido);
     // `posNatural` = onde ele joga de verdade. Quando diferem, o motor aplica a
@@ -886,7 +944,23 @@ export default function PartidaAoVivoPage() {
     defending: p.defending,
     physical: p.physical,
     dribbling: p.dribbling,
-  })
+    // Os tres campos do modelo canonico. `undefined` quando nao ha perfil, o que
+    // faz o motor cair exatamente no calculo de antes.
+    familiaridade: perfil ? familiaridadeEm(perfil, progresso, slot) : undefined,
+    forcaGoleiro: perfil ? (forcaDeGoleiro(perfil, caracteristicas) ?? undefined) : undefined,
+    forcaGoleiroAlto: perfil ? (forcaDeGoleiroNoAlto(perfil, caracteristicas) ?? undefined) : undefined,
+    pesoLesao: perfil ? pesoDeLesao(perfil) : undefined,
+    // Pesos das caracteristicas. Sem perfil (elenco gerado na hora) ficam
+    // `undefined` e o motor volta ao sorteio uniforme de antes da 1.0.298.
+    pesoFinalizar: perfil ? pesos.pesoFinalizar : undefined,
+    pesoAereo: perfil ? pesos.pesoAereo : undefined,
+    pesoCriar: perfil ? pesos.pesoCriar : undefined,
+    pesoVelocidade: perfil ? pesos.pesoVelocidade : undefined,
+    multChute: perfil ? pesos.multChute : undefined,
+    multCabeceio: perfil ? pesos.multCabeceio : undefined,
+    pesoPenalti: perfil ? pesoDePenalti(caracteristicas) : undefined,
+    }
+  }
 
   // Mentalidade do time do USUARIO, mudavel DURANTE a partida (o motor le config ao vivo,
   // entao vale ja no proximo lance / no 2o tempo). Ofensivo = mais ataque, menos solidez.
@@ -920,7 +994,12 @@ export default function PartidaAoVivoPage() {
    * `lib/forcas-taticas.ts`, que preserva estes mesmos numeros para o estilo
    * (a calibracao do motor nao muda) e soma os demais como TROCA, com teto.
    */
-  const tacticalForces = useMemo(() => forcasDaTatica(teamTactics), [teamTactics])
+  // O TÉCNICO ENTRA AQUI, na coerência — ver lib/efeito-do-treinador.ts.
+  const tecnico = useMemo(() => efeitosDoTreinador(), [])
+  const tacticalForces = useMemo(
+    () => forcasDaTatica(teamTactics, tecnico.coerenciaTatica),
+    [teamTactics, tecnico.coerenciaTatica],
+  )
 
   /** A identidade da IA agora chega ao motor inteiro, não apenas como rótulo de
    * mentalidade. Pressão, risco, bloco e transição variam por adversário. */
@@ -942,6 +1021,18 @@ export default function PartidaAoVivoPage() {
   }, [posturaDaIA, savedGame.socialDaIA])
   const homeCpuProfile = useMemo(() => cpuMatchProfile(homeTeam), [cpuMatchProfile, homeTeam])
   const awayCpuProfile = useMemo(() => cpuMatchProfile(awayTeam), [cpuMatchProfile, awayTeam])
+  const userSpatialProfile = useMemo(
+    () => perfilEspacial286({ ...teamTactics, formation: liveFormation }),
+    [teamTactics, liveFormation],
+  )
+  const homeSpatialProfile = useMemo(
+    () => userSide === "home" ? userSpatialProfile : perfilEspacial286(homeCpuProfile.tactic),
+    [userSide, userSpatialProfile, homeCpuProfile.tactic],
+  )
+  const awaySpatialProfile = useMemo(
+    () => userSide === "away" ? userSpatialProfile : perfilEspacial286(awayCpuProfile.tactic),
+    [userSide, userSpatialProfile, awayCpuProfile.tactic],
+  )
 
   /**
    * CLIMA DO VESTIARIO. O capitao ja era escolhivel em Elenco > Gerenciamento e
@@ -960,6 +1051,59 @@ export default function PartidaAoVivoPage() {
   // recheado de craques nao criava mais chances que um mediano de mesmo
   // prestigio. Aqui saem dos atributos do XI titular, por setor, mais a tatica
   // e um modificador de FORMA e MORAL (que o motor ignorava por completo).
+  // ── CONFRONTO ENTRE DOIS TÉCNICOS HUMANOS ────────────────────────────────
+  //
+  // No co-op local o adversário pode ser outra pessoa da mesa. Duas coisas
+  // mudam, e as duas são necessárias para o modo não virar enfeite:
+  //
+  //  1. A PARTIDA NÃO É DIRIGIDA AO VIVO. Comandar em tempo real só faria
+  //     sentido para UM dos dois — o outro assistiria o próprio time ser
+  //     dirigido por ninguém, e ainda daria ao rival o direito de reagir depois
+  //     de ver o time dele em campo. É simulada de uma vez, com o que cada um
+  //     já decidiu na sua vez.
+  //  2. A FORÇA DELE VEM DO ELENCO DELE. Sem isto o time do outro técnico
+  //     entraria como CPU, medido pelo PRESTÍGIO do clube — e o elenco que ele
+  //     montou, os reforços que comprou e a tática que escolheu não teriam
+  //     efeito nenhum no placar.
+  const tecnicosDoJogo = useMemo(
+    () => tecnicosDoSave(savedGame.tecnicos, savedGame.managerName, savedGame.selectedTeamShort),
+    [savedGame.tecnicos, savedGame.managerName, savedGame.selectedTeamShort],
+  )
+  /**
+   * O adversário de hoje é de outro técnico humano?
+   *
+   * ⚠️ Só vale para jogo de CLUBE. Na base e na seleção o elenco em campo não é
+   * o do clube — casar pelo `curto` do clube apontaria para o time errado.
+   */
+  const tecnicoAdversario = useMemo(() => {
+    if (matchCtx.youth || matchCtx.national) return null
+    const rival = userSide === "home" ? awayTeam : homeTeam
+    // ⚠️ O `file_key` entra na conta desde a 1.0.304: com cada técnico escolhendo
+    // o país dele, um clube estrangeiro de `curto` igual seria confundido com o
+    // do vizinho de mesa — e a partida entraria no caminho de "dois humanos"
+    // contra um adversário que é da CPU, medindo a força dele pelo elenco errado.
+    return tecnicoDoClube(tecnicosDoJogo, rival.curto, (rival as { file_key?: string }).file_key)
+  }, [tecnicosDoJogo, matchCtx.youth, matchCtx.national, userSide, awayTeam, homeTeam])
+
+  const forcasDoAdversarioHumano = useMemo(() => {
+    if (!tecnicoAdversario) return null
+    // O elenco dele mora no bolso que o revezamento guardou. Ver
+    // `lib/chaveamento-de-tecnico.ts`.
+    const bolso = savedGame.estadoPorTecnico?.[tecnicoAdversario.id]
+    const plantel = (bolso?.squadPlayers as AtletaEmCampo[] | undefined) ?? []
+    const clube = userSide === "home" ? awayTeam : homeTeam
+    // A MESMA função que mede o time do usuário — ver o aviso em
+    // `lib/forca-do-plantel.ts` sobre por que a régua tem de ser única.
+    const base = forcasDoPlantel(titularesAptos(plantel), clube.prestigio)
+    const tat = bolso?.teamTactics ? forcasDaTatica(bolso.teamTactics as TeamTactics) : null
+    return {
+      overall: base.overall + base.mod,
+      attack: base.attack + (tat?.attack ?? 0) + base.mod,
+      defense: base.defense + (tat?.defense ?? 0) + base.mod,
+      midfield: base.midfield + (tat?.midfield ?? 0) + base.mod,
+    }
+  }, [tecnicoAdversario, savedGame.estadoPorTecnico, userSide, awayTeam, homeTeam])
+
   const userForces = useMemo(() => {
     // NA SELEÇÃO A FORÇA É A DA CONVOCAÇÃO. `enginePlayers` é o plantel do
     // clube: sem isto, a força do time em campo numa Copa do Mundo era a do seu
@@ -1011,6 +1155,48 @@ export default function PartidaAoVivoPage() {
     }
   }, [matchEnginePlayers, selecaoConvocada, matchCtx.national, tacticalForces, climaDoElenco.efeito, instrucoesIndividuais, userSide, homeTeam.prestigio, awayTeam.prestigio])
 
+  /**
+   * CENTRAL DE GESTÃO EM CAMPO.
+   *
+   * As rotinas de bola parada e a preparação para o adversário eram gravadas no
+   * save e nenhum motor as lia. Aqui elas viram números: o plano vai para o
+   * `MatchConfig` do lado do usuário (a IA não ensaia rotina) e o bônus de
+   * preparação entra como força, só se foi preparado para ESTE rival nesta
+   * semana.
+   */
+  const gestaoAvancada = useMemo(() => normalizarGestao282(savedGame.gestao282), [savedGame.gestao282])
+
+  const planoBolaParada = useMemo(
+    () => planoDeBolaParada282(gestaoAvancada, matchEnginePlayers),
+    [gestaoAvancada, matchEnginePlayers],
+  )
+
+  const bonusPrep = useMemo(() => {
+    const adversario = userSide === "home" ? awayTeam.nome : homeTeam.nome
+    return bonusPreparacaoAplicavel282(gestaoAvancada.preparacao, {
+      season: savedGame.season,
+      week: savedGame.week,
+      adversario,
+    }, tecnico.preparoDeJogo)
+  }, [gestaoAvancada.preparacao, savedGame.season, savedGame.week, userSide, homeTeam.nome, awayTeam.nome, tecnico.preparoDeJogo])
+
+  /**
+   * O LADO DE LÁ, em números — máquina ou outro técnico da mesa.
+   *
+   * Estava espalhado em seis linhas da config, cada uma repetindo
+   * `prestigio * modificador + socialModifier`. Virou um lugar só porque agora
+   * há dois casos, e porque a escolha entre eles é testada: ver
+   * `scripts/test-forca-do-plantel.ts`.
+   */
+  const ladoAdversario = useMemo(
+    () => ladoAdversarioEmCampo(
+      forcasDoAdversarioHumano,
+      (userSide === "home" ? awayTeam : homeTeam).prestigio,
+      userSide === "home" ? awayCpuProfile : homeCpuProfile,
+    ),
+    [forcasDoAdversarioHumano, userSide, awayCpuProfile, homeCpuProfile, awayTeam, homeTeam],
+  )
+
   // Config da simulacao
   const config = useMemo(() => ({
     homeTeam,
@@ -1021,8 +1207,8 @@ export default function PartidaAoVivoPage() {
     // mais, estilo FM). So o lado do usuario recebe; a IA fica no prestigio.
     // Rating do lado do usuario vem do OVERALL do elenco real (+entrosamento);
     // a IA segue no prestigio + pequeno ganho de preparo.
-    homeRating: userSide === "home" ? userForces.overall + bonusEntrosamento : homeTeam.prestigio + (userSide === "away" ? 2 : 0) + homeCpuProfile.socialModifier,
-    awayRating: userSide === "away" ? userForces.overall + bonusEntrosamento : awayTeam.prestigio + (userSide === "home" ? 2 : 0) + awayCpuProfile.socialModifier,
+    homeRating: userSide === "home" ? userForces.overall + bonusEntrosamento : ladoAdversario.overall,
+    awayRating: userSide === "away" ? userForces.overall + bonusEntrosamento : ladoAdversario.overall,
     homeSquad: homeSquad.map(toSquadPlayer),
     awaySquad: awaySquad.map(toSquadPlayer),
     durationMinutes: matchCtx.duration,
@@ -1060,18 +1246,40 @@ export default function PartidaAoVivoPage() {
     awayPressingLoad: userSide === "away" ? tacticalForces.pressingLoad : awayCpuProfile.pressingLoad,
     homeTransitionLoad: userSide === "home" ? tacticalForces.transitionLoad : homeCpuProfile.transitionLoad,
     awayTransitionLoad: userSide === "away" ? tacticalForces.transitionLoad : awayCpuProfile.transitionLoad,
-    // Forcas por setor do lado do usuario — do elenco real + tatica + forma/moral.
-    homeAttack: userSide === "home" ? userForces.attack : homeTeam.prestigio * homeCpuProfile.modifiers.attackBoost + homeCpuProfile.socialModifier,
-    homeDefense: userSide === "home" ? userForces.defense : homeTeam.prestigio * homeCpuProfile.modifiers.defenseBoost + homeCpuProfile.socialModifier,
-    homeMidfield: userSide === "home" ? userForces.midfield : homeTeam.prestigio * (0.94 + homeCpuProfile.modifiers.pressureBoost * 0.06) + homeCpuProfile.socialModifier,
-    awayAttack: userSide === "away" ? userForces.attack : awayTeam.prestigio * awayCpuProfile.modifiers.attackBoost + awayCpuProfile.socialModifier,
-    awayDefense: userSide === "away" ? userForces.defense : awayTeam.prestigio * awayCpuProfile.modifiers.defenseBoost + awayCpuProfile.socialModifier,
-    awayMidfield: userSide === "away" ? userForces.midfield : awayTeam.prestigio * (0.94 + awayCpuProfile.modifiers.pressureBoost * 0.06) + awayCpuProfile.socialModifier,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments, posturaDaIA, nivelDificuldade, homeCpuProfile, awayCpuProfile])
+    // Ocupação por fases: define corredores, proteção às costas, rotações e
+    // recuperação alta que o motor usa para criar o lance da 1.0.286.
+    homeSpatialProfile,
+    awaySpatialProfile,
+    // Rotinas ensaiadas: só o lado do usuário tem. A IA não usa a Central de
+    // Gestão, então segue no comportamento de base do motor.
+    homeSetPiecePlan: userSide === "home" ? planoBolaParada : undefined,
+    awaySetPiecePlan: userSide === "away" ? planoBolaParada : undefined,
+    // Forcas por setor do lado do usuario — do elenco real + tatica + forma/moral
+    // + a sessão de preparação para ESTE adversário (0 quando não há plano).
+    homeAttack: userSide === "home" ? userForces.attack + bonusPrep : ladoAdversario.attack,
+    homeDefense: userSide === "home" ? userForces.defense + bonusPrep : ladoAdversario.defense,
+    homeMidfield: userSide === "home" ? userForces.midfield + bonusPrep : ladoAdversario.midfield,
+    awayAttack: userSide === "away" ? userForces.attack + bonusPrep : ladoAdversario.attack,
+    awayDefense: userSide === "away" ? userForces.defense + bonusPrep : ladoAdversario.defense,
+    awayMidfield: userSide === "away" ? userForces.midfield + bonusPrep : ladoAdversario.midfield,
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments, posturaDaIA, nivelDificuldade, homeCpuProfile, awayCpuProfile, planoBolaParada, bonusPrep, homeSpatialProfile, awaySpatialProfile, ladoAdversario])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty,
     beginShootout, kickShootout, endShootout, shootoutTakers } = sim
+
+  /**
+   * Começar a partida — pelo botão, pelo Enter ou pelo controle.
+   *
+   * Contra outro técnico da mesa isto SIMULA em vez de abrir o ao vivo. O
+   * `fastForward` do motor roda a partida inteira pelo MESMO caminho de sempre:
+   * mesmo cálculo, mesmo registro de resultado. O que muda é só não haver banco
+   * de reservas humano — que é o ponto.
+   */
+  const comecarPartida = useCallback(() => {
+    if (tecnicoAdversario) fastForward()
+    else start()
+  }, [tecnicoAdversario, fastForward, start])
 
   /**
    * Esta partida DECIDE um confronto de mata-mata?
@@ -1273,6 +1481,23 @@ export default function PartidaAoVivoPage() {
 
   // Tab ativa
   const [activeTab, setActiveTab] = useState<"pitch" | "stats" | "gameplan" | "narration">("narration")
+  const [usarCampo3D, setUsarCampo3D] = useState(true)
+  const [falhaCampo3D, setFalhaCampo3D] = useState<string | null>(null)
+
+  const formacaoDaFase = useMemo(() => {
+    const ultimo = state.events[0]?.type
+    const temBola = state.ball.side === userSide
+    if (temBola && (ultimo === "kickoff" || ultimo === "save")) {
+      return teamTactics.buildUpFormation ?? liveFormation
+    }
+    if (temBola) return teamTactics.inPossessionFormation ?? liveFormation
+    return teamTactics.outOfPossessionFormation ?? liveFormation
+  }, [liveFormation, state.ball.side, state.events, teamTactics.buildUpFormation, teamTactics.inPossessionFormation, teamTactics.outOfPossessionFormation, userSide])
+
+  const eventosDo3D = useMemo(() => state.events.map(evento => ({
+    id: evento.id, tipo: evento.type, lado: evento.side, minuto: evento.minute,
+  })), [state.events])
+  const velocidadeDo3D = speed === "ultra" ? 5 : speed === "fast" ? 3 : 1
 
   // Estado para animacoes de eventos
   const [currentAnimation, setCurrentAnimation] = useState<{
@@ -1376,7 +1601,7 @@ export default function PartidaAoVivoPage() {
       if (state.phase === "penaltis") return
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault()
-        if (state.phase === "pre") { start(); return }
+        if (state.phase === "pre") { comecarPartida(); return }
       }
       if (e.key.toLowerCase() === "x" && state.phase !== "fulltime") {
         e.preventDefault()
@@ -1401,7 +1626,7 @@ export default function PartidaAoVivoPage() {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [fastForward, isRunning, pause, resume, start, state.phase, subsRemaining])
+  }, [fastForward, isRunning, pause, resume, comecarPartida, state.phase, subsRemaining])
 
   // Handler de gamepad
   useEffect(() => {
@@ -1431,7 +1656,7 @@ export default function PartidaAoVivoPage() {
           fastForward()
           break
         case "confirm":
-          if (state.phase === "pre") start()
+          if (state.phase === "pre") comecarPartida()
           break
         case "back":
           if (showSubModal) setShowSubModal(false)
@@ -1440,7 +1665,7 @@ export default function PartidaAoVivoPage() {
     }
     window.addEventListener("gamepad:button" as any, handleGamepadButton)
     return () => window.removeEventListener("gamepad:button" as any, handleGamepadButton)
-  }, [fastForward, gameContext, isRunning, pause, resume, speed, setSpeed, start, subsRemaining, state.phase, showSubModal])
+  }, [fastForward, gameContext, isRunning, pause, resume, speed, setSpeed, comecarPartida, subsRemaining, state.phase, showSubModal])
 
   // Modal de fim
   const [showResult, setShowResult] = useState(false)
@@ -1448,6 +1673,28 @@ export default function PartidaAoVivoPage() {
   const [showPressConference, setShowPressConference] = useState(false)
   const [isLeagueChampion, setIsLeagueChampion] = useState(false)
   const postMatchAdvance = useRef<Promise<unknown> | null>(null)
+  /**
+   * A TELA DA PARTIDA AINDA ESTÁ ABERTA?
+   *
+   * ⚠️ RELATO DE JOGADOR: "o leilão aparece do nada e me tira da partida ou de
+   * qualquer outra página aberta". A causa é o fim da coletiva: entre o clique e
+   * a navegação há três esperas — o avanço de semana (`postMatchAdvance`, que
+   * simula a rodada inteira e leva SEGUNDOS), a descarga do disco e a gravação
+   * do save. Sair da partida nesse intervalo não cancela nada: a função
+   * continua viva, chega ao fim e chama `hardNavigate`, que é navegação de
+   * documento inteiro. O jogador estava no elenco, no mercado ou já em outra
+   * partida — e era jogado no leilão sem ter pedido.
+   *
+   * Este ref é o que permite desistir: quem sair da tela cancela a navegação
+   * pendente em vez de ser sequestrado por ela.
+   */
+  const telaAberta = useRef(true)
+  useEffect(() => () => { telaAberta.current = false }, [])
+  /** Espera única entre o apito e o modal de resultado. Ver o uso, mais abaixo. */
+  const resultTimer = useRef<number | null>(null)
+  useEffect(() => () => {
+    if (resultTimer.current !== null) window.clearTimeout(resultTimer.current)
+  }, [])
   // Congela os times do confronto no apito final, ANTES de advanceWeek mudar o
   // currentMatch para a proxima partida (senao o modal mostra o adversario errado).
 
@@ -1480,6 +1727,46 @@ export default function PartidaAoVivoPage() {
     if (state.phase === "fulltime" && !showResult) {
       if (!resultRegistered.current) {
         resultRegistered.current = true
+        // AS DECISÕES DO BANCO SOBREVIVEM AO APITO. Antes disto, tudo o que o
+        // técnico fez em campo morria no minuto 90 — o elenco não guardava nada.
+        // Ver `saldoDeMoralDaPartida`.
+        //
+        // ⚠️ NÃO vale para jogo de seleção: `squadPlayers` é o elenco do CLUBE, e
+        // quem entrou em campo foi a convocação. Creditar aqui daria moral a
+        // atletas que não disputaram a partida.
+        if (!matchCtx.national) {
+          const golsPro = userSide === "home" ? state.home.goals : state.away.goals
+          const golsContra = userSide === "home" ? state.away.goals : state.home.goals
+          const degraus = saldoDeMoralDaPartida(
+            sim.decisionHistory,
+            golsPro > golsContra ? "vitoria" : golsPro === golsContra ? "empate" : "derrota",
+          )
+          if (degraus !== 0) {
+            // ⚠️ O `id` do MatchPlayer é POSICIONAL (`idOffset + i + 1`), não o id
+            // do atleta no elenco — passá-lo direto para `ajustarMoralJogador`
+            // mexeria na moral de outra pessoa. O nome é a única chave comum.
+            const emCampo = new Set((userSide === "home" ? homeSquad : awaySquad).slice(0, 11).map(p => p.name))
+            for (const atleta of useGameEngine.getState().squadPlayers) {
+              if (emCampo.has(atleta.name)) useGameEngine.getState().ajustarMoralJogador(atleta.id, degraus)
+            }
+          }
+        }
+        // APRENDER A POSICAO JOGANDO NELA (1.0.293). Quem terminou em campo
+        // credita familiaridade no slot em que atuou — e so quem esta fora da
+        // posicao natural de fato ganha alguma coisa.
+        if (!matchCtx.national) {
+          const emCampo = (userSide === "home" ? homeSquad : awaySquad).slice(0, 11)
+          const minutos = emCampo
+            .filter(a => typeof a.atletaId === "number")
+            .map(a => ({
+              id: a.atletaId as number,
+              posicao: a.formationPosition ?? a.position,
+              minutos: Math.max(0, Math.min(120, state.minute)),
+              funcao: instrucoesIndividuais[a.atletaId as number]?.role,
+              funcaoSemBola: instrucoesIndividuais[a.atletaId as number]?.roleSemBola,
+            }))
+          if (minutos.length) useGameEngine.getState().registrarPosicoesJogadas(minutos)
+        }
         // Snapshot dos times ANTES de avancar a semana (que troca o currentMatch)
         setFinalMatch({ home: homeTeam, away: awayTeam, userSide })
         // AMISTOSO: e so treino — NAO registra resultado, NAO mexe na tabela nem avanca a
@@ -1571,13 +1858,17 @@ export default function PartidaAoVivoPage() {
                 shots: state.home.shots, shotsOnTarget: state.home.shotsOnTarget, xG: state.home.xG,
                 corners: state.home.corners, fouls: state.home.fouls, yellows: state.home.yellows,
                 reds: state.home.reds, possession: state.home.possession, passes: state.home.passes,
-                passAccuracy: state.home.passAccuracy,
+                passAccuracy: state.home.passAccuracy, xA: state.home.xA,
+                boxEntries: state.home.entradasNaArea, highRecoveries: state.home.recuperacoesAltas,
+                attacksByChannel: { left: state.home.ataquesPorCorredor.esquerda, center: state.home.ataquesPorCorredor.centro, right: state.home.ataquesPorCorredor.direita },
               },
               away: {
                 shots: state.away.shots, shotsOnTarget: state.away.shotsOnTarget, xG: state.away.xG,
                 corners: state.away.corners, fouls: state.away.fouls, yellows: state.away.yellows,
                 reds: state.away.reds, possession: state.away.possession, passes: state.away.passes,
-                passAccuracy: state.away.passAccuracy,
+                passAccuracy: state.away.passAccuracy, xA: state.away.xA,
+                boxEntries: state.away.entradasNaArea, highRecoveries: state.away.recuperacoesAltas,
+                attacksByChannel: { left: state.away.ataquesPorCorredor.esquerda, center: state.away.ataquesPorCorredor.centro, right: state.away.ataquesPorCorredor.direita },
               },
             },
           )
@@ -1719,12 +2010,29 @@ export default function PartidaAoVivoPage() {
                 .catch(() => undefined)
         }
       }
-      const t = setTimeout(() => setShowResult(true), 1200)
-      return () => clearTimeout(t)
+      // ⚠️ UMA VEZ SÓ, E SEM CANCELAR NO RE-RENDER.
+      //
+      // Isto era `setTimeout(...); return () => clearTimeout(t)` num efeito cujas
+      // dependências incluem `savedGame` e `setSavedGame` — as duas trocam de
+      // identidade a cada gravação no save. Cada re-render CANCELAVA a espera e
+      // começava outra: enquanto chovesse gravação (e chove, logo depois do
+      // apito), o modal era adiado indefinidamente. Medido: o efeito reentrou
+      // três vezes seguidas em menos de dez segundos.
+      //
+      // Com a espera guardada numa ref, o apito agenda o modal uma vez e o
+      // restante dos renders não tem mais como empurrá-lo para frente.
+      if (resultTimer.current === null) {
+        resultTimer.current = window.setTimeout(() => {
+          resultTimer.current = null
+          setShowResult(true)
+        }, 1200)
+      }
     }
   }, [state.phase, showResult, state.events, state.home.goals, state.away.goals, state.shootout, precisaDePenaltis, homeTeam.curto, awayTeam.curto, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana, matchCtx.friendly, matchCtx.youth, savedGame, setSavedGame, userSide])
 
-  // Stamina drena por minuto.
+  // Stamina drena por minuto. A decisao ativa agora cobra/devolve a energia
+  // prometida pelo motor: pressionar e tudo-ou-nada cansam; acalmar, recuar e
+  // poupar reduzem o ritmo. Antes energyDelta era apenas texto morto.
   // Dois bugs do relato ("até o goleiro cansou kk" + print "5.4000000000012%"):
   // 1) dreno FIXO de 1.1 para todos — 90' zeravam qualquer atleta, goleiro
   //    incluído. GK agora drena ~20% do ritmo de linha.
@@ -1732,13 +2040,31 @@ export default function PartidaAoVivoPage() {
   //    Arredonda a 1 casa a cada tick.
   useEffect(() => {
     if (state.phase !== "first" && state.phase !== "second") return
-    const drena = (p: { position: string; stamina: number }) => {
-      const taxa = p.position === "GOL" ? 0.22 : 0.62
+    const drena = (p: MatchPlayer, ladoUsuario: boolean) => {
+      const fatorDecisao = ladoUsuario
+        ? Math.max(0.6, Math.min(1.5, 1 - sim.decisionEffect.energyDelta * 0.08 + sim.decisionEffect.pressureDelta * 0.012))
+        : 1
+      // "Resistencia" (lib/caracteristicas-do-atleta.ts) segura os noventa
+      // minutos: drena ~15% menos. E o unico efeito dela, e o mais visivel de
+      // todos — o atleta chega inteiro nos ultimos vinte, quando o resto cai.
+      const fatorFisico = typeof p.atletaId === "number"
+        ? pesosDeLance(caracteristicasDoAtleta(
+            p.atletaId, p.position,
+            {
+              pace: p.pace ?? p.rating, shooting: p.shooting ?? p.rating,
+              passing: p.passing ?? p.rating, dribbling: p.dribbling ?? p.rating,
+              defending: p.defending ?? p.rating, physical: p.physical ?? p.rating,
+            },
+            p.rating,
+            traitsDoEditor[p.atletaId],
+          )).multDesgaste
+        : 1
+      const taxa = (p.position === "GOL" ? 0.22 : 0.62) * fatorDecisao * fatorFisico
       return Math.max(0, Math.round((p.stamina - taxa) * 10) / 10)
     }
-    setHomeSquad(prev => prev.map(p => ({ ...p, stamina: drena(p) })))
-    setAwaySquad(prev => prev.map(p => ({ ...p, stamina: drena(p) })))
-  }, [state.minute, state.phase])
+    setHomeSquad(prev => prev.map(p => ({ ...p, stamina: drena(p, userSide === "home") })))
+    setAwaySquad(prev => prev.map(p => ({ ...p, stamina: drena(p, userSide === "away") })))
+  }, [state.minute, state.phase, userSide, sim.decisionEffect.energyDelta, sim.decisionEffect.pressureDelta, traitsDoEditor])
 
   // Mantém FC Hub e Discord Rich Presence sincronizados com o jogo ao vivo.
   // É um evento local e leve; não envia dados para servidor próprio.
@@ -1881,16 +2207,27 @@ export default function PartidaAoVivoPage() {
             {/* Botão e hint */}
             <div className="px-6 pb-6 flex flex-col items-center gap-3 border-t border-white/[0.04] pt-5">
               <button
-                onClick={start}
+                onClick={comecarPartida}
                 className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-[var(--brand)] text-[var(--brand-ink)] font-black text-base hover:bg-[#00e6b5] transition-all shadow-lg shadow-[var(--brand)]/25 active:scale-[0.98]"
               >
-                <Play className="h-5 w-5 fill-current" />
-                INICIAR PARTIDA
+                {tecnicoAdversario ? <FastForward className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
+                {tecnicoAdversario ? "SIMULAR CONFRONTO" : "INICIAR PARTIDA"}
               </button>
 
-              <p className="text-white/30 text-xs">
-                Pressione <kbd className="bg-white/10 px-2 py-0.5 rounded text-white/50">Enter</kbd> ou o botão A do controle
-              </p>
+              {/* Sem esta explicacao o jogador clica esperando o ao vivo e recebe
+                  o placar pronto, sem entender o que aconteceu. */}
+              {tecnicoAdversario ? (
+                <p className="text-white/40 text-xs text-center leading-relaxed px-2">
+                  O {userSide === "home" ? awayTeam.nome : homeTeam.nome} é de{" "}
+                  <span className="text-white/70 font-semibold">{tecnicoAdversario.nome}</span>. Confronto entre
+                  dois técnicos da mesa não é dirigido ao vivo — vale o que cada um já decidiu:
+                  elenco, escalação e tática.
+                </p>
+              ) : (
+                <p className="text-white/30 text-xs">
+                  Pressione <kbd className="bg-white/10 px-2 py-0.5 rounded text-white/50">Enter</kbd> ou o botão A do controle
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -2001,6 +2338,17 @@ export default function PartidaAoVivoPage() {
   <StatBar label="Faltas" homeValue={state.home?.fouls ?? 0} awayValue={state.away?.fouls ?? 0} />
   <StatBar label="Passes" homeValue={state.home?.passes ?? 0} awayValue={state.away?.passes ?? 0} />
   <StatBar label="xG" homeValue={Math.round((state.home?.xG ?? 0) * 10) / 10} awayValue={Math.round((state.away?.xG ?? 0) * 10) / 10} />
+  <StatBar label="xA" homeValue={Math.round((state.home?.xA ?? 0) * 10) / 10} awayValue={Math.round((state.away?.xA ?? 0) * 10) / 10} />
+  <StatBar label="Entradas na Área" homeValue={state.home?.entradasNaArea ?? 0} awayValue={state.away?.entradasNaArea ?? 0} />
+  <StatBar label="Recuperações Altas" homeValue={state.home?.recuperacoesAltas ?? 0} awayValue={state.away?.recuperacoesAltas ?? 0} />
+  <div className="rounded-lg border border-white/[0.06] bg-black/15 p-2.5">
+    <p className="mb-2 text-center text-[9px] font-bold uppercase tracking-wider text-white/35">Ataques por corredor · E / C / D</p>
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[10px] font-bold">
+      <span className="text-white/65">{state.home.ataquesPorCorredor?.esquerda ?? 0} / {state.home.ataquesPorCorredor?.centro ?? 0} / {state.home.ataquesPorCorredor?.direita ?? 0}</span>
+      <span className="text-white/20">×</span>
+      <span className="text-right text-white/65">{state.away.ataquesPorCorredor?.esquerda ?? 0} / {state.away.ataquesPorCorredor?.centro ?? 0} / {state.away.ataquesPorCorredor?.direita ?? 0}</span>
+    </div>
+  </div>
   </div>
                   </div>
                 )}
@@ -2055,8 +2403,28 @@ export default function PartidaAoVivoPage() {
 
                 {activeTab === "pitch" && (
                   <div className="flex flex-1 min-h-0 flex-col gap-3">
-                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider shrink-0">{t.match.live.sectionPitch}</h3>
-                    <MatchRadar
+                    <div className="flex shrink-0 items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60">{t.match.live.sectionPitch}</h3>
+                        <p className="text-[10px] text-white/35">Estrutura ativa: {formacaoDaFase}</p>
+                      </div>
+                      <div className="flex rounded-lg border border-white/10 bg-black/25 p-1">
+                        <button type="button" onClick={() => setUsarCampo3D(false)} className={cn("rounded px-3 py-1 text-xs font-bold", !usarCampo3D ? "bg-white/15 text-white" : "text-white/45")}>2D</button>
+                        <button type="button" disabled={Boolean(falhaCampo3D)} onClick={() => setUsarCampo3D(true)} className={cn("rounded px-3 py-1 text-xs font-bold", usarCampo3D ? "bg-[var(--brand)]/20 text-[var(--brand)]" : "text-white/45", falhaCampo3D && "cursor-not-allowed opacity-40")}>3D</button>
+                      </div>
+                    </div>
+                    {falhaCampo3D && <AvisoQuedaPara2D motivo={falhaCampo3D} />}
+                    {usarCampo3D && !falhaCampo3D ? (
+                      <Campo3D
+                        eventos={eventosDo3D}
+                        velocidade={velocidadeDo3D}
+                        pausado={!isRunning}
+                        formacao={formacaoDaFase}
+                        casa={{ nome: homeTeam.nome, sigla: homeTeam.curto, corPrincipal: homeKitColor, corSecundaria: homeTeam.cor2 }}
+                        fora={{ nome: awayTeam.nome, sigla: awayTeam.curto, corPrincipal: awayKitColor, corSecundaria: awayTeam.cor2 }}
+                        aoFalhar={motivo => { setFalhaCampo3D(motivo); setUsarCampo3D(false) }}
+                      />
+                    ) : <MatchRadar
                       homeTeam={homeTeam}
                       awayTeam={awayTeam}
                       homeSquad={homeSquad}
@@ -2070,7 +2438,7 @@ export default function PartidaAoVivoPage() {
                       awayFormation={userSide === "away" ? liveFormation : undefined}
                       homeColor={homeKitColor}
                       awayColor={awayKitColor}
-                    />
+                    />}
                   </div>
                 )}
 
@@ -2153,10 +2521,8 @@ export default function PartidaAoVivoPage() {
                       </div>
                     </div>
 
-                    {/* Decisões do técnico — efeito temporizado no momentum, que é
-                        a mesma grandeza que o motor usa para decidir quem cria
-                        chance. Complementa a mentalidade: ela é o ajuste contínuo,
-                        estas são intervenções pontuais. */}
+                    {/* Decisoes do tecnico — ataque, defesa, energia, moral e
+                        pressao permanecem ativos ate o minuto exibido. */}
                     <div className="mb-4 rounded-lg border border-amber-400/20 bg-amber-400/[0.04] p-3">
                       <div className="mb-2 flex items-center justify-between">
                         <span className="text-xs font-semibold uppercase tracking-wider text-white/70">Decisões do técnico</span>
@@ -2196,9 +2562,16 @@ export default function PartidaAoVivoPage() {
                         })}
                       </div>
                       {sim.activeDecisions.length > 0 && (
-                        <p className="mt-2 text-[10px] text-white/40">
-                          Em vigor: {sim.activeDecisions.map(d => `${d.id.replace(/_/g, " ")} (até ${d.appliedAtMinute + d.effect.durationMinutes}')`).join(" · ")}
-                        </p>
+                        <div className="mt-2 space-y-1 text-[10px] text-white/45">
+                          <p>Em vigor: {sim.activeDecisions.map(d => `${d.id.replace(/_/g, " ")} (até ${d.appliedAtMinute + d.effect.durationMinutes}')`).join(" · ")}</p>
+                          <p className="text-amber-200/70">
+                            Ataque {sim.decisionEffect.attackDelta >= 0 ? "+" : ""}{sim.decisionEffect.attackDelta}
+                            {" · "}Defesa {sim.decisionEffect.defenseDelta >= 0 ? "+" : ""}{sim.decisionEffect.defenseDelta}
+                            {" · "}Energia {sim.decisionEffect.energyDelta >= 0 ? "+" : ""}{sim.decisionEffect.energyDelta}
+                            {" · "}Moral {sim.decisionEffect.moraleDelta >= 0 ? "+" : ""}{sim.decisionEffect.moraleDelta}
+                            {" · "}Pressão +{sim.decisionEffect.pressureDelta}
+                          </p>
+                        </div>
                       )}
                     </div>
 
@@ -2299,11 +2672,13 @@ export default function PartidaAoVivoPage() {
               {state.phase === "pre" && (
                 <Button
                   size="sm"
-                  onClick={start}
+                  onClick={comecarPartida}
                   className="text-xs bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand)]/80 font-bold"
                 >
-                  <Play className="mr-1 h-3.5 w-3.5 fill-current" />
-                  INICIAR
+                  {tecnicoAdversario
+                    ? <FastForward className="mr-1 h-3.5 w-3.5" />
+                    : <Play className="mr-1 h-3.5 w-3.5 fill-current" />}
+                  {tecnicoAdversario ? "SIMULAR" : "INICIAR"}
                 </Button>
               )}
               {isMatchInProgress && (
@@ -2459,6 +2834,7 @@ export default function PartidaAoVivoPage() {
           tons,
           venceu: userGoals > rivalGoals,
           perdeu: userGoals < rivalGoals,
+          comunicacao: tecnico.impactoDaColetiva,
         })
 
         if (efeito.moralDelta !== 0 || efeito.diretoriaDelta !== 0) {
@@ -2510,6 +2886,13 @@ export default function PartidaAoVivoPage() {
         // Sem leilao aberto, ela segue sozinha para o pre-office.
         // A seleção não tem leilão nem pré-office de clube: o técnico volta para
         // o escritório da seleção, que é onde está a competição dele.
+        // ⚠️ SÓ NAVEGA SE O JOGADOR AINDA ESTIVER AQUI. As esperas acima duram
+        // segundos; quem saiu da partida nesse meio-tempo já escolheu para onde
+        // ir, e levá-lo ao leilão seria tirá-lo da tela que ele abriu. O
+        // `pathname` entra como segunda trava porque o ref sozinho não cobre o
+        // caso de a tela ter sido recarregada por baixo.
+        if (!telaAberta.current) return
+        if (typeof window !== "undefined" && !window.location.pathname.includes("/partida")) return
         hardNavigate(matchCtx.national ? "/selecao" : matchCtx.youth ? "/base/carreira" : "/leiloes")
       }}
     />

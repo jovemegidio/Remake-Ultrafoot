@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, ArrowLeftRight, ClipboardList, Eye, History } from "lucide-react"
+import { Search, ArrowLeftRight, ClipboardList, Eye, History, RadioTower } from "lucide-react"
 import { HubScreen, type HubCard } from "@/components/hub-screen"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -45,6 +45,14 @@ const cards: HubCard[] = [
     icon: Eye,
     description: "Gerencie seus olheiros e as regioes observadas para descobrir novos talentos.",
     route: "/mercado?tab=olheiros",
+  },
+  {
+    id: 6,
+    title: "TransferRoom",
+    subtitle: "Mercado direto entre clubes",
+    icon: RadioTower,
+    description: "Publique necessidades e encontre clubes procurando exatamente o perfil de atletas do seu elenco.",
+    route: "/transferroom",
   },
 ]
 

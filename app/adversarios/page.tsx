@@ -29,9 +29,10 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
-import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { allTeams, getTeamByShort, type Team } from "@/lib/teams-data"
 import { useGameEngine, type OpponentAnalysis, type MatchResult } from "@/lib/game-engine"
 import { getPlayersForTeam } from "@/lib/players-data"
+import { useUserTeam } from "@/lib/time-da-carreira"
 
 // Dados detalhados de adversarios
 // Dossie do adversario montado a partir de dados REAIS (elenco, resultados e perfil de
@@ -39,7 +40,7 @@ import { getPlayersForTeam } from "@/lib/players-data"
 // com jogadores chumbados (Gabigol/Endrick...) e deixava os outros 16 sem NADA. Um olheiro
 // de verdade forma essas leituras a partir do que o time TEM.
 interface Dossier {
-  formation: string
+  formation: string | null
   mentality: string
   keyPlayers: { name: string; position: string; overall: number; threat: number }[]
   style: string[]
@@ -124,7 +125,8 @@ function buildOpponentDossier(
   const n = games.length || 1
 
   return {
-    formation: "4-3-3",
+    // Sem uma súmula tática observada não existe base para inventar formação.
+    formation: null,
     mentality,
     keyPlayers,
     style,
@@ -140,12 +142,6 @@ function buildOpponentDossier(
   }
 }
 
-// Lista de times para analisar
-const TEAMS_TO_ANALYZE = [
-  "FLA", "PAL", "COR", "SAO", "INT", "GRE", "CAM", "FLU", "BOT", "BAH",
-  "CRU", "FOR", "VAS", "CAP", "SAN", "VIT", "JUV", "MIR", "SPT", "CEA"
-]
-
 export default function AdversariosPage() {
   const router = useRouter()
 
@@ -159,19 +155,28 @@ export default function AdversariosPage() {
     return () => window.removeEventListener('gamepad:button', handler)
   }, [router])
   const { state } = useGameState()
-  const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  const { team: userTeam } = useUserTeam()
   const gameEngine = useGameEngine()
   
-  const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
-  const [isAnalyzing, setIsAnalyzing] = useState<string | null>(null)
-  const [analysisData, setAnalysisData] = useState<Record<string, number>>({})
-  
+  // A BUSCA GLOBAL (menu W) manda o clube por aqui. Ler no ESTADO INICIAL, e nao
+  // num efeito, evita o piscar de "nenhum clube" antes do que o usuario pediu —
+  // e evita sobrescrever a escolha dele se ele trocar de clube nesta tela.
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null
+    return new URLSearchParams(window.location.search).get("clube")
+  })
   const { opponentAnalyses, analyzeOpponent, currentWeek } = gameEngine
 
-  // Filtrar times (excluir o time do usuario)
+  // Adversários vêm do calendário real; antes a lista era fixa na Série A.
   const availableTeams = useMemo(() => {
-    return TEAMS_TO_ANALYZE.filter(t => t !== userTeam.curto)
-  }, [userTeam])
+    const scheduled = new Set<string>()
+    for (const fixture of state.fixtures ?? []) {
+      if (fixture.homeCurto === userTeam.curto) scheduled.add(fixture.awayCurto)
+      if (fixture.awayCurto === userTeam.curto) scheduled.add(fixture.homeCurto)
+    }
+    if (scheduled.size > 0) return [...scheduled]
+    return allTeams.filter(team => team.divisao === userTeam.divisao && team.curto !== userTeam.curto).map(team => team.curto)
+  }, [state.fixtures, userTeam.curto, userTeam.divisao])
 
   // Buscar analise existente
   const getAnalysis = (teamShort: string) => {
@@ -180,20 +185,7 @@ export default function AdversariosPage() {
 
   // Iniciar analise
   const startAnalysis = (teamShort: string) => {
-    setIsAnalyzing(teamShort)
     analyzeOpponent(teamShort)
-    
-    // Simular progresso
-    let progress = analysisData[teamShort] || 0
-    const interval = setInterval(() => {
-      progress += 5
-      setAnalysisData(prev => ({ ...prev, [teamShort]: Math.min(100, progress) }))
-      
-      if (progress >= 100) {
-        clearInterval(interval)
-        setIsAnalyzing(null)
-      }
-    }, 300)
   }
 
   const selectedTeamInfo = selectedTeam ? getTeamByShort(selectedTeam) : null
@@ -202,6 +194,7 @@ export default function AdversariosPage() {
     () => buildOpponentDossier(selectedTeam ?? "", selectedTeamInfo ?? null, gameEngine.matchResults),
     [selectedTeam, selectedTeamInfo, gameEngine.matchResults],
   )
+  const selectedProgress = selectedTeam ? getAnalysis(selectedTeam)?.analysisProgress ?? 0 : 0
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
@@ -221,15 +214,14 @@ export default function AdversariosPage() {
           <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-4">
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Search className="h-5 w-5 text-primary" />
-              Times da Serie A
+              Adversários do calendário
             </h2>
             
             <div className="space-y-2 max-h-[600px] overflow-y-auto scrollbar-thin pr-2">
               {availableTeams.map(teamShort => {
                 const team = getTeamByShort(teamShort)
                 const analysis = getAnalysis(teamShort)
-                const progress = analysisData[teamShort] || analysis?.analysisProgress || 0
-                const isCurrentlyAnalyzing = isAnalyzing === teamShort
+                const progress = analysis?.analysisProgress || 0
                 
                 if (!team) return null
                 
@@ -257,13 +249,6 @@ export default function AdversariosPage() {
                     </div>
                     {progress >= 100 ? (
                       <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    ) : isCurrentlyAnalyzing ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      >
-                        <Search className="h-4 w-4 text-primary" />
-                      </motion.div>
                     ) : progress > 0 ? (
                       <span className="text-xs text-white/50">{progress}%</span>
                     ) : (
@@ -299,25 +284,15 @@ export default function AdversariosPage() {
                       
                       <Button
                         onClick={() => startAnalysis(selectedTeam)}
-                        disabled={isAnalyzing === selectedTeam || (analysisData[selectedTeam] || 0) >= 100}
+                        disabled={selectedProgress >= 100}
                         className={cn(
                           "gap-2",
-                          (analysisData[selectedTeam] || 0) >= 100 
+                          selectedProgress >= 100 
                             ? "bg-green-600 hover:bg-green-700"
                             : ""
                         )}
                       >
-                        {isAnalyzing === selectedTeam ? (
-                          <>
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            >
-                              <Search className="h-4 w-4" />
-                            </motion.div>
-                            Analisando...
-                          </>
-                        ) : (analysisData[selectedTeam] || 0) >= 100 ? (
+                        {selectedProgress >= 100 ? (
                           <>
                             <CheckCircle2 className="h-4 w-4" />
                             Analise Completa
@@ -335,16 +310,16 @@ export default function AdversariosPage() {
                     <div className="mb-6">
                       <div className="flex justify-between text-sm mb-2">
                         <span className="text-white/70">Progresso da Analise</span>
-                        <span className="text-primary font-medium">{analysisData[selectedTeam] || 0}%</span>
+                        <span className="text-primary font-medium">{selectedProgress}%</span>
                       </div>
-                      <Progress value={analysisData[selectedTeam] || 0} className="h-3" />
+                      <Progress value={selectedProgress} className="h-3" />
                     </div>
 
                     {/* Informacoes reveladas conforme progresso */}
-                    {(analysisData[selectedTeam] || 0) >= 25 && selectedTeamData && (
+                    {selectedProgress >= 25 && selectedTeamData && (
                       <div className="grid grid-cols-3 gap-4">
                         <div className="text-center p-3 bg-white/5 rounded-lg">
-                          <div className="text-xl font-bold text-white">{selectedTeamData.formation}</div>
+                          <div className="text-xl font-bold text-white">{selectedTeamData.formation ?? "Não observada"}</div>
                           <div className="text-xs text-white/50">Formacao</div>
                         </div>
                         <div className="text-center p-3 bg-white/5 rounded-lg">
@@ -374,7 +349,7 @@ export default function AdversariosPage() {
                   </div>
 
                   {/* Jogadores-Chave */}
-                  {(analysisData[selectedTeam] || 0) >= 50 && selectedTeamData && (
+                  {selectedProgress >= 50 && selectedTeamData && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -406,7 +381,7 @@ export default function AdversariosPage() {
                   )}
 
                   {/* Estilo e Estatisticas */}
-                  {(analysisData[selectedTeam] || 0) >= 75 && selectedTeamData && (
+                  {selectedProgress >= 75 && selectedTeamData && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -463,7 +438,7 @@ export default function AdversariosPage() {
                   )}
 
                   {/* Pontos Fortes e Fracos */}
-                  {(analysisData[selectedTeam] || 0) >= 100 && selectedTeamData && (
+                  {selectedProgress >= 100 && selectedTeamData && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}

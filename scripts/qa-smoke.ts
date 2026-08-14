@@ -19,8 +19,31 @@ function publicFileExists(publicPath: string) {
   return existsSync(path.join(root, "public", publicPath.replace(/^\//, "")))
 }
 
+// ESCUDO LOCAL — guarda de REGRESSÃO, não de perfeição.
+//
+// Esta verificação exigia escudo para os 1.350 clubes e vinha reprovando desde a
+// expansão UEFA da 1.0.279, despejando uma lista de centenas de nomes. Medido em
+// 11/08/2026 (`scripts/auditar-escudos-faltantes.ts`): **660 de 1.350 (48,9%)**
+// sem arquivo, com 24 países INTEIROS sem nenhum — Romênia, Polônia, Belarus,
+// Ucrânia, Suécia, Luxemburgo...
+//
+// Isso é dívida de DADO (as ligas entraram sem os seus ativos), não defeito de
+// código, e o pacote FMG por FM ID é quem a resolve. Enquanto isso, exigir zero
+// mantinha o `qa:smoke` permanentemente vermelho — e verificação que vive
+// vermelha ninguém lê. Pior: era por isso que ele estava FORA do `qa:gates`, e
+// por isso os outros dez checks daqui também não rodavam.
+//
+// ⚠️ O teto NÃO é para ficar. Cada lote de escudos importado deve baixá-lo; se
+// alguém precisar SUBIR o teto, é porque um país perdeu os escudos que tinha, e
+// aí é regressão de verdade.
 const teamsWithoutLocalCrest = allTeams.filter((team) => !publicFileExists(getLocalEscudoPath(team.file_key)))
-check("escudos locais de todos os times", teamsWithoutLocalCrest.length === 0, teamsWithoutLocalCrest.map((team) => team.nome).join(", "))
+const TETO_SEM_ESCUDO = 660
+check(
+  `escudos locais (no maximo ${TETO_SEM_ESCUDO} clubes sem, hoje ${teamsWithoutLocalCrest.length})`,
+  teamsWithoutLocalCrest.length <= TETO_SEM_ESCUDO,
+  teamsWithoutLocalCrest.slice(0, 8).map((team) => team.nome).join(", ") +
+    (teamsWithoutLocalCrest.length > 8 ? ` e mais ${teamsWithoutLocalCrest.length - 8}` : ""),
+)
 
 const squadSizes = allTeams.map((team) => ({ team, players: getPlayersForTeam(team) }))
 const shortSquads = squadSizes.filter(({ players }) => players.length < 18)

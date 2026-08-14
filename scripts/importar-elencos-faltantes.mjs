@@ -31,6 +31,8 @@ const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const args = process.argv.slice(2)
 const gravar = args.includes("--gravar")
 const limite = args.includes("--limite") ? Number(args[args.indexOf("--limite") + 1]) : Infinity
+const divisao = args.includes("--divisao") ? args[args.indexOf("--divisao") + 1] : null
+const apenasUrlsDiretas = args.includes("--urls-diretas")
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
 const nomeChave = s => (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "")
@@ -137,7 +139,7 @@ const APELIDOS_DE_PAIS = {
   "bolivia": ["bolivia"],
   "venezuela": ["venezuela"],
   "grecia": ["grecia", "greece", "griechenland"],
-  "chequia": ["chequia", "czech republic", "tchequia", "czechia"],
+  "chequia": ["chequia", "czech republic", "republica checa", "republica tcheca", "tchequia", "czechia", "tschechien"],
   "azerbaijao": ["azerbaijao", "azerbaijan"],
   "cazaquistao": ["cazaquistao", "kazakhstan"],
   "chipre": ["chipre", "cyprus", "zypern"],
@@ -171,7 +173,54 @@ async function baixar(url, tentativas = 3) {
 }
 
 /** Acha a página do clube no TM, conferindo o país. */
-async function acharClube(nome, pais) {
+const ALIAS_BUSCA = {
+  "1. SK Prostejov": "1. SK Prostějov",
+  "FC Banik Ostrava B": "FC Baník Ostrava B",
+  "FC Sellier & Bellot Vlasim": "FC Sellier & Bellot Vlašim",
+  "FC SILON Taborsko": "FC SILON Táborsko",
+  "FC Vysocina Jihlava": "FC Vysočina Jihlava",
+  "FK Arsenal Ceska Lipa": "FK Arsenal Česká Lípa",
+  "FK Trinec": "FK Třinec",
+  "FK VIAGEM Usti nad Labem": "FK VIAGEM Ústí nad Labem",
+  "FK Viktoria Zizkov": "FK Viktoria Žižkov",
+  "Fotbal Pribram": "Fotbal Příbram",
+  "MFK Karvina": "MFK Karviná",
+  "SK Hanacka Slavia Kromeriz": "SK Hanácká Slavia Kroměříž",
+  "Slezsky FC Opava": "Slezský FC Opava",
+}
+
+// URLs confirmadas individualmente. Evitam falsos negativos da busca rápida do
+// TM (que frequentemente bloqueia/omite a seção de clubes), sem relaxar o país.
+const URL_DIRETA = {
+  "1. SK Prostejov": "https://www.transfermarkt.com.br/1-sk-prostejov/startseite/verein/13718",
+  "FC Banik Ostrava B": "https://www.transfermarkt.com.br/fc-banik-ostrau-b/startseite/verein/6201",
+  "FC Sellier & Bellot Vlasim": "https://www.transfermarkt.com.br/fc-sellier-amp-bellot-vlasim/startseite/verein/13299",
+  "FC SILON Taborsko": "https://www.transfermarkt.com.br/fc-silon-taborsko/startseite/verein/28596",
+  "FC Vysocina Jihlava": "https://www.transfermarkt.com.br/fc-vysocina-jihlava/startseite/verein/7975",
+  "FK Arsenal Ceska Lipa": "https://www.transfermarkt.com.br/arsenal-ceska-lipa/startseite/verein/19077",
+  "FK Dukla Praha": "https://www.transfermarkt.com.br/fk-dukla-praga/startseite/verein/450",
+  "FK Trinec": "https://www.transfermarkt.com.br/fk-fotbal-trinec/startseite/verein/804",
+  "FK VIAGEM Usti nad Labem": "https://www.transfermarkt.com.br/fk-usti-nad-labem/startseite/verein/6377",
+  "FK Viktoria Zizkov": "https://www.transfermarkt.com.br/fk-viktoria-zizkov/startseite/verein/892",
+  "Fotbal Pribram": "https://www.transfermarkt.com.br/1-fk-pribram/startseite/verein/2598",
+  "MFK Karvina": "https://www.transfermarkt.com.br/mfk-karvina/startseite/verein/13726",
+  "SK Hanacka Slavia Kromeriz": "https://www.transfermarkt.com.br/sk-hanacka-slavia-kromeriz/startseite/verein/3795",
+  "SK Kladno": "https://www.transfermarkt.com.br/sk-kladno/startseite/verein/6380",
+  "SK Slavia Praha B": "https://www.transfermarkt.com.br/sk-slavia-prag-b/startseite/verein/6541",
+  "Slezsky FC Opava": "https://www.transfermarkt.com.br/slezsky-fc-opava/startseite/verein/479",
+}
+
+async function acharClube(nome, pais, aceitarReserva = false) {
+  const direta = URL_DIRETA[nome]
+  if (direta) {
+    const pagina = await baixar(direta)
+    const paisTm = paisDaPagina(pagina)
+    if (pagina && paisBate(pais, paisTm)) {
+      const match = direta.match(/\/([^/]+)\/startseite\/verein\/(\d+)/)
+      return { slug: match?.[1] ?? nomeChave(nome).replace(/ /g, "-"), id: match?.[2] ?? "", html: pagina, paisTm }
+    }
+  }
+  nome = ALIAS_BUSCA[nome] ?? nome
   const busca = `https://www.transfermarkt.com.br/schnellsuche/ergebnis/schnellsuche?query=${encodeURIComponent(nome)}`
   const html = await baixar(busca)
   if (!html) return null
@@ -179,7 +228,7 @@ async function acharClube(nome, pais) {
   const candidatos = []
   for (const m of html.matchAll(/\/([a-z0-9-]+)\/startseite\/verein\/(\d+)/g)) {
     const chave = `${m[1]}/${m[2]}`
-    if (vistos.has(chave) || EH_TIME_SECUNDARIO.test(m[1])) continue
+    if (vistos.has(chave) || (!aceitarReserva && EH_TIME_SECUNDARIO.test(m[1]))) continue
     vistos.add(chave)
     candidatos.push({ slug: m[1], id: m[2] })
     if (candidatos.length >= 4) break
@@ -206,6 +255,8 @@ for (const lista of Object.values(rs)) for (const p of lista) reais.add(nomeChav
 // A lista de alvos vem de um arquivo gerado pelo medidor (para o script não
 // precisar importar o TypeScript do jogo).
 const alvos = JSON.parse(await readFile(path.join(RAIZ, "scripts/elencos-faltantes.json"), "utf8"))
+  .filter(alvo => !divisao || alvo.divisao === divisao)
+  .filter(alvo => !apenasUrlsDiretas || Boolean(URL_DIRETA[alvo.nome]))
   .slice(0, limite)
 
 console.log(`${alvos.length} clubes sem elenco real\n`)
@@ -218,7 +269,7 @@ for (const alvo of alvos) {
   const chave = `${alvo.curto}|${nomeChave(alvo.nome)}`
   if (rs[chave]?.length >= 14) { console.log(`  = ${alvo.nome}: ja tinha`); continue }
 
-  const achado = await acharClube(alvo.nome, alvo.pais)
+  const achado = await acharClube(alvo.nome, alvo.pais, alvo.promotionEligible === false)
   if (!achado) {
     semCasar.push(alvo)
     console.log(`  ! ${alvo.nome.padEnd(26)} nao casou (pais ${alvo.pais})`)

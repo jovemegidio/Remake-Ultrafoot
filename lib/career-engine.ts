@@ -1,7 +1,8 @@
 // Motor de carreira — gera fixtures, simula rodadas CPU, atualiza tabela, controla finanças e mensagens.
 
 import type { Team } from "@/lib/teams-data"
-import { serieATeams, serieBTeams, getTeamsByDivision, completarLigaComPool, tamanhoDaLiga } from "@/lib/teams-data"
+import { serieATeams, serieBTeams, getTeamsByDivision, completarLigaComPool, tamanhoDaLiga, getTeamByFileKey } from "@/lib/teams-data"
+import { clubesDaLigaNoServidor, regulamentoDaLigaNoServidor } from "@/lib/atualizacao-elencos"
 import { simulateFullMatch } from "@/lib/match-engine"
 import type { SavedTeam } from "@/lib/save-system"
 import type {
@@ -32,6 +33,29 @@ export function getLeagueTeams(userTeam: SavedTeam): Team[] {
   // curta e completada com clubes do PROPRIO PAIS (pool importado), e a Serie A
   // so entra se de fato nao houver nada — o que, hoje, nao acontece para nenhuma
   // divisao. Ver completarLigaComPool em lib/teams-data.
+  // ─── PARTICIPANTES VINDOS DO CANAL ───────────────────────────────────────
+  //
+  // A aba Competições do painel grava quem disputa cada torneio, e é assim que
+  // promovido e rebaixado da temporada nova chegam SEM build. Isto existia pela
+  // metade: `clubesDaLigaNoServidor` era exportada e ninguém a chamava — dava
+  // para cadastrar a liga inteira no painel e o jogo montava a divisão pelo
+  // seed do mesmo jeito.
+  //
+  // A chave aceita as duas formas porque as duas aparecem: a divisão
+  // (`serie_a`) é o que o jogo tem em mãos aqui, e o nome da competição
+  // (`Serie A`) é o que o admin naturalmente digita.
+  const doCanal = clubesDaLigaNoServidor(userTeam.divisao as string)
+  if (doCanal && doCanal.length >= 8) {
+    const resolvidos = doCanal
+      .map(fk => getTeamByFileKey(fk))
+      .filter((t): t is Team => Boolean(t))
+    // Se metade dos file_keys não casar, o cadastro está errado e montar a liga
+    // com o que sobrou entregaria um campeonato de 6 clubes. Melhor cair no seed.
+    if (resolvidos.length >= doCanal.length * 0.8 && resolvidos.length >= 8) {
+      return resolvidos
+    }
+  }
+
   const divTeams = completarLigaComPool(userTeam.divisao as string)
   const base: Team[] = divTeams.length >= 8 ? divTeams : serieATeams
 
@@ -67,7 +91,15 @@ export function getLeagueTeams(userTeam: SavedTeam): Team[] {
 
 // ─── Round-Robin ───────────────────────────────────────────────────────────────
 
-function buildRoundRobin(curtos: string[]): { home: string; away: string }[][] {
+/**
+ * @param turnos 1 = só o turno; 2 = turno e returno (o padrão histórico).
+ *
+ * Até a 1.0.283 o returno era somado SEMPRE, sem parâmetro nenhum: campeonato de
+ * turno único não tinha como existir, por mais que o regulamento na tela
+ * dissesse o contrário. Ver a nota das três fontes de "rodadas": só esta gera
+ * jogo — as outras duas descrevem.
+ */
+export function buildRoundRobin(curtos: string[], turnos = 2): { home: string; away: string }[][] {
   const list = curtos.length % 2 === 0 ? [...curtos] : [...curtos, "__BYE__"]
   const n = list.length
   const rounds: { home: string; away: string }[][] = []
@@ -86,6 +118,7 @@ function buildRoundRobin(curtos: string[]): { home: string; away: string }[][] {
     list.splice(1, 0, list.pop()!)
   }
 
+  if (turnos <= 1) return rounds
   // Turno de volta: inverte casa/fora
   const secondHalf = rounds.map(r => r.map(f => ({ home: f.away, away: f.home })))
   return [...rounds, ...secondHalf]
@@ -99,7 +132,10 @@ export function generateSeasonFixtures(
   competition = "Brasileirao Serie A"
 ): MatchFixture[] {
   const teamMap = new Map(teams.map(t => [t.curto, t]))
-  const rounds = buildRoundRobin(teams.map(t => t.curto))
+  // REGULAMENTO DO CANAL. O painel publica turnos por competição; sem isto o
+  // campo era gravado, viajava no manifesto e nenhum jogo mudava.
+  const regulamento = regulamentoDaLigaNoServidor(competition)
+  const rounds = buildRoundRobin(teams.map(t => t.curto), regulamento?.turnos ?? 2)
   const fixtures: MatchFixture[] = []
 
   rounds.forEach((round, roundIdx) => {
