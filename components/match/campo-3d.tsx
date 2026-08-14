@@ -140,6 +140,13 @@ function aparencias(titulares?: AtletaVisual[]) {
   return { jogadores3D: titulares.map(aparenciaDoAtleta) }
 }
 
+/** Os números do painel `?debug3d=1`. Só o V5 os fornece; no V4 fica vazio. */
+interface Render3D {
+  lodDetalhe: number; lodMedio: number; lodProxy: number
+  crowdCount: number; jogadorGLB: boolean; estadioGLB: boolean
+  cameraModo: string; fov: number; falhasAssets: string[]
+}
+
 export function Campo3D({
   eventos, velocidade = 1, pausado = false, formacao = "4-3-3", duracaoDoTempo,
   camera = "transmissao", casa, fora, titularesCasa, titularesFora, aoFalhar,
@@ -174,7 +181,11 @@ export function Campo3D({
     void import("@/partida-3d/partida-3d/motor")
       .then(({ criarMotor }) => {
         if (!vivo) return
-        const instancia = criarMotor({
+        // ⚠️ O componente serve aos DOIS motores. `assets3D` e `render3D` só
+        // existem no V5; o V4 os ignora. O cast é o que permite manter uma única
+        // tela funcionando com qualquer um dos dois — e foi o que tornou a volta
+        // ao V4 uma troca de arquivo, e não uma reescrita.
+        const opcoesDoMotor = {
           palco: alvo,
           qualidade: QUALIDADE_POR_PERFIL[perfil] ?? "mid",
           // PASSO 6 — os assets do V5. `obrigatorio: false` é o que preserva o
@@ -197,10 +208,11 @@ export function Campo3D({
           // entram depois, quando a escalação chega.
           casa: { ...casa, ...aparencias(titularesCasa) },
           fora: { ...fora, ...aparencias(titularesFora) },
-          aoProgredir: (pct, etapa) => { if (vivo) setProgresso({ pct, etapa }) },
+          aoProgredir: (pct: number, etapa: string) => { if (vivo) setProgresso({ pct, etapa }) },
           aoIniciar: () => { if (vivo) setPronto(true) },
-          aoFalhar: (erro) => { if (vivo) falhar.current(erro.message) },
-        })
+          aoFalhar: (erro: Error) => { if (vivo) falhar.current(erro.message) },
+        }
+        const instancia = criarMotor(opcoesDoMotor as Parameters<typeof criarMotor>[0])
         motor.current = instancia
         // ⚠️ CONFIGURAR SÓ DEPOIS DE `iniciar()`, NUNCA ANTES.
         //
@@ -226,7 +238,11 @@ export function Campo3D({
             // PASSO 10 — velocidade e pausa já tinham ponte; a DURAÇÃO não
             // tinha, e sem ela o relógio da cena divergia do da partida.
             if (duracaoDoTempo) instancia.definirDuracaoDoTempo(duracaoDoTempo)
-            instancia.definirCamera(camera)
+            // ⚠️ O V4 NAO TEM `definirCamera` — o V5 tem. Chamar sem checar
+            // quebra a cena inteira no V4, e foi o que a volta ao V4 exigiu
+            // tratar. Checar a existencia deixa o componente valido nos dois.
+            const comCamera = instancia as Partial<{ definirCamera: (m: string) => void }>
+            comCamera.definirCamera?.(camera)
           } catch (erro) {
             // Registrado, não engolido: o painel `?debug3d=1` e o console
             // precisam mostrar que algo do V5 não aceitou a configuração.
@@ -263,7 +279,10 @@ export function Campo3D({
   useEffect(() => {
     if (duracaoDoTempo) motor.current?.definirDuracaoDoTempo(duracaoDoTempo)
   }, [duracaoDoTempo])
-  useEffect(() => { motor.current?.definirCamera(camera) }, [camera])
+  useEffect(() => {
+    const m = motor.current as Partial<{ definirCamera: (modo: string) => void }> | null
+    m?.definirCamera?.(camera)
+  }, [camera])
   useEffect(() => { motor.current?.definirFormacao(getFormationSlots(formacao)) }, [formacao])
 
   /**
@@ -280,13 +299,13 @@ export function Campo3D({
    *
    * Fica atrás de `?debug3d=1`: some em produção sem precisar de build separada.
    */
-  const [telemetria, setTelemetria] = useState<ReturnType<NonNullable<typeof motor.current>["lerTelemetria"]> | null>(null)
+  const [telemetria, setTelemetria] = useState<{ render3D?: Render3D } | null>(null)
   const mostrarDebug = typeof window !== "undefined"
     && new URLSearchParams(window.location.search).get("debug3d") === "1"
   useEffect(() => {
     if (!mostrarDebug || !pronto) return
     // 2 por segundo: o suficiente para acompanhar, longe de competir com a cena.
-    const id = window.setInterval(() => setTelemetria(motor.current?.lerTelemetria() ?? null), 500)
+    const id = window.setInterval(() => setTelemetria((motor.current?.lerTelemetria() ?? null) as { render3D?: Render3D } | null), 500)
     return () => window.clearInterval(id)
   }, [mostrarDebug, pronto])
 

@@ -1,19 +1,10 @@
 // PITCH ENGINE PRO — motor 3D da partida.
 //
-// ⚠️ ESTE ARQUIVO É A FONTE OFICIAL DESDE 14/08/2026 (V5). EDITE-O.
+// GERADO por scripts/converter-motor-3d.py a partir de simulacao-partida-3d.html.
+// NAO EDITE A MAO: rode o script de novo. Ele existe para que a conversao seja
+// auditavel e repetivel — se chegar uma versao nova do HTML, e um comando.
 //
-// O cabeçalho antigo dizia "GERADO por scripts/converter-motor-3d.py a partir de
-// simulacao-partida-3d.html — NAO EDITE A MAO". Os dois sumiram: nem o conversor
-// nem o HTML existem no repositório, no disco de build ou no G:. Procurei os
-// três. Um aviso de "não edite, regenere" apontando para um gerador inexistente é
-// pior que nenhum aviso — ele faz a pessoa perder tempo procurando e, no limite,
-// desistir de corrigir um defeito real aqui dentro.
-//
-// A decisão está tomada por circunstância, não por preferência: o V5 é a fonte.
-// Se um dia o gerador voltar, quem o trouxer precisa portar o que estiver aqui —
-// e não o contrário.
-//
-// BASE DE CONVERSAO do HTML original:
+// O QUE MUDOU em relacao ao HTML original (e so isto):
 //
 //   1. `THREE` global          -> import de 'three'
 //   2. `sRGBEncoding`          -> `SRGBColorSpace` (removido no r152; sem a troca
@@ -23,11 +14,8 @@
 //   4. boot pelo botao "GO"    -> `iniciar()`, porque quem decide a hora agora
 //                                 e o React
 //
-// VERSAO AAA V5: física, IA, regras e arbitragem continuam preservadas.
-// O visual mantém LOD, humanoides GLB, rede massa-mola e torcida V4, e acrescenta
-// direção de transmissão contextual, clima visual em tempo real (sol/nublado/chuva/neve),
-// gramado molhado/neve procedural, precipitação GPU-friendly, iluminação por horário,
-// visibilidade televisiva da bola e enquadramentos de bola parada mais próximos das referências.
+// Fisica, IA, regras, arbitragem, replay e render continuam BYTE A BYTE iguais
+// ao original. Se algo divergir do HTML, e bug da conversao, nao do motor.
 //
 // O HUD e desenhado pelo React (components/partida/campo-3d.tsx). O motor
 // escreve nos elementos por id quando eles existem; quando nao existem, o helper
@@ -59,32 +47,6 @@ export function criarMotor(opcoes) {
   // O motor original procurava o palco pelo id "stage". Agora ele vem por
   // parametro: o React e dono do DOM e pode montar a partida em qualquer lugar.
   const _palco = opcoes.palco
-
-  // Pipeline opcional de assets AAA. Sem configuração, o motor continua 100%
-  // compatível e usa o jogador/estádio procedural como fallback.
-  const ASSETS3D_PADRAO = {
-    baseUrl: "/assets/futebol",
-    jogador: {
-      modelo: "players/player.glb",
-      animacoes: "animations/football_motion.glb",
-      alturaBaseM: 1.80, escala: 1, rotacaoY: 0,
-      lod: { detalheAte: 28, glbAte: 78, proxyApos: 78 },
-      clipes: {
-        idle:"Idle", walk:"Walk", run:"Run", sprint:"Sprint", kick:"Kick_Right",
-        tackle:"Slide_Tackle", header:"Header", celebrate:"Celebrate", dive:"Goalkeeper_Dive",
-        control:"Control", disappointed:"Disappointed", complain:"Complain", point:"Point", hips:"Hands_Hips"
-      }
-    },
-    estadio: { modelo:"stadium/stadium.glb", substituirProcedural:true, escala:1, rotacaoY:0, posicao:[0,0,0], castShadow:true, envMapIntensity:.72 },
-    gramadoPBR: { normal:"pitch/grass_normal.png", roughness:"pitch/grass_roughness.png", ao:"pitch/grass_ao.png", repeat:36 }
-  }
-  // Se o chamador não passar assets3D, tenta automaticamente o pacote incluído.
-  // Arquivos ausentes não quebram a partida: Asset3D.init() recua para o procedural.
-  const ASSETS3D_CFG = opcoes.assets3D || ASSETS3D_PADRAO
-
-  // Ambiente é propositalmente VISUAL: não muda placar nem decisões do match-engine.
-  // `clima` fica como alias curto para integração com projetos que já usam esse nome.
-  const AMBIENTE_CFG_INICIAL = opcoes.ambiente || opcoes.clima || { tipo:"ensolarado", hora:15.5, intensidade:1 }
 
   // Formacao vinda do 2D, convertida em `formacaoDo2D`. Fica `null` quando a
   // tela nao passa nada, e o motor usa a `FORMATION` embutida — um 3D sem
@@ -154,8 +116,8 @@ const DEAD={style:{},textContent:'',innerHTML:'',value:'',disabled:false,
 DEAD.firstElementChild=DEAD;
 const $=id=>document.getElementById(id)||DEAD;
 let QUALITY=QUALITY_INICIAL;
-const Q={ high:{grass:96000,shadow:4096,post:true,crowd:1,px:2.25},
-          mid :{grass:30000,shadow:2048,post:true,crowd:.78,px:1.6},
+const Q={ high:{grass:64000,shadow:4096,post:true,crowd:1,px:2},
+          mid :{grass:22000,shadow:1024,post:true,crowd:.7,px:1.5},
           low :{grass:0,    shadow:1024,post:false,crowd:.5,px:1} };
 const qq=()=>Q[QUALITY];
 
@@ -275,13 +237,13 @@ function buildPitchTexture(){
   g.fillStyle='#24451c'; g.fillRect(0,0,PX,PZ);
 
   // faixas de corte: alternam claro/escuro porque as folhas ficam deitadas p/ lados opostos
-  const bands=12, bw=CFG.pitch.L/bands;
+  const bands=14, bw=CFG.pitch.L/bands;
   for(let i=0;i<bands;i++){
     const dark=i%2===0;
     const gr=g.createLinearGradient(X(-HALF_L+i*bw),0,X(-HALF_L+(i+1)*bw),0);
-    gr.addColorStop(0,   dark?'#2b6726':'#3a7d31');
-    gr.addColorStop(.5,  dark?'#30752b':'#438b37');
-    gr.addColorStop(1,   dark?'#2b6726':'#3a7d31');
+    gr.addColorStop(0,   dark?'#2f6224':'#3d7c2d');
+    gr.addColorStop(.5,  dark?'#336a27':'#427f30');
+    gr.addColorStop(1,   dark?'#2f6224':'#3d7c2d');
     g.fillStyle=gr;
     g.fillRect(X(-HALF_L+i*bw), Z(-HALF_W-4.5), M(bw)+1, M(CFG.pitch.W+9));
   }
@@ -309,13 +271,11 @@ function buildPitchTexture(){
       g.fillRect(X(x),Z(z),rnd(2,6),rnd(2,6));
     }
   };
-  wear(-HALF_L+9,0,9,14,3000*K); wear(HALF_L-9,0,9,14,3000*K);
-  wear(0,0,13,10,1500*K);
+  wear(-HALF_L+9,0,9,14,4200*K); wear(HALF_L-9,0,9,14,4200*K);
+  wear(0,0,13,10,2600*K);
 
-  // demarcação. Em neve intensa, linhas amarelas de alta visibilidade lembram
-  // transmissões em gramado nevado; `corLinhas` permite sobrescrever.
-  const corLinha=Ambiente?.cfg?.corLinhas || (Ambiente?.cfg?.tipo==='neve'?'#efbd2d':'rgba(250,253,255,.94)');
-  g.strokeStyle=corLinha; g.fillStyle=corLinha;
+  // demarcação
+  g.strokeStyle='rgba(250,253,255,.94)'; g.fillStyle='rgba(250,253,255,.94)';
   g.lineWidth=Math.max(2.4,M(.12));
   const rect=(x,z,w,h)=>g.strokeRect(X(x),Z(z),M(w),M(h));
   rect(-HALF_L,-HALF_W,CFG.pitch.L,CFG.pitch.W);
@@ -469,32 +429,6 @@ function numberTexture(n,fg,bg){
   g.textAlign='center'; g.textBaseline='middle';
   g.fillText(String(n),64,72);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
-}
-
-/* nome + número transparentes para o uniforme GLB. O modelo V4 tem UV, mas a
-   numeração precisa continuar dinâmica porque cada escalação usa outro atleta. */
-function kitBackTexture(nome,numero,fg='#ffffff'){
-  const c=cv(256,256),g=c.getContext('2d'); g.clearRect(0,0,256,256);
-  g.textAlign='center'; g.textBaseline='middle'; g.fillStyle=fg;
-  const safe=String(nome||'').toUpperCase().replace(/[^A-ZÀ-Ü0-9 .'-]/g,'').slice(0,14);
-  g.font='700 31px Arial Narrow, Arial'; if(safe) g.fillText(safe,128,54);
-  g.font='900 128px Arial Narrow, Arial'; g.fillText(String(numero??''),128,148);
-  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
-  t.anisotropy=Math.min(8,renderer?.capabilities?.getMaxAnisotropy?.()||4); return t;
-}
-
-function farPlayerTexture(kit,shorts,skin,hair,numero){
-  const c=cv(128,256),g=c.getContext('2d'); g.clearRect(0,0,128,256);
-  // silhueta simples para LOD distante; melhor que 22 rigs completos em plano aéreo.
-  g.fillStyle=skin; g.beginPath(); g.arc(64,28,18,0,6.2832); g.fill();
-  g.fillStyle=hair; g.beginPath(); g.ellipse(64,19,18,9,0,Math.PI,6.2832); g.fill();
-  g.fillStyle=kit; g.beginPath(); g.moveTo(35,52); g.lineTo(93,52); g.lineTo(101,137); g.lineTo(27,137); g.closePath(); g.fill();
-  g.fillStyle=skin; g.fillRect(19,58,13,72); g.fillRect(96,58,13,72);
-  g.fillStyle=shorts; g.fillRect(33,137,62,38);
-  g.fillStyle=skin; g.fillRect(37,175,19,54); g.fillRect(72,175,19,54);
-  g.fillStyle='#15181d'; g.fillRect(33,225,26,13); g.fillRect(69,225,26,13);
-  g.fillStyle='#fff'; g.font='900 45px Arial Narrow, Arial'; g.textAlign='center'; g.fillText(String(numero||''),64,112);
-  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.needsUpdate=true; return t;
 }
 
 function ballTexture(){
@@ -653,14 +587,14 @@ const Gfx={
       this.mComp=new THREE.ShaderMaterial({
         uniforms:{tDiffuse:{value:null},tBloom:{value:null},tBlur:{value:null},
                   tDepth:{value:null},tAO:{value:null},uAo:{value:.8},
-                  uNear:{value:.4},uFar:{value:900},uFocus:{value:62},uDof:{value:.105},
-                  bloom:{value:.055},vig:{value:.10},grain:{value:.003},
-                  ca:{value:.00035},sat:{value:1.12},contrast:{value:1.055},tint:{value:new THREE.Vector3(1,1,1)},time:{value:0}},
+                  uNear:{value:.4},uFar:{value:900},uFocus:{value:62},uDof:{value:.22},
+                  bloom:{value:.09},vig:{value:.16},grain:{value:.006},
+                  ca:{value:.0010},time:{value:0}},
         vertexShader:VS_QUAD,
         fragmentShader:`
           uniform sampler2D tDiffuse,tBloom,tBlur,tDepth,tAO;
           uniform float uNear,uFar,uFocus,uDof,uAo;
-          uniform float bloom,vig,grain,ca,sat,contrast,time; uniform vec3 tint; varying vec2 vUv;
+          uniform float bloom,vig,grain,ca,time; varying vec2 vUv;
           // reconstrói distância linear a partir do depth buffer
           float zdist(vec2 uv){
             float z=texture2D(tDepth,uv).x;
@@ -684,9 +618,8 @@ const Gfx={
             c+=texture2D(tBloom,uv).rgb*bloom;
             // grade: saturação, contraste em S e sombras levemente frias
             float l=dot(c,vec3(0.2126,0.7152,0.0722));
-            c=mix(vec3(l),c,sat);
-            c=clamp((c-0.5)*contrast+0.5,0.0,4.0);
-            c*=tint;
+            c=mix(vec3(l),c,1.14);
+            c=clamp((c-0.5)*1.07+0.5,0.0,4.0);
             c+=vec3(-0.006,0.001,0.016)*(1.0-smoothstep(0.0,0.4,l));
             c*=1.0-vig*smoothstep(0.10,0.92,r2*1.7);
             float n=fract(sin(dot(uv*vec2(97.31,71.17)+time,vec2(12.9898,78.233)))*43758.5453);
@@ -718,7 +651,7 @@ const Gfx={
     renderer.setRenderTarget(this.rtScene); renderer.clear(); renderer.render(scene,camera);
 
     // motion blur temporal: guarda mais histórico quando a câmera corre
-    const k=this.first?1:clamp(1-clamp(camSpeed*.010,0,.20),.78,1);
+    const k=this.first?1:clamp(1-clamp(camSpeed*.016,0,.34),.62,1);
     this.mAcc.uniforms.tNew.value=this.rtScene.texture;
     this.mAcc.uniforms.tOld.value=this.accA.texture;
     this.mAcc.uniforms.k.value=k;
@@ -764,12 +697,6 @@ const Gfx={
     this.mComp.uniforms.tAO.value=this.sA.texture;
     renderer.setRenderTarget(null); renderer.setViewport(0,0,cw,ch);
     this.mComp.uniforms.uFocus.value=Director.focus||30;
-    // grade de transmissão por condição: chuva perde saturação/contraste; sol fica
-    // levemente quente; neve recebe branco frio sem estourar altas luzes.
-    const wt=Ambiente.cfg.tipo;
-    this.mComp.uniforms.sat.value=wt==='ensolarado'?1.12:wt==='nublado'?1.035:wt==='chuva'?.965:1.015;
-    this.mComp.uniforms.contrast.value=wt==='ensolarado'?1.055:wt==='nublado'?1.035:wt==='chuva'?1.012:1.028;
-    this.mComp.uniforms.tint.value.set(wt==='ensolarado'?1.012:wt==='chuva'?.965:.99, wt==='ensolarado'?1.0:1.0, wt==='neve'?1.025:wt==='chuva'?1.035:1.012);
     this.mComp.uniforms.time.value=this.t;
     this.blit(this.mComp,null);
   }
@@ -782,11 +709,11 @@ function initRenderer(){
   }
   const inicial=tamanho()
   renderer=new THREE.WebGLRenderer({antialias:!qq().post,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,qq().px));
+  renderer.setPixelRatio(Math.min(devicePixelRatio,qq().px));
   renderer.setSize(inicial.w,inicial.h,false);
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure=1.00;
+  renderer.toneMappingExposure=1.05;
   renderer.setClearColor(0x173a32,1);
   renderer.shadowMap.enabled=true;
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -799,8 +726,8 @@ function initRenderer(){
   if(host&&host.appendChild) host.appendChild(renderer.domElement);
 
   scene=new THREE.Scene();
-  camera=new THREE.PerspectiveCamera(36,inicial.w/inicial.h,.4,900);
-  camera.position.set(0,25.5,52); camera.lookAt(0,.8,0);
+  camera=new THREE.PerspectiveCamera(48,inicial.w/inicial.h,.4,900);
+  camera.position.set(0,46,72); camera.lookAt(0,0,0);
 
   const redimensionar=(entradas)=>{
     const caixa=entradas?.[0]?.contentRect
@@ -818,157 +745,11 @@ function initRenderer(){
   }
 }
 
-
-/* ============================================================================
-   AMBIENTE / CLIMA VISUAL V5
-   - não altera o resultado autoritativo da partida;
-   - muda iluminação, fog, roughness do gramado, neve e precipitação;
-   - pode ser atualizado em runtime por definirAmbiente().
-   ============================================================================ */
-function normalizarClima(v){
-  const x=String(v||'ensolarado').toLowerCase();
-  if(['rain','rainy','chuva','chuvoso'].includes(x)) return 'chuva';
-  if(['snow','snowy','neve','nevando'].includes(x)) return 'neve';
-  if(['cloud','cloudy','overcast','nublado','encoberto'].includes(x)) return 'nublado';
-  return 'ensolarado';
-}
-
-const Ambiente={
-  cfg:(()=>{
-    const raw=typeof AMBIENTE_CFG_INICIAL==='string'?{tipo:AMBIENTE_CFG_INICIAL}:AMBIENTE_CFG_INICIAL||{};
-    return {
-      tipo:normalizarClima(raw.tipo||raw.clima),
-      hora:Number.isFinite(raw.hora)?raw.hora:15.5,
-      intensidade:Number.isFinite(raw.intensidade)?clamp(raw.intensidade,0,1):1,
-      molhado:Number.isFinite(raw.molhado)?clamp(raw.molhado,0,1):null,
-      neveNoGramado:Number.isFinite(raw.neveNoGramado)?clamp(raw.neveNoGramado,0,1):null,
-      ventoVisual:Number.isFinite(raw.ventoVisual)?raw.ventoVisual:1.2,
-      corLinhas:raw.corLinhas||null,
-    };
-  })(),
-  sun:null,hemi:null,bounce:null,rim:null,sky:null,precip:null,pitchMat:null,snow:null,snowTex:null,snowTrackT:0,
-  _tmpColor:new THREE.Color(),
-  aplicarLuz(){
-    if(!scene||!renderer) return;
-    const c=this.cfg, tipo=c.tipo, h=((c.hora%24)+24)%24;
-    const daylight=clamp(Math.sin((h-6)/12*Math.PI),.08,1);
-    const az=(h-12)/12*Math.PI;
-    SUN.set(Math.cos(az)*102,18+daylight*70,Math.sin(az)*102);
-    const sunK=tipo==='ensolarado'?1:tipo==='nublado'?.42:tipo==='chuva'?.24:.34;
-    const hemiK=tipo==='ensolarado'?1:tipo==='nublado'?1.18:tipo==='chuva'?.92:1.12;
-    if(this.sun){ this.sun.position.copy(SUN); this.sun.intensity=2.12*sunK*(.78+.22*daylight); }
-    if(this.hemi) this.hemi.intensity=.28*hemiK;
-    if(this.bounce) this.bounce.intensity=tipo==='ensolarado'?.10:.055;
-    if(this.rim) this.rim.intensity=tipo==='ensolarado'?.075:.035;
-    renderer.toneMappingExposure = tipo==='ensolarado'?1.0:tipo==='nublado'?.93:tipo==='chuva'?.86:.96;
-    if(this.sky?.material){
-      const col=tipo==='ensolarado'?0xffffff:tipo==='nublado'?0xb9c7d3:tipo==='chuva'?0x778896:0xe3edf4;
-      this.sky.material.color.setHex(col);
-    }
-    scene.fog = tipo==='ensolarado'?null:new THREE.FogExp2(
-      tipo==='chuva'?0x8b9ca8:tipo==='neve'?0xdce6eb:0xb7c5cf,
-      tipo==='chuva'?.00215:tipo==='neve'?.00175:.00115);
-    this.aplicarGramado();
-  },
-  _snowTexture(){
-    const c=cv(1024,700),g=c.getContext('2d'); g.clearRect(0,0,c.width,c.height);
-    for(let i=0;i<1250;i++){
-      const x=Math.random()*c.width,y=Math.random()*c.height,r=rnd(5,48),a=rnd(.035,.17);
-      const gr=g.createRadialGradient(x,y,0,x,y,r);
-      gr.addColorStop(0,`rgba(255,255,255,${a})`); gr.addColorStop(.62,`rgba(245,250,252,${a*.72})`); gr.addColorStop(1,'rgba(255,255,255,0)');
-      g.fillStyle=gr; g.beginPath(); g.ellipse(x,y,r,r*rnd(.35,1.0),rnd(0,3.14),0,6.2832); g.fill();
-    }
-    // acúmulo irregular nas bordas como em campo varrido antes do jogo
-    g.fillStyle='rgba(255,255,255,.11)'; g.fillRect(0,0,c.width,18); g.fillRect(0,c.height-18,c.width,18);
-    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping; t.userData.canvas=c; t.userData.ctx=g; return t;
-  },
-  prepararGramado(ground,mat){
-    this.pitchMat=mat;
-    if(!this.snow && scene){
-      const tex=this._snowTexture(); this.snowTex=tex;
-      const sm=new THREE.MeshStandardMaterial({map:tex,transparent:true,opacity:0,alphaTest:.015,depthWrite:false,roughness:.98,metalness:0,color:0xffffff});
-      const snow=new THREE.Mesh(new THREE.PlaneGeometry(132,90),sm);
-      snow.rotation.x=-Math.PI/2; snow.position.y=.022; snow.receiveShadow=true; snow.renderOrder=2; scene.add(snow); this.snow=snow;
-    }
-    this.aplicarGramado(); this.rebuildPrecipitacao();
-  },
-  aplicarGramado(){
-    if(!this.pitchMat) return;
-    const c=this.cfg,t=c.tipo;
-    const wet=c.molhado!=null?c.molhado:(t==='chuva'?1:t==='nublado'?.18:0);
-    this.pitchMat.roughness=lerp(.84,.45,wet);
-    this.pitchMat.envMapIntensity=lerp(.40,.78,wet);
-    this.pitchMat.color.setHex(t==='chuva'?0xb9c8b7:t==='nublado'?0xd4ddd0:0xffffff);
-    if(this.snow){
-      const snowAmt=c.neveNoGramado!=null?c.neveNoGramado:(t==='neve'?.88:0);
-      this.snow.visible=snowAmt>.01; this.snow.material.opacity=.86*snowAmt*c.intensidade;
-    }
-  },
-  _spriteNeve(){
-    const c=cv(64,64),g=c.getContext('2d'),gr=g.createRadialGradient(32,32,1,32,32,30);
-    gr.addColorStop(0,'rgba(255,255,255,.98)'); gr.addColorStop(.45,'rgba(255,255,255,.72)'); gr.addColorStop(1,'rgba(255,255,255,0)');
-    g.fillStyle=gr; g.fillRect(0,0,64,64); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
-  },
-  limparPrecipitacao(){
-    if(!this.precip) return; const o=this.precip.obj; scene?.remove(o); o.geometry?.dispose?.(); o.material?.map?.dispose?.(); o.material?.dispose?.(); this.precip=null;
-  },
-  rebuildPrecipitacao(){
-    if(!scene||!renderer) return; this.limparPrecipitacao();
-    const tipo=this.cfg.tipo, k=this.cfg.intensidade; if(k<=.02||!['chuva','neve'].includes(tipo)) return;
-    if(tipo==='chuva'){
-      const N=Math.max(500,Math.round((QUALITY==='high'?2400:1200)*k)),a=new Float32Array(N*6);
-      for(let i=0;i<N;i++){ const x=rnd(-68,68),y=rnd(.4,34),z=rnd(-47,47),j=i*6; a[j]=x;a[j+1]=y;a[j+2]=z;a[j+3]=x-.08;a[j+4]=y-rnd(.5,1.25);a[j+5]=z+.03; }
-      const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(a,3));
-      const obj=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xc4d9e8,transparent:true,opacity:.30,depthWrite:false})); obj.frustumCulled=false; scene.add(obj);
-      this.precip={tipo,obj,N,buf:a};
-    }else{
-      const N=Math.max(450,Math.round((QUALITY==='high'?3000:1500)*k)),a=new Float32Array(N*3),phase=new Float32Array(N);
-      for(let i=0;i<N;i++){ a[i*3]=rnd(-68,68);a[i*3+1]=rnd(.4,34);a[i*3+2]=rnd(-47,47);phase[i]=rnd(0,6.2832); }
-      const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(a,3));
-      const obj=new THREE.Points(g,new THREE.PointsMaterial({map:this._spriteNeve(),color:0xffffff,size:.18,transparent:true,opacity:.76,depthWrite:false,sizeAttenuation:true,alphaTest:.02})); obj.frustumCulled=false; scene.add(obj);
-      this.precip={tipo,obj,N,buf:a,phase};
-    }
-  },
-  step(dt){
-    // Pegadas/trilhas removem neve do alpha map em baixa frequência: barato e persistente.
-    if(this.cfg.tipo==='neve' && this.snowTex?.userData?.ctx && typeof players!=='undefined'){
-      this.snowTrackT+=dt;
-      if(this.snowTrackT>.11){
-        this.snowTrackT=0; const g=this.snowTex.userData.ctx,c=this.snowTex.userData.canvas;
-        g.save(); g.globalCompositeOperation='destination-out'; g.fillStyle='rgba(0,0,0,.13)';
-        for(const pl of players){
-          const x=(pl.pos.x+66)/132*c.width, y=(pl.pos.z+45)/90*c.height;
-          g.beginPath(); g.ellipse(x,y,2.3,1.35,pl.face||0,0,6.2832); g.fill();
-        }
-        g.restore(); this.snowTex.needsUpdate=true;
-      }
-    }
-    const p=this.precip;if(!p)return;const a=p.buf,w=this.cfg.ventoVisual||0;
-    if(p.tipo==='chuva'){
-      for(let i=0;i<p.N;i++){const j=i*6;a[j]-=w*dt*.42;a[j+1]-=27*dt;a[j+3]-=w*dt*.42;a[j+4]-=27*dt;if(a[j+1]<.15){const x=rnd(-68,68),y=rnd(27,35),z=rnd(-47,47);a[j]=x;a[j+1]=y;a[j+2]=z;a[j+3]=x-.08;a[j+4]=y-rnd(.5,1.25);a[j+5]=z+.03;}}
-    }else{
-      for(let i=0;i<p.N;i++){const j=i*3;a[j]+=(-w*.18+Math.sin(wallT*1.7+p.phase[i])*.12)*dt;a[j+1]-=(2.4+Math.sin(p.phase[i])*.55)*dt;if(a[j+1]<.08){a[j]=rnd(-68,68);a[j+1]=rnd(29,35);a[j+2]=rnd(-47,47);}}
-    }
-    p.obj.geometry.attributes.position.needsUpdate=true;
-  },
-  set(v){
-    const raw=typeof v==='string'?{tipo:v}:v||{};
-    if(raw.tipo||raw.clima)this.cfg.tipo=normalizarClima(raw.tipo||raw.clima);
-    if(Number.isFinite(raw.hora))this.cfg.hora=clamp(raw.hora,0,24);
-    if(Number.isFinite(raw.intensidade))this.cfg.intensidade=clamp(raw.intensidade,0,1);
-    if(Number.isFinite(raw.molhado))this.cfg.molhado=clamp(raw.molhado,0,1);
-    if(Number.isFinite(raw.neveNoGramado))this.cfg.neveNoGramado=clamp(raw.neveNoGramado,0,1);
-    if(Number.isFinite(raw.ventoVisual))this.cfg.ventoVisual=raw.ventoVisual;
-    if(typeof raw.corLinhas==='string')this.cfg.corLinhas=raw.corLinhas;
-    this.aplicarLuz(); this.rebuildPrecipitacao();
-  }
-};
-
 function buildSky(){
   const tex=skyTexture();
   const sky=new THREE.Mesh(new THREE.SphereGeometry(620,40,24),
     new THREE.MeshBasicMaterial({map:tex,side:THREE.BackSide,fog:false}));
-  scene.add(sky); Ambiente.sky=sky;
+  scene.add(sky);
   /* iluminação por imagem: o céu vira o mapa de ambiente da cena, então cada
      material recebe reflexo especular coerente com a abóbada. É o que separa
      "modelo iluminado" de "objeto no lugar". */
@@ -980,36 +761,38 @@ function buildSky(){
     Tex.env=env.texture;
     pm.dispose();
   }catch(e){ console.warn('IBL indisponível:',e.message); }
-  Ambiente.aplicarLuz();
 }
 
 function buildLights(){
-  /* Luz solar V5: o horário controla direção/tamanho das sombras e o clima
-     controla dureza/intensidade, sem mudar física ou resultado da partida. */
-  const hemi=new THREE.HemisphereLight(0xc7dbef,0x315a27,.28); scene.add(hemi);
-  const sun=new THREE.DirectionalLight(0xfff0d8,2.12); sun.position.copy(SUN); sun.castShadow=true;
-  const S=qq().shadow; sun.shadow.mapSize.set(S,S);
-  const c=sun.shadow.camera; c.left=-92;c.right=92;c.top=72;c.bottom=-72;c.near=1;c.far=360;
-  sun.shadow.bias=-0.0007; sun.shadow.normalBias=.022; scene.add(sun);
-  const bounce=new THREE.DirectionalLight(0x9fc2e8,.10); bounce.position.set(-70,34,64); scene.add(bounce);
-  const rim=new THREE.DirectionalLight(0xffe9c4,.075); rim.position.set(-40,12,-90); scene.add(rim);
-  Ambiente.hemi=hemi; Ambiente.sun=sun; Ambiente.bounce=bounce; Ambiente.rim=rim; Ambiente.aplicarLuz();
+  /* Orçamento de luz refeito. Antes: sol 2,45 + hemisférica 0,62 + 2 preenchimentos
+     = irradiância muito acima de 1 sobre um gramado de albedo alto, o que estourava
+     o branco e alimentava o bloom. Agora o sol domina e o resto só preenche sombra. */
+  scene.add(new THREE.HemisphereLight(0xbcd4ee,0x2c5423,.34));
+  const sun=new THREE.DirectionalLight(0xfff2dc,1.80);
+  sun.position.copy(SUN);
+  sun.castShadow=true;
+  const S=qq().shadow;
+  sun.shadow.mapSize.set(S,S);
+  const c=sun.shadow.camera;
+  c.left=-112; c.right=112; c.top=88; c.bottom=-88; c.near=1; c.far=430;
+  sun.shadow.bias=-0.0009; sun.shadow.normalBias=.03;
+  scene.add(sun);
+  const bounce=new THREE.DirectionalLight(0x9fc2e8,.14);
+  bounce.position.set(-70,34,64); scene.add(bounce);
+  const rim=new THREE.DirectionalLight(0xffe9c4,.10);
+  rim.position.set(-40,12,-90); scene.add(rim);
 }
 
 function buildPitch(){
   const {map,PW,PH}=buildPitchTexture();
   Tex.pitch=map; Tex.PW=PW; Tex.PH=PH;
-  const gm=grassMaps(), ext=Asset3D.pitchMaps||{};
+  const gm=grassMaps();
   const mat=new THREE.MeshStandardMaterial({
-    map, normalMap:ext.normal||gm.normal, roughnessMap:ext.rough||gm.rough, aoMap:ext.ao||null,
-    normalScale:new THREE.Vector2(ext.normal?.isTexture?.82:1.0,ext.normal?.isTexture?.82:1.0),
-    roughness:.82, metalness:0, envMapIntensity:.40
+    map, normalMap:gm.normal, roughnessMap:gm.rough,
+    normalScale:new THREE.Vector2(.85,.85), roughness:.92, metalness:0
   });
-  const geoGround=new THREE.PlaneGeometry(PW,PH);
-  if(ext.ao && geoGround.attributes.uv && !geoGround.attributes.uv2) geoGround.setAttribute('uv2',geoGround.attributes.uv.clone());
-  const ground=new THREE.Mesh(geoGround,mat);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(PW,PH),mat);
   ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
-  Ambiente.prepararGramado(ground,mat);
 
   const apron=new THREE.Mesh(new THREE.PlaneGeometry(230,170),
     new THREE.MeshStandardMaterial({color:0x1d3a17,roughness:1}));
@@ -1020,7 +803,7 @@ function buildPitch(){
   const sheen=new THREE.Mesh(new THREE.PlaneGeometry(CFG.pitch.L,CFG.pitch.W,1,1),
     new THREE.ShaderMaterial({
       transparent:true, blending:THREE.AdditiveBlending, depthWrite:false,
-      uniforms:{uCam:{value:new THREE.Vector3()},bands:{value:12}},
+      uniforms:{uCam:{value:new THREE.Vector3()},bands:{value:14}},
       vertexShader:`
         varying vec3 vW;
         void main(){
@@ -1037,7 +820,7 @@ function buildPitch(){
           vec3 lay=normalize(vec3(sgn*0.94,0.34,0.0));
           float f=pow(clamp(dot(lay,V),0.0,1.0),3.5);
           float fade=1.0-smoothstep(60.0,190.0,length(uCam-vW));
-          gl_FragColor=vec4(vec3(0.62,0.86,0.55)*f*0.092*fade,1.0);
+          gl_FragColor=vec4(vec3(0.62,0.86,0.55)*f*0.065*fade,1.0);
         }`
     }));
   sheen.rotation.x=-Math.PI/2; sheen.position.y=.012; sheen.renderOrder=1;
@@ -1126,8 +909,7 @@ function buildGrass(){
 /* ============================================================================
    ESTÁDIO, TRAVES COM REDE DEFORMÁVEL, BOLA
    ============================================================================ */
-const World={ ballShadow:null, nets:[], flags:[], grass:null, sheen:null,
-  crowd:null, crowdShaders:[], fanFlags:[], pitchMaterial:null, snowCover:null };
+const World={ ballShadow:null, nets:[], flags:[], grass:null, sheen:null };
 
 function buildGoals(){
   const netTex=netTexture();
@@ -1142,6 +924,7 @@ function buildGoals(){
     }
     const bar=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,w,16),postMat);
     bar.rotation.x=Math.PI/2; bar.position.y=h; bar.castShadow=true; G.add(bar);
+    // suportes traseiros
     for(const t of [-1,1]){
       const b=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,Math.hypot(depth,h),10),postMat);
       b.position.set(s*depth/2,h/2,t*w/2);
@@ -1150,82 +933,77 @@ function buildGoals(){
     }
 
     const mk=(gw,gh,segw,segh)=>{
-      const t2=netTex.clone(); t2.needsUpdate=true; t2.repeat.set(gw*3.4,gh*3.4);
-      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(gw,gh,segw,segh),
-        new THREE.MeshStandardMaterial({map:t2,transparent:true,alphaTest:.24,
-          side:THREE.DoubleSide,roughness:.9,color:0xf7fbff,depthWrite:false}));
-      mesh.castShadow=false; mesh.receiveShadow=true; return mesh;
+      const t2=netTex.clone(); t2.needsUpdate=true; t2.repeat.set(gw*3.2,gh*3.2);
+      return new THREE.Mesh(new THREE.PlaneGeometry(gw,gh,segw,segh),
+        new THREE.MeshStandardMaterial({map:t2,transparent:true,alphaTest:.3,
+          side:THREE.DoubleSide,roughness:.85,color:0xeef4f9}));
     };
-
-    /* Cada pano vira uma pequena malha massa-mola. As bordas ficam presas às
-       traves/suportes e o interior propaga a energia do chute pelos vizinhos. */
+    /* Os QUATRO panos entram na simulação de deformação, não só o fundo.
+       Antes só o fundo balançava: um chute que morria na lateral da rede, ou
+       uma bola que subia e batia no teto, entravam num pano de pedra. */
     const paineis=[];
-    const reg=(mesh,segw,segh)=>{
-      const geo=mesh.geometry, arr=geo.attributes.position.array;
-      const n=(segw+1)*(segh+1), base=Float32Array.from(arr);
-      const disp=new Float32Array(n), vel=new Float32Array(n), acc=new Float32Array(n), pin=new Uint8Array(n);
-      for(let y=0;y<=segh;y++) for(let x=0;x<=segw;x++){
-        const i=y*(segw+1)+x;
-        if(x===0||x===segw||y===0||y===segh) pin[i]=1;
-      }
-      paineis.push({mesh,geo,base,disp,vel,acc,pin,cols:segw+1,rows:segh+1,imp:new THREE.Vector3(),peso:1});
-      G.add(mesh);
+    const reg=m=>{
+      const geo=m.geometry;
+      const base=geo.attributes.position&&geo.attributes.position.array
+               ? Float32Array.from(geo.attributes.position.array) : null;
+      paineis.push({mesh:m,geo,base,imp:new THREE.Vector3(),peso:1});
+      G.add(m);
     };
-    const back=mk(w,h,26,17); back.position.set(s*depth,h/2,0); back.rotation.y=Math.PI/2; reg(back,26,17);
-    const top=mk(w,depth,26,8); top.rotation.x=Math.PI/2; top.position.set(s*depth/2,h,0); reg(top,26,8);
+    const back=mk(w,h,18,12);
+    back.position.set(s*depth,h/2,0); back.rotation.y=Math.PI/2; reg(back);
+    const top=mk(w,depth,18,6);
+    top.rotation.x=Math.PI/2; top.position.set(s*depth/2,h,0); reg(top);
     for(const t of [-1,1]){
-      const side=mk(depth,h,10,17); side.position.set(s*depth/2,h/2,t*w/2); reg(side,10,17);
+      const side=mk(depth,h,8,10);
+      side.position.set(s*depth/2,h/2,t*w/2); reg(side);
     }
-    G.updateMatrixWorld(true);
-    World.nets.push({grupo:G,paineis,t:9,power:1,energy:0});
+    G.updateMatrixWorld(true);          // worldToLocal precisa da matriz pronta
+    World.nets.push({grupo:G,paineis,t:9,power:1});
   }
 }
 
+/* ----------------------------------------------------------------------------
+   ONDA NA REDE
+   O impacto entra em COORDENADA DE MUNDO e cada pano converte para o seu
+   próprio plano. Antes o ponto vinha como (z, y) e só fazia sentido para o pano
+   do fundo — um toque na lateral da rede deformava o fundo, no lugar errado.
+   ---------------------------------------------------------------------------- */
 const _impMundo=new THREE.Vector3();
+/** Impacto em ponto de MUNDO. `y` é altura, `z` é a lateral do campo. */
 function hitNet(side,x,y,z,power){
-  const net=World.nets[side<0?0:1]; if(!net) return;
-  net.t=0; net.power=clamp((power||18)/26,.25,1.65); net.energy=Math.max(net.energy,net.power);
+  const net=World.nets[side<0?0:1];
+  if(!net) return;
+  net.t=0; net.power=clamp((power||18)/26,.3,1.5);
   _impMundo.set(x,y,z);
   for(const p of net.paineis){
-    p.imp.copy(_impMundo); p.mesh.worldToLocal(p.imp);
-    p.peso=Math.exp(-Math.abs(p.imp.z)*1.6);
-    const arr=p.base, impulse=clamp(power||18,4,34)*.024*p.peso;
-    for(let i=0,j=0;i<arr.length;i+=3,j++){
-      if(p.pin[j]) continue;
-      const dx=arr[i]-p.imp.x, dy=arr[i+1]-p.imp.y, d2=dx*dx+dy*dy;
-      if(d2<2.6) p.vel[j]+=Math.exp(-d2*2.2)*impulse;
-    }
+    if(!p.base) continue;
+    p.imp.copy(_impMundo);
+    p.mesh.worldToLocal(p.imp);                 // vira (x,y) no plano do pano
+    // um pano longe do impacto balança pouco, mas balança: a rede é uma só
+    p.peso=Math.exp(-Math.abs(p.imp.z)*1.15);
   }
 }
-
 function updateNets(dt){
-  const h=Math.min(dt,.033), K=54, REST=20, DAMP=5.8;
   for(const n of World.nets){
-    n.t+=dt; n.energy*=Math.exp(-dt*1.65);
+    if(n.t>2.2) continue;
+    n.t+=dt;
+    const decay=Math.exp(-n.t*3.1);
     for(const p of n.paineis){
-      const {disp,vel,acc,pin,cols,rows}=p;
-      for(let y=1;y<rows-1;y++) for(let x=1;x<cols-1;x++){
-        const i=y*cols+x; if(pin[i]){acc[i]=0;continue;}
-        const avg=(disp[i-1]+disp[i+1]+disp[i-cols]+disp[i+cols])*.25;
-        acc[i]=(avg-disp[i])*K-disp[i]*REST-vel[i]*DAMP;
-      }
-      for(let y=1;y<rows-1;y++) for(let x=1;x<cols-1;x++){
-        const i=y*cols+x; if(pin[i]) continue;
-        vel[i]+=acc[i]*h; disp[i]+=vel[i]*h;
-        disp[i]=clamp(disp[i],-.72,.72);
-      }
+      if(!p.base) continue;
       const arr=p.geo.attributes.position.array;
-      for(let i=0,j=0;i<arr.length;i+=3,j++) arr[i+2]=p.base[i+2]+disp[j];
+      const amp=.42*(n.power||1)*p.peso;
+      for(let i=0;i<arr.length;i+=3){
+        const dx=p.base[i]-p.imp.x, dy=p.base[i+1]-p.imp.y;
+        const d=Math.hypot(dx,dy);
+        arr[i+2]=p.base[i+2]+Math.exp(-d*d*.55)*Math.cos(n.t*17-d*2.1)*decay*amp;
+      }
       p.geo.attributes.position.needsUpdate=true;
-      // normais a 15 Hz: visual suave sem gastar CPU todo quadro.
-      p._normalT=(p._normalT||0)+dt;
-      if(p._normalT>.066){ p._normalT=0; p.geo.computeVertexNormals?.(); }
+      if(p.geo.computeVertexNormals) p.geo.computeVertexNormals();
     }
   }
 }
 
 function buildStadium(){
-  if(Asset3D.estadioAtivo && Asset3D.cfg?.estadio?.substituirProcedural!==false) return;
   const crowd=crowdTexture(qq().crowd);
   const struct=new THREE.MeshStandardMaterial({color:0x1b212b,roughness:.88});
   const roofMat=new THREE.MeshStandardMaterial({color:0x252d38,roughness:.55,metalness:.3});
@@ -1255,21 +1033,20 @@ function buildStadium(){
     }
     scene.add(G);
   }
-  // Arquibancadas mais próximas do campo, como em estádios de transmissão moderna.
-  stand(158,43,0); stand(158,43,Math.PI);
-  stand(120,68,Math.PI/2); stand(120,68,-Math.PI/2);
+  stand(158,60,0); stand(158,60,Math.PI);
+  stand(120,84,Math.PI/2); stand(120,84,-Math.PI/2);
 
   // placas de publicidade
   const mk=(len,rep)=>new THREE.MeshStandardMaterial({map:adsTexture(rep),roughness:.45,
       emissive:0x11151d,emissiveIntensity:.14});
   for(const s of [-1,1]){
     const b=new THREE.Mesh(new THREE.BoxGeometry(126,1.1,.32),mk(126,2.6));
-    b.position.set(0,.55,s*(HALF_W+2.8)); b.rotation.y=s>0?Math.PI:0;
+    b.position.set(0,.55,s*(HALF_W+6.5)); b.rotation.y=s>0?Math.PI:0;
     b.castShadow=true; scene.add(b);
   }
   for(const s of [-1,1]){
     const b=new THREE.Mesh(new THREE.BoxGeometry(78,1.1,.32),mk(78,1.6));
-    b.position.set(s*(HALF_L+3.6),.55,0); b.rotation.y=s>0?-Math.PI/2:Math.PI/2;
+    b.position.set(s*(HALF_L+8),.55,0); b.rotation.y=s>0?-Math.PI/2:Math.PI/2;
     b.castShadow=true; scene.add(b);
   }
 
@@ -1344,92 +1121,45 @@ function buildFlashes(){
 
 /* público volumétrico: milhares de corpos instanciados em uma única draw call.
    A textura plana resolve de longe, mas some no close; isto não. */
-function crowdAnimatedMaterial(mat,strength){
-  mat.onBeforeCompile=shader=>{
-    shader.uniforms.uCrowdTime={value:0};
-    shader.vertexShader=shader.vertexShader
-      .replace('#include <common>','#include <common>\nuniform float uCrowdTime; attribute float crowdPhase; attribute float crowdEnergy;')
-      .replace('#include <begin_vertex>',`vec3 transformed=vec3(position);
-        float cw=sin(uCrowdTime*(1.15+crowdEnergy*1.8)+crowdPhase);
-        float cw2=cos(uCrowdTime*.73+crowdPhase*1.31);
-        transformed.x += cw*${strength.toFixed(4)}*(.35+crowdEnergy);
-        transformed.z += cw2*${(strength*.36).toFixed(4)}*(.25+crowdEnergy);`);
-    mat.userData._crowdShader=shader; World.crowdShaders.push(shader);
-  };
-  mat.customProgramCacheKey=()=>`crowd-v4-${strength}`;
-  return mat;
-}
-
-function buildFanFlags(){
-  if(QUALITY!=='high') return;
-  const geo=new THREE.PlaneGeometry(1.55,1.0,8,5);
-  const cols=[0xe33b30,0xf4f5f6,0x234eaa,0xffc928,0x7b1fa2];
-  for(let i=0;i<12;i++){
-    const side=i<6?-1:1, x=rnd(-47,47), z=side*(HALF_W+rnd(12,20)), y=rnd(8,17);
-    const mat=new THREE.MeshStandardMaterial({color:pick(cols),roughness:.85,side:THREE.DoubleSide});
-    const fl=new THREE.Mesh(geo.clone(),mat); fl.position.set(x,y,z); fl.rotation.y=side<0?0:Math.PI;
-    scene.add(fl); World.fanFlags.push({mesh:fl,phase:rnd(0,6.28),base:Float32Array.from(fl.geometry.attributes.position.array)});
-  }
-}
-
 function buildCrowdVolume(){
   if(QUALITY==='low') return;
-  const N=QUALITY==='high'?9000:4200;
-  const bodyGeo=new THREE.BoxGeometry(.40,.68,.30), headGeo=new THREE.SphereGeometry(.135,8,6), armGeo=new THREE.BoxGeometry(.105,.52,.105);
-  const phases=new Float32Array(N), energies=new Float32Array(N);
-  for(let i=0;i<N;i++){ phases[i]=Math.random()*6.2832; energies[i]=Math.pow(Math.random(),.65); }
-  const attrs=geo=>{ geo.setAttribute('crowdPhase',new THREE.InstancedBufferAttribute(phases,1)); geo.setAttribute('crowdEnergy',new THREE.InstancedBufferAttribute(energies,1)); };
-  attrs(bodyGeo); attrs(headGeo); attrs(armGeo);
-  const mat=crowdAnimatedMaterial(new THREE.MeshStandardMaterial({roughness:.92,metalness:0,vertexColors:true}),.035);
-  const headMat=crowdAnimatedMaterial(new THREE.MeshStandardMaterial({roughness:.74,metalness:0,vertexColors:true}),.052);
-  const armMatL=crowdAnimatedMaterial(new THREE.MeshStandardMaterial({roughness:.70,metalness:0,vertexColors:true}),.065);
-  const armMatR=armMatL.clone(); armMatR.onBeforeCompile=armMatL.onBeforeCompile; armMatR.customProgramCacheKey=armMatL.customProgramCacheKey;
-  const body=new THREE.InstancedMesh(bodyGeo,mat,N), heads=new THREE.InstancedMesh(headGeo,headMat,N);
-  const armL=new THREE.InstancedMesh(armGeo,armMatL,N), armR=new THREE.InstancedMesh(armGeo,armMatR,N);
-  const m=new THREE.Matrix4(), hm=new THREE.Matrix4(), lm=new THREE.Matrix4(), rm=new THREE.Matrix4();
-  const q=new THREE.Quaternion(), ql=new THREE.Quaternion(), qr=new THREE.Quaternion(), localQ=new THREE.Quaternion();
-  const sc=new THREE.Vector3(), hsc=new THREE.Vector3(), asc=new THREE.Vector3(1,1,1), pos=new THREE.Vector3(), hpos=new THREE.Vector3();
-  const lp=new THREE.Vector3(), rp=new THREE.Vector3(), col=new THREE.Color(), hcol=new THREE.Color();
-  const axis=new THREE.Vector3(0,1,0), crowdDark=new THREE.Color(0x20252b), pal=[0xd94a2e,0xf2f5f7,0x1b2a5e,0x2b3340,0xd3a02a,0x8c96a5,0x141821,0xb5543a,0xe7ecf1],
-        skinPal=[0xf0c49c,0xd7a06f,0xb97c52,0x87563b,0x6e4634,0xc88f63];
-  let i=0; const rows=16;
+  const N=QUALITY==='high'?4600:2200;
+  const geo=new THREE.BoxGeometry(.40,.68,.32);
+  /* vertexColors é obrigatório: sem ele o three calcula instanceColor no vertex
+     shader mas não aplica no fragment, e a torcida sai toda branca. */
+  const mat=new THREE.MeshStandardMaterial({roughness:.93,metalness:0,vertexColors:true});
+  const mesh=new THREE.InstancedMesh(geo,mat,N);
+  const m=new THREE.Matrix4(), q=new THREE.Quaternion(),
+        sc=new THREE.Vector3(1,1,1), pos=new THREE.Vector3(), col=new THREE.Color();
+  const axis=new THREE.Vector3(0,1,0);
+  const pal=[0xd94a2e,0xf2f5f7,0x1b2a5e,0x2b3340,0xd3a02a,0x8c96a5,0x141821,0xb5543a,0xe7ecf1];
+  let i=0;
+  const rows=14;
   for(let side=0;side<4&&i<N;side++){
     const long=side<2, sgn=(side%2)?1:-1;
     for(let r=0;r<rows&&i<N;r++){
-      const off=(long?9.5:14.0)+r*1.22, y=4.35+r*1.23, len=long?154:108, step=1.02;
+      const off=(long?24:32)+r*1.35, y=5.4+r*1.34;
+      const len=long?150:104, step=1.15;
       for(let t=-len/2;t<len/2&&i<N;t+=step){
-        if(Math.random()<.11) continue;
-        if(long) pos.set(t+rnd(-.18,.18),y+rnd(-.07,.07),sgn*(HALF_W+off+rnd(-.22,.22)));
-        else pos.set(sgn*(HALF_L+off+rnd(-.22,.22)),y+rnd(-.07,.07),t*.84+rnd(-.18,.18));
-        q.setFromAxisAngle(axis,long?0:Math.PI/2); const sy=rnd(.86,1.16); sc.set(1,sy,1); m.compose(pos,q,sc); body.setMatrixAt(i,m);
-        // setores ganham massa de cor dos clubes, como nas arquibancadas das referências.
-        if(Math.random()<.56){
-          const hx=(side===0||side===2)?CFG.teams.home.kit:CFG.teams.away.kit; col.set(hx).lerp(crowdDark,.18);
-        } else col.setHex(pal[(Math.random()*pal.length)|0]);
-        body.setColorAt?.(i,col);
-        hpos.copy(pos); hpos.y+=.45*sy; const hs=rnd(.88,1.08); hsc.set(hs,hs*rnd(.96,1.08),hs); hm.compose(hpos,q,hsc); heads.setMatrixAt(i,hm);
-        hcol.setHex(skinPal[(Math.random()*skinPal.length)|0]); heads.setColorAt?.(i,hcol);
-        // braços: parte da torcida fica com os braços erguidos, como nas referências.
-        const cheer=energies[i]>.58, az=cheer?rnd(.55,1.05):rnd(.08,.32);
-        lp.set(.22,.18*sy,0).applyQuaternion(q).add(pos); rp.set(-.22,.18*sy,0).applyQuaternion(q).add(pos);
-        localQ.setFromAxisAngle(new THREE.Vector3(0,0,1),az); ql.copy(q).multiply(localQ);
-        localQ.setFromAxisAngle(new THREE.Vector3(0,0,1),-az); qr.copy(q).multiply(localQ);
-        lm.compose(lp,ql,asc); rm.compose(rp,qr,asc); armL.setMatrixAt(i,lm); armR.setMatrixAt(i,rm);
-        armL.setColorAt?.(i,hcol); armR.setColorAt?.(i,hcol); i++;
+        if(Math.random()<.14) continue;
+        if(long){ pos.set(t+rnd(-.2,.2),y+rnd(-.07,.07),sgn*(HALF_W+off+rnd(-.25,.25))); }
+        else { pos.set(sgn*(HALF_L+off+rnd(-.25,.25)),y+rnd(-.07,.07),t*.85+rnd(-.2,.2)); }
+        q.setFromAxisAngle(axis,long?0:Math.PI/2);
+        sc.set(1,rnd(.86,1.16),1);
+        m.compose(pos,q,sc);
+        mesh.setMatrixAt(i,m);
+        col.setHex(pal[(Math.random()*pal.length)|0]);
+        if(mesh.setColorAt) mesh.setColorAt(i,col);
+        i++;
       }
     }
   }
-  for(const x of [body,heads,armL,armR]){ x.count=i; x.instanceMatrix.needsUpdate=true; if(x.instanceColor)x.instanceColor.needsUpdate=true; x.frustumCulled=false; scene.add(x); }
-  World.crowd={body,heads,armL,armR,count:i}; buildFanFlags();
-}
-
-function updateCrowdVisuals(){
-  for(const sh of World.crowdShaders) if(sh?.uniforms?.uCrowdTime) sh.uniforms.uCrowdTime.value=wallT;
-  for(const f of World.fanFlags){
-    const a=f.mesh.geometry.attributes.position.array, base=f.base;
-    for(let i=0;i<a.length;i+=3){ const x=base[i]; a[i+2]=base[i+2]+Math.sin(wallT*4.2+f.phase+x*4.1)*(.035+.055*(x+.8)); }
-    f.mesh.geometry.attributes.position.needsUpdate=true;
-  }
+  mesh.count=i;
+  if(mesh.instanceMatrix) mesh.instanceMatrix.needsUpdate=true;
+  if(mesh.instanceColor) mesh.instanceColor.needsUpdate=true;
+  mesh.frustumCulled=false;
+  scene.add(mesh);
+  World.crowd=mesh;
 }
 
 function buildBall(){
@@ -1816,310 +1546,6 @@ function predictAtPlane(gx){
 /* ============================================================================
    JOGADOR — malha detalhada + máquina de poses
    ============================================================================ */
-
-/* ============================================================================
-   PIPELINE AAA DE ASSETS 3D
-
-   O motor continua autônomo: se nenhum GLB/GLTF for informado ele usa o atleta
-   procedural. Quando `opcoes.assets3D` existe, esta camada carrega modelo humano
-   rigado, clips mocap, texturas de uniforme/rosto e estádio PBR. O fallback é
-   deliberado: um arquivo ausente nunca deve transformar a partida em tela preta.
-   ============================================================================ */
-const Asset3D={
-  cfg:ASSETS3D_CFG, pronto:false, jogadorPronto:false, estadioAtivo:false,
-  GLTFLoader:null, cloneSkinned:null, loader:null, texLoader:new THREE.TextureLoader(),
-  playerTemplate:null, clips:[], teamTex:{home:{},away:{}}, faceTex:new Map(),
-  pitchMaps:{}, cacheTex:new Map(), falhas:[],
-
-  url(v){
-    if(!v) return null;
-    if(/^(?:https?:|data:|blob:|\/)/i.test(v)) return v;
-    const b=(this.cfg?.baseUrl||'').replace(/\/+$/,'');
-    return b?b+'/'+String(v).replace(/^\/+/, ''):v;
-  },
-  async textura(v,srgb=false,repeat=1){
-    const url=this.url(v); if(!url) return null;
-    const key=url+'|'+srgb+'|'+repeat;
-    if(this.cacheTex.has(key)) return this.cacheTex.get(key);
-    const p=this.texLoader.loadAsync(url).then(t=>{
-      if(srgb) t.colorSpace=THREE.SRGBColorSpace;
-      t.wrapS=t.wrapT=THREE.RepeatWrapping;
-      if(repeat && repeat!==1) t.repeat.set(repeat,repeat);
-      if(renderer?.capabilities?.getMaxAnisotropy)
-        t.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());
-      t.needsUpdate=true; return t;
-    });
-    this.cacheTex.set(key,p); return p;
-  },
-  async gltf(v){
-    if(!v||!this.loader) return null;
-    return this.loader.loadAsync(this.url(v));
-  },
-  async importarLoaders(){
-    if(this.GLTFLoader) return;
-    const [gltfMod,skelMod]=await Promise.all([
-      import('three/examples/jsm/loaders/GLTFLoader.js'),
-      import('three/examples/jsm/utils/SkeletonUtils.js')
-    ]);
-    this.GLTFLoader=gltfMod.GLTFLoader;
-    this.cloneSkinned=skelMod.clone;
-    this.loader=new this.GLTFLoader();
-    const draco=this.cfg?.dracoDecoderPath;
-    if(draco){
-      try{
-        const {DRACOLoader}=await import('three/examples/jsm/loaders/DRACOLoader.js');
-        const dl=new DRACOLoader(); dl.setDecoderPath(this.url(draco));
-        this.loader.setDRACOLoader(dl); this.draco=dl;
-      }catch(e){ this.falhas.push('DRACO: '+e.message); }
-    }
-  },
-  async prepararTexturasTime(team){
-    const id=team==='home'?opcoes.casa:opcoes.fora;
-    const u=id?.uniforme3D||{};
-    const dst=this.teamTex[team];
-    const jobs=[
-      ['shirt','camisa',true],['shirtNormal','camisaNormal',false],['shirtRough','camisaRoughness',false],
-      ['shorts','shorts',true],['shortsNormal','shortsNormal',false],['socks','meias',true],
-      ['boots','chuteiras',true],['gk','goleiro',true]
-    ];
-    await Promise.all(jobs.map(async ([k,n,s])=>{ if(u[n]) dst[k]=await this.textura(u[n],s); }));
-    const vis=id?.jogadores3D||[];
-    await Promise.all(vis.map(async (v,i)=>{
-      if(v?.rosto) this.faceTex.set(team+':'+i,await this.textura(v.rosto,true));
-    }));
-  },
-  async prepararGramado(){
-    const p=this.cfg?.gramadoPBR; if(!p) return;
-    const rep=p.repeat||32;
-    const [normal,rough,ao]=await Promise.all([
-      this.textura(p.normal,false,rep), this.textura(p.roughness,false,rep), this.textura(p.ao,false,rep)
-    ]);
-    this.pitchMaps={normal,rough,ao};
-  },
-  async prepararJogador(){
-    const c=this.cfg?.jogador; if(!c?.modelo) return;
-    await this.importarLoaders();
-    const gltf=await this.gltf(c.modelo);
-    if(!gltf?.scene) throw new Error('GLB do jogador não contém scene');
-    this.playerTemplate=gltf.scene;
-    this.clips=[...(gltf.animations||[])];
-    if(c.animacoes){
-      const extra=await this.gltf(c.animacoes);
-      if(extra?.animations?.length) this.clips.push(...extra.animations);
-    }
-    this.jogadorPronto=true;
-  },
-  async prepararEstadio(){
-    const c=this.cfg?.estadio; if(!c?.modelo) return;
-    await this.importarLoaders();
-    const gltf=await this.gltf(c.modelo); if(!gltf?.scene) throw new Error('GLB do estádio não contém scene');
-    const root=gltf.scene;
-    const sc=c.escala??1; root.scale.setScalar(sc);
-    root.rotation.y=c.rotacaoY||0;
-    const p=c.posicao||[0,0,0]; root.position.set(p[0]||0,p[1]||0,p[2]||0);
-    root.traverse(o=>{
-      if(!o.isMesh) return;
-      o.castShadow=c.castShadow!==false; o.receiveShadow=true;
-      const mats=Array.isArray(o.material)?o.material:[o.material];
-      for(const m of mats){
-        if(!m) continue;
-        if(m.map){ m.map.colorSpace=THREE.SRGBColorSpace; m.map.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy?.()||8); }
-        if('envMapIntensity' in m) m.envMapIntensity=c.envMapIntensity??.72;
-      }
-    });
-    scene.add(root); this.estadio=root; this.estadioAtivo=true;
-  },
-  async init(){
-    if(!this.cfg){ this.pronto=true; return; }
-    try{
-      await Promise.all([this.prepararGramado(),this.prepararTexturasTime('home'),this.prepararTexturasTime('away')]);
-      await Promise.all([this.prepararJogador(),this.prepararEstadio()]);
-      this.pronto=true;
-    }catch(e){
-      this.falhas.push(e?.message||String(e));
-      console.warn('[Pitch Engine] assets 3D indisponíveis; usando fallback procedural:',e);
-      if(this.cfg?.obrigatorio) throw e;
-      this.pronto=true;
-    }
-  },
-  clip(tipo){
-    if(!this.clips.length) return null;
-    const c=this.cfg?.jogador||{};
-    const exato=c.clipes?.[tipo];
-    if(exato){ const k=this.clips.find(x=>x.name===exato); if(k) return k; }
-    const aliases={
-      idle:['idle','stand','breath','breathing'], walk:['walk'], run:['run','jog'], sprint:['sprint','fast run'],
-      kick:['kick','shoot','shot','strike'], tackle:['tackle','slide'], header:['header','head'],
-      celebrate:['celebrate','celebration','victory'], dive:['dive','keeper','goalkeeper'], control:['control','trap'],
-      disappointed:['disappoint','hands head','sad'], complain:['complain','argue','protest'], point:['point'], hips:['hips','tired']
-    };
-    const arr=aliases[tipo]||[tipo];
-    return this.clips.find(x=>arr.some(a=>x.name.toLowerCase().includes(a)))||null;
-  },
-  classificarMaterial(nome){
-    const n=nome.toLowerCase();
-    if(/eye|pupil|iris/.test(n)) return 'eye';
-    if(/hair|cabelo/.test(n)) return 'hair';
-    if(/boot|shoe|chuteira/.test(n)) return 'boots';
-    if(/sock|meia/.test(n)) return 'socks';
-    if(/short/.test(n)) return 'shorts';
-    if(/glove|luva/.test(n)) return 'glove';
-    if(/shirt|jersey|camisa|kit|torso|upper|top/.test(n)) return 'shirt';
-    if(/face|head|skin|pele|hand|arm|leg/.test(n)) return 'skin';
-    return 'other';
-  },
-  aplicarMaterial(m,kind,p,meshName){
-    if(!m) return m;
-    const mat=m.clone(); const tx=this.teamTex[p.team]||{};
-    const kit=p.gk?p.kit.gk:p.kit.kit;
-    if(kind==='shirt'){
-      mat.color?.set(p.gk?p.kit.gk:p.kit.kit); if(p.gk&&tx.gk) mat.map=tx.gk; else if(tx.shirt) mat.map=tx.shirt;
-      if(tx.shirtNormal) mat.normalMap=tx.shirtNormal; if(tx.shirtRough) mat.roughnessMap=tx.shirtRough;
-      mat.roughness=Math.max(.48,mat.roughness??.58);
-    } else if(kind==='shorts'){
-      mat.color?.set(p.gk?'#141a24':p.kit.shorts); if(tx.shorts) mat.map=tx.shorts; if(tx.shortsNormal) mat.normalMap=tx.shortsNormal;
-      mat.roughness=.66;
-    } else if(kind==='socks'){
-      mat.color?.set(p.gk?'#141a24':p.kit.socks); if(tx.socks) mat.map=tx.socks; mat.roughness=.72;
-    } else if(kind==='boots'){
-      if(tx.boots) mat.map=tx.boots; mat.roughness=.30; if('metalness' in mat) mat.metalness=.04;
-    } else if(kind==='hair'){
-      const hc=p.visual?.corCabelo; if(hc) mat.color?.set(hc); mat.roughness=.82;
-    } else if(kind==='skin'){
-      const fc=this.faceTex.get(p.team+':'+p.idx);
-      if(fc && /face|head/i.test(meshName) && !/ear|jaw|nose/i.test(meshName)) mat.map=fc;
-      const skin=p.visual?.tomPele; if(skin) mat.color?.set(skin);
-      mat.roughness=.55;
-    }
-    if(mat.map){ mat.map.colorSpace=THREE.SRGBColorSpace; mat.map.needsUpdate=true; }
-    if('envMapIntensity' in mat) mat.envMapIntensity=.68;
-    mat.needsUpdate=true; return mat;
-  },
-  aplicarVariantes(model,p){
-    const vis=p.visual||{}, hairRaw=String(vis.cabelo||vis.cabeloPreset||['short','fade','buzz','curly','long'][(p.idx+(p.team==='home'?0:2))%5]).toLowerCase();
-    const alias={curto:'short',raspado:'buzz',degrade:'fade',cacheado:'curly',longo:'long'};
-    const hair=alias[hairRaw]||hairRaw;
-    const groups={short:'Hair_Short',buzz:'Hair_Buzz',fade:'Hair_Fade',curly:'Hair_Curly',long:'Hair_Long'};
-    for(const name of Object.values(groups)){ const o=model.getObjectByName(name); if(o) o.visible=name===groups[hair]; }
-    // puffs/partes longas herdam a visibilidade do pai; o short original não deve vazar.
-    const head=model.getObjectByName('Head');
-    if(head){
-      const preset=String(vis.rostoPreset||['balanced','slim','wide'][(p.idx+(p.team==='away'?1:0))%3]).toLowerCase();
-      const sx=vis.larguraRosto??(preset==='wide'?1.08:preset==='slim'?.94:1);
-      const sy=vis.alturaRosto??(preset==='long'?1.07:preset==='round'?.95:1);
-      head.scale.set(sx,sy,1);
-    }
-    return {hair,detailNodes:model.children?[]:[]};
-  },
-  criarProxy(p){
-    const skin=p.visual?.tomPele||'#b98055', hair=p.visual?.corCabelo||'#17120f';
-    const tx=farPlayerTexture(p.gk?p.kit.gk:p.kit.kit,p.gk?'#18202b':p.kit.shorts,skin,hair,p.num);
-    const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:true,alphaTest:.12}));
-    spr.scale.set(.78,1.82,1); spr.position.y=.91; spr.visible=false; spr.castShadow=false; return spr;
-  },
-  adicionarNumero(model,p){
-    const chest=model.getObjectByName('Chest'); if(!chest) return null;
-    const tex=kitBackTexture(p.name,p.num,p.gk?'#111820':p.kit.trim||'#ffffff');
-    const pl=new THREE.Mesh(new THREE.PlaneGeometry(.29,.34),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide}));
-    pl.name='Kit_Name_Number'; pl.position.set(0,.045,-.245); pl.rotation.y=Math.PI; chest.add(pl); return pl;
-  },
-  criarJogador(p){
-    if(!this.jogadorPronto||!this.playerTemplate||!this.cloneSkinned) return null;
-    try{
-      const wrapper=new THREE.Group();
-      const model=this.cloneSkinned(this.playerTemplate);
-      model.traverse(o=>{
-        if(!o.isMesh&&!o.isSkinnedMesh) return;
-        o.castShadow=true; o.receiveShadow=true;
-        const mats=Array.isArray(o.material)?o.material:[o.material];
-        const out=mats.map(m=>this.aplicarMaterial(m,this.classificarMaterial((o.name||'')+' '+(m?.name||'')),p,o.name||''));
-        o.material=Array.isArray(o.material)?out:out[0];
-      });
-      wrapper.add(model);
-      this.aplicarVariantes(model,p);
-      const numero3D=this.adicionarNumero(model,p);
-      const detailNodes=[]; model.traverse(o=>{ if(/^Face_|^Kit_Name_Number/.test(o.name||'')) detailNodes.push(o); });
-      const proxy=this.criarProxy(p); wrapper.add(proxy);
-      // normaliza qualquer humanoide para ~1,80 m antes da variação individual.
-      const box=new THREE.Box3().setFromObject(model), size=new THREE.Vector3(); box.getSize(size);
-      const alvo=this.cfg?.jogador?.alturaBaseM||1.80;
-      const auto=size.y>0.2?alvo/size.y:1;
-      const scl=auto*(this.cfg?.jogador?.escala??1);
-      model.scale.multiplyScalar(scl);
-      const b2=new THREE.Box3().setFromObject(model);
-      model.position.y-=b2.min.y;
-      model.position.y+=this.cfg?.jogador?.offsetY||0;
-      model.rotation.y=this.cfg?.jogador?.rotacaoY||0;
-
-      const mixer=new THREE.AnimationMixer(model), actions={};
-      for(const k of ['idle','walk','run','sprint','kick','tackle','header','celebrate','dive','control','disappointed','complain','point','hips']){
-        const clip=this.clip(k); if(!clip) continue;
-        const a=mixer.clipAction(clip); a.enabled=true; actions[k]=a;
-        if(['kick','tackle','header','celebrate','dive','control','disappointed','complain','point','hips'].includes(k)){
-          a.setLoop(THREE.LoopOnce,1); a.clampWhenFinished=true;
-        }
-      }
-      const first=actions.idle||actions.run||Object.values(actions)[0]; first?.play();
-      p.rig3D={wrapper,model,proxy,numero3D,detailNodes,mixer,actions,
-        current:first?Object.keys(actions).find(k=>actions[k]===first):null,lod:'detail',frameSkip:0};
-      return wrapper;
-    }catch(e){ console.warn('[Pitch Engine] falha ao instanciar jogador GLB:',e); return null; }
-  },
-  trocarAcao(p,nova,fade=.14){
-    const r=p.rig3D, next=r?.actions?.[nova]; if(!r||!next||r.current===nova) return;
-    const old=r.actions[r.current];
-    next.reset().enabled=true; next.setEffectiveWeight(1); next.play();
-    if(old&&old!==next) old.crossFadeTo(next,fade,false);
-    r.current=nova;
-  },
-  renderJogador(p,a,dt){
-    const r=p.rig3D; if(!r) return false;
-    const x=lerp(p.prev.x,p.pos.x,a), z=lerp(p.prev.z,p.pos.z,a), face=p.facePrev+angleDiff(p.face,p.facePrev)*a;
-    const sp=Math.hypot(p.vel.x,p.vel.z), cd=Math.hypot(camera.position.x-x,camera.position.y-1,camera.position.z-z);
-    const lc=this.cfg?.jogador?.lod||{}, detalhe=lc.detalheAte??28, proxyApos=lc.proxyApos??78;
-    const far=cd>proxyApos, medium=!far&&cd>detalhe;
-    r.model.visible=!far; if(r.proxy) r.proxy.visible=far;
-    if(r.detailNodes) for(const o of r.detailNodes) o.visible=!medium&&!far;
-    r.lod=far?'proxy':medium?'medium':'detail';
-
-    let st='idle';
-    if(p.kickT>0) st='kick'; else if(p.pose==='dive') st='dive'; else if(p.pose==='tackle') st='tackle';
-    else if(p.pose==='header') st='header'; else if(p.pose==='celebrate') st='celebrate'; else if(p.pose==='control') st='control';
-    else if(p.pose==='maos_cabeca') st='disappointed'; else if(p.pose==='reclamar') st='complain'; else if(p.pose==='aponta') st='point';
-    else if(p.pose==='maos_quadril') st='hips'; else if(sp>6.4) st='sprint'; else if(sp>2.1) st='run'; else if(sp>.35) st='walk';
-    if(!r.actions[st]) st=r.actions.run?(sp>.35?'run':'idle'):(r.actions.idle?'idle':r.current);
-    if(!far && st) this.trocarAcao(p,st,st==='kick'?.07:.14);
-    const act=r.actions[r.current];
-    if(!far){
-      if(act && ['run','sprint','walk'].includes(r.current)){
-        const ref=r.current==='sprint'?7.6:r.current==='run'?5.2:1.7; act.setEffectiveTimeScale(clamp(sp/ref,.62,1.45));
-      } else act?.setEffectiveTimeScale(1);
-      // LOD médio atualiza o mixer em metade dos quadros; close continua 60 fps.
-      r.frameSkip=(r.frameSkip+1)&1; if(!medium||r.frameSkip===0) r.mixer.update(Math.min(dt||1/60,.05)*(medium?2:1));
-    }
-    r.wrapper.position.set(x,0,z); r.wrapper.rotation.set(clamp(sp*.012,0,.08),face,p.lean*.42);
-    const hScale=p.height, wScale=p.build||1; r.wrapper.scale.set(hScale*wScale,hScale,hScale*wScale);
-    return true;
-  },
-  dispose(){ try{ this.draco?.dispose?.(); }catch{} }
-};
-
-/* micro-PBR de tecido para o fallback procedural: trama gera normal/roughness,
-   tirando o aspecto de plástico mesmo quando não há GLB externo. */
-function playerFabricMaps(){
-  if(Tex.fabric) return Tex.fabric;
-  const c=cv(128,128),g=c.getContext('2d'); g.fillStyle='#777'; g.fillRect(0,0,128,128);
-  for(let y=0;y<128;y+=4) for(let x=0;x<128;x+=4){
-    g.fillStyle=((x+y)/4)%2?'#969696':'#626262'; g.fillRect(x,y,2,2);
-    g.fillStyle='rgba(255,255,255,.22)'; g.fillRect(x+2,y,1,4);
-  }
-  const normal=new THREE.CanvasTexture(normalFromHeight(c,1.55)); normal.wrapS=normal.wrapT=THREE.RepeatWrapping; normal.repeat.set(5,7);
-  const rc=cv(128,128),rg=rc.getContext('2d'); rg.fillStyle='#b8b8b8'; rg.fillRect(0,0,128,128);
-  for(let i=0;i<1200;i++){ const v=(rnd(145,225)|0); rg.fillStyle=`rgb(${v},${v},${v})`; rg.fillRect(Math.random()*128,Math.random()*128,rnd(1,4),rnd(1,4)); }
-  const rough=new THREE.CanvasTexture(rc); rough.wrapS=rough.wrapT=THREE.RepeatWrapping; rough.repeat.set(6,8);
-  return Tex.fabric={normal,rough};
-}
-
 const NAMES=['SILVA','MOURA','KLOSE','ARNOLD','VIEIRA','HOJBJERG','DAVIES','ROCHA','LENNART',
   'SANÉ','PEREIRA','BRAGA','WINTER','MARTINS','KOVAC','OLSEN','DUARTE','FALK','ROMANO','NUNES',
   'BAUER','COSTA','ELIAS','GRIMM','TAVARES','WEBER'];
@@ -2179,12 +1605,9 @@ let players=[], teams={home:[],away:[]};
 
 class Player{
   constructor(team,idx){
-    this.team=team; this.idx=idx; this.kit=CFG.teams[team]; this.dir=this.kit.dir;
+    this.team=team; this.kit=CFG.teams[team]; this.dir=this.kit.dir;
     this.def=(_formacaoAtiva||FORMATION)[idx]; this.role=this.def.r; this.gk=this.role==='GOL';
-    const identidade=team==='home'?opcoes.casa:opcoes.fora;
-    this.visual=identidade?.jogadores3D?.[idx]||null;
-    this.num=Number.isFinite(this.visual?.numero)?this.visual.numero:NUMS[idx];
-    this.name=this.visual?.nome||NAMES[(idx+(team==='home'?0:11))%NAMES.length];
+    this.num=NUMS[idx]; this.name=NAMES[(idx+(team==='home'?0:11))%NAMES.length];
     this.pos=this.slot().clone(); this.prev=this.pos.clone();
     this.vel=new THREE.Vector3();
     this.face=this.dir>0?Math.PI/2:-Math.PI/2; this.facePrev=this.face;
@@ -2196,30 +1619,19 @@ class Player{
               shoot:clamp(a[2]+j(),.2,1), tackle:clamp(a[3]+j(),.3,1),
               endur:clamp(a[4]+j(),.4,1) };
     this.energy=1;                       // reserva do jogo inteiro (fadiga acumulada)
-    const alturaCfg=Number(this.visual?.alturaM), porteCfg=Number(this.visual?.porte);
-    this.height=Number.isFinite(alturaCfg)?clamp(alturaCfg/1.80,.88,1.14):rnd(.95,1.06)*(.98+this.at.pace*.04);
-    this.build=Number.isFinite(porteCfg)?clamp(porteCfg,.88,1.14):rnd(.94,1.08);
+    this.height=rnd(.95,1.06)*(.98+this.at.pace*.04); this.build=rnd(.94,1.08);
     this.mesh=this.buildMesh(); scene.add(this.mesh);
   }
   slot(){ return new THREE.Vector3(this.def.x*CFG.pitch.L*this.dir,0,this.def.z*CFG.pitch.W*this.dir); }
 
   buildMesh(){
-    const rig=Asset3D.criarJogador(this);
-    if(rig) return rig;
     const G=new THREE.Group();
     const kitCol=this.gk?this.kit.gk:this.kit.kit;
-    const skin=this.visual?.tomPele||pick([0xf5cfaa,0xe0ac7e,0xb98055,0x7d5138,0x9a663f,0xc78f61]);
-    const fab=playerFabricMaps();
-    const M=(c,r,tipo='solido')=>{
-      const m=new THREE.MeshPhysicalMaterial({color:c,roughness:r,metalness:0,envMapIntensity:.58});
-      if(tipo==='tecido'){ m.normalMap=fab.normal; m.roughnessMap=fab.rough; m.normalScale=new THREE.Vector2(.22,.22); m.sheen=.18; m.sheenRoughness=.86; }
-      if(tipo==='pele'){ m.roughness=.54; m.sheen=.12; m.sheenRoughness=.72; }
-      if(tipo==='chuteira'){ m.roughness=.28; m.clearcoat=.34; m.clearcoatRoughness=.32; }
-      return m;
-    };
-    const mKit=M(kitCol,.60,'tecido'), mTrim=M(this.gk?'#10161e':this.kit.trim,.63,'tecido'),
-          mShorts=M(this.gk?'#141a24':this.kit.shorts,.66,'tecido'), mSkin=M(skin,.55,'pele'),
-          mSock=M(this.gk?'#141a24':this.kit.socks,.70,'tecido'), mBoot=M(0x0d1116,.28,'chuteira');
+    const skin=pick([0xf5cfaa,0xe0ac7e,0xb98055,0x7d5138,0x9a663f,0xc78f61]);
+    const M=(c,r)=>new THREE.MeshStandardMaterial({color:c,roughness:r,envMapIntensity:.7});
+    const mKit=M(kitCol,.72), mTrim=M(this.gk?'#10161e':this.kit.trim,.7),
+          mShorts=M(this.gk?'#141a24':this.kit.shorts,.76), mSkin=M(skin,.58),
+          mSock=M(this.gk?'#141a24':this.kit.socks,.8), mBoot=M(0x0d1116,.4);
     const B=this.build;
 
     /* Tronco humano é achatado à frente e atrás (~36 cm de largura por ~24 de
@@ -2250,24 +1662,11 @@ class Player{
     const head=new THREE.Mesh(new THREE.SphereGeometry(.113,20,16),mSkin);
     head.position.y=1.672; head.scale.set(.92,1.09,.99); head.castShadow=true;
     const hair=new THREE.Mesh(new THREE.SphereGeometry(.117,18,12),
-      M(this.visual?.corCabelo||pick([0x141010,0x33241a,0x0e0c0b,0x6a4a29,0x241a14]),.86));
+      M(pick([0x141010,0x33241a,0x0e0c0b,0x6a4a29,0x241a14]),.92));
     hair.scale.set(1,.72,1.02); hair.position.y=.032; head.add(hair);
     const ear=(sd)=>{ const e=new THREE.Mesh(new THREE.SphereGeometry(.026,8,6),mSkin);
       e.scale.set(.5,1,.8); e.position.set(sd*.104,-.01,0); head.add(e); };
     ear(-1); ear(1);
-    if(detail){
-      const eyeMat=M(0x17191c,.36), white=M(0xe8edf0,.50);
-      for(const sd of [-1,1]){
-        const eye=new THREE.Mesh(new THREE.SphereGeometry(.015,8,6),white);
-        eye.scale.set(1.15,.65,.5); eye.position.set(sd*.041,.012,.105); head.add(eye);
-        const pupil=new THREE.Mesh(new THREE.SphereGeometry(.007,7,5),eyeMat);
-        pupil.position.set(0,0,.012); eye.add(pupil);
-      }
-      const nose=new THREE.Mesh(new THREE.ConeGeometry(.017,.048,8),mSkin);
-      nose.rotation.x=Math.PI/2; nose.position.set(0,-.015,.116); head.add(nose);
-      const browMat=M(this.visual?.corCabelo||0x2a211c,.82);
-      for(const sd of [-1,1]){ const br=new THREE.Mesh(new THREE.BoxGeometry(.038,.007,.008),browMat); br.position.set(sd*.04,.045,.108); br.rotation.z=-sd*.08; head.add(br); }
-    }
     const headPivot=new THREE.Group(); headPivot.position.y=0; headPivot.add(head); G.add(headPivot);
     this.headPivot=headPivot;
 
@@ -2417,8 +1816,7 @@ class Player{
   }
 
   /* pose visual — roda no render, com interpolação do passo fixo */
-  render(a,dt){
-    if(this.rig3D && Asset3D.renderJogador(this,a,dt)) return;
+  render(a){
     const x=lerp(this.prev.x,this.pos.x,a), z=lerp(this.prev.z,this.pos.z,a);
     const face=this.facePrev+angleDiff(this.face,this.facePrev)*a;
     const sp=Math.hypot(this.vel.x,this.vel.z);
@@ -3790,21 +3188,26 @@ const Ctrl={
    DIREÇÃO DE CÂMERA
    ============================================================================ */
 const Director={
-  // TRANSMISSÃO é o padrão: câmera lateral televisiva, com zoom/contexto variando
-  // conforme o setor do campo e o tipo do lance. As bolas paradas ganham
-  // enquadramentos próprios inspirados em FC/eFootball: falta diagonal, escanteio
-  // da bandeirinha e pênalti atrás do cobrador.
-  mode:1, names:['DINÂMICA','TRANSMISSÃO','TELE','AÉREA'],
+  mode:0, names:['DINÂMICA','TRANSMISSÃO','TELE','AÉREA'],
   cena:null, cenaT:0,
   look:new THREE.Vector3(0,1,0), shake:0, speed:0, last:new THREE.Vector3(),
   free:false, yaw:2.4, pitch:.42, dist:26,
-  lag:new THREE.Vector3(), fov:36, nz:0, wantFov:null,
+  lag:new THREE.Vector3(), fov:36, nz:0,
   cycle(){ this.mode=(this.mode+1)%4; this.free=false; $('cam').textContent=this.names[this.mode]; },
   update(dt){
+    // Câmera fixa de transmissão: preserva a leitura tática do campo inteiro.
+    // Eventos, gols e replays movem os atletas e a bola, nunca o espectador.
+    const lookFixo=new THREE.Vector3(0,0,0)
+    camera.position.set(0,46,72)
+    this.look.copy(lookFixo)
+    camera.lookAt(lookFixo)
+    if(camera.fov!==48){ camera.fov=48; camera.updateProjectionMatrix() }
+    this.fov=48; this.speed=0; this.focus=Math.hypot(46,72)
+    return
+    /* istanbul ignore next -- modos legados mantidos para compatibilidade do replay */
     if(this.cenaT > 0){ this.cenaT -= dt; if(this.cenaT <= 0) this.cena = null }
     const b=Ball.pos, dir=CFG.teams[Match.possession].dir;
     let want, look, rate=2.7;
-    this.wantFov=null;
 
     /* o operador não é instantâneo: ele persegue a bola com atraso.
        Esse atraso é o que faz a imagem parecer filmada e não calculada. */
@@ -3819,7 +3222,6 @@ const Director={
                              1.2+sp2*this.dist,
                              b.z+Math.sin(this.yaw)*cp*this.dist);
       look=new THREE.Vector3(b.x,b.y+.4,b.z);
-      this.wantFov=38;
       this.applyCam(want,look,5.5,dt,true);
       return;
     }
@@ -3827,104 +3229,39 @@ const Director={
     if(Replay.active){
       const a=Replay.t*.42;
       want=new THREE.Vector3(b.x-Math.cos(a)*17,3.4+Math.sin(a*.8)*1.8,b.z-Math.sin(a)*17);
-      look=new THREE.Vector3(b.x,1.15,b.z); rate=4.2; this.wantFov=30;
+      look=new THREE.Vector3(b.x,1.15,b.z); rate=4.2;
     } else if(Match.phase==='goal'){
       const a=performance.now()*.0006;
       want=new THREE.Vector3(b.x-dir*12+Math.sin(a)*8,5.4,b.z+Math.cos(a)*14);
-      look=new THREE.Vector3(b.x,1.7,b.z); rate=3.6; this.wantFov=28;
-    } else if(Match.phase==='penalty' && Match.penTaker){
-      const t=Match.penTaker, d=t.dir, gx=d*HALF_L;
-      // pênalti: quase alinhado cobrador-bola-goleiro, como FC/eFootball.
-      want=new THREE.Vector3(t.pos.x-d*9.0,2.12,clamp(t.pos.z*.18,-1.4,1.4));
-      look=new THREE.Vector3(gx,1.30,clamp(t.pos.z*.06,-.35,.35));
-      rate=4.6; this.wantFov=28.2;
-    } else if(Match.phase==='set' && Match.setType){
-      const team=Match.possession, d=CFG.teams[team].dir;
-      const gc=goalCenter(team), gd=dist(Ball.pos,gc), s=Math.sign(Ball.pos.z||1)||1;
-      if(Match.setType==='FALTA' && gd<34){
-        if(gd<30 && Math.abs(Ball.pos.z)<11.5){
-          // Falta central: câmera por trás da meta; rede e goleiro ficam no primeiro plano.
-          // É o enquadramento visto nas referências clássicas de cobrança frontal.
-          want=new THREE.Vector3(d*(HALF_L+5.2),3.55,clamp(-s*4.2,-7,7));
-          look=new THREE.Vector3(Ball.pos.x+d*2.5,1.35,Ball.pos.z*.48);
-          rate=4.1; this.wantFov=31.2;
-        }else{
-          // Falta lateral/diagonal: atrás do cobrador vendo barreira e gol.
-          want=new THREE.Vector3(Ball.pos.x-d*11.2,3.35,clamp(Ball.pos.z+s*6.4,-41,41));
-          look=new THREE.Vector3(lerp(Ball.pos.x,gc.x,.66),1.75,lerp(Ball.pos.z,0,.58));
-          rate=4.0; this.wantFov=30.5;
-        }
-      } else if(Match.setType==='ESCANTEIO'){
-        // Escanteio: câmera próxima à bandeirinha apontando para a área.
-        want=new THREE.Vector3(Ball.pos.x-d*5.6,3.05,clamp(Ball.pos.z+s*4.8,-40.8,40.8));
-        look=new THREE.Vector3(d*(HALF_L-10.5),2.0,clamp(-s*1.8,-8,8));
-        rate=4.3; this.wantFov=31.5;
-      } else if(Match.setType==='TIRO DE META'){
-        // Tiro de meta: visão mais aberta atrás do goleiro para ler as opções.
-        want=new THREE.Vector3(Ball.pos.x-d*10.2,6.0,clamp(Ball.pos.z+10,-24,24));
-        look=new THREE.Vector3(Ball.pos.x+d*18,1.2,0);
-        rate=3.2; this.wantFov=34.5;
-      } else if(Match.setType==='LATERAL'){
-        // Lateral: plano de TV mais baixo, alinhado com a linha lateral.
-        want=new THREE.Vector3(clamp(Ball.pos.x-d*5.5,-50,50),8.5,clamp(Ball.pos.z+s*18,-52,52));
-        look=new THREE.Vector3(clamp(Ball.pos.x+d*8,-48,48),1.1,clamp(Ball.pos.z*.55,-20,20));
-        rate=3.6; this.wantFov=33.5;
-      }
-    }
-
-    if(!want || !look){
-      if(Director.cena && Director.cenaT > 0){
-        // Enquadramento da cena encenada. `alvo` e o ponto de interesse (a bola,
-        // ou quem esta reagindo); `aperto` fecha o plano conforme a cena avanca.
-        const c = Director.cena
-        const foco = c.alvo || b
-        const t = 1 - clamp(Director.cenaT / (c.dur || 1), 0, 1)
-        const aperto = c.fecha ? (1 - t * 0.45) : 1
-        const ang = c.ang + t * (c.giro || 0)
-        const rai = (c.raio || 16) * aperto
-        want = new THREE.Vector3(
-          foco.x + Math.cos(ang) * rai,
-          (c.alt || 4.2) * aperto + 0.8,
-          foco.z + Math.sin(ang) * rai)
-        look = new THREE.Vector3(foco.x, (c.olha ?? 1.2), foco.z)
-        rate = c.rate || 3.2
-        if(this.wantFov==null) this.wantFov=clamp(32-(rai-16)*.28,24,34)
-      } else switch(this.mode){
-        case 0: {
-          // Dinâmica: por trás do ataque, sem cair no ângulo de drone.
-          const prox=clamp((Math.abs(lg.x)-10)/34,0,1);
-          want=new THREE.Vector3(clamp(lg.x-dir*(17+prox*4.5),-45,45),lerp(17.5,13.5,prox),clamp(lg.z*.22+34,-12,40));
-          look=new THREE.Vector3(clamp(lg.x+dir*(11+prox*5),-49,49),1.2,clamp(lg.z*.68,-24,24));
-          this.wantFov=lerp(36,31,prox);
-          break;
-        }
-        case 1: {
-          // Broadcast V5: operador antecipa a jogada, abre em transição rápida e fecha
-          // quando a bola entra no último terço/área ou muitos atletas congestionam o lance.
-          const prox=clamp((Math.abs(lg.x)-7)/39,0,1);
-          let perto=0; for(const p of players) if(dist2(p.pos,b)<17*17) perto++;
-          const congestion=clamp((perto-4)/8,0,1), speed=clamp(Ball.vel.length()/24,0,1);
-          const side=clamp(lg.z*.17,-4.8,4.8);
-          const lead=clamp(Ball.vel.x*.34 + (Ball.owner?dir*3.2:0),-7.5,7.5);
-          want=new THREE.Vector3(clamp(lg.x-dir*(2.5+prox*3.4),-44,44),lerp(26.4,19.0,prox),lerp(51.2,38.6,prox)+side);
-          look=new THREE.Vector3(clamp(lg.x+dir*(8.7+prox*5.2)+lead,-49,49),.82+b.y*.08,clamp(lg.z*.65,-19,19));
-          this.wantFov=clamp(lerp(36.1,29.5,prox)-congestion*.75+speed*.72,28.7,36.6);
-          break;
-        }
-        case 2: {
-          // Tele V5: câmera lateral baixa próxima ao nível do gramado, parecida com
-          // a referência imersiva RMA x BAY, sem virar uma câmera de jogador.
-          const prox=clamp((Math.abs(lg.x)-6)/35,0,1), lead=clamp(Ball.vel.x*.22,-5,5);
-          want=new THREE.Vector3(clamp(lg.x-dir*(6.3+prox*3.6),-44,44),lerp(9.4,7.1,prox),lerp(28.8,23.2,prox));
-          look=new THREE.Vector3(clamp(lg.x+dir*(8.2+prox*3.8)+lead,-49,49),1.10,clamp(lg.z*.82,-24,24));
-          this.wantFov=lerp(34.0,29.0,prox);
-          break;
-        }
-        default:
-          want=new THREE.Vector3(b.x*.45,72,14);
-          look=new THREE.Vector3(b.x*.52,0,b.z*.72);
-          this.wantFov=39;
-      }
+      look=new THREE.Vector3(b.x,1.7,b.z); rate=3.6;
+    } else if(Director.cena && Director.cenaT > 0){
+      // Enquadramento da cena encenada. `alvo` e o ponto de interesse (a bola,
+      // ou quem esta reagindo); `aperto` fecha o plano conforme a cena avanca.
+      const c = Director.cena
+      const foco = c.alvo || b
+      const t = 1 - clamp(Director.cenaT / (c.dur || 1), 0, 1)
+      const aperto = c.fecha ? (1 - t * 0.45) : 1
+      const ang = c.ang + t * (c.giro || 0)
+      const rai = (c.raio || 16) * aperto
+      want = new THREE.Vector3(
+        foco.x + Math.cos(ang) * rai,
+        (c.alt || 4.2) * aperto + 0.8,
+        foco.z + Math.sin(ang) * rai)
+      look = new THREE.Vector3(foco.x, (c.olha ?? 1.2), foco.z)
+      rate = c.rate || 3.2
+    } else switch(this.mode){
+      case 0:
+        want=new THREE.Vector3(clamp(lg.x,-46,46)-dir*24,15,clamp(lg.z,-20,20)*.5+14);
+        look=new THREE.Vector3(lg.x+dir*12,1.5,lg.z*.6); break;
+      case 1:
+        want=new THREE.Vector3(clamp(lg.x,-33,33),28,56);
+        look=new THREE.Vector3(clamp(lg.x,-40,40)*.9,.5,lg.z*.32); break;
+      case 2:
+        want=new THREE.Vector3(clamp(lg.x,-40,40),13,32);
+        look=new THREE.Vector3(lg.x,1.1,lg.z*.75); break;
+      default:
+        want=new THREE.Vector3(b.x*.5,70,12);
+        look=new THREE.Vector3(b.x*.5,0,b.z*.7);
     }
     this.applyCam(want,look,rate,dt,false);
   },
@@ -3940,9 +3277,9 @@ const Director={
     // tremor de mão: dois senos incomensuráveis, amplitude proporcional ao zoom
     this.nz+=dt;
     if(!isFree){
-      const amp=.0014*(42-this.fov);
+      const amp=.0016*(42-this.fov);
       this.look.x+=Math.sin(this.nz*1.7)*amp+Math.sin(this.nz*4.3)*amp*.4;
-      this.look.y+=Math.sin(this.nz*2.3+1.1)*amp*.65;
+      this.look.y+=Math.sin(this.nz*2.3+1.1)*amp*.7;
     }
     if(this.shake>0){
       this.shake-=dt*1.5; const sh=this.shake*.3;
@@ -3950,19 +3287,12 @@ const Director={
     }
     camera.lookAt(this.look);
 
-    // zoom: o operador fecha o enquadramento conforme o tipo de jogada.
+    // zoom: o operador fecha o enquadramento quando a jogada está longe
     const d=Math.hypot(camera.position.x-this.look.x,camera.position.y-this.look.y,
                        camera.position.z-this.look.z);
-    let wantFov;
-    if(this.wantFov!=null) wantFov=this.wantFov;
-    else if(isFree) wantFov=38;
-    else if(this.cena && this.cenaT>0) wantFov=clamp(33-(d-20)*.13,24,35);
-    else if(this.mode===1) wantFov=34;
-    else if(this.mode===2) wantFov=30;
-    else if(this.mode===3) wantFov=39;
-    else wantFov=35;
+    const wantFov=isFree?38:clamp(40-(d-24)*.30,17,42);
     if(Math.abs(wantFov-this.fov)>.02){
-      this.fov=damp(this.fov,wantFov,1.8,dt);
+      this.fov=damp(this.fov,wantFov,1.6,dt);
       camera.fov=this.fov; camera.updateProjectionMatrix();
     }
     this.speed=Math.hypot(camera.position.x-this.last.x,camera.position.y-this.last.y,
@@ -4258,17 +3588,12 @@ const Hud={
 let started=false, last=performance.now(), acc=0, wallT=0;
 
 function renderWorld(dt,a){
-  Ambiente.step(dt);
-  for(const p of players) p.render(a,dt);
+  for(const p of players) p.render(a);
   Officials.render(a);
 
   const bx=lerp(Ball.prev.x,Ball.pos.x,a), by=lerp(Ball.prev.y,Ball.pos.y,a),
         bz=lerp(Ball.prev.z,Ball.pos.z,a);
   Ball.mesh.position.set(bx,by,bz);
-  // Broadcast visibility: a bola ganha no máximo ~18% de escala apenas quando muito
-  // distante da câmera. A física continua usando raio oficial de 11 cm.
-  const camBallDist=camera.position.distanceTo(Ball.mesh.position);
-  const ballVis=lerp(1,1.18,clamp((camBallDist-34)/72,0,1)); Ball.mesh.scale.setScalar(ballVis);
   const w=Ball.spin, wl=Math.hypot(w.x,w.y,w.z);
   if(wl>.01){
     Ball._ax=Ball._ax||new THREE.Vector3();
@@ -4314,7 +3639,6 @@ function renderWorld(dt,a){
     fl.rotation.y=wdir+Math.sin(wallT*(2.2+wmag*2)+i)*(.12+.34*wmag);
     fl.rotation.z=Math.sin(wallT*(3.1+wmag*2)+i)*(.05+.2*wmag);
   }
-  updateCrowdVisuals();
   updateNets(dt);
   Overlay.update();
   if(World.flashes){
@@ -4385,7 +3709,6 @@ function boot(p,t){ $('barFill').style.width=p+'%'; if(t) $('step').textContent=
 const steps=[
   ['renderizador e pós-processamento',()=>{ initRenderer(); Gfx.init(); }],
   ['céu e iluminação',()=>{ buildSky(); buildLights(); }],
-  ['assets 3D, mocap e PBR',()=>Asset3D.init()],
   ['gramado, faixas e desgaste',()=>{ buildPitch(); }],
   ['grama instanciada',()=>{ buildGrass(); }],
   ['traves, redes e bola',()=>{ buildGoals(); buildBall(); buildFlashes(); }],
@@ -4394,7 +3717,7 @@ const steps=[
     Replay.init(); Overlay.init(); Ctrl.init(); }],
   ['aquecendo shaders',()=>{
     Rules.kickoff('home');
-    $('cam').textContent=Director.names[Director.mode];
+    $('cam').textContent=Director.names[0];
     $('qtag').textContent=QUALITY==='high'?'ALTA':QUALITY==='mid'?'MÉDIA':'BAIXA';
     if(renderer.compile) renderer.compile(scene,camera);
     renderWorld(1/60,1);
@@ -4408,8 +3731,9 @@ function runBuild(done){
     const [label,fn]=steps[i];
     boot(Math.round(i/steps.length*100),label);
     requestAnimationFrame(()=>{
-      Promise.resolve().then(()=>fn()).then(()=>{ i++; setTimeout(next,14); })
-        .catch(err=>{ $('step').textContent='falha: '+err.message; console.error(err); });
+      try{ fn(); }
+      catch(err){ $('step').textContent='falha: '+err.message; console.error(err); return; }
+      i++; setTimeout(next,14);
     });
   })();
 }
@@ -4418,8 +3742,6 @@ function runBuild(done){
   function lerTelemetria(){
     if(_destruido || typeof Match === "undefined") return null
     const somaPoss = (Match.possT.home + Match.possT.away) || 1
-    let lodDetalhe=0,lodMedio=0,lodProxy=0;
-    for(const p of players){ const l=p.rig3D?.lod; if(l==='detail')lodDetalhe++; else if(l==='medium')lodMedio++; else if(l==='proxy')lodProxy++; }
     return {
       relogio: { segundos: Match.t, tempo: Match.half, acrescimo: Match.stoppage,
                  fase: Match.phase, pausado: Match.paused },
@@ -4451,17 +3773,6 @@ function runBuild(done){
       },
       velocidadeSim: Sim.speed,
       passos: Match.steps,
-      ambiente: { tipo:Ambiente.cfg.tipo, hora:Ambiente.cfg.hora, intensidade:Ambiente.cfg.intensidade,
-                  precipitacao:Ambiente.precip?.N||0, molhado:Ambiente.cfg.molhado ?? (Ambiente.cfg.tipo==='chuva'?1:0) },
-      render3D: {
-        lodDetalhe, lodMedio, lodProxy,
-        crowdCount: World.crowd?.count||0,
-        jogadorGLB: !!Asset3D.jogadorPronto,
-        estadioGLB: !!Asset3D.estadioAtivo,
-        cameraModo: Director.names[Director.mode], fov: camera?.fov||0,
-        precipitacao: Ambiente.precip?.N||0,
-        falhasAssets: [...(Asset3D.falhas||[])],
-      },
     }
   }
 
@@ -4488,21 +3799,6 @@ function runBuild(done){
   function definirPausa(pausado){
     if(_destruido || typeof Match === "undefined") return
     Match.paused = !!pausado
-  }
-
-  /** Seleciona a câmera do jogo sem depender do teclado/HUD legado. */
-  function definirCamera(modo){
-    if(_destruido || typeof Director === "undefined") return
-    const nomes={dinamica:0,transmissao:1,tele:2,aerea:3,dynamic:0,broadcast:1,aerial:3}
-    let i=typeof modo==='number'?Math.round(modo):nomes[String(modo||'').toLowerCase()]
-    if(!Number.isFinite(i)) i=1
-    Director.mode=clamp(i,0,3); Director.free=false; $('cam').textContent=Director.names[Director.mode]
-  }
-
-  /** Atualiza somente o ambiente VISUAL: sol/nuvens/chuva/neve/horário. */
-  function definirAmbiente(config){
-    if(_destruido) return
-    Ambiente.set(config)
   }
 
   /**
@@ -5089,10 +4385,9 @@ function runBuild(done){
         opcoes.aoProgredir?.(Math.round(i / steps.length * 100), rotulo)
         _rafId = requestAnimationFrame(() => {
           if(_destruido) return resolve()
-          Promise.resolve().then(() => fn()).then(() => {
-            i++
-            _timers.push(window.setTimeout(proximo, 14))
-          }).catch(reject)
+          try { fn() } catch(err){ return reject(err) }
+          i++
+          _timers.push(window.setTimeout(proximo, 14))
         })
       })()
     })
@@ -5137,7 +4432,6 @@ function runBuild(done){
     } catch { /* ja descartado */ }
 
     try { Audio2?.close?.() } catch { /* audio pode nem ter iniciado */ }
-    try { Asset3D?.dispose?.() } catch { /* loaders opcionais */ }
   }
 
   function descartarMaterial(m){
@@ -5155,8 +4449,6 @@ function runBuild(done){
     definirVelocidade,
     definirDuracaoDoTempo,
     definirPausa,
-    definirCamera,
-    definirAmbiente,
     definirFormacao,
     encenar,
     get destruido(){ return _destruido },
