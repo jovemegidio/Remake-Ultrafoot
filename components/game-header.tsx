@@ -72,6 +72,7 @@ const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/infraestrutura", meta: { parent: "Escritorio", parentHref: "/financas", title: "Infraestrutura" } },
   { prefix: "/analise-partida", meta: { parent: "Escritorio", parentHref: "/financas", title: "Analise da Partida" } },
   { prefix: "/performance", meta: { parent: "Escritorio", parentHref: "/financas", title: "Performance Center" } },
+  { prefix: "/selecao/calendario", meta: { parent: "Selecao", parentHref: "/selecao", title: "Calendario da selecao" } },
   { prefix: "/configuracoes", meta: { parent: "Personalizar", parentHref: "/configuracoes", title: "Configuracoes" } },
   { prefix: "/salvar", meta: { parent: "Personalizar", parentHref: "/configuracoes", title: "Salvar" } },
 ]
@@ -1126,6 +1127,10 @@ const NAV_MENU_ITEMS: NavMenuItem[] = [
 
 // Itens que substituem os de clube no modo selecao (entram antes de Configuracoes).
 const NAV_MENU_NATIONAL_ITEMS: NavMenuItem[] = [
+  // O calendario vem PRIMEIRO de proposito: dirigindo uma selecao, "quando e o
+  // meu proximo jogo" e a pergunta que se faz antes de qualquer outra — e era a
+  // unica que o modo nao respondia.
+  { secao: "Selecao", label: "Calendario da selecao", href: "/selecao/calendario", icon: Calendar },
   { secao: "Selecao", label: "Convocacao", href: "/selecao/convocacao", icon: User },
   { secao: "Selecao", label: "Competicoes da selecao", href: "/selecao/competicoes", icon: Trophy },
   { secao: "Selecao", label: "Amistosos de preparacao", href: "/selecao/amistosos", icon: Swords },

@@ -33,6 +33,7 @@ import type { PorSetor, ObraDoEstadio } from "@/lib/stadium-sectors"
 import type { AIClubSocialState } from "@/lib/ai-club-social"
 import type { EstadoGestao282 } from "@/lib/gestao-282"
 import type { RodadaCompartilhada, TecnicoDoSave } from "@/lib/tecnicos-do-save"
+import type { LesaoRegistrada } from "@/lib/historico-de-lesoes"
 import type { ConfiguracoesIniciais283 } from "@/lib/configuracoes-iniciais-283"
 import type { UniversoPersistente286 } from "@/lib/universo-286"
 import type { EstadoTransferRoom26 } from "@/lib/transferroom-26"
@@ -55,6 +56,15 @@ export interface SquadPlayer {
   age: number
   overall: number
   potential: number
+  /**
+   * Lesões que este atleta já teve (as 12 mais recentes).
+   *
+   * Fica no ATLETA, e não numa lista à parte no save, de propósito: assim ela
+   * viaja junto numa transferência, entra e sai do bolso do técnico no co-op
+   * pelo mesmo caminho do elenco, e nenhum campo novo precisa ser classificado
+   * em `lib/chaveamento-de-tecnico.ts`. Ver `lib/historico-de-lesoes.ts`.
+   */
+  historicoDeLesoes?: LesaoRegistrada[]
   value: number
   /** Nacionalidade do jovem; opcional para compatibilidade com saves antigos. */
   nationality?: string

@@ -16,6 +16,7 @@ import {
 } from "@/lib/gestao-282"
 import { cn } from "@/lib/utils"
 import { Award, ClipboardList, Goal, GraduationCap, Handshake, History, Landmark, Scale, Shield, Target, Users } from "lucide-react"
+import { areaMaisFragil, confiancaPorArea, NOME_DA_AREA } from "@/lib/confianca-da-diretoria"
 
 type Aba = "bolas" | "preparacao" | "mercado" | "metas" | "cultura" | "treino" | "diretoria" | "comissao" | "disciplina" | "timeline"
 const ABAS: { id: Aba; nome: string; icon: typeof Goal }[] = [
@@ -61,7 +62,7 @@ export default function GestaoAvancadaPage() {
       {aba === "metas" && <Metas gestao={gestao} jogadores={engine.squadPlayers} week={engine.currentWeek} salvar={salvar} />}
       {aba === "cultura" && <Cultura gestao={gestao} jogadores={engine.squadPlayers} salvar={salvar} />}
       {aba === "treino" && <Treino gestao={gestao} jogadores={engine.squadPlayers} salvar={salvar} />}
-      {aba === "diretoria" && <Diretoria gestao={gestao} season={state.season} confidence={state.boardConfidence ?? 50} jogadores={engine.squadPlayers} liberarVerba={engine.liberarVerbaDaDiretoria} salvar={salvar} />}
+      {aba === "diretoria" && <Diretoria gestao={gestao} season={state.season} confidence={state.boardConfidence ?? 50} jogadores={engine.squadPlayers} liberarVerba={engine.liberarVerbaDaDiretoria} salvar={salvar} saldo={engine.balance} dividaTotal={state.debt?.enabled ? (state.debt.principal ?? 0) : 0} orcamento={engine.transferBudget} moralDoElenco={state.teamMorale ?? 65} />}
       {aba === "comissao" && <Comissao gestao={gestao} salvar={salvar} />}
       {aba === "disciplina" && <Disciplina gestao={gestao} salvar={salvar} />}
       {aba === "timeline" && <Linha eventos={gestao.linhaDoTempo} />}
@@ -116,9 +117,10 @@ function Treino({ gestao, jogadores, salvar }: Props & { jogadores: Player[] }) 
   return <Secao titulo="Unidades de treino e mentoria" texto="Cada atleta trabalha numa unidade; veteranos podem orientar jovens."><div className="max-h-72 overflow-y-auto">{jogadores.map(p => <div key={p.id} className="flex items-center justify-between border-b border-white/5 py-2"><span>{p.name} · {p.position}</span><select className={campo} value={gestao.unidadesTreino[p.id] ?? (p.position === "GOL" ? "goleiros" : ["ZAG","LD","LE","VOL"].includes(p.position) ? "defesa" : "ataque")} onChange={e => unidade(p.id, e.target.value as "goleiros"|"defesa"|"ataque")}><option value="goleiros">Goleiros</option><option value="defesa">Defesa</option><option value="ataque">Ataque</option></select></div>)}</div><div className="mt-5 flex flex-wrap gap-3"><JogadorSelect jogadores={jogadores.filter(p=>p.age>=27)} value={mentor} onChange={setMentor} label="Mentor veterano" /><JogadorSelect jogadores={jogadores.filter(p=>p.age<=23)} value={jovem} onChange={setJovem} label="Jovem" /><button className={botao} onClick={criar}>Criar mentoria</button></div><Lista itens={gestao.mentorias.map(m => `${m.mentor} → ${m.jovens.join(", ")} (${m.foco})`)} /></Secao>
 }
 
-function Diretoria({ gestao, season, confidence, jogadores, liberarVerba, salvar }: Props & {
+function Diretoria({ gestao, season, confidence, jogadores, liberarVerba, salvar, saldo, dividaTotal, orcamento, moralDoElenco }: Props & {
   season: number; confidence: number; jogadores: Player[]
   liberarVerba: (valor: number, destino: "transferencias" | "caixa") => void
+  saldo: number; dividaTotal: number; orcamento: number; moralDoElenco: number
 }) {
   const [tipo, setTipo] = useState<PedidoDiretoria282["tipo"]>("orcamento"); const [texto, setTexto] = useState(""); const [prioridade, setPrioridade] = useState(false)
   const prioridadeUsada = gestao.pedidosDiretoria.some(p => p.season === season && p.prioridade)
@@ -146,9 +148,58 @@ function Diretoria({ gestao, season, confidence, jogadores, liberarVerba, salvar
     )
     setTexto("")
   }
-  return <Secao titulo="Pedidos contextuais à diretoria" texto="Um pedido pode ser marcado como prioridade por temporada. Confiança e justificativa afetam a resposta — e o que for aprovado vira verba de verdade."><div className="flex flex-wrap gap-3"><select className={campo} value={tipo} onChange={e => setTipo(e.target.value as typeof tipo)}><option value="orcamento">Orçamento</option><option value="estadio">Estádio</option><option value="treino">Centro de treino</option><option value="base">Categorias de base</option><option value="staff">Comissão técnica</option></select><input className={`${campo} min-w-72 flex-1`} value={texto} onChange={e => setTexto(e.target.value)} placeholder="Por que o clube precisa disto agora?" /><label className="flex items-center gap-2"><input type="checkbox" disabled={prioridadeUsada} checked={prioridade} onChange={e => setPrioridade(e.target.checked)} /> Prioridade anual</label><button className={botao} onClick={enviar}>Enviar</button></div>
+  /**
+   * A CONFIANÇA, ABERTA POR ÁREA.
+   *
+   * O número sozinho não orientava decisão: 72 podia ser o campeão que quebrou o
+   * clube ou o arrumado que não vence. Aberto, o técnico vê ONDE está o problema
+   * — e cada área se resolve de um jeito diferente. Ver lib/confianca-da-diretoria.
+   *
+   * Tudo aqui sai de dado que o save já tem; nenhuma área inventa medida nova.
+   */
+  const areasDaDiretoria = useMemo(() => confiancaPorArea({
+    confiancaEsportiva: confidence,
+    // A penalidade de governanca ja esta embutida no `confidence` que chega
+    // aqui; some-la de novo contaria duas vezes.
+    bonusDeGovernanca: 0,
+    saldo,
+    dividaTotal,
+    // Orcamento CONSUMIDO: o que sobrou contra o que o elenco vale e o proxy
+    // honesto que esta tela tem. Orcamento zerado com elenco caro = gastou.
+    gastoDoOrcamento: valorDoElenco > 0 ? Math.max(0, 1 - orcamento / (valorDoElenco * 0.35)) : 0.5,
+    // Garotos da base que ja estao no profissional.
+    promovidosDaBase: jogadores.filter(j => (j.age ?? 30) <= 21 && (j.overall ?? 0) >= 60).length,
+    moralDoElenco,
+  }), [confidence, saldo, dividaTotal, orcamento, valorDoElenco, jogadores, moralDoElenco])
+  const fragil = useMemo(() => areaMaisFragil(areasDaDiretoria), [areasDaDiretoria])
+
+  return <>
+    <Secao titulo="Confiança da diretoria" texto={fragil
+      ? `A diretoria está preocupada com ${NOME_DA_AREA[fragil.area].toLowerCase()}: ${fragil.leitura}`
+      : "Nenhuma área preocupa a diretoria no momento."}>
+      <div className="grid gap-2 md:grid-cols-2">
+        {areasDaDiretoria.map(a => (
+          <div key={a.area} className="rounded-xl bg-white/5 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-white">{NOME_DA_AREA[a.area]}</span>
+              <span className={`font-mono text-sm font-bold tabular-nums ${
+                a.nota >= 70 ? "text-emerald-400" : a.nota >= 45 ? "text-amber-400" : "text-red-400"
+              }`}>{a.nota}</span>
+            </div>
+            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
+              <div className={`h-full rounded-full ${
+                a.nota >= 70 ? "bg-emerald-400/70" : a.nota >= 45 ? "bg-amber-400/70" : "bg-red-400/70"
+              }`} style={{ width: `${a.nota}%` }} />
+            </div>
+            <p className="mt-1.5 text-xs text-white/45">{a.leitura}</p>
+          </div>
+        ))}
+      </div>
+    </Secao>
+    <Secao titulo="Pedidos contextuais à diretoria" texto="Um pedido pode ser marcado como prioridade por temporada. Confiança e justificativa afetam a resposta — e o que for aprovado vira verba de verdade."><div className="flex flex-wrap gap-3"><select className={campo} value={tipo} onChange={e => setTipo(e.target.value as typeof tipo)}><option value="orcamento">Orçamento</option><option value="estadio">Estádio</option><option value="treino">Centro de treino</option><option value="base">Categorias de base</option><option value="staff">Comissão técnica</option></select><input className={`${campo} min-w-72 flex-1`} value={texto} onChange={e => setTexto(e.target.value)} placeholder="Por que o clube precisa disto agora?" /><label className="flex items-center gap-2"><input type="checkbox" disabled={prioridadeUsada} checked={prioridade} onChange={e => setPrioridade(e.target.checked)} /> Prioridade anual</label><button className={botao} onClick={enviar}>Enviar</button></div>
     <p className="mt-3 text-sm text-white/50">Se aprovado, a diretoria libera cerca de <b className="text-emerald-300">{formatCurrency(previsto)}</b> em {DESTINO_DO_PEDIDO[tipo] === "transferencias" ? "verba de transferências" : "caixa"}.</p>
     <Lista itens={gestao.pedidosDiretoria.map(p => `${p.tipo} · ${p.status}${p.prioridade ? " · PRIORITÁRIO" : ""}${p.verbaLiberada ? ` · ${formatCurrency(p.verbaLiberada)}` : ""}: ${p.justificativa}`)} /></Secao>
+  </>
 }
 
 function Comissao({ gestao, salvar }: Props) {

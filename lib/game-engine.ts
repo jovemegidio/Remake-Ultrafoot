@@ -20,6 +20,7 @@ import {
 } from "@/lib/mercado-realista"
 import { normalizePosition, pickStartingXI } from "@/lib/formations"
 import { aprenderPosicao, exercerFuncao, perfilDoAtleta, type ProgressoDoPerfil } from "@/lib/modelo-de-jogador"
+import { registrarLesao, riscoPorHistorico, type LesaoRegistrada } from "@/lib/historico-de-lesoes"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
 import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor, FRACAO_DO_CUSTO_OPERACIONAL, youthPromotionSalaryWeekly } from "@/lib/club-economy"
 import { reforcosEmergenciais, gerarNomeDeAtleta, ELENCO_MINIMO } from "@/lib/reposicao-emergencial"
@@ -552,6 +553,14 @@ export interface PlayerTraining {
 }
 
 export interface Player {
+  /**
+   * Lesoes que este atleta ja teve (as 12 mais recentes).
+   *
+   * Mora no ATLETA de proposito: viaja junto numa transferencia e entra/sai do
+   * bolso do tecnico no co-op pelo mesmo caminho do elenco, sem exigir campo
+   * novo no save. Ver lib/historico-de-lesoes.ts.
+   */
+  historicoDeLesoes?: LesaoRegistrada[]
   id: number
   name: string
   position: string
@@ -5770,7 +5779,22 @@ export const useGameEngine = create<GameEngineState>()(
           const pesos = aptos.map(p => {
             const persona = p.persona ?? gerarPersona(p.id, p.overall)
             const fragil = 1.4 - persona.profissionalismo / 20 // ~0.4-1.35
-            return { p, peso: (p.position === "GOL" ? 0.3 : 1) * Math.max(0.2, fragil) }
+            // ⚠️ DUAS COISAS QUE JA EXISTIAM E NAO ENTRAVAM AQUI:
+            //
+            // `propensaoALesao` nasce em lib/modelo-de-jogador (atributo oculto,
+            // derivado do id) e ja pesava no motor de PARTIDA — mas o sorteio
+            // semanal a ignorava, entao o atleta fragil so era fragil em campo.
+            //
+            // E o passado do atleta nao contava: quem voltou de tres lesoes
+            // seguidas corria o mesmo risco de quem nunca se machucou. Ver
+            // lib/historico-de-lesoes.ts.
+            const perfil = perfilDoAtleta(p.id, p.position, p.overall, p.secondaryPositions ?? [])
+            const propensao = 0.7 + (perfil.propensaoALesao / 20) * 0.6 // ~0.7-1.3
+            const passado = riscoPorHistorico(p.historicoDeLesoes, get().currentWeek)
+            return {
+              p,
+              peso: (p.position === "GOL" ? 0.3 : 1) * Math.max(0.2, fragil) * propensao * passado,
+            }
           })
           const soma = pesos.reduce((a, b) => a + b.peso, 0)
           let r = Math.random() * soma
@@ -5780,9 +5804,19 @@ export const useGameEngine = create<GameEngineState>()(
           const semanas = sev === "leve" ? 1 + Math.floor(Math.random() * 2)
             : sev === "media" ? 3 + Math.floor(Math.random() * 3) : 6 + Math.floor(Math.random() * 8)
           set((st) => ({
-            squadPlayers: st.squadPlayers.map(p => p.id === alvo.id
-              ? { ...p, injury: { type: INJURY_TYPES[Math.floor(Math.random() * INJURY_TYPES.length)], severity: sev, weeksRemaining: semanas, startWeek: st.currentWeek } }
-              : p),
+            squadPlayers: st.squadPlayers.map(p => {
+              if (p.id !== alvo.id) return p
+              const tipo = INJURY_TYPES[Math.floor(Math.random() * INJURY_TYPES.length)]
+              return {
+                ...p,
+                injury: { type: tipo, severity: sev, weeksRemaining: semanas, startWeek: st.currentWeek },
+                // O historico e escrito AQUI, junto com a lesao: separar os dois
+                // criaria o caso de uma lesao existir sem registro.
+                historicoDeLesoes: registrarLesao(p.historicoDeLesoes, {
+                  tipo, severidade: sev, semana: st.currentWeek, duracao: semanas,
+                }),
+              }
+            }),
           }))
         }
       },

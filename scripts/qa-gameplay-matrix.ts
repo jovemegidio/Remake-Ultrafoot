@@ -1,5 +1,5 @@
 import { applyCard, tickSuspensions, type DisciplinaryRecord } from "../lib/discipline-engine"
-import { resolveDivisionChange } from "../lib/promotion-relegation"
+import { resolveDivisionChange } from "../lib/league-pyramid"
 import { completeTransfer, createOffer, runDeadlineDay } from "../lib/transfer-engine"
 import { DEFAULT_STATE, createFreshCareerState } from "../lib/save-system"
 
@@ -11,10 +11,14 @@ if (tickSuspensions(thirdYellow, 1, "liga").suspensions.length) fail("suspensão
 const straightRed = applyCard(record, "red", "copa")
 if (straightRed.redCards !== 1 || straightRed.suspensions[0]?.reason !== "red_card") fail("vermelho direto inválido")
 
-if (resolveDivisionChange("serie_a", 17).nextDivision !== "serie_b") fail("rebaixamento Série A")
-if (resolveDivisionChange("serie_b", 4).nextDivision !== "serie_a") fail("acesso Série B")
-if (resolveDivisionChange("serie_c", 19).nextDivision !== "serie_d") fail("rebaixamento Série C 2026")
-if (resolveDivisionChange("serie_d", 6).nextDivision !== "serie_c") fail("sexto acesso Série D 2026")
+// ⚠️ Estas quatro linhas vinham de `lib/promotion-relegation`, que NINGUEM
+// executa (ver scripts/qa-promotion-relegation.ts). Alem de provar codigo morto,
+// elas afirmavam numeros que divergiam do jogo E da realidade: que a Serie C
+// rebaixa 2 e que o 6o da Serie D sobe. A piramide viva usa 4 e 4.
+if (resolveDivisionChange("serie_a", 17, 20).nextDivision !== "serie_b") fail("rebaixamento Série A")
+if (resolveDivisionChange("serie_b", 4, 20).nextDivision !== "serie_a") fail("acesso Série B")
+if (resolveDivisionChange("serie_c", 19, 20).nextDivision !== "serie_d") fail("rebaixamento Série C")
+if (resolveDivisionChange("serie_d", 4, 20).nextDivision !== "serie_c") fail("acesso Série D")
 
 const career = createFreshCareerState(DEFAULT_STATE, {
   managerName: "Matriz QA", selectedTeamShort: "FLA", season: 2026, week: 12, balance: 100_000_000,
