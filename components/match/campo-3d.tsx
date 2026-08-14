@@ -27,6 +27,15 @@ import { AlertTriangle } from "lucide-react"
 import { performanceStore } from "@/components/performance-profile"
 import type { EventoParaEncenar, Motor, QualidadeMotor } from "@/partida-3d/partida-3d/motor"
 import { getFormationSlots } from "@/lib/formations"
+import { assetsFutebol } from "@/lib/assets-futebol"
+
+/** O que o 3D precisa saber de um atleta para desenhá-lo. Tudo opcional. */
+export interface AtletaVisual {
+  id?: string
+  nome?: string
+  numero?: number
+  posicao?: string
+}
 
 export interface Campo3DProps {
   /** Eventos do match-engine, do mais NOVO para o mais antigo (como no state). */
@@ -35,8 +44,18 @@ export interface Campo3DProps {
   velocidade?: number
   pausado?: boolean
   formacao?: string
+  /** Duração de cada tempo, em minutos de jogo. Vem do contexto da partida. */
+  duracaoDoTempo?: number
   casa: { nome: string; sigla: string; corPrincipal: string; corSecundaria: string }
   fora: { nome: string; sigla: string; corPrincipal: string; corSecundaria: string }
+  /**
+   * Os 11 titulares de cada lado, NA ORDEM DOS SLOTS da escalação.
+   *
+   * A ordem importa: o motor casa o índice do atleta com o índice do slot da
+   * formação. Fora de ordem, o goleiro apareceria no ataque.
+   */
+  titularesCasa?: AtletaVisual[]
+  titularesFora?: AtletaVisual[]
   /**
    * Chamado quando o 3D não pode ser usado. Quem chama DEVE mostrar o 2D.
    * Recebe o motivo para a mensagem — o jogador merece saber por que trocou.
@@ -63,7 +82,50 @@ const QUALIDADE_POR_PERFIL: Record<string, QualidadeMotor> = {
   quality: "high",
 }
 
-export function Campo3D({ eventos, velocidade = 1, pausado = false, formacao = "4-3-3", casa, fora, aoFalhar }: Campo3DProps) {
+/**
+ * A APARÊNCIA DO ATLETA SAI DO ID DELE, e não do banco.
+ *
+ * O jogo não guarda cabelo, tom de pele ou formato de rosto — e não deve passar
+ * a guardar só para o 3D: seriam três campos novos por atleta em 66 mil atletas,
+ * inflando save e seed para uma decisão puramente visual. Derivar do id dá o que
+ * importa: **estabilidade**. O mesmo atleta aparece igual em toda partida, em
+ * toda máquina, sem custar um byte de save.
+ *
+ * ⚠️ Só devolve o que dá para afirmar. Altura e porte NÃO são inventados aqui —
+ * o jogo nunca teve esse dado (ver [[ultrafoot-dados-fisicos-inventados]]), e o
+ * motor tem fallback próprio para eles. Preencher com número inventado seria
+ * transformar palpite em dado.
+ */
+const CABELOS = ["short", "buzz", "fade", "curly", "long"] as const
+const TONS_DE_PELE = ["#f2d3b3", "#e0b088", "#c68642", "#8d5524", "#5c3317"]
+const CORES_DE_CABELO = ["#1b1310", "#2f2119", "#4a3220", "#7a5230", "#b58a4c"]
+const ROSTOS = ["balanced", "slim", "wide", "long", "round"] as const
+
+function semente(id: string): number {
+  let h = 2166136261
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+
+function aparenciaDoAtleta(atleta: AtletaVisual, indice: number) {
+  const s = semente(atleta.id ?? atleta.nome ?? `slot-${indice}`)
+  return {
+    nome: atleta.nome,
+    numero: atleta.numero,
+    cabelo: CABELOS[s % CABELOS.length],
+    tomPele: TONS_DE_PELE[(s >>> 3) % TONS_DE_PELE.length],
+    corCabelo: CORES_DE_CABELO[(s >>> 7) % CORES_DE_CABELO.length],
+    rostoPreset: ROSTOS[(s >>> 11) % ROSTOS.length],
+  }
+}
+
+export function Campo3D({
+  eventos, velocidade = 1, pausado = false, formacao = "4-3-3", duracaoDoTempo,
+  casa, fora, titularesCasa, titularesFora, aoFalhar,
+}: Campo3DProps) {
   const palco = useRef<HTMLDivElement | null>(null)
   const motor = useRef<Motor | null>(null)
   const [progresso, setProgresso] = useState({ pct: 0, etapa: "preparando" })
@@ -97,13 +159,23 @@ export function Campo3D({ eventos, velocidade = 1, pausado = false, formacao = "
         const instancia = criarMotor({
           palco: alvo,
           qualidade: QUALIDADE_POR_PERFIL[perfil] ?? "mid",
-          casa,
-          fora,
+          // PASSO 6 — os assets do V5. `obrigatorio: false` é o que preserva o
+          // fallback procedural: se um GLB ou textura faltar (disco podado,
+          // download incompleto), a partida continua com o modelo simples em vez
+          // de virar tela preta. Ver o aviso de FALLBACK no topo deste arquivo.
+          assets3D: { ...assetsFutebol, obrigatorio: false },
+          // PASSO 7 — clube real. `casa`/`fora` já traziam nome, sigla e cores;
+          // o uniforme entra pelo mesmo objeto, sem duplicar dado de clube.
+          casa: { ...casa, jogadores3D: (titularesCasa ?? []).map(aparenciaDoAtleta) },
+          fora: { ...fora, jogadores3D: (titularesFora ?? []).map(aparenciaDoAtleta) },
           aoProgredir: (pct, etapa) => { if (vivo) setProgresso({ pct, etapa }) },
           aoIniciar: () => { if (vivo) setPronto(true) },
           aoFalhar: (erro) => { if (vivo) falhar.current(erro.message) },
         })
         instancia.definirFormacao(getFormationSlots(formacao))
+        // PASSO 10 — velocidade e pausa ja tinham ponte; a DURACAO nao tinha, e
+        // sem ela o relogio da cena divergia do relogio da partida.
+        if (duracaoDoTempo) instancia.definirDuracaoDoTempo(duracaoDoTempo)
         motor.current = instancia
         return instancia.iniciar()
       })
@@ -133,6 +205,9 @@ export function Campo3D({ eventos, velocidade = 1, pausado = false, formacao = "
     motor.current?.definirVelocidade(velocidade)
   }, [velocidade])
   useEffect(() => { motor.current?.definirPausa(pausado) }, [pausado])
+  useEffect(() => {
+    if (duracaoDoTempo) motor.current?.definirDuracaoDoTempo(duracaoDoTempo)
+  }, [duracaoDoTempo])
   useEffect(() => { motor.current?.definirFormacao(getFormationSlots(formacao)) }, [formacao])
 
   // ── Encenação: só o que CHEGOU depois da última vez ───────────────────────

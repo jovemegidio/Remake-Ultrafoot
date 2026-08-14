@@ -9,6 +9,12 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "A diretoria agora diz COM O QUE está insatisfeita",
+      "category": "Novidade",
+      "body": "A confiança da diretoria era um número só, e por isso não orientava decisão nenhuma: 72 podia ser o campeão que quebrou o clube ou o arrumado que não vence. Agora ela abre em resultados, finanças, mercado, base e vestiário, e aponta a área mais frágil — que é a que dá para consertar.",
+      "date": "2026-08-14"
+    },
+    {
       "title": "O leilão parou de sequestrar a sua tela",
       "category": "Correção",
       "body": "Dois relatos de jogadores, duas correções. O leilão abria sozinho e tirava você do que estivesse fazendo: ele é aberto ao fim da coletiva pós-jogo, mas só depois de o jogo avançar a semana e gravar o save — e quem saía da partida nesses segundos era levado ao leilão do mesmo jeito, porque a ida já estava a caminho. E simular muitas partidas pelo calendário travava na contagem de dias, porque a tela redesenhava o calendário inteiro a cada dia simulado, mais de duzentas vezes numa simulação longa.",
@@ -228,9 +234,20 @@
   ],
   "changelog": [
     {
+      "version": "1.0.310",
+      "data": "2026-08-14",
+      "latest": true,
+      "titulo": "Diretoria por área, memória de lesão e calendário da seleção",
+      "itens": [
+        "A confiança da diretoria agora abre em cinco áreas — resultados, finanças, mercado, base e vestiário — e aponta qual está pesando contra você. Antes era um número só: o técnico que ganhava tudo e quebrava o clube lia o mesmo 72 do que equilibrava as contas e não vencia.",
+        "Lesão passou a ter memória. Quem acabou de voltar fica mais frágil por algumas semanas, e repetir o MESMO tipo de lesão pesa mais que ter tido problemas diferentes — poupar um recém-recuperado finalmente tem efeito.",
+        "Dirigir seleção ganhou calendário: próximo jogo, próxima data FIFA e a competição fase a fase.",
+        "Correção interna: acesso e rebaixamento tinham duas implementações, e os testes validavam a que o jogo não usa — ela afirmava que clube inglês em 20º não cai."
+      ]
+    },
+    {
       "version": "1.0.308",
       "data": "2026-08-13",
-      "latest": true,
       "titulo": "O leilão que aparecia do nada e o calendário que travava",
       "itens": [
         "CORREÇÃO (relato de jogador): o leilão abria sozinho e tirava você da partida — ou de qualquer outra tela que estivesse aberta. A tela de leilões é aberta ao fim da coletiva pós-jogo, mas isso só acontece depois de o jogo avançar a semana e gravar o save, o que leva alguns segundos. Quem saía da partida nesse intervalo era levado ao leilão mesmo assim, porque a ida já estava a caminho e nada a cancelava. Agora, se você saiu, a ida é cancelada.",

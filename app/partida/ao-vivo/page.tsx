@@ -2422,6 +2422,9 @@ export default function PartidaAoVivoPage() {
                         formacao={formacaoDaFase}
                         casa={{ nome: homeTeam.nome, sigla: homeTeam.curto, corPrincipal: homeKitColor, corSecundaria: homeTeam.cor2 }}
                         fora={{ nome: awayTeam.nome, sigla: awayTeam.curto, corPrincipal: awayKitColor, corSecundaria: awayTeam.cor2 }}
+                        titularesCasa={homeSquad.map(j => ({ id: String(j.atletaId ?? j.id), nome: j.name, numero: j.number, posicao: j.position }))}
+                        titularesFora={awaySquad.map(j => ({ id: String(j.atletaId ?? j.id), nome: j.name, numero: j.number, posicao: j.position }))}
+                        duracaoDoTempo={matchCtx.duration}
                         aoFalhar={motivo => { setFalhaCampo3D(motivo); setUsarCampo3D(false) }}
                       />
                     ) : <MatchRadar

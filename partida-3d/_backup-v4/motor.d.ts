@@ -1,6 +1,6 @@
 // Tipos do Pitch Engine PRO.
 //
-// O motor em si (`motor.js`) e JavaScript de propósito: tem milhares de linhas
+// O motor em si (`motor.js`) e JavaScript de propósito: são 3.163 linhas
 // convertidas de um HTML solto, e anotá-las uma a uma seria reescrever o motor —
 // com risco real de mudar a física sem querer. Os tipos moram aqui, cobrindo a
 // **API pública**, que é o que o resto do projeto de fato consome.
@@ -16,19 +16,11 @@ export interface OpcoesMotor {
   casa?: IdentidadeVisualTime
   fora?: IdentidadeVisualTime
 
-  /** Assets opcionais para o modo visual AAA (GLB/GLTF + mocap + PBR). */
-  assets3D?: ConfigAssets3D
-
-  /** Ambiente VISUAL. Não muda resultado do match-engine. */
-  ambiente?: ConfigAmbiente | TipoClima
-  /** Alias de `ambiente`, aceito pelo runtime por compatibilidade. */
-  clima?: ConfigAmbiente | TipoClima
-
   /**
    * Qualidade inicial. Omitido, o motor escolhe: `mid` em telas de toque
    * (`pointer:coarse`), `high` no resto.
    *
-   * O que muda: `high` = 96k tufos de grama e sombra 4096; `mid` = 30k e 2048;
+   * O que muda: `high` = 64k tufos de grama e sombra 4096; `mid` = 22k e 1024;
    * `low` = sem grama instanciada e sem pós-processamento.
    */
   qualidade?: QualidadeMotor
@@ -36,7 +28,7 @@ export interface OpcoesMotor {
   /**
    * Progresso da montagem, 0-100, com o rótulo da etapa atual.
    *
-   * A cena é montada em 9 passos com um quadro de respiro entre eles — sem isso
+   * A cena é montada em 8 passos com um quadro de respiro entre eles — sem isso
    * a aba travaria por segundos e a barra pularia direto de 0 a 100.
    */
   aoProgredir?: (pct: number, etapa: string) => void
@@ -57,110 +49,6 @@ export interface IdentidadeVisualTime {
   sigla?: string
   corPrincipal?: string
   corSecundaria?: string
-  /** Texturas UV compatíveis com o modelo humanoide configurado em assets3D. */
-  uniforme3D?: Uniforme3D
-  /** Aparência por slot da formação (0 = goleiro, 1..10 = jogadores de linha). */
-  jogadores3D?: JogadorVisual3D[]
-}
-
-export interface Uniforme3D {
-  camisa?: string
-  camisaNormal?: string
-  camisaRoughness?: string
-  shorts?: string
-  shortsNormal?: string
-  meias?: string
-  chuteiras?: string
-  goleiro?: string
-}
-
-export interface JogadorVisual3D {
-  nome?: string
-  numero?: number
-  /** Textura facial opcional. O player.glb V4 já possui UV0 funcional. */
-  rosto?: string
-  corCabelo?: string
-  tomPele?: string
-  /** Variação geométrica do cabelo embutida no player V4. */
-  cabelo?: "short" | "buzz" | "fade" | "curly" | "long" | "curto" | "raspado" | "degrade" | "cacheado" | "longo"
-  cabeloPreset?: string
-  /** Preset de proporção da cabeça. */
-  rostoPreset?: "balanced" | "slim" | "wide" | "long" | "round" | (string & {})
-  larguraRosto?: number
-  alturaRosto?: number
-  /** Altura real aproximada em metros; 1,80 = escala base. */
-  alturaM?: number
-  /** Largura corporal relativa: 1 = padrão. */
-  porte?: number
-}
-
-export type AnimacaoJogador3D =
-  | "idle" | "walk" | "run" | "sprint" | "kick" | "tackle" | "header"
-  | "celebrate" | "dive" | "control" | "disappointed" | "complain" | "point" | "hips"
-
-export interface ConfigAssets3D {
-  /** Prefixo para URLs relativas, ex.: "/assets/futebol". */
-  baseUrl?: string
-  /** Se true, falha de asset aborta o início; padrão false = fallback procedural. */
-  obrigatorio?: boolean
-  /** Caminho do decoder DRACO quando o GLB usa compressão Draco. */
-  dracoDecoderPath?: string
-  jogador?: {
-    modelo: string
-    /** GLB separado apenas com AnimationClips; opcional se o modelo já traz clips. */
-    animacoes?: string
-    alturaBaseM?: number
-    escala?: number
-    rotacaoY?: number
-    offsetY?: number
-    /** Distâncias da câmera em metros para o LOD dos 22 atletas. */
-    lod?: {
-      /** Até aqui: GLB completo + face/número/cabelo detalhados. Padrão 28. */
-      detalheAte?: number
-      /** Mantido por compatibilidade; o GLB médio fica ativo até o proxy. */
-      glbAte?: number
-      /** Depois desta distância entra o sprite-proxy de uma draw call por atleta. Padrão 78. */
-      proxyApos?: number
-    }
-    /** Mapeia estados do motor para nomes exatos dos AnimationClips do seu mocap. */
-    clipes?: Partial<Record<AnimacaoJogador3D, string>>
-  }
-  estadio?: {
-    modelo: string
-    escala?: number
-    rotacaoY?: number
-    posicao?: [number, number, number]
-    castShadow?: boolean
-    envMapIntensity?: number
-    /** true/padrão: usa só o GLB; false: mantém também arquibancada procedural. */
-    substituirProcedural?: boolean
-  }
-  /** PBR do gramado; o albedo/demarcações continuam procedurais para preservar as regras. */
-  gramadoPBR?: {
-    normal?: string
-    roughness?: string
-    ao?: string
-    repeat?: number
-  }
-}
-
-
-export type TipoClima = "ensolarado" | "nublado" | "chuva" | "neve" | "sunny" | "cloudy" | "rain" | "snow"
-
-export interface ConfigAmbiente {
-  tipo?: TipoClima
-  /** 0-24. Controla direção do sol e tamanho das sombras. */
-  hora?: number
-  /** 0-1. Densidade da precipitação. */
-  intensidade?: number
-  /** 0-1. Roughness/reflectância do gramado; visual apenas. */
-  molhado?: number
-  /** 0-1. Cobertura procedural de neve sobre o campo. */
-  neveNoGramado?: number
-  /** Deslocamento visual das partículas; não muda a aerodinâmica da bola. */
-  ventoVisual?: number
-  /** Cor das linhas na geração inicial do campo. Em neve, padrão amarelo de alta visibilidade. */
-  corLinhas?: string
 }
 
 export type QualidadeMotor = "high" | "mid" | "low"
@@ -218,21 +106,6 @@ export interface Telemetria {
   velocidadeSim: number
   /** Passos de física acumulados. Só cresce — bom para detectar loop parado. */
   passos: number
-  /** Estado do ambiente visual V5. */
-  ambiente: { tipo: "ensolarado" | "nublado" | "chuva" | "neve"; hora: number; intensidade: number; precipitacao: number; molhado: number }
-  /** Diagnóstico do pipeline visual V5; útil no HUD de desenvolvimento. */
-  render3D: {
-    lodDetalhe: number
-    lodMedio: number
-    lodProxy: number
-    crowdCount: number
-    jogadorGLB: boolean
-    estadioGLB: boolean
-    cameraModo: string
-    fov: number
-    precipitacao: number
-    falhasAssets: string[]
-  }
 }
 
 /**
@@ -338,12 +211,6 @@ export interface Motor {
 
   /** Pausa ou retoma a simulação. */
   definirPausa(pausado: boolean): void
-
-  /** Seleciona o enquadramento sem depender do HUD legado. */
-  definirCamera(modo: 0 | 1 | 2 | 3 | "dinamica" | "transmissao" | "tele" | "aerea" | "dynamic" | "broadcast" | "aerial"): void
-
-  /** Atualiza sol/nuvens/chuva/neve/horário em runtime; visual apenas. */
-  definirAmbiente(config: ConfigAmbiente | TipoClima): void
 
   /**
    * Usa a formação do 2D (`lib/formations.ts`) no lugar da embutida no motor.
