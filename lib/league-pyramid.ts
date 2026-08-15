@@ -11,6 +11,7 @@
 // fim de temporada por `evolvePyramids`.
 
 import { UEFA_EXPANSION_FEDERATIONS } from "@/lib/uefa-expansion"
+import { DIVISOES_DE_ACESSO, acessoDoPais } from "@/lib/divisao-de-acesso"
 import { regulamentoDaLigaNoServidor } from "@/lib/atualizacao-elencos"
 
 /** Uma piramide nacional: divisoes do topo para a base e quantos clubes trocam
@@ -24,11 +25,8 @@ export interface Pyramid {
 // So entram paises com 2+ divisoes com elenco na base (conferido). Os numeros de
 // troca seguem a vida real: Europa 3, Brasil 4. Onde a divisao de baixo nao
 // existe no jogo, o clube simplesmente nao tem para onde descer/subir.
-export const PYRAMIDS: readonly Pyramid[] = [
-  // A Divisao de Acesso e o quinto degrau: os clubes brasileiros do pool que nao
-  // tinham divisao nenhuma passam a ter para onde subir. Quatro trocas, como nos
-  // outros degraus brasileiros. Ver o tipo `Divisao` em lib/teams-data.
-  { country: "Brasil", tiers: ["serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br"], swaps: [4, 4, 4, 4] },
+const PIRAMIDES_NACIONAIS: readonly Pyramid[] = [
+  { country: "Brasil", tiers: ["serie_a", "serie_b", "serie_c", "serie_d"], swaps: [4, 4, 4] },
   { country: "Inglaterra", tiers: ["premier_league", "championship", "league_one_eng", "league_two_eng", "national_league_eng", "national_league_ns_eng"], swaps: [3, 3, 4, 2, 4] },
   { country: "Espanha", tiers: ["la_liga", "la_liga_2", "primera_federacion_esp", "segunda_federacion_esp"], swaps: [3, 4, 5] },
   { country: "Italia", tiers: ["serie_a_ita", "serie_b_ita"], swaps: [3] },
@@ -89,6 +87,32 @@ export const PYRAMIDS: readonly Pyramid[] = [
   }),
 ]
 
+/**
+ * A DIVISÃO DE ACESSO É ANEXADA À PIRÂMIDE DO PRÓPRIO PAÍS.
+ *
+ * ⚠️ NÃO transforme o acesso numa pirâmide separada de duas divisões (`[acima,
+ * acesso]`). É tentador — evita mexer nas 16 listas — e quebra a escada inteira:
+ * `TIER_INDEX` indexa POR DIVISÃO e a última entrada vence, então `serie_d`
+ * passaria a apontar para a pirâmide curta com `idx 0`, `divisionAbove("serie_d")`
+ * viraria `null` e a **Série D pararia de subir para a Série C**. Nada quebraria;
+ * o acesso simplesmente sumiria do meio da pirâmide.
+ *
+ * A guarda `acesso.acima === última` existe para o caso de alguém acrescentar um
+ * degrau a um país e esquecer de atualizar o catálogo: em vez de pendurar a base
+ * no lugar errado, ela não pendura — e o teste acusa.
+ */
+export const PYRAMIDS: readonly Pyramid[] = PIRAMIDES_NACIONAIS.map(piramide => {
+  const acesso = acessoDoPais(piramide.country)
+  if (!acesso) return piramide
+  const ultima = piramide.tiers[piramide.tiers.length - 1]
+  if (acesso.acima !== ultima) return piramide
+  return {
+    ...piramide,
+    tiers: [...piramide.tiers, acesso.id],
+    swaps: [...piramide.swaps, acesso.sobem],
+  }
+})
+
 const TIER_INDEX = new Map<string, { pyramid: Pyramid; idx: number }>()
 for (const pyramid of PYRAMIDS) {
   pyramid.tiers.forEach((tier, idx) => TIER_INDEX.set(tier, { pyramid, idx }))
@@ -147,7 +171,9 @@ export interface DivisionOutcome {
 
 const LABELS: Record<string, string> = {
   serie_a: "Série A", serie_b: "Série B", serie_c: "Série C", serie_d: "Série D",
-  divisao_acesso_br: "Divisão de Acesso",
+  // Os rótulos das divisões de acesso saem do catálogo — escrevê-los de novo
+  // aqui é como um deles ficaria para trás quando o outro mudasse.
+  ...Object.fromEntries(DIVISOES_DE_ACESSO.map(d => [d.id, d.rotulo])),
   premier_league: "Premier League", championship: "Championship",
   la_liga: "La Liga", la_liga_2: "La Liga 2",
   serie_a_ita: "Serie A", serie_b_ita: "Serie B",

@@ -3,6 +3,7 @@ import { competitionsByLeague } from "../lib/international-competitions"
 import { NATIONAL_COMPETITIONS } from "../lib/national-competitions"
 import { getContinentalSpot } from "../lib/country-competitions"
 import { planWindowCompetition } from "../lib/national-windows"
+import { acessoDoPais } from "../lib/divisao-de-acesso"
 
 const failures: string[] = []
 const assert = (condition: unknown, message: string) => { if (!condition) failures.push(message) }
@@ -52,11 +53,27 @@ assert(catalogById.get("j_league")?.relegation === 0, "j_league: torneio especia
 assert(catalogById.get("j2_league")?.promotion === 0 && catalogById.get("j2_league")?.relegation === 0, "j2_league: transição 2026 sem acesso/descenso")
 assert(catalogById.get("k_league_2")?.teams === 17 && catalogById.get("k_league_2")?.promotion === 3, "k_league_2: formato 2026 divergente")
 assert(catalogById.get("afc_champions_league")?.teams === 32 && catalogById.get("afc_champions_league")?.rounds === 8, "afc_champions_league: formato 2026/27 divergente")
-// `relegation` cobra 0, e nao os 4 da AFA: a divisao abaixo (Primera B
-// Metropolitana / Torneo Federal) nao existe no jogo, e zona de rebaixamento que
-// nunca rebaixa e pior do que nao ter zona. O que da para conferir de verdade —
-// 36 clubes em duas zonas e dois acessos — continua sendo cobrado.
-assert(catalogById.get("primera_b_arg")?.teams === 36 && catalogById.get("primera_b_arg")?.groups === 2 && catalogById.get("primera_b_arg")?.promotion === 2 && catalogById.get("primera_b_arg")?.relegation === 0, "primera_b_arg: formato AFA 2026 divergente")
+// ⚠️ `relegation` cobrava 0 ATE A 1.0.319, e o motivo era explicito: "a divisao
+// abaixo (Torneo Federal) nao existe no jogo, e zona de rebaixamento que nunca
+// rebaixa e pior do que nao ter zona".
+//
+// Essa premissa caiu quando o `acesso_arg` nasceu. Agora HA para onde cair, e
+// cobrar 0 seria o defeito inverso: a Primera Nacional anunciando que ninguem
+// desce enquanto a piramide desce dois por temporada.
+//
+// O numero e lido do CATALOGO, e nao escrito aqui: se um dia o degrau de baixo
+// sumir, `acessoDoPais` devolve `undefined` e a assercao volta sozinha a cobrar
+// zero — em vez de virar um numero herdado que ninguem lembra de onde veio.
+{
+  const quedaEsperada = acessoDoPais("Argentina")?.sobem ?? 0
+  assert(
+    catalogById.get("primera_b_arg")?.teams === 36
+    && catalogById.get("primera_b_arg")?.groups === 2
+    && catalogById.get("primera_b_arg")?.promotion === 2
+    && catalogById.get("primera_b_arg")?.relegation === quedaEsperada,
+    `primera_b_arg: formato AFA 2026 divergente (rebaixamento esperado ${quedaEsperada})`,
+  )
+}
 assert(catalogById.get("torneo_betplay")?.teams === 16 && catalogById.get("torneo_betplay")?.format === "group_knockout", "torneo_betplay: formato DIMAYOR 2026 divergente")
 assert(catalogById.get("primera_div_ury")?.rounds === 37 && catalogById.get("primera_div_ury")?.groups === 2, "primera_div_ury: Apertura/Intermedio/Clausura não configurados")
 // 14 clubes, nao os 13 reais: com 13 o turno-returno fecha em 24 rodadas e o

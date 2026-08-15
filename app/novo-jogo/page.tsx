@@ -61,6 +61,7 @@ import { useGameManager } from "@/lib/use-game-manager"
 import { listCareerSaves } from "@/lib/save-system"
 import { contaLogada } from "@/lib/conta-ultrafoot"
 import { LIMITE_SAVES_SEM_REGISTRO, PAISES_SEM_REGISTRO, ROTA_DE_REGISTRO, useJogoRegistrado } from "@/lib/beneficios"
+import { DIVISOES_DE_ACESSO } from "@/lib/divisao-de-acesso"
 import { createYouthCareer } from "@/lib/youth-career-engine"
 import { createClubDebt, type DebtPreset } from "@/lib/debt-engine"
 import { createScoutingDepartment } from "@/lib/scout-engine"
@@ -179,7 +180,6 @@ const CORE_COUNTRIES: CountryTab[] = [
       { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams },
       { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams },
       { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams },
-      { key: "divisao_acesso_br", label: "Divisao de Acesso", short: "Acesso", teams: [], todosDaDivisao: true },
     ],
   },
   {
@@ -419,7 +419,36 @@ const CATALOG_COUNTRIES: CountryTab[] = [
   ] },
 ]
 
+/**
+ * A DIVISÃO DE ACESSO É ANEXADA À ABA DO PRÓPRIO PAÍS.
+ *
+ * Escrever uma linha por país aqui (são treze) é o que faz esta lista sair de
+ * sincronia com o catálogo — foi assim que onze segundas divisões existiram
+ * declaradas e sem aparecer em lugar nenhum. O casamento é pelo `name` da aba,
+ * que usa a mesma grafia das pirâmides.
+ *
+ * ⚠️ `todosDaDivisao` em vez de `doPool`: a base tem centenas de clubes para 20
+ * vagas na tabela, e mostrar só as 20 esconderia justamente o clube pequeno que
+ * o jogador foi procurar. Ver o uso mais abaixo.
+ */
 const COUNTRIES: CountryTab[] = [...CORE_COUNTRIES, ...CATALOG_COUNTRIES, ...EXPANSION_COUNTRIES]
+  .map(pais => {
+    const acesso = DIVISOES_DE_ACESSO.find(a => a.country === pais.name)
+    if (!acesso || pais.leagues.some(l => l.key === acesso.id)) return pais
+    return {
+      ...pais,
+      leagues: [...pais.leagues, {
+        // O catálogo guarda o id como `string`; a aba pede `Divisao`. A união já
+        // aceita `acesso_${string}`, e o teste confere que todo id do catálogo
+        // tem pirâmide, rótulo e regulamento — a garantia é lá, não no tipo.
+        key: acesso.id as Divisao,
+        label: acesso.rotulo,
+        short: acesso.rotulo.length > 14 ? "Acesso" : acesso.rotulo,
+        teams: [],
+        todosDaDivisao: true,
+      }],
+    }
+  })
 
 // Fundo trocado a pedido do usuario (2026-07-20): foto in-game 7.
 const STADIUM_BG = "/images/pre-jogo/in-game-7.webp"

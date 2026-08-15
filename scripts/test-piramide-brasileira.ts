@@ -77,12 +77,10 @@ console.log("\nPIRAMIDE BRASILEIRA PROFUNDA\n")
 //    pega a inversao da piramide.
 {
   const acesso = faixa(getTeamsByDivision("divisao_acesso_br"))
-  const serieD = faixa(completarLigaComPool("serie_d"))
-  ok("o teto do acesso nao passa o teto da Serie D", acesso.max <= serieD.max,
-    `(acesso ${acesso.min}-${acesso.max} x serie_d ${serieD.min}-${serieD.max})`)
-  ok("o piso do acesso fica abaixo do piso da Serie D", acesso.min < serieD.min,
-    `(${acesso.min} x ${serieD.min})`)
-  ok("nenhum clube do acesso alcanca a Serie B", acesso.max < 45, `(${acesso.max})`)
+  const serieD = faixa(getTeamsByDivision("serie_d"))
+  ok("o teto do acesso fica ABAIXO do piso da Serie D", acesso.max < serieD.min,
+    `(acesso ${acesso.min}-${acesso.max} x piso da D ${serieD.min})`)
+  ok("nenhum clube do acesso alcanca a Serie B", acesso.max < 19, `(${acesso.max})`)
 }
 
 // 4. A UF derivada nunca pode contradizer a declarada. Zero conflitos foi o que

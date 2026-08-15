@@ -1,5 +1,6 @@
 import { competitionsByLeague } from "./international-competitions"
 import { UEFA_EXPANSION_FEDERATIONS } from "./uefa-expansion"
+import { DIVISOES_DE_ACESSO, IDS_DE_ACESSO } from "./divisao-de-acesso"
 
 // Competicoes por PAIS/LIGA.
 //
@@ -33,18 +34,12 @@ const CONMEBOL = {
   continentalSecondary: "Copa Sul-Americana",
 }
 
-export const LEAGUE_COMPETITIONS: Record<string, CountryCompetitions> = {
+const LEAGUE_COMPETITIONS_BASE: Record<string, CountryCompetitions> = {
   // Brasil — unico com estadual
   serie_a: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
   serie_b: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
   serie_c: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
   serie_d: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
-  // Divisao de Acesso. O estadual continua sendo a competicao paralela — e dele
-  // que estes clubes vem. A Copa do Brasil entra junto porque e assim na vida
-  // real: a vaga do clube pequeno sai do estadual, e sortear o Flamengo na
-  // primeira fase e justamente a recompensa de comecar por baixo.
-  divisao_acesso_br: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
-
   // Europa
   la_liga: { country: "Espanha", domesticCup: "Copa del Rey", ...UEFA },
   premier_league: { country: "Inglaterra", domesticCup: "FA Cup", ...UEFA },
@@ -149,7 +144,9 @@ export const LEAGUE_COMPETITIONS: Record<string, CountryCompetitions> = {
 for (const federation of UEFA_EXPANSION_FEDERATIONS) {
   for (const division of [federation.top, federation.second]) {
     if (!division?.participants.length) continue
-    LEAGUE_COMPETITIONS[division.id] = {
+    // Vai para a BASE, e nao para o objeto exportado: este laço roda antes de o
+    // derivado existir, e é a base que a derivação lê.
+    LEAGUE_COMPETITIONS_BASE[division.id] = {
       country: federation.country,
       domesticCup: `Copa nacional — ${federation.country}`,
       ...UEFA,
@@ -164,6 +161,28 @@ const FALLBACK: CountryCompetitions = {
   continentalSecondary: null,
   hasStateChampionship: false,
 }
+
+/**
+ * ⚠️ AS DIVISOES DE ACESSO ENTRAM AQUI, DEPOIS — nao dentro do objeto acima.
+ *
+ * Elas HERDAM a configuracao da divisao logo acima delas: mesmo pais, mesma copa
+ * nacional, mesma continental, mesmo estadual. E o certo por construcao (um
+ * clube nao muda de pais nem de copa ao subir um degrau) e evita que a base
+ * fique com dado velho quando a divisao de cima for corrigida.
+ *
+ * A copa nacional entra junto porque e assim na vida real: a vaga do clube
+ * pequeno sai da base, e sortear o gigante na primeira fase e justamente a
+ * recompensa de comecar por baixo.
+ *
+ * Um objeto nao pode se referenciar durante a propria inicializacao — por isso a
+ * derivacao mora fora dele.
+ */
+export const LEAGUE_COMPETITIONS: Record<string, CountryCompetitions> = {
+  ...LEAGUE_COMPETITIONS_BASE,
+  ...Object.fromEntries(DIVISOES_DE_ACESSO.map(acesso =>
+    [acesso.id, { ...(LEAGUE_COMPETITIONS_BASE[acesso.acima] ?? FALLBACK) }])),
+}
+
 
 export function getCountryCompetitions(divisao: string | undefined): CountryCompetitions {
   if (!divisao) return FALLBACK
@@ -187,7 +206,7 @@ export type Confederation = "CONMEBOL" | "UEFA" | "AFC" | "CONCACAF" | "UNAFFILI
 
 const CONFEDERATION_DIVISIONS: Record<Confederation, string[]> = {
   CONMEBOL: [
-    "serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br",
+    "serie_a", "serie_b", "serie_c", "serie_d",
     "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury", "primera_a_ecu",
     "primera_b_arg", "torneo_betplay", "primera_b_chi", "segunda_div_ury", "serie_b_ecu",
     "primera_div_per", "primera_div_ven", "primera_div_bol", "primera_div_par",
@@ -217,6 +236,16 @@ CONFEDERATION_DIVISIONS.UEFA.push(...UEFA_EXPANSION_FEDERATIONS.flatMap(federati
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry?.participants.length))
     .map(entry => entry.id),
 ))
+
+// A divisao de acesso fica na MESMA confederacao da divisao acima dela — o clube
+// nao muda de continente ao subir um degrau. Derivado em vez de escrito a mao
+// porque uma base fora de confederacao sortearia adversario continental de outro
+// continente, que e um defeito que a Juventus x Boca ja produziu uma vez.
+for (const acesso of DIVISOES_DE_ACESSO) {
+  for (const divs of Object.values(CONFEDERATION_DIVISIONS)) {
+    if (divs.includes(acesso.acima) && !divs.includes(acesso.id)) { divs.push(acesso.id); break }
+  }
+}
 
 export function getConfederation(divisao: string | undefined): Confederation {
   if (!divisao) return "UNAFFILIATED"

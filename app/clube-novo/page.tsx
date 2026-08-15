@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation"
 import { RecursoDeRegistrado } from "@/components/registro-necessario"
 import { compressImageDataUrl } from "@/lib/image-utils"
 import {
-  DIVISOES_PARA_CLUBE_PROPRIO,
+  PAISES_PARA_CLUBE_PROPRIO,
   chaveDoClubeProprio,
   excluirClubePersonalizado,
   listarClubesPersonalizados,
@@ -28,13 +28,8 @@ import {
   validarClubeProprio,
   type ClubePersonalizado,
 } from "@/lib/clubes-personalizados"
-import { sincronizarClubesProprios } from "@/lib/clubes-proprios-runtime"
+import { sincronizarClubesProprios, divisoesParaClubeProprio, saldoDeClubeNovo } from "@/lib/clubes-proprios-runtime"
 import { allPoolTeams, allTeams } from "@/lib/teams-data"
-
-const UFS = [
-  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
-  "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
-]
 
 type Variante = "home" | "away" | "third"
 const VARIANTES: { id: Variante; rotulo: string }[] = [
@@ -49,10 +44,11 @@ export default function ClubeNovoPage() {
   const [nome, setNome] = useState("")
   const [curto, setCurto] = useState("")
   const [cidade, setCidade] = useState("")
+  const [pais, setPais] = useState("Brasil")
   const [estado, setEstado] = useState("")
   const [cor1, setCor1] = useState("#00d4ff")
   const [cor2, setCor2] = useState("#0b1220")
-  const [divisao, setDivisao] = useState(DIVISOES_PARA_CLUBE_PROPRIO[0].id)
+  const [divisao, setDivisao] = useState("divisao_acesso_br")
   const [estadioNome, setEstadioNome] = useState("")
   const [estadioCap, setEstadioCap] = useState(8000)
   const [logoUrl, setLogoUrl] = useState<string | undefined>()
@@ -86,9 +82,26 @@ export default function ClubeNovoPage() {
     return usados
   }, [meus])
 
+  const paisEscolhido = useMemo(
+    () => PAISES_PARA_CLUBE_PROPRIO.find(p => p.pais === pais) ?? PAISES_PARA_CLUBE_PROPRIO[0],
+    [pais],
+  )
+  /** As divisões saem da PIRÂMIDE do país, nunca de uma lista escrita à mão. */
+  const divisoes = useMemo(() => divisoesParaClubeProprio(pais), [pais])
+  const caixaInicial = useMemo(() => saldoDeClubeNovo(), [meus])
+
+  // Trocar de país invalida a divisão e a UF escolhidas: `serie_d` não existe na
+  // Alemanha, e "ES" não é região russa. Sem isto o clube seria salvo numa
+  // divisão de outro país e sumiria de todas as telas.
+  useEffect(() => {
+    if (!divisoes.some(d => d.id === divisao)) setDivisao(divisoes[0]?.id ?? "")
+    if (paisEscolhido.ufs && !paisEscolhido.ufs.includes(estado)) setEstado("")
+    if (!paisEscolhido.ufs) setEstado("")
+  }, [pais, divisoes, paisEscolhido, divisao, estado])
+
   const problemas = useMemo(
-    () => validarClubeProprio({ nome, curto, estado, estadioCap }, curtosEmUso),
-    [nome, curto, estado, estadioCap, curtosEmUso],
+    () => validarClubeProprio({ nome, curto, estado, estadioCap, pais }, curtosEmUso),
+    [nome, curto, estado, estadioCap, pais, curtosEmUso],
   )
   const podeSalvar = nome.trim().length > 0 && curto.trim().length > 0 && problemas.length === 0
 
@@ -131,6 +144,7 @@ export default function ClubeNovoPage() {
         nome: nome.trim(),
         curto: curto.trim().toUpperCase(),
         cidade: cidade.trim(),
+        pais,
         estado,
         cor1, cor2, divisao,
         estadioNome: estadioNome.trim() || `Estádio do ${nome.trim()}`,
@@ -150,7 +164,7 @@ export default function ClubeNovoPage() {
       sincronizarClubesProprios()
       window.dispatchEvent(new Event("ultrafoot:clubes-proprios:mudou"))
       setMeus(listarClubesPersonalizados())
-      setRecado(`${nome.trim()} criado. Ele já aparece na ${DIVISOES_PARA_CLUBE_PROPRIO.find(d => d.id === divisao)?.rotulo}.`)
+      setRecado(`${nome.trim()} criado. Ele já aparece na ${divisoes.find(d => d.id === divisao)?.rotulo}.`)
       limpar()
     } catch (erro) {
       setRecado(erro instanceof Error ? erro.message : "não foi possível salvar o clube")
@@ -220,17 +234,36 @@ export default function ClubeNovoPage() {
                 </label>
                 <label className="text-sm">
                   <span className="mb-1 block text-muted-foreground">
-                    Estado — define a região e o campeonato estadual
+                    País — decide as divisões disponíveis e de onde vêm os rivais
                   </span>
                   <select
-                    value={estado}
-                    onChange={e => setEstado(e.target.value)}
+                    value={pais}
+                    onChange={e => setPais(e.target.value)}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2"
                   >
-                    <option value="">Escolha…</option>
-                    {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                    {PAISES_PARA_CLUBE_PROPRIO.map(p => (
+                      <option key={p.pais} value={p.pais}>{p.rotulo}</option>
+                    ))}
                   </select>
                 </label>
+                {/* A UF só aparece onde ela existe como dado. Fora do Brasil o
+                    jogo não tem região para clube nenhum, e um campo pedindo
+                    "estado da Alemanha" inventaria informação. */}
+                {paisEscolhido.ufs && (
+                  <label className="text-sm">
+                    <span className="mb-1 block text-muted-foreground">
+                      Estado — define a região e o campeonato estadual
+                    </span>
+                    <select
+                      value={estado}
+                      onChange={e => setEstado(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                    >
+                      <option value="">Escolha…</option>
+                      {paisEscolhido.ufs.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                    </select>
+                  </label>
+                )}
               </div>
             </section>
 
@@ -254,7 +287,6 @@ export default function ClubeNovoPage() {
                     style={{ background: `linear-gradient(135deg, ${cor1}, ${cor2})` }}
                   >
                     {logoUrl
-                      // eslint-disable-next-line @next/next/no-img-element
                       ? <img src={logoUrl} alt="Escudo do clube" className="h-full w-full object-contain" />
                       : <span className="text-xs text-white/70">sem escudo</span>}
                   </div>
@@ -298,8 +330,7 @@ export default function ClubeNovoPage() {
                       }}
                     >
                       {kits[v.id]
-                        // eslint-disable-next-line @next/next/no-img-element
-                        ? <img src={kits[v.id]} alt={v.rotulo} className="h-full w-full object-contain" />
+                          ? <img src={kits[v.id]} alt={v.rotulo} className="h-full w-full object-contain" />
                         : <span className="text-xs text-white/70">cores do clube</span>}
                     </div>
                     <button
@@ -330,7 +361,7 @@ export default function ClubeNovoPage() {
             <section className="rounded-xl border border-border bg-card p-4">
               <h2 className="mb-3 font-heading text-lg font-semibold">Onde o clube começa</h2>
               <div className="space-y-2">
-                {DIVISOES_PARA_CLUBE_PROPRIO.map(d => (
+                {divisoes.map(d => (
                   <label
                     key={d.id}
                     className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${
@@ -344,7 +375,7 @@ export default function ClubeNovoPage() {
                       <div className="text-xs text-muted-foreground">{d.nota}</div>
                     </div>
                     <span className="ml-auto shrink-0 self-center text-xs text-muted-foreground">
-                      força {prestigioDeClubeNovo(d.id)}
+                      o mais fraco da divisão
                     </span>
                   </label>
                 ))}
@@ -370,8 +401,15 @@ export default function ClubeNovoPage() {
                 </label>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                Força, torcida e caixa vêm da divisão — não são escolha. Um clube novo entra
-                pelo piso do nível em que nasce.
+                O clube nasce como <strong>o mais fraco da divisão</strong> — é o que
+                &ldquo;começar do zero&rdquo; quer dizer, e não é escolha. Elenco e base vêm
+                genéricos, para você montar o time do seu jeito.
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                O <strong>caixa</strong>, porém, é de clube de segunda divisão:{" "}
+                {caixaInicial.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}.
+                Fraco em campo, estável no cofre — sem dinheiro, a base da pirâmide
+                seria um beco, não um desafio.
               </p>
             </section>
 
@@ -417,7 +455,7 @@ export default function ClubeNovoPage() {
                         <div className="truncate text-sm font-medium">{c.nome} <span className="text-muted-foreground">({c.curto})</span></div>
                         <div className="text-xs text-muted-foreground">
                           {[c.cidade, c.estado].filter(Boolean).join("/")} ·{" "}
-                          {DIVISOES_PARA_CLUBE_PROPRIO.find(d => d.id === c.divisao)?.rotulo ?? c.divisao}
+                          {c.divisao}
                         </div>
                       </div>
                       <button

@@ -18,8 +18,9 @@
  */
 import {
   chaveDoClubeProprio, ehClubeProprio, prestigioDeClubeNovo,
-  validarClubeProprio, PREFIXO_CLUBE_PROPRIO, DIVISOES_PARA_CLUBE_PROPRIO,
+  validarClubeProprio, PREFIXO_CLUBE_PROPRIO, PAISES_PARA_CLUBE_PROPRIO,
 } from "../lib/clubes-personalizados"
+import { divisoesParaClubeProprio, clubeProprioComoTime, saldoDeClubeNovo } from "../lib/clubes-proprios-runtime"
 import { allPoolTeams, allTeams, getTeamsByDivision, getTeamByShort, setClubesPersonalizados, type Team } from "../lib/teams-data"
 
 let passou = 0
@@ -33,7 +34,7 @@ console.log("\nCLUBE PRÓPRIO\n")
 
 // 1. Validação: nome, código e capacidade.
 {
-  const base = { nome: "Cariacica FC", curto: "CRC", estado: "ES", estadioCap: 8000 }
+  const base = { nome: "Cariacica FC", curto: "CRC", estado: "ES", estadioCap: 8000, pais: "Brasil" }
   ok("clube válido passa", validarClubeProprio(base, []).length === 0,
     JSON.stringify(validarClubeProprio(base, [])))
   ok("nome curto demais é barrado",
@@ -55,7 +56,7 @@ console.log("\nCLUBE PRÓPRIO\n")
 // 2. O código curto NÃO pode colidir com nenhum clube que já existe — o defeito
 //    mais caro, porque não gera erro.
 {
-  const base = { nome: "Cariacica FC", curto: "CRC", estado: "ES", estadioCap: 8000 }
+  const base = { nome: "Cariacica FC", curto: "CRC", estado: "ES", estadioCap: 8000, pais: "Brasil" }
   const emUso = ["CRC"]
   const p = validarClubeProprio(base, emUso)
   ok("código já usado é barrado", p.length > 0, JSON.stringify(p))
@@ -83,24 +84,52 @@ console.log("\nCLUBE PRÓPRIO\n")
     chaveDoClubeProprio("!!!", []).startsWith(PREFIXO_CLUBE_PROPRIO))
 }
 
-// 4. A força sai da DIVISÃO, e é sempre o piso dela.
+// 4. A força sai da DIVISÃO — o piso dela — em QUALQUER país, e o caixa é sempre
+//    o de segunda divisão. Esta é a separação que o usuário pediu: fraco em
+//    campo, estável no cofre.
 {
-  for (const d of DIVISOES_PARA_CLUBE_PROPRIO) {
-    const forca = prestigioDeClubeNovo(d.id)
-    const naDivisao = getTeamsByDivision(d.id)
-    const menor = Math.min(...naDivisao.map(t => t.prestigio ?? 0))
-    ok(`${d.id}: o clube novo nasce no piso ou abaixo (${forca} <= ${menor + 2})`,
-      forca <= menor + 2)
+  const caixa = saldoDeClubeNovo()
+  const serieB = getTeamsByDivision("serie_b").map(t => t.saldo ?? 0).filter(s => s > 0)
+  ok("o caixa do clube novo é o de um clube de Série B",
+    caixa >= Math.min(...serieB) && caixa <= Math.max(...serieB),
+    `(${caixa} fora de ${Math.min(...serieB)}..${Math.max(...serieB)})`)
+  ok("o caixa nunca é zero", caixa > 0)
+
+  let divisoesConferidas = 0
+  for (const p of PAISES_PARA_CLUBE_PROPRIO) {
+    const divisoes = divisoesParaClubeProprio(p.pais)
+    ok(`${p.pais} oferece divisões`, divisoes.length > 0, `(${divisoes.length})`)
+    for (const d of divisoes) {
+      const naDivisao = getTeamsByDivision(d.id).map(t => t.prestigio ?? 0).filter(v => v > 0)
+      if (!naDivisao.length) continue
+      const menor = Math.min(...naDivisao)
+      const time = clubeProprioComoTime({
+        fileKey: "meuclube_teste", nome: "Teste", curto: "TSTE", cidade: "", pais: p.pais,
+        estado: "", cor1: "#fff", cor2: "#000", divisao: d.id,
+        estadioNome: "X", estadioCap: 8000, criadoEm: "2026-08-15T00:00:00Z",
+      })
+      divisoesConferidas++
+      if (time.prestigio > menor) {
+        ok(`${d.id}: clube novo nasce no piso (${time.prestigio} <= ${menor})`, false)
+      }
+      // O caixa NÃO pode variar com a divisão — é o ponto do pedido.
+      if (time.saldo !== caixa) {
+        ok(`${d.id}: caixa igual em toda divisão`, false, `(${time.saldo} != ${caixa})`)
+      }
+    }
   }
-  ok("divisão desconhecida não devolve força alta", prestigioDeClubeNovo("nao_existe") <= 12)
-  ok("acesso é mais fraco que a Série A",
-    prestigioDeClubeNovo("divisao_acesso_br") < prestigioDeClubeNovo("serie_a"))
+  ok(`nenhuma das ${divisoesConferidas} divisões deixa o clube novo acima do lanterna`, true)
+  ok("a primeira divisão oferecida é a BASE, não a elite",
+    divisoesParaClubeProprio("Brasil")[0]?.id === "divisao_acesso_br",
+    `(${divisoesParaClubeProprio("Brasil")[0]?.id})`)
+  ok("país sem pirâmide não oferece divisão nenhuma",
+    divisoesParaClubeProprio("Narnia").length === 0)
 }
 
 // 5. Publicado o clube, ele entra na divisão e é achável pelo código.
 {
   const meu: Team = {
-    nome: "Cariacica FC", curto: "CRCX", cidade: "Cariacica", estado: "ES",
+    nome: "Cariacica FC", curto: "CRCX", cidade: "Cariacica", estado: "ES", pais: "Brasil",
     cor1: "#00d4ff", cor2: "#0b1220", prestigio: 8, torcida: 9600,
     estadio_cap: 8000, saldo: 250000, file_key: "meuclube_cariacicafc",
     estadio_nome: "Estádio Municipal", patrocinador: "", escudo_url: "",

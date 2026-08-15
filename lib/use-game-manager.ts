@@ -44,6 +44,7 @@ import { addJobOffers, clearJobOffers, encerrarPassagem } from "@/lib/career-mov
 import { hardNavigate } from "@/lib/hard-navigation"
 // Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
 import { resolveDivisionChange, evolvePyramids, PYRAMIDS, type PyramidClub } from "@/lib/league-pyramid"
+import { DIVISOES_DE_ACESSO } from "@/lib/divisao-de-acesso"
 import { applySponsorDebtContribution, debtConsequences, processDebtMonth, renegotiateDebt, successorDebtBudget } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
 import { useNotifications } from "@/components/notifications-system"
@@ -184,7 +185,6 @@ const LEAGUE_NAMES: Record<string, string> = {
   serie_b: "Brasileirao Serie B",
   serie_c: "Brasileirao Serie C",
   serie_d: "Brasileirao Serie D",
-  divisao_acesso_br: "Divisao de Acesso",
   premier_league: "Premier League",
   la_liga: "La Liga",
   serie_a_ita: "Serie A",
@@ -199,6 +199,8 @@ const LEAGUE_NAMES: Record<string, string> = {
   carioca: "Campeonato Carioca",
   mineiro: "Campeonato Mineiro",
   gaucho: "Campeonato Gaucho",
+  // Os nomes das divisoes de acesso saem do catalogo (lib/divisao-de-acesso).
+  ...Object.fromEntries(DIVISOES_DE_ACESSO.map(d => [d.id, d.rotulo])),
 }
 
 // Configuracao do calendario de cada liga: mes de inicio (0=Jan) e duracao em meses
@@ -217,10 +219,6 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   serie_b:        { startMonth: 3,  monthsInSeason: 9,  rounds: 38 },
   serie_c:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
   serie_d:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
-  // Quinto nivel: mesma janela da Serie D. Como as outras, o numero de rodadas
-  // que VALE sai do elenco real da divisao — este campo dimensiona a liga no
-  // caminho em que o usuario nao esta nela.
-  divisao_acesso_br: { startMonth: 3, monthsInSeason: 8, rounds: 38 },
   // Estaduais isolados (divisao propria)
   paulistao:      { startMonth: 0,  monthsInSeason: 3,  rounds: 14 },
   carioca:        { startMonth: 0,  monthsInSeason: 3,  rounds: 12 },
@@ -278,6 +276,23 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   j2_league:      { startMonth: 1,  monthsInSeason: 11, rounds: 40 },
   k_league_2:     { startMonth: 1,  monthsInSeason: 11, rounds: 36 },
   china_league_one:{ startMonth: 1, monthsInSeason: 10, rounds: 20 },
+}
+
+/**
+ * A divisao de acesso HERDA a janela de calendario da divisao acima dela.
+ *
+ * Faz sentido no mundo (o quinto nivel de um pais joga na mesma epoca do quarto)
+ * e evita o erro que este mapa ja teve: uma liga com janela europeia num pais de
+ * calendario invertido faz a temporada terminar antes de a tabela acabar. Como o
+ * numero de rodadas que VALE sai do elenco real da divisao, este campo so
+ * dimensiona a liga quando o usuario nao esta nela.
+ *
+ * Escrito depois do objeto porque ele nao pode se referenciar durante a propria
+ * inicializacao.
+ */
+for (const acesso of DIVISOES_DE_ACESSO) {
+  const deCima = LEAGUE_CALENDAR[acesso.acima]
+  if (deCima && !LEAGUE_CALENDAR[acesso.id]) LEAGUE_CALENDAR[acesso.id] = { ...deCima }
 }
 
 function leagueCalendarConfig(division: string): LeagueCalendarConfig {
@@ -701,7 +716,7 @@ export function getLeagueRounds(division: string): number {
 
 // Divisoes por confederacao (para sortear adversarios continentais coerentes)
 const SOUTH_AMERICAN_DIVISIONS = new Set([
-  "serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br",
+  "serie_a", "serie_b", "serie_c", "serie_d",
   "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury",
   "primera_b_arg", "torneo_betplay", "primera_b_chi", "segunda_div_ury",
 ])

@@ -1,6 +1,7 @@
 // Competicoes internacionais
 import type { Divisao } from "./teams-data"
 import { UEFA_EXPANSION_COMPETITIONS } from "./uefa-expansion"
+import { DIVISOES_DE_ACESSO } from "./divisao-de-acesso"
 
 export interface Competition {
   id: string
@@ -143,29 +144,6 @@ export const competitionsByLeague: Record<string, Competition[]> = {
       // numero tem de bater com `swaps` da piramide, e o
       // `qa-qualidade-das-ligas` cobra isso.
       relegation: 4,
-    },
-  ],
-
-  // Quinto nivel brasileiro: a base da piramide, onde vivem os clubes que antes
-  // nao tinham divisao nenhuma. Nao declara rebaixamento — nao existe degrau
-  // abaixo, e divisao que anuncia queda sem ter para onde cair foi um defeito
-  // real ja corrigido em outras 16 ligas.
-  divisao_acesso_br: [
-    {
-      id: "divisao_acesso_br",
-      name: "Divisão de Acesso",
-      shortName: "Acesso",
-      type: "league",
-      region: "brasil",
-      format: "points",
-      teams: 20,
-      rounds: 38,
-      // Premio e prestigio abaixo da Serie D pela mesma razao que o prestigio
-      // dos clubes foi reescalonado: e o degrau mais baixo do futebol nacional.
-      prize: 600000,
-      prestige: 12,
-      promotion: 4,
-      formatDetails: "Turno e returno entre 20 clubes da mesma região; sobem quatro à Série D. São 260 clubes disputando as vagas da tabela, e a chave é montada em torno do seu clube.",
     },
   ],
 
@@ -950,6 +928,56 @@ for (const competitions of Object.values(DEEP_PLAYABLE_COMPETITIONS)) {
 // Mantido fora do literal gigante para que a expansão de federações seja
 // declarativa e auditável em um único arquivo.
 Object.assign(competitionsByLeague, UEFA_EXPANSION_COMPETITIONS, DEEP_PLAYABLE_COMPETITIONS)
+
+// ⚠️ A DERIVACAO DO ACESSO RODA DEPOIS DO `Object.assign` ACIMA.
+//
+// Seis paises (Alemanha, Franca, Espanha, Portugal, Belgica, Turquia) tem a
+// divisao logo acima do acesso em `DEEP_PLAYABLE_COMPETITIONS`, e nao no objeto
+// literal. Rodando antes, `competitionsByLeague[acesso.acima]` era `undefined`
+// para eles e as seis bases ficavam SEM REGULAMENTO — divisao jogavel cuja tela
+// de competicao nao mostra nada, que e o defeito das dezoito ligas do FALLBACK.
+/**
+ * REGULAMENTO DAS DIVISÕES DE ACESSO — derivado da divisão logo acima.
+ *
+ * ⚠️ Prêmio e prestígio são uma FRAÇÃO da divisão de cima, nunca números
+ * inventados. É a mesma regra que fez o leilão e o caixa dos clubes darem
+ * errado três vezes: antes de escrever um número de dinheiro ou de força,
+ * procure a escala que o jogo já usa. Aqui a escala é a do degrau imediatamente
+ * superior, que é exatamente o que o jogador vai comparar.
+ *
+ * ⚠️ `relegation` fica em ZERO. É a base da pirâmide: não existe degrau abaixo,
+ * e divisão que anuncia rebaixamento sem ter para onde cair foi um defeito real
+ * em 16 ligas, corrigido na auditoria de 04/08.
+ *
+ * ⚠️ A divisão de cima passa a REBAIXAR — antes ela era a ponta. O número tem de
+ * bater com `swaps` da pirâmide, e o `qa-qualidade-das-ligas` cobra isso; por
+ * isso o `relegation` dela é ajustado aqui, junto, e não numa edição à mão que
+ * ficaria para trás quando o catálogo crescesse.
+ */
+for (const acesso of DIVISOES_DE_ACESSO) {
+  const deCima = competitionsByLeague[acesso.acima]?.[0]
+  if (!deCima) continue
+
+  competitionsByLeague[acesso.acima] = competitionsByLeague[acesso.acima].map((c, i) =>
+    i === 0 ? { ...c, relegation: acesso.sobem } : c)
+
+  competitionsByLeague[acesso.id] = [{
+    id: acesso.id,
+    name: acesso.rotulo,
+    shortName: acesso.rotulo.length > 16 ? acesso.rotulo.slice(0, 16) : acesso.rotulo,
+    type: "league",
+    region: deCima.region,
+    format: "points",
+    teams: 20,
+    rounds: 38,
+    prize: Math.max(200_000, Math.round(deCima.prize * 0.3)),
+    prestige: Math.max(5, Math.round(deCima.prestige * 0.5)),
+    promotion: acesso.sobem,
+    relegation: 0,
+    formatDetails: `Turno e returno entre 20 clubes da mesma região; sobem ${acesso.sobem} à ${deCima.name}. A base da pirâmide reúne todos os clubes do país que não estão em outra divisão, e a chave é montada em torno do seu clube.`,
+  }]
+}
+
 
 // Funcao para obter competicoes de um time
 export function getCompetitionsForTeam(divisao: Divisao): Competition[] {

@@ -40,6 +40,7 @@ import { repairMojibake } from "@/lib/text-normalization"
 import { getNationalKitUrl } from "@/lib/national-assets"
 import { UEFA_EXPANSION_FEDERATIONS, type UefaExpansionDivision } from "@/lib/uefa-expansion"
 import { OFFICIAL_EUROPEAN_PARTICIPANTS_2026 } from "@/lib/official-european-participants-2026"
+import { DIVISOES_DE_ACESSO, IDS_DE_ACESSO, acessoDoPais } from "@/lib/divisao-de-acesso"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -50,19 +51,19 @@ export type Divisao =
   | "serie_c"
   | "serie_d"
   /**
-   * QUINTO NIVEL BRASILEIRO — o degrau que faltava embaixo da Serie D.
+   * DIVISOES DE ACESSO — a base da piramide, em 16 paises.
    *
-   * Ate aqui os ~268 clubes brasileiros do pool ficavam em `pool:Brasil`, que
-   * NAO e divisao: eles apareciam no editor, tinham escudo e elenco, e nao
-   * podiam ser dirigidos nem subir para lugar nenhum. Era o relato "Cariacica,
-   * Vitoria-ES e afins nao tem como chegar na Serie D".
+   * Ate a 1.0.318 os 1.618 clubes do pool ficavam em `pool:<Pais>`, que NAO e
+   * divisao: apareciam no editor, tinham escudo e elenco, e nao podiam ser
+   * dirigidos nem subir para lugar nenhum. Era o relato "Cariacica, Vitoria-ES
+   * e afins nao tem como chegar na Serie D" — e o mesmo valia no resto do mundo.
    *
-   * O nome nao inventa uma divisao da CBF que nao existe. Na vida real quem
-   * alimenta a Serie D e o campeonato estadual, e "divisao de acesso" e como o
-   * proprio futebol brasileiro chama o degrau que da subida — que e exatamente
-   * o papel deste nivel aqui.
+   * Os ids sao PERMANENTES (vao para o save) e vivem em `lib/divisao-de-acesso`.
+   * A uniao abaixo aceita qualquer um deles; o catalogo e quem decide quais
+   * existem, e o teste confere que os dois lados batem.
    */
   | "divisao_acesso_br"
+  | `acesso_${string}`
   // Internacionais
   | "premier_league"
   | "la_liga"
@@ -1768,15 +1769,12 @@ const _playableShortByFileKey: Record<string, string> = {}
  * mexer nele ali recalibra o jogo inteiro. O ajuste vale so para o clube que
  * entrou na piramide brasileira, e o mapa abaixo e a fronteira disso.
  */
-const _prestigioNaPiramideBR: Record<string, number> = {}
+const _prestigioNaPiramideDoPais: Record<string, number> = {}
 
-/** Faixa de destino: abaixo da Serie D (10-45), com sobreposicao no topo, para
- *  que o campeao do acesso chegue parecido com o lanterna da Serie D. */
-const FAIXA_DIVISAO_ACESSO = { min: 6, max: 34 } as const
 
 function _withPlayablePoolIdentity(team: Team): Team {
   const curto = _playableShortByFileKey[team.file_key]
-  const prestigio = _prestigioNaPiramideBR[team.file_key]
+  const prestigio = _prestigioNaPiramideDoPais[team.file_key]
   if (!curto && prestigio === undefined) return team
   const ajustado: Team = { ...team }
   if (curto && curto !== team.curto) ajustado.curto = curto
@@ -1861,10 +1859,11 @@ export const MIN_TIMES_PARA_LIGA = 8
  */
 export const TAMANHO_OFICIAL_DA_LIGA: Record<string, number> = {
   serie_a: 20, serie_b: 20, serie_c: 20, serie_d: 20,
-  // Quinto nivel brasileiro. 20 como as outras quatro: o gerador de tabela monta
+  // Divisoes de acesso: 20 como as outras. O gerador de tabela monta
   // turno-returno a partir do ELENCO da divisao, entao um numero maior nao e
-  // "mais clubes disponiveis", e sim mais rodadas na temporada do jogador.
-  divisao_acesso_br: 20,
+  // "mais clubes disponiveis", e sim mais rodadas na temporada do jogador — e
+  // sao 1.618 clubes livres no mundo disputando essas vagas.
+  ...Object.fromEntries(IDS_DE_ACESSO.map(id => [id, 20])),
   premier_league: 20, championship: 24,
   la_liga: 20, la_liga_2: 22,
   serie_a_ita: 20, serie_b_ita: 20,
@@ -1924,10 +1923,10 @@ export function tamanhoDaLiga(divisao: string): number {
  * nao estao na primeira divisao.
  */
 const PAIS_DA_DIVISAO: Record<string, string> = {
-  // A Divisao de Acesso nasce SEM nenhum clube curado — os 20 saem todos do pool
-  // brasileiro. Sem esta entrada `completarLigaComPool` nao teria como descobrir
-  // o pais dela (ele olha o primeiro clube da divisao, e nao ha nenhum).
-  divisao_acesso_br: "Brasil",
+  // As divisoes de acesso nascem SEM nenhum clube curado — os 20 saem todos do
+  // pool. Sem estas entradas `completarLigaComPool` nao teria como descobrir o
+  // pais delas (ele olha o primeiro clube da divisao, e nao ha nenhum).
+  ...Object.fromEntries(DIVISOES_DE_ACESSO.map(d => [d.id, d.country])),
   liga_portugal_2: "Portugal", eerste_divisie: "Holanda", challenger_pro: "Belgica",
   tff_1_lig: "Turquia", russian_first: "Russia", primera_b_arg: "Argentina",
   torneo_betplay: "Colombia", segunda_div_ury: "Uruguai",
@@ -2014,7 +2013,7 @@ const PIRAMIDES_PROFUNDAS_DO_POOL: readonly { country: string; tiers: readonly s
   // calcula `missing = 0` para todas elas e NAO mexe na Serie A/B/C/D — o unico
   // nivel que ele preenche e a Divisao de Acesso, que nasce vazia. Isso so vale
   // porque `_paisDoClube` enxerga a UF do curado; ver o aviso la.
-  { country: "Brasil", tiers: ["serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br"] },
+  { country: "Brasil", tiers: ["serie_a", "serie_b", "serie_c", "serie_d"] },
   { country: "Inglaterra", tiers: ["premier_league", "championship", "league_one_eng", "league_two_eng", "national_league_eng", "national_league_ns_eng"] },
   { country: "Espanha", tiers: ["la_liga", "la_liga_2", "primera_federacion_esp", "segunda_federacion_esp"] },
   { country: "Alemanha", tiers: ["bundesliga", "bundesliga_2", "dritte_liga_ger"] },
@@ -2024,7 +2023,34 @@ const PIRAMIDES_PROFUNDAS_DO_POOL: readonly { country: string; tiers: readonly s
   { country: "Belgica", tiers: ["pro_league_bel", "challenger_pro", "first_national_bel"] },
   { country: "Turquia", tiers: ["super_lig", "tff_1_lig", "tff_2_lig"] },
   { country: "Grecia", tiers: ["super_league_gre", "super_league_2_gre"] },
-]
+  // ── Paises que so entraram aqui por causa da Divisao de Acesso ────────────
+  //
+  // ⚠️ A ESCADA INTEIRA, e nao so o degrau de baixo. O laco preenche na ordem e
+  // RESERVA o clube para um nivel so; listar apenas o acesso faria os 139
+  // argentinos livres serem reservados para ele, e `completarLigaComPool`
+  // deixaria de achar clube para a Primera Nacional (que precisa de 36) — a
+  // divisao de cima encolheria em silencio, que e exatamente o defeito que esta
+  // particao existe para evitar.
+  //
+  // As listas espelham `PYRAMIDS` de lib/league-pyramid; o
+  // `scripts/test-divisao-de-acesso.ts` compara as duas e falha se divergirem.
+  { country: "Argentina", tiers: ["liga_argentina", "primera_b_arg"] },
+  { country: "Italia", tiers: ["serie_a_ita", "serie_b_ita"] },
+  { country: "Holanda", tiers: ["eredivisie", "eerste_divisie"] },
+  { country: "Russia", tiers: ["russian_prem", "russian_first"] },
+  { country: "Chile", tiers: ["primera_div_chi", "primera_b_chi"] },
+  { country: "Peru", tiers: ["primera_div_per", "liga_2_per"] },
+  { country: "Paraguai", tiers: ["primera_div_par", "division_intermedia_par"] },
+  { country: "Bolivia", tiers: ["primera_div_bol", "copa_simon_bolivar"] },
+  { country: "China", tiers: ["chinese_super", "china_league_one"] },
+].map(layout => {
+  // O degrau de acesso e ANEXADO ao fim da escada do pais, nunca escrito a mao
+  // em cada linha: a lista acima ja saiu de sincronia com `PYRAMIDS` uma vez.
+  const acesso = acessoDoPais(layout.country)
+  if (!acesso) return layout
+  if (acesso.acima !== layout.tiers[layout.tiers.length - 1]) return layout
+  return { ...layout, tiers: [...layout.tiers, acesso.id] }
+})
 
 const _nomePoolComparavel = (nome: string) =>
   (nome ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "").trim()
@@ -2116,14 +2142,15 @@ for (const layout of PIRAMIDES_PROFUNDAS_DO_POOL) {
   }
 }
 
-// ── Prestigio do quinto nivel brasileiro na escala do catalogo ───────────────
+// ── Prestigio das divisoes de acesso na escala do catalogo de cada pais ─────
 //
 // Roda DEPOIS do laco das piramides porque depende de `_poolInitialDivisionByFileKey`
 // ja estar preenchido. Mapeamento linear e determinstico, preservando a ordem de
 // forca entre os clubes: o melhor do pool vira o melhor do acesso, e nao o
-// melhor do Brasil. Ver o aviso em `_prestigioNaPiramideBR`.
-{
-  // ⚠️ TODOS os brasileiros livres entram, nao so os 20 que cabem na tabela.
+// melhor do Brasil. Ver o aviso em `_prestigioNaPiramideDoPais`.
+for (const acesso of DIVISOES_DE_ACESSO) {
+  const paisDoAcesso = _paisCanonico(acesso.country)
+  // ⚠️ TODOS os clubes livres do pais entram, nao so os 20 que cabem na tabela.
   //
   // O laco acima para em `tamanhoDaLiga`, que e o certo para as divisoes do
   // meio: elas tem tamanho fixo. Mas a BASE da piramide e o balde de quem nao
@@ -2137,25 +2164,35 @@ for (const layout of PIRAMIDES_PROFUNDAS_DO_POOL) {
   // esta entre os 20 mais fortes. Ou seja: 268 clubes disputam o nivel, 20 jogam
   // a temporada visivel, e `evolvePyramids` promove 4 deles.
   for (const team of allPoolTeams) {
-    if (_paisDoClube(team) !== "brasil") continue
+    if (_paisDoClube(team) !== paisDoAcesso) continue
     if (_poolInitialDivisionByFileKey[team.file_key]) continue
     if (_officialEuropeanDivisionByFileKey[team.file_key] || PROMOVIDOS_DO_POOL[team.file_key]) continue
-    _poolInitialDivisionByFileKey[team.file_key] = "divisao_acesso_br"
+    _poolInitialDivisionByFileKey[team.file_key] = acesso.id
   }
 
   const noAcesso = allPoolTeams.filter(
-    team => _poolInitialDivisionByFileKey[team.file_key] === "divisao_acesso_br",
+    team => _poolInitialDivisionByFileKey[team.file_key] === acesso.id,
   )
+  // ⚠️ A faixa de destino e calculada CONTRA A DIVISAO DE CIMA, e nao fixa em
+  // 6-34 como era na versao so-Brasil. As piramides do mundo tem escalas bem
+  // diferentes — a Serie D brasileira vai a 45 e a `national_fra` a outra coisa
+  // —, e uma faixa unica poria a base francesa acima da sua propria segunda
+  // divisao. O teto do acesso e o PISO da divisao de cima; abaixo dele, a faixa
+  // se abre proporcionalmente.
   if (noAcesso.length) {
+    const acima = getTeamsByDivision(acesso.acima).map(t => t.prestigio ?? 0)
+    const pisoDeCima = acima.length ? Math.min(...acima) : 15
+    const max = Math.max(4, pisoDeCima - 1)
+    const min = Math.max(1, Math.round(max * 0.2))
+
     const forcas = noAcesso.map(team => team.prestigio ?? 0)
     const menor = Math.min(...forcas)
     const maior = Math.max(...forcas)
-    const { min, max } = FAIXA_DIVISAO_ACESSO
     for (const team of noAcesso) {
       // Todos com o mesmo prestigio (amplitude zero) cairiam numa divisao por
       // zero; nesse caso o nivel inteiro vale o meio da faixa.
       const posicao = maior > menor ? ((team.prestigio ?? 0) - menor) / (maior - menor) : 0.5
-      _prestigioNaPiramideBR[team.file_key] = Math.round(min + posicao * (max - min))
+      _prestigioNaPiramideDoPais[team.file_key] = Math.round(min + posicao * (max - min))
     }
   }
 }
