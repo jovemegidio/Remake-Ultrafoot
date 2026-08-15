@@ -5,6 +5,7 @@
 import type { Team } from "@/lib/teams-data"
 import { penalidadeImprovisacao } from "@/lib/formations"
 import { confrontoEspacial286, escolherCorredor286, type CorredorEspacial286, type PerfilEspacial286 } from "@/lib/modelo-espacial-286"
+import { rigorDoArbitro, type Arbitro } from "@/lib/arbitragem"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos base
@@ -263,6 +264,11 @@ export interface MatchConfig {
   weatherFactor?: number
   homeSquad?: SquadPlayer[]
   awaySquad?: SquadPlayer[]
+  /**
+   * O árbitro da partida. Altera SÓ a frequência de cartão — nunca o placar.
+   * Ausente = arbitragem média, o comportamento de antes. Ver `lib/arbitragem.ts`.
+   */
+  arbitro?: Arbitro
   modifiers?: MatchModifiers
   // Overrides táticos (formação/mentalidade/moral já aplicados pela UI).
   // Quando presentes, substituem as forças derivadas do elenco.
@@ -1284,7 +1290,11 @@ function resolveFoul(side: Side, state: MatchState, config: MatchConfig, probs: 
 
   // Calibrado para cerca de 0,08-0,18 expulsao por partida em amostra longa.
   // O multiplicador anterior criava reincidencia de amarelos em quase todo jogo.
-  if (rnd() < probs.cardChance * 0.4) {
+  //
+  // O RIGOR DO ÁRBITRO entra aqui, e só aqui: ele muda a frequência do cartão,
+  // não a chance de gol. Sem árbitro definido o fator é 1 e nada muda em relação
+  // à calibração acima. Ver `lib/arbitragem.ts`.
+  if (rnd() < probs.cardChance * 0.4 * rigorDoArbitro(config.arbitro)) {
     const squad = side === "home" ? config.homeSquad : config.awaySquad
     const eligible = (squad ?? []).filter(candidate => !state.playerRedCards[`${side}:${candidate.nome.toLocaleLowerCase("pt-BR")}`])
     const player = eligible.length > 0

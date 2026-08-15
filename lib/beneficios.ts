@@ -40,10 +40,13 @@ export const PAISES_SEM_REGISTRO: readonly string[] = ["BRA"]
  * aqui, ao lado da lista de paises, para as duas regras nao se separarem.
  */
 export const DIVISOES_SEM_REGISTRO: readonly string[] = [
-  "serie_a", "serie_b", "serie_c", "serie_d",
+  // A Divisao de Acesso e futebol brasileiro, entao entra na amostra livre pela
+  // mesma regra das quatro Series — "o futebol brasileiro inteiro" continua
+  // valendo depois que a piramide ganhou um quinto degrau.
+  "serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br",
 ]
 
-export type BeneficioId = "nuvem" | "hub" | "editor" | "atualizacoes" | "saves" | "ligas"
+export type BeneficioId = "nuvem" | "hub" | "editor" | "atualizacoes" | "saves" | "ligas" | "clube-proprio"
 
 export interface Beneficio {
   id: BeneficioId
@@ -57,6 +60,11 @@ export const BENEFICIOS: Beneficio[] = [
     id: "ligas",
     titulo: "O mundo inteiro",
     descricao: "Sem registro você dirige o futebol brasileiro (Série A à D). O código abre as ligas dos outros países.",
+  },
+  {
+    id: "clube-proprio",
+    titulo: "Seu próprio clube",
+    descricao: "Crie um clube do zero — nome, cores, escudo, os três uniformes e o estádio — e dirija a carreira com ele.",
   },
   {
     id: "nuvem",

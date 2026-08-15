@@ -56,7 +56,15 @@ export function getLeagueTeams(userTeam: SavedTeam): Team[] {
     }
   }
 
-  const divTeams = completarLigaComPool(userTeam.divisao as string)
+  // A ancora so muda alguma coisa nas divisoes com mais clubes do que vagas —
+  // hoje, a Divisao de Acesso (260 clubes para 20 lugares). Ali ela e o que faz
+  // o clube pequeno pegar adversarios da propria regiao e do proprio tamanho, em
+  // vez dos 20 mais fortes do Brasil.
+  const divTeams = completarLigaComPool(
+    userTeam.divisao as string,
+    tamanhoDaLiga(userTeam.divisao as string),
+    { file_key: userTeam.fileKey, estado: userTeam.estado, prestigio: userTeam.prestigio },
+  )
   const base: Team[] = divTeams.length >= 8 ? divTeams : serieATeams
 
   // ⚠️ O CORTE ERA 20, FIXO, PARA TODA LIGA DO MUNDO. Ele nunca apertou nada

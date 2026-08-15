@@ -34,6 +34,8 @@ import {
   Hand,
   Stethoscope,
   Circle,
+  Maximize2,
+  Minimize2,
 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { getCompetitionLogo } from "@/lib/competition-logo"
@@ -67,6 +69,7 @@ import { forcasDaTatica } from "@/lib/forcas-taticas"
 import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
 import { forcasDoPlantel, ladoAdversarioEmCampo, titularesAptos, type AtletaEmCampo } from "@/lib/forca-do-plantel"
 import { tecnicoDoClube, tecnicosDoSave } from "@/lib/tecnicos-do-save"
+import { arbitroDaPartida } from "@/lib/arbitragem"
 import type { TeamTactics } from "@/lib/game-engine"
 import { aiTacticForClub, applyTacticModifiers, type TacticalIdentity } from "@/lib/tactics-engine"
 import { aiClubSocialMatchModifier } from "@/lib/ai-club-social"
@@ -1211,6 +1214,10 @@ export default function PartidaAoVivoPage() {
     awayRating: userSide === "away" ? userForces.overall + bonusEntrosamento : ladoAdversario.overall,
     homeSquad: homeSquad.map(toSquadPlayer),
     awaySquad: awaySquad.map(toSquadPlayer),
+    // ÁRBITRO DA PARTIDA. Determinístico pelos clubes + temporada + semana: o
+    // mesmo jogo tem sempre o mesmo juiz, senão o nome mudaria entre a tela de
+    // pré-jogo e a súmula. Ele altera só a frequência de cartão.
+    arbitro: arbitroDaPartida(`${homeTeam.curto}-${awayTeam.curto}-${savedGame.season}-${savedGame.week}`),
     durationMinutes: matchCtx.duration,
     // Diz ao motor qual lado e o do usuario: no penalti dele, o motor PARA e espera
     // a escolha do batedor em vez de cobrar sozinho.
@@ -1483,6 +1490,30 @@ export default function PartidaAoVivoPage() {
   const [activeTab, setActiveTab] = useState<"pitch" | "stats" | "gameplan" | "narration">("narration")
   const [usarCampo3D, setUsarCampo3D] = useState(true)
   const [falhaCampo3D, setFalhaCampo3D] = useState<string | null>(null)
+  /** Campo ocupando a janela inteira, para acompanhar a partida. */
+  const [campoEmTelaCheia, setCampoEmTelaCheia] = useState(false)
+
+  // Esc sai, F alterna. Esc é o gesto que a pessoa tenta primeiro numa tela que
+  // tomou conta do jogo; sem ele, a tela cheia parece travada.
+  //
+  // ⚠️ Ignora as teclas quando o foco está num campo de texto: digitar "f" numa
+  // busca não pode jogar o jogador para dentro da tela cheia.
+  useEffect(() => {
+    const aoTeclar = (e: KeyboardEvent) => {
+      const alvo = e.target as HTMLElement | null
+      if (alvo && (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA" || alvo.isContentEditable)) return
+      if (e.key === "Escape" && campoEmTelaCheia) { e.preventDefault(); setCampoEmTelaCheia(false) }
+      else if (e.key === "f" || e.key === "F") { e.preventDefault(); setCampoEmTelaCheia(v => !v) }
+    }
+    window.addEventListener("keydown", aoTeclar)
+    return () => window.removeEventListener("keydown", aoTeclar)
+  }, [campoEmTelaCheia])
+
+  // Sair da aba do campo fecha a tela cheia junto: sem isto, voltar para as
+  // estatísticas deixaria um retângulo preto cobrindo o jogo.
+  useEffect(() => {
+    if (activeTab !== "pitch" && campoEmTelaCheia) setCampoEmTelaCheia(false)
+  }, [activeTab, campoEmTelaCheia])
 
   const formacaoDaFase = useMemo(() => {
     const ultimo = state.events[0]?.type
@@ -2402,15 +2433,56 @@ export default function PartidaAoVivoPage() {
                 )}
 
                 {activeTab === "pitch" && (
-                  <div className="flex flex-1 min-h-0 flex-col gap-3">
+                  // ── TELA CHEIA DO CAMPO ──────────────────────────────────
+                  //
+                  // Em tela cheia o bloco sai do fluxo e cobre a janela. O motor
+                  // 3D se ajusta sozinho (ele tem ResizeObserver + setSize), por
+                  // isso não é preciso avisá-lo nem remontar a cena — remontar
+                  // perderia o lance em andamento.
+                  //
+                  // ⚠️ z-[150] fica ABAIXO da tela de passagem de vez (z-200) e
+                  // ACIMA do cabeçalho: assistir não pode esconder a troca de
+                  // técnico no co-op, que é o que protege o elenco de cada um.
+                  <div className={cn(
+                    "flex min-h-0 flex-col gap-3",
+                    campoEmTelaCheia
+                      ? "fixed inset-0 z-[150] bg-[#05070b] p-4"
+                      : "flex-1",
+                  )}>
                     <div className="flex shrink-0 items-center justify-between gap-3">
-                      <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60">{t.match.live.sectionPitch}</h3>
-                        <p className="text-[10px] text-white/35">Estrutura ativa: {formacaoDaFase}</p>
-                      </div>
-                      <div className="flex rounded-lg border border-white/10 bg-black/25 p-1">
-                        <button type="button" onClick={() => setUsarCampo3D(false)} className={cn("rounded px-3 py-1 text-xs font-bold", !usarCampo3D ? "bg-white/15 text-white" : "text-white/45")}>2D</button>
-                        <button type="button" disabled={Boolean(falhaCampo3D)} onClick={() => setUsarCampo3D(true)} className={cn("rounded px-3 py-1 text-xs font-bold", usarCampo3D ? "bg-[var(--brand)]/20 text-[var(--brand)]" : "text-white/45", falhaCampo3D && "cursor-not-allowed opacity-40")}>3D</button>
+                      {campoEmTelaCheia ? (
+                        // Sem o resto da tela, o placar e o minuto precisam vir
+                        // junto: assistir sem saber como está o jogo é inútil.
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-white">{homeTeam.curto}</span>
+                          <span className="rounded-lg bg-white/[0.08] px-3 py-1 text-lg font-black tabular-nums text-white">
+                            {state.home.goals} <span className="text-white/30">×</span> {state.away.goals}
+                          </span>
+                          <span className="text-sm font-bold text-white">{awayTeam.curto}</span>
+                          <span className="ml-2 rounded-md bg-[var(--brand)]/15 px-2 py-0.5 text-xs font-bold tabular-nums text-[var(--brand)]">
+                            {state.minute}&apos;
+                          </span>
+                        </div>
+                      ) : (
+                        <div>
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60">{t.match.live.sectionPitch}</h3>
+                          <p className="text-[10px] text-white/35">Estrutura ativa: {formacaoDaFase}</p>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <div className="flex rounded-lg border border-white/10 bg-black/25 p-1">
+                          <button type="button" onClick={() => setUsarCampo3D(false)} className={cn("rounded px-3 py-1 text-xs font-bold", !usarCampo3D ? "bg-white/15 text-white" : "text-white/45")}>2D</button>
+                          <button type="button" disabled={Boolean(falhaCampo3D)} onClick={() => setUsarCampo3D(true)} className={cn("rounded px-3 py-1 text-xs font-bold", usarCampo3D ? "bg-[var(--brand)]/20 text-[var(--brand)]" : "text-white/45", falhaCampo3D && "cursor-not-allowed opacity-40")}>3D</button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCampoEmTelaCheia(v => !v)}
+                          title={campoEmTelaCheia ? "Sair da tela cheia (Esc)" : "Assistir em tela cheia (F)"}
+                          aria-label={campoEmTelaCheia ? "Sair da tela cheia" : "Assistir em tela cheia"}
+                          className="rounded-lg border border-white/10 bg-black/25 p-2 text-white/60 transition-colors hover:text-white"
+                        >
+                          {campoEmTelaCheia ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                        </button>
                       </div>
                     </div>
                     {falhaCampo3D && <AvisoQuedaPara2D motivo={falhaCampo3D} />}

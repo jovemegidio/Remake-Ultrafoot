@@ -88,6 +88,11 @@ function hasWindow(): boolean {
 }
 
 function isSaveKey(key: string): boolean {
+  // ⚠️ A QUARENTENA NÃO SOBE PARA A NUVEM. Ela guarda o que o jogo escreveu sem
+  // carreira ativa (boot, splash, logo após apagar uma carreira). É lixo por
+  // definição, e mandá-la junto levaria a contaminação de "um save invadindo
+  // outro" para a máquina que baixasse o pacote. Ver `getCareerScopedKey`.
+  if (key.endsWith(":__sem-carreira") || key.includes(":__legado-consumido-por")) return false
   if (key.startsWith("ultrafoot-game-engine")) return true
   if (!key.startsWith("ultrafoot:")) return false
   if (key.startsWith(CLOUD_PREFIX) || key === LAST_CODE_KEY) return false

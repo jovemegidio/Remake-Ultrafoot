@@ -7,6 +7,7 @@ import { NotificationsProvider, NotificationToastContainer } from "@/components/
 // reservas NÃO entram mais aqui: cada um alcança os seeds, e este layout envolve
 // até a splash. Agora vivem em `carreira-ativa`, montados só com carreira aberta.
 import { CarreiraAtiva } from "@/components/carreira-ativa"
+import { ClubesPropriosBridge } from "@/components/clubes-proprios-bridge"
 import { DialogoDoJogo } from "@/components/dialogo-do-jogo"
 import { PendingInboxGate } from "@/components/pending-inbox-gate"
 import { NativeAppProvider } from "@/components/native-app-provider"
@@ -76,6 +77,10 @@ export default function RootLayout({
                     banco de reservas. Só montam com carreira aberta — eram eles
                     que traziam os seeds para a splash. Ver carreira-ativa. */}
                 <CarreiraAtiva />
+                {/* Publica os clubes criados pelo jogador nas listas de
+                    teams-data. Sem carreira aberta também: quem cria um clube
+                    precisa vê-lo na tela de nova carreira. */}
+                <ClubesPropriosBridge />
                 <PendingInboxGate />
                 <PerformanceProfileBootstrap />
                 <EaActionBarProvider>

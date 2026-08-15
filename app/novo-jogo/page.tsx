@@ -6,7 +6,7 @@ import { getClubFacts } from "@/lib/club-facts"
 import { getTeamStadiumBackground } from "@/lib/pre-match-bg"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { ChevronLeft, ChevronRight, User, Play, Check, Trophy, Award, Globe, Building2, CornerDownLeft, ArrowLeft, Shuffle, Repeat, Settings2, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, User, Play, Check, Trophy, Award, Globe, Building2, CornerDownLeft, ArrowLeft, Shuffle, Repeat, Settings2, Sparkles, X } from "lucide-react"
 import {
   serieATeams,
   serieBTeams,
@@ -14,6 +14,7 @@ import {
   serieDTeams,
   getTeamUniforms,
   completarLigaComPool,
+  getTeamsByDivision,
   getCamisaUrl,
   getEscudoUrl,
   isKitVariantAvailable,
@@ -159,6 +160,8 @@ interface LeagueTab {
    * [[ultrafoot-efeito-que-grava-antes-de-hidratar]].
    */
   doPool?: boolean
+  /** Lista TODOS os clubes da divisao, e nao a tabela de 20. Ver o uso abaixo. */
+  todosDaDivisao?: boolean
 }
 
 interface CountryTab {
@@ -176,6 +179,7 @@ const CORE_COUNTRIES: CountryTab[] = [
       { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams },
       { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams },
       { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams },
+      { key: "divisao_acesso_br", label: "Divisao de Acesso", short: "Acesso", teams: [], todosDaDivisao: true },
     ],
   },
   {
@@ -526,8 +530,22 @@ export default function NovoJogoPage() {
       const lista = registrado ? COUNTRIES : COUNTRIES.filter(c => PAISES_SEM_REGISTRO.includes(c.code))
       return lista.map(pais => ({
         ...pais,
-        leagues: pais.leagues.map(liga =>
-          liga.doPool ? { ...liga, teams: completarLigaComPool(liga.key) } : liga),
+        leagues: pais.leagues.map(liga => {
+          // A Divisao de Acesso e o unico nivel em que a lista de ESCOLHA nao
+          // pode ser a tabela: sao 260 clubes disputando 20 vagas, e mostrar so
+          // as 20 deixaria o Serra-ES invisivel — que e exatamente o clube que
+          // este nivel existe para tornar jogavel. A tabela dele e montada em
+          // torno da escolha (ver a ancora em completarLigaComPool).
+          if (liga.todosDaDivisao) {
+            return {
+              ...liga,
+              teams: [...getTeamsByDivision(liga.key)].sort((a, b) =>
+                (a.estado || "ZZ").localeCompare(b.estado || "ZZ")
+                || a.nome.localeCompare(b.nome)),
+            }
+          }
+          return liga.doPool ? { ...liga, teams: completarLigaComPool(liga.key) } : liga
+        }),
       }))
     },
     [registrado, storeHidratado],
@@ -1081,6 +1099,24 @@ export default function NovoJogoPage() {
                   </span>
                 </button>
               )}
+
+              {/* CRIAR O PRÓPRIO CLUBE. Fica aqui, e não num menu distante,
+                  porque a hora em que alguém quer o próprio clube é exatamente a
+                  hora em que está escolhendo um. O convite aparece para todos —
+                  o portão de registro é da TELA de criação, pela regra "só
+                  benefício, nunca trava": esconder a existência do recurso é
+                  pior do que mostrá-lo e explicar o que ele pede. */}
+              <button
+                type="button"
+                onClick={() => hardNavigate("/clube-novo")}
+                className="mb-3 flex w-full items-start gap-2 rounded-lg border border-cyan-400/25 bg-cyan-400/[0.07] px-2.5 py-2 text-left text-[11px] leading-snug text-cyan-100/80 transition-colors hover:border-cyan-400/45 hover:bg-cyan-400/[0.12]"
+              >
+                <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
+                <span>
+                  Nao achou o seu time? <strong className="font-semibold text-cyan-100">Crie o seu proprio clube</strong> —
+                  nome, cores, escudo, uniformes e estadio, comecando da Divisao de Acesso.
+                </span>
+              </button>
 
               {/* NOME + ESCUDO, na hierarquia da referência: o nome manda, o
                   escudo vem grande logo abaixo, sem moldura nem círculo. O halo

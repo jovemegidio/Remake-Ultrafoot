@@ -138,6 +138,34 @@ export const competitionsByLeague: Record<string, Competition[]> = {
       prestige: 25,
       promotion: 4,
       formatDetails: "Turno e returno entre os 20 clubes; sobem quatro à Série C. Na competição real são 96 clubes em 16 grupos.",
+      // ⚠️ A Serie D passou a ter para onde REBAIXAR quando a Divisao de Acesso
+      // nasceu. Ate aqui ela era a ponta da piramide e nao declarava queda; o
+      // numero tem de bater com `swaps` da piramide, e o
+      // `qa-qualidade-das-ligas` cobra isso.
+      relegation: 4,
+    },
+  ],
+
+  // Quinto nivel brasileiro: a base da piramide, onde vivem os clubes que antes
+  // nao tinham divisao nenhuma. Nao declara rebaixamento — nao existe degrau
+  // abaixo, e divisao que anuncia queda sem ter para onde cair foi um defeito
+  // real ja corrigido em outras 16 ligas.
+  divisao_acesso_br: [
+    {
+      id: "divisao_acesso_br",
+      name: "Divisão de Acesso",
+      shortName: "Acesso",
+      type: "league",
+      region: "brasil",
+      format: "points",
+      teams: 20,
+      rounds: 38,
+      // Premio e prestigio abaixo da Serie D pela mesma razao que o prestigio
+      // dos clubes foi reescalonado: e o degrau mais baixo do futebol nacional.
+      prize: 600000,
+      prestige: 12,
+      promotion: 4,
+      formatDetails: "Turno e returno entre 20 clubes da mesma região; sobem quatro à Série D. São 260 clubes disputando as vagas da tabela, e a chave é montada em torno do seu clube.",
     },
   ],
 

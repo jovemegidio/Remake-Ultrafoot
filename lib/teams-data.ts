@@ -49,6 +49,20 @@ export type Divisao =
   | "serie_b"
   | "serie_c"
   | "serie_d"
+  /**
+   * QUINTO NIVEL BRASILEIRO — o degrau que faltava embaixo da Serie D.
+   *
+   * Ate aqui os ~268 clubes brasileiros do pool ficavam em `pool:Brasil`, que
+   * NAO e divisao: eles apareciam no editor, tinham escudo e elenco, e nao
+   * podiam ser dirigidos nem subir para lugar nenhum. Era o relato "Cariacica,
+   * Vitoria-ES e afins nao tem como chegar na Serie D".
+   *
+   * O nome nao inventa uma divisao da CBF que nao existe. Na vida real quem
+   * alimenta a Serie D e o campeonato estadual, e "divisao de acesso" e como o
+   * proprio futebol brasileiro chama o degrau que da subida — que e exatamente
+   * o papel deste nivel aqui.
+   */
+  | "divisao_acesso_br"
   // Internacionais
   | "premier_league"
   | "la_liga"
@@ -1421,6 +1435,43 @@ interface PoolTeamRaw {
 }
 
 const _seenPoolTeams = new Set<string>()
+/**
+ * UFs brasileiras — o clube curado do Brasil guarda a UF em `estado` e nao tem
+ * `pais`.
+ *
+ * ⚠️ Fica AQUI, e nao junto de `_paisCanonico` como antes, porque `_ufDoPoolBR`
+ * logo abaixo o consulta durante a construcao de `allPoolTeams`, que roda na
+ * carga do modulo. Declarado depois, o `const` estaria na zona morta temporal e
+ * o jogo quebraria ao importar `teams-data` — sem tela, sem erro util.
+ */
+const UFS_BRASIL = new Set(["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"])
+
+/**
+ * UF DE UM CLUBE BRASILEIRO DO POOL, quando o campo `estado` veio vazio.
+ *
+ * 138 dos 268 brasileiros do pool nao trazem `estado`. Sem UF eles nao tem
+ * regiao, e a Divisao de Acesso nao consegue montar a tabela com vizinhos — o
+ * capixaba pegaria adversario do Amapa. A UF, porem, esta la: ou no sufixo do
+ * `file_key` (`serra_es`, `nacional_pb`) ou no proprio nome ("Santos - AP").
+ *
+ * Recupera 108 dos 138, com **zero conflitos** medidos contra os clubes que JA
+ * declaram `estado` — esse foi o teste de controle antes de confiar na regra
+ * (`scripts/test-piramide-brasileira.ts` mantem o numero travado).
+ *
+ * ⚠️ Deliberadamente NAO adivinha pelas duas ultimas letras do radical. Seria
+ * tentador (`muricial` -> AL, `atleticopi` -> PI), mas o mesmo palpite le
+ * `amapa_bra` como **PA** quando o Amapa e **AP** — e uma UF errada e pior que
+ * UF nenhuma: manda o clube para a regiao errada em silencio. Os 30 restantes
+ * ficam sem UF e caem na faixa "sem proximidade", que e um resultado honesto.
+ */
+const _ufDoPoolBR = (fileKey: string, nome: string): string | undefined => {
+  const doArquivo = /_([a-z]{2})$/i.exec(fileKey)?.[1]?.toUpperCase()
+  if (doArquivo && UFS_BRASIL.has(doArquivo)) return doArquivo
+  const doNome = /[-–]\s*([A-Za-z]{2})\s*$/.exec(nome.trim())?.[1]?.toUpperCase()
+  if (doNome && UFS_BRASIL.has(doNome)) return doNome
+  return undefined
+}
+
 export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[] }).teams) ?? [])
   .filter((t) => {
     const nome = repairMojibake(String(t.nome ?? ""))
@@ -1445,7 +1496,12 @@ export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[]
     nome: repairMojibake(String(t.nome ?? "")),
     curto: String(t.curto ?? String(t.nome ?? "").slice(0, 3).toUpperCase()),
     cidade: "",
-    estado: String(t.estado ?? ""),
+    // A UF derivada so entra quando o campo veio VAZIO — o valor declarado
+    // sempre vence, e por isso a derivacao nao pode contradizer dado existente.
+    estado: String(t.estado ?? "").trim()
+      || (normalizeCountry(t.pais) === "Brasil"
+        ? (_ufDoPoolBR(String(t.fileKey ?? ""), repairMojibake(String(t.nome ?? ""))) ?? "")
+        : ""),
     cor1: String(t.cor1 ?? "#666666"),
     cor2: String(t.cor2 ?? "#ffffff"),
     prestigio: Number(t.prestigio ?? 45),
@@ -1552,6 +1608,27 @@ export function setClubDivisions(map: Record<string, string> | undefined): void 
 }
 export function getClubDivisions(): Record<string, string> {
   return _clubDivisions
+}
+
+/**
+ * CLUBES CRIADOS PELO JOGADOR — mesmo padrão de `_clubDivisions`, e pelo mesmo
+ * motivo.
+ *
+ * ⚠️ Eles NÃO podem entrar em `allTeams`. As listas deste arquivo são montadas
+ * na carga do módulo, e um clube criado vive no persistent-store, que só é lido
+ * depois — no primeiro render ele ainda não existe. Colocá-lo numa lista
+ * estática daria um array que às vezes tem o clube e às vezes não, dependendo de
+ * qual tela importou o módulo primeiro.
+ *
+ * Quem alimenta este registro é `components/clubes-proprios-bridge`, ao ouvir
+ * `ultrafoot:store:ready`; as telas que listam clube revisam no mesmo evento.
+ */
+let _clubesPersonalizados: Team[] = []
+export function setClubesPersonalizados(times: Team[]): void {
+  _clubesPersonalizados = times
+}
+export function getClubesPersonalizados(): Team[] {
+  return _clubesPersonalizados
 }
 
 /** Clubes do pool que pertencem a alguma divisão jogável da pirâmide. */
@@ -1664,9 +1741,47 @@ const _poolInitialDivisionByFileKey: Record<string, string> = {}
 const _pyramidDivisionByCountryShort: Record<string, string> = {}
 const _playableShortByFileKey: Record<string, string> = {}
 
+/**
+ * PRESTIGIO REESCALONADO — a correcao sem a qual o quinto nivel nasce mais forte
+ * que a Serie B.
+ *
+ * As duas fontes medem forca em escalas DIFERENTES, e isso e medido, nao supo-
+ * sicao (`scripts/test-piramide-brasileira.ts` trava os numeros):
+ *
+ *   catalogo curado   Serie A 43-93 · Serie B 19-75 · Serie C 16-71 · Serie D 10-45
+ *   pool brasileiro   50-98, mediana 69
+ *
+ * O prestigio do pool e um ranking INTERNO do pool — ele diz quem e mais forte
+ * entre os clubes do pool, nao onde eles ficam na piramide nacional. Jogados
+ * crus num nivel abaixo da Serie D, os 268 clubes chegariam com forca de Serie
+ * A/B; e como `evolvePyramids` ordena por prestigio as divisoes que o jogo nao
+ * simula, eles subiriam TODOS na primeira virada de temporada. A piramide
+ * inverteria em silencio — nada quebraria, o jogo so ficaria errado.
+ *
+ * ⚠️ Esta e a terceira aparicao da mesma familia de defeito ("duas escalas para
+ * a mesma grandeza", como o leilao e o caixa dos clubes). A regra da casa e:
+ * antes de inventar um numero de forca, procure a escala que o jogo ja usa.
+ * Aqui a escala de destino e a do CATALOGO CURADO, que e quem manda no Brasil.
+ *
+ * ⚠️ NAO reescalone `allPoolTeams` global. O mesmo prestigio alimenta o editor,
+ * o completamento de liga de outros 30 paises e os sorteios continentais —
+ * mexer nele ali recalibra o jogo inteiro. O ajuste vale so para o clube que
+ * entrou na piramide brasileira, e o mapa abaixo e a fronteira disso.
+ */
+const _prestigioNaPiramideBR: Record<string, number> = {}
+
+/** Faixa de destino: abaixo da Serie D (10-45), com sobreposicao no topo, para
+ *  que o campeao do acesso chegue parecido com o lanterna da Serie D. */
+const FAIXA_DIVISAO_ACESSO = { min: 6, max: 34 } as const
+
 function _withPlayablePoolIdentity(team: Team): Team {
   const curto = _playableShortByFileKey[team.file_key]
-  return curto && curto !== team.curto ? { ...team, curto } : team
+  const prestigio = _prestigioNaPiramideBR[team.file_key]
+  if (!curto && prestigio === undefined) return team
+  const ajustado: Team = { ...team }
+  if (curto && curto !== team.curto) ajustado.curto = curto
+  if (prestigio !== undefined) ajustado.prestigio = prestigio
+  return ajustado
 }
 
 /** Quanto do arquivo de 2026 casou com o catalogo curado (para o teste conferir). */
@@ -1700,9 +1815,27 @@ export function getTeamsByDivision(divisao: string): Team[] {
     .map(team => _withPlayablePoolIdentity(applyTeamOverride(team)))
   const result = [...curados, ...doPool]
   const snapshot = _officialEuropeanTeamsByDivision.get(divisao)
-  if (!snapshot || Object.keys(_clubDivisions).length > 0) return result
+  if (!snapshot || Object.keys(_clubDivisions).length > 0) return _comClubesProprios(result, divisao)
   const byKey = new Map(result.map(team => [team.file_key, team]))
-  return snapshot.map(team => byKey.get(team.file_key) ?? applyTeamOverride(team))
+  return _comClubesProprios(
+    snapshot.map(team => byKey.get(team.file_key) ?? applyTeamOverride(team)),
+    divisao,
+  )
+}
+
+/**
+ * Acrescenta os clubes criados pelo jogador que pertencem a esta divisão.
+ *
+ * ⚠️ Passa pelas DUAS saídas de `getTeamsByDivision`. A segunda usa a fotografia
+ * oficial europeia, e um clube próprio criado numa liga europeia sumiria por ali
+ * — o tipo de falha que só aparece meses depois, em um país só.
+ */
+function _comClubesProprios(times: Team[], divisao: string): Team[] {
+  if (!_clubesPersonalizados.length) return times
+  const meus = _clubesPersonalizados
+    .filter(t => effectiveDivision(t) === divisao)
+    .filter(t => !times.some(c => c.file_key === t.file_key))
+  return meus.length ? [...times, ...meus] : times
 }
 
 /** Abaixo disto o turno-returno não sustenta um campeonato. */
@@ -1728,6 +1861,10 @@ export const MIN_TIMES_PARA_LIGA = 8
  */
 export const TAMANHO_OFICIAL_DA_LIGA: Record<string, number> = {
   serie_a: 20, serie_b: 20, serie_c: 20, serie_d: 20,
+  // Quinto nivel brasileiro. 20 como as outras quatro: o gerador de tabela monta
+  // turno-returno a partir do ELENCO da divisao, entao um numero maior nao e
+  // "mais clubes disponiveis", e sim mais rodadas na temporada do jogador.
+  divisao_acesso_br: 20,
   premier_league: 20, championship: 24,
   la_liga: 20, la_liga_2: 22,
   serie_a_ita: 20, serie_b_ita: 20,
@@ -1787,6 +1924,10 @@ export function tamanhoDaLiga(divisao: string): number {
  * nao estao na primeira divisao.
  */
 const PAIS_DA_DIVISAO: Record<string, string> = {
+  // A Divisao de Acesso nasce SEM nenhum clube curado — os 20 saem todos do pool
+  // brasileiro. Sem esta entrada `completarLigaComPool` nao teria como descobrir
+  // o pais dela (ele olha o primeiro clube da divisao, e nao ha nenhum).
+  divisao_acesso_br: "Brasil",
   liga_portugal_2: "Portugal", eerste_divisie: "Holanda", challenger_pro: "Belgica",
   tff_1_lig: "Turquia", russian_first: "Russia", primera_b_arg: "Argentina",
   torneo_betplay: "Colombia", segunda_div_ury: "Uruguai",
@@ -1820,9 +1961,6 @@ const _paisComparavel = (p: string) =>
  * é para quando os dois lados escolheram palavras diferentes ("Chequia" no
  * catálogo, "Tchéquia" no pool).
  */
-/** UFs brasileiras — o clube curado do Brasil guarda a UF em `estado` e nao tem `pais`. */
-const UFS_BRASIL = new Set(["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"])
-
 const APELIDOS_DE_PAIS: Record<string, string> = {
   chequia: "tchequia", "republica tcheca": "tchequia",
   tch: "tchequia",
@@ -1843,12 +1981,40 @@ const _paisCanonico = (p: string) => {
 }
 
 /**
+ * PAIS DE UM CLUBE, RESOLVENDO A UF BRASILEIRA.
+ *
+ * ⚠️ Nao troque isto por `_paisCanonico(team.pais ?? team.estado)`. O clube
+ * brasileiro CURADO nao tem o campo `pais` — ele guarda a UF em `estado` —, e
+ * `_paisCanonico("SP")` devolve `"sp"`, nao `"brasil"`. Com a comparacao crua, o
+ * laco das piramides profundas contaria ZERO curados no Brasil e concluiria que
+ * faltam 20 clubes em CADA divisao: Serie A, B, C e D seriam preenchidas com
+ * clubes do pool por cima dos curados — o desastre do "Cruzeiro - AL na Serie A"
+ * que o comentario de `_divisoes2026` descreve.
+ *
+ * A mesma pegadinha ja tinha custado caro em `completarLigaComPool` (a Serie D
+ * ficava sem pais nenhum com 184 brasileiros disponiveis no pool). Aqui ela esta
+ * resolvida num lugar so, para nao ser redescoberta uma terceira vez.
+ */
+const _paisDoClube = (team: { pais?: string; estado?: string }): string => {
+  const declarado = String(team.pais ?? "").trim()
+  if (declarado) return _paisCanonico(declarado)
+  const uf = String(team.estado ?? "").trim().toUpperCase()
+  if (UFS_BRASIL.has(uf)) return "brasil"
+  return _paisCanonico(String(team.estado ?? ""))
+}
+
+/**
  * Reserva clubes reais do pool para um único nível nacional. Sem esta partição,
  * o mesmo clube era usado para completar a segunda, a terceira e a quarta
  * divisão ao mesmo tempo. A ordem é do topo para a base e o prestígio decide
  * quem ocupa cada faixa na primeira temporada.
  */
 const PIRAMIDES_PROFUNDAS_DO_POOL: readonly { country: string; tiers: readonly string[] }[] = [
+  // BRASIL. As quatro divisoes ja tem 20 clubes curados cada, entao o laco
+  // calcula `missing = 0` para todas elas e NAO mexe na Serie A/B/C/D — o unico
+  // nivel que ele preenche e a Divisao de Acesso, que nasce vazia. Isso so vale
+  // porque `_paisDoClube` enxerga a UF do curado; ver o aviso la.
+  { country: "Brasil", tiers: ["serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br"] },
   { country: "Inglaterra", tiers: ["premier_league", "championship", "league_one_eng", "league_two_eng", "national_league_eng", "national_league_ns_eng"] },
   { country: "Espanha", tiers: ["la_liga", "la_liga_2", "primera_federacion_esp", "segunda_federacion_esp"] },
   { country: "Alemanha", tiers: ["bundesliga", "bundesliga_2", "dritte_liga_ger"] },
@@ -1867,14 +2033,13 @@ for (const layout of PIRAMIDES_PROFUNDAS_DO_POOL) {
   const country = _paisCanonico(layout.country)
   const tiers = new Set(layout.tiers)
   const curatedNames = new Set(allTeams
-    .filter(team => _paisCanonico(String(team.pais ?? team.estado ?? "")) === country)
+    .filter(team => _paisDoClube(team) === country)
     .map(team => _nomePoolComparavel(team.nome)))
   const reservedShorts = new Set(allTeams
-    .filter(team => _paisCanonico(String(team.pais ?? team.estado ?? "")) === country)
+    .filter(team => _paisDoClube(team) === country)
     .map(team => team.curto))
   const candidateShorts = new Set<string>()
-  for (const team of allTeams.filter(team =>
-    _paisCanonico(String(team.pais ?? team.estado ?? "")) === country)) {
+  for (const team of allTeams.filter(team => _paisDoClube(team) === country)) {
     const initial = _officialEuropeanDivisionByFileKey[team.file_key]
       ?? _divisoes2026[team.curto]
       ?? String(team.divisao)
@@ -1882,7 +2047,7 @@ for (const layout of PIRAMIDES_PROFUNDAS_DO_POOL) {
   }
 
   const candidates = allPoolTeams
-    .filter(team => _paisCanonico(String(team.pais ?? "")) === country)
+    .filter(team => _paisDoClube(team) === country)
     .filter(team => !curatedNames.has(_nomePoolComparavel(team.nome)))
     .sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0) || a.file_key.localeCompare(b.file_key))
     .filter(team => {
@@ -1925,7 +2090,7 @@ for (const layout of PIRAMIDES_PROFUNDAS_DO_POOL) {
   // frequentemente repetem o código da matriz; somente nesses conflitos
   // geramos um sufixo determinístico a partir do file_key.
   const usedPlayableShorts = new Set(allTeams
-    .filter(team => _paisCanonico(String(team.pais ?? team.estado ?? "")) === country)
+    .filter(team => _paisDoClube(team) === country)
     .map(team => team.curto))
   const playablePool = allPoolTeams
     .filter(team => {
@@ -1948,6 +2113,50 @@ for (const layout of PIRAMIDES_PROFUNDAS_DO_POOL) {
     }
     _playableShortByFileKey[team.file_key] = curto
     usedPlayableShorts.add(curto)
+  }
+}
+
+// ── Prestigio do quinto nivel brasileiro na escala do catalogo ───────────────
+//
+// Roda DEPOIS do laco das piramides porque depende de `_poolInitialDivisionByFileKey`
+// ja estar preenchido. Mapeamento linear e determinstico, preservando a ordem de
+// forca entre os clubes: o melhor do pool vira o melhor do acesso, e nao o
+// melhor do Brasil. Ver o aviso em `_prestigioNaPiramideBR`.
+{
+  // ⚠️ TODOS os brasileiros livres entram, nao so os 20 que cabem na tabela.
+  //
+  // O laco acima para em `tamanhoDaLiga`, que e o certo para as divisoes do
+  // meio: elas tem tamanho fixo. Mas a BASE da piramide e o balde de quem nao
+  // esta em nenhuma outra — parar em 20 deixaria 248 clubes brasileiros ainda
+  // sem divisao alguma, que e exatamente o defeito que este nivel existe para
+  // corrigir (o Serra-ES continuaria intocavel, so o Flamengo-PI ganharia
+  // divisao).
+  //
+  // A tabela JOGADA continua com 20: `completarLigaComPool` apara por prestigio,
+  // e `getLeagueTeams` garante a vaga do clube do usuario mesmo quando ele nao
+  // esta entre os 20 mais fortes. Ou seja: 268 clubes disputam o nivel, 20 jogam
+  // a temporada visivel, e `evolvePyramids` promove 4 deles.
+  for (const team of allPoolTeams) {
+    if (_paisDoClube(team) !== "brasil") continue
+    if (_poolInitialDivisionByFileKey[team.file_key]) continue
+    if (_officialEuropeanDivisionByFileKey[team.file_key] || PROMOVIDOS_DO_POOL[team.file_key]) continue
+    _poolInitialDivisionByFileKey[team.file_key] = "divisao_acesso_br"
+  }
+
+  const noAcesso = allPoolTeams.filter(
+    team => _poolInitialDivisionByFileKey[team.file_key] === "divisao_acesso_br",
+  )
+  if (noAcesso.length) {
+    const forcas = noAcesso.map(team => team.prestigio ?? 0)
+    const menor = Math.min(...forcas)
+    const maior = Math.max(...forcas)
+    const { min, max } = FAIXA_DIVISAO_ACESSO
+    for (const team of noAcesso) {
+      // Todos com o mesmo prestigio (amplitude zero) cairiam numa divisao por
+      // zero; nesse caso o nivel inteiro vale o meio da faixa.
+      const posicao = maior > menor ? ((team.prestigio ?? 0) - menor) / (maior - menor) : 0.5
+      _prestigioNaPiramideBR[team.file_key] = Math.round(min + posicao * (max - min))
+    }
   }
 }
 
@@ -2003,8 +2212,72 @@ const CONFEDERACAO_DO_PAIS: Record<string, string> = {
  * chegam a oito. Um campeonato cipriota com alguns europeus a mais é estranho;
  * um campeonato cipriota disputado contra Flamengo e Palmeiras é absurdo.
  */
-export function completarLigaComPool(divisao: string, alvo = tamanhoDaLiga(divisao)): Team[] {
+/**
+ * REGIAO DA UF — usada so para montar a Divisao de Acesso perto de casa.
+ *
+ * O quinto nivel brasileiro tem 260 clubes disputando 20 vagas na tabela. Aparar
+ * so por prestigio entregava a mesma liga para todo mundo: os 20 mais fortes do
+ * pais inteiro. Quem escolhesse o Serra-ES entrava com forca 8 numa liga em que
+ * todos os outros eram 25-34 — uma temporada perdida antes do primeiro jogo, e o
+ * oposto de "clube pequeno consegue subir".
+ *
+ * Agrupar por regiao tambem e o que a Serie D faz de verdade: a CBF preenche as
+ * vagas por federacao estadual, e os grupos sao montados por proximidade.
+ */
+const REGIAO_DA_UF: Record<string, string> = {
+  AC: "N", AM: "N", AP: "N", PA: "N", RO: "N", RR: "N", TO: "N",
+  AL: "NE", BA: "NE", CE: "NE", MA: "NE", PB: "NE", PE: "NE", PI: "NE", RN: "NE", SE: "NE",
+  DF: "CO", GO: "CO", MT: "CO", MS: "CO",
+  ES: "SE", MG: "SE", RJ: "SE", SP: "SE",
+  PR: "S", RS: "S", SC: "S",
+}
+
+/**
+ * @param ancora clube em torno do qual a tabela e montada, quando a divisao tem
+ *   muito mais clubes do que vagas. Hoje so a Divisao de Acesso esta nessa
+ *   situacao; para as outras divisoes o parametro nao muda nada.
+ */
+export function completarLigaComPool(
+  divisao: string,
+  alvo = tamanhoDaLiga(divisao),
+  ancora?: { file_key?: string; estado?: string; prestigio?: number },
+): Team[] {
   const base = getTeamsByDivision(divisao)
+
+  // Divisao com clubes DEMAIS e uma ancora: os companheiros de tabela saem da
+  // vizinhanca do clube, e nao do topo nacional. Sem ancora o comportamento
+  // antigo (aparar por prestigio) continua valendo.
+  // Sem UF na ancora nao ha regiao, mas a vaga dela na propria liga continua
+  // valendo: 30 clubes do pool nao tem UF recuperavel, e ficar de fora do
+  // proprio campeonato seria pior do que pegar adversario de outra regiao.
+  if (ancora && base.length > alvo) {
+    const ufAncora = String(ancora.estado ?? "").toUpperCase()
+    const regiaoAncora = REGIAO_DA_UF[ufAncora]
+    const forcaAncora = ancora.prestigio ?? 0
+    // Ancora sem UF conhecida: nao ha vizinhanca para calcular, entao todos
+    // empatam em distancia e quem decide e so a proximidade de FORCA. Sem esta
+    // saida, `REGIAO_DA_UF[""]` seria `undefined` e casaria com os outros
+    // clubes sem UF por acidente — agrupamento por falta de dado, nao por
+    // geografia.
+    const proximidade = (t: Team) => {
+      if (!regiaoAncora) return 0
+      const uf = String(t.estado ?? "").toUpperCase()
+      if (uf === ufAncora) return 0
+      if (REGIAO_DA_UF[uf] === regiaoAncora) return 1
+      return 2
+    }
+    const escolhidos = [...base].sort((a, b) =>
+      proximidade(a) - proximidade(b)
+      // Dentro da mesma faixa de distancia, quem estiver mais perto em FORCA:
+      // uma liga equilibrada e o que torna o acesso disputavel.
+      || Math.abs((a.prestigio ?? 0) - forcaAncora) - Math.abs((b.prestigio ?? 0) - forcaAncora)
+      || a.file_key.localeCompare(b.file_key))
+    // O proprio clube da ancora nunca pode ficar de fora da propria liga.
+    const eu = ancora.file_key ? base.find(t => t.file_key === ancora.file_key) : undefined
+    const semEu = escolhidos.filter(t => t.file_key !== eu?.file_key)
+    return eu ? [eu, ...semEu].slice(0, alvo) : escolhidos.slice(0, alvo)
+  }
+
   // ⚠️ O CORTE ERA `>= 8`, e nao `>= alvo`. Bastava a divisao ter oito clubes
   // para o completamento parar, entao doze ligas rodavam menores do que o
   // proprio regulamento anunciava — Bundesliga 2 com 13 de 18, Ligue 2 com 14
@@ -2086,15 +2359,25 @@ export function completarLigaComPool(divisao: string, alvo = tamanhoDaLiga(divis
 export function getTeamByShort(curto: string, divisao?: string): Team | undefined {
   const curados = allTeams.map(applyTeamOverride)
   const pool = allPoolTeams.map(team => _withPlayablePoolIdentity(applyTeamOverride(team)))
+  // ⚠️ O clube PRÓPRIO vem primeiro. Se ele ficasse por último, um código curto
+  // que por acaso exista no pool (são ~134 códigos para 3.000 clubes) devolveria
+  // outro clube — e a tela mostraria escudo, cores e elenco alheios para o time
+  // que o jogador criou. A validação impede a colisão na criação, mas a ordem
+  // aqui é a garantia que não depende de o registro estar íntegro.
   if (divisao) {
-    return curados.find(t => t.curto === curto && effectiveDivision(t) === divisao)
+    return _clubesPersonalizados.find(t => t.curto === curto && effectiveDivision(t) === divisao)
+      ?? curados.find(t => t.curto === curto && effectiveDivision(t) === divisao)
       ?? pool.find(t => t.curto === curto && effectiveDivision(t) === divisao)
   }
-  return curados.find(t => t.curto === curto) ?? pool.find(t => t.curto === curto)
+  return _clubesPersonalizados.find(t => t.curto === curto)
+    ?? curados.find(t => t.curto === curto)
+    ?? pool.find(t => t.curto === curto)
 }
 
 // Função para buscar time por file_key
 export function getTeamByFileKey(fileKey: string): Team | undefined {
+  const proprio = _clubesPersonalizados.find(t => t.file_key === fileKey)
+  if (proprio) return proprio
   const team = allTeams.find(t => t.file_key === fileKey)
     ?? allPoolTeams.find(t => t.file_key === fileKey)
   return team ? _withPlayablePoolIdentity(applyTeamOverride(team)) : undefined

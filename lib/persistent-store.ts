@@ -273,32 +273,66 @@ async function _writeAsync(key: string, value: string): Promise<void> {
 // persistent-store (sobrevive a reinstalacoes). getItem e async de proposito: o
 // zustand aguarda a carga do disco antes de hidratar, evitando que a store inicie
 // vazia (elenco/tabela em branco) logo apos abrir o app.
+const MOTOR = "ultrafoot-game-engine"
+/** Onde o motor vai parar quando NÃO há carreira ativa. Nunca a chave nua. */
+export const MOTOR_SEM_CARREIRA = `${MOTOR}:__sem-carreira`
+/** Marca qual carreira já consumiu o motor legado (pré-carreiras). */
+const MOTOR_LEGADO_CONSUMIDO = `${MOTOR}:__legado-consumido-por`
+
 export function createTauriZustandStorage() {
+  /**
+   * ⚠️ SEM CARREIRA ATIVA, O MOTOR VAI PARA A QUARENTENA — nunca para a chave nua.
+   *
+   * Este `: name` era a origem de UM SAVE INVADINDO OUTRO. A chave nua
+   * `ultrafoot-game-engine` é COMPARTILHADA por todas as carreiras, e há janelas
+   * reais sem carreira ativa: o boot antes de hidratar, a splash, e logo depois
+   * de apagar uma carreira (o `active-career` é removido). Tudo que o motor
+   * gravasse nessas janelas — elenco, caixa, táticas — ficava num balde comum.
+   */
   const resolveName = (name: string): string => {
-    if (name !== "ultrafoot-game-engine") return name
+    if (name !== MOTOR) return name
     const careerId = storeGet("ultrafoot:active-career")
-    return careerId ? `${name}:${careerId}` : name
+    return careerId ? `${name}:${careerId}` : MOTOR_SEM_CARREIRA
   }
   return {
     getItem: async (name: string): Promise<string | null> => {
       await initPersistentStore()
       const resolvedName = resolveName(name)
       let value = storeGet(resolvedName)
-      // Migra o motor unico das builds antigas para a carreira ativa. A copia e
-      // feita uma vez e o legado permanece como recuperacao de emergencia.
-      if (value == null && resolvedName !== name) {
-        const legacy = storeGet(name)
-        if (legacy != null) {
-          storeSet(resolvedName, legacy)
-          value = legacy
+      // ⚠️ A MIGRAÇÃO DO MOTOR LEGADO VALE PARA UMA CARREIRA SÓ.
+      //
+      // Ela existe para o save das builds antigas (motor único, antes de haver
+      // carreiras) não se perder. Mas sem a trava abaixo ela disparava para
+      // TODA carreira nova: carreira criada = motor ainda vazio = o adaptador
+      // copiava o balde comum para dentro dela. O jogador criava uma carreira do
+      // zero e encontrava o elenco, o caixa e a tática de outra.
+      //
+      // A marca diz qual carreira já herdou. A segunda em diante começa vazia,
+      // como tem de começar. O legado fica no disco como recuperação.
+      if (value == null && resolvedName !== name && resolvedName !== MOTOR_SEM_CARREIRA) {
+        const jaConsumido = storeGet(MOTOR_LEGADO_CONSUMIDO)
+        if (!jaConsumido || jaConsumido === resolvedName) {
+          const legacy = storeGet(name)
+          if (legacy != null) {
+            storeSet(resolvedName, legacy)
+            storeSet(MOTOR_LEGADO_CONSUMIDO, resolvedName)
+            value = legacy
+          }
         }
       }
       // Migra dado legado que so exista no localStorage da webview (saves de versoes
       // que nao sobreviviam a reinstalacao). Uma unica vez: passa a viver no store.
+      //
+      // ⚠️ Mesma trava: sem ela, o `?? window.localStorage.getItem(name)` reabria
+      // exatamente o mesmo caminho de contaminação por outra porta.
       if (value == null && typeof window !== "undefined" && window.localStorage) {
-        const legacy = window.localStorage.getItem(resolvedName) ?? window.localStorage.getItem(name)
+        const podeHerdarLegado = resolvedName !== MOTOR_SEM_CARREIRA
+          && (storeGet(MOTOR_LEGADO_CONSUMIDO) ?? resolvedName) === resolvedName
+        const legacy = window.localStorage.getItem(resolvedName)
+          ?? (podeHerdarLegado ? window.localStorage.getItem(name) : null)
         if (legacy != null) {
           storeSet(resolvedName, legacy)
+          if (name === MOTOR && podeHerdarLegado) storeSet(MOTOR_LEGADO_CONSUMIDO, resolvedName)
           value = legacy
         }
       }

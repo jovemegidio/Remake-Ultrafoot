@@ -7,6 +7,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { createTauriZustandStorage, storeSet } from "@/lib/persistent-store"
 import { getCareerScopedKey, loadGameState } from "@/lib/save-system"
 import { bonusMentoria282, normalizarGestao282, rendimentoUnidade282 } from "@/lib/gestao-282"
+import { repartirVenda, descreverRepasses } from "@/lib/repartir-venda"
 import { allTeams, getTeamByFileKey, getTeamByShort, effectiveDivision } from "@/lib/teams-data"
 import {
   type PlayerPersona, gerarPersona, contribuicoesPorJogador, calcularNota, suspensaoPorCartoes,
@@ -1341,6 +1342,19 @@ export interface MatchResult {
    * Opcional: saves antigos e partidas sem geracao caem na atribuicao deterministica.
    */
   scorers?: MatchScorer[]
+  /**
+   * POR QUE O PLACAR SAIU ASSIM — frases curtas, do desequilíbrio maior para o
+   * menor ("Seu meio-campo foi dominado por 9").
+   *
+   * ⚠️ Existe porque o jogo não conseguia responder isso. O 3D encena um
+   * resultado já decidido, então assistir não ensina nada sobre a derrota; e a
+   * partida simulada saía do prestígio do escudo, então não HAVIA causa tática
+   * para contar. Com o placar ouvindo o elenco (ver `simulateMatchResult`), a
+   * conta passou a existir — e esta é ela.
+   *
+   * Ausente em jogo entre dois clubes da CPU e em jogo equilibrado.
+   */
+  porQue?: string[]
   /**
    * Placar da DISPUTA DE PÊNALTIS, quando o mata-mata empatou e a disputa foi
    * jogada (lib/match-engine, fase "penaltis"). Os gols da disputa NÃO entram em
@@ -4400,6 +4414,14 @@ export const useGameEngine = create<GameEngineState>()(
         if (!player) return
 
         const recebido = typeof valor === "number" && valor > 0 ? valor : player.marketValue
+
+        // ⚠️ NEM TUDO QUE ENTRA NA VENDA É DO CLUBE. O contrato já declarava a
+        // revenda devida ao clube anterior e o fatiamento de direitos (fundo,
+        // coproprietário) — e nada lia esses campos: o caixa recebia o valor
+        // cheio. Além de irreal, era a jogada mais rentável do jogo. Ver
+        // `lib/repartir-venda.ts`.
+        const venda = repartirVenda(recebido, player.contract ?? undefined)
+
         set((s) => ({
           squadPlayers: s.squadPlayers.filter(p => p.id !== playerId),
           // Sai tambem das listas: atleta vendido nao pode continuar anunciado
@@ -4407,14 +4429,19 @@ export const useGameEngine = create<GameEngineState>()(
           transferListedIds: (s.transferListedIds ?? []).filter(id => id !== playerId),
           loanListedIds: (s.loanListedIds ?? []).filter(id => id !== playerId),
           transferOffers: s.transferOffers.filter(offer => offer.playerId !== playerId),
-          balance: s.balance + recebido,
+          balance: s.balance + venda.liquido,
           weeklyExpenses: Math.max(0, s.weeklyExpenses - (player.contract?.salary || 0)),
         }))
+        // O extrato registra o valor NEGOCIADO e diz para onde foi o que não
+        // entrou: ver "vendi por 10 milhões" e o caixa subir 4 sem explicação
+        // seria pior do que não ter a regra.
         registrarMovimentacao({
           playerName: player.name, type: "sell", value: recebido,
           fromTeam: state.myTeamShort ?? "", toTeam: "",
           season: state.currentSeason, week: state.currentWeek,
-          detalhe: "Venda em definitivo",
+          detalhe: venda.repasses.length
+            ? `Venda em definitivo · líquido ${Math.round(venda.liquido / 1000)}k (${descreverRepasses(venda).join(", ")})`
+            : "Venda em definitivo",
         })
       },
 

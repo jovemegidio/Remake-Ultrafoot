@@ -30,18 +30,26 @@ Write-Host "==> pasta de build: $C"
 
 Write-Host "==> Sync source G: -> C: (sem node_modules/target/.next)..."
 $opts = @('/MIR','/XF','desktop.ini','/XD','node_modules','.next','target','gen','.git','/R:1','/W:1','/MT:16','/NP','/NFL','/NDL','/NJH','/NJS')
-foreach ($f in @('app','components','lib','hooks','styles','scripts','data')) {
+foreach ($f in @('app','components','lib','hooks','styles','scripts','data','partida-3d')) {
   if (Test-Path "$G\$f") { robocopy "$G\$f" "$C\$f" @opts | Out-Null }
 }
 foreach ($f in @('package.json','package-lock.json','next.config.mjs','tsconfig.json','postcss.config.mjs','components.json','next-env.d.ts')) {
   if (Test-Path "$G\$f") { Copy-Item "$G\$f" "$C\$f" -Force }
+}
+# O backend e as permissoes Tauri tambem fazem parte do jogo. Sem sincronizar
+# capabilities, o frontend novo pode compilar e ainda ter o AppData bloqueado.
+foreach ($f in @('src','capabilities')) {
+  if (Test-Path "$G\src-tauri\$f") { robocopy "$G\src-tauri\$f" "$C\src-tauri\$f" @opts | Out-Null }
+}
+foreach ($f in @('Cargo.toml','Cargo.lock','build.rs')) {
+  if (Test-Path "$G\src-tauri\$f") { Copy-Item "$G\src-tauri\$f" "$C\src-tauri\$f" -Force }
 }
 # A versao exibida no executavel vem do tauri.conf.json. Sem sincroniza-lo, o codigo
 # novo era instalado com o numero antigo nos metadados do Windows.
 if (Test-Path "$G\src-tauri\tauri.conf.json") {
   Copy-Item "$G\src-tauri\tauri.conf.json" "$C\src-tauri\tauri.conf.json" -Force
 }
-foreach ($d in @('images','brand','logos','flags','cutscenes','kits-imported','audio','stadiums')) {
+foreach ($d in @('images','brand','logos','flags','cutscenes','kits-imported','audio','stadiums','overrides')) {
   if (Test-Path "$G\public\$d") { robocopy "$G\public\$d" "$C\public\$d" '/XF' 'desktop.ini' '/R:1' '/W:1' '/MT:16' '/NP' '/NFL' '/NDL' '/NJH' '/NJS' | Out-Null }
 }
 

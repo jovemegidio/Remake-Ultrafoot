@@ -25,7 +25,10 @@ export interface Pyramid {
 // troca seguem a vida real: Europa 3, Brasil 4. Onde a divisao de baixo nao
 // existe no jogo, o clube simplesmente nao tem para onde descer/subir.
 export const PYRAMIDS: readonly Pyramid[] = [
-  { country: "Brasil", tiers: ["serie_a", "serie_b", "serie_c", "serie_d"], swaps: [4, 4, 4] },
+  // A Divisao de Acesso e o quinto degrau: os clubes brasileiros do pool que nao
+  // tinham divisao nenhuma passam a ter para onde subir. Quatro trocas, como nos
+  // outros degraus brasileiros. Ver o tipo `Divisao` em lib/teams-data.
+  { country: "Brasil", tiers: ["serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br"], swaps: [4, 4, 4, 4] },
   { country: "Inglaterra", tiers: ["premier_league", "championship", "league_one_eng", "league_two_eng", "national_league_eng", "national_league_ns_eng"], swaps: [3, 3, 4, 2, 4] },
   { country: "Espanha", tiers: ["la_liga", "la_liga_2", "primera_federacion_esp", "segunda_federacion_esp"], swaps: [3, 4, 5] },
   { country: "Italia", tiers: ["serie_a_ita", "serie_b_ita"], swaps: [3] },
@@ -144,6 +147,7 @@ export interface DivisionOutcome {
 
 const LABELS: Record<string, string> = {
   serie_a: "Série A", serie_b: "Série B", serie_c: "Série C", serie_d: "Série D",
+  divisao_acesso_br: "Divisão de Acesso",
   premier_league: "Premier League", championship: "Championship",
   la_liga: "La Liga", la_liga_2: "La Liga 2",
   serie_a_ita: "Serie A", serie_b_ita: "Serie B",

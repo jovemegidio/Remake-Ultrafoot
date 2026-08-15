@@ -39,6 +39,11 @@ export const LEAGUE_COMPETITIONS: Record<string, CountryCompetitions> = {
   serie_b: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
   serie_c: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
   serie_d: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
+  // Divisao de Acesso. O estadual continua sendo a competicao paralela — e dele
+  // que estes clubes vem. A Copa do Brasil entra junto porque e assim na vida
+  // real: a vaga do clube pequeno sai do estadual, e sortear o Flamengo na
+  // primeira fase e justamente a recompensa de comecar por baixo.
+  divisao_acesso_br: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
 
   // Europa
   la_liga: { country: "Espanha", domesticCup: "Copa del Rey", ...UEFA },
@@ -182,7 +187,7 @@ export type Confederation = "CONMEBOL" | "UEFA" | "AFC" | "CONCACAF" | "UNAFFILI
 
 const CONFEDERATION_DIVISIONS: Record<Confederation, string[]> = {
   CONMEBOL: [
-    "serie_a", "serie_b", "serie_c", "serie_d",
+    "serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br",
     "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury", "primera_a_ecu",
     "primera_b_arg", "torneo_betplay", "primera_b_chi", "segunda_div_ury", "serie_b_ecu",
     "primera_div_per", "primera_div_ven", "primera_div_bol", "primera_div_par",

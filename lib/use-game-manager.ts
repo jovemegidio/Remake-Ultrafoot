@@ -84,6 +84,12 @@ import {
   proximoAJogar, tecnicosDoSave, type TecnicoDoSave,
 } from "@/lib/tecnicos-do-save"
 import {
+  forcasDoPlantel, titularesAptos, type AtletaEmCampo,
+} from "@/lib/forca-do-plantel"
+import {
+  simularPartida, forcaPorPrestigio, type ForcaPorSetor,
+} from "@/lib/simulacao-da-partida"
+import {
   chaveDaLiga, guardarEstadoDaLiga, guardarEstadoDoClube, guardarEstadoDoMundo,
   guardarEstadoDoTempo, guardarSaveDaLiga, guardarSaveDoTecnico,
   restaurarEstadoDoClube, restaurarSaveDoTecnico,
@@ -178,6 +184,7 @@ const LEAGUE_NAMES: Record<string, string> = {
   serie_b: "Brasileirao Serie B",
   serie_c: "Brasileirao Serie C",
   serie_d: "Brasileirao Serie D",
+  divisao_acesso_br: "Divisao de Acesso",
   premier_league: "Premier League",
   la_liga: "La Liga",
   serie_a_ita: "Serie A",
@@ -210,6 +217,10 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   serie_b:        { startMonth: 3,  monthsInSeason: 9,  rounds: 38 },
   serie_c:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
   serie_d:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
+  // Quinto nivel: mesma janela da Serie D. Como as outras, o numero de rodadas
+  // que VALE sai do elenco real da divisao — este campo dimensiona a liga no
+  // caminho em que o usuario nao esta nela.
+  divisao_acesso_br: { startMonth: 3, monthsInSeason: 8, rounds: 38 },
   // Estaduais isolados (divisao propria)
   paulistao:      { startMonth: 0,  monthsInSeason: 3,  rounds: 14 },
   carioca:        { startMonth: 0,  monthsInSeason: 3,  rounds: 12 },
@@ -340,7 +351,7 @@ export const ESTADO_CAMPEONATO: Record<string, string> = {
   TO: "Campeonato Tocantinense",
 }
 
-const BRAZILIAN_DIVISIONS = ["serie_a", "serie_b", "serie_c", "serie_d"]
+const BRAZILIAN_DIVISIONS = ["serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br"]
 
 function isBrazilianDivision(division: string): boolean {
   return BRAZILIAN_DIVISIONS.includes(division)
@@ -690,7 +701,7 @@ export function getLeagueRounds(division: string): number {
 
 // Divisoes por confederacao (para sortear adversarios continentais coerentes)
 const SOUTH_AMERICAN_DIVISIONS = new Set([
-  "serie_a", "serie_b", "serie_c", "serie_d",
+  "serie_a", "serie_b", "serie_c", "serie_d", "divisao_acesso_br",
   "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury",
   "primera_b_arg", "torneo_betplay", "primera_b_chi", "segunda_div_ury",
 ])
@@ -1868,22 +1879,72 @@ function generateRoundMatchups(teams: Team[], round: number): [Team, Team][] {
 // competition: nome REAL da competicao do fixture (estadual/liga/copa/continental).
 // Antes caia sempre em getLeagueName(mandante), o que rotulava jogos de estadual/copa
 // como se fossem da liga e quebrava o agrupamento por competicao.
-function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, season: number, competition?: string): MatchResult {
-  // Fator de forca baseado em prestigio
-  const homeStrength = homeTeam.prestigio + 5 // Bonus de mando
-  const awayStrength = awayTeam.prestigio
-  
-  // Calcula probabilidades
-  const totalStrength = homeStrength + awayStrength
-  const homeChance = homeStrength / totalStrength
-  
-  // Simula gols baseado em forca
-  const homeExpectedGoals = 1.3 + (homeChance * 1.5)
-  const awayExpectedGoals = 1.1 + ((1 - homeChance) * 1.5)
-  
-  const homeScore = Math.floor(Math.random() * 4 * (homeExpectedGoals / 2))
-  const awayScore = Math.floor(Math.random() * 4 * (awayExpectedGoals / 2))
-  
+/**
+ * Força por setor do XI do jogador, no formato que `simularPartida` espera.
+ *
+ * Reaproveita `forcasDoPlantel` de propósito: é a MESMA régua que mede o
+ * adversário humano no co-op. Duas contas diferentes para "quão forte é este
+ * time" acabariam divergindo, e a divergência sairia como um viés que ninguém
+ * prova olhando o jogo — só sente depois de dez partidas.
+ */
+function forcasPorSetorDoXI(xi: AtletaEmCampo[]): ForcaPorSetor {
+  const titulares = titularesAptos(xi)
+  const f = forcasDoPlantel(titulares.length ? titulares : xi, 60)
+  // O `mod` (forma + moral) vem separado da fonte e é do CLUBE de quem joga:
+  // entra por igual nos três setores, porque time desanimado não rende só na
+  // defesa.
+  return {
+    ataque: f.attack + f.mod,
+    meio: f.midfield + f.mod,
+    defesa: f.defense + f.mod,
+  }
+}
+
+function simulateMatchResult(
+  homeTeam: Team,
+  awayTeam: Team,
+  week: number,
+  season: number,
+  competition?: string,
+  /**
+   * O lado do JOGADOR, quando a partida é dele. Sem isto o placar sai só do
+   * prestígio dos escudos — ver o bloco abaixo.
+   */
+  ladoDoJogador?: { curto: string; xi: { position: string; overall: number; form?: number }[] },
+): MatchResult {
+  /**
+   * ⚠️ O PLACAR PASSOU A OUVIR O ELENCO (1.0.316).
+   *
+   * Este cálculo saía do PRESTÍGIO do clube e de mais nada — contratar, escalar
+   * e mudar a tática não moviam o resultado de nenhuma partida que o jogador não
+   * disputasse ao vivo, inclusive a dele quando escolhia simular. É o mesmo
+   * defeito que o co-op já barrava do outro lado: elenco que não vale nada no
+   * placar torna o modo um enfeite (ver `lib/forca-do-plantel.ts`).
+   *
+   * Agora o lado do jogador entra com a força REAL do elenco por setor; os
+   * clubes da CPU seguem no prestígio, que é barato e é o que permite resolver
+   * uma rodada inteira sem repetir o O(n²) que travou o apito final.
+   */
+  const forcaDoJogador = ladoDoJogador?.xi?.length
+    ? forcasPorSetorDoXI(ladoDoJogador.xi)
+    : null
+  const ehCasa = ladoDoJogador?.curto === homeTeam.curto
+  const ehFora = ladoDoJogador?.curto === awayTeam.curto
+
+  const explicado = simularPartida(
+    {
+      forca: forcaDoJogador && ehCasa ? forcaDoJogador : forcaPorPrestigio(homeTeam.prestigio),
+    },
+    {
+      forca: forcaDoJogador && ehFora ? forcaDoJogador : forcaPorPrestigio(awayTeam.prestigio),
+      mandante: false,
+    },
+    `${homeTeam.curto}-${awayTeam.curto}-${season}-${week}`,
+    ehFora ? "visitante" : "mandante",
+  )
+  const homeScore = explicado.golsMandante
+  const awayScore = explicado.golsVisitante
+
   // Goleadores REAIS da partida, ponderados por posicao e overall, com assistencia
   // (~62%). Substitui o sorteio uniforme entre atacantes que existia aqui. Os
   // scorers sao GRAVADOS no resultado para a estatistica ler dado persistido; os
@@ -1913,6 +1974,11 @@ function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, seaso
     awayScore,
     events: events.sort((a, b) => a.minute - b.minute),
     scorers,
+    // A CONTA QUE GEROU O PLACAR. Vazia quando o jogo foi entre dois clubes da
+    // CPU (ali não há nada que o técnico pudesse ter mudado) e quando a partida
+    // saiu equilibrada — inventar uma causa para um jogo parelho é pior que não
+    // explicar. Ver `lib/simulacao-da-partida.ts`.
+    ...(ladoDoJogador && explicado.porQue.length ? { porQue: explicado.porQue } : {}),
   }
 }
 
@@ -3530,12 +3596,16 @@ export function useGameManager() {
     const autoPlayed: string[] = []
     const completedKeysFromAuto: string[] = []
     for (const fixture of overdueUserFixtures) {
+      // ⚠️ A PARTIDA DO JOGADOR OUVE O ELENCO DELE. As dos rivais continuam no
+      // caminho barato do prestígio: carregar o elenco de todo clube da rodada é
+      // o custo que já travou o jogo no apito final. Ver `simulateMatchResult`.
       const simulated = simulateMatchResult(
         fixture.homeTeam,
         fixture.awayTeam,
         fixture.week,
         currentState.season,
         fixture.competition,
+        { curto: userShort, xi: useGameEngine.getState().squadPlayers },
       )
       const fixtureKey = getCalendarFixtureKey(fixture, currentState.season)
       // Não reprocessa o que já foi registrado (ex.: partida disputada cujo

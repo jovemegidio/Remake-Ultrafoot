@@ -990,8 +990,34 @@ export function setActiveCareerId(careerId: string): void {
   storeSet(ACTIVE_CAREER_KEY, careerId)
 }
 
+/**
+ * Sufixo de quarentena para quando NÃO há carreira ativa.
+ *
+ * Exportado porque o adaptador do motor (`lib/persistent-store.ts`) precisa
+ * reconhecê-lo para não tratar a quarentena como uma carreira de verdade.
+ */
+export const SEM_CARREIRA = "__sem-carreira"
+
+/**
+ * Chave escopada pela carreira ativa.
+ *
+ * ⚠️ SEM CARREIRA, VAI PARA A QUARENTENA — nunca para a chave nua.
+ *
+ * O `: base` que existia aqui era UM SAVE INVADINDO OUTRO. Estas chaves guardam
+ * notificações, propostas de emprego, observados, atletas que saíram, mercado do
+ * mundo e a tabela de competições — tudo por carreira. Mas `getActiveCareerId()`
+ * devolve `null` em janelas reais (boot antes de hidratar, splash, e logo após
+ * apagar uma carreira, que remove o `active-career`), e nessas janelas TODAS as
+ * carreiras passavam a ler e escrever no MESMO lugar. O dado de uma aparecia na
+ * outra sem erro nenhum — só um jogo incoerente.
+ *
+ * Quem precisa mesmo ler dado legado da chave nua faz isso explicitamente, com
+ * `?? storeGet(CHAVE_LEGADA)` — é o que `lib/temporada-do-mundo.ts` já fazia, e
+ * é o único jeito de a intenção ficar visível em vez de virar efeito colateral
+ * de um valor ausente.
+ */
 export function getCareerScopedKey(base: string, careerId = getActiveCareerId()): string {
-  return careerId ? `${base}:${careerId}` : base
+  return `${base}:${careerId || SEM_CARREIRA}`
 }
 
 function saveKey(careerId: string): string {

@@ -1140,6 +1140,23 @@ export default function CalendarioPage() {
               </span>
             </div>
 
+            {/* POR QUE O PLACAR SAIU ASSIM. É a leitura que o jogo não dava: o
+                3D encena um resultado já decidido, então assistir não ensinava
+                nada sobre a derrota. Ausente quando o jogo foi equilibrado —
+                inventar causa para um 1x1 parelho seria pior que calar. */}
+            {resultadoRapido.porQue?.length ? (
+              <div className="mt-5 space-y-1.5 rounded-xl border border-white/10 bg-black/30 p-3 text-left">
+                <p className="text-[10px] font-black uppercase tracking-[.18em] text-white/35">
+                  Por que
+                </p>
+                {resultadoRapido.porQue.map((frase, i) => (
+                  <p key={i} className="text-xs leading-snug text-white/70">{frase}</p>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-5 text-xs text-white/35">Jogo equilibrado — decidiu nos detalhes.</p>
+            )}
+
             <button
               onClick={() => setResultadoRapido(null)}
               autoFocus

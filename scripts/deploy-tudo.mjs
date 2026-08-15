@@ -49,7 +49,19 @@ const VERSAO_LAUNCHER = versao("Launcher/package.json")
 
 // Os instaladores saem do disco LOCAL: o G: é unidade de rede e o build do
 // Tauri não roda nele (ver a memória do projeto).
-const DISCO = "C:/Ultrafoot"
+//
+// ⚠️ CONFIGURÁVEL, e isto NÃO afrouxa nenhuma guarda. O caminho era cravado em
+// `C:/Ultrafoot`, então publicar de outra árvore local (hoje há mais de uma:
+// `C:/uf-297` é a cópia isolada onde se trabalha quando a sessão paralela está
+// mexendo na principal) dizia só "SEM INSTALADOR" — e a saída improvisada era
+// copiar o `.exe` para a árvore errada e bumpar a versão dela à mão, que é
+// justamente como se publica um instalador que não corresponde a fonte nenhuma.
+//
+// A conferência que importa continua igual: a versão vem do `package.json` da
+// árvore ONDE O SCRIPT RODA, e o `.exe` procurado leva essa mesma versão no
+// nome. Apontar o disco para a árvore que compilou faz os dois voltarem a
+// descrever a mesma coisa.
+const DISCO = (process.env.ULTRAFOOT_DISCO ?? "C:/Ultrafoot").replace(/[\\/]+$/, "")
 const EXE_JOGO = `${DISCO}/src-tauri/target/release/bundle/nsis/Ultrafoot 26_${VERSAO_JOGO}_x64-setup.exe`
 const EXE_LAUNCHER = `${DISCO}/Launcher/src-tauri/target/release/bundle/nsis/Ultrafoot Launcher_${VERSAO_LAUNCHER}_x64-setup.exe`
 
