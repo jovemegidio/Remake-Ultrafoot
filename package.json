@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.318",
+  "version": "1.0.319",
   "private": true,
   "scripts": {
     "dev": "next dev",

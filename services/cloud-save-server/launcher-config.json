@@ -252,9 +252,24 @@
   ],
   "changelog": [
     {
-      "version": "1.0.318",
+      "version": "1.0.319",
       "data": "2026-08-15",
       "latest": true,
+      "titulo": "A base da piramide chegou ao mundo inteiro",
+      "itens": [
+        "A Divisao de Acesso deixou de ser so brasileira: agora 13 paises tem o degrau de base — Brasil, Argentina, Chile, Alemanha, Franca, Italia, Espanha, Portugal, Paises Baixos, Belgica, Turquia, Russia e China.",
+        "Cada uma leva o nome real do degrau daquele pais: Torneo Federal A, Regionalliga, National 2, Tercera Federacion, Tweede Divisie, TFF 3. Lig e por ai.",
+        "Eram 1.618 clubes espalhados por 138 paises sem divisao nenhuma; agora sobram 684. Quase mil clubes passaram a poder ser dirigidos e a disputar acesso.",
+        "A divisao logo acima de cada base passou a rebaixar de verdade — antes ela anunciava queda para um lugar que nao existia.",
+        "CLUBE PROPRIO: agora voce escolhe o PAIS e o estado onde ele joga, e as divisoes oferecidas saem da piramide real daquele pais.",
+        "O clube criado nasce com o caixa de um time de Serie B, em qualquer divisao. Fraco em campo, estavel no cofre: sem dinheiro, comecar na base seria beco e nao desafio.",
+        "Base e elenco do clube criado vem genericos, para voce montar o time do seu jeito."
+      ]
+    },
+    {
+      "version": "1.0.318",
+      "data": "2026-08-15",
+      "latest": false,
       "titulo": "Divisao de Acesso e o seu proprio clube",
       "itens": [
         "NOVIDADE: nasceu a Divisao de Acesso, o quinto degrau do futebol brasileiro. 260 clubes que antes nao tinham divisao nenhuma — Serra, Cachoeiro, Colatina, Estrela do Norte, Vitoria-ES e companhia — agora podem ser dirigidos e disputam quatro vagas na Serie D.",
