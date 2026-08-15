@@ -1473,6 +1473,42 @@ const _ufDoPoolBR = (fileKey: string, nome: string): string | undefined => {
   return undefined
 }
 
+/**
+ * TORCIDA E CAPACIDADE DE ESTADIO PARA O CLUBE DO POOL.
+ *
+ * ⚠️ ISTO CONSERTA UM CRASH DE PONTA A PONTA (1.0.320).
+ *
+ * O pool sempre gravou `torcida: 0` e `estadio_cap: 0` — e isso nunca importou,
+ * porque clube do pool NAO ERA JOGAVEL: ele so aparecia no editor e como nome
+ * numa tabela. A Divisao de Acesso tornou 260 deles dirigiveis de uma vez, e os
+ * dois zeros passaram a atravessar o jogo inteiro:
+ *
+ *   - bilheteria DIVIDE pela capacidade -> divisao por zero -> NaN;
+ *   - juniores e mercado escalam pela torcida -> tudo zero ou NaN;
+ *   - o NaN contamina saldo, folha e forca, e a simulacao morre no meio.
+ *
+ * Era o relato "nao consigo gerir o time, crasha ao abrir elenco, no mercado,
+ * nos juniores, e a simulacao crasha de ponta a ponta".
+ *
+ * ⚠️ Os coeficientes sao MEDIDOS no catalogo curado, nunca inventados. E a
+ * quarta vez que este projeto tropeca em "numero de escala escrito a mao" (o
+ * leilao, o caixa dos clubes, o prestigio do pool). A referencia sao os clubes
+ * curados de menor porte, que e a faixa em que esses clubes vivem.
+ */
+const { torcidaPorPrestigio, capacidadePorPrestigio } = (() => {
+  const pequenos = allTeams.filter(t =>
+    (t.prestigio ?? 0) > 0 && (t.torcida ?? 0) > 0 && (t.estadio_cap ?? 0) > 0 && (t.prestigio ?? 0) <= 45)
+  const mediana = (v: number[]) => {
+    if (!v.length) return 0
+    const s = [...v].sort((a, b) => a - b)
+    return s[Math.floor(s.length / 2)]
+  }
+  return {
+    torcidaPorPrestigio: mediana(pequenos.map(t => (t.torcida ?? 0) / (t.prestigio ?? 1))) || 2500,
+    capacidadePorPrestigio: mediana(pequenos.map(t => (t.estadio_cap ?? 0) / (t.prestigio ?? 1))) || 400,
+  }
+})()
+
 export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[] }).teams) ?? [])
   .filter((t) => {
     const nome = repairMojibake(String(t.nome ?? ""))
@@ -1506,8 +1542,11 @@ export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[]
     cor1: String(t.cor1 ?? "#666666"),
     cor2: String(t.cor2 ?? "#ffffff"),
     prestigio: Number(t.prestigio ?? 45),
-    torcida: 0,
-    estadio_cap: 0,
+    // ⚠️ NUNCA ZERO. Ver o aviso de `torcidaPorPrestigio` acima: os dois zeros
+    // que ficaram aqui por anos derrubaram o jogo inteiro no dia em que o clube
+    // do pool virou dirigivel. O piso existe para o clube sem prestigio.
+    torcida: Math.max(2_000, Math.round(Number(t.prestigio ?? 45) * torcidaPorPrestigio)),
+    estadio_cap: Math.max(1_000, Math.round(Number(t.prestigio ?? 45) * capacidadePorPrestigio)),
     saldo: Number(t.saldo ?? 0),
     file_key: String(t.fileKey ?? ""),
     estadio_nome: String(t.estadio ?? ""),
@@ -1778,7 +1817,19 @@ function _withPlayablePoolIdentity(team: Team): Team {
   if (!curto && prestigio === undefined) return team
   const ajustado: Team = { ...team }
   if (curto && curto !== team.curto) ajustado.curto = curto
-  if (prestigio !== undefined) ajustado.prestigio = prestigio
+  if (prestigio !== undefined) {
+    ajustado.prestigio = prestigio
+    // ⚠️ TORCIDA E ESTADIO ACOMPANHAM O PRESTIGIO REESCALONADO.
+    //
+    // Eles sao calculados na construcao de `allPoolTeams`, quando so existe o
+    // prestigio CRU do pool (50-98). Para quem entra na piramide nacional esse
+    // numero deixa de valer — o clube passa a valer 2-9 —, e sem recalcular o
+    // quinto nivel brasileiro nasceria com estadios de 26 mil lugares e 200 mil
+    // torcedores, maiores que os da Serie D acima dele. Bilheteria e socios
+    // saem dai, entao o efeito nao seria so visual.
+    ajustado.torcida = Math.max(2_000, Math.round(prestigio * torcidaPorPrestigio))
+    ajustado.estadio_cap = Math.max(1_000, Math.round(prestigio * capacidadePorPrestigio))
+  }
   return ajustado
 }
 

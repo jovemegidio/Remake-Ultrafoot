@@ -33,6 +33,20 @@ export interface DivisaoDeAcesso {
   acima: string
   /** Quantos sobem por temporada. Segue o `swaps` do resto daquela pirâmide. */
   sobem: number
+  /**
+   * Janela de calendário PRÓPRIA, quando o degrau de base não fecha junto com a
+   * divisão acima dele.
+   *
+   * ⚠️ Omitir é o caso normal e o certo: sem isto a base HERDA o calendário do
+   * degrau superior, que é o que faz cada país terminar a temporada quando as
+   * outras divisões dele terminam. Uma janela europeia num país de calendário
+   * invertido faz a temporada acabar antes de a tabela fechar.
+   *
+   * O Brasil é a exceção pedida: a Série D vai de abril a NOVEMBRO
+   * (`monthsInSeason: 8`), e a Divisão de Acesso tem de terminar em DEZEMBRO,
+   * como a Série A e a B. Herdar daria novembro.
+   */
+  calendario?: { startMonth: number; monthsInSeason: number; rounds: number }
 }
 
 /**
@@ -51,7 +65,10 @@ export interface DivisaoDeAcesso {
  */
 export const DIVISOES_DE_ACESSO: readonly DivisaoDeAcesso[] = [
   // Brasil — o primeiro, e o único cujo id foge do padrão (ver o aviso acima).
-  { country: "Brasil", id: "divisao_acesso_br", rotulo: "Divisão de Acesso", acima: "serie_d", sobem: 4 },
+  // A ÚNICA com calendário próprio: abril a DEZEMBRO, como a Série A e a B. A
+  // Série D fecha em novembro, e herdar dela encerraria o acesso um mês antes.
+  { country: "Brasil", id: "divisao_acesso_br", rotulo: "Divisão de Acesso", acima: "serie_d", sobem: 4,
+    calendario: { startMonth: 3, monthsInSeason: 9, rounds: 38 } },
 
   // América do Sul
   { country: "Argentina", id: "acesso_arg", rotulo: "Torneo Federal A", acima: "primera_b_arg", sobem: 2 },

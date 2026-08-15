@@ -967,14 +967,27 @@ for (const acesso of DIVISOES_DE_ACESSO) {
     shortName: acesso.rotulo.length > 16 ? acesso.rotulo.slice(0, 16) : acesso.rotulo,
     type: "league",
     region: deCima.region,
-    format: "points",
+    // ⚠️ FORMATO ELIMINATÓRIO, como a base de pirâmide é na vida real: os
+    // clubes se dividem em grupos regionais e os melhores decidem o acesso em
+    // mata-mata. É o mesmo formato que a Série D já declara (`group_knockout`).
+    //
+    // ⚠️ E é o mesmo compromisso dela, escrito aqui para ninguém redescobrir:
+    // quem GERA jogo é o `buildRoundRobin`, que deriva tudo do número de clubes
+    // da divisão — as três fontes de "rodadas" e só uma manda. Então o jogo
+    // disputa uma chave única de 20 e o regulamento descreve a competição real.
+    // Fingir grupos aqui sem o gerador suportá-los faria a tela anunciar um
+    // torneio que não acontece, que foi exatamente o defeito das 47
+    // inconsistências corrigidas em 04/08.
+    format: "group_knockout",
+    groups: 4,
+    teamsPerGroup: 5,
     teams: 20,
     rounds: 38,
     prize: Math.max(200_000, Math.round(deCima.prize * 0.3)),
     prestige: Math.max(5, Math.round(deCima.prestige * 0.5)),
     promotion: acesso.sobem,
     relegation: 0,
-    formatDetails: `Turno e returno entre 20 clubes da mesma região; sobem ${acesso.sobem} à ${deCima.name}. A base da pirâmide reúne todos os clubes do país que não estão em outra divisão, e a chave é montada em torno do seu clube.`,
+    formatDetails: `Base da pirâmide: reúne todos os clubes do país fora das outras divisões, em quatro grupos regionais de cinco. Os dois melhores de cada grupo avançam ao mata-mata, e ${acesso.sobem} sobem à ${deCima.name}. No jogo a chave é única, de 20 clubes montados em torno do seu — turno e returno.`,
   }]
 }
 

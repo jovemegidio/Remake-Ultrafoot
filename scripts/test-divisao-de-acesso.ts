@@ -155,5 +155,32 @@ console.log("\nDIVISAO DE ACESSO NO MUNDO\n")
   ok("acessoPorId nao inventa", acessoPorId("serie_a") === undefined)
 }
 
+// 10. NENHUM CAMPO QUE O JOGO DIVIDE PODE SER ZERO — o crash da 1.0.320.
+//
+// O pool sempre gravou `torcida: 0` e `estadio_cap: 0`, e isso nunca importou
+// porque clube do pool NAO ERA JOGAVEL. A Divisao de Acesso tornou centenas
+// deles dirigiveis de uma vez: a bilheteria DIVIDE pela capacidade, juniores e
+// mercado escalam pela torcida, o NaN contamina saldo e forca, e a simulacao
+// morre no meio. Era o relato "crasha ao abrir elenco, no mercado, nos juniores,
+// e a simulacao crasha de ponta a ponta".
+{
+  let ruins = 0
+  let gigantes = 0
+  for (const a of DIVISOES_DE_ACESSO) {
+    const naDivisao = getTeamsByDivision(a.id)
+    const acima = getTeamsByDivision(a.acima)
+    const tetoDeCima = Math.max(0, ...acima.map(t => t.estadio_cap ?? 0))
+    for (const t of naDivisao) {
+      const bom = Number.isFinite(t.torcida) && (t.torcida ?? 0) > 0
+        && Number.isFinite(t.estadio_cap) && (t.estadio_cap ?? 0) > 0
+      if (!bom) { ruins++; if (ruins <= 3) console.log(`       ${a.id}/${t.nome}: torcida=${t.torcida} cap=${t.estadio_cap}`) }
+      // Estadio maior que o da divisao ACIMA seria bilheteria invertida.
+      if (tetoDeCima > 0 && (t.estadio_cap ?? 0) > tetoDeCima) gigantes++
+    }
+  }
+  ok("nenhum clube de acesso tem torcida ou estadio zero/NaN", ruins === 0, `(${ruins})`)
+  ok("nenhum estadio de acesso passa o maior da divisao de cima", gigantes === 0, `(${gigantes})`)
+}
+
 console.log(`\n${passou} ok, ${falhou} falha(s)\n`)
 if (falhou > 0) process.exit(1)

@@ -48,6 +48,10 @@ const PADRAO: Omit<FormatoLiga, "id" | "nome" | "times"> = {
  * clubes — que é o que o jogo já fazia antes, então nada regride.
  */
 export const FORMATOS: Record<string, FormatoLiga> = {
+  // BASE DA PIRAMIDE (divisoes de acesso). Formato eliminatorio: quatro grupos
+  // regionais de cinco, dois avancam por grupo, e o mata-mata decide o acesso.
+  // A tabela que o jogo joga e unica, de 20 — mesmo compromisso da Serie D.
+  divisao_de_acesso: { id: "divisao_de_acesso", nome: "Divisao de Acesso", times: 20, ...PADRAO, doisTurnos: true, grupos: 4, classificadosPorGrupo: 2, rebaixadosDireto: 0, promovidosDireto: 4 },
   brasileirao_a: { id: "brasileirao_a", nome: "Brasileirão Série A", times: 20, ...PADRAO },
   brasileirao_b: { id: "brasileirao_b", nome: "Brasileirão Série B", times: 20, ...PADRAO },
   brasileirao_c: { id: "brasileirao_c", nome: "Brasileirão Série C", times: 20, ...PADRAO, rebaixadosDireto: 4, promovidosDireto: 4 },

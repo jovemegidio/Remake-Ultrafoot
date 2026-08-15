@@ -291,8 +291,11 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
  * inicializacao.
  */
 for (const acesso of DIVISOES_DE_ACESSO) {
-  const deCima = LEAGUE_CALENDAR[acesso.acima]
-  if (deCima && !LEAGUE_CALENDAR[acesso.id]) LEAGUE_CALENDAR[acesso.id] = { ...deCima }
+  if (LEAGUE_CALENDAR[acesso.id]) continue
+  // A janela PRÓPRIA vence a herança — hoje só o Brasil tem uma, para fechar em
+  // dezembro em vez do novembro que a Série D dita.
+  const janela = acesso.calendario ?? LEAGUE_CALENDAR[acesso.acima]
+  if (janela) LEAGUE_CALENDAR[acesso.id] = { ...janela }
 }
 
 function leagueCalendarConfig(division: string): LeagueCalendarConfig {

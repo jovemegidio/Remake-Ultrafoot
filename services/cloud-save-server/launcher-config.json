@@ -252,9 +252,21 @@
   ],
   "changelog": [
     {
-      "version": "1.0.319",
+      "version": "1.0.320",
       "data": "2026-08-15",
       "latest": true,
+      "titulo": "Correcao: dirigir clube da Divisao de Acesso",
+      "itens": [
+        "CORRECAO IMPORTANTE: o jogo travava ao abrir o elenco, o mercado e os juniores de um clube da Divisao de Acesso, e a simulacao quebrava de ponta a ponta. Os 260 clubes do novo nivel estavam sem torcida e sem capacidade de estadio — a bilheteria divide pela capacidade, e o resultado contaminava saldo, folha e forca.",
+        "Agora cada clube da base tem torcida e estadio proporcionais ao seu tamanho, sempre menores que os da divisao acima.",
+        "A Divisao de Acesso passou a ter formato eliminatorio: quatro grupos regionais de cinco, os dois melhores de cada avancam ao mata-mata que decide o acesso.",
+        "Calendario: no Brasil a Divisao de Acesso termina em DEZEMBRO, como a Serie A e a B. Nos outros 12 paises ela fecha junto com as demais divisoes daquele pais."
+      ]
+    },
+    {
+      "version": "1.0.319",
+      "data": "2026-08-15",
+      "latest": false,
       "titulo": "A base da piramide chegou ao mundo inteiro",
       "itens": [
         "A Divisao de Acesso deixou de ser so brasileira: agora 13 paises tem o degrau de base — Brasil, Argentina, Chile, Alemanha, Franca, Italia, Espanha, Portugal, Paises Baixos, Belgica, Turquia, Russia e China.",

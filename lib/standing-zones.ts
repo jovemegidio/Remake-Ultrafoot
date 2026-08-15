@@ -3,6 +3,7 @@
 // as linhas na tabela de classificacao.
 
 import { FORMATOS, zonaDePlayoff } from "@/lib/formato-de-liga"
+import { IDS_DE_ACESSO } from "@/lib/divisao-de-acesso"
 
 export interface StandingZone {
   id: string
@@ -100,6 +101,10 @@ const DIVISAO_PARA_FORMATO: Record<string, string> = {
   serie_b: "brasileirao_b",
   serie_c: "brasileirao_c",
   serie_d: "brasileirao_d",
+  // Todas as divisoes de acesso compartilham o MESMO formato — sao 13 e a
+  // estrutura e identica; uma entrada por pais aqui so criaria 13 chances de
+  // divergir. Ver lib/divisao-de-acesso.
+  ...Object.fromEntries(IDS_DE_ACESSO.map(id => [id, "divisao_de_acesso"])),
   premier_league: "premier_league",
   championship: "championship",
   la_liga: "la_liga",
