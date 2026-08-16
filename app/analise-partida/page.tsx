@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameEngine, type PostMatchAnalysis, type AnalysisPoint } from "@/lib/game-engine"
+import { siglaExibivel } from "@/lib/club-identity"
 
 const CATEGORY_INFO: Record<string, { label: string; icon: typeof Shield; color: string }> = {
   ataque: { label: "Ataque", icon: Zap, color: "text-red-400" },
@@ -197,7 +198,7 @@ export default function AnalisePartidaPage() {
                           
                           <div className="flex items-center gap-3">
                             <span className="text-white font-medium">
-                              {analysis.isHome ? userTeam.curto : analysis.opponent}
+                              {analysis.isHome ? siglaExibivel(userTeam.curto, userTeam.nome) : analysis.opponent}
                             </span>
                             <span className={cn(
                               "px-2 py-0.5 rounded text-sm font-bold",
@@ -208,7 +209,7 @@ export default function AnalisePartidaPage() {
                               {analysis.result.home} - {analysis.result.away}
                             </span>
                             <span className="text-white font-medium">
-                              {analysis.isHome ? analysis.opponent : userTeam.curto}
+                              {analysis.isHome ? analysis.opponent : siglaExibivel(userTeam.curto, userTeam.nome)}
                             </span>
                           </div>
                           

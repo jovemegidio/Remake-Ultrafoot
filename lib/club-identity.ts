@@ -24,6 +24,7 @@
 
 import { allTeams, type Team } from "@/lib/teams-data"
 import { repairMojibake } from "@/lib/text-normalization"
+import siglasDesambiguadas from "@/data/seeds/siglas-clubes.json"
 
 /** Palavras que nao ajudam a distinguir clubes ao montar uma sigla. */
 const RUIDO = new Set([
@@ -73,9 +74,21 @@ export function siglaEhSlugDeArquivo(curto?: string, nome?: string): boolean {
   return c.length >= 5 && !alvo.startsWith(c.toUpperCase())
 }
 
+/**
+ * Desempate das siglas derivadas (gerado por scripts/gerar-siglas-desambiguadas.mjs).
+ *
+ * Tres letras colidem: "Swansea City", "Stoke City" e "Salford City" derivam
+ * todos SCI, e uma tabela com tres SCI e tao ruim quanto o slug de arquivo.
+ * O arquivo traz SO os clubes que precisaram de alternativa dentro da propria
+ * liga — 182 de 3.064 — e o clube de maior prestigio fica com a sigla base
+ * (o Manchester United nao perde MUN para o Maidenhead United).
+ */
+const DESEMPATE = siglasDesambiguadas as Record<string, string>
+
 /** Sigla boa para exibir: mantem a curada/legitima, troca o slug pela derivada do nome. */
 export function siglaExibivel(curto: string | undefined, nome: string | undefined): string {
-  return siglaEhSlugDeArquivo(curto, nome) ? siglaDoNome(nome) : (curto as string)
+  if (!siglaEhSlugDeArquivo(curto, nome)) return curto as string
+  return DESEMPATE[chaveDeClube(nome)] ?? siglaDoNome(nome)
 }
 
 /**

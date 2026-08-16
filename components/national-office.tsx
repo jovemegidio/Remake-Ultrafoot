@@ -17,6 +17,7 @@ import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { siglaExibivel } from "@/lib/club-identity"
 import { useGameState } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { useNationalTeam } from "@/lib/use-national-team"
@@ -94,7 +95,7 @@ export function NationalOffice() {
                 className="flex shrink-0 items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-2 text-xs font-semibold text-white/80 transition-colors hover:bg-white/[0.12]"
               >
                 <ArrowLeftRight className="h-3.5 w-3.5" />
-                Voltar ao {club.curto}
+                Voltar ao {siglaExibivel(club.curto, club.nome)}
               </button>
             ) : (
               // Sem clube (ex.: demitido — caso Diniz): oferece o caminho de volta

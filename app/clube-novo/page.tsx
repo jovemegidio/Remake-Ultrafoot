@@ -30,6 +30,7 @@ import {
 } from "@/lib/clubes-personalizados"
 import { sincronizarClubesProprios, divisoesParaClubeProprio, saldoDeClubeNovo } from "@/lib/clubes-proprios-runtime"
 import { allPoolTeams, allTeams } from "@/lib/teams-data"
+import { siglaExibivel } from "@/lib/club-identity"
 
 type Variante = "home" | "away" | "third"
 const VARIANTES: { id: Variante; rotulo: string }[] = [
@@ -462,7 +463,7 @@ export default function ClubeNovoPage() {
                         style={{ background: `linear-gradient(135deg, ${c.cor1}, ${c.cor2})` }}
                       />
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">{c.nome} <span className="text-muted-foreground">({c.curto})</span></div>
+                        <div className="truncate text-sm font-medium">{c.nome} <span className="text-muted-foreground">({siglaExibivel(c.curto, c.nome)})</span></div>
                         <div className="text-xs text-muted-foreground">
                           {[c.cidade, c.estado].filter(Boolean).join("/")} ·{" "}
                           {c.divisao}

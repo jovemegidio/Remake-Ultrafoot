@@ -1114,11 +1114,11 @@ function FixtureRow({ fixture, userTeam, season, isNext }: { fixture: Fixture; u
       <div className="flex items-center gap-2 flex-1">
         <TeamCrest team={fixture.homeTeam} size="sm" />
         <span className={cn("text-sm", fixture.homeTeam.curto === userTeam.curto && "font-semibold text-white")}>
-          {fixture.homeTeam.curto}
+          {siglaExibivel(fixture.homeTeam.curto, fixture.homeTeam.nome)}
         </span>
         <span className="text-white/30 mx-1">vs</span>
         <span className={cn("text-sm", fixture.awayTeam.curto === userTeam.curto && "font-semibold text-white")}>
-          {fixture.awayTeam.curto}
+          {siglaExibivel(fixture.awayTeam.curto, fixture.awayTeam.nome)}
         </span>
         <TeamCrest team={fixture.awayTeam} size="sm" />
       </div>

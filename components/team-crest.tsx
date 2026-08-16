@@ -10,6 +10,7 @@ import { escudoDoMod } from "@/lib/mods"
 import { guardarImagem, resolverImagem } from "@/lib/banco-de-imagens"
 import { gameAssetUrl, gameAssetUrlAlternativa, isTauri } from "@/lib/game-asset"
 import { getLocalEscudoPath } from "@/lib/escudos-map"
+import { siglaExibivel } from "@/lib/club-identity"
 // Escudos EMBUTIDOS no build (viajam no mesmo seed dos overrides, campo logoUrl). E por
 // eles que um escudo importado no editor chega aos OUTROS jogadores, nao so ao save local.
 import bundledOverrides from "@/data/seeds/team-overrides.json"
@@ -309,8 +310,14 @@ export function TeamCrest({
   const FallbackShield = () => {
     const cor1 = resolvedTeam?.cor1 || "#10b981"
     const cor2 = resolvedTeam?.cor2 || "#064e3b"
-    const initial = resolvedTeam?.curto?.charAt(0) || teamShort?.charAt(0) || "?"
-    const shortName = resolvedTeam?.curto || teamShort || "?"
+    // O `curto` do pool costuma ser o fileKey cortado em 8 letras ("DEPORTIV" e
+    // de 22 clubes diferentes). No escudo de reserva — o que aparece justamente
+    // nos clubes SEM imagem — isso e o unico texto na tela, entao aqui vale a
+    // sigla derivada do nome (ver lib/club-identity.ts).
+    const shortName = resolvedTeam
+      ? siglaExibivel(resolvedTeam.curto, resolvedTeam.nome)
+      : (teamShort || "?")
+    const initial = shortName.charAt(0) || "?"
     
     return (
       <div

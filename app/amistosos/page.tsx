@@ -16,6 +16,7 @@ import { TorneioAmistosoPanel } from "@/components/torneio-amistoso-panel"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { cn } from "@/lib/utils"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { siglaExibivel } from "@/lib/club-identity"
 
 function norm(s: string) {
   return (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
@@ -161,14 +162,14 @@ export default function AmistososPage() {
             className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-all",
               userIsHome ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.06]")}
           >
-            <Home className="h-4 w-4" /> {userTeam.curto} em casa
+            <Home className="h-4 w-4" /> {siglaExibivel(userTeam.curto, userTeam.nome)} em casa
           </button>
           <button
             onClick={() => setUserIsHome(false)}
             className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-all",
               !userIsHome ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.06]")}
           >
-            <Plane className="h-4 w-4" /> {userTeam.curto} fora
+            <Plane className="h-4 w-4" /> {siglaExibivel(userTeam.curto, userTeam.nome)} fora
           </button>
         </div>
 

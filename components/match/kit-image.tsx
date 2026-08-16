@@ -12,6 +12,7 @@
 import { useEffect, useRef, useState } from "react"
 import { getCamisaUrl, getLocalCamisaPath, isKitVariantAvailable, type Team } from "@/lib/teams-data"
 import { gameAssetUrl } from "@/lib/game-asset"
+import { siglaExibivel } from "@/lib/club-identity"
 
 export type KitVariant = "home" | "away" | "third"
 
@@ -60,7 +61,7 @@ function DrawnKit({ team, variant }: { team: Team; variant: KitVariant }) {
         stroke="rgba(0,0,0,0.4)"
         strokeWidth="0.4"
       >
-        {team.curto}
+        {siglaExibivel(team.curto, team.nome)}
       </text>
     </svg>
   )

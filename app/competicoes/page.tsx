@@ -82,6 +82,7 @@ import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
 import { periodoLabelPorNome } from "@/lib/competition-dates-2026"
 import { cn } from "@/lib/utils"
+import { siglaExibivel } from "@/lib/club-identity"
 
 // Tipos para competicoes
 interface BracketMatch {
@@ -1767,7 +1768,7 @@ function OfficialKnockoutPath({
               <span className="font-semibold">{getTeamByShort(rival)?.nome ?? rival}</span>
             </div>
             {games.length > 1 && <div className="mt-2 text-[11px] text-white/40">
-              {played.map(g => `${g.homeTeam.curto} ${g.homeScore}-${g.awayScore} ${g.awayTeam.curto}`).join(" · ") || "Ida e volta ainda não disputadas"}
+              {played.map(g => `${siglaExibivel(g.homeTeam.curto, g.homeTeam.nome)} ${g.homeScore}-${g.awayScore} ${siglaExibivel(g.awayTeam.curto, g.awayTeam.nome)}`).join(" · ") || "Ida e volta ainda não disputadas"}
             </div>}
             {penalties && <div className="mt-2 text-xs font-semibold text-amber-300">Decidido nos pênaltis: {penalties}</div>}
           </div>

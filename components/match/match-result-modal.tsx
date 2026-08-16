@@ -6,6 +6,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/lib/teams-data"
+import { siglaExibivel } from "@/lib/club-identity"
 import type { MatchState } from "@/lib/match-engine"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -157,7 +158,7 @@ export function MatchResultModal({
                     )}
                   </div>
                   <span className="text-sm font-bold text-white/80 uppercase tracking-wider">
-                    {homeTeam.curto}
+                    {siglaExibivel(homeTeam.curto, homeTeam.nome)}
                   </span>
                 </div>
 
@@ -214,7 +215,7 @@ export function MatchResultModal({
                     )}
                   </div>
                   <span className="text-sm font-bold text-white/80 uppercase tracking-wider">
-                    {awayTeam.curto}
+                    {siglaExibivel(awayTeam.curto, awayTeam.nome)}
                   </span>
                 </div>
               </motion.div>
