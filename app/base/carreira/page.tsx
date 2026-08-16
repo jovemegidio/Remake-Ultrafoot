@@ -37,7 +37,7 @@ export default function YouthCareerPage() {
 
   if (!career) {
     return (
-      <main className="min-h-screen bg-[#06090d] text-white">
+      <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
           <p>Nenhuma carreira Sub-20 ativa.</p>
@@ -100,7 +100,7 @@ export default function YouthCareerPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#06090d] text-white">
+    <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
       <GameHeader />
       <GameSidebar />
       <div className="mx-auto max-w-[1500px] px-5 pb-12 pt-20 lg:pl-20">

@@ -78,7 +78,7 @@ import { carregarElencosDoPool } from "@/lib/pool-elencos"
 import { carregarElencosReaisTM } from "@/lib/elencos-reais-tm"
 import { carregarElencosFemininos, clubesComElencoFeminino } from "@/lib/elencos-femininos"
 import { LIGAS_FEMININAS } from "@/lib/futebol-feminino"
-import { MODALIDADES, type ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
+import { MODALIDADES, MODALIDADE_DE_JOGADOR, type ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
 import {
   POSICOES_JOGAVEIS, criarAtletaDaCarreira, criarCarreiraDeJogador,
   type PosicaoDoAtleta,
@@ -568,6 +568,22 @@ export default function NovoJogoPage() {
    * era inalcançável. Agora as quatro carreiras que o jogo tem são escolha.
    */
   const [modalidade, setModalidade] = useState<ModalidadeDeCarreira>("profissional")
+  /**
+   * A CARREIRA DE JOGADOR CHEGA PELO MENU PRINCIPAL (1.0.324).
+   *
+   * `/novo-jogo?modo=jogador` trava a modalidade: esta tela continua sendo a
+   * mesma (o atleta também precisa escolher um clube), mas o seletor de
+   * modalidade some — quem entrou por aquela porta já escolheu.
+   *
+   * Lido num efeito, e não no inicializador do `useState`: o export é ESTÁTICO e
+   * o componente é pré-renderizado no Node, onde `window` não existe.
+   */
+  const [modoTravado, setModoTravado] = useState(false)
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("modo") !== "jogador") return
+    setModalidade("jogador")
+    setModoTravado(true)
+  }, [])
   /**
    * O ATLETA da carreira de jogador. Só é usado quando a modalidade é
    * "jogador"; fica aqui, e não num modal separado, porque é decisão de CRIAÇÃO
@@ -1795,15 +1811,25 @@ export default function NovoJogoPage() {
                   caminho para o sub-20, e um controle que não controla nada
                   sugere uma escolha que não existe. Ele volta agora que as
                   quatro carreiras existem de verdade. */}
-              <select
-                value={modalidade}
-                onChange={event => setModalidade(event.target.value as ModalidadeDeCarreira)}
-                aria-label="Modalidade da carreira"
-                title={MODALIDADES.find(m => m.id === modalidade)?.resumo}
-                className="h-11 rounded-xl border border-[var(--brand)]/35 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/85"
-              >
-                {MODALIDADES.map(m => <option key={m.id} value={m.id}>{m.titulo}</option>)}
-              </select>
+              {modoTravado ? (
+                // Entrou pelo menu principal: a modalidade já está decidida, e
+                // um seletor aqui só ofereceria desfazer a escolha que a pessoa
+                // acabou de fazer na tela anterior.
+                <span className="inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/10 px-3 text-[10px] font-bold uppercase tracking-wide text-[var(--brand)]">
+                  <User className="h-4 w-4" />
+                  {MODALIDADE_DE_JOGADOR.titulo}
+                </span>
+              ) : (
+                <select
+                  value={modalidade}
+                  onChange={event => setModalidade(event.target.value as ModalidadeDeCarreira)}
+                  aria-label="Modalidade da carreira"
+                  title={MODALIDADES.find(m => m.id === modalidade)?.resumo}
+                  className="h-11 rounded-xl border border-[var(--brand)]/35 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/85"
+                >
+                  {MODALIDADES.map(m => <option key={m.id} value={m.id}>{m.titulo}</option>)}
+                </select>
+              )}
               <select value={debtPreset} onChange={event => setDebtPreset(event.target.value as DebtPreset)} aria-label="Dívida inicial do clube" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
                 <option value="none">Sem dívida</option><option value="light">Dívida leve</option><option value="realistic">Dívida realista</option><option value="high">Dívida alta</option>
               </select>
@@ -1874,8 +1900,10 @@ export default function NovoJogoPage() {
 {/* MODALIDADE + O ATLETA. Estas são as decisões que não têm volta:
                 depois da carreira criada não se troca de modo nem de corpo. */}
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4">
-              <h3 className="text-sm font-bold text-white">Tipo de carreira</h3>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <h3 className="text-sm font-bold text-white">
+                {modoTravado ? MODALIDADE_DE_JOGADOR.titulo : "Tipo de carreira"}
+              </h3>
+              <div className={cn("mt-3 grid gap-2 sm:grid-cols-2", modoTravado && "hidden")}>
                 {MODALIDADES.map(m => (
                   <button
                     key={m.id}

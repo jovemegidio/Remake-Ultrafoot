@@ -46,7 +46,7 @@ type SplashPhase =
   | "main-menu"
   | "fade-out"
 
-type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
+type MenuOption = "novo-jogo" | "carreira-jogador" | "editar" | "carregar" | "registrar" | "sair"
 
 // O fundo da tela principal virou um CARROSSEL com crossfade (ver
 // components/menu-background). Antes era o carrossel de PRINTS do jogo com
@@ -268,6 +268,14 @@ export default function SplashPage() {
     href?: string
   }[] = useMemo(() => [
     { id: "novo-jogo", label: t.splash.newGame, hint: "Escolher clube e comecar uma carreira", grupo: "jogar", href: "/novo-jogo" },
+    // CARREIRA DE JOGADOR no menu principal (1.0.324, pedido do usuario).
+    //
+    // Ela nasceu como uma das opcoes do seletor de modalidade da tela de
+    // criacao, ao lado de profissional/feminino/sub-20. Estava no lugar errado:
+    // aquele seletor responde "que clube voce vai dirigir?", e quem escolhe ser
+    // ATLETA nao esta dirigindo clube nenhum — escolhe um corpo primeiro. As
+    // tres de tecnico continuam juntas la dentro; esta ganha porta propria.
+    { id: "carreira-jogador", label: "Carreira de jogador", hint: "Um atleta so: da estreia a aposentadoria", grupo: "jogar", href: "/novo-jogo?modo=jogador" },
     { id: "carregar", label: t.splash.loadGame, hint: hasSaveGame ? "Continuar uma carreira salva" : "Nenhuma carreira salva ainda", grupo: "jogar" },
     { id: "editar", label: t.splash.clubEditor, hint: "Nomes, escudos, uniformes e elencos", grupo: "ferramentas", href: "/editar" },
     // REGISTRAR so aparece para quem AINDA NAO registrou (pedido 30/07/26): depois

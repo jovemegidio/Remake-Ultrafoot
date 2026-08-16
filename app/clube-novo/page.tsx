@@ -181,7 +181,17 @@ export default function ClubeNovoPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-background p-4 sm:p-6">
+    // ⚠️ `h-dvh overflow-y-auto`, e não `min-h-dvh` (1.0.324).
+    // O jogo tem `overflow: hidden` no `html` E no `body` (app/globals.css, na
+    // camada base) para se comportar como aplicativo em tela cheia. A
+    // consequência é que uma página mais alta que a janela não ganha barra de
+    // rolagem: ela é simplesmente CORTADA. Esta tela tem identidade, cores,
+    // escudo, uniformes, estádio e divisão — passava da altura da janela, e
+    // metade do formulário ficava inalcançável (relato do usuário).
+    // `min-h` não resolve: ele deixa o elemento CRESCER, e é justamente o
+    // crescimento que o corte engole. É preciso ALTURA FIXA (a da janela) com
+    // rolagem própria.
+    <main className="h-dvh overflow-y-auto bg-background p-4 sm:p-6">
       <div className="mx-auto w-full max-w-4xl">
         <header className="mb-6">
           <button

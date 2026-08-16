@@ -46,7 +46,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "brasileirao",
     name: "Campeonato Brasileiro Serie A",
     shortName: "BRASILEIRAO",
-    backgroundImage: "/themes/brasileirao.png",
+    backgroundImage: "/themes/brasileirao.webp",
     colors: {
       primary: "#1db954",
       secondary: "#0a0a0a",
@@ -62,7 +62,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "copa_brasil",
     name: "Copa do Brasil",
     shortName: "COPA BR",
-    backgroundImage: "/themes/copa-do-brasil.png",
+    backgroundImage: "/themes/copa-do-brasil.webp",
     colors: {
       primary: "#009c3b",
       secondary: "#002776",
@@ -78,7 +78,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "libertadores",
     name: "CONMEBOL Libertadores",
     shortName: "LIBERTADORES",
-    backgroundImage: "/themes/libertadores.png",
+    backgroundImage: "/themes/libertadores.webp",
     colors: {
       primary: "#d4af37",
       secondary: "#1a1a1a",
@@ -94,7 +94,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "sulamericana",
     name: "CONMEBOL Sul-Americana",
     shortName: "SULA",
-    backgroundImage: "/themes/sudamericana.png",
+    backgroundImage: "/themes/sudamericana.webp",
     colors: {
       primary: "#e63946",
       secondary: "#1a1a1a",
@@ -125,7 +125,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "europa_league",
     name: "UEFA Europa League",
     shortName: "UEL",
-    backgroundImage: "/themes/europa-league.png",
+    backgroundImage: "/themes/europa-league.webp",
     colors: {
       primary: "#f57c00",
       secondary: "#1a1a1a",

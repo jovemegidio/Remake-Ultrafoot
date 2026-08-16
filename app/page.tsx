@@ -757,7 +757,7 @@ export default function DashboardPage() {
               </span>
               <div className="relative aspect-[4/3] max-h-[340px] w-full">
                 <Image
-                  src="/ads/garagem-comics.png"
+                  src="/ads/garagem-comics.webp"
                   alt="Garagem Comics"
                   fill
                   unoptimized

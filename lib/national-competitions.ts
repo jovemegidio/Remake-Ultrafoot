@@ -60,7 +60,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     groupSize: 4,
     qualifyFromGroup: 2,
     knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
-    theme: "/competitions/7.png",
+    theme: "/competitions/7.webp",
     logo: "/competicoes/copa-america-2028.png",
     accent: "#e11d2a",
   },
@@ -78,7 +78,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     qualifyFromGroup: 2,
     bestThirdPlaces: 4,
     knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
-    theme: "/competitions/8.jpg",
+    theme: "/competitions/8.webp",
     accent: "#1d4ed8",
   },
   {
@@ -95,7 +95,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     qualifyFromGroup: 2,
     doubleRoundRobin: true,
     knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
-    theme: "/competitions/8.jpg",
+    theme: "/competitions/8.webp",
     accent: "#0d9488",
   },
   {
@@ -111,7 +111,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     groupSize: 6,
     qualifyFromGroup: 4,
     knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
-    theme: "/competitions/8.jpg",
+    theme: "/competitions/8.webp",
     accent: "#0f766e",
   },
   {
@@ -121,7 +121,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     confederations: ["CONMEBOL"], format: "league", kind: "qualifier", prestige: 74,
     leagueTeams: 10, leagueQualify: 6, playoffFrom: 7, playoffTo: 7, doubleRoundRobin: true,
     knockoutStages: ["Repescagem intercontinental"],
-    theme: "/competitions/9.jpg", accent: "#ca8a04",
+    theme: "/competitions/9.webp", accent: "#ca8a04",
   },
   {
     id: "eliminatorias_uefa",
@@ -130,7 +130,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     confederations: ["UEFA"], format: "league", kind: "qualifier", prestige: 74,
     leagueTeams: 5, leagueQualify: 1, playoffFrom: 2, playoffTo: 2, doubleRoundRobin: true,
     knockoutStages: ["Semifinal dos playoffs", "Final dos playoffs"],
-    theme: "/competitions/9.jpg", accent: "#1d4ed8",
+    theme: "/competitions/9.webp", accent: "#1d4ed8",
   },
   {
     id: "eliminatorias_afc",
@@ -139,7 +139,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     confederations: ["AFC"], format: "league", kind: "qualifier", prestige: 70,
     leagueTeams: 6, leagueQualify: 2, playoffFrom: 3, playoffTo: 4, doubleRoundRobin: true,
     knockoutStages: ["4a fase da AFC", "Playoff asiatico", "Repescagem intercontinental"],
-    theme: "/competitions/9.jpg", accent: "#2563eb",
+    theme: "/competitions/9.webp", accent: "#2563eb",
   },
   {
     id: "eliminatorias_caf",
@@ -148,7 +148,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     confederations: ["CAF"], format: "league", kind: "qualifier", prestige: 70,
     leagueTeams: 6, leagueQualify: 1, playoffFrom: 2, playoffTo: 2, doubleRoundRobin: true,
     knockoutStages: ["Playoff africano", "Repescagem intercontinental"],
-    theme: "/competitions/9.jpg", accent: "#16a34a",
+    theme: "/competitions/9.webp", accent: "#16a34a",
   },
   {
     id: "eliminatorias_concacaf",
@@ -157,7 +157,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     confederations: ["CONCACAF"], format: "league", kind: "qualifier", prestige: 68,
     leagueTeams: 4, leagueQualify: 1, playoffFrom: 2, playoffTo: 2, doubleRoundRobin: true,
     knockoutStages: ["Repescagem intercontinental"],
-    theme: "/competitions/9.jpg", accent: "#eab308",
+    theme: "/competitions/9.webp", accent: "#eab308",
   },
   {
     id: "eliminatorias_ofc",
@@ -166,21 +166,21 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     confederations: ["OFC"], format: "group_knockout", kind: "qualifier", prestige: 64,
     participants: 8, groups: 2, groupSize: 4, qualifyFromGroup: 2,
     knockoutStages: ["Semifinal", "Final"],
-    theme: "/competitions/9.jpg", accent: "#0891b2",
+    theme: "/competitions/9.webp", accent: "#0891b2",
   },
   {
     id: "eliminatorias",
     name: "Eliminatorias da Copa (save antigo)", shortName: "Eliminatorias",
     confederations: ["CONMEBOL", "UEFA", "CONCACAF", "AFC", "CAF", "OFC"],
     format: "league", kind: "qualifier", prestige: 70, leagueTeams: 6, leagueQualify: 4,
-    legacy: true, theme: "/competitions/9.jpg", accent: "#ca8a04",
+    legacy: true, theme: "/competitions/9.webp", accent: "#ca8a04",
   },
   {
     id: "nations_league",
     name: "Liga das Nacoes (save antigo)", shortName: "Nations League",
     confederations: ["UEFA", "CONCACAF"], format: "league", kind: "title", prestige: 78,
     leagueTeams: 4, leagueQualify: 1, legacy: true,
-    theme: "/competitions/8.jpg", accent: "#0d9488",
+    theme: "/competitions/8.webp", accent: "#0d9488",
   },
   {
     id: "copa_mundo",
@@ -196,7 +196,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     qualifyFromGroup: 2,
     bestThirdPlaces: 8,
     knockoutStages: ["Fase de 32", "Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
-    theme: "/competitions/9.jpg",
+    theme: "/competitions/9.webp",
     logo: "/competicoes/copa-do-mundo-2026.png",
     accent: "#1e3a8a",
   },
@@ -210,7 +210,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     prestige: 45,
     leagueTeams: 4,
     leagueQualify: 0,
-    theme: "/competitions/8.jpg",
+    theme: "/competitions/8.webp",
     accent: "#64748b",
   },
   {
@@ -227,7 +227,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     qualifyFromGroup: 2,
     bestThirdPlaces: 4,
     knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
-    theme: "/competitions/8.jpg",
+    theme: "/competitions/8.webp",
     accent: "#16a34a",
   },
   {
@@ -244,7 +244,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     qualifyFromGroup: 2,
     bestThirdPlaces: 4,
     knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
-    theme: "/competitions/8.jpg",
+    theme: "/competitions/8.webp",
     accent: "#2563eb",
   },
   {
@@ -260,7 +260,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     groupSize: 4,
     qualifyFromGroup: 2,
     knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
-    theme: "/competitions/8.jpg",
+    theme: "/competitions/8.webp",
     accent: "#eab308",
   },
   {
@@ -276,7 +276,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     groupSize: 4,
     qualifyFromGroup: 2,
     knockoutStages: ["Semifinal", "Final"],
-    theme: "/competitions/8.jpg",
+    theme: "/competitions/8.webp",
     accent: "#0891b2",
   },
 ]

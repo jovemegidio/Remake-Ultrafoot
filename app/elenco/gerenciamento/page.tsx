@@ -201,7 +201,24 @@ const ESTILO_DA_FAIXA: Record<FaixaDaCarta, {
  * interna (`::before` do protótipo, aqui um segundo elemento): as duas PRECISAM
  * ser o mesmo polígono, e duas cópias divergiriam no primeiro ajuste.
  */
-const RECORTE_DA_CARTA = "polygon(7% 1%, 43% 1%, 50% 6%, 57% 1%, 93% 1%, 98% 7%, 98% 64%, 50% 99%, 2% 64%, 2% 7%)"
+/**
+ * ⚠️ O AFUNILAMENTO COMEÇAVA EM 64% E A CARTA VAZAVA (corrigido na 1.0.324).
+ *
+ * Relato do usuário, com print: a grade de atributos aparecia FORA da silhueta,
+ * pendurada no vazio abaixo da carta. Não era estilo, era geometria — medido na
+ * carta média (88 × 124 px):
+ *
+ *   y = 87px (70% da altura) → a carta ocupa  9px .. 79px
+ *   y = 99px (80% da altura) → a carta ocupa 21px .. 67px
+ *   a grade de atributos ocupa                4px .. 84px
+ *
+ * Ou seja: 17px de sobra de cada lado, justamente onde ficam os números das
+ * colunas 1 e 6. Com o afunilamento em 82% os dois lados seguem retos até
+ * depois da grade, e a ponta continua existindo nos últimos 17% — que é a
+ * silhueta da referência (lados retos, bico curto no pé), não um triângulo que
+ * começa no meio da carta.
+ */
+const RECORTE_DA_CARTA = "polygon(7% 1%, 43% 1%, 50% 6%, 57% 1%, 93% 1%, 98% 7%, 98% 82%, 50% 99%, 2% 82%, 2% 7%)"
 
 /**
  * As seis siglas do card.
@@ -268,7 +285,9 @@ function CartaDeJogador({
           que interessa — a tarja do nome e a grade de atributos, únicos dois
           lugares que recebem a cor da faixa. */}
       <div
-        className="relative h-[104px] w-[74px] transition-all md:h-[124px] md:w-[88px]"
+        // +6/+8px de altura junto com o afunilamento novo: a grade de atributos
+        // passou a caber com folga em vez de encostar na borda do recorte.
+        className="relative h-[110px] w-[74px] transition-all md:h-[132px] md:w-[88px]"
         style={{
           filter: selecionado
             ? "drop-shadow(0 0 3px var(--brand)) drop-shadow(0 0 10px var(--brand)) drop-shadow(0 6px 6px rgba(0,0,0,0.55))"
@@ -410,7 +429,10 @@ function CartaDeJogador({
             referência. Antes eram três colunas em duas linhas, que é o formato
             das cartas antigas do FIFA — a diferença muda a silhueta da carta
             inteira, não só a grade. */}
-        <div className="absolute inset-x-[4px] top-[72px] z-10 grid grid-cols-6 md:top-[87px]">
+        {/* `inset-x-[6px]`: as colunas das pontas eram as que encostavam na
+            borda inclinada. Dois pixels a mais de cada lado custam nada e tiram
+            o número de cima da aresta. */}
+        <div className="absolute inset-x-[6px] top-[74px] z-10 grid grid-cols-6 md:top-[90px]">
           {SIGLAS_DOS_ATRIBUTOS.map((sigla, i) => (
             <span key={sigla} className="flex flex-col items-center leading-none">
               <small className="text-[4px] font-black md:text-[5px]" style={{ color: `${estilo.texto}b3` }}>

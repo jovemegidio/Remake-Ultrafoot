@@ -95,7 +95,7 @@ const AD_CARD: NewsItem = {
   isAd: true,
   // Arte da campanha empacotada no jogo (public/ads). Nao depende de rede: o
   // anuncio renderiza igual offline, ao contrario das capas remotas do RSS.
-  imagem: "/ads/garagem-comics.png",
+  imagem: "/ads/garagem-comics.webp",
 }
 
 /**

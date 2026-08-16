@@ -67,7 +67,7 @@ export default function CarreiraDeJogadorPage() {
 
   if (!carreira) {
     return (
-      <main className="min-h-screen bg-[#06090d] text-white">
+      <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
           <p className="text-white/70">Nenhuma carreira de jogador ativa neste save.</p>
@@ -84,7 +84,7 @@ export default function CarreiraDeJogadorPage() {
   const posicaoNaTabela = Math.max(1, carreira.tabela.findIndex(l => l.curto === carreira.clubeCurto) + 1)
 
   return (
-    <main className="min-h-screen bg-[#06090d] text-white">
+    <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
       <GameHeader />
       <GameSidebar />
       <div className="mx-auto max-w-[1500px] px-5 pb-14 pt-20 lg:pl-24">

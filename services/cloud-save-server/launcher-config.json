@@ -252,9 +252,22 @@
   ],
   "changelog": [
     {
-      "version": "1.0.323",
+      "version": "1.0.324",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "Jogo mais leve, cartas certas e a carreira de jogador no menu",
+      "itens": [
+        "O jogo pesa menos: 20.193 fotos de atleta e as artes de fundo mais pesadas (temas de competicao, telas de selecao e o anuncio) passaram para WebP. Sao 34 MB a menos, sem trocar imagem por outra pior — cada arquivo so foi trocado quando encolheu.",
+        "CORRECAO: as cartas do elenco na prancheta deitada mostravam os atributos FORA da carta, pendurados no vazio. O afunilamento da silhueta comecava em 64% da altura enquanto a grade de numeros ia ate 80% — 17 pixels de sobra de cada lado. Agora os lados seguem retos ate depois da grade, como no modelo.",
+        "CORRECAO: a tela de criar o proprio clube nao rolava. O jogo trava a rolagem da pagina inteira para se comportar como aplicativo, e essa tela e mais alta que a janela: metade do formulario ficava inalcancavel. As telas de carreira na base e de carreira de jogador tinham o mesmo defeito e foram corrigidas junto.",
+        "A CARREIRA DE JOGADOR virou item do MENU PRINCIPAL, ao lado de Novo Jogo. Ela estava dentro do seletor de modalidade da criacao de carreira, que responde a pergunta 'que clube voce vai dirigir?' — e quem escolhe ser atleta nao esta dirigindo clube nenhum. As tres de tecnico (profissional, feminino e sub-20) continuam juntas la dentro.",
+        "CORRECAO: o gerador do manifesto de retratos descartava em silencio 289 fotos cujo cadastro usava o nome cru do arquivo em vez do caminho completo. Quem regerasse o manifesto perdia esses atletas. Agora sao 26.702 retratos disponiveis, 75 a mais do que antes."
+      ]
+    },
+    {
+      "version": "1.0.323",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "A pasta do jogo ficou organizada",
       "itens": [
         "A pasta do jogo agora tem um atalho 'sav' que abre direto onde as suas carreiras ficam gravadas. O save NAO mudou de lugar: ele continua fora da pasta do jogo, que e o que faz ele sobreviver a atualizacao e a reinstalacao. O atalho so encurta o caminho para quem quer fazer copia de seguranca.",

@@ -29,6 +29,18 @@ export interface DescricaoDeModalidade {
   detalhe: string
 }
 
+/**
+ * ⚠️ AS TRÊS DE TÉCNICO E A DE ATLETA ENTRAM POR PORTAS DIFERENTES (1.0.324).
+ *
+ * `MODALIDADES` é a lista da tela de criação de carreira, e ela só tem as de
+ * TÉCNICO: profissional, feminino e sub-20 — as três respondem à mesma pergunta
+ * ("que clube você vai dirigir?") e por isso convivem no mesmo seletor.
+ *
+ * A carreira de JOGADOR não responde a essa pergunta: quem escolhe ser atleta
+ * escolhe primeiro um CORPO e só depois um clube. Ela virou item do MENU
+ * PRINCIPAL, ao lado de "Novo jogo" (pedido do usuário). Quem precisa da lista
+ * das quatro — para rotular um save, por exemplo — usa `TODAS_AS_MODALIDADES`.
+ */
 export const MODALIDADES: DescricaoDeModalidade[] = [
   {
     id: "profissional",
@@ -48,16 +60,21 @@ export const MODALIDADES: DescricaoDeModalidade[] = [
     resumo: "Comece no Sub-20 e chegue ao profissional formando atletas.",
     detalhe: "Copinha, Brasileirão Sub-20 e as competições de base do país.",
   },
-  {
-    id: "jogador",
-    titulo: "Carreira de jogador",
-    resumo: "Uma atleta ou um atleta só: da estreia à aposentadoria.",
-    detalhe: "Nota do treinador, evolução por pontos, seleção e propostas.",
-  },
 ]
 
+/** A carreira de atleta — fora do seletor de técnico, no menu principal. */
+export const MODALIDADE_DE_JOGADOR: DescricaoDeModalidade = {
+  id: "jogador",
+  titulo: "Carreira de jogador",
+  resumo: "Uma atleta ou um atleta só: da estreia à aposentadoria.",
+  detalhe: "Nota do treinador, evolução por pontos, seleção e propostas.",
+}
+
+/** As quatro, para quem precisa rotular um save qualquer. */
+export const TODAS_AS_MODALIDADES: DescricaoDeModalidade[] = [...MODALIDADES, MODALIDADE_DE_JOGADOR]
+
 export function descricaoDaModalidade(id: ModalidadeDeCarreira | undefined): DescricaoDeModalidade {
-  return MODALIDADES.find(m => m.id === id) ?? MODALIDADES[0]
+  return TODAS_AS_MODALIDADES.find(m => m.id === id) ?? MODALIDADES[0]
 }
 
 /**
