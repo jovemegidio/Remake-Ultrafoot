@@ -59,7 +59,7 @@ import {
 import { getLeagueLogo } from "@/lib/league-logos"
 import { useVersaoDoJogo } from "@/lib/versao-do-jogo"
 import { useGameManager } from "@/lib/use-game-manager"
-import { listCareerSaves } from "@/lib/save-system"
+import { listCareerSaves, useGameState } from "@/lib/save-system"
 import { contaLogada } from "@/lib/conta-ultrafoot"
 import { LIMITE_SAVES_SEM_REGISTRO, PAISES_SEM_REGISTRO, ROTA_DE_REGISTRO, useJogoRegistrado } from "@/lib/beneficios"
 import { DIVISOES_DE_ACESSO } from "@/lib/divisao-de-acesso"
@@ -578,6 +578,9 @@ export default function NovoJogoPage() {
    * Lido num efeito, e não no inicializador do `useState`: o export é ESTÁTICO e
    * o componente é pré-renderizado no Node, onde `window` não existe.
    */
+  // O modo online e uma preferencia do SAVE (multiplayerEnabled). Aqui a tela
+  // ainda nao tem carreira, entao a leitura vem do estado global do jogo.
+  const modoOnlineLigado = Boolean(useGameState().state.multiplayerEnabled)
   const [modoTravado, setModoTravado] = useState(false)
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("modo") !== "jogador") return
@@ -1254,6 +1257,19 @@ export default function NovoJogoPage() {
                     </button>
                   ))}
                 </div>
+              )}
+
+              {/* ONLINE — só com o modo online ligado (1.0.327).
+                  Fica junto da escolha de modalidade porque é o mesmo tipo de
+                  decisão: que carreira você vai jogar. Desligado, não existe. */}
+              {modoOnlineLigado && (
+                <button
+                  onClick={() => hardNavigate("/online")}
+                  className="mb-3 flex w-full items-center gap-2 rounded-xl border border-sky-400/25 bg-sky-400/[0.07] px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-sky-100/80 transition-colors hover:border-sky-400/45 hover:bg-sky-400/[0.12]"
+                >
+                  <Globe className="h-4 w-4 text-sky-300" />
+                  Jogar online contra outros técnicos
+                </button>
               )}
 
               {/* Pais (com setas, navega nos dois sentidos pelos paises disponiveis) */}

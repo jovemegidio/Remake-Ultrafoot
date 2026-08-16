@@ -252,9 +252,20 @@
   ],
   "changelog": [
     {
-      "version": "1.0.326",
+      "version": "1.0.327",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "O online ganhou porta propria — e so aparece quando voce liga",
+      "itens": [
+        "MENU ONLINE novo, com os modos entre tecnicos reunidos num lugar so: FC Hub, amistoso com sala, Manager Draft e o que vem pela frente (Rivals, Champions, Carreira Online, cooperativa, diretoria, rush e eventos).",
+        "Ele so aparece — no menu principal E na tela de criacao de carreira — quando o MODO ONLINE esta ligado em Configuracoes. Desligado, quem joga sozinho nao ve um item sequer de online no caminho.",
+        "A tela diz a VERDADE sobre cada modo: disponivel, em obras ou em breve, com a fase do plano. Os que ainda nao existem nao sao clicaveis — um menu que oferece dez modos e entrega dois ensina o jogador a nao confiar na tela."
+      ]
+    },
+    {
+      "version": "1.0.326",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "Empresario, contratos de verdade e a aposentadoria que vira carreira de tecnico",
       "itens": [
         "O MUNDO PROCURA VOCE. Em vez de escolher um clube num menu e cumprir metas, os clubes acompanham quem esta jogando: o interesse sai do overall, da media, dos gols e dos minutos. Quem esta sem espaco recebe proposta de EMPRESTIMO — o caminho real de quem precisa jogar.",

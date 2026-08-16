@@ -46,7 +46,7 @@ type SplashPhase =
   | "main-menu"
   | "fade-out"
 
-type MenuOption = "novo-jogo" | "carreira-jogador" | "editar" | "carregar" | "registrar" | "sair"
+type MenuOption = "novo-jogo" | "carreira-jogador" | "online" | "editar" | "carregar" | "registrar" | "sair"
 
 // O fundo da tela principal virou um CARROSSEL com crossfade (ver
 // components/menu-background). Antes era o carrossel de PRINTS do jogo com
@@ -276,6 +276,14 @@ export default function SplashPage() {
     // ATLETA nao esta dirigindo clube nenhum — escolhe um corpo primeiro. As
     // tres de tecnico continuam juntas la dentro; esta ganha porta propria.
     { id: "carreira-jogador", label: "Carreira de jogador", hint: "Um atleta so: da estreia a aposentadoria", grupo: "jogar", href: "/novo-jogo?modo=jogador" },
+    // ONLINE só existe quando o jogo está EM MODO ONLINE (1.0.327, pedido do
+    // usuario: "devem aparecer na tela de novo jogo e menu apenas no modo
+    // online"). O interruptor nao e novo — e o `multiplayerEnabled` do save,
+    // ligado em Configuracoes. Desligado, quem joga sozinho nao ve um item
+    // sequer de online no caminho.
+    ...(gameState.multiplayerEnabled
+      ? [{ id: "online" as MenuOption, label: "Online", hint: "FC Hub, amistosos e modos entre tecnicos", grupo: "jogar" as const, href: "/online" }]
+      : []),
     { id: "carregar", label: t.splash.loadGame, hint: hasSaveGame ? "Continuar uma carreira salva" : "Nenhuma carreira salva ainda", grupo: "jogar" },
     { id: "editar", label: t.splash.clubEditor, hint: "Nomes, escudos, uniformes e elencos", grupo: "ferramentas", href: "/editar" },
     // REGISTRAR so aparece para quem AINDA NAO registrou (pedido 30/07/26): depois
@@ -287,7 +295,7 @@ export default function SplashPage() {
     { id: "sair", label: t.splash.exit, hint: "Fechar o jogo", grupo: "sistema" },
     // Memoizado porque a lista entra nas dependencias do teclado/controle: um
     // array novo a cada render reinstalava os listeners sem parar.
-  ], [t, isRegistered, hasSaveGame])
+  ], [t, isRegistered, hasSaveGame, gameState.multiplayerEnabled])
 
   // Quem registra COM O MENU ABERTO perde um item da lista. Sem este ajuste o
   // cursor ficaria apontando para fora dela e o Enter nao faria nada.
