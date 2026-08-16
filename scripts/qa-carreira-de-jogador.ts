@@ -16,8 +16,10 @@ import { allTeams, getTeamByFileKey } from "@/lib/teams-data"
 import {
   confiancaMerecida, criarAtletaDaCarreira, criarCarreiraDeJogador, hierarquiaDaPosicao,
   jogarProximaRodada, papelNoElenco, encerrarTemporada, potencialVisivel,
+  concluirPartidaDoAtleta,
   type EstadoCarreiraDeJogador,
 } from "@/lib/carreira-de-jogador"
+import { decidirMomento, partidaTerminou } from "@/lib/partida-do-atleta"
 
 let falhas = 0
 const erro = (m: string) => { console.log("FALHA: " + m); falhas++ }
@@ -113,6 +115,43 @@ if (faixa.min > dedicado.atleta.potencial || faixa.max < dedicado.atleta.potenci
   erro("a faixa mostrada nao contem o potencial real")
 }
 if (faixa.max - faixa.min <= 0) erro("a faixa fechou de todo — o teto deixou de ser segredo")
+
+// ── 6. VIVER A PARTIDA (1.0.329) ────────────────────────────────────────────
+//
+// A trava que importa: quem VIVE a partida nao pode marcar mais gols do que o
+// TIME fez. O placar sai do motor antes de a tela abrir; os momentos so
+// redistribuem participacao dentro dele. E os dois caminhos (viver e simular)
+// tem de passar pela MESMA contabilidade — senao a carreira ganha duas
+// verdades, que foi o que quebrou o co-op quando metade do estado viajava.
+let vivendo = criarCarreiraDeJogador(santos, base, "Brasileirao Serie A", 2026)
+vivendo = { ...vivendo, notaDoTreinador: 70 }   // titular, para garantir minutos
+vivendo = jogarProximaRodada(vivendo, { viver: true })
+const emCurso = vivendo.partidaEmCurso
+
+if (!emCurso) {
+  erro("viver a partida nao montou os momentos")
+} else {
+  console.log(`partida vivida: ${emCurso.minutos}' | ${emCurso.momentos.length} momentos | placar ${emCurso.golsPro}-${emCurso.golsContra}`)
+  if (!emCurso.momentos.length) erro("a partida vivida nao tem momento nenhum")
+  if (vivendo.temporadaAtual.jogos !== 0) erro("a partida foi contabilizada ANTES de o jogador decidir")
+
+  // Decide sempre a opcao mais agressiva, que e a que mais tenta gol.
+  let p = emCurso
+  while (!partidaTerminou(p)) {
+    const m = p.momentos[p.atual]
+    p = decidirMomento(vivendo, p, m.escolhas[0].id).partida
+  }
+  if (p.gols > p.golsPro) erro(`o atleta fez ${p.gols} gols num time que fez ${p.golsPro}`)
+  if (p.gols + p.assistencias > p.golsPro) erro("gols + assistencias passaram dos gols do time")
+  if (p.nota < 3 || p.nota > 10) erro(`nota fora da escala: ${p.nota}`)
+
+  const fechada = concluirPartidaDoAtleta({ ...vivendo, partidaEmCurso: p })
+  if (fechada.partidaEmCurso) erro("a partida continuou em curso depois de fechada")
+  if (fechada.temporadaAtual.jogos !== 1) erro("a partida vivida nao entrou na temporada")
+  if (fechada.temporadaAtual.gols !== p.gols) erro("os gols da partida vivida nao foram para a temporada")
+  if (fechada.ultimasPartidas[0]?.nota !== p.nota) erro("a nota da partida vivida nao foi registrada")
+  console.log(`fechada: ${fechada.temporadaAtual.jogos} jogo, ${fechada.temporadaAtual.gols} gol(s), nota ${p.nota}`)
+}
 
 console.log(falhas === 0 ? "TUDO OK" : `${falhas} falha(s)`)
 process.exit(falhas === 0 ? 0 : 1)

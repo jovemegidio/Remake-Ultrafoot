@@ -26,6 +26,7 @@ import { completarLigaComPool, getTeamByFileKey, type Team } from "@/lib/teams-d
 // O elenco REAL do clube — é dele que sai a fila da posição (ver
 // `hierarquiaDaPosicao`). Sem isto a disputa seria contra um número inventado.
 import { getPlayersForTeam } from "@/lib/players-data"
+import { montarPartidaDoAtleta, partidaTerminou, type PartidaEmCurso } from "@/lib/partida-do-atleta"
 
 export type PosicaoDoAtleta = "GOL" | "ZAG" | "LD" | "LE" | "VOL" | "MEI" | "ATA"
 
@@ -371,6 +372,8 @@ export interface EstadoCarreiraDeJogador {
   torcida?: number
   entrevistasRespondidas?: string[]
   repercussao?: PostDeRepercussao[]
+  /** Partida sendo VIVIDA momento a momento (1.0.329). */
+  partidaEmCurso?: PartidaEmCurso
   /**
    * A NOTA DO TREINADOR (0–100) — o número que decide tudo.
    *
@@ -895,7 +898,10 @@ function aplicarXP(estado: EstadoCarreiraDeJogador, xp: number): void {
  * Devolve um estado NOVO (o save é imutável por fora; ver
  * [[ultrafoot-gravacao-do-save-e-react]]).
  */
-export function jogarProximaRodada(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
+export function jogarProximaRodada(
+  estado: EstadoCarreiraDeJogador,
+  opcoes?: { viver?: boolean },
+): EstadoCarreiraDeJogador {
   if (estado.aposentado || estado.temporadaEncerrada) return estado
   const proxima = estado.calendario.find(f => !f.played)
   if (!proxima) return { ...estado, temporadaEncerrada: true }
@@ -932,6 +938,19 @@ export function jogarProximaRodada(estado: EstadoCarreiraDeJogador): EstadoCarre
     const adversario = emCasa ? fixture.awayNome : fixture.homeNome
     const forcaAdversaria = forcaDoTime(emCasa ? visitante : mandante)
     const d = desempenhoDaPartida(novo, golsPro, golsContra, forcaAdversaria, `${novo.atleta.id}:${novo.temporada}:${rodada}`)
+
+    // ── VIVER A PARTIDA (1.0.329) ──
+    //
+    // Em vez de aplicar a linha individual que o motor calculou, monta os
+    // MOMENTOS e devolve a decisão ao jogador. O placar já está fechado (e a
+    // tabela, atualizada logo acima): o que muda é QUEM fez o quê dentro dele.
+    if (opcoes?.viver && d.minutos > 0) {
+      novo.partidaEmCurso = montarPartidaDoAtleta(novo, {
+        fixtureId: fixture.id, adversario, emCasa, competicao: fixture.competition, rodada,
+        golsPro, golsContra, minutos: d.minutos, titular: d.titular,
+      })
+      continue
+    }
 
     const registro: PartidaDoAtleta = {
       temporada: novo.temporada, rodada, competicao: fixture.competition,
@@ -1718,6 +1737,73 @@ function gerarRepercussao(estado: EstadoCarreiraDeJogador, tom: TomDaResposta): 
       ? `${nome} admite que avalia propostas. Empresário já circula na Europa.`
       : `${nome} evita polêmica e diz que respeita a decisão do treinador.`
   return { id: `post_${estado.temporada}_${estado.rodada}_${tom}`, autor, texto, temporada: estado.temporada }
+}
+
+/**
+ * FECHA A PARTIDA VIVIDA e devolve os números ao motor de carreira.
+ *
+ * ⚠️ Passa pelo MESMO caminho da partida simulada — estatística da temporada,
+ * ações para a evolução orgânica, bônus por gol, forma, moral e a confiança
+ * caminhando para o mérito. Se este fechamento tivesse contabilidade própria, a
+ * carreira teria duas verdades: uma para quem joga os momentos e outra para
+ * quem simula. É o mesmo princípio do co-op, onde metade do estado viajando foi
+ * o que quebrou o modo.
+ */
+export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
+  const p = estado.partidaEmCurso
+  if (!p || !partidaTerminou(p)) return estado
+  const novo = structuredClone(estado)
+  delete novo.partidaEmCurso
+
+  const registro: PartidaDoAtleta = {
+    temporada: novo.temporada, rodada: p.rodada, competicao: p.competicao,
+    adversario: p.adversario, casa: p.emCasa, golsPro: p.golsPro, golsContra: p.golsContra,
+    titular: p.titular, minutos: p.minutos, gols: p.gols, assistencias: p.assistencias,
+    nota: p.nota, cartao: null,
+  }
+  novo.ultimasPartidas = [registro, ...novo.ultimasPartidas].slice(0, 12)
+
+  const t = novo.temporadaAtual
+  t.jogos++
+  if (p.titular) t.titularidades++
+  t.minutos += p.minutos
+  t.gols += p.gols
+  t.assistencias += p.assistencias
+  t.somaDasNotas += p.nota
+
+  if (p.gols > 0) novo.ganhosDaTemporada += p.gols * (novo.contrato.bonusPorGol ?? 0)
+  registrarAcoes(novo, {
+    titular: p.titular, minutos: p.minutos, gols: p.gols,
+    assistencias: p.assistencias, nota: p.nota, cartao: null, xp: 0,
+  }, `${novo.atleta.id}:${novo.temporada}:${p.rodada}:acoes`)
+
+  novo.notaDoTreinador = limitar(novo.notaDoTreinador + (p.nota - 6.6) * 2.4 + p.gols * 1.5)
+  novo.forma = limitar(novo.forma * 0.72 + p.nota * 8.4)
+  novo.moral = limitar(novo.moral + (p.nota >= 7 ? 3 : p.nota >= 6 ? 0 : -3)
+    + (p.golsPro > p.golsContra ? 2 : p.golsPro === p.golsContra ? 0 : -2))
+  aplicarXP(novo, Math.round(p.minutos * 0.55 + p.gols * 45 + p.assistencias * 25 + Math.max(0, p.nota - 6.5) * 30))
+
+  const merecida = confiancaMerecida(novo)
+  novo.notaDoTreinador = limitar(Math.max(
+    merecida - 22,
+    Math.min(merecida + 22, novo.notaDoTreinador + (merecida - novo.notaDoTreinador) * 0.12),
+  ))
+  atualizarMetas(novo)
+
+  if (p.gols >= 2 || p.nota >= 8.5) {
+    novo.reputacao = Math.min(100, (novo.reputacao ?? 30) + (p.gols >= 2 ? 3 : 2))
+    novo.repercussao = [{
+      id: `post_${novo.temporada}_${p.rodada}`,
+      autor: "@FutNews",
+      texto: p.gols >= 2
+        ? `${novo.atleta.nome} decide de novo: ${p.gols} gols contra o ${p.adversario}.`
+        : `Nota ${p.nota.toFixed(1)} para ${novo.atleta.nome} no jogo contra o ${p.adversario}.`,
+      temporada: novo.temporada,
+    }, ...(novo.repercussao ?? [])].slice(0, 20)
+  }
+
+  if (!novo.calendario.some(f => !f.played)) novo.temporadaEncerrada = true
+  return novo
 }
 
 /** Média da temporada corrente — a tela mostra em três lugares. */

@@ -252,9 +252,21 @@
   ],
   "changelog": [
     {
-      "version": "1.0.328",
+      "version": "1.0.329",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "Viver a partida: os momentos em que a bola passa pelo seu atleta",
+      "itens": [
+        "VIVER A PARTIDA: na carreira de jogador voce escolhe entre SIMULAR a rodada ou VIVE-LA. Vivendo, o jogo para nos momentos em que a bola passa por voce e pergunta o que faz: chutar de primeira, encarar o marcador, tocar para quem esta melhor, ir para a dividida, subir no escanteio. Cada escolha e resolvida pelos SEUS atributos e muda a nota na hora.",
+        "Quem entra do banco vive a chamada do treinador e menos momentos — quem joga 20 minutos vive um ou dois lances, quem joga os 90 vive cinco. E o que faz valer a pena ser titular.",
+        "O placar continua sendo do motor: os momentos redistribuem a PARTICIPACAO dentro do resultado, nunca criam gol do nada. O gate da casa reprova se gols + assistencias do atleta passarem dos gols do time — foi assim que uma incoerencia foi pega antes de sair.",
+        "Simular e viver passam pela MESMA contabilidade (estatistica, evolucao organica, bonus, forma, confianca). Duas contabilidades seriam duas verdades sobre a mesma carreira."
+      ]
+    },
+    {
+      "version": "1.0.328",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "Entrevistas com consequencia, repercussao e premios individuais",
       "itens": [
         "ENTREVISTAS que mexem no jogo. A imprensa so pergunta o que o save produziu — quatro jogos no banco, sequencia de gols, proposta na mesa — e cada tom de resposta puxa para lados DIFERENTES: a resposta que agrada o treinador nao e a que constroi reputacao, e a polemica compra a torcida ao preco do banco. A tela mostra o efeito antes do clique.",

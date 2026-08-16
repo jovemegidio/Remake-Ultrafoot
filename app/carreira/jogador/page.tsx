@@ -120,10 +120,27 @@ export default function CarreiraDeJogadorPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {/* ── VIVER × SIMULAR (1.0.329) ────────────────────────────────
+                "Viver" para a partida nos momentos em que a bola passa por
+                você; "simular" resolve tudo no motor, como antes. Os dois
+                caminham pela MESMA contabilidade — ver
+                `concluirPartidaDoAtleta`. */}
             {!carreira.aposentado && !carreira.temporadaEncerrada && (
-              <Button onClick={() => aplicar(jogarProximaRodada(carreira))} className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[#00d9b0]">
-                <Play className="mr-2 h-4 w-4" /> Jogar rodada
-              </Button>
+              <>
+                <Button
+                  onClick={() => {
+                    const comPartida = jogarProximaRodada(carreira, { viver: true })
+                    setState({ carreiraDeJogador: comPartida })
+                    if (comPartida.partidaEmCurso) hardNavigate("/carreira/jogador/partida")
+                  }}
+                  className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[#00d9b0]"
+                >
+                  <Play className="mr-2 h-4 w-4" /> Viver a partida
+                </Button>
+                <Button variant="outline" onClick={() => aplicar(jogarProximaRodada(carreira))}>
+                  Simular rodada
+                </Button>
+              </>
             )}
             {carreira.temporadaEncerrada && !carreira.aposentado && (
               <Button onClick={() => aplicar(encerrarTemporada(carreira))}>
