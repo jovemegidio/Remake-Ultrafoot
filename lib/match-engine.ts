@@ -89,6 +89,36 @@ export interface MatchEvent {
   expulsaoViolenta?: boolean
   /** Corredor onde o lance nasceu. Alimenta o Data Hub e o radar. */
   corredor?: CorredorEspacial286
+  /**
+   * Só em eventos de VAR. Dois momentos: a CHECAGEM (o jogo para, e o jogador
+   * ainda não sabe) e a DECISÃO. A tensão do lance mora nesse intervalo — é
+   * para isso que o campo existe separado do texto.
+   */
+  varReview?: {
+    status: "checking" | "decision"
+    incident: "goal" | "penalty" | "red_card"
+    decision?: "confirmed" | "overturned"
+    reason: string
+  }
+}
+
+/**
+ * A CHECAGEM DO VAR EM CURSO.
+ *
+ * ⚠️ O motor PARA enquanto isto existe — pelo mesmo motivo do `pendingPenalty`:
+ * se o minuto continuasse correndo, a decisão sairia depois de o jogo já ter
+ * andado, e o gol anulado apareceria três lances atrasado. A decisão já está
+ * DECIDIDA quando a checagem abre (o sorteio acontece na abertura); o que a
+ * tela mostra no intervalo é a espera, que é justamente a graça.
+ */
+export interface PendingVarReview {
+  incident: "goal" | "penalty" | "red_card"
+  decision: "confirmed" | "overturned"
+  side: Side
+  minute: number
+  originalEventId: string
+  player?: string
+  reason: string
 }
 
 export interface TeamStats {
@@ -142,6 +172,8 @@ export interface MatchState {
    * Agora o motor PARA aqui e espera resolvePenalty() com o batedor escolhido.
    */
   pendingPenalty: { side: Side; minute: number } | null
+  /** Checagem do VAR congelando o jogo. Ver `PendingVarReview`. */
+  pendingVar: PendingVarReview | null
   /**
    * Disputa de penaltis em andamento. `null` em toda partida que nao empatou num
    * mata-mata decisivo — ou seja, na esmagadora maioria dos jogos.
@@ -432,8 +464,100 @@ export function createInitialState(): MatchState {
     playerYellowCards: {},
     playerRedCards: {},
     pendingPenalty: null,
+    pendingVar: null,
     shootout: null,
   }
+}
+
+// ─── VAR ────────────────────────────────────────────────────────────────────
+//
+// O pedido: "gerar apreensão — se o pênalti foi anulado, se o gol foi anulado".
+// A apreensão não vem da decisão: vem da ESPERA. Por isso a checagem congela o
+// jogo e a decisão só sai no passo seguinte, quando quem está assistindo já
+// teve tempo de temer o pior.
+//
+// ⚠️ REALISMO ACIMA DE DRAMA. Se toda bola na rede fosse revisada, a revisão
+// deixaria de significar alguma coisa em dois jogos. As taxas abaixo são
+// baixas de propósito: a maioria dos gols nem é checada, e a maioria das
+// checagens CONFIRMA. O lance anulado é raro — e é por ser raro que dói.
+
+const MOTIVOS_VAR_GOL = [
+  "impedimento na origem da jogada",
+  "possível falta no ataque",
+  "possível toque de mão",
+] as const
+
+/** Abre a revisão de um gol. A decisão só é aplicada por `resolvePendingVar`. */
+function tentarRevisaoDeGol(state: MatchState, side: Side, eventoGol: MatchEvent): void {
+  if (rnd() >= 0.18) return                       // ~18% dos gols são checados
+  const decision = rnd() < 0.18 ? "overturned" : "confirmed"
+  const reason = MOTIVOS_VAR_GOL[Math.floor(rnd() * MOTIVOS_VAR_GOL.length)]
+  state.pendingVar = {
+    incident: "goal", decision, side, minute: state.minute,
+    originalEventId: eventoGol.id, player: eventoGol.player, reason,
+  }
+  state.events = [{
+    id: nameId(), minute: state.minute, type: "var", side,
+    text: "VAR checando o gol...", player: eventoGol.player, important: true,
+    varReview: { status: "checking", incident: "goal", reason },
+  }, ...state.events]
+  state.flash = null
+}
+
+/** Abre a revisão da marcação de pênalti. Devolve `true` quando abriu. */
+function tentarRevisaoDePenalti(state: MatchState, side: Side, minute: number): boolean {
+  if (rnd() >= 0.30) return false                 // pênalti é mais checado que gol
+  const decision = rnd() < 0.22 ? "overturned" : "confirmed"
+  const reason = decision === "overturned"
+    ? (rnd() < 0.5 ? "a infração aconteceu fora da área" : "o contato não configura infração")
+    : "infração confirmada dentro da área"
+  state.pendingVar = {
+    incident: "penalty", decision, side, minute,
+    originalEventId: nameId(), reason,
+  }
+  state.events = [{
+    id: nameId(), minute, type: "var", side,
+    text: "VAR revisando a marcação do pênalti...", important: true,
+    varReview: { status: "checking", incident: "penalty", reason },
+  }, ...state.events]
+  state.flash = null
+  return true
+}
+
+/**
+ * Conclui a checagem. Gol anulado sai do placar na hora; pênalti confirmado
+ * vira `pendingPenalty` e só então é cobrado — inclusive com escolha de batedor,
+ * como qualquer outro pênalti.
+ */
+export function resolvePendingVar(state: MatchState): MatchState {
+  const review = state.pendingVar
+  if (!review) return state
+  const next: MatchState = {
+    ...state,
+    home: { ...state.home },
+    away: { ...state.away },
+    events: state.events.slice(),
+    pendingVar: null,
+    flash: null,
+  }
+  const stats = review.side === "home" ? next.home : next.away
+  if (review.incident === "goal" && review.decision === "overturned") {
+    stats.goals = Math.max(0, stats.goals - 1)
+    next.momentum += review.side === "home" ? -12 : 12
+  }
+  if (review.incident === "penalty" && review.decision === "confirmed") {
+    next.pendingPenalty = { side: review.side, minute: review.minute }
+  }
+
+  const rotulo = review.incident === "goal" ? "gol" : review.incident === "penalty" ? "pênalti" : "cartão vermelho"
+  const decisao = review.decision === "confirmed" ? `${rotulo} confirmado` : `${rotulo} anulado`
+  next.events = [{
+    id: nameId(), minute: review.minute, type: "var", side: review.side,
+    text: `Decisão do VAR: ${decisao}. ${review.reason}.`,
+    player: review.player, important: true,
+    varReview: { status: "decision", incident: review.incident, decision: review.decision, reason: review.reason },
+  }, ...next.events]
+  return next
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1145,6 +1269,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
         text: goalLine(shooterName, team.curto, assistName),
         player: shooterName, assist: assistName, important: true, corredor,
       }, ...state.events]
+      tentarRevisaoDeGol(state, side, state.events[0])
       if (assistName) teamStats.xA += xg * 0.78
       state.flash = { side, type: "goal" }
       state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
@@ -1233,6 +1358,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
                 : `GOOOOL! ${hdrName} marca de cabeça no escanteio!`,
               player: hdrName, assist: cornerTaker, important: true,
             }, ...state.events]
+            tentarRevisaoDeGol(state, side, state.events[0])
             state.flash = { side, type: "goal" }
             state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
             state.momentum = isHome ? 20 : -20
@@ -1252,6 +1378,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
                 text: `GOOOOL! O goleiro rebate a cabeçada de ${hdrName} e ${sobra.nome} aparece na sobra!`,
                 player: sobra.nome, assist: hdrName, important: true,
               }, ...state.events]
+              tentarRevisaoDeGol(state, side, state.events[0])
               state.flash = { side, type: "goal" }
               state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
               state.momentum = isHome ? 20 : -20
@@ -1378,6 +1505,7 @@ function resolveFoul(side: Side, state: MatchState, config: MatchConfig, probs: 
           text: `GOOOOL! ${fkName} marca de falta direto!`,
           player: fkName, important: true,
         }, ...state.events]
+        tentarRevisaoDeGol(state, fkSide, state.events[0])
         state.flash = { side: fkSide, type: "goal" }
         state.ball = { x: 50, y: 50, side: fkIsHome ? "away" : "home" }
         state.momentum = fkIsHome ? 20 : -20
@@ -1465,11 +1593,13 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
   } else if (homeVaiChutar) {
     resolveShot("home", state, config, probs)
   }
+  if (state.pendingVar) return
   if (awayVaiChutar && marcarImpedimento("away", state, config)) {
     // anulado
   } else if (awayVaiChutar) {
     resolveShot("away", state, config, probs)
   }
+  if (state.pendingVar) return
 
   // Contra-ataque: quem defende e recupera a bola sai em velocidade. So faz
   // sentido quando o time NAO criou a chance neste minuto e o adversario criou.
@@ -1480,7 +1610,9 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
 
   // Faltas verificadas independentemente
   if (rnd() < probs.homeFoulChance) resolveFoul("home", state, config, probs)
+  if (state.pendingVar) return
   if (rnd() < probs.awayFoulChance) resolveFoul("away", state, config, probs)
+  if (state.pendingVar) return
 
   // Lesão — mais frequente no 2º tempo e nos minutos finais
   const baseInjury = state.phase === "second" ? 0.007 : 0.003
@@ -1518,6 +1650,10 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
       text: `Pênalti para ${team.curto}!`,
       important: true,
     }, ...state.events]
+
+    // A marcacao pode ser revista antes de qualquer cobranca. Enquanto o VAR
+    // decide, nem a IA nem o jogador conhecem ainda o desfecho.
+    if (tentarRevisaoDePenalti(state, side, minute)) return
 
     // Penalti do USUARIO: o motor PARA aqui. Antes ele cobrava no mesmo tick — o gol
     // ja estava no placar quando a UI ia reagir, o evento de penalti ficava soterrado
@@ -2001,6 +2137,8 @@ export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
   // disputa avanca por cobranca (takeShootoutKick), nunca por minuto. Sem esta
   // guarda o tick voltaria a simular jogo com a disputa aberta.
   if (state.phase === "fulltime" || state.phase === "pre" || state.phase === "penaltis") return state
+  // A checagem do VAR congela o relogio ate a decisao aparecer na tela.
+  if (state.pendingVar) return state
   // Penalti do usuario pendente: o relogio NAO anda ate ele escolher o batedor.
   if (state.pendingPenalty) return state
 
@@ -2127,6 +2265,10 @@ export function simulateFullMatch(config: MatchConfig): MatchState {
   let state = startMatch(createInitialState())
   let voltas = 0
   while (state.phase !== "fulltime" && voltas++ < 600) {
+    if (state.pendingVar) {
+      state = resolvePendingVar(state)
+      continue
+    }
     if (state.pendingPenalty) {
       state = resolvePendingPenalty(state, config, null).state
       continue

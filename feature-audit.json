@@ -1,634 +1,280 @@
 {
-  "generatedAt": "2026-07-19T19:32:54.624Z",
-  "scannedFiles": 272,
+  "generatedAt": "2026-08-16T22:07:51.344Z",
+  "scannedFiles": 468,
   "totals": {
     "notImplemented": 0,
-    "skeleton": 88,
+    "skeleton": 30,
     "todo": 2,
-    "mock": 13
+    "mock": 12
   },
   "activeNotImplementedFunctions": 0,
   "actionableMarkers": 0,
-  "documentationMarkers": 103,
+  "documentationMarkers": 44,
   "priorityFiles": [],
   "findings": [
     {
       "type": "mock",
-      "file": "components\\tactical-editor.tsx",
-      "line": 124,
-      "text": "// Jogadores iniciais mockados"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\interviews-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — impactam moral, imprensa, torcida, diretoria, jogador específico."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\match-decisions.ts",
-      "line": 2,
-      "text": "// Status: skeleton — gritar, acalmar, pressionar, recuar, tudo ou nada,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\injury-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — leve, muscular, grave, recaída, sacrifício."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\hall-of-fame-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — clubes treinados, títulos, reputação, aproveitamento, ranking."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\fans-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — confiança, protesto, apoio, vaias, mosaico, campanha demissão,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\events-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — lesões em massa, atraso salário, proposta inesperada, polêmica,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\dressing-room-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — eventos: reclamação banco, pedido reunião, grupo insatisfeito,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\discipline-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — cartões, suspensão, multa, indisciplina, briga no treino."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\competition-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — define o framework de competições (liga, copa, estadual, continental)."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\challenge-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — define a API. Cenários: salvar do rebaixamento, subir divisão,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\commentary-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — gera linhas de comentário a partir de eventos do match-engine."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\calendar-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — rodadas oficiais, copas, datas FIFA, viagens, descanso, adiamentos."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\board-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — perfis paciente/exigente/gastadora/econômica/base/títulos/lucro/politizada."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\audio-commentary.ts",
-      "line": 2,
-      "text": "// Status: skeleton — usa howler.js (TODO: adicionar a package.json antes da implementação real)."
-    },
-    {
-      "type": "todo",
-      "file": "lib\\audio-commentary.ts",
-      "line": 2,
-      "text": "// Status: skeleton — usa howler.js (TODO: adicionar a package.json antes da implementação real)."
-    },
-    {
-      "type": "todo",
-      "file": "lib\\audio-commentary.ts",
-      "line": 9,
-      "text": "// TODO: when implementing, add to package.json:"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\achievement-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — títulos, acessos, invencibilidade, revelação jovem,"
+      "file": "app/editar/page.tsx",
+      "line": 283,
+      "text": "// Mock players data generator based on team - completamente deterministico (sem Math.random)"
     },
     {
       "type": "mock",
-      "file": "lib\\cup-engine.ts",
-      "line": 255,
-      "text": "* em vez do mock que usava simulateMatch(50, 50) e cara-ou-coroa."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\ranking-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — prestígio, torcida, elenco, finanças, base, ranking continental."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\post-match-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — melhores momentos, estatísticas (xG, posse, notas),"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\news-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — gera notícias automáticas: contratação, venda, lesão, crise,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\rebuild-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — cenários: gigante em crise, clube endividado, rebaixado,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\multiplayer-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — 2-4 técnicos no mesmo save, turnos semanais,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\infrastructure-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — estádio, CT, base, gramado, médico, marketing, centro análise."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\morale-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — personalidades afetam moral, renovação, desempenho, clássicos, críticas."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\museum-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — títulos, ídolos, recordes, campanhas, temporadas históricas."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\rivalry-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — semana clássico, provocações, bônus torcida, pressão extra, moral."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\reputation-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — promessa → estrela → ídolo → lenda. Impacta salário, torcida, mercado, camisa."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\pack-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — importar/exportar packs, validar, preview escudo/camisa,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 5,
-      "text": "export type PhaseStatus = \"skeleton\" | \"partial\" | \"implemented\" | \"missing\""
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 35,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 43,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 50,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 56,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 63,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 71,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 78,
-      "text": "status: \"skeleton\","
+      "file": "app/elenco/gerenciamento/page.tsx",
+      "line": 66,
+      "text": "// Mock players data"
     },
     {
       "type": "mock",
-      "file": "lib\\phases-registry.ts",
-      "line": 80,
-      "text": "notes: \"UI atual em app/mercado é mock — engine criado, falta integrar.\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 85,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 91,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 97,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 103,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 109,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 116,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 123,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 129,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 135,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 141,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 147,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 153,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 159,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 165,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 171,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 178,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 184,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 190,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 196,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 203,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 209,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 215,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 221,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 227,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 233,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 239,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 245,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 251,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 257,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 263,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 269,
-      "text": "status: \"skeleton\","
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 289,
-      "text": "export function progressSummary(): { total: number; skeleton: number; partial: number; implemented: number; missing: number } {"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\phases-registry.ts",
-      "line": 292,
-      "text": "skeleton: PHASES.filter(p => p.status === \"skeleton\").length,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\president-mode-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — contratar técnico, orçamento, estádio, patrocinador, finanças."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\staff-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — auxiliar, prep físico, médico, fisio, analista, olheiro,"
-    },
-    {
-      "type": "skeleton",
-      "file": "lib\\revenue-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — camisas vendidas, sócios, bilheteria, marketing, popularidade."
+      "file": "app/elenco/gerenciamento/page.tsx",
+      "line": 67,
+      "text": "// Os elencos MOCK (playersData/benchData) foram REMOVIDOS: eram o elenco do RB"
     },
     {
       "type": "mock",
-      "file": "lib\\use-user-roster.ts",
+      "file": "app/partida/escalacao/page.tsx",
+      "line": 44,
+      "text": "// Mock players data"
+    },
+    {
+      "type": "mock",
+      "file": "app/partida/escalacao/page.tsx",
       "line": 45,
-      "text": "// Sem time nao ha elenco. Antes devolvia um elenco MOCK aqui, que era o que congelava."
+      "text": "// Os elencos MOCK (playersData/benchData) foram REMOVIDOS: eram o elenco do RB"
     },
     {
       "type": "mock",
-      "file": "lib\\save-system.ts",
-      "line": 643,
-      "text": "// que era limpo ao atualizar e fazia o jogo \"sumir\" (calendario/partidas em mock)."
+      "file": "app/partida/page.tsx",
+      "line": 758,
+      "text": "// calendario — a tela mock relatada. Agora a tela so desenha com o save na"
     },
     {
       "type": "mock",
-      "file": "lib\\save-system.ts",
-      "line": 737,
-      "text": "// primeiro render e as telas ficariam em mock/vazio."
+      "file": "app/partida/page.tsx",
+      "line": 771,
+      "text": "// existe no calendario, que e a tela mock relatada."
     },
     {
       "type": "skeleton",
-      "file": "components\\ui\\skeleton.tsx",
-      "line": 3,
-      "text": "function Skeleton({ className, ...props }: React.ComponentProps<'div'>) {"
-    },
-    {
-      "type": "skeleton",
-      "file": "components\\ui\\skeleton.tsx",
-      "line": 6,
-      "text": "data-slot=\"skeleton\""
-    },
-    {
-      "type": "skeleton",
-      "file": "components\\ui\\skeleton.tsx",
-      "line": 13,
-      "text": "export { Skeleton }"
-    },
-    {
-      "type": "skeleton",
-      "file": "components\\ui\\sidebar.tsx",
+      "file": "components/ui/sidebar.tsx",
       "line": 20,
       "text": "import { Skeleton } from '@/components/ui/skeleton'"
     },
     {
       "type": "skeleton",
-      "file": "components\\ui\\sidebar.tsx",
+      "file": "components/ui/sidebar.tsx",
       "line": 616,
       "text": "data-slot=\"sidebar-menu-skeleton\""
     },
     {
       "type": "skeleton",
-      "file": "components\\ui\\sidebar.tsx",
+      "file": "components/ui/sidebar.tsx",
       "line": 617,
       "text": "data-sidebar=\"menu-skeleton\""
     },
     {
       "type": "skeleton",
-      "file": "components\\ui\\sidebar.tsx",
+      "file": "components/ui/sidebar.tsx",
       "line": 622,
       "text": "<Skeleton"
     },
     {
       "type": "skeleton",
-      "file": "components\\ui\\sidebar.tsx",
+      "file": "components/ui/sidebar.tsx",
       "line": 624,
       "text": "data-sidebar=\"menu-skeleton-icon\""
     },
     {
       "type": "skeleton",
-      "file": "components\\ui\\sidebar.tsx",
+      "file": "components/ui/sidebar.tsx",
       "line": 627,
       "text": "<Skeleton"
     },
     {
       "type": "skeleton",
-      "file": "components\\ui\\sidebar.tsx",
+      "file": "components/ui/sidebar.tsx",
       "line": 628,
       "text": "className=\"h-4 max-w-(--skeleton-width) flex-1\""
     },
     {
       "type": "skeleton",
-      "file": "components\\ui\\sidebar.tsx",
+      "file": "components/ui/sidebar.tsx",
       "line": 629,
       "text": "data-sidebar=\"menu-skeleton-text\""
     },
     {
       "type": "skeleton",
-      "file": "components\\ui\\sidebar.tsx",
+      "file": "components/ui/sidebar.tsx",
       "line": 632,
       "text": "'--skeleton-width': width,"
     },
     {
       "type": "skeleton",
-      "file": "lib\\training-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — finalização, defesa, posse, contra-ataque, bola parada,"
+      "file": "components/ui/skeleton.tsx",
+      "line": 3,
+      "text": "function Skeleton({ className, ...props }: React.ComponentProps<'div'>) {"
     },
     {
       "type": "skeleton",
-      "file": "lib\\youth-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — sub-17, sub-20, peneiras, olheiros, potencial,"
+      "file": "components/ui/skeleton.tsx",
+      "line": 6,
+      "text": "data-slot=\"skeleton\""
     },
     {
       "type": "skeleton",
-      "file": "lib\\sponsor-engine.ts",
+      "file": "components/ui/skeleton.tsx",
+      "line": 13,
+      "text": "export { Skeleton }"
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/audio-commentary.ts",
+      "line": 2,
+      "text": "// Status: skeleton — usa howler.js (TODO: adicionar a package.json antes da implementação real)."
+    },
+    {
+      "type": "todo",
+      "file": "lib/audio-commentary.ts",
+      "line": 2,
+      "text": "// Status: skeleton — usa howler.js (TODO: adicionar a package.json antes da implementação real)."
+    },
+    {
+      "type": "todo",
+      "file": "lib/audio-commentary.ts",
+      "line": 9,
+      "text": "// TODO: when implementing, add to package.json:"
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/board-engine.ts",
+      "line": 2,
+      "text": "// Status: skeleton — perfis paciente/exigente/gastadora/econômica/base/títulos/lucro/politizada."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/challenge-engine.ts",
+      "line": 5,
+      "text": "// Um esqueleto que se declarava esqueleto (\"Status: skeleton — define a API\")."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/commentary-engine.ts",
+      "line": 2,
+      "text": "// Status: skeleton — gera linhas de comentário a partir de eventos do match-engine."
+    },
+    {
+      "type": "mock",
+      "file": "lib/cup-engine.ts",
+      "line": 351,
+      "text": "* em vez do mock que usava simulateMatch(50, 50) e cara-ou-coroa."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/discipline-engine.ts",
+      "line": 2,
+      "text": "// Status: skeleton — cartões, suspensão, multa, indisciplina, briga no treino."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/hall-of-fame-engine.ts",
+      "line": 2,
+      "text": "// Status: skeleton — clubes treinados, títulos, reputação, aproveitamento, ranking."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/hierarquia-do-elenco.ts",
+      "line": 10,
+      "text": "* com ZERO consumidores — esqueleto, nunca preenchido."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/hierarquia-do-elenco.ts",
+      "line": 14,
+      "text": "* A tentacao era gravar `PlayerHierarchy[]` no save. Foi assim que o esqueleto"
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/infrastructure-engine.ts",
+      "line": 2,
+      "text": "// Status: skeleton — estádio, CT, base, gramado, médico, marketing, centro análise."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/injury-engine.ts",
+      "line": 2,
+      "text": "// Status: skeleton — leve, muscular, grave, recaída, sacrifício."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/interviews-engine.ts",
+      "line": 2,
+      "text": "// Status: skeleton — impactam moral, imprensa, torcida, diretoria, jogador específico."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/match-decisions.ts",
+      "line": 3,
+      "text": "// ⚠️ O cabeçalho deste arquivo dizia \"Status: skeleton\" até a 1.0.292 e isso"
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/multiplayer-engine.ts",
+      "line": 2,
+      "text": "// Status: skeleton — 2-4 técnicos no mesmo save, turnos semanais,"
+    },
+    {
+      "type": "mock",
+      "file": "lib/save-system.ts",
+      "line": 1424,
+      "text": "// que era limpo ao atualizar e fazia o jogo \"sumir\" (calendario/partidas em mock)."
+    },
+    {
+      "type": "mock",
+      "file": "lib/save-system.ts",
+      "line": 1708,
+      "text": "// primeiro render e as telas ficariam em mock/vazio."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/sponsor-engine.ts",
       "line": 2,
       "text": "// Status: skeleton — master, fornecedor, bônus, penalidade, renovação."
     },
     {
       "type": "skeleton",
-      "file": "lib\\transfer-engine.ts",
+      "file": "lib/staff-engine.ts",
+      "line": 2,
+      "text": "// Status: skeleton — auxiliar, prep físico, médico, fisio, analista, olheiro,"
+    },
+    {
+      "type": "mock",
+      "file": "lib/time-da-carreira.ts",
+      "line": 42,
+      "text": "* familia do falso \"mock Palmeiras x Botafogo\" do pre-jogo."
+    },
+    {
+      "type": "skeleton",
+      "file": "lib/transfer-engine.ts",
       "line": 3,
       "text": "// Restante do esqueleto fica para evolução futura (counter-offers, contratos, deadline day, etc.)."
     },
     {
       "type": "skeleton",
-      "file": "lib\\transfer-engine.ts",
-      "line": 380,
+      "file": "lib/transfer-engine.ts",
+      "line": 557,
       "text": "// ─── Esqueleto original (para evolução futura) ─────────────────────────────────"
     },
     {
+      "type": "mock",
+      "file": "lib/use-user-roster.ts",
+      "line": 86,
+      "text": "// Sem time nao ha elenco. Antes devolvia um elenco MOCK aqui, que era o que congelava."
+    },
+    {
       "type": "skeleton",
-      "file": "lib\\women-football-engine.ts",
+      "file": "lib/youth-engine.ts",
       "line": 2,
-      "text": "// Status: skeleton — clubes, carreira, competições femininas. Espelha career-engine"
-    },
-    {
-      "type": "mock",
-      "file": "app\\editar\\page.tsx",
-      "line": 148,
-      "text": "// Mock players data generator based on team - completamente deterministico (sem Math.random)"
-    },
-    {
-      "type": "mock",
-      "file": "app\\elenco\\gerenciamento\\page.tsx",
-      "line": 45,
-      "text": "// Mock players data"
-    },
-    {
-      "type": "mock",
-      "file": "app\\elenco\\gerenciamento\\page.tsx",
-      "line": 46,
-      "text": "// Os elencos MOCK (playersData/benchData) foram REMOVIDOS: eram o elenco do RB"
-    },
-    {
-      "type": "mock",
-      "file": "app\\partida\\escalacao\\page.tsx",
-      "line": 43,
-      "text": "// Mock players data"
-    },
-    {
-      "type": "mock",
-      "file": "app\\partida\\escalacao\\page.tsx",
-      "line": 44,
-      "text": "// Os elencos MOCK (playersData/benchData) foram REMOVIDOS: eram o elenco do RB"
-    },
-    {
-      "type": "mock",
-      "file": "app\\central\\page.tsx",
-      "line": 65,
-      "text": "// Mock data para disciplina"
-    },
-    {
-      "type": "mock",
-      "file": "app\\partida\\ao-vivo\\page.tsx",
-      "line": 70,
-      "text": "// Mock players - usados como elenco padrao quando nao houver squad real"
+      "text": "// Status: skeleton — sub-17, sub-20, peneiras, olheiros, potencial,"
     }
   ]
 }

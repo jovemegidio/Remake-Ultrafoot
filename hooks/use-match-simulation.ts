@@ -8,6 +8,7 @@ import {
   tickMinute,
   getFootballClock,
   resolvePendingPenalty,
+  resolvePendingVar,
   startShootout,
   takeShootoutKick,
   shootoutAvailableTakers,
@@ -73,6 +74,8 @@ export interface UseMatchSimulation {
    * destrava a partida.
    */
   takePenalty: (taker: SquadPlayer | null) => PenaltyOutcome | null
+  /** Revela a decisao do VAR mantendo o relogio parado durante a animacao. */
+  resolveVar: () => void
   /**
    * Abre a disputa de penaltis. Chamado pela tela quando o mata-mata termina
    * empatado — o motor nao decide isso sozinho porque so a tela sabe se este
@@ -276,6 +279,10 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
         : { ...cfg, homeCoachEffect: effect }
       // tickMinute nao avanca enquanto houver penalti pendente — sem resolver aqui,
       // o "avancar" ficaria girando em falso ate estourar o safety. O motor bate.
+      if (cur.pendingVar) {
+        cur = resolvePendingVar(cur)
+        continue
+      }
       if (cur.pendingPenalty) {
         cur = resolvePendingPenalty(cur, liveConfig, null).state
         continue
@@ -301,6 +308,12 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     stateRef.current = next
     setState(next)
     return outcome
+  }, [])
+
+  const resolveVar = useCallback(() => {
+    const next = resolvePendingVar(stateRef.current)
+    stateRef.current = next
+    setState(next)
   }, [])
 
   // ── Disputa de penaltis ───────────────────────────────────────────────────
@@ -384,6 +397,7 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     addEvent,
     fastForward,
     takePenalty,
+    resolveVar,
     beginShootout,
     kickShootout,
     endShootout,

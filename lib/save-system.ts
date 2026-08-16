@@ -1507,13 +1507,23 @@ export function commitGameState(
 
 export function saveGameState(state: GameState): void {
   if (typeof window === "undefined") return
-  const careerId = state.careerId || getActiveCareerId()
+  const activeCareerId = getActiveCareerId()
+  const careerId = state.careerId || activeCareerId
   // Preferencias antes de uma carreira continuam no legado, sem criar slot vazio.
   if (!careerId && !state.selectedTeamShort) {
     storeSet(LEGACY_STORAGE_KEY, JSON.stringify({ ...state, version: VERSION, updatedAt: Date.now() }))
     return
   }
   const resolvedId = careerId || makeCareerId()
+  // Uma tela da carreira anterior pode deixar um save em microtask pendente
+  // exatamente quando o jogador abre outro slot. Esse callback ainda carrega o
+  // careerId antigo; ele nao pode gravar nem reativar a carreira anterior.
+  if (state.careerId && activeCareerId && state.careerId !== activeCareerId) {
+    console.warn(
+      `[save] gravacao atrasada de ${state.careerId} descartada; a carreira ativa agora e ${activeCareerId}.`,
+    )
+    return
+  }
   // CAMADA 1: retrato do save ANTES de esta versao escrever qualquer coisa nele.
   guardarRetratoDaVersaoAnterior(resolvedId)
   const next = { ...state, careerId: resolvedId, version: VERSION, updatedAt: Date.now() }

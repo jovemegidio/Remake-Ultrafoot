@@ -25,11 +25,11 @@
  * abertura do jogo, sem nada na tela denunciando.
  */
 
-import { getTeamByShort, type Team } from "@/lib/teams-data"
+import { getTeamByFileKey, getTeamByShort, type Team } from "@/lib/teams-data"
 import { getNationalTeamById, getNationalStrength, type NationalTeam } from "@/lib/national-teams"
 import { getNationalCrestUrl } from "@/lib/national-assets"
 import { applyTeamOverride } from "@/lib/team-overrides"
-import { useGameState } from "@/lib/save-system"
+import { savedTeamToTeam, useGameState } from "@/lib/save-system"
 
 /**
  * ⚠️ CLUBE NEUTRO, NUNCA UM CLUBE DE VERDADE.
@@ -109,7 +109,12 @@ export function useUserTeam(): { team: Team; hydrated: boolean } {
   const team = nation
     ? nationalTeamToTeam(nation)
     : state.selectedTeamShort
-      ? getTeamByShort(state.selectedTeamShort) ?? FALLBACK_TEAM
+      // `curto` nao e identidade global. O save ja guarda o fileKey imutavel;
+      // ele precisa vencer para dois Atleticos homonimos nunca trocarem de pais.
+      ? (state.selectedTeam?.fileKey ? getTeamByFileKey(state.selectedTeam.fileKey) : undefined)
+        ?? savedTeamToTeam(state.selectedTeam)
+        ?? getTeamByShort(state.selectedTeamShort)
+        ?? FALLBACK_TEAM
       : FALLBACK_TEAM
   return { team, hydrated }
 }

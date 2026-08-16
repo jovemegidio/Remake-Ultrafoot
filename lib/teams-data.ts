@@ -1855,15 +1855,25 @@ export function getDivisoes2026(): Record<string, string> {
 }
 
 /** Divisao ATUAL do clube: piramide do save > tabela de 2026 > divisao estatica. */
-export function initialDivision(team: { curto: string; divisao: string; file_key?: string }): string {
+export function initialDivision(team: {
+  curto: string; divisao: string; file_key?: string; pais?: string; estado?: string
+}): string {
+  // `_divisoes2026` e uma tabela brasileira indexada pelo codigo historico.
+  // Como esse codigo se repete no banco mundial, so um clube explicitamente
+  // brasileiro pode herdar Serie A-D por ele.
+  const divisaoBrasileira = normalizeCountry(team.pais ?? team.estado) === "Brasil"
+    ? _divisoes2026[team.curto]
+    : undefined
   return (team.file_key ? _officialEuropeanDivisionByFileKey[team.file_key] : undefined)
     ?? (team.file_key ? PROMOVIDOS_DO_POOL[team.file_key] : undefined)
     ?? (team.file_key ? _poolInitialDivisionByFileKey[team.file_key] : undefined)
-    ?? _divisoes2026[team.curto]
+    ?? divisaoBrasileira
     ?? team.divisao
 }
 
-export function effectiveDivision(team: { curto: string; divisao: string; file_key?: string }): string {
+export function effectiveDivision(team: {
+  curto: string; divisao: string; file_key?: string; pais?: string; estado?: string
+}): string {
   const canonical = team.file_key ? _clubDivisions[clubDivisionKey({ file_key: team.file_key })] : undefined
   return canonical ?? _clubDivisions[team.curto] ?? initialDivision(team)
 }
@@ -2310,6 +2320,29 @@ for (const acesso of DIVISOES_DE_ACESSO) {
       const posicao = maior > menor ? ((team.prestigio ?? 0) - menor) / (maior - menor) : 0.5
       _prestigioNaPiramideDoPais[team.file_key] = Math.round(min + posicao * (max - min))
     }
+  }
+}
+
+// IDENTIDADE GLOBAL DO POOL. `curto` veio do nome truncado e nao e unico:
+// Atletico Rafaela e Atletico Alagoinhas, por exemplo, eram ambos ATLETICO.
+// O file_key e unico, portanto gera um sufixo deterministico apenas quando o
+// codigo ja esta ocupado. A ordem por file_key estabiliza o resultado entre
+// atualizacoes do catalogo.
+{
+  const usados = new Set(allTeams.map(team => team.curto))
+  for (const team of [...allPoolTeams].sort((a, b) => a.file_key.localeCompare(b.file_key))) {
+    let curto = _playableShortByFileKey[team.file_key] ?? team.curto
+    if (usados.has(curto)) {
+      const clean = team.file_key.replace(/[^a-z0-9]/gi, "").toUpperCase()
+      const stem = team.curto.slice(0, 7)
+      let size = 2
+      do {
+        curto = `${stem}${clean.slice(-size)}`
+        size++
+      } while (usados.has(curto))
+    }
+    _playableShortByFileKey[team.file_key] = curto
+    usados.add(curto)
   }
 }
 

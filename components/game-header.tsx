@@ -11,7 +11,7 @@ import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-da
 import { competitionsByLeague } from "@/lib/international-competitions"
 import { agrupar, buscar, ROTULO_DO_TIPO, type ItemBuscavel } from "@/lib/busca-global"
 import { podeSalvarCarreira, useGameState } from "@/lib/save-system"
-import { useManagingNational } from "@/lib/time-da-carreira"
+import { useManagingNational, useUserTeam } from "@/lib/time-da-carreira"
 import { salvarTudo } from "@/lib/salvar-tudo"
 import { useGameManager } from "@/lib/use-game-manager"
 import { useGameEngine } from "@/lib/game-engine"
@@ -30,6 +30,10 @@ import {
 import { siglaExibivel } from "@/lib/club-identity"
 
 const MONTHS_SHORT = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
+
+// Prefetch e cache da sessao. Cada rota so precisa ser aquecida uma vez, mesmo
+// que o cabecalho remonte a cada navegacao.
+const rotasPrincipaisAquecidas = new Set<string>()
 
 interface GameHeaderProps {
   team?: Team
@@ -119,7 +123,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     advanceWeek: advanceGameWeek, currentWeek, currentSeason, seasonCalendar,
     fecharDecisoesEPassarAVez, trocarTecnicoAtivo,
   } = useGameManager()
-  const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  const { team: careerTeam } = useUserTeam()
+  const userTeam = team || careerTeam || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   const routeMeta = getRouteMeta(pathname)
   // Dirigindo uma selecao o menu perde os itens de clube (mercado, financas,
   // juniores...) e recebe os da selecao. Ver buildNavMenuItems.
@@ -273,15 +278,29 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     performanceStore.getServerSnapshot,
   )
   useEffect(() => {
+    const nav = navigator as Navigator & {
+      deviceMemory?: number
+      connection?: { saveData?: boolean }
+    }
+    if (
+      (nav.hardwareConcurrency ?? 8) <= 4
+      || (nav.deviceMemory ?? 8) <= 4
+      || nav.connection?.saveData
+    ) return
+
     const rotas = perfilDesempenho === "economy" ? []
       : perfilDesempenho === "balanced" ? ["/", "/elenco"]
       : ["/", "/elenco", "/mercado", "/calendario", "/competicoes"]
-    if (rotas.length === 0) return
+    const pendentes = rotas.filter(href => !rotasPrincipaisAquecidas.has(href))
+    if (pendentes.length === 0) return
 
     let cancelado = false
     const aquecer = () => {
       if (cancelado) return
-      for (const href of rotas) router.prefetch(href)
+      for (const href of pendentes) {
+        rotasPrincipaisAquecidas.add(href)
+        router.prefetch(href)
+      }
     }
     // `requestIdleCallback` não existe em toda webview; o timeout é a saída.
     const temOcioso = typeof window.requestIdleCallback === "function"
@@ -1092,14 +1111,8 @@ const NAV_MENU_ITEMS: NavMenuItem[] = [
   { secao: "Elenco", label: "Elenco", href: "/elenco", icon: User, clubOnly: true },
   { secao: "Elenco", label: "Treinamento", href: "/treinamento", icon: User, clubOnly: true },
   { secao: "Elenco", label: "Juniores", href: "/base", icon: Sprout, clubOnly: true },
-  // AS DUAS CARREIRAS QUE NÃO SÃO A DO ESCRITÓRIO (1.0.322).
-  //
-  // ⚠️ Sem estas linhas elas ficariam alcançáveis SÓ no instante da criação:
-  // quem fechasse o jogo voltaria para o escritório do técnico sem porta
-  // nenhuma para a própria carreira. É o defeito clássico da casa — sistema
-  // implementado e desligado por falta de entrada.
-  { secao: "Elenco", label: "Carreira na base (Sub-20)", href: "/base/carreira", icon: Sprout, clubOnly: true },
-  { secao: "Voce", label: "Carreira de jogador", href: "/carreira/jogador", icon: User, clubOnly: true },
+  // Carreira na base e carreira de jogador tem seus proprios menus e continuam
+  // acessiveis pela criacao. Este W pertence ao escritorio do treinador.
   // MERCADO absorve o TransferRoom: os dois sao a mesma tarefa (negociar
   // atleta), e o TransferRoom ja e alcancado de dentro do Mercado. Duas linhas
   // no menu para a mesma decisao so faziam o tecnico escolher por qual porta

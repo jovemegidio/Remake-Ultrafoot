@@ -1274,7 +1274,7 @@ export default function PartidaAoVivoPage() {
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty,
-    beginShootout, kickShootout, endShootout, shootoutTakers } = sim
+    resolveVar, beginShootout, kickShootout, endShootout, shootoutTakers } = sim
 
   /**
    * Começar a partida — pelo botão, pelo Enter ou pelo controle.
@@ -1411,9 +1411,10 @@ export default function PartidaAoVivoPage() {
   useEffect(() => {
     if (state.pendingPenalty) {
       pause()
-      setShowPenaltyModal(true)
+      if (state.pendingPenalty.side === userSide) setShowPenaltyModal(true)
+      else takePenalty(null)
     }
-  }, [state.pendingPenalty, pause])
+  }, [state.pendingPenalty, userSide, pause, takePenalty])
 
   // Discord Rich Presence
   useDiscordRPC(state, homeTeam, awayTeam)
@@ -1618,7 +1619,14 @@ export default function PartidaAoVivoPage() {
 
   // Handler para fechar animacao
   const handleAnimationComplete = () => {
+    const eraChecagemDoVar = currentAnimation?.type === "var" && Boolean(state.pendingVar)
     setCurrentAnimation(null)
+    if (eraChecagemDoVar) {
+      // Primeiro overlay = apreensao; agora o motor publica a decisao. O evento
+      // novo abre um segundo overlay e so depois a partida volta a correr.
+      resolveVar()
+      return
+    }
     // Resume a partida apos a animacao
     if (state.phase !== "fulltime" && state.phase !== "pre") {
       resume()
@@ -2398,13 +2406,14 @@ export default function PartidaAoVivoPage() {
                             : e.type === "red_card" ? "text-red-400 font-semibold"
                             : e.type === "yellow_card" ? "text-yellow-400"
                             : e.type === "penalty" ? "text-orange-400 font-semibold"
+                            : e.type === "var" ? "text-sky-300 font-semibold"
                             : e.type === "save" || e.type === "post" ? "text-cyan-300"
                             : e.type === "fulltime" || e.type === "halftime" || e.type === "kickoff" ? "text-white/80 font-semibold"
                             : "text-white/55"
                           const EventIcon =
                             e.type === "goal" ? Goal
                             : e.type === "red_card" || e.type === "yellow_card" ? Square
-                            : e.type === "penalty" ? TargetIcon
+                            : e.type === "penalty" || e.type === "var" ? TargetIcon
                             : e.type === "corner" ? Flag
                             : e.type === "injury" ? Stethoscope
                             : e.type === "save" ? Hand
@@ -2415,6 +2424,7 @@ export default function PartidaAoVivoPage() {
                             : e.type === "yellow_card" ? "fill-yellow-400 text-yellow-400"
                             : e.type === "goal" ? "text-emerald-400"
                             : e.type === "penalty" ? "text-orange-400"
+                            : e.type === "var" ? "text-sky-300"
                             : e.type === "corner" ? "text-rose-300"
                             : e.type === "injury" ? "text-red-300"
                             : e.type === "save" ? "text-cyan-300"

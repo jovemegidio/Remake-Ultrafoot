@@ -9,6 +9,13 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "1.0.333: tudo restaurado, sem perder as correcoes novas",
+      "category": "Atualizacao",
+      "body": "A versao 1.0.333 une a arvore completa — Divisao de Acesso, VAR, 3D, lesoes, diretoria, Online, Manager Rivals e a carreira de jogador da 324 a 329 — com as correcoes recentes de clubes, saves separados e desempenho. Esta entrega marca aproximadamente 80% do jogo planejado, e o novo gate impede publicar outra arvore incompleta.",
+      "date": "2026-08-16",
+      "pinned": true
+    },
+    {
       "title": "Carreira nova não puxa mais o passado",
       "category": "Correção",
       "body": "Um jogador relatou que um save novo trazia negociações da carreira anterior. O save realmente nascia limpo — quem não nascia era o motor do jogo, que guarda propostas, interesses de mercado e conversas com atletas à parte, e não estava sendo zerado. Junto vai a correção do campo 3D, que não abria e derrubava a partida para o 2D.",
@@ -252,9 +259,24 @@
   ],
   "changelog": [
     {
-      "version": "1.0.332",
+      "version": "1.0.333",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "A uniao completa: restauracoes, saves isolados e clubes corretos",
+      "itens": [
+        "RESTAURADO PARA TODOS: Divisao de Acesso com 260 clubes, VAR/arbitragem, eventos do 3D, historico de lesoes, confianca da diretoria, simulacao da partida, menu Online, Manager Rivals, Viver a Partida e toda a carreira de jogador entregue da 1.0.324 a 1.0.329.",
+        "SEM PERDER A 1.0.331: clubes estrangeiros nao entram nas divisoes brasileiras por coincidencia de sigla; Atletico Alagoinhas e Atletico Rafaela tem identidades proprias; cada carreira mantem save, elenco, caixa e tatica separados, inclusive contra gravacoes atrasadas.",
+        "DESEMPENHO E MENU: o W do escritorio mostra apenas a carreira de treinador, e telas pesadas so sao pre-carregadas uma vez, quando o perfil e o computador comportam esse trabalho.",
+        "VAR REALISTA: gols e penaltis raros entram em checagem, o relogio para durante a apreensao e a decisao aparece separada. Gol anulado sai do placar; penalti confirmado so entao vai para a cobranca.",
+        "DADOS SINCRONIZADOS: o catalogo leve e os elencos derivados agora conferem clube por clube com a fonte atual — 3.064 clubes e 66.820 atletas, sem elenco orfao — e o manifesto das 153 ligas foi recalculado.",
+        "GATE DE PUBLICACAO: o inventario confere arquivos e marcadores internos de cada funcionalidade entregue, e agora tambem executa os testes da 1.0.331. Uma arvore antiga com numero novo nao consegue mais chegar ao instalador.",
+        "MARCO DO PROJETO: com os sistemas restaurados e os itens recentes unidos, o jogo chega ao patamar estimado de 80% do escopo planejado."
+      ]
+    },
+    {
+      "version": "1.0.332",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "De volta o que tinha sumido: Divisao de Acesso, VAR e a carreira de jogador inteira",
       "itens": [
         "CORRECAO DE REGRESSAO. Uma arvore antiga estava circulando com o numero novo, e por isso 20 funcionalidades ja entregues nao apareciam no jogo: a DIVISAO DE ACESSO (a base da piramide, com os 260 clubes), o VAR/arbitragem, os eventos do 3D, o historico de lesoes, a confianca da diretoria, o menu ONLINE inteiro, o Manager Rivals, o VIVER A PARTIDA e tudo o que a carreira de jogador ganhou da 1.0.324 a 1.0.329 (fila da posicao, arquetipos, potencial oculto, evolucao organica, empresario, entrevistas e a aposentadoria virando carreira de tecnico).",

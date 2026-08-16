@@ -434,8 +434,36 @@ export default function SplashPage() {
     //
     // O motor entra por import dinamico: e aqui, ao ABRIR uma carreira, que os
     // seeds passam a fazer falta — nao na hora de desenhar o menu.
-    const { useGameEngine } = await import("@/lib/game-engine")
-    await useGameEngine.persist.rehydrate()
+    const [{ useGameEngine, persistGameEngineNow }, { storeGet }] = await Promise.all([
+      import("@/lib/game-engine"),
+      import("@/lib/persistent-store"),
+    ])
+    const salvo = loadGameState()
+    const chaveDoMotor = `ultrafoot-game-engine:${saveId}`
+    const tinhaMotorProprio = storeGet(chaveDoMotor) !== null
+
+    if (tinhaMotorProprio) await useGameEngine.persist.rehydrate()
+
+    // Save antigo/importado pode nao ter um motor proprio. O Zustand conserva o
+    // estado atual quando rehydrate recebe null; sem zerar, abrir B reutilizava
+    // elenco, caixa e tatica de A. Tambem repara um motor cuja identidade nao
+    // corresponde ao clube persistido no save.
+    const motorBate = Boolean(
+      salvo.selectedTeamShort
+      && useGameEngine.getState().myTeamShort === salvo.selectedTeamShort
+      && useGameEngine.getState().squadPlayers.length > 0,
+    )
+    if (!tinhaMotorProprio || (salvo.selectedTeamShort && !motorBate)) {
+      useGameEngine.setState(useGameEngine.getInitialState(), true)
+      if (salvo.selectedTeamShort) {
+        await Promise.all([carregarElencosDoPool(), carregarElencosReaisTM()])
+        useGameEngine.getState().initializeGame(
+          salvo.selectedTeamShort,
+          salvo.selectedTeam?.fileKey,
+        )
+      }
+      persistGameEngineNow()
+    }
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("ultrafoot:session-active", "true")
     }

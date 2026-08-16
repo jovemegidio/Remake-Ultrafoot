@@ -49,7 +49,17 @@ if (loadedB.managerName !== "B" || loadedB.week !== 3 || loadedB.selectedTeamSho
 if (store.storeGet(save.getCareerScopedKey("ultrafoot-game-engine")) !== "engine-B") throw new Error("Motor B contaminado")
 
 if (save.listCareerSaves().length !== 2) throw new Error("Indice nao preservou os dois saves")
-console.log("OK saves: duas carreiras, motores e progresso isolados")
+
+// Uma tela antiga ainda pode disparar um save em microtask depois que o jogador
+// ja abriu outro slot. Essa gravacao nunca pode reativar nem alterar A.
+save.saveGameState({ ...loadedA, careerId: careerA, managerName: "A atrasado", week: 99 })
+if (save.getActiveCareerId() !== careerB) throw new Error("Gravacao atrasada reativou o save A")
+const depoisDoAtrasado = save.loadGameState()
+if (depoisDoAtrasado.managerName !== "B" || depoisDoAtrasado.week !== 3) {
+  throw new Error("Gravacao atrasada do save A contaminou o save B")
+}
+
+console.log("OK saves: duas carreiras, motores, progresso e gravacoes atrasadas isolados")
 }
 
 void main()
