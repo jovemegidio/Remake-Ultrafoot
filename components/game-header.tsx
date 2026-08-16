@@ -27,6 +27,7 @@ import { PassagemDeVez } from "@/components/passagem-de-vez"
 import {
   ehMultitecnico, faltamFechar, iniciarRodada, tecnicosDoSave, type TecnicoDoSave,
 } from "@/lib/tecnicos-do-save"
+import { siglaExibivel } from "@/lib/club-identity"
 
 const MONTHS_SHORT = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
 
@@ -742,7 +743,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           >
             <TeamCrest team={userTeam} size="sm" />
             <div className="hidden md:flex flex-col items-start leading-none gap-1">
-              <span className="text-[12px] font-bold text-white">{userTeam.curto}</span>
+              <span className="text-[12px] font-bold text-white">{siglaExibivel(userTeam.curto, userTeam.nome)}</span>
               <FormBars results={form} />
             </div>
             <Star className="hidden lg:block h-3.5 w-3.5 text-[#ffd700] fill-[#ffd700]" />
@@ -1091,6 +1092,14 @@ const NAV_MENU_ITEMS: NavMenuItem[] = [
   { secao: "Elenco", label: "Elenco", href: "/elenco", icon: User, clubOnly: true },
   { secao: "Elenco", label: "Treinamento", href: "/treinamento", icon: User, clubOnly: true },
   { secao: "Elenco", label: "Juniores", href: "/base", icon: Sprout, clubOnly: true },
+  // AS DUAS CARREIRAS QUE NÃO SÃO A DO ESCRITÓRIO (1.0.322).
+  //
+  // ⚠️ Sem estas linhas elas ficariam alcançáveis SÓ no instante da criação:
+  // quem fechasse o jogo voltaria para o escritório do técnico sem porta
+  // nenhuma para a própria carreira. É o defeito clássico da casa — sistema
+  // implementado e desligado por falta de entrada.
+  { secao: "Elenco", label: "Carreira na base (Sub-20)", href: "/base/carreira", icon: Sprout, clubOnly: true },
+  { secao: "Voce", label: "Carreira de jogador", href: "/carreira/jogador", icon: User, clubOnly: true },
   // MERCADO absorve o TransferRoom: os dois sao a mesma tarefa (negociar
   // atleta), e o TransferRoom ja e alcancado de dentro do Mercado. Duas linhas
   // no menu para a mesma decisao so faziam o tecnico escolher por qual porta

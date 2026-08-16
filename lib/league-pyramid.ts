@@ -13,6 +13,7 @@
 import { UEFA_EXPANSION_FEDERATIONS } from "@/lib/uefa-expansion"
 import { DIVISOES_DE_ACESSO, acessoDoPais } from "@/lib/divisao-de-acesso"
 import { regulamentoDaLigaNoServidor } from "@/lib/atualizacao-elencos"
+import { LIGAS_FEMININAS } from "@/lib/futebol-feminino"
 
 /** Uma piramide nacional: divisoes do topo para a base e quantos clubes trocam
  *  entre cada par adjacente. swaps[i] = clubes entre tiers[i] e tiers[i+1]. */
@@ -72,6 +73,21 @@ const PIRAMIDES_NACIONAIS: readonly Pyramid[] = [
   { country: "Chipre", tiers: ["protathlima_cyp", "second_div_cyp"], swaps: [3] },
   { country: "Chequia", tiers: ["fortuna_liga_cze", "chance_narodni_liga"], swaps: [1] },
   { country: "Grecia", tiers: ["super_league_gre", "super_league_2_gre"], swaps: [2] },
+  // FUTEBOL FEMININO. Só entram os países cujas DUAS divisões existem no
+  // catálogo — é a mesma régua da expansão UEFA logo abaixo, e pelo mesmo
+  // motivo: uma pirâmide com um degrau só rebaixa clube para o vazio.
+  // O número de trocas é o `desce` que a própria liga declara.
+  ...LIGAS_FEMININAS
+    .filter(liga => liga.nivel === 1 && liga.desce > 0)
+    .flatMap((liga): Pyramid[] => {
+      const segunda = LIGAS_FEMININAS.find(l => l.codigoPais === liga.codigoPais && l.nivel === 2)
+      if (!segunda) return []
+      return [{
+        country: `${liga.pais} (feminino)`,
+        tiers: [liga.id, segunda.id],
+        swaps: [Math.min(liga.desce, segunda.sobe || liga.desce)],
+      }]
+    }),
   // Federações da expansão só entram aqui quando os DOIS níveis têm uma
   // fotografia explícita de participantes. O filtro evita transformar uma
   // segunda divisão ainda aberta em uma pirâmide fictícia e liga
@@ -170,6 +186,9 @@ export interface DivisionOutcome {
 }
 
 const LABELS: Record<string, string> = {
+  // As femininas saem do próprio cadastro: repetir os 21 nomes aqui à mão só
+  // criaria uma segunda verdade para envelhecer.
+  ...Object.fromEntries(LIGAS_FEMININAS.map(liga => [liga.id, liga.short])),
   serie_a: "Série A", serie_b: "Série B", serie_c: "Série C", serie_d: "Série D",
   // Os rótulos das divisões de acesso saem do catálogo — escrevê-los de novo
   // aqui é como um deles ficaria para trás quando o outro mudasse.

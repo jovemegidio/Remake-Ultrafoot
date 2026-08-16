@@ -252,9 +252,24 @@
   ],
   "changelog": [
     {
-      "version": "1.0.321",
+      "version": "1.0.322",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "Futebol feminino, carreira na base e carreira de jogador",
+      "itens": [
+        "FUTEBOL FEMININO: 21 ligas de 18 paises jogaveis (Brasileirao A1 e A2, WSL e WSL 2, Liga F, Premiere Ligue, Frauen-Bundesliga, Serie A Femminile, NWSL, Liga MX Femenil, WE League, A-League Women, Damallsvenskan, Toppserien, Kvindeligaen, SWPL, Eredivisie Vrouwen, Nacional Feminino, Colombia, Argentina e Chile), cada uma com o proprio calendario, a propria copa nacional e a continental da confederacao.",
+        "Os clubes femininos usam o escudo e o uniforme do clube-mae, tem tabela, acesso e rebaixamento (A1 x A2, WSL x WSL 2) e mercado da propria modalidade — nenhum clube masculino entra na liga feminina, e a Libertadores Feminina nao sorteia adversario masculino.",
+        "126 clubes femininos ja entram com ELENCO REAL importado (3.277 atletas com nome, posicao e nacionalidade); os demais seguem com elenco gerado, e a tela de criacao diz qual e qual.",
+        "CARREIRA NA BASE (Sub-20) finalmente pode ser criada: o motor e a tela existiam desde sempre e nao havia caminho ate eles. Agora ela roda na mesma maquina do profissional — calendario contra as academias dos rivais da divisao, tabela, copa e competicoes de base do PAIS do clube (Copinha so no Brasil; Premier League 2, Primavera 1, Gambardella, A-Junioren e UEFA Youth League nos outros).",
+        "CARREIRA DE JOGADOR: um atleta so, da estreia a aposentadoria. Voce cria o atleta (posicao, idade, nacionalidade, pe, camisa), e quem decide se voce joga e o treinador, pela sua NOTA. Nota por partida, metas da temporada, evolucao por pontos com teto no potencial, convocacao para a selecao, propostas de outros clubes, premios e aposentadoria.",
+        "As 70 selecoes de pais da criacao de carreira passam a aparecer em ORDEM ALFABETICA. Antes era a ordem de cadastro, e achar um pais no meio dos setenta exigia varrer o carrossel inteiro.",
+        "A base do clube revela garotos com nome do PAIS do clube (e nome feminino na base feminina) — antes a base do Ajax revelava 'Matheus Nascimento'."
+      ]
+    },
+    {
+      "version": "1.0.321",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "Correcao do crash no elenco, cartas novas e Taca Guanabara",
       "itens": [
         "CORRECAO IMPORTANTE: a tela de Elenco / Gerenciamento quebrava com 'Cannot read properties of undefined' em QUALQUER clube, nao so nos da Divisao de Acesso. Save gravado antes das funcoes individuais chegava sem o mapa de funcoes, e a tela lia esse mapa pelo nome do atleta. Agora todo mapa tatico que falta no save nasce vazio, em vez de derrubar a tela.",

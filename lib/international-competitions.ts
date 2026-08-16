@@ -2,6 +2,7 @@
 import type { Divisao } from "./teams-data"
 import { UEFA_EXPANSION_COMPETITIONS } from "./uefa-expansion"
 import { DIVISOES_DE_ACESSO } from "./divisao-de-acesso"
+import { LIGAS_FEMININAS } from "./futebol-feminino"
 
 export interface Competition {
   id: string
@@ -928,6 +929,80 @@ for (const competitions of Object.values(DEEP_PLAYABLE_COMPETITIONS)) {
 // Mantido fora do literal gigante para que a expansão de federações seja
 // declarativa e auditável em um único arquivo.
 Object.assign(competitionsByLeague, UEFA_EXPANSION_COMPETITIONS, DEEP_PLAYABLE_COMPETITIONS)
+
+// ─── FUTEBOL FEMININO ────────────────────────────────────────────────────────
+//
+// A liga feminina precisa existir AQUI, e não só no catálogo de clubes, porque é
+// deste mapa que saem quatro coisas do modo profissional: a tela de
+// Competições, o regulamento (`COMPETITION_REGULATIONS_2026` é DERIVADO daqui),
+// as vagas continentais (`getContinentalSpot` lê `continentalSpots`) e a
+// premiação. Sem estas entradas o clube feminino teria calendário e tabela e
+// nenhuma competição declarada — jogaria um campeonato que a tela não sabe
+// nomear.
+//
+// Os valores de premiação são a ordem de grandeza REAL da modalidade, não uma
+// cópia reduzida do masculino: inflar prêmio feminino desbalancearia a
+// economia do clube (a receita entra no mesmo caixa).
+const REGIAO_POR_CONFEDERACAO: Record<string, string> = {
+  CONMEBOL: "america_sul", UEFA: "europa", AFC: "asia", CONCACAF: "america_norte", OFC: "oceania",
+}
+
+for (const liga of LIGAS_FEMININAS) {
+  const regiao = liga.codigoPais === "BRA" ? "brasil" : REGIAO_POR_CONFEDERACAO[liga.confederacao] ?? "internacional"
+  const rodadas = (liga.clubes.length - 1) * 2
+  const premioBase = liga.nivel === 1 ? 4_200_000 : 900_000
+  const competicoes: Competition[] = [
+    {
+      id: liga.id,
+      name: liga.nome,
+      shortName: liga.short,
+      type: "league",
+      region: regiao,
+      format: "points",
+      teams: liga.clubes.length,
+      rounds: rodadas,
+      roundRobinCycles: 2,
+      prize: premioBase,
+      prestige: liga.nivel === 1 ? 72 : 52,
+      relegation: liga.desce,
+      promotion: liga.sobe,
+      // Vagas continentais: as duas primeiras da primeira divisão, como na
+      // Champions feminina e na Libertadores Feminina (que leva o campeão e o
+      // vice de cada federação).
+      continentalSpots: liga.continental && liga.nivel === 1
+        ? [{ competition: liga.continental, spots: 2 }, ...(liga.continentalSecundaria ? [{ competition: liga.continentalSecundaria, spots: 1 }] : [])]
+        : [],
+      participantStatus: liga.procedencia === "federation-snapshot" ? "official-verified" : "provisional-snapshot",
+    },
+    {
+      id: `${liga.id}_copa`,
+      name: liga.copaNacional,
+      shortName: liga.copaNacional,
+      type: "cup",
+      region: regiao,
+      format: "knockout",
+      teams: Math.max(16, liga.clubes.length * 2),
+      prize: Math.round(premioBase * 0.6),
+      prestige: liga.nivel === 1 ? 68 : 48,
+    },
+  ]
+  if (liga.continental && liga.nivel === 1) {
+    competicoes.push({
+      id: `${liga.id}_continental`,
+      name: liga.continental,
+      shortName: liga.continental,
+      type: "continental",
+      region: REGIAO_POR_CONFEDERACAO[liga.confederacao] ?? "internacional",
+      format: "group_knockout",
+      teams: liga.confederacao === "UEFA" ? 18 : 16,
+      groups: 4,
+      teamsPerGroup: 4,
+      prize: Math.round(premioBase * 1.8),
+      prestige: 88,
+    })
+  }
+  competitionsByLeague[liga.id] = competicoes
+}
 
 // ⚠️ A DERIVACAO DO ACESSO RODA DEPOIS DO `Object.assign` ACIMA.
 //

@@ -14,7 +14,7 @@ import type { Team } from "@/lib/teams-data"
 import type { NationalCompetitionState } from "@/lib/national-competitions"
 import { storeGet, storeSet, storeRemove, initPersistentStore, flushPersistentStore } from "@/lib/persistent-store"
 import { mirrorSaveToFolder, deleteSaveFromFolder, listMirroredCareerSuffixes } from "@/lib/save-folder"
-import type { TransferRecord, MatchFixture, StandingEntry, MatchResult, FinanceEntry, SeasonRecord, InjuryRecord, FatigueMap } from "@/lib/career-types"
+import type { TransferRecord, MatchFixture, StandingEntry, MatchResult, FinanceEntry, SeasonRecord, InjuryRecord, FatigueMap, CupBracket } from "@/lib/career-types"
 import type { ClubDebtState } from "@/lib/debt-engine"
 import type { ScoutingDepartmentState } from "@/lib/scout-engine"
 import type { StadiumPitch } from "@/lib/infrastructure-engine"
@@ -38,6 +38,11 @@ import type { ConfiguracoesIniciais283 } from "@/lib/configuracoes-iniciais-283"
 import type { UniversoPersistente286 } from "@/lib/universo-286"
 import type { EstadoTransferRoom26 } from "@/lib/transferroom-26"
 import type { PerfilTreinador26 } from "@/lib/manager-profile-26"
+import type { ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
+// ⚠️ SÓ O TIPO, pelo mesmo motivo do `Team` lá em cima: `carreira-de-jogador`
+// importa `teams-data` e o motor de partida. Um import de valor traria os dois
+// para dentro da splash.
+import type { EstadoCarreiraDeJogador } from "@/lib/carreira-de-jogador"
 
 const LEGACY_STORAGE_KEY = "ultrafoot:save"
 const ACTIVE_CAREER_KEY = "ultrafoot:active-career"
@@ -101,6 +106,35 @@ export interface YouthCareerState {
   category: "sub20"
   clubCurto: string
   clubNome: string
+  /**
+   * PAÍS DO CLUBE — decide as competições de base e o nome dos garotos.
+   *
+   * Ausente = Brasil, que era a única possibilidade quando o modo foi escrito
+   * (as três competições estavam fixas no código). Ver `formatosDeBase`.
+   */
+  pais?: string
+  /** Base de clube FEMININO: muda os nomes revelados na peneira. */
+  feminino?: boolean
+  /** Divisão do clube-mãe — de onde saem as academias rivais da temporada. */
+  divisao?: string
+  /**
+   * A TEMPORADA DA BASE COM A MESMA MÁQUINA DO PROFISSIONAL (1.0.322).
+   *
+   * Até aqui a carreira de base não tinha calendário nem tabela: cada "rodada"
+   * sorteava um adversário qualquer do país e somava pontos num contador solto.
+   * O técnico da base não sabia contra quem jogava, em que posição estava nem
+   * quantas rodadas faltavam — as três perguntas que o modo profissional
+   * responde. Agora são os mesmos `generateSeasonFixtures`, `updateStandings` e
+   * `generateCupBracket`.
+   *
+   * Opcionais: uma carreira de base criada antes desta versão continua rodando
+   * pelo caminho antigo (`simulateYouthRound`), sem migração.
+   */
+  ligaNome?: string
+  copaNome?: string
+  calendario?: MatchFixture[]
+  tabela?: StandingEntry[]
+  copa?: CupBracket
   startedSeason: number
   currentSeason: number
   round: number
@@ -600,6 +634,23 @@ export interface GameState {
   youthBoardCheckWeek?: number
   /** Carreira opcional iniciada nas categorias de base. */
   youthCareer?: YouthCareerState
+  /**
+   * QUE CARREIRA É ESTA (1.0.322).
+   *
+   * Ausente = técnico de clube profissional masculino, que é o que todo save
+   * anterior é. Ver `lib/modalidade-de-carreira.ts` — a leitura passa por
+   * `modalidadeDoSave`, nunca por este campo cru, justamente por causa dos
+   * saves antigos.
+   */
+  modalidade?: ModalidadeDeCarreira
+  /**
+   * CARREIRA DE UM ATLETA SÓ (o Player Career do EA FC).
+   *
+   * Vive num bolso próprio porque não compartilha NADA com a carreira de
+   * técnico: calendário, tabela, contrato e evolução são dele. Misturar os dois
+   * estados foi o que quebrou o co-op quando só metade viajava entre técnicos.
+   */
+  carreiraDeJogador?: EstadoCarreiraDeJogador
   /**
    * Técnicos demitidos pelos OUTROS clubes nesta carreira (lib/mercado-de-tecnicos).
    * Serve a dois propósitos: virar notícia da rodada e impedir que o mesmo clube

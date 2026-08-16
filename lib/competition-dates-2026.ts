@@ -22,6 +22,7 @@
 // futebol domestico) + as internacionais abaixo.
 
 import { COMPETITION_REGULATIONS_2026 } from "@/lib/competition-regulations-2026"
+import { COMPETICOES_FEMININAS_INTERNACIONAIS, LIGAS_FEMININAS } from "@/lib/futebol-feminino"
 
 export interface PeriodoCompeticao {
   startsOn: string // ISO YYYY-MM-DD
@@ -83,6 +84,33 @@ for (const reg of Object.values(COMPETITION_REGULATIONS_2026)) {
 for (const item of INTERNACIONAIS) {
   porId.set(item.id, item.periodo)
   for (const nome of item.nomes) porNome.set(norm(nome), item.periodo)
+}
+
+// ── CALENDÁRIO DO FUTEBOL FEMININO ──────────────────────────────────────────
+//
+// A modalidade não segue o calendário masculino, e essa é a metade da história
+// que costuma sumir: a NWSL vai de março a novembro, a WSL de setembro a maio,
+// o Brasileirão Feminino de março a setembro. Sem estas janelas a tela de
+// competições mostrava "—" para toda liga feminina, ou pior, herdaria por nome
+// a janela da liga masculina homônima ("Serie A" existe nas duas).
+//
+// Cada liga declara `inicio`/`fim` no próprio cadastro (lib/futebol-feminino),
+// então a fonte é uma só e não há data escrita duas vezes.
+for (const liga of LIGAS_FEMININAS) {
+  const periodo: PeriodoCompeticao = { startsOn: liga.inicio, endsOn: liga.fim }
+  porId.set(liga.id, periodo)
+  porNome.set(norm(liga.nome), periodo)
+  // A copa nacional feminina acompanha a janela do campeonato do país — é o
+  // recorte honesto enquanto a data exata de cada federação não estiver
+  // cadastrada, e é melhor do que a tela dizer que a copa não existe.
+  if (!porNome.has(norm(liga.copaNacional))) {
+    porNome.set(norm(liga.copaNacional), { startsOn: liga.inicio, endsOn: liga.fim, aproximado: true })
+  }
+}
+for (const comp of COMPETICOES_FEMININAS_INTERNACIONAIS) {
+  const periodo: PeriodoCompeticao = { startsOn: comp.inicio, endsOn: comp.fim }
+  porId.set(comp.id, periodo)
+  for (const nome of comp.nomes) porNome.set(norm(nome), periodo)
 }
 
 /** Periodo real da competicao em 2026 por id (regulamento ou internacional). */

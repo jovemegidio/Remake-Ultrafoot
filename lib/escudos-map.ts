@@ -333,7 +333,25 @@ export const localEscudoMap: Record<string, string> = {
   ...(userCrestOverrides as Record<string, string>),
 }
 
+/**
+ * ESCUDO DO CLUBE FEMININO = ESCUDO DO CLUBE-MÃE.
+ *
+ * O clube feminino tem `file_key` próprio (`corinthians_bra__fem`) para não
+ * atropelar o masculino em nenhum índice do jogo — mas o brasão é o MESMO, e
+ * duplicar ~250 arquivos de imagem no instalador para desenhar o mesmo escudo
+ * seria peso puro. A regra é local e sem import (este arquivo não pode depender
+ * de `teams-data`): cai o sufixo, resolve a chave do masculino.
+ *
+ * ⚠️ Sufixo com DOIS sublinhados de propósito: `_fem` sozinho existe em chave de
+ * clube real (ex.: nomes que terminam em "fem").
+ */
+const SUFIXO_FEMININO = "__fem"
+function chaveDeEscudo(fileKey: string): string {
+  return fileKey.endsWith(SUFIXO_FEMININO) ? fileKey.slice(0, -SUFIXO_FEMININO.length) : fileKey
+}
+
 export function getEscudoUrl(fileKey: string): string {
+  fileKey = chaveDeEscudo(fileKey)
   // No app desktop (Tauri) os escudos sao empacotados localmente.
   // Na web nao existe pasta public/escudos, entao usamos o repositorio remoto
   // (padrao /teams/escudos/{file_key}.png), evitando 404 e o fallback generico.
@@ -353,15 +371,17 @@ export function getEscudoUrl(fileKey: string): string {
 // `getRemoteEscudoUrl` aponta para um repositório de terceiros que continua
 // servindo PNG — mudar a extensão lá quebraria o download.
 export function getLocalEscudoPath(fileKey: string): string {
+  fileKey = chaveDeEscudo(fileKey)
   return localEscudoMap[fileKey] ?? `/escudos/${fileKey}.webp`
 }
 
 export function getRemoteEscudoUrl(fileKey: string): string {
   // O repositorio nomeia os arquivos pelo proprio file_key (ex: botafogorj_bra.png).
-  return `${ULTRAFOOT_RAW_URL}/teams/escudos/${fileKey}.png`
+  return `${ULTRAFOOT_RAW_URL}/teams/escudos/${chaveDeEscudo(fileKey)}.png`
 }
 
 export function getEscudoMiniUrl(fileKey: string): string {
+  fileKey = chaveDeEscudo(fileKey)
   if (isTauri()) {
     const raw = localEscudoMap[fileKey] ?? `/escudos/${fileKey}.webp`
     return gameAssetUrl(raw)

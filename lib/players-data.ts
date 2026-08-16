@@ -22,6 +22,8 @@ import { saiuDoClube, chegouAoClube, temTransferencias } from "@/lib/atualizacao
 import { envelhecerElenco } from "@/lib/mundo-vivo"
 import { temporadasDesdeOSeed, getClubeDoUsuario } from "@/lib/temporada-do-mundo"
 import { elencoPersistente286 } from "@/lib/universo-286"
+import { ehDivisaoFeminina, nomesFemininosDoPais } from "@/lib/futebol-feminino"
+import { elencoFemininoDoClube } from "@/lib/elencos-femininos"
 
 const REAL_SQUADS = realSquadsJson as unknown as Record<
   string,
@@ -842,9 +844,44 @@ const NOMES_PREENCHIMENTO: Record<string, { pri: string[]; ult: string[] }> = {
   Padrao: { pri: ["Alex", "Marco", "David", "Daniel", "Leo", "Ivan", "Nikola", "Stefan"], ult: ["Novak", "Kovac", "Popov", "Horvat", "Petrov", "Marin", "Ilic", "Vidal"] },
 }
 
+/**
+ * ELENCO REAL DO CLUBE FEMININO como `Player` do jogo.
+ *
+ * ⚠️ A fonte dá NOME, POSIÇÃO e NACIONALIDADE — não dá idade nem força. Estas
+ * duas são DERIVADAS aqui, do prestígio do clube e da ordem no elenco, de forma
+ * determinística (o mesmo clube devolve sempre os mesmos números). É o que o
+ * jogo já faz com clube masculino sem dado de força; o que não se pode é
+ * apresentar número derivado como se fosse medido — por isso está escrito.
+ */
+function atletasFemininasComoPlayers(team: Team, atletas: { n: string; p: string; c?: string }[]): Player[] {
+  const teto = Math.max(52, Math.min(88, Math.round(38 + (team.prestigio ?? 60) * 0.55)))
+  return atletas.map((atleta, indice) => {
+    let h = 2166136261
+    for (const c of `${team.file_key}:${atleta.n}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619)
+    h = h >>> 0
+    // Titulares mais fortes que o banco, e o banco mais forte que o fim da lista.
+    const degrau = indice < 11 ? 0 : indice < 18 ? 3 : 7
+    return {
+      nome: atleta.n,
+      pos: (atleta.p || "MEI") as Posicao,
+      idade: 18 + (h >>> 5) % 17,
+      base: Math.max(45, teto - degrau - (h % 5)),
+      time: team.nome,
+      nac: atleta.c,
+    }
+  })
+}
+
 function poolDeNomes(team: Team) {
   const pais = (team.pais ?? "").toLowerCase()
   const div = String(team.divisao)
+  // FUTEBOL FEMININO. Sem esta linha o Corinthians feminino entrava em campo
+  // com "Lucas Silva" e "Pedro Costa": o gerador de elenco só olhava o país do
+  // clube. É o mesmo defeito que `nomes-por-pais` corrigiu na base masculina —
+  // nome gerado que não combina com quem está em campo quebra a imersão inteira.
+  if (ehDivisaoFeminina(div) || (team.file_key ?? "").endsWith("__fem")) {
+    return nomesFemininosDoPais(team.pais)
+  }
   if (pais.includes("brasil") || div.startsWith("serie_")) return NOMES_PREENCHIMENTO.Brasil
   if (pais.includes("argentin")) return NOMES_PREENCHIMENTO.Argentina
   if (pais.includes("espanh") || pais.includes("spain")) return NOMES_PREENCHIMENTO.Espanha
@@ -1289,6 +1326,19 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
   // por nome do clube, ele passou a vencer o CSV e trouxe de volta atletas que
   // ja tinham saido (Gillespie/Ramsdale/Trippier voltaram ao Newcastle) — o
   // qa-real-positions pegou. O TM cobre os clubes que o CSV nao alcanca.
+  // FUTEBOL FEMININO. O elenco importado vence tudo o que vem abaixo: os CSVs, o
+  // Transfermarkt e o índice curado são do futebol MASCULINO e não têm uma linha
+  // sequer sobre estes clubes — sem esta ramificação o clube feminino cairia
+  // direto no gerador, que foi como a modalidade nasceu.
+  //
+  // Passa pelo MESMO fim de linha dos outros (edições do editor, garantia de
+  // plantel jogável, calibração e overrides) — só a FONTE é outra.
+  const doFeminino = elencoFemininoDoClube(String(team.divisao), team.nome)
+  if (doFeminino?.length) {
+    const comEdicoesFem = aplicarPatchDeElenco(team.file_key, atletasFemininasComoPlayers(team, doFeminino), team.nome)
+    const femininas = calibrateSquadRatings(team, ensurePlayableSquad(team, comEdicoesFem))
+    return opts?.raw ? femininas : applyPlayerOverrides(team.file_key, femininas)
+  }
   const temOverlayCsv = Boolean(findRealSquad(team, teamAliasOverrides[team.file_key ?? ""] ?? []))
   // `refinarPosicoes` fecha a inconsistencia entre a vitrine e o elenco: o
   // mercado ja cruzava a posicao real do Transfermarkt por nome, os elencos nao.

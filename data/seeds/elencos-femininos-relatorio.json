@@ -1,0 +1,58 @@
+{
+  "brasileirao_fem_a1|Corinthians": {
+    "ok": 33,
+    "pagina": "SC Corinthians Paulista (women)"
+  },
+  "brasileirao_fem_a1|Palmeiras": {
+    "ok": 41,
+    "pagina": "SE Palmeiras (women)"
+  },
+  "brasileirao_fem_a1|São Paulo": {
+    "ok": 30,
+    "pagina": "São Paulo FC (women)"
+  },
+  "brasileirao_fem_a1|Cruzeiro": {
+    "ok": 26,
+    "pagina": "Cruzeiro EC (women)"
+  },
+  "brasileirao_fem_a1|Flamengo": {
+    "ok": 32,
+    "pagina": "CR Flamengo (women)"
+  },
+  "brasileirao_fem_a1|Internacional": {
+    "ok": 35,
+    "pagina": "SC Internacional (women)"
+  },
+  "brasileirao_fem_a1|Ferroviária": {
+    "ok": 31,
+    "pagina": "Associação Ferroviária de Esportes (women)"
+  },
+  "brasileirao_fem_a1|Grêmio": {
+    "ok": 32,
+    "pagina": "Grêmio FBPA (women)"
+  },
+  "brasileirao_fem_a1|Atlético Mineiro": {
+    "ok": 29,
+    "pagina": "Clube Atlético Mineiro (women)"
+  },
+  "brasileirao_fem_a1|Santos": {
+    "ok": 24,
+    "pagina": "Santos Laguna (women)"
+  },
+  "brasileirao_fem_a1|Fluminense": {
+    "motivo": "elenco curto (0)",
+    "pagina": "Fluminense Football Club (futebol feminino)"
+  },
+  "brasileirao_fem_a1|Bahia": {
+    "ok": 29,
+    "pagina": "Esporte Clube Bahia (women)"
+  },
+  "brasileirao_fem_a1|Red Bull Bragantino": {
+    "ok": 28,
+    "pagina": "Red Bull Bragantino (women)"
+  },
+  "brasileirao_fem_a1|Juventude": {
+    "ok": 27,
+    "pagina": "Esporte Clube Juventude (women)"
+  }
+}

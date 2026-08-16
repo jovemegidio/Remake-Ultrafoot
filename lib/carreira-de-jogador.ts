@@ -1,0 +1,803 @@
+// CARREIRA DE JOGADOR — um atleta só, da estreia à aposentadoria.
+//
+// É o "Player Career" do EA FC trazido para a lógica deste jogo. O que aquele
+// modo tem e um modo de técnico não tem, item por item (foi o que guiou o que
+// está aqui):
+//
+//   • você não escala ninguém — quem decide se você joga é o TREINADOR, e ele
+//     decide pela sua NOTA (a "manager rating" de cinco estrelas). Titular,
+//     rodízio, banco e "fora dos planos" são consequência dela;
+//   • a partida devolve uma linha individual: minutos, gols, assistências e uma
+//     NOTA de 0 a 10 — o time pode vencer com você indo mal, e isso tem custo;
+//   • você evolui gastando PONTOS por atributo, não esperando o mundo envelhecer;
+//   • a diretoria não fala com você: quem fala é o treinador (metas da
+//     temporada), o agente (propostas) e a seleção (convocação);
+//   • a carreira TERMINA. Idade cobra, o overall cai e a aposentadoria chega.
+//
+// ⚠️ O estado é FECHADO e vive dentro do save. Nada aqui lê o motor do técnico:
+// as duas carreiras não podem compartilhar elenco, caixa nem calendário — foi
+// exatamente o descasamento que quebrou o co-op quando só metade do estado
+// viajava (ver `chaveamento-de-tecnico`).
+
+import { generateSeasonFixtures, initStandings, sortStandings, updateStandings } from "@/lib/career-engine"
+import type { MatchFixture, StandingEntry } from "@/lib/career-types"
+import { simulateFullMatch } from "@/lib/match-engine"
+import { completarLigaComPool, getTeamByFileKey, type Team } from "@/lib/teams-data"
+
+export type PosicaoDoAtleta = "GOL" | "ZAG" | "LD" | "LE" | "VOL" | "MEI" | "ATA"
+
+export const POSICOES_JOGAVEIS: { id: PosicaoDoAtleta; nome: string }[] = [
+  { id: "GOL", nome: "Goleiro" },
+  { id: "ZAG", nome: "Zagueiro" },
+  { id: "LD", nome: "Lateral direito" },
+  { id: "LE", nome: "Lateral esquerdo" },
+  { id: "VOL", nome: "Volante" },
+  { id: "MEI", nome: "Meia" },
+  { id: "ATA", nome: "Atacante" },
+]
+
+export interface AtributosDoAtleta {
+  ritmo: number
+  finalizacao: number
+  passe: number
+  drible: number
+  defesa: number
+  fisico: number
+}
+
+export interface AtletaDaCarreira {
+  id: string
+  nome: string
+  posicao: PosicaoDoAtleta
+  idade: number
+  nacionalidade: string
+  pePreferido: "direito" | "esquerdo"
+  alturaCm: number
+  pesoKg: number
+  numero: number
+  overall: number
+  potencial: number
+  atributos: AtributosDoAtleta
+}
+
+export interface PartidaDoAtleta {
+  temporada: number
+  rodada: number
+  competicao: string
+  adversario: string
+  casa: boolean
+  golsPro: number
+  golsContra: number
+  titular: boolean
+  minutos: number
+  gols: number
+  assistencias: number
+  /** Nota 0–10, uma casa decimal. */
+  nota: number
+  cartao: "amarelo" | "vermelho" | null
+}
+
+export type TipoDeMeta = "gols" | "assistencias" | "jogos" | "nota" | "titulo"
+
+export interface MetaDaTemporada {
+  id: string
+  tipo: TipoDeMeta
+  descricao: string
+  alvo: number
+  progresso: number
+  cumprida: boolean
+}
+
+export interface PropostaDeClube {
+  id: string
+  clubeCurto: string
+  clubeNome: string
+  clubeFileKey: string
+  divisao: string
+  ligaNome: string
+  prestigio: number
+  salarioSemanal: number
+  temporadas: number
+  motivo: string
+}
+
+export interface TemporadaDoAtleta {
+  temporada: number
+  clubeNome: string
+  competicao: string
+  jogos: number
+  titularidades: number
+  minutos: number
+  gols: number
+  assistencias: number
+  notaMedia: number
+  posicaoNaLiga: number
+  titulos: string[]
+  premios: string[]
+  overallFinal: number
+}
+
+export interface EstadoCarreiraDeJogador {
+  versao: 1
+  atleta: AtletaDaCarreira
+  clubeCurto: string
+  clubeNome: string
+  clubeFileKey: string
+  divisao: string
+  ligaNome: string
+  pais: string
+  temporada: number
+  rodada: number
+  /** Calendário da liga do clube. As partidas do clube trazem `isUserMatch`. */
+  calendario: MatchFixture[]
+  tabela: StandingEntry[]
+  contrato: { salarioSemanal: number; ateTemporada: number; valorDePasse: number }
+  /**
+   * A NOTA DO TREINADOR (0–100) — o número que decide tudo.
+   *
+   * É a tradução das cinco estrelas do EA FC. Ela sobe com atuação boa e cai com
+   * atuação ruim e com jogo assistido do banco; é ela que define se você é
+   * titular absoluto ou se some do time. Começa baixa de propósito num clube
+   * grande: chegar ao Barcelona aos 17 anos e ser titular na estreia é o tipo de
+   * coisa que faz o modo perder a graça na terceira temporada.
+   */
+  notaDoTreinador: number
+  /** Forma recente (0–100): média móvel das últimas atuações. */
+  forma: number
+  moral: number
+  temporadaAtual: {
+    jogos: number
+    titularidades: number
+    minutos: number
+    gols: number
+    assistencias: number
+    somaDasNotas: number
+    cartoesAmarelos: number
+    cartoesVermelhos: number
+  }
+  ultimasPartidas: PartidaDoAtleta[]
+  metas: MetaDaTemporada[]
+  crescimento: { xp: number; nivel: number; pontosDisponiveis: number }
+  selecao: { convocada: boolean; nivel: "sub20" | "principal" | null; jogos: number; gols: number }
+  historico: TemporadaDoAtleta[]
+  propostas: PropostaDeClube[]
+  /** Pedido feito ao clube; some quando respondido no fim da temporada. */
+  pedido: "nenhum" | "transferencia" | "mais_minutos" | "renovacao"
+  titulos: string[]
+  premios: string[]
+  temporadaEncerrada: boolean
+  aposentado: boolean
+  /** Mensagens curtas do treinador/agente, a caixa de entrada do atleta. */
+  recados: { id: string; de: string; texto: string; temporada: number; rodada: number }[]
+}
+
+// ─── Aleatoriedade semeada ──────────────────────────────────────────────────
+//
+// Mesma técnica do `youth-career-engine`: hash do FNV sobre uma semente textual.
+// Determinismo importa aqui mais do que lá — a mesma rodada precisa dar o mesmo
+// resultado se o jogador reabrir o save, senão dá para "rolar de novo" fechando
+// e abrindo o jogo até a nota agradar.
+
+function hash(seed: string): number {
+  let h = 2166136261
+  for (const c of seed) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) }
+  return h >>> 0
+}
+function roll(seed: string): number { return (hash(seed) % 10000) / 10000 }
+
+// ─── Overall e atributos ────────────────────────────────────────────────────
+
+const PESOS_POR_POSICAO: Record<PosicaoDoAtleta, AtributosDoAtleta> = {
+  GOL: { ritmo: 0.05, finalizacao: 0.02, passe: 0.13, drible: 0.05, defesa: 0.55, fisico: 0.20 },
+  ZAG: { ritmo: 0.12, finalizacao: 0.03, passe: 0.13, drible: 0.05, defesa: 0.45, fisico: 0.22 },
+  LD: { ritmo: 0.24, finalizacao: 0.05, passe: 0.20, drible: 0.14, defesa: 0.25, fisico: 0.12 },
+  LE: { ritmo: 0.24, finalizacao: 0.05, passe: 0.20, drible: 0.14, defesa: 0.25, fisico: 0.12 },
+  VOL: { ritmo: 0.10, finalizacao: 0.06, passe: 0.26, drible: 0.12, defesa: 0.30, fisico: 0.16 },
+  MEI: { ritmo: 0.12, finalizacao: 0.16, passe: 0.30, drible: 0.26, defesa: 0.06, fisico: 0.10 },
+  ATA: { ritmo: 0.22, finalizacao: 0.34, passe: 0.10, drible: 0.22, defesa: 0.02, fisico: 0.10 },
+}
+
+/** Overall = média PONDERADA pela posição. Um zagueiro não vira 90 driblando. */
+export function overallDoAtleta(posicao: PosicaoDoAtleta, atributos: AtributosDoAtleta): number {
+  const pesos = PESOS_POR_POSICAO[posicao]
+  const soma = (Object.keys(pesos) as (keyof AtributosDoAtleta)[])
+    .reduce((total, chave) => total + atributos[chave] * pesos[chave], 0)
+  return Math.max(30, Math.min(99, Math.round(soma)))
+}
+
+export interface EscolhasDoAtleta {
+  nome: string
+  posicao: PosicaoDoAtleta
+  idade: number
+  nacionalidade: string
+  pePreferido: "direito" | "esquerdo"
+  alturaCm: number
+  pesoKg: number
+  numero: number
+}
+
+/**
+ * Cria o atleta.
+ *
+ * O ponto de partida é DELIBERADAMENTE modesto: overall na faixa 58–66 e
+ * potencial alto. Começar com 75 tira do modo a única coisa que ele tem de
+ * diferente — a subida.
+ */
+export function criarAtletaDaCarreira(escolhas: EscolhasDoAtleta, semente = "atleta"): AtletaDaCarreira {
+  const r = (n: number) => roll(`${semente}:${escolhas.nome}:${escolhas.posicao}:${n}`)
+  const jovem = Math.max(0, 22 - escolhas.idade) // quanto mais novo, mais bruto e mais teto
+  const base = 56 + Math.round(r(1) * 8) + Math.round((escolhas.idade - 16) * 0.6)
+
+  const variar = (peso: number, n: number) =>
+    Math.max(25, Math.min(88, Math.round(base + peso * 10 + (r(n) - 0.5) * 12)))
+
+  const pesos = PESOS_POR_POSICAO[escolhas.posicao]
+  const atributos: AtributosDoAtleta = {
+    ritmo: variar(pesos.ritmo, 2),
+    finalizacao: variar(pesos.finalizacao, 3),
+    passe: variar(pesos.passe, 4),
+    drible: variar(pesos.drible, 5),
+    defesa: variar(pesos.defesa, 6),
+    fisico: variar(pesos.fisico, 7),
+  }
+  const overall = overallDoAtleta(escolhas.posicao, atributos)
+
+  return {
+    id: `atleta_${hash(`${escolhas.nome}:${escolhas.posicao}:${escolhas.idade}`)}`,
+    nome: escolhas.nome.trim() || "Atleta",
+    posicao: escolhas.posicao,
+    idade: escolhas.idade,
+    nacionalidade: escolhas.nacionalidade,
+    pePreferido: escolhas.pePreferido,
+    alturaCm: escolhas.alturaCm,
+    pesoKg: escolhas.pesoKg,
+    numero: escolhas.numero,
+    overall,
+    // Teto: quem começa mais novo pode chegar mais longe.
+    potencial: Math.min(94, overall + 8 + jovem * 2 + Math.round(r(8) * 10)),
+    atributos,
+  }
+}
+
+// ─── Criação da carreira ────────────────────────────────────────────────────
+
+function metasIniciais(atleta: AtletaDaCarreira, prestigioDoClube: number, jogosDaTemporada: number): MetaDaTemporada[] {
+  const ataque = atleta.posicao === "ATA" || atleta.posicao === "MEI"
+  const exigencia = prestigioDoClube >= 85 ? 1.25 : prestigioDoClube >= 70 ? 1 : 0.8
+  const jogosAlvo = Math.max(8, Math.round(jogosDaTemporada * 0.4))
+  const metas: MetaDaTemporada[] = [
+    { id: "jogos", tipo: "jogos", descricao: `Disputar ${jogosAlvo} partidas na temporada`, alvo: jogosAlvo, progresso: 0, cumprida: false },
+    { id: "nota", tipo: "nota", descricao: "Fechar a temporada com média 6.8", alvo: 6.8, progresso: 0, cumprida: false },
+  ]
+  if (ataque) {
+    const gols = Math.max(3, Math.round(jogosDaTemporada * 0.18 * exigencia))
+    metas.push({ id: "gols", tipo: "gols", descricao: `Marcar ${gols} gols`, alvo: gols, progresso: 0, cumprida: false })
+    metas.push({ id: "assist", tipo: "assistencias", descricao: "Dar 4 assistências", alvo: 4, progresso: 0, cumprida: false })
+  } else if (atleta.posicao === "GOL" || atleta.posicao === "ZAG") {
+    metas.push({ id: "nota_def", tipo: "nota", descricao: "Manter média 7.0 na defesa", alvo: 7.0, progresso: 0, cumprida: false })
+  } else {
+    metas.push({ id: "assist", tipo: "assistencias", descricao: "Dar 6 assistências", alvo: 6, progresso: 0, cumprida: false })
+  }
+  if (prestigioDoClube >= 80) {
+    metas.push({ id: "titulo", tipo: "titulo", descricao: "Ser campeão da liga", alvo: 1, progresso: 0, cumprida: false })
+  }
+  return metas
+}
+
+/** Clubes da liga do clube escolhido — a mesma fonte que a carreira de técnico usa. */
+export function ligaDoClube(clube: Team): Team[] {
+  const times = completarLigaComPool(String(clube.divisao))
+  return times.some(t => t.file_key === clube.file_key) ? times : [clube, ...times.slice(0, Math.max(3, times.length - 1))]
+}
+
+export function criarCarreiraDeJogador(
+  clube: Team,
+  atleta: AtletaDaCarreira,
+  ligaNome: string,
+  temporada = 2026,
+): EstadoCarreiraDeJogador {
+  const times = ligaDoClube(clube)
+  const calendario = generateSeasonFixtures(times, clube.curto, temporada, ligaNome)
+  const jogosDoClube = calendario.filter(f => f.isUserMatch).length
+  // Salário por prestígio do clube e overall do atleta. Um garoto de 60 no
+  // Barcelona não ganha o mesmo que o camisa 10 — e é o que faz a proposta de
+  // um clube menor com salário maior ser uma decisão de verdade.
+  const salario = Math.round((clube.prestigio * 220 + Math.max(0, atleta.overall - 55) * 900) * (atleta.idade < 20 ? 0.6 : 1))
+
+  return {
+    versao: 1,
+    atleta,
+    clubeCurto: clube.curto,
+    clubeNome: clube.nome,
+    clubeFileKey: clube.file_key,
+    divisao: String(clube.divisao),
+    ligaNome,
+    pais: clube.pais ?? "",
+    temporada,
+    rodada: 0,
+    calendario,
+    tabela: initStandings(times),
+    contrato: { salarioSemanal: salario, ateTemporada: temporada + 2, valorDePasse: Math.max(200_000, atleta.overall ** 3 * 12) },
+    // Ninguém chega titular. A nota inicial é o "vamos ver" do treinador — um
+    // atleta bom para o nível do clube começa mais perto de jogar.
+    notaDoTreinador: Math.max(18, Math.min(70, 40 + (atleta.overall - clube.prestigio * 0.85))),
+    forma: 50,
+    moral: 70,
+    temporadaAtual: { jogos: 0, titularidades: 0, minutos: 0, gols: 0, assistencias: 0, somaDasNotas: 0, cartoesAmarelos: 0, cartoesVermelhos: 0 },
+    ultimasPartidas: [],
+    metas: metasIniciais(atleta, clube.prestigio, jogosDoClube),
+    crescimento: { xp: 0, nivel: 1, pontosDisponiveis: 3 },
+    selecao: { convocada: false, nivel: null, jogos: 0, gols: 0 },
+    historico: [],
+    propostas: [],
+    pedido: "nenhum",
+    titulos: [],
+    premios: [],
+    temporadaEncerrada: false,
+    aposentado: false,
+    recados: [{
+      id: `boasvindas_${temporada}`,
+      de: "Treinador",
+      texto: `Bem-vindo ao ${clube.nome}. Treine bem e o time é seu — aqui quem joga é quem convence.`,
+      temporada, rodada: 0,
+    }],
+  }
+}
+
+// ─── O papel no elenco ──────────────────────────────────────────────────────
+
+export type PapelNoElenco = "titular absoluto" | "titular" | "rodízio" | "reserva" | "fora dos planos"
+
+export function papelNoElenco(nota: number): PapelNoElenco {
+  if (nota >= 78) return "titular absoluto"
+  if (nota >= 60) return "titular"
+  if (nota >= 42) return "rodízio"
+  if (nota >= 24) return "reserva"
+  return "fora dos planos"
+}
+
+/** Minutos esperados na próxima partida — o que o jogador vê ANTES de jogar. */
+export function minutosEsperados(estado: EstadoCarreiraDeJogador): string {
+  const papel = papelNoElenco(estado.notaDoTreinador)
+  return papel === "titular absoluto" ? "90 minutos"
+    : papel === "titular" ? "70–90 minutos"
+      : papel === "rodízio" ? "0–70 minutos"
+        : papel === "reserva" ? "0–25 minutos"
+          : "banco (sem previsão de entrar)"
+}
+
+// ─── A rodada ───────────────────────────────────────────────────────────────
+
+function forcaDoTime(t: Team | undefined): number { return t?.prestigio ?? 55 }
+
+interface DesempenhoIndividual {
+  titular: boolean
+  minutos: number
+  gols: number
+  assistencias: number
+  nota: number
+  cartao: "amarelo" | "vermelho" | null
+  xp: number
+}
+
+/**
+ * A LINHA INDIVIDUAL da partida.
+ *
+ * Sai do placar que o motor já produziu — e não de um sorteio paralelo. Se o
+ * time fez 3, os gols do atleta saem DESSES três; se o time não fez nenhum, ele
+ * não marca. Era o erro óbvio a evitar: um atacante com 2 gols numa derrota
+ * por 1 a 0.
+ */
+function desempenhoDaPartida(
+  estado: EstadoCarreiraDeJogador,
+  golsPro: number,
+  golsContra: number,
+  forcaAdversaria: number,
+  semente: string,
+): DesempenhoIndividual {
+  const { atleta } = estado
+  const papel = papelNoElenco(estado.notaDoTreinador)
+  const r = (n: number) => roll(`${semente}:${n}`)
+
+  const titular = papel === "titular absoluto" || papel === "titular"
+    || (papel === "rodízio" && r(1) < 0.5)
+  const entrou = titular || (papel === "rodízio" && r(2) < 0.75) || (papel === "reserva" && r(2) < 0.35)
+  const minutos = !entrou ? 0
+    : titular ? (r(3) < 0.75 ? 90 : 60 + Math.floor(r(4) * 30))
+      : 8 + Math.floor(r(5) * 30)
+
+  if (minutos === 0) {
+    // Jogo assistido do banco: a forma esfria e a nota do treinador cede um
+    // pouco. Ficar parado tem custo, senão o modo premia não jogar.
+    return { titular: false, minutos: 0, gols: 0, assistencias: 0, nota: 0, cartao: null, xp: 2 }
+  }
+
+  const proporcao = minutos / 90
+  const qualidade = (atleta.overall - forcaAdversaria * 0.9) / 100
+  const ofensivo = atleta.posicao === "ATA" ? 1 : atleta.posicao === "MEI" ? 0.72 : atleta.posicao === "LD" || atleta.posicao === "LE" ? 0.34 : atleta.posicao === "VOL" ? 0.28 : 0.12
+
+  let gols = 0
+  for (let g = 0; g < golsPro; g++) {
+    if (r(10 + g) < 0.16 + ofensivo * 0.34 + qualidade * 0.25) { gols++; if (gols >= golsPro) break }
+  }
+  gols = Math.min(gols, Math.round(golsPro * proporcao + 0.4))
+
+  let assistencias = 0
+  const restantes = golsPro - gols
+  for (let a = 0; a < restantes; a++) {
+    if (r(30 + a) < 0.1 + ofensivo * 0.26 + (atleta.atributos.passe - 60) / 220) assistencias++
+  }
+
+  // NOTA: base 6, mais o que ele fez, mais o resultado, mais uma oscilação
+  // pequena. A vitória vale pouco sozinha — é a atuação que manda.
+  const resultado = golsPro > golsContra ? 0.45 : golsPro === golsContra ? 0.1 : -0.35
+  const defensiva = ["GOL", "ZAG", "VOL", "LD", "LE"].includes(atleta.posicao)
+    ? (golsContra === 0 ? 0.75 : golsContra >= 3 ? -0.6 : -0.15 * golsContra)
+    : 0
+  const bruta = 6 + gols * 1.05 + assistencias * 0.65 + resultado + defensiva
+    + qualidade * 1.8 + (estado.forma - 50) / 160 + (r(40) - 0.5) * 1.1
+  const nota = Math.max(3, Math.min(10, Math.round(bruta * 10) / 10))
+
+  const cartao: DesempenhoIndividual["cartao"] =
+    r(50) < 0.055 + (atleta.atributos.defesa > 70 ? 0.02 : 0) ? (r(51) < 0.08 ? "vermelho" : "amarelo") : null
+
+  const xp = Math.round(minutos * 0.55 + gols * 45 + assistencias * 25 + Math.max(0, nota - 6.5) * 30)
+  return { titular, minutos, gols, assistencias, nota, cartao, xp }
+}
+
+function aplicarXP(estado: EstadoCarreiraDeJogador, xp: number): void {
+  estado.crescimento.xp += xp
+  // Cada nível custa mais que o anterior: a subida desacelera sozinha, sem
+  // precisar de trava artificial.
+  while (estado.crescimento.xp >= estado.crescimento.nivel * 320) {
+    estado.crescimento.xp -= estado.crescimento.nivel * 320
+    estado.crescimento.nivel++
+    estado.crescimento.pontosDisponiveis += 2
+  }
+}
+
+/**
+ * Joga a próxima rodada: a partida do clube do atleta e as dos rivais.
+ *
+ * Devolve um estado NOVO (o save é imutável por fora; ver
+ * [[ultrafoot-gravacao-do-save-e-react]]).
+ */
+export function jogarProximaRodada(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
+  if (estado.aposentado || estado.temporadaEncerrada) return estado
+  const proxima = estado.calendario.find(f => !f.played)
+  if (!proxima) return { ...estado, temporadaEncerrada: true }
+
+  const novo: EstadoCarreiraDeJogador = structuredClone(estado)
+  const rodada = proxima.round
+  const daRodada = novo.calendario.filter(f => f.round === rodada && !f.played)
+  // Os clubes da liga são resolvidos UMA vez por rodada. Resolver por partida
+  // chamava `completarLigaComPool` dezenas de vezes na mesma rodada — é o tipo
+  // de O(n²) que travou o apito na 1.0.300.
+  const clubes = new Map(clubesDaLiga(novo).map(t => [t.curto, t]))
+
+  for (const fixture of daRodada) {
+    const mandante = clubes.get(fixture.homeCurto) ?? clubeDeReserva(novo, fixture.homeCurto)
+    const visitante = clubes.get(fixture.awayCurto) ?? clubeDeReserva(novo, fixture.awayCurto)
+    const partida = simulateFullMatch({
+      homeTeam: mandante,
+      awayTeam: visitante,
+      homeRating: forcaDoTime(mandante),
+      awayRating: forcaDoTime(visitante),
+      durationMinutes: 90,
+    })
+    fixture.played = true
+    fixture.homeGoals = partida.home.goals
+    fixture.awayGoals = partida.away.goals
+    novo.tabela = updateStandings(novo.tabela, fixture.homeCurto, fixture.awayCurto, partida.home.goals, partida.away.goals)
+
+    if (!fixture.isUserMatch) continue
+
+    // ── A partida do atleta ──
+    const emCasa = fixture.homeCurto === novo.clubeCurto
+    const golsPro = emCasa ? partida.home.goals : partida.away.goals
+    const golsContra = emCasa ? partida.away.goals : partida.home.goals
+    const adversario = emCasa ? fixture.awayNome : fixture.homeNome
+    const forcaAdversaria = forcaDoTime(emCasa ? visitante : mandante)
+    const d = desempenhoDaPartida(novo, golsPro, golsContra, forcaAdversaria, `${novo.atleta.id}:${novo.temporada}:${rodada}`)
+
+    const registro: PartidaDoAtleta = {
+      temporada: novo.temporada, rodada, competicao: fixture.competition,
+      adversario, casa: emCasa, golsPro, golsContra,
+      titular: d.titular, minutos: d.minutos, gols: d.gols, assistencias: d.assistencias,
+      nota: d.nota, cartao: d.cartao,
+    }
+    novo.ultimasPartidas = [registro, ...novo.ultimasPartidas].slice(0, 12)
+
+    if (d.minutos > 0) {
+      novo.temporadaAtual.jogos++
+      if (d.titular) novo.temporadaAtual.titularidades++
+      novo.temporadaAtual.minutos += d.minutos
+      novo.temporadaAtual.gols += d.gols
+      novo.temporadaAtual.assistencias += d.assistencias
+      novo.temporadaAtual.somaDasNotas += d.nota
+      if (d.cartao === "amarelo") novo.temporadaAtual.cartoesAmarelos++
+      if (d.cartao === "vermelho") novo.temporadaAtual.cartoesVermelhos++
+      // A nota do treinador se move DEVAGAR: uma partida ruim não tira o
+      // titular, e uma boa não faz o reserva virar camisa 10 na semana seguinte.
+      novo.notaDoTreinador = limitar(novo.notaDoTreinador + (d.nota - 6.6) * 2.4 + d.gols * 1.5)
+      novo.forma = limitar(novo.forma * 0.72 + d.nota * 8.4)
+      novo.moral = limitar(novo.moral + (d.nota >= 7 ? 3 : d.nota >= 6 ? 0 : -3) + (golsPro > golsContra ? 2 : golsPro === golsContra ? 0 : -2))
+    } else {
+      novo.notaDoTreinador = limitar(novo.notaDoTreinador - 0.8)
+      novo.forma = limitar(novo.forma - 4)
+      novo.moral = limitar(novo.moral - (novo.pedido === "mais_minutos" ? 4 : 2))
+    }
+    aplicarXP(novo, d.xp)
+    atualizarMetas(novo)
+  }
+
+  novo.rodada = rodada
+  novo.tabela = sortStandings(novo.tabela)
+  if (!novo.calendario.some(f => !f.played)) novo.temporadaEncerrada = true
+  return novo
+}
+
+function limitar(v: number): number { return Math.max(0, Math.min(100, Math.round(v * 10) / 10)) }
+
+/** Clubes da liga desta carreira, com o clube do atleta garantido na lista. */
+function clubesDaLiga(estado: EstadoCarreiraDeJogador): Team[] {
+  const clube = getTeamByFileKey(estado.clubeFileKey)
+  return clube ? ligaDoClube(clube) : completarLigaComPool(estado.divisao)
+}
+
+/**
+ * Clube que está na TABELA mas não na lista atual de clubes da divisão.
+ *
+ * Acontece quando o jogo é atualizado no meio da carreira e a composição da
+ * divisão muda — o calendário já gravado continua citando o clube antigo. Sem
+ * esta reserva a rodada simplesmente não simularia aquela partida e a temporada
+ * nunca fecharia (o mesmo mecanismo que travava a virada de temporada).
+ */
+function clubeDeReserva(estado: EstadoCarreiraDeJogador, curto: string): Team {
+  const linha = estado.tabela.find(t => t.curto === curto)
+  return {
+    nome: linha?.nome ?? curto, curto, cidade: "", estado: "",
+    cor1: linha?.cor1 ?? "#334155", cor2: "#ffffff",
+    prestigio: 60, torcida: 10_000, estadio_cap: 20_000, saldo: 0,
+    file_key: curto.toLowerCase(), estadio_nome: "", patrocinador: "", escudo_url: "",
+    divisao: estado.divisao,
+  } as Team
+}
+
+function atualizarMetas(estado: EstadoCarreiraDeJogador): void {
+  const media = estado.temporadaAtual.jogos > 0 ? estado.temporadaAtual.somaDasNotas / estado.temporadaAtual.jogos : 0
+  for (const meta of estado.metas) {
+    meta.progresso =
+      meta.tipo === "gols" ? estado.temporadaAtual.gols
+        : meta.tipo === "assistencias" ? estado.temporadaAtual.assistencias
+          : meta.tipo === "jogos" ? estado.temporadaAtual.jogos
+            : meta.tipo === "nota" ? Math.round(media * 100) / 100
+              : estado.tabela[0]?.curto === estado.clubeCurto ? 1 : 0
+    meta.cumprida = meta.progresso >= meta.alvo
+  }
+}
+
+// ─── Evolução por pontos ────────────────────────────────────────────────────
+
+/**
+ * Gasta um ponto num atributo.
+ *
+ * Custo cresce com o valor do atributo e o TETO é o potencial: um atleta com
+ * potencial 80 não vira 95 por acúmulo de partidas. É o que impede a carreira
+ * longa de virar um passeio depois da quarta temporada.
+ */
+export function gastarPonto(estado: EstadoCarreiraDeJogador, atributo: keyof AtributosDoAtleta): EstadoCarreiraDeJogador {
+  if (estado.crescimento.pontosDisponiveis <= 0) return estado
+  const atual = estado.atleta.atributos[atributo]
+  if (atual >= 99) return estado
+  const novo = structuredClone(estado)
+  const custo = atual >= 85 ? 3 : atual >= 75 ? 2 : 1
+  if (novo.crescimento.pontosDisponiveis < custo) return estado
+  novo.crescimento.pontosDisponiveis -= custo
+  novo.atleta.atributos[atributo] = atual + 1
+  const overall = overallDoAtleta(novo.atleta.posicao, novo.atleta.atributos)
+  novo.atleta.overall = Math.min(novo.atleta.potencial, overall)
+  novo.contrato.valorDePasse = Math.max(200_000, novo.atleta.overall ** 3 * 12)
+  return novo
+}
+
+// ─── Pedidos ao clube ───────────────────────────────────────────────────────
+
+export function fazerPedido(estado: EstadoCarreiraDeJogador, pedido: EstadoCarreiraDeJogador["pedido"]): EstadoCarreiraDeJogador {
+  const novo = structuredClone(estado)
+  novo.pedido = pedido
+  const texto = pedido === "transferencia"
+    ? "Pedido de transferência registrado. O clube ouve propostas no fim da temporada."
+    : pedido === "mais_minutos"
+      ? "Você pediu mais minutos. O treinador respondeu que espaço se ganha treinando."
+      : pedido === "renovacao"
+        ? "Pedido de renovação enviado à diretoria."
+        : "Pedido retirado."
+  novo.recados = [{ id: `pedido_${pedido}_${estado.temporada}_${estado.rodada}`, de: "Agente", texto, temporada: estado.temporada, rodada: estado.rodada }, ...novo.recados].slice(0, 25)
+  // Pedir transferência custa moral no vestiário — como custa na vida real.
+  if (pedido === "transferencia") novo.moral = limitar(novo.moral - 8)
+  return novo
+}
+
+// ─── Fim de temporada ───────────────────────────────────────────────────────
+
+function gerarPropostas(estado: EstadoCarreiraDeJogador, media: number): PropostaDeClube[] {
+  const { atleta } = estado
+  const interesse = atleta.overall + media * 4 + estado.temporadaAtual.gols * 1.2 + (estado.pedido === "transferencia" ? 8 : 0)
+  if (interesse < 78) return []
+
+  // Os interessados saem das ligas de MAIOR prestígio do jogo — é para onde um
+  // atleta em ascensão vai. Clube do mesmo país aparece primeiro por afinidade.
+  const candidatos = completarLigaComPool(estado.divisao)
+    .filter(t => t.file_key !== estado.clubeFileKey)
+    .concat(ligasVizinhas(estado))
+    .filter(t => t.prestigio > 0)
+    .sort((a, b) => b.prestigio - a.prestigio)
+    .filter(t => t.prestigio <= interesse + 12 && t.prestigio >= interesse - 30)
+    .slice(0, 3)
+
+  return candidatos.map((clube, i) => ({
+    id: `proposta_${estado.temporada}_${clube.file_key}`,
+    clubeCurto: clube.curto,
+    clubeNome: clube.nome,
+    clubeFileKey: clube.file_key,
+    divisao: String(clube.divisao),
+    ligaNome: String(clube.divisao),
+    prestigio: clube.prestigio,
+    salarioSemanal: Math.round(estado.contrato.salarioSemanal * (1.15 + i * 0.22 + clube.prestigio / 400)),
+    temporadas: 3 + (i % 2),
+    motivo: clube.prestigio > estado.tabela.length ? "Quer você como titular imediato." : "Projeto de crescimento com minutos garantidos.",
+  }))
+}
+
+/** Clubes de fora da liga atual que podem se interessar (as ligas mais fortes). */
+function ligasVizinhas(estado: EstadoCarreiraDeJogador): Team[] {
+  const grandes = ["premier_league", "la_liga", "serie_a_ita", "bundesliga", "ligue_1", "serie_a", "liga_f_esp", "wsl_ing", "nwsl_usa", "brasileirao_fem_a1"]
+  return grandes
+    .filter(div => div !== estado.divisao)
+    .flatMap(div => completarLigaComPool(div).slice(0, 4))
+}
+
+export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
+  if (!estado.temporadaEncerrada || estado.aposentado) return estado
+  const novo = structuredClone(estado)
+  const t = novo.temporadaAtual
+  const media = t.jogos > 0 ? Math.round((t.somaDasNotas / t.jogos) * 100) / 100 : 0
+  const tabela = sortStandings(novo.tabela)
+  const posicao = Math.max(1, tabela.findIndex(l => l.curto === novo.clubeCurto) + 1)
+
+  const titulos: string[] = []
+  if (posicao === 1) titulos.push(`${novo.ligaNome} ${novo.temporada}`)
+
+  // PRÊMIOS. Sem inventar concorrência: o critério é o desempenho absoluto do
+  // atleta na competição, que é o dado que existe de verdade neste modo.
+  const premios: string[] = []
+  if (t.gols >= Math.max(12, t.jogos * 0.55)) premios.push(`Artilheiro da ${novo.ligaNome}`)
+  if (media >= 7.6 && t.jogos >= 10) premios.push(`Seleção da ${novo.ligaNome}`)
+  if (media >= 8 && t.jogos >= 15) premios.push("Melhor jogador da temporada")
+
+  novo.historico.push({
+    temporada: novo.temporada, clubeNome: novo.clubeNome, competicao: novo.ligaNome,
+    jogos: t.jogos, titularidades: t.titularidades, minutos: t.minutos,
+    gols: t.gols, assistencias: t.assistencias, notaMedia: media,
+    posicaoNaLiga: posicao, titulos, premios, overallFinal: novo.atleta.overall,
+  })
+  novo.titulos.push(...titulos)
+  novo.premios.push(...premios)
+
+  // ── Metas cobradas pelo treinador ──
+  const cumpridas = novo.metas.filter(m => m.cumprida).length
+  const proporcao = novo.metas.length ? cumpridas / novo.metas.length : 1
+  novo.notaDoTreinador = limitar(novo.notaDoTreinador + (proporcao - 0.5) * 18)
+  novo.recados = [{
+    id: `metas_${novo.temporada}`, de: "Treinador",
+    texto: proporcao >= 0.75
+      ? `Temporada cumprida: ${cumpridas} de ${novo.metas.length} metas. O time conta com você.`
+      : proporcao >= 0.4
+        ? `${cumpridas} de ${novo.metas.length} metas. Dá para mais.`
+        : `Só ${cumpridas} de ${novo.metas.length} metas. Vamos precisar de outra temporada bem diferente.`,
+    temporada: novo.temporada, rodada: novo.rodada,
+  }, ...novo.recados].slice(0, 25)
+
+  // ── SELEÇÃO. Convocação por overall + atuação, e o nível pela idade. ──
+  const chamado = novo.atleta.overall >= 74 && media >= 6.9 && t.jogos >= 8
+  novo.selecao.convocada = chamado
+  novo.selecao.nivel = chamado ? (novo.atleta.idade <= 20 ? "sub20" : "principal") : null
+  if (chamado) {
+    novo.selecao.jogos += 4 + Math.floor(roll(`${novo.atleta.id}:selecao:${novo.temporada}`) * 6)
+    novo.selecao.gols += novo.atleta.posicao === "ATA" || novo.atleta.posicao === "MEI"
+      ? Math.floor(roll(`${novo.atleta.id}:selgols:${novo.temporada}`) * 4) : 0
+    novo.recados = [{
+      id: `selecao_${novo.temporada}`, de: "Seleção",
+      texto: `Você foi convocado para a seleção ${novo.selecao.nivel === "sub20" ? "Sub-20" : "principal"} de ${novo.atleta.nacionalidade}.`,
+      temporada: novo.temporada, rodada: novo.rodada,
+    }, ...novo.recados].slice(0, 25)
+  }
+
+  // ── IDADE E DECLÍNIO ──
+  novo.atleta.idade++
+  const idade = novo.atleta.idade
+  if (idade >= 31) {
+    // Cai primeiro o que a idade cobra primeiro: ritmo e físico.
+    const perda = idade >= 35 ? 4 : idade >= 33 ? 3 : 2
+    novo.atleta.atributos.ritmo = Math.max(20, novo.atleta.atributos.ritmo - perda)
+    novo.atleta.atributos.fisico = Math.max(20, novo.atleta.atributos.fisico - Math.round(perda * 0.7))
+    novo.atleta.overall = overallDoAtleta(novo.atleta.posicao, novo.atleta.atributos)
+  } else {
+    // Antes dos 31 o crescimento natural existe, mas é pequeno — o grosso vem
+    // dos pontos ganhos jogando. É o que faz jogar valer mais do que esperar.
+    novo.crescimento.pontosDisponiveis += t.jogos >= 15 ? 3 : t.jogos >= 6 ? 2 : 1
+  }
+
+  novo.propostas = gerarPropostas(novo, media)
+
+  // Aposentadoria: idade + queda de rendimento + ninguém mais chamando.
+  if (idade >= 38 || (idade >= 34 && novo.notaDoTreinador < 20 && novo.propostas.length === 0)) {
+    novo.aposentado = true
+    novo.recados = [{
+      id: `aposentadoria_${novo.temporada}`, de: "Agente",
+      texto: `Fim de linha: ${novo.historico.reduce((n, h) => n + h.jogos, 0)} jogos, ${novo.historico.reduce((n, h) => n + h.gols, 0)} gols e ${novo.titulos.length} títulos. Obrigado por tudo.`,
+      temporada: novo.temporada, rodada: novo.rodada,
+    }, ...novo.recados].slice(0, 25)
+    return novo
+  }
+
+  // ── TEMPORADA NOVA ──
+  novo.temporada++
+  const clube = getTeamByFileKey(novo.clubeFileKey)
+  const times = clube ? ligaDoClube(clube) : completarLigaComPool(novo.divisao)
+  novo.calendario = generateSeasonFixtures(times, novo.clubeCurto, novo.temporada, novo.ligaNome)
+  novo.tabela = initStandings(times)
+  novo.rodada = 0
+  novo.temporadaAtual = { jogos: 0, titularidades: 0, minutos: 0, gols: 0, assistencias: 0, somaDasNotas: 0, cartoesAmarelos: 0, cartoesVermelhos: 0 }
+  novo.metas = metasIniciais(novo.atleta, clube?.prestigio ?? 60, novo.calendario.filter(f => f.isUserMatch).length)
+  novo.temporadaEncerrada = false
+  novo.contrato.ateTemporada = Math.max(novo.contrato.ateTemporada, novo.temporada)
+  return novo
+}
+
+/** Aceita uma proposta: troca de clube, calendário novo e nota do treinador zerada. */
+export function aceitarProposta(estado: EstadoCarreiraDeJogador, propostaId: string): EstadoCarreiraDeJogador {
+  const proposta = estado.propostas.find(p => p.id === propostaId)
+  if (!proposta) return estado
+  const clube = getTeamByFileKey(proposta.clubeFileKey)
+  if (!clube) return estado
+
+  const novo = structuredClone(estado)
+  const times = ligaDoClube(clube)
+  novo.clubeCurto = clube.curto
+  novo.clubeNome = clube.nome
+  novo.clubeFileKey = clube.file_key
+  novo.divisao = String(clube.divisao)
+  novo.pais = clube.pais ?? novo.pais
+  novo.ligaNome = proposta.ligaNome
+  novo.calendario = generateSeasonFixtures(times, clube.curto, novo.temporada, novo.ligaNome)
+  novo.tabela = initStandings(times)
+  novo.contrato = {
+    salarioSemanal: proposta.salarioSemanal,
+    ateTemporada: novo.temporada + proposta.temporadas,
+    valorDePasse: Math.max(200_000, novo.atleta.overall ** 3 * 12),
+  }
+  // Clube novo, treinador novo: a confiança recomeça, calibrada pelo tamanho do
+  // clube. É o que dá peso à decisão de subir de degrau cedo demais.
+  novo.notaDoTreinador = Math.max(20, Math.min(72, 42 + (novo.atleta.overall - clube.prestigio * 0.9)))
+  novo.metas = metasIniciais(novo.atleta, clube.prestigio, novo.calendario.filter(f => f.isUserMatch).length)
+  novo.propostas = []
+  novo.pedido = "nenhum"
+  novo.recados = [{
+    id: `transferencia_${novo.temporada}_${clube.file_key}`, de: "Agente",
+    texto: `Acertado com o ${clube.nome}. Contrato até ${novo.contrato.ateTemporada}.`,
+    temporada: novo.temporada, rodada: 0,
+  }, ...novo.recados].slice(0, 25)
+  return novo
+}
+
+export function recusarPropostas(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
+  return { ...estado, propostas: [], pedido: "nenhum" }
+}
+
+/** Média da temporada corrente — a tela mostra em três lugares. */
+export function mediaDaTemporada(estado: EstadoCarreiraDeJogador): number {
+  const t = estado.temporadaAtual
+  return t.jogos > 0 ? Math.round((t.somaDasNotas / t.jogos) * 100) / 100 : 0
+}

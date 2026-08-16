@@ -1,6 +1,7 @@
 import { competitionsByLeague } from "./international-competitions"
 import { UEFA_EXPANSION_FEDERATIONS } from "./uefa-expansion"
 import { DIVISOES_DE_ACESSO, IDS_DE_ACESSO } from "./divisao-de-acesso"
+import { LIGAS_FEMININAS, ehDivisaoFeminina } from "./futebol-feminino"
 
 // Competicoes por PAIS/LIGA.
 //
@@ -154,6 +155,32 @@ for (const federation of UEFA_EXPANSION_FEDERATIONS) {
   }
 }
 
+// ─── FUTEBOL FEMININO ────────────────────────────────────────────────────────
+//
+// Cada liga feminina declara a PRÓPRIA copa e a PRÓPRIA continental. Sem estas
+// entradas o clube feminino cairia no FALLBACK e disputaria uma "Copa Nacional"
+// contra uma "Copa Continental" — nomes que não existem, o mesmo defeito que a
+// auditoria de 31/07 achou nas dezoito divisões masculinas.
+//
+// ⚠️ Vai para a BASE (e não para o objeto exportado) pelo mesmo motivo do laço
+// da expansão UEFA logo acima: é a base que a derivação das divisões de acesso
+// lê, e ela roda depois.
+//
+// ⚠️ `hasStateChampionship` fica FALSE mesmo no Brasil, onde o Paulista e o
+// Carioca femininos existem de verdade: quem monta o estadual escolhe os
+// participantes entre os clubes das divisões MASCULINAS por estado, então
+// declarar `true` aqui colocaria o Corinthians feminino num Paulistão de clubes
+// masculinos. Estadual feminino é trabalho de dado próprio, não de flag.
+for (const liga of LIGAS_FEMININAS) {
+  LEAGUE_COMPETITIONS_BASE[liga.id] = {
+    country: liga.pais,
+    domesticCup: liga.copaNacional,
+    continental: liga.continental ?? "—",
+    continentalSecondary: liga.continentalSecundaria ?? null,
+    hasStateChampionship: false,
+  }
+}
+
 const FALLBACK: CountryCompetitions = {
   country: "Internacional",
   domesticCup: "Copa Nacional",
@@ -231,6 +258,13 @@ const CONFEDERATION_DIVISIONS: Record<Confederation, string[]> = {
   UNAFFILIATED: [],
 }
 
+// As ligas femininas entram na confederação DELAS: é isso que faz o sorteio da
+// continental buscar adversárias no continente certo (uma equipe da NWSL não
+// pode cair num chaveamento da Libertadores Feminina).
+for (const liga of LIGAS_FEMININAS) {
+  CONFEDERATION_DIVISIONS[liga.confederacao === "OFC" ? "UNAFFILIATED" : liga.confederacao].push(liga.id)
+}
+
 CONFEDERATION_DIVISIONS.UEFA.push(...UEFA_EXPANSION_FEDERATIONS.flatMap(federation =>
   [federation.top, federation.second]
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry?.participants.length))
@@ -258,9 +292,19 @@ export function getConfederation(divisao: string | undefined): Confederation {
   return "UNAFFILIATED"
 }
 
-/** Ligas que fornecem os participantes da continental do clube. */
+/**
+ * Ligas que fornecem os participantes da continental do clube.
+ *
+ * ⚠️ A MODALIDADE FILTRA. As divisões femininas entram nas mesmas confederações
+ * das masculinas (e têm de entrar: a Libertadores Feminina é da CONMEBOL), mas
+ * misturá-las aqui produziria o Corinthians feminino sorteado contra o Boca
+ * Juniors masculino — exatamente o erro que a nota acima descreve no caso da
+ * Juventus contra o Boca, só que atravessando também o gênero.
+ */
 export function getContinentalDivisions(divisao: string | undefined): string[] {
-  return CONFEDERATION_DIVISIONS[getConfederation(divisao)]
+  const daConfederacao = CONFEDERATION_DIVISIONS[getConfederation(divisao)]
+  const feminina = ehDivisaoFeminina(divisao)
+  return daConfederacao.filter(div => ehDivisaoFeminina(div) === feminina)
 }
 
 // ─── Qual continental o clube disputa ────────────────────────────────────────

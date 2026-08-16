@@ -5,6 +5,8 @@
 import type { GameState } from "@/lib/save-system"
 import type { SquadPlayer } from "@/lib/save-system"
 import { evoluirSemana, type JovemBase } from "@/lib/youth-academy-rules"
+import { nomeDeAtleta } from "@/lib/nomes-por-pais"
+import { nomeDeAtletaFeminina } from "@/lib/futebol-feminino"
 
 export type YouthCategory = "sub17" | "sub20"
 
@@ -217,7 +219,21 @@ const YOUTH_LAST_NAMES = [
 const YOUTH_POSITIONS: Array<"GOL" | "ZAG" | "VOL" | "MEI" | "ATA"> = ["GOL","ZAG","ZAG","VOL","MEI","MEI","ATA","ATA"]
 const PERSONALITIES: Personality[] = ["lider", "ambicioso", "calmo", "profissional", "leal", "estrela", "polemico", "preguicoso", "mercenario"]
 
-function randomYouthName(): string {
+/**
+ * Nome do prospecto.
+ *
+ * ⚠️ As duas listas acima são BRASILEIRAS e MASCULINAS — é exatamente o defeito
+ * que `lib/nomes-por-pais` foi escrito para corrigir ("a base do Ajax revelava
+ * Matheus Nascimento"). Elas ficam como fallback dos chamadores que não
+ * informam país; quem informa recebe nome do país certo, e a carreira feminina
+ * recebe nome feminino.
+ */
+function randomYouthName(pais?: string, feminino?: boolean): string {
+  if (pais) {
+    return feminino
+      ? nomeDeAtletaFeminina(pais, Math.random)
+      : nomeDeAtleta(pais, Math.random)
+  }
   const f = YOUTH_FIRST_NAMES[Math.floor(Math.random() * YOUTH_FIRST_NAMES.length)]
   const l = YOUTH_LAST_NAMES[Math.floor(Math.random() * YOUTH_LAST_NAMES.length)]
   return `${f} ${l}`
@@ -228,6 +244,7 @@ export function generateYouthBatch(
   season: number,
   count = 4,
   prestige = 70,
+  origem?: { pais?: string; feminino?: boolean },
 ): SquadPlayer[] {
   const result: SquadPlayer[] = []
   for (let i = 0; i < count; i++) {
@@ -241,7 +258,7 @@ export function generateYouthBatch(
     const pos = YOUTH_POSITIONS[Math.floor(Math.random() * YOUTH_POSITIONS.length)]
     result.push({
       id: `youth_${season}_${i}_${Math.random().toString(36).slice(2, 6)}`,
-      name: randomYouthName(),
+      name: randomYouthName(origem?.pais, origem?.feminino),
       position: pos,
       age,
       overall,

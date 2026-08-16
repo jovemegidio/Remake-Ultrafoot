@@ -13,7 +13,8 @@ import { competicaoHabilitada283 } from "@/lib/configuracoes-iniciais-283"
 import { atualizarAdesao282, avaliarConduta291, avaliarMetas282, negociosPorQuinzena282, normalizarGestao282, PUNICOES_CONDUTA_291, registrarTemporadaAcademia291, relatoriosDaComissao282, type EventoCarreira282 } from "@/lib/gestao-282"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, absoluteWeek, getContractStatus, isTransferWindowOpen, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { getTeamsByDivision, getPlayablePoolTeams, getTeamByFileKey, getTeamByShort, setClubDivisions, effectiveDivision, initialDivision, clubDivisionKey, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, MIN_TIMES_PARA_LIGA, type Team } from "@/lib/teams-data"
+import { getTeamsByDivision, getPlayablePoolTeams, getTeamByFileKey, getTeamByShort, getAllTimesFemininos, setClubDivisions, effectiveDivision, initialDivision, clubDivisionKey, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, MIN_TIMES_PARA_LIGA, type Team } from "@/lib/teams-data"
+import { SUFIXO_FEMININO } from "@/lib/futebol-feminino"
 import { getGameDate, configurarDuracaoDaTemporada } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { carregarElencosDoPool } from "@/lib/pool-elencos"
@@ -100,7 +101,16 @@ import {
 function semearUniverso286(temporada: number, clubeDoUsuario: string): UniversoPersistente286 {
   // Nunca deixe o cache de outra carreira contaminar a fotografia inicial.
   definirUniversoAtivo286(null)
-  const clubesJogaveis = [...allTeams, ...getPlayablePoolTeams()].filter((time, index, todos) =>
+  // ⚠️ O MUNDO DA CARREIRA É O DA MODALIDADE. Numa carreira feminina, semear o
+  // universo com os clubes masculinos daria à técnica um mundo de rivais,
+  // mercado e elencos que ela nunca vai encontrar — o clube dela disputaria a
+  // liga feminina enquanto o "mundo vivo" ao lado envelhecia outro futebol.
+  const doUsuario = getTeamByShort(clubeDoUsuario)
+  const feminino = String(doUsuario?.file_key ?? "").endsWith(SUFIXO_FEMININO)
+  const clubesJogaveis = (feminino
+    ? getAllTimesFemininos()
+    : [...allTeams, ...getPlayablePoolTeams()]
+  ).filter((time, index, todos) =>
     todos.findIndex(outro => outro.file_key === time.file_key) === index)
   return criarUniversoPersistente286({
     temporada,

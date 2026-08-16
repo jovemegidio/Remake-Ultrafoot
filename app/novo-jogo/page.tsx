@@ -15,6 +15,7 @@ import {
   getTeamUniforms,
   completarLigaComPool,
   getTeamsByDivision,
+  getTeamsFemininosByDivision,
   getCamisaUrl,
   getEscudoUrl,
   isKitVariantAvailable,
@@ -75,6 +76,13 @@ import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { carregarElencosDoPool } from "@/lib/pool-elencos"
 import { carregarElencosReaisTM } from "@/lib/elencos-reais-tm"
+import { carregarElencosFemininos, clubesComElencoFeminino } from "@/lib/elencos-femininos"
+import { LIGAS_FEMININAS } from "@/lib/futebol-feminino"
+import { MODALIDADES, type ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
+import {
+  POSICOES_JOGAVEIS, criarAtletaDaCarreira, criarCarreiraDeJogador,
+  type PosicaoDoAtleta,
+} from "@/lib/carreira-de-jogador"
 import qualidadeDasLigas from "@/data/seeds/qualidade-das-ligas.json"
 import { flushPersistentStore } from "@/lib/persistent-store"
 import { UEFA_EXPANSION_FEDERATIONS } from "@/lib/uefa-expansion"
@@ -431,6 +439,9 @@ const CATALOG_COUNTRIES: CountryTab[] = [
  * vagas na tabela, e mostrar só as 20 esconderia justamente o clube pequeno que
  * o jogador foi procurar. Ver o uso mais abaixo.
  */
+const porNomeDoPais = (a: CountryTab, b: CountryTab) =>
+  a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
+
 const COUNTRIES: CountryTab[] = [...CORE_COUNTRIES, ...CATALOG_COUNTRIES, ...EXPANSION_COUNTRIES]
   .map(pais => {
     const acesso = DIVISOES_DE_ACESSO.find(a => a.country === pais.name)
@@ -449,6 +460,40 @@ const COUNTRIES: CountryTab[] = [...CORE_COUNTRIES, ...CATALOG_COUNTRIES, ...EXP
       }],
     }
   })
+  /**
+   * ORDEM ALFABÉTICA — pedido do usuário (1.0.322): "as 70 ligas devem começar
+   * por ordem alfabética... para jogadores registrados começar ABCDEFG".
+   *
+   * A ordem antiga era a de CADASTRO: primeiro os países do catálogo original
+   * (Brasil, Inglaterra, Espanha...), depois os do catálogo estendido, e por
+   * último os 36 da expansão UEFA. Funcionava enquanto eram dez países; com
+   * setenta virou uma lista sem regra nenhuma, em que achar a Dinamarca exigia
+   * varrer o carrossel inteiro.
+   *
+   * `localeCompare` com `sensitivity: "base"` porque os nomes convivem com e sem
+   * acento na base ("Azerbaijao"/"Azerbaijão"): comparar bytes jogaria os
+   * acentuados para o fim da lista.
+   */
+  .sort(porNomeDoPais)
+
+/**
+ * PAÍSES COM FUTEBOL FEMININO.
+ *
+ * Sai inteiro do cadastro de `lib/futebol-feminino` — país, liga, tamanho, copa
+ * e continental moram lá, num lugar só. Os clubes são resolvidos na HIDRATAÇÃO
+ * (`doPool`), pelo mesmo motivo das segundas divisões masculinas: o
+ * persistent-store carrega depois do import e um clube resolvido cedo demais
+ * apareceria com o nome e o escudo de antes das edições do jogador.
+ */
+const COUNTRIES_FEMININOS: CountryTab[] = Object.values(
+  LIGAS_FEMININAS.reduce<Record<string, CountryTab>>((mapa, liga) => {
+    const pais = (mapa[liga.codigoPais] ??= {
+      name: liga.pais, code: liga.codigoPais, region: liga.regiao, leagues: [],
+    })
+    pais.leagues.push({ key: liga.id as Divisao, label: liga.nome, short: liga.short, teams: [], doPool: true })
+    return mapa
+  }, {}),
+).sort(porNomeDoPais)
 
 // Fundo trocado a pedido do usuario (2026-07-20): foto in-game 7.
 const STADIUM_BG = "/images/pre-jogo/in-game-7.webp"
@@ -514,7 +559,29 @@ export default function NovoJogoPage() {
 
     return () => { vivo = false }
   }, [])
-  const [careerStart, setCareerStart] = useState<"professional" | "sub20">("professional")
+  /**
+   * A MODALIDADE DA CARREIRA (1.0.322).
+   *
+   * Substitui o antigo `careerStart`, que era um seletor de uma opção só: ele
+   * nunca deixava de ser "professional" porque não havia botão para o sub-20 —
+   * o motor da base existia inteiro (`youth-career-engine`, `/base/carreira`) e
+   * era inalcançável. Agora as quatro carreiras que o jogo tem são escolha.
+   */
+  const [modalidade, setModalidade] = useState<ModalidadeDeCarreira>("profissional")
+  /**
+   * O ATLETA da carreira de jogador. Só é usado quando a modalidade é
+   * "jogador"; fica aqui, e não num modal separado, porque é decisão de CRIAÇÃO
+   * — depois que a carreira existe não há como trocar de corpo.
+   */
+  const [atleta, setAtleta] = useState<{
+    nome: string; posicao: PosicaoDoAtleta; idade: number
+    nacionalidade: string; pePreferido: "direito" | "esquerdo"
+    alturaCm: number; pesoKg: number; numero: number
+  }>({ nome: "", posicao: "ATA", idade: 18, nacionalidade: "Brasil", pePreferido: "direito", alturaCm: 178, pesoKg: 72, numero: 9 })
+  // Trocar de modalidade troca o catálogo inteiro: os índices de país, liga e
+  // clube não significam a mesma coisa nos dois, e mantê-los abriria a tela num
+  // clube que não é o que o carrossel está mostrando.
+  useEffect(() => { setCountryIndex(0); setLeagueIndex(0); setTeamIndex(0) }, [modalidade])
   const [debtPreset, setDebtPreset] = useState<DebtPreset>("none")
   const [modoDeMundo, setModoDeMundo] = useState<ModoDeMundo>("original")
   const [showInitialSettings, setShowInitialSettings] = useState(false)
@@ -556,10 +623,16 @@ export default function NovoJogoPage() {
 
   const paises = useMemo(
     () => {
-      const lista = registrado ? COUNTRIES : COUNTRIES.filter(c => PAISES_SEM_REGISTRO.includes(c.code))
+      // A MODALIDADE decide o catálogo. Feminino tem país, liga e clube
+      // próprios; profissional, sub-20 e carreira de jogador partem todos do
+      // mesmo mundo masculino (a base de um clube é do clube, e o atleta nasce
+      // num clube que existe).
+      const catalogo = modalidade === "feminino" ? COUNTRIES_FEMININOS : COUNTRIES
+      const lista = registrado ? catalogo : catalogo.filter(c => PAISES_SEM_REGISTRO.includes(c.code))
       return lista.map(pais => ({
         ...pais,
         leagues: pais.leagues.map(liga => {
+          if (modalidade === "feminino") return { ...liga, teams: getTeamsFemininosByDivision(liga.key) }
           // A Divisao de Acesso e o unico nivel em que a lista de ESCOLHA nao
           // pode ser a tabela: sao 260 clubes disputando 20 vagas, e mostrar so
           // as 20 deixaria o Serra-ES invisivel — que e exatamente o clube que
@@ -577,9 +650,9 @@ export default function NovoJogoPage() {
         }),
       }))
     },
-    [registrado, storeHidratado],
+    [registrado, storeHidratado, modalidade],
   )
-  const paisesBloqueados = COUNTRIES.length - paises.length
+  const paisesBloqueados = (modalidade === "feminino" ? COUNTRIES_FEMININOS.length : COUNTRIES.length) - paises.length
 
   const activeCountry = paises[Math.min(countryIndex, paises.length - 1)]
   const activeLeague = activeCountry.leagues[Math.min(leagueIndex, activeCountry.leagues.length - 1)]
@@ -858,13 +931,37 @@ export default function NovoJogoPage() {
     // demanda para tirar o seed do chunk de toda rota. Criar a carreira com eles
     // frios não dá erro nenhum: dá clube inteiro com atleta GERADO no lugar do
     // licenciado — e isso vai para o save, para sempre. Ver `lib/pool-elencos.ts`.
-    await Promise.all([carregarElencosDoPool(), carregarElencosReaisTM()])
+    // O elenco FEMININO entra na mesma espera e pelo mesmo motivo: criar a
+    // carreira com ele frio grava atleta gerado no lugar da atleta real, no
+    // save, para sempre.
+    await Promise.all([carregarElencosDoPool(), carregarElencosReaisTM(), carregarElencosFemininos()])
     setTeamColors({ primary: selectedTeam.cor1, secondary: selectedTeam.cor2 })
     setTheme("team")
     // "user" trava o detector automático: a escolha do jogador manda a partir daqui.
     applyPerformanceProfile(resolverPerfilDesempenho283(configuracoes283.perfilDesempenho), "user")
     const efeitosDoPerfil = efeitosIniciaisPerfil26(managerProfile26)
+
+    // ── CARREIRA DE BASE (Sub-20) ──
+    // O motor e a tela existiam desde sempre e não havia como chegar até eles.
+    // A carreira nasce com o elenco da base gerado a partir do prestígio do
+    // clube; o profissional daquele clube fica de fora — quem dirige a base não
+    // dirige o time principal, e é dessa distância que sai o modo.
+    const daBase = modalidade === "sub20" ? createYouthCareer(selectedTeam, 2026) : null
+
+    // ── CARREIRA DE JOGADOR ──
+    const doAtleta = modalidade === "jogador"
+      ? criarCarreiraDeJogador(
+          selectedTeam,
+          criarAtletaDaCarreira({ ...atleta, nome: atleta.nome.trim() || managerName.trim() }),
+          activeLeague.label,
+          2026,
+        )
+      : null
+
     initializeNewGame(selectedTeam.curto, managerName, {
+      modalidade,
+      ...(daBase ? { youthCareer: daBase.career, youthPlayers: daBase.players, youthCareerStartSeason: 2026 } : {}),
+      ...(doAtleta ? { carreiraDeJogador: doAtleta } : {}),
       // Só grava a lista quando há mais de um: um save de técnico único fica
       // exatamente como sempre foi, e `tecnicosDoSave` o lê como lista de um.
       ...(convidados.length > 0 ? {
@@ -876,7 +973,6 @@ export default function NovoJogoPage() {
       configuracoesIniciais283: configuracoes283,
       managerProfile26,
       ...efeitosDoPerfil,
-      youthCareer: undefined,
       debt: createClubDebt(debtPreset, profile?.clubValue ?? 100_000_000),
       scoutingDepartment: createScoutingDepartment(),
       stadiumPitch: createStadiumPitch(selectedTeam.prestigio, 2026),
@@ -892,8 +988,15 @@ export default function NovoJogoPage() {
       flushPersistentStore(),
       new Promise<void>(resolve => window.setTimeout(resolve, 5000)),
     ])
-    hardNavigate("/?career=1")
-  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme, careerStart, debtPreset, profile, modoDeMundo, configuracoes283, managerProfile26, convidados.length, tecnicosDaMesa, errosDosTecnicos.length, escolhendoConvidado])
+    // CADA MODALIDADE ABRE ONDE ELA ACONTECE. Mandar as quatro para o escritório
+    // do técnico era o caminho mais curto e o mais errado: quem escolheu ser
+    // atleta cairia numa tela de mercado e de folha salarial que não é dele.
+    hardNavigate(
+      modalidade === "sub20" ? "/base/carreira"
+        : modalidade === "jogador" ? "/carreira/jogador"
+          : "/?career=1",
+    )
+  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme, modalidade, atleta, activeLeague.label, debtPreset, profile, modoDeMundo, configuracoes283, managerProfile26, convidados.length, tecnicosDaMesa, errosDosTecnicos.length, escolhendoConvidado, registrado])
 
   const isNameValid = managerName.trim().length > 0
 
@@ -1684,11 +1787,20 @@ export default function NovoJogoPage() {
               <select value={modoDeMundo} onChange={event => setModoDeMundo(event.target.value as ModoDeMundo)} aria-label="Modo do mundo" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
                 <option value="original">Original</option><option value="mundo_real">Mundo Real</option><option value="seu_mundo">Seu Mundo</option>
               </select>
-              {/* O botão "Profissional" saiu daqui: era um seletor de UMA opção
-                  só — `careerStart` nunca deixava de ser "professional", já que
-                  não havia botão para o sub-20. Um controle que não controla
-                  nada ocupa espaço e sugere uma escolha que não existe.
-                  O estado continua, com o mesmo valor padrão. */}
+              {/* MODALIDADE. Este seletor já existiu como "Profissional" e foi
+                  REMOVIDO por ser um controle de uma opção só — não havia
+                  caminho para o sub-20, e um controle que não controla nada
+                  sugere uma escolha que não existe. Ele volta agora que as
+                  quatro carreiras existem de verdade. */}
+              <select
+                value={modalidade}
+                onChange={event => setModalidade(event.target.value as ModalidadeDeCarreira)}
+                aria-label="Modalidade da carreira"
+                title={MODALIDADES.find(m => m.id === modalidade)?.resumo}
+                className="h-11 rounded-xl border border-[var(--brand)]/35 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/85"
+              >
+                {MODALIDADES.map(m => <option key={m.id} value={m.id}>{m.titulo}</option>)}
+              </select>
               <select value={debtPreset} onChange={event => setDebtPreset(event.target.value as DebtPreset)} aria-label="Dívida inicial do clube" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
                 <option value="none">Sem dívida</option><option value="light">Dívida leve</option><option value="realistic">Dívida realista</option><option value="high">Dívida alta</option>
               </select>
@@ -1756,7 +1868,115 @@ export default function NovoJogoPage() {
               <button onClick={() => setShowInitialSettings(false)} aria-label="Fechar configurações" className="rounded-xl border border-white/10 p-2 text-white/60 hover:text-white"><X className="h-5 w-5" /></button>
             </div>
 
-            {/* TÉCNICOS NA MESA. Fica aqui, junto das outras decisões de
+{/* MODALIDADE + O ATLETA. Estas são as decisões que não têm volta:
+                depois da carreira criada não se troca de modo nem de corpo. */}
+            <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4">
+              <h3 className="text-sm font-bold text-white">Tipo de carreira</h3>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {MODALIDADES.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => setModalidade(m.id)}
+                    className={cn(
+                      "rounded-xl border p-3 text-left transition-colors",
+                      modalidade === m.id
+                        ? "border-[var(--brand)]/50 bg-[var(--brand)]/10"
+                        : "border-white/10 bg-black/30 hover:border-white/25",
+                    )}
+                  >
+                    <p className="text-sm font-bold text-white">{m.titulo}</p>
+                    <p className="mt-0.5 text-[11px] leading-snug text-white/50">{m.resumo}</p>
+                    <p className="mt-1 text-[10px] text-white/35">{m.detalhe}</p>
+                  </button>
+                ))}
+              </div>
+
+              {modalidade === "feminino" && (
+                <p className="mt-3 rounded-lg border border-sky-400/20 bg-sky-400/[0.06] px-3 py-2 text-[11px] leading-relaxed text-sky-100/70">
+                  {COUNTRIES_FEMININOS.length} países com futebol feminino jogável e {LIGAS_FEMININAS.length} ligas,
+                  cada uma com o próprio calendário, a própria copa nacional e a continental da confederação.
+                  Os elencos são gerados: a modalidade ainda não tem elenco real importado, e a tela diz isso
+                  em vez de prometer o que não tem.
+                </p>
+              )}
+              {modalidade === "sub20" && (
+                <p className="mt-3 rounded-lg border border-sky-400/20 bg-sky-400/[0.06] px-3 py-2 text-[11px] leading-relaxed text-sky-100/70">
+                  Você comanda a base do clube escolhido — Copinha, Brasileirão Sub-20 e Copa do Brasil Sub-20
+                  (ou as competições de base do país do clube). Reputação alta abre propostas do futebol
+                  profissional, e os atletas que você formar continuam sendo acompanhados depois de saírem.
+                </p>
+              )}
+
+              {modalidade === "jogador" && (
+                <div className="mt-4 border-t border-white/10 pt-4">
+                  <h4 className="text-sm font-bold text-white">Quem é você em campo</h4>
+                  <p className="mt-0.5 text-[11px] text-white/45">
+                    Começa como promessa: overall modesto e teto alto. Quem decide se você joga é o treinador —
+                    e ele decide pela sua nota.
+                  </p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <label className="text-[11px] text-white/55">
+                      Nome
+                      <input
+                        value={atleta.nome}
+                        onChange={e => setAtleta(a => ({ ...a, nome: e.target.value }))}
+                        placeholder="Nome do atleta"
+                        maxLength={28}
+                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white placeholder:text-white/25"
+                      />
+                    </label>
+                    <label className="text-[11px] text-white/55">
+                      Posição
+                      <select
+                        value={atleta.posicao}
+                        onChange={e => setAtleta(a => ({ ...a, posicao: e.target.value as PosicaoDoAtleta }))}
+                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                      >
+                        {POSICOES_JOGAVEIS.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                      </select>
+                    </label>
+                    <label className="text-[11px] text-white/55">
+                      Idade
+                      <input
+                        type="number" min={16} max={24} value={atleta.idade}
+                        onChange={e => setAtleta(a => ({ ...a, idade: Math.max(16, Math.min(24, Number(e.target.value) || 18)) }))}
+                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                      />
+                    </label>
+                    <label className="text-[11px] text-white/55">
+                      Nacionalidade
+                      <input
+                        value={atleta.nacionalidade}
+                        onChange={e => setAtleta(a => ({ ...a, nacionalidade: e.target.value }))}
+                        maxLength={24}
+                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                      />
+                    </label>
+                    <label className="text-[11px] text-white/55">
+                      Pé preferido
+                      <select
+                        value={atleta.pePreferido}
+                        onChange={e => setAtleta(a => ({ ...a, pePreferido: e.target.value as "direito" | "esquerdo" }))}
+                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                      >
+                        <option value="direito">Direito</option>
+                        <option value="esquerdo">Esquerdo</option>
+                      </select>
+                    </label>
+                    <label className="text-[11px] text-white/55">
+                      Camisa
+                      <input
+                        type="number" min={1} max={99} value={atleta.numero}
+                        onChange={e => setAtleta(a => ({ ...a, numero: Math.max(1, Math.min(99, Number(e.target.value) || 9)) }))}
+                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+
+                        {/* TÉCNICOS NA MESA. Fica aqui, junto das outras decisões de
                 criação, porque é uma delas — e porque depois de a carreira
                 existir não há como acrescentar alguém sem refazer o mundo. */}
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4">

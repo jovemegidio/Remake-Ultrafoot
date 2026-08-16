@@ -41,6 +41,14 @@ import { getNationalKitUrl } from "@/lib/national-assets"
 import { UEFA_EXPANSION_FEDERATIONS, type UefaExpansionDivision } from "@/lib/uefa-expansion"
 import { OFFICIAL_EUROPEAN_PARTICIPANTS_2026 } from "@/lib/official-european-participants-2026"
 import { DIVISOES_DE_ACESSO, IDS_DE_ACESSO, acessoDoPais } from "@/lib/divisao-de-acesso"
+// FUTEBOL FEMININO. O módulo é só DADO e não importa este arquivo em tempo de
+// execução (só o tipo `Team`), então não há ciclo. A montagem dos clubes mora
+// aqui porque é aqui que existe o catálogo masculino de onde eles herdam cores,
+// estádio e — pelo sufixo do `file_key` — escudo e uniforme.
+import {
+  SUFIXO_FEMININO, TAMANHO_DAS_LIGAS_FEMININAS,
+  chaveDeAssetMasculina, construirTimesFemininos, ehDivisaoFeminina,
+} from "@/lib/futebol-feminino"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -460,6 +468,10 @@ function findConservativeFuzzyKit(candidates: string[]): (typeof importedKitMap)
 
 /** Caminho do pacote legado instalado, separado para auditoria e testes offline. */
 export function getLocalCamisaPath(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
+  // Clube feminino veste a camisa do clube-mãe: o sufixo `__fem` cai aqui e o
+  // caminho resolvido é o do masculino. Sem isto seriam ~250 arquivos de kit
+  // duplicados no instalador para desenhar exatamente a mesma camisa.
+  fileKey = chaveDeAssetMasculina(fileKey)
   // O pacote recebido do Manchester United possui somente a arte principal.
   const legacyVariant = fileKey === "manchester_united" && variant !== "home" ? "home" : variant
   const folder = legacyVariant === "home" ? "camisas" : legacyVariant === "away" ? "camisas2" : "camisas3"
@@ -481,7 +493,10 @@ export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third"
     return getNationalKitUrl(fileKey.slice("nation_".length), variant)
   }
 
-  const candidates = [normalizeKitKey(fileKey), normalizeKitKey(teamName), normalizeKitKey(localCamisaMap[fileKey] ?? ""), normalizeKitKey(escudoMap[fileKey] ?? "")].filter(Boolean)
+  // A chave do clube-mãe entra ANTES da feminina: é ela que existe no manifesto
+  // de kits importados (`corinthians_bra`), não a com sufixo.
+  const chaveDoKit = chaveDeAssetMasculina(fileKey)
+  const candidates = [normalizeKitKey(chaveDoKit), normalizeKitKey(teamName.replace(/ Feminino$/, "")), normalizeKitKey(localCamisaMap[chaveDoKit] ?? ""), normalizeKitKey(escudoMap[chaveDoKit] ?? "")].filter(Boolean)
   let imported = candidates.map(key => importedKitMap[key]).find(Boolean)
   if (!imported) {
     imported = candidates
@@ -512,6 +527,7 @@ export function isKitVariantAvailable(fileKey: string, variant: "home" | "away" 
 }
 
 export function getRemoteCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
+  fileKey = chaveDeAssetMasculina(fileKey)
   const key = escudoMap[fileKey] || fileKey
   const folder = variant === "home" ? "camisas" : variant === "away" ? "camisas2" : "camisas3"
   return `${ULTRAFOOT_RAW_URL}/teams/${folder}/${key}.png`
@@ -1852,7 +1868,52 @@ export function effectiveDivision(team: { curto: string; divisao: string; file_k
   return canonical ?? _clubDivisions[team.curto] ?? initialDivision(team)
 }
 
+/**
+ * CLUBES DO FUTEBOL FEMININO — construídos sob demanda, nunca no escopo do módulo.
+ *
+ * ⚠️ A construção lê `applyTeamOverride` (indiretamente, ao resolver o clube
+ * masculino) e o `persistent-store` HIDRATA DEPOIS do import. Montar no escopo
+ * do módulo congelaria cores e estádio de antes das edições do jogador — é o
+ * mesmo motivo pelo qual as ligas do pool na tela de criação são resolvidas na
+ * hidratação. Ver [[ultrafoot-efeito-que-grava-antes-de-hidratar]].
+ */
+let _timesFemininos: Team[] | null = null
+function timesFemininos(): Team[] {
+  if (_timesFemininos) return _timesFemininos
+  // Códigos já ocupados: os curados (com as colisões já resolvidas acima) e os
+  // do pool. Um código repetido faria a tabela do clube feminino desenhar o
+  // escudo de um clube masculino qualquer.
+  const emUso = new Set<string>([..._usedCurto, ...allPoolTeams.map(t => t.curto)])
+  _timesFemininos = construirTimesFemininos(
+    fileKey => allTeams.find(t => t.file_key === fileKey) ?? allPoolTeams.find(t => t.file_key === fileKey),
+    emUso,
+  )
+  return _timesFemininos
+}
+
+/**
+ * Clubes femininos de uma divisão (vazio quando a divisão não for feminina).
+ *
+ * ⚠️ Filtra por `effectiveDivision`, não por `t.divisao`. A diferença é a
+ * PIRÂMIDE VIVA: quem cai do Brasileirão Feminino A1 para o A2 tem a divisão
+ * nova gravada em `_clubDivisions`, e comparar com o cadastro estático faria o
+ * rebaixamento acontecer na tela de fim de temporada e não valer no ano
+ * seguinte — a liga voltaria a ter os mesmos clubes de sempre.
+ */
+export function getTeamsFemininosByDivision(divisao: string): Team[] {
+  if (!ehDivisaoFeminina(divisao)) return []
+  return timesFemininos().filter(t => effectiveDivision(t) === divisao).map(applyTeamOverride)
+}
+
+/** Todos os clubes femininos do jogo — para busca e para o mercado da modalidade. */
+export function getAllTimesFemininos(): Team[] {
+  return timesFemininos().map(applyTeamOverride)
+}
+
 export function getTeamsByDivision(divisao: string): Team[] {
+  // A liga feminina é FECHADA em si: completá-la com o pool masculino colocaria
+  // um clube masculino dentro do campeonato feminino.
+  if (ehDivisaoFeminina(divisao)) return getTeamsFemininosByDivision(divisao)
   const curados = allTeams.filter(t => effectiveDivision(t) === divisao).map(applyTeamOverride)
   // Os promovidos do pool entram AQUI, e nao em `allTeams`: manter o catalogo
   // curado intocado evita que um `curto` repetido do pool atropele um clube
@@ -1952,6 +2013,10 @@ export const TAMANHO_OFICIAL_DA_LIGA: Record<string, number> = {
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry?.participants.length))
       .map(entry => [entry.id, entry.participants.length]),
   )),
+  // FEMININO: o tamanho é exatamente o número de clubes declarados. Não é
+  // detalhe — é o que faz `completarLigaComPool` devolver a liga INTACTA, sem
+  // sair buscando clube masculino no pool para "completar" o campeonato.
+  ...TAMANHO_DAS_LIGAS_FEMININAS,
 }
 
 /** Alvo de clubes para a divisao, com o padrao antigo (18) para o que nao esta na tabela. */
@@ -2453,6 +2518,9 @@ export function getTeamByShort(curto: string, divisao?: string): Team | undefine
   // que o jogador criou. A validação impede a colisão na criação, mas a ordem
   // aqui é a garantia que não depende de o registro estar íntegro.
   if (divisao) {
+    // Divisão feminina responde do registro feminino: lá o código é único e
+    // não há como um homônimo masculino atender no lugar.
+    if (ehDivisaoFeminina(divisao)) return getTeamsFemininosByDivision(divisao).find(t => t.curto === curto)
     return _clubesPersonalizados.find(t => t.curto === curto && effectiveDivision(t) === divisao)
       ?? curados.find(t => t.curto === curto && effectiveDivision(t) === divisao)
       ?? pool.find(t => t.curto === curto && effectiveDivision(t) === divisao)
@@ -2460,10 +2528,18 @@ export function getTeamByShort(curto: string, divisao?: string): Team | undefine
   return _clubesPersonalizados.find(t => t.curto === curto)
     ?? curados.find(t => t.curto === curto)
     ?? pool.find(t => t.curto === curto)
+    ?? timesFemininos().map(applyTeamOverride).find(t => t.curto === curto)
 }
 
 // Função para buscar time por file_key
 export function getTeamByFileKey(fileKey: string): Team | undefined {
+  // O clube feminino tem `file_key` PRÓPRIO (sufixo `__fem`) — sem esta linha,
+  // `nascimentoDeCarreira` resolveria o clube MASCULINO de mesma raiz e a
+  // carreira feminina nasceria com o elenco e a liga do masculino.
+  if (fileKey.endsWith(SUFIXO_FEMININO)) {
+    const feminino = timesFemininos().find(t => t.file_key === fileKey)
+    return feminino ? applyTeamOverride(feminino) : undefined
+  }
   const proprio = _clubesPersonalizados.find(t => t.file_key === fileKey)
   if (proprio) return proprio
   const team = allTeams.find(t => t.file_key === fileKey)
@@ -2511,7 +2587,10 @@ function _nomeComparavel(nome: string): string {
  * quem digitou o nome curto quase sempre quis dizer.
  */
 export function getTeamByName(nome: string): Team | undefined {
-  const times = allTeams.map(applyTeamOverride)
+  // Os femininos entram no FIM da lista: o nome deles termina em " Feminino",
+  // então nunca ganham de um clube masculino por igualdade — só respondem
+  // quando a busca é pelo nome feminino mesmo.
+  const times = [...allTeams, ...timesFemininos()].map(applyTeamOverride)
 
   const exato = times.find(t => t.nome.toLowerCase() === nome.toLowerCase())
   if (exato) return exato
