@@ -252,9 +252,22 @@
   ],
   "changelog": [
     {
-      "version": "1.0.329",
+      "version": "1.0.330",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "Manager Rivals: matchmaking, ranking e anti-cheat no servidor",
+      "itens": [
+        "MANAGER RIVALS no servidor que ja existia. O relay ganhou fila, ranking por divisao (10 ate a Elite) e validacao de resultado. O jogo manda INTENCAO — quero jogar, o placar foi 2 a 1 —; adversario, validacao e rating sao decididos LA. Save editado no PC nao muda uma linha do ranking.",
+        "PAREAMENTO por rating do tecnico E forca do clube, com a janela abrindo conforme voce espera. So por rating aconteceria Real Madrid contra Criciuma entre dois jogadores de mesmo ranking.",
+        "ANTI-CHEAT em quatro camadas, cada uma com teste automatico: terceiro nao manda resultado de partida alheia; placar impossivel e recusado; reenviar o proprio placar depois de ver o do adversario e recusado; e divergencia entre os dois nao pontua NINGUEM (punir os dois seria injusto com quem enviou certo).",
+        "A sala do Rivals e criada PELO SERVIDOR e entregue pronta aos dois — ninguem abre a partida, ve quem e o adversario e sai.",
+        "O ranking sobrevive a reinicio do servidor (gravado em disco), e o gate  sobe o relay de verdade num diretorio temporario e joga contra ele para provar as sete garantias."
+      ]
+    },
+    {
+      "version": "1.0.329",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "Viver a partida: os momentos em que a bola passa pelo seu atleta",
       "itens": [
         "VIVER A PARTIDA: na carreira de jogador voce escolhe entre SIMULAR a rodada ou VIVE-LA. Vivendo, o jogo para nos momentos em que a bola passa por voce e pergunta o que faz: chutar de primeira, encarar o marcador, tocar para quem esta melhor, ir para a dividida, subir no escanteio. Cada escolha e resolvida pelos SEUS atributos e muda a nota na hora.",

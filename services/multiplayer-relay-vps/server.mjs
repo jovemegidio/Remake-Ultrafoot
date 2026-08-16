@@ -3,6 +3,7 @@ import crypto from "node:crypto"
 import fs from "node:fs"
 import path from "node:path"
 import { WebSocketServer, WebSocket } from "ws"
+import { Competitivo, divisaoDoRating } from "./rivals.mjs"
 
 const PORT = Number(process.env.PORT || 8790)
 const DATA_DIR = process.env.DATA_DIR || "/var/lib/ultrafoot/relay"
@@ -107,11 +108,92 @@ function standings(ids, fixtures) {
   return [...rows.values()].sort((a, b) => b.points - a.points || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf)
 }
 
+// Estado do competitivo (fila, rating, anti-cheat). Vive em disco próprio.
+const competitivo = new Competitivo(DATA_DIR)
+
+/**
+ * Sala criada pelo SERVIDOR quando o matchmaking parou de pé um confronto.
+ *
+ * Diferente da sala de FC Hub, esta não tem host humano: ninguém "abre" a
+ * partida do Rivals, ela é entregue pronta aos dois. É o que impede o truque
+ * mais simples de todos — abrir a sala, ver o adversário e sair se não gostar.
+ */
+function criarSalaCompetitiva(a, b) {
+  let roomCode = code()
+  while (rooms.has(roomCode)) roomCode = code()
+  const now = Date.now()
+  const participante = (p) => ({
+    id: p.id, managerName: String(p.nome || "Técnico").slice(0, 48), teamShort: "",
+    ready: false, connected: false, joinedAt: now, lastSeen: now, token: token(),
+  })
+  const room = {
+    code: roomCode, mode: "competitivo", hostId: a.id, gameVersion: GAME_VERSION,
+    maxPlayers: 2, createdAt: now, sharedRound: 0,
+    participants: [participante(a), participante(b)],
+    competition: null,
+    leagueSettings: { leagueId: "competitivo", leagueName: "Manager Rivals", matchSpeed: "normal", roundDeadlineHours: 24, allowSpectators: false },
+    commands: [], sequence: 0,
+  }
+  rooms.set(roomCode, room)
+  persist()
+  return room
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") return json(res, 204, {})
   if (req.url === "/health") return json(res, 200, { ok: true, service: "ultrafoot-relay", gameVersion: GAME_VERSION, rooms: rooms.size })
   if (limited(req)) return json(res, 429, { ok: false, error: "rate_limited" })
   const url = new URL(req.url, `http://${req.headers.host}`)
+
+  // ── COMPETITIVO: fila, ranking e resultado (1.0.330) ─────────────────────
+  //
+  // ⚠️ O SERVIDOR É A VERDADE. O cliente manda INTENÇÃO — "quero entrar na
+  // fila", "o placar foi 2 a 1" —, nunca fato consumado. Adversário, validação
+  // do resultado e rating são decididos aqui; save editado no PC não muda uma
+  // linha disto. Ver `rivals.mjs`.
+  if (req.method === "POST" && url.pathname === "/v1/competitivo/fila") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    if (!versaoAceita(input.gameVersion)) return json(res, 409, { ok: false, error: "unsupported_game_version", requiredVersion: GAME_VERSION })
+    const modo = String(input.modo || "rivals").slice(0, 24)
+    const id = String(input.managerId || "").slice(0, 64)
+    if (!id) return json(res, 400, { ok: false, error: "manager_id_required" })
+
+    const { pareado } = competitivo.entrarNaFila(modo, {
+      id, nome: input.managerName, forcaDoClube: Number(input.forcaDoClube) || 70,
+    })
+    if (!pareado) {
+      const perfil = competitivo.perfil(id, input.managerName)
+      return json(res, 200, { ok: true, estado: "na_fila", rating: perfil.rating, divisao: divisaoDoRating(perfil.rating) })
+    }
+
+    // Achou adversário: o SERVIDOR cria a sala e entrega o código aos dois.
+    const sala = criarSalaCompetitiva(pareado, { id, nome: input.managerName })
+    const matchId = competitivo.abrirPartida(modo, pareado, { id, nome: input.managerName }, sala.code)
+    return json(res, 200, {
+      ok: true, estado: "pareado", matchId, roomCode: sala.code,
+      adversario: { nome: pareado.nome, rating: pareado.rating, divisao: divisaoDoRating(pareado.rating) },
+      voceEhMandante: false,
+    })
+  }
+  if (req.method === "POST" && url.pathname === "/v1/competitivo/sair") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    competitivo.sairDaFila(String(input.modo || "rivals"), String(input.managerId || ""))
+    return json(res, 200, { ok: true })
+  }
+  if (req.method === "POST" && url.pathname === "/v1/competitivo/resultado") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    const r = competitivo.enviarResultado(String(input.matchId || ""), String(input.managerId || ""), {
+      golsCasa: input.golsCasa, golsFora: input.golsFora, assinatura: input.assinatura,
+    })
+    return json(res, r.erro ? 400 : 200, { ok: !r.erro, ...r })
+  }
+  if (req.method === "GET" && url.pathname === "/v1/competitivo/ranking") {
+    return json(res, 200, { ok: true, ranking: competitivo.ranking(Number(url.searchParams.get("limite")) || 50) })
+  }
+
   if (req.method === "POST" && url.pathname === "/v1/rooms") {
     const input = await body(req).catch(() => null)
     if (!input) return json(res, 400, { ok: false, error: "invalid_json" })

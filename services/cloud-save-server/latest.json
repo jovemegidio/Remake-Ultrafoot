@@ -1,12 +1,68 @@
 {
-  "version": "1.0.289",
-  "notes": "Correcao: o jogo travava por completo ao percorrer os times na criacao de carreira. O escudo 3D criava um contexto de video novo a cada troca de time e nunca o devolvia; o navegador suporta cerca de 16 ao mesmo tempo e, passando disso, derruba a pagina. Em computador rapido acontecia antes, porque se percorre mais times por minuto.",
-  "sizeMb": 754,
-  "sha256": "0530C0CA8E123C05B26834A14C78C87F549AFAAE29188D3B7AE8F35EABA5AE7E",
+  "version": "1.0.322",
+  "notes": "Futebol feminino e carreira de jogador. 70 clubes brasileiros novos, com cidade, cores, estadio e divisao conferidos - e 54 deles ja com atletas reais no elenco. Corrigida a sigla dos clubes, que aparecia como pedaco do nome de arquivo (MACHESTE, DEPORTIV) no placar da partida, no radar, na cerimonia de titulo e na tabela. As imagens do canal de atualizacao passaram para WebP sem perdas: mesma qualidade, metade do peso.",
+  "sizeMb": 685,
+  "sha256": "711DEB00716C8F4A7D448BE040D0A4F2A56AE4A0597E8649FFA108DE07CEAE2B",
+  "anteriores": [
+    {
+      "version": "1.0.321",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.321/Ultrafoot.26_1.0.321_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.321",
+      "sizeMb": 685
+    },
+    {
+      "version": "1.0.320",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.320/Ultrafoot.26_1.0.320_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.320",
+      "sizeMb": 685
+    },
+    {
+      "version": "1.0.319",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.319/Ultrafoot.26_1.0.319_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.319",
+      "sizeMb": 685
+    },
+    {
+      "version": "1.0.318",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.318/Ultrafoot.26_1.0.318_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.318",
+      "sizeMb": 685
+    },
+    {
+      "version": "1.0.317",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.317/Ultrafoot.26_1.0.317_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.317",
+      "sizeMb": 685
+    },
+    {
+      "version": "1.0.316",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.316/Ultrafoot.26_1.0.316_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.316",
+      "sizeMb": 685
+    },
+    {
+      "version": "1.0.315",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.315/Ultrafoot.26_1.0.315_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.315",
+      "sizeMb": 685
+    },
+    {
+      "version": "1.0.314",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.314/Ultrafoot.26_1.0.314_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.314",
+      "sizeMb": 685
+    },
+    {
+      "version": "1.0.312",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.312/Ultrafoot.26_1.0.312_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.312",
+      "sizeMb": 682
+    }
+  ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUZOSWpXNll1S3B0N2czdUZobTVPdzM3NTdsUG1Fc1NiVSs5RDcrb29RVlM0eVRDeG1oWktXUDYxVDd5TGxGZDA3QnhQYXJaMmc2MDBXalAxditFc0FZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2NDQ1NDU0CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yODlfeDY0LXNldHVwLmV4ZQoreXJoRUFFelhJRmZsakVGZC9RdEhaTG50YXllSDNCTUlaZ1lhZHMxcjVMVnZSZGRxMEFlcTN0WDRjMG8rdXlYc1gyN2x4Rnp3VXNlUXYzOUpHdXhBdz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.289_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUtpUStaMnc1STljS2E4dzQzWHM4OURRUlVhM0VHekp2Tit4YXBHQmR2dkJuMjRuUDZYTXdVbjFVakVHVktDalZUREZOMGRERnZxRHRZM0JzZnVlSncwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2ODg0MDMwCWZpbGU6VWx0cmFmb290IDI2XzEuMC4zMjJfeDY0LXNldHVwLmV4ZQpuOUIvOGxQdTAxdDlYWVJZQTh0TVMvZHZ1OXlQd0tKTjVqV212SGVDbTZDTEd2eCthcWtSQXI2aXFpYWkvTzdXQ2hTazg5cEVCSmRMbGtWSGg3TEJCZz09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.322_x64-setup.exe"
     }
   }
 }

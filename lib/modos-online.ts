@@ -56,7 +56,8 @@ export const MODOS_ONLINE: ModoOnline[] = [
     id: "rivals",
     nome: "Manager Rivals",
     resumo: "Divisões e ranking por habilidade. O motor joga; quem gerencia melhor vence.",
-    estado: "planejado",
+    href: "/online/rivals",
+    estado: "em obras",
     fase: 2,
   },
   {
