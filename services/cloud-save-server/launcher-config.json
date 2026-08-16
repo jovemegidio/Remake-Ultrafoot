@@ -252,9 +252,20 @@
   ],
   "changelog": [
     {
-      "version": "1.0.327",
+      "version": "1.0.328",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "Entrevistas com consequencia, repercussao e premios individuais",
+      "itens": [
+        "ENTREVISTAS que mexem no jogo. A imprensa so pergunta o que o save produziu — quatro jogos no banco, sequencia de gols, proposta na mesa — e cada tom de resposta puxa para lados DIFERENTES: a resposta que agrada o treinador nao e a que constroi reputacao, e a polemica compra a torcida ao preco do banco. A tela mostra o efeito antes do clique.",
+        "REPERCUSSAO: o mundo comenta o que aconteceu de verdade (dois gols numa partida, nota alta, declaracao forte). E a reputacao que sai dai faz clube grande acordar — sem isso, responder a imprensa seria enfeite.",
+        "PREMIOS INDIVIDUAIS que olham a carreira e nao so a temporada: melhor jovem da liga, Chuteira de Ouro e Bola de Ouro (que exige temporada excepcional COM titulo e selecao). Eles entram no legado que a aposentadoria leva para a carreira de tecnico."
+      ]
+    },
+    {
+      "version": "1.0.327",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "O online ganhou porta propria — e so aparece quando voce liga",
       "itens": [
         "MENU ONLINE novo, com os modos entre tecnicos reunidos num lugar so: FC Hub, amistoso com sala, Manager Draft e o que vem pela frente (Rivals, Champions, Carreira Online, cooperativa, diretoria, rush e eventos).",

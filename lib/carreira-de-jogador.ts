@@ -360,6 +360,18 @@ export interface EstadoCarreiraDeJogador {
   /** Quanto o atleta já ganhou de bônus nesta temporada. */
   ganhosDaTemporada: number
   /**
+   * REPUTAÇÃO (0–100) e relação com a TORCIDA (0–100), da camada narrativa
+   * (1.0.328). Opcionais para saves criados antes dela.
+   *
+   * Reputação é o que faz clube grande olhar para você; torcida é o que decide
+   * se a saída é aplaudida ou vaiada. Entrevista mexe nas duas, e nem sempre
+   * para o mesmo lado — é isso que torna a escolha uma escolha.
+   */
+  reputacao?: number
+  torcida?: number
+  entrevistasRespondidas?: string[]
+  repercussao?: PostDeRepercussao[]
+  /**
    * A NOTA DO TREINADOR (0–100) — o número que decide tudo.
    *
    * É a tradução das cinco estrelas do EA FC. Ela sobe com atuação boa e cai com
@@ -628,6 +640,10 @@ export function criarCarreiraDeJogador(
     // sem alcance. Trocar por um bom é uma decisão da carreira, com custo.
     empresario: EMPRESARIOS[2],
     ganhosDaTemporada: 0,
+    reputacao: 30,
+    torcida: 50,
+    entrevistasRespondidas: [],
+    repercussao: [],
     // Provisória: logo abaixo é substituída pela confiança MERECIDA, que depende
     // do elenco do clube e por isso precisa do estado já montado.
     notaDoTreinador: 40,
@@ -938,6 +954,21 @@ export function jogarProximaRodada(estado: EstadoCarreiraDeJogador): EstadoCarre
       // BÔNUS POR GOL vira dinheiro na hora — é o que faz o contrato ser uma
       // decisão e não um enfeite na tela de proposta.
       if (d.gols > 0) novo.ganhosDaTemporada += d.gols * (novo.contrato.bonusPorGol ?? 0)
+      // REPERCUSSÃO automática: o mundo comenta o que aconteceu. Dois gols ou
+      // uma nota alta viram post; reputação sobe junto, e é ela que faz clube
+      // grande acordar (ver `gerarPropostas`).
+      if (d.gols >= 2 || d.nota >= 8.5) {
+        novo.reputacao = Math.min(100, (novo.reputacao ?? 30) + (d.gols >= 2 ? 3 : 2))
+        novo.torcida = Math.min(100, (novo.torcida ?? 50) + 2)
+        novo.repercussao = [{
+          id: `post_${novo.temporada}_${rodada}`,
+          autor: "@FutNews",
+          texto: d.gols >= 2
+            ? `${novo.atleta.nome} decide de novo: ${d.gols} gols contra o ${adversario}.`
+            : `Nota ${d.nota.toFixed(1)} para ${novo.atleta.nome} no jogo contra o ${adversario}.`,
+          temporada: novo.temporada,
+        }, ...(novo.repercussao ?? [])].slice(0, 20)
+      }
       // A nota do treinador se move DEVAGAR: uma partida ruim não tira o
       // titular, e uma boa não faz o reserva virar camisa 10 na semana seguinte.
       novo.notaDoTreinador = limitar(novo.notaDoTreinador + (d.nota - 6.6) * 2.4 + d.gols * 1.5)
@@ -1219,6 +1250,9 @@ function gerarPropostas(estado: EstadoCarreiraDeJogador, media: number): Propost
     + t.gols * 1.2
     + (estado.pedido === "transferencia" ? 8 : 0)
     + (agente.influencia - 10) * 0.8
+    // A REPUTAÇÃO fecha o ciclo da camada narrativa: entrevista ambiciosa que
+    // repercute faz clube olhar. Sem isto, responder à imprensa seria enfeite.
+    + ((estado.reputacao ?? 30) - 30) * 0.25
   const semEspaco = papelNoElenco(estado.notaDoTreinador) === "fora dos planos" || (!jogou && atleta.idade <= 23)
 
   if (interesse < 74 && !semEspaco) return []
@@ -1291,6 +1325,20 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
   if (t.gols >= Math.max(12, t.jogos * 0.55)) premios.push(`Artilheiro da ${novo.ligaNome}`)
   if (media >= 7.6 && t.jogos >= 10) premios.push(`Seleção da ${novo.ligaNome}`)
   if (media >= 8 && t.jogos >= 15) premios.push("Melhor jogador da temporada")
+  // ── PRÊMIOS QUE OLHAM A CARREIRA, NÃO SÓ A TEMPORADA (1.0.328) ──
+  //
+  // O critério continua sendo o desempenho ABSOLUTO do atleta — este modo não
+  // simula a temporada individual dos outros 40 mil jogadores do mundo, e
+  // inventar uma disputa que não existe seria pior do que não premiar.
+  // O que muda é a régua: Bola de Ouro pede temporada excepcional COM título e
+  // seleção; melhor jovem pede idade.
+  if (novo.atleta.idade <= 21 && media >= 7.4 && t.jogos >= 12) {
+    premios.push(`Melhor jovem da ${novo.ligaNome}`)
+  }
+  if (media >= 8.2 && t.jogos >= 20 && titulos.length > 0 && novo.selecao.jogos >= 8) {
+    premios.push(`Bola de Ouro ${novo.temporada}`)
+  }
+  if (t.gols >= 25 && t.jogos >= 20) premios.push(`Chuteira de Ouro ${novo.temporada}`)
 
   novo.historico.push({
     temporada: novo.temporada, clubeNome: novo.clubeNome, competicao: novo.ligaNome,
@@ -1538,6 +1586,138 @@ export function reputacaoDeTreinador(resumo: ResumoDaCarreira): number {
     + resumo.premios.length * 4
     + Math.min(15, resumo.selecao.jogos * 0.2),
   ))
+}
+
+// ─── ENTREVISTAS E REPERCUSSÃO (1.0.328) ────────────────────────────────────
+//
+// ⚠️ NÃO É ENFEITE, E É POR ISSO QUE EXISTE. Uma entrevista que não muda nada é
+// só texto no meio do caminho — o jogador aprende em duas rodadas que pode
+// clicar em qualquer resposta. Aqui cada tom mexe em coisas diferentes e
+// OPOSTAS: a resposta que agrada o treinador não é a que constrói reputação, e
+// a polêmica compra a torcida ao preço do banco.
+
+export type TomDaResposta = "respeitosa" | "ambiciosa" | "polemica"
+
+export interface Entrevista {
+  id: string
+  pergunta: string
+  /** O que motivou a pergunta — a imprensa só pergunta o que aconteceu. */
+  contexto: string
+  respostas: {
+    tom: TomDaResposta
+    texto: string
+    /** O que muda, em linguagem de gente, para a tela mostrar ANTES do clique. */
+    efeito: string
+  }[]
+}
+
+/**
+ * A pergunta da vez, ou `null` quando não há assunto.
+ *
+ * A imprensa só pergunta o que o save produziu: sequência no banco, sequência
+ * de gols, proposta na mesa. Sem assunto, não há entrevista — inventar pauta
+ * seria o mesmo que inventar concorrência para os prêmios.
+ */
+export function entrevistaDaVez(estado: EstadoCarreiraDeJogador): Entrevista | null {
+  const papel = papelNoElenco(estado.notaDoTreinador)
+  const t = estado.temporadaAtual
+  const semJogar = estado.ultimasPartidas.slice(0, 4)
+  const encostado = semJogar.length >= 4 && semJogar.every(p => p.minutos === 0)
+
+  if (encostado) {
+    return {
+      id: `entrevista_banco_${estado.temporada}_${estado.rodada}`,
+      pergunta: "Você está satisfeito com os poucos minutos?",
+      contexto: `Quatro partidas seguidas sem sair do banco. Hoje você é ${papel} no elenco.`,
+      respostas: [
+        { tom: "respeitosa", texto: "Vou continuar trabalhando e esperando minha vez.", efeito: "Treinador gosta · moral cede um pouco" },
+        { tom: "ambiciosa", texto: "Acredito que mereço mais oportunidades.", efeito: "Reputação sobe · treinador esfria" },
+        { tom: "polemica", texto: "Não entendo a decisão. Ninguém entende.", efeito: "Torcida e mídia falam de você · treinador afunda" },
+      ],
+    }
+  }
+
+  if (t.gols >= 5 && t.jogos >= 6) {
+    return {
+      id: `entrevista_fase_${estado.temporada}_${t.gols}`,
+      pergunta: "A fase é a melhor da sua carreira. O que mudou?",
+      contexto: `${t.gols} gols em ${t.jogos} partidas nesta temporada.`,
+      respostas: [
+        { tom: "respeitosa", texto: "É o trabalho do grupo. Eu só finalizo.", efeito: "Vestiário aprova · treinador confia mais" },
+        { tom: "ambiciosa", texto: "Estou pronto para um passo maior.", efeito: "Reputação sobe · clubes acordam · treinador desconfia" },
+        { tom: "polemica", texto: "Faltou quem acreditasse antes.", efeito: "Mídia repercute · vestiário racha" },
+      ],
+    }
+  }
+
+  if (estado.propostas.length > 0) {
+    return {
+      id: `entrevista_proposta_${estado.temporada}`,
+      pergunta: "Existe proposta na mesa. Você fica?",
+      contexto: `${estado.propostas.length} clube(s) sondando você nesta janela.`,
+      respostas: [
+        { tom: "respeitosa", texto: "Tenho contrato e respeito o clube.", efeito: "Torcida e treinador aprovam" },
+        { tom: "ambiciosa", texto: "Vou avaliar o que for melhor para minha carreira.", efeito: "Reputação sobe · torcida esfria" },
+        { tom: "polemica", texto: "Já dei o que tinha de dar aqui.", efeito: "Rompe com a torcida · acelera a saída" },
+      ],
+    }
+  }
+  return null
+}
+
+/** Responde. Cada tom mexe em coisas diferentes — e algumas em direções opostas. */
+export function responderEntrevista(
+  estado: EstadoCarreiraDeJogador,
+  entrevistaId: string,
+  tom: TomDaResposta,
+): EstadoCarreiraDeJogador {
+  const novo = structuredClone(estado)
+  const efeitos: Record<TomDaResposta, { treinador: number; moral: number; reputacao: number; torcida: number }> = {
+    respeitosa: { treinador: +4, moral: -2, reputacao: 0, torcida: +2 },
+    ambiciosa: { treinador: -3, moral: +3, reputacao: +6, torcida: -1 },
+    polemica: { treinador: -9, moral: +1, reputacao: +9, torcida: -6 },
+  }
+  const e = efeitos[tom]
+  novo.notaDoTreinador = limitar(novo.notaDoTreinador + e.treinador)
+  novo.moral = limitar(novo.moral + e.moral)
+  novo.reputacao = Math.max(0, Math.min(100, (novo.reputacao ?? 30) + e.reputacao))
+  novo.torcida = Math.max(0, Math.min(100, (novo.torcida ?? 50) + e.torcida))
+  novo.entrevistasRespondidas = [...(novo.entrevistasRespondidas ?? []), entrevistaId]
+
+  const texto = tom === "respeitosa" ? "Resposta comedida. O treinador registrou."
+    : tom === "ambiciosa" ? "Você se colocou. A imprensa gostou; o treinador, nem tanto."
+      : "Declaração forte. Vai repercutir — e o treinador viu."
+  novo.recados = [{
+    id: `entrevista_resp_${entrevistaId}`, de: "Imprensa", texto,
+    temporada: novo.temporada, rodada: novo.rodada,
+  }, ...novo.recados].slice(0, 25)
+  novo.repercussao = [gerarRepercussao(novo, tom), ...(novo.repercussao ?? [])].slice(0, 20)
+  return novo
+}
+
+/**
+ * A REPERCUSSÃO — as "redes sociais" do save.
+ *
+ * Gerada a partir do que aconteceu, nunca de texto aleatório: gol, convocação,
+ * transferência, sequência no banco e declaração. É o que faz a carreira ter
+ * eco fora do placar.
+ */
+export interface PostDeRepercussao {
+  id: string
+  autor: string
+  texto: string
+  temporada: number
+}
+
+function gerarRepercussao(estado: EstadoCarreiraDeJogador, tom: TomDaResposta): PostDeRepercussao {
+  const nome = estado.atleta.nome
+  const autor = tom === "polemica" ? "@torcedor_raiz" : tom === "ambiciosa" ? "@mercadoFC" : "@FutNews"
+  const texto = tom === "polemica"
+    ? `${nome} detonou a comissão técnica. Vestiário fervendo no ${estado.clubeNome}.`
+    : tom === "ambiciosa"
+      ? `${nome} admite que avalia propostas. Empresário já circula na Europa.`
+      : `${nome} evita polêmica e diz que respeita a decisão do treinador.`
+  return { id: `post_${estado.temporada}_${estado.rodada}_${tom}`, autor, texto, temporada: estado.temporada }
 }
 
 /** Média da temporada corrente — a tela mostra em três lugares. */

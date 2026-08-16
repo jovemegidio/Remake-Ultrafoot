@@ -10,7 +10,7 @@
 
 import { useMemo, useState } from "react"
 import {
-  Award, BarChart3, BriefcaseBusiness, CalendarDays, ChevronRight, Flag, Play, Star, Target, TrendingUp, Users,
+  Award, BarChart3, BriefcaseBusiness, CalendarDays, ChevronRight, Flag, Newspaper, Play, Star, Target, TrendingUp, Users,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { GameSidebar } from "@/components/game-sidebar"
@@ -26,6 +26,7 @@ import {
   aceitarProposta, arquetipo, confiancaMerecida, encerrarTemporada, fazerPedido,
   hierarquiaDaPosicao, jogarProximaRodada, leituraDaPersonalidade, potencialVisivel,
   reputacaoDeTreinador, resumoDaCarreira, trocarEmpresario, EMPRESARIOS,
+  entrevistaDaVez, responderEntrevista,
   mediaDaTemporada, minutosEsperados, papelNoElenco, recusarPropostas,
   type AtributosDoAtleta, type EstadoCarreiraDeJogador,
 } from "@/lib/carreira-de-jogador"
@@ -96,6 +97,7 @@ export default function CarreiraDeJogadorPage() {
   const jogosNaCarreira = carreira.historico.reduce((n, h) => n + h.jogos, 0) + carreira.temporadaAtual.jogos
   const faixaDePotencial = potencialVisivel(atleta, jogosNaCarreira)
   const resumo = resumoDaCarreira(carreira)
+  const entrevista = entrevistaDaVez(carreira)
 
   return (
     <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
@@ -345,6 +347,52 @@ export default function CarreiraDeJogadorPage() {
                 </p>
               )}
             </section>
+
+            {/* ── IMPRENSA (1.0.328) ───────────────────────────────────────
+                A pergunta só aparece quando o save produziu assunto — quatro
+                jogos no banco, sequência de gols, proposta na mesa. Cada tom
+                mexe em coisas DIFERENTES e às vezes opostas, e a tela diz o que
+                muda antes do clique: entrevista que não muda nada é texto no
+                meio do caminho. */}
+            {entrevista && !carreira.aposentado && (
+              <section className="rounded-2xl border border-sky-400/25 bg-sky-400/[.05] p-5 lg:col-span-3">
+                <h2 className="flex items-center gap-2 text-xl font-black">
+                  <Newspaper className="text-sky-300" />Entrevista
+                </h2>
+                <p className="mt-1 text-[11px] text-white/40">{entrevista.contexto}</p>
+                <p className="mt-3 text-sm font-bold text-white/85">“{entrevista.pergunta}”</p>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  {entrevista.respostas.map(r => (
+                    <button
+                      key={r.tom}
+                      onClick={() => aplicar(responderEntrevista(carreira, entrevista.id, r.tom))}
+                      className="rounded-xl border border-white/10 bg-black/30 p-3 text-left transition-colors hover:border-sky-400/40 hover:bg-sky-400/[.08]"
+                    >
+                      <p className="text-[13px] text-white/80">“{r.texto}”</p>
+                      <p className="mt-1.5 text-[10px] uppercase tracking-wide text-sky-200/60">{r.efeito}</p>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* REPERCUSSÃO — o eco do que o save produziu. */}
+            {(carreira.repercussao?.length ?? 0) > 0 && (
+              <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
+                <h2 className="text-xl font-black">Repercussão</h2>
+                <p className="mt-1 text-[11px] text-white/40">
+                  Reputação {carreira.reputacao ?? 30} · torcida {carreira.torcida ?? 50}
+                </p>
+                <div className="mt-3 max-h-[300px] space-y-2 overflow-auto">
+                  {(carreira.repercussao ?? []).map(post => (
+                    <div key={post.id} className="rounded-xl bg-black/30 p-3">
+                      <p className="text-[11px] font-bold text-sky-300">{post.autor}</p>
+                      <p className="mt-0.5 text-[13px] text-white/75">{post.texto}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* ÚLTIMAS PARTIDAS */}
             <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
