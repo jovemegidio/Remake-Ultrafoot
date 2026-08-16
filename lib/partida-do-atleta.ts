@@ -240,7 +240,9 @@ export function decidirMomento(
   const podeGol = participacoes < partida.golsPro
   const podeAssistencia = participacoes < partida.golsPro
 
-  let gol = false, assistencia = false, delta = 0, narracao = ""
+  let gol = false, assistencia = false
+  let delta: number
+  let narracao: string
   if (sucesso) {
     if (escolha.recompensa === "gol" && podeGol) { gol = true; delta = 1.2; narracao = "GOL! Você resolve." }
     else if (escolha.recompensa === "assistencia" && podeAssistencia) { assistencia = true; delta = 0.8; narracao = "Assistência! O passe encontrou o gol." }
