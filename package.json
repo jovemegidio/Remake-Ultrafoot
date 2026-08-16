@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "qa:smoke": "tsx scripts/qa-smoke.ts",
+    "qa:rivals-no-ar": "node scripts/qa-rivals-no-ar.mjs",
     "qa:rivals": "node scripts/qa-rivals-servidor.mjs",
     "qa:carreira-jogador": "tsx scripts/qa-carreira-de-jogador.ts",
     "qa:modalidades": "tsx scripts/qa-modalidades-322.ts",
