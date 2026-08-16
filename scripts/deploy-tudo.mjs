@@ -240,6 +240,7 @@ const GATES = [
   { nome: "isolamento das carreiras", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/qa-save-isolation.ts"] },
   { nome: "identidade dos clubes da 331", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-identidade-clubes-331.ts"] },
   { nome: "VAR realista da 333", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-var-realista-333.ts"] },
+  { nome: "decisoes diretas do VAR", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-var.ts"] },
   { nome: "indice e elencos do pool alinhados", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-pool-elencos.ts"] },
   { nome: "qualidade das ligas atualizada", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/qa-qualidade-das-ligas.ts"] },
   { nome: "type-check", cmd: "node", args: ["node_modules/typescript/bin/tsc", "--noEmit", "-p", "tsconfig.json"] },
