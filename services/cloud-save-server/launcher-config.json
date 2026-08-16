@@ -252,9 +252,21 @@
   ],
   "changelog": [
     {
-      "version": "1.0.322",
+      "version": "1.0.323",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "A pasta do jogo ficou organizada",
+      "itens": [
+        "A pasta do jogo agora tem um atalho 'sav' que abre direto onde as suas carreiras ficam gravadas. O save NAO mudou de lugar: ele continua fora da pasta do jogo, que e o que faz ele sobreviver a atualizacao e a reinstalacao. O atalho so encurta o caminho para quem quer fazer copia de seguranca.",
+        "Um LEIA-ME na pasta do jogo explica o que e cada pasta (escudos, camisas, jogadores, trofeus, audio) e como guardar e restaurar uma carreira.",
+        "O aviso de licenca que ficava solto na raiz foi para a pasta 'licencas'.",
+        "Protecao no desinstalador: ele remove o atalho 'sav' ANTES de limpar a pasta, para que desinstalar ou atualizar o jogo nunca alcance os seus saves pelo caminho do atalho."
+      ]
+    },
+    {
+      "version": "1.0.322",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "Futebol feminino, carreira na base e carreira de jogador",
       "itens": [
         "FUTEBOL FEMININO: 21 ligas de 18 paises jogaveis (Brasileirao A1 e A2, WSL e WSL 2, Liga F, Premiere Ligue, Frauen-Bundesliga, Serie A Femminile, NWSL, Liga MX Femenil, WE League, A-League Women, Damallsvenskan, Toppserien, Kvindeligaen, SWPL, Eredivisie Vrouwen, Nacional Feminino, Colombia, Argentina e Chile), cada uma com o proprio calendario, a propria copa nacional e a continental da confederacao.",

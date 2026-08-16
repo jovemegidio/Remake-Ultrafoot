@@ -1,0 +1,56 @@
+ULTRAFOOT 26
+============
+
+O QUE E CADA PASTA
+------------------
+
+  sav\               Seus saves. E um atalho para a pasta onde o jogo grava de
+                     verdade (fora daqui, para sobreviver a atualizacao e a
+                     reinstalacao). O arquivo ultrafoot-clubs.json guarda as
+                     carreiras, as edicoes de clube e as imagens baixadas.
+
+  escudos\           Escudos dos clubes.
+  escudos-mini\      Versoes pequenas, usadas em tabela e listas.
+  escudos-selecoes\  Escudos das selecoes.
+  camisas\           Uniformes principais.
+  camisas2\          Uniformes reservas.
+  camisas3\          Terceiros uniformes.
+  kits-imported\     Uniformes que vieram pelo canal de atualizacao.
+  jogadores\         Fotos dos atletas.
+  selecoes\          Arte das selecoes.
+  trofeus\           Arte dos trofeus das competicoes.
+  audio\             Narracao e sons da partida.
+
+  licencas\          Avisos de licenca de bibliotecas de terceiros.
+  extractor\         7-Zip, usado para descompactar pacotes de arte.
+  prerequisites\     Instalador do Visual C++ Runtime, se o Windows precisar.
+  launcher\          Ultrafoot Launcher, que cuida das atualizacoes.
+
+  ultrafoot.exe      O jogo.
+  uninstall.exe      Desinstalar.
+
+
+COPIA DE SEGURANCA DA SUA CARREIRA
+----------------------------------
+
+Copie a pasta "sav" inteira. So isso. Para restaurar, devolva os arquivos ao
+mesmo lugar com o jogo FECHADO.
+
+
+IMAGENS BAIXADAS
+----------------
+
+Escudos, uniformes e fotos que chegam pelo canal de atualizacao ficam gravados
+junto do save e sao reaproveitados: o jogo nao baixa de novo uma imagem que ja
+tem. Atualizar o jogo nao apaga essa colecao.
+
+
+NAO MEXA AQUI DENTRO COM O JOGO ABERTO
+--------------------------------------
+
+Trocar arquivo de arte com o jogo rodando pode deixar a tela sem a imagem ate
+reabrir. Para colocar escudo ou uniforme proprio, use o Editor dentro do jogo —
+ele grava no lugar certo e sobrevive a atualizacao.
+
+
+ultrafoot.179-198-103-30.sslip.io

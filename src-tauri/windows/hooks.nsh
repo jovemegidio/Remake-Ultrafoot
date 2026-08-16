@@ -20,6 +20,12 @@
 !macro NSIS_HOOK_PREINSTALL
   SetRegView 64
 
+  ; A juncao `sav` sai ANTES de qualquer coisa tocar em $INSTDIR — o mesmo
+  ; motivo detalhado no NSIS_HOOK_PREUNINSTALL la embaixo: um apagar recursivo
+  ; atravessa o link e leva as carreiras junto. O jogo a recria no proximo
+  ; arranque. Sem `/r`, de proposito.
+  RMDir "$INSTDIR\sav"
+
   ; ── Versão mínima do Windows ────────────────────────────────────────────────
   ; O WebView2 exige Windows 10 1809 (build 17763) ou mais novo. Abaixo disso o
   ; jogo NÃO tem como funcionar, e instalar seria enganar o jogador.
@@ -188,4 +194,25 @@
   ${EndIf}
 
   SetRegView lastused
+!macroend
+
+; ─── A JUNCAO `sav` TEM DE SUMIR ANTES DO APAGAR RECURSIVO ─────────────────────
+;
+; ⚠️ ISTO PROTEGE A CARREIRA DE TODO MUNDO. A partir da 1.0.323 o jogo cria, na
+; pasta instalada, uma juncao chamada `sav` que aponta para
+; `%APPDATA%\com.ultrafoot.remake` — onde o save realmente mora (ver
+; `criar_atalho_sav` em src-tauri/src/lib.rs). E conveniencia: quem abre a pasta
+; do jogo acha o save.
+;
+; O perigo e o desinstalador. O template do Tauri termina com `RMDir /r
+; "$INSTDIR"`, e o /r ENTRA na juncao: ele apagaria os arquivos do OUTRO lado do
+; link — isto e, as carreiras — antes de remover a pasta. Desinstalar (ou uma
+; atualizacao que desinstala a versao anterior) levaria o save junto, e sem
+; nenhum aviso.
+;
+; `RMDir` SEM `/r` remove o ponto de reparo e nao toca no destino. Se por acaso
+; `sav` for uma pasta de verdade com conteudo, o comando falha sozinho e nao
+; apaga nada — que e o comportamento desejado nos dois casos.
+!macro NSIS_HOOK_PREUNINSTALL
+  RMDir "$INSTDIR\sav"
 !macroend

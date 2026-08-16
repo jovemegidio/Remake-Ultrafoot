@@ -514,6 +514,63 @@ fn ler_sessao_do_launcher() -> Option<String> {
     std::fs::read_to_string(pasta_compartilhada_do_launcher()?.join("sessao.json")).ok()
 }
 
+/// `sav` NA PASTA DO JOGO, APONTANDO PARA ONDE OS SAVES REALMENTE ESTAO.
+///
+/// Pedido do usuario: a pasta instalada devia parecer organizada, com um `sav`
+/// como o do Brasfoot. Os saves NAO se mudam para ca — eles vivem em
+/// `%APPDATA%\com.ultrafoot.remake\ultrafoot-clubs.json`, que e o unico lugar
+/// que sobrevive a reinstalacao e a atualizacao. Mover isso obrigaria a migrar
+/// a carreira de todo mundo, com risco de perder save, para ganhar aparencia.
+///
+/// A juncao (`mklink /J`) resolve os dois lados: quem abre a pasta do jogo ve
+/// `sav` e entra direto nos saves; o arquivo continua onde sempre esteve.
+/// Juncao NAO exige administrador (link simbolico exigiria), e por isso e ela.
+///
+/// Falhar aqui e SEM CONSEQUENCIA de proposito: se a pasta for somente leitura,
+/// se o disco nao for NTFS ou se o `cmd` nao responder, fica so o aviso em
+/// texto com o caminho. Um atalho de conveniencia jamais pode impedir o jogo de
+/// abrir.
+#[cfg(target_os = "windows")]
+fn criar_atalho_sav(app: &tauri::App) {
+    use std::os::windows::process::CommandExt;
+    use tauri::Manager;
+
+    let Ok(dados) = app.path().app_data_dir() else { return };
+    let Ok(exe) = std::env::current_exe() else { return };
+    let Some(pasta_do_jogo) = exe.parent() else { return };
+    let atalho = pasta_do_jogo.join("sav");
+
+    // Ja existe (juncao de uma execucao anterior, ou pasta de verdade que
+    // alguem criou): nao mexe. Reapontar apagaria o que estiver la dentro.
+    if atalho.exists() {
+        return;
+    }
+    let _ = std::fs::create_dir_all(&dados);
+
+    let ok = std::process::Command::new("cmd")
+        .args(["/C", "mklink", "/J"])
+        .arg(&atalho)
+        .arg(&dados)
+        .creation_flags(0x0800_0000) // CREATE_NO_WINDOW: sem piscar console no arranque
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+
+    if !ok {
+        // Sem juncao, o caminho vira texto — continua respondendo "onde esta o
+        // meu save?", que e a pergunta que o `sav` existe para responder.
+        let _ = std::fs::write(
+            pasta_do_jogo.join("ONDE-ESTAO-OS-SAVES.txt"),
+            format!(
+                "Os saves do Ultrafoot 26 ficam em:\r\n\r\n{}\r\n\r\n\
+                 O arquivo ultrafoot-clubs.json guarda as carreiras, as edicoes de clube\r\n\
+                 e as imagens baixadas. Para fazer copia de seguranca, copie essa pasta.\r\n",
+                dados.display()
+            ),
+        );
+    }
+}
+
 pub fn run() {
     // DESKTOP: conecta ao Discord (falha em silencio se ele nao estiver aberto).
     #[cfg(desktop)]
@@ -669,7 +726,11 @@ pub fn run() {
                 .body(file_data)
                 .unwrap()
         })
-        .setup(|_app| Ok(()))
+        .setup(|_app| {
+            #[cfg(target_os = "windows")]
+            criar_atalho_sav(_app);
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
