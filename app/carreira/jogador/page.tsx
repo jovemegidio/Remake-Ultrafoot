@@ -21,7 +21,8 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
 import {
-  aceitarProposta, encerrarTemporada, fazerPedido, gastarPonto, jogarProximaRodada,
+  aceitarProposta, arquetipo, confiancaMerecida, encerrarTemporada, fazerPedido,
+  hierarquiaDaPosicao, jogarProximaRodada, leituraDaPersonalidade, potencialVisivel,
   mediaDaTemporada, minutosEsperados, papelNoElenco, recusarPropostas,
   type AtributosDoAtleta, type EstadoCarreiraDeJogador,
 } from "@/lib/carreira-de-jogador"
@@ -82,6 +83,14 @@ export default function CarreiraDeJogadorPage() {
   const media = mediaDaTemporada(carreira)
   const papel = papelNoElenco(carreira.notaDoTreinador)
   const posicaoNaTabela = Math.max(1, carreira.tabela.findIndex(l => l.curto === carreira.clubeCurto) + 1)
+  // Derivados do motor. `hierarquiaDaPosicao` lê o elenco do clube, então é o
+  // mesmo número que decide se o atleta joga — não uma segunda contabilidade.
+  const arq = arquetipo(atleta.arquetipo)
+  const especializacao = arq.especializacoes.find(e => e.id === atleta.especializacao)
+  const hierarquia = hierarquiaDaPosicao(carreira)
+  const merecida = confiancaMerecida(carreira)
+  const jogosNaCarreira = carreira.historico.reduce((n, h) => n + h.jogos, 0) + carreira.temporadaAtual.jogos
+  const faixaDePotencial = potencialVisivel(atleta, jogosNaCarreira)
 
   return (
     <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
@@ -155,8 +164,13 @@ export default function CarreiraDeJogadorPage() {
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4">
             <TrendingUp className="h-5 w-5 text-[var(--brand)]" />
-            <p className="mt-3 text-xs text-white/45">Overall / potencial</p>
-            <p className="mt-1 text-2xl font-black">{atleta.overall} <span className="text-base text-white/40">/ {atleta.potencial}</span></p>
+            {/* ⚠️ FAIXA, não o número. Mostrar "potencial 87" transforma a
+                carreira numa barra de progresso: o jogador sabe no primeiro dia
+                onde vai terminar. A faixa estreita conforme ele joga. */}
+            <p className="mt-3 text-xs text-white/45">Overall / teto projetado</p>
+            <p className="mt-1 text-2xl font-black">
+              {atleta.overall} <span className="text-base text-white/40">/ {faixaDePotencial.min}–{faixaDePotencial.max}</span>
+            </p>
           </div>
         </section>
 
@@ -288,32 +302,94 @@ export default function CarreiraDeJogadorPage() {
 
         {aba === "evolucao" && (
           <div className="grid gap-5 lg:grid-cols-2">
+            {/* ── ATRIBUTOS E EVOLUÇÃO ORGÂNICA (1.0.325) ──────────────────
+                Os botões "+" saíram. Não se compra mais atributo com ponto: o
+                atleta cresce pelo que FAZ em campo, e a tela agora explica de
+                onde veio cada ganho — sem isso a evolução vira ruído. O que o
+                jogador escolhe é o FOCO DE TREINO, que inclina a curva sem
+                decidi-la. */}
             <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-black">Atributos</h2>
                 <span className="rounded-full border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-3 py-1 text-xs font-bold text-[var(--brand)]">
-                  {carreira.crescimento.pontosDisponiveis} pontos
+                  {arq.nome}{especializacao ? ` · ${especializacao.nome}` : ""}
                 </span>
               </div>
-              <p className="mt-1 text-[11px] text-white/40">
-                Nível {carreira.crescimento.nivel} · pontos saem de minutos jogados, gols e notas altas.
-                Atributo acima de 75 custa 2 pontos; acima de 85, três. O teto é o seu potencial ({atleta.potencial}).
+              <p className="mt-1 text-[11px] leading-relaxed text-white/40">
+                {arq.descricao} Você evolui pelo que faz em campo — dribles puxam drible, desarmes puxam
+                defesa, minutos puxam físico. A comissão projeta seu teto entre{" "}
+                <b className="text-white/70">{faixaDePotencial.min} e {faixaDePotencial.max}</b>, e essa
+                leitura vai apertando conforme você joga.
               </p>
+
+              <label className="mt-4 block text-[11px] text-white/55">
+                Foco do treino
+                <select
+                  value={carreira.focoDeTreino}
+                  onChange={e => aplicar({ ...carreira, focoDeTreino: e.target.value as typeof carreira.focoDeTreino })}
+                  className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                >
+                  <option value="equilibrado">Equilibrado</option>
+                  {ATRIBUTOS.map(a => <option key={a.chave} value={a.chave}>{a.nome}</option>)}
+                </select>
+              </label>
+
               <div className="mt-4 space-y-3">
-                {ATRIBUTOS.map(({ chave, nome }) => (
-                  <div key={chave} className="flex items-center gap-3">
-                    <span className="w-28 text-sm text-white/60">{nome}</span>
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-                      <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${atleta.atributos[chave]}%` }} />
+                {ATRIBUTOS.map(({ chave, nome }) => {
+                  const ganho = carreira.ultimaEvolucao.find(g => g.atributo === chave)?.ganho ?? 0
+                  const doArquetipo = arq.principais.includes(chave)
+                  return (
+                    <div key={chave} className="flex items-center gap-3">
+                      <span className={cn("w-28 text-sm", doArquetipo ? "font-bold text-white/80" : "text-white/55")}>
+                        {nome}
+                      </span>
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${atleta.atributos[chave]}%` }} />
+                      </div>
+                      <b className="w-8 text-right">{atleta.atributos[chave]}</b>
+                      <span className={cn("w-9 text-right text-xs font-bold", ganho > 0 ? "text-emerald-400" : "text-transparent")}>
+                        +{ganho}
+                      </span>
                     </div>
-                    <b className="w-8 text-right">{atleta.atributos[chave]}</b>
-                    <Button
-                      size="sm" variant="outline"
-                      disabled={carreira.crescimento.pontosDisponiveis <= 0 || atleta.atributos[chave] >= 99}
-                      onClick={() => aplicar(gastarPonto(carreira, chave))}
-                    >+</Button>
-                  </div>
-                ))}
+                  )
+                })}
+              </div>
+              {carreira.ultimaEvolucao.length > 0 && (
+                <p className="mt-3 text-[11px] text-emerald-300/70">
+                  Ganho da última temporada — puxado pelo que você fez em campo.
+                </p>
+              )}
+            </section>
+
+            {/* ── A FILA DA POSIÇÃO ────────────────────────────────────────
+                O número que decide se você joga. Antes a tela só mostrava o
+                resultado ("fora dos planos") sem dizer contra quem. */}
+            <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
+              <h2 className="flex items-center gap-2 text-xl font-black"><Users className="text-[var(--brand)]" />Disputa pela posição</h2>
+              <p className="mt-1 text-[11px] text-white/45">
+                Você é o <b className="text-white/80">{hierarquia.posto}º</b> de {hierarquia.concorrentes} em {atleta.posicao} neste elenco.
+                {hierarquia.posto > 1 && ` À sua frente: ${hierarquia.nomeDoMelhorRival} (${hierarquia.melhorRival}).`}
+              </p>
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/55">Confiança do treinador</span>
+                  <b>{Math.round(carreira.notaDoTreinador)}</b>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${carreira.notaDoTreinador}%` }} />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-white/40">
+                  <span>Merecido pelo seu lugar na fila</span>
+                  <b className="text-white/60">{Math.round(merecida)}</b>
+                </div>
+              </div>
+              <div className="mt-4 border-t border-white/10 pt-3">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-white/45">Como a comissão te vê</p>
+                <ul className="mt-2 space-y-1">
+                  {leituraDaPersonalidade(atleta.personalidade).map(frase => (
+                    <li key={frase} className="text-[12px] text-white/65">· {frase}</li>
+                  ))}
+                </ul>
               </div>
             </section>
 

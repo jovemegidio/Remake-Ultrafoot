@@ -15,7 +15,8 @@
 import { allTeams, getTeamByFileKey } from "@/lib/teams-data"
 import {
   confiancaMerecida, criarAtletaDaCarreira, criarCarreiraDeJogador, hierarquiaDaPosicao,
-  jogarProximaRodada, papelNoElenco, type EstadoCarreiraDeJogador,
+  jogarProximaRodada, papelNoElenco, encerrarTemporada, potencialVisivel,
+  type EstadoCarreiraDeJogador,
 } from "@/lib/carreira-de-jogador"
 
 let falhas = 0
@@ -76,6 +77,42 @@ if (merecidaCraque < 60) erro("um atleta de 92 nao chega nem perto de titular")
 const clube = getTeamByFileKey(carreira.clubeFileKey)
 if (!clube) erro("clube da carreira nao resolve por file_key")
 if (h.concorrentes < 2) erro("a posicao nao tem concorrencia nenhuma no elenco real")
+
+// ── 5. EVOLUCAO ORGANICA (1.0.325) ──────────────────────────────────────────
+//
+// Duas carreiras com o MESMO atleta e personalidades opostas: quem tem
+// profissionalismo e determinacao altos tem de terminar mais forte. E ninguem
+// pode passar do proprio teto — que continua escondido atras de uma faixa.
+const base = criarAtletaDaCarreira({
+  nome: "Evolucao Teste", posicao: "MEI", idade: 18, nacionalidade: "Brasil",
+  pePreferido: "direito", alturaCm: 178, pesoKg: 72, numero: 8, arquetipo: "maestro",
+})
+const santos = allTeams.find(t => t.nome === "Santos") ?? allTeams.find(t => t.prestigio < 80)!
+
+function tresTemporadas(pers: Partial<typeof base.personalidade>): EstadoCarreiraDeJogador {
+  const atleta = { ...base, personalidade: { ...base.personalidade, ...pers } }
+  let e = criarCarreiraDeJogador(santos, atleta, "Brasileirao Serie A", 2026)
+  for (let ano = 0; ano < 3; ano++) { e = rodarTemporada(e); e = encerrarTemporada(e) }
+  return e
+}
+
+const dedicado = tresTemporadas({ profissionalismo: 19, determinacao: 19 })
+const relaxado = tresTemporadas({ profissionalismo: 4, determinacao: 4 })
+console.log(`overall apos 3 temporadas: dedicado ${dedicado.atleta.overall} | relaxado ${relaxado.atleta.overall} (comecaram em ${base.overall})`)
+
+if (dedicado.atleta.overall <= base.overall) erro("o atleta dedicado nao evoluiu em tres temporadas")
+if (dedicado.atleta.overall <= relaxado.atleta.overall) erro("a personalidade nao muda a evolucao")
+if (dedicado.atleta.overall > dedicado.atleta.potencial) erro("o atleta passou do proprio teto")
+if (!dedicado.historico.length) erro("historico vazio depois de tres temporadas")
+if (!dedicado.ultimaEvolucao.length) erro("a evolucao nao registrou em que atributo o atleta cresceu")
+
+const jogosNaCarreira = dedicado.historico.reduce((n, h) => n + h.jogos, 0)
+const faixa = potencialVisivel(dedicado.atleta, jogosNaCarreira)
+console.log(`faixa mostrada: ${faixa.min}-${faixa.max} (real ${dedicado.atleta.potencial}, escondido)`)
+if (faixa.min > dedicado.atleta.potencial || faixa.max < dedicado.atleta.potencial) {
+  erro("a faixa mostrada nao contem o potencial real")
+}
+if (faixa.max - faixa.min <= 0) erro("a faixa fechou de todo — o teto deixou de ser segredo")
 
 console.log(falhas === 0 ? "TUDO OK" : `${falhas} falha(s)`)
 process.exit(falhas === 0 ? 0 : 1)

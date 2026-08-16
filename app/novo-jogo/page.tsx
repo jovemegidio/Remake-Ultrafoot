@@ -80,8 +80,8 @@ import { carregarElencosFemininos, clubesComElencoFeminino } from "@/lib/elencos
 import { LIGAS_FEMININAS } from "@/lib/futebol-feminino"
 import { MODALIDADES, MODALIDADE_DE_JOGADOR, type ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
 import {
-  POSICOES_JOGAVEIS, criarAtletaDaCarreira, criarCarreiraDeJogador,
-  type PosicaoDoAtleta,
+  ORIGENS, POSICOES_JOGAVEIS, arquetiposDaPosicao, criarAtletaDaCarreira, criarCarreiraDeJogador,
+  type ArquetipoId, type OrigemDoAtleta, type PosicaoDoAtleta,
 } from "@/lib/carreira-de-jogador"
 import qualidadeDasLigas from "@/data/seeds/qualidade-das-ligas.json"
 import { flushPersistentStore } from "@/lib/persistent-store"
@@ -593,7 +593,8 @@ export default function NovoJogoPage() {
     nome: string; posicao: PosicaoDoAtleta; idade: number
     nacionalidade: string; pePreferido: "direito" | "esquerdo"
     alturaCm: number; pesoKg: number; numero: number
-  }>({ nome: "", posicao: "ATA", idade: 18, nacionalidade: "Brasil", pePreferido: "direito", alturaCm: 178, pesoKg: 72, numero: 9 })
+    arquetipo: ArquetipoId; origem: OrigemDoAtleta
+  }>({ nome: "", posicao: "ATA", idade: 18, nacionalidade: "Brasil", pePreferido: "direito", alturaCm: 178, pesoKg: 72, numero: 9, arquetipo: "matador", origem: "joia" })
   // Trocar de modalidade troca o catálogo inteiro: os índices de país, liga e
   // clube não significam a mesma coisa nos dois, e mantê-los abriria a tela num
   // clube que não é o que o carrossel está mostrando.
@@ -2033,6 +2034,41 @@ export default function NovoJogoPage() {
                         className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
                       />
                     </label>
+                    {/* ARQUÉTIPO — a identidade do atleta (1.0.325). Dois
+                        overalls 85 têm de jogar diferente: é ele que decide
+                        quais atributos crescem mais rápido e que caminho de
+                        especialização abre lá na frente. */}
+                    <label className="text-[11px] text-white/55">
+                      Perfil de jogo
+                      <select
+                        value={atleta.arquetipo}
+                        onChange={e => setAtleta(a => ({ ...a, arquetipo: e.target.value as ArquetipoId }))}
+                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                      >
+                        {arquetiposDaPosicao(atleta.posicao).map(a => (
+                          <option key={a.id} value={a.id}>{a.nome}</option>
+                        ))}
+                      </select>
+                    </label>
+                    {/* ORIGEM — a história de partida. Não é enfeite: mexe no
+                        overall inicial, no teto e na personalidade. */}
+                    <label className="text-[11px] text-white/55">
+                      Como sua história começa
+                      <select
+                        value={atleta.origem}
+                        onChange={e => setAtleta(a => ({ ...a, origem: e.target.value as OrigemDoAtleta }))}
+                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                      >
+                        {ORIGENS.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-white/40">
+                    {ORIGENS.find(o => o.id === atleta.origem)?.efeito}{" "}
+                    {arquetiposDaPosicao(atleta.posicao).find(a => a.id === atleta.arquetipo)?.descricao}{" "}
+                    O seu TETO fica escondido: a comissão só arrisca uma faixa, e ela aperta conforme você joga.
+                  </p>
+                  <div className="hidden">
                   </div>
                 </div>
               )}

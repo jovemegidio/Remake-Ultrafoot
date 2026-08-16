@@ -48,6 +48,113 @@ export interface AtributosDoAtleta {
   fisico: number
 }
 
+// ─── ARQUÉTIPOS ──────────────────────────────────────────────────────────────
+//
+// Dois atletas de overall 85 têm de jogar diferente. O arquétipo é a identidade:
+// diz quais atributos são os DELE — os que crescem mais rápido, os que a
+// evolução orgânica favorece e os que o overall pondera mais.
+//
+// ⚠️ São nossos, não os treze do EA FC. Copiar a lista de lá amarraria o modo a
+// um balanceamento que não é deste jogo (e cujos nomes são marca alheia). O que
+// se aproveita da referência é a IDEIA: identidade primeiro, especialização
+// depois.
+
+export type ArquetipoId = "maestro" | "explosivo" | "matador" | "muralha" | "general" | "guardiao"
+
+export interface Arquetipo {
+  id: ArquetipoId
+  nome: string
+  descricao: string
+  /** Onde este atleta cresce mais rápido. */
+  principais: (keyof AtributosDoAtleta)[]
+  /** Posições em que ele faz sentido. */
+  posicoes: PosicaoDoAtleta[]
+  /** Caminhos que se abrem quando o atleta amadurece (ver `especializacaoDisponivel`). */
+  especializacoes: { id: string; nome: string; foco: (keyof AtributosDoAtleta)[] }[]
+}
+
+export const ARQUETIPOS: Arquetipo[] = [
+  {
+    id: "maestro", nome: "Maestro",
+    descricao: "Manda no jogo com passe, leitura e técnica.",
+    principais: ["passe", "drible"], posicoes: ["MEI", "VOL"],
+    especializacoes: [
+      { id: "armador", nome: "Armador", foco: ["passe", "ritmo"] },
+      { id: "camisa10", nome: "Camisa 10", foco: ["drible", "finalizacao"] },
+    ],
+  },
+  {
+    id: "explosivo", nome: "Explosivo",
+    descricao: "Resolve no espaço: velocidade, drible e repetição.",
+    principais: ["ritmo", "drible"], posicoes: ["ATA", "MEI", "LD", "LE"],
+    especializacoes: [
+      { id: "ponta", nome: "Ponta clássico", foco: ["ritmo", "passe"] },
+      { id: "interior", nome: "Atacante interior", foco: ["drible", "finalizacao"] },
+    ],
+  },
+  {
+    id: "matador", nome: "Matador",
+    descricao: "Existe para finalizar: posicionamento e frieza na área.",
+    principais: ["finalizacao", "fisico"], posicoes: ["ATA"],
+    especializacoes: [
+      { id: "area", nome: "Homem de área", foco: ["finalizacao", "fisico"] },
+      { id: "movel", nome: "Atacante móvel", foco: ["ritmo", "drible"] },
+    ],
+  },
+  {
+    id: "muralha", nome: "Muralha",
+    descricao: "Ganha a bola e o duelo: força, antecipação e posicionamento.",
+    principais: ["defesa", "fisico"], posicoes: ["ZAG", "LD", "LE"],
+    especializacoes: [
+      { id: "lider", nome: "Líder da linha", foco: ["defesa", "passe"] },
+      { id: "veloz", nome: "Zagueiro veloz", foco: ["ritmo", "defesa"] },
+    ],
+  },
+  {
+    id: "general", nome: "General",
+    descricao: "Equilibra o time: desarme, cobertura e saída de bola.",
+    principais: ["defesa", "passe"], posicoes: ["VOL", "MEI", "ZAG"],
+    especializacoes: [
+      { id: "cabeca", nome: "Cabeça de área", foco: ["defesa", "fisico"] },
+      { id: "saida", nome: "Primeiro passe", foco: ["passe", "drible"] },
+    ],
+  },
+  {
+    id: "guardiao", nome: "Guardião",
+    descricao: "Goleiro: reflexo, posicionamento e domínio da área.",
+    principais: ["defesa", "fisico"], posicoes: ["GOL"],
+    especializacoes: [
+      { id: "reflexo", nome: "Reflexo", foco: ["defesa", "ritmo"] },
+      { id: "linha", nome: "Goleiro-linha", foco: ["passe", "defesa"] },
+    ],
+  },
+]
+
+export function arquetipo(id: ArquetipoId): Arquetipo {
+  return ARQUETIPOS.find(a => a.id === id) ?? ARQUETIPOS[0]
+}
+
+/** Os arquétipos que fazem sentido para a posição escolhida. */
+export function arquetiposDaPosicao(posicao: PosicaoDoAtleta): Arquetipo[] {
+  const doPosto = ARQUETIPOS.filter(a => a.posicoes.includes(posicao))
+  return doPosto.length ? doPosto : [arquetipo(posicao === "GOL" ? "guardiao" : "general")]
+}
+
+// ─── PERSONALIDADE (escondida) ──────────────────────────────────────────────
+//
+// Dois atletas de 75 aos 20 anos podem terminar em 86 e em 78. A diferença não
+// é o overall — é quem treina, quem aguenta pressão e quem quer mais. Os
+// valores vão de 1 a 20, nunca aparecem crus na tela e o jogo só os deixa
+// transparecer por FRASES (ver `leituraDaPersonalidade`).
+
+export interface PersonalidadeDoAtleta {
+  ambicao: number
+  profissionalismo: number
+  determinacao: number
+  lealdade: number
+  temperamento: number
+}
+
 export interface AtletaDaCarreira {
   id: string
   nome: string
@@ -59,8 +166,70 @@ export interface AtletaDaCarreira {
   pesoKg: number
   numero: number
   overall: number
+  /**
+   * O POTENCIAL REAL — nunca mostrado ao jogador.
+   *
+   * ⚠️ A tela mostra uma FAIXA (`potencialVisivel`), que começa larga e fecha
+   * conforme o atleta joga. Mostrar "potencial 87" transforma a carreira numa
+   * barra de progresso: o jogador sabe desde o primeiro dia onde vai terminar e
+   * o que resta é apertar continuar. A faixa mantém a pergunta de pé.
+   */
   potencial: number
+  arquetipo: ArquetipoId
+  /** Aberta quando o atleta amadurece; até lá, `null`. */
+  especializacao: string | null
+  personalidade: PersonalidadeDoAtleta
   atributos: AtributosDoAtleta
+}
+
+/**
+ * A faixa de potencial que a comissão técnica ARRISCA, dado o que já viu.
+ *
+ * Quanto mais partidas, mais estreita — é a mesma lógica de olheiro do jogo: a
+ * primeira leitura é um chute largo, a centésima é quase certeza. Nunca fecha
+ * de todo: o teto real fica escondido até o fim.
+ */
+export function potencialVisivel(atleta: AtletaDaCarreira, jogosNaCarreira: number): { min: number; max: number } {
+  const margem = Math.max(2, Math.round(12 - Math.min(10, jogosNaCarreira / 12)))
+  return {
+    min: Math.max(atleta.overall, atleta.potencial - margem),
+    max: Math.min(99, atleta.potencial + Math.round(margem * 0.6)),
+  }
+}
+
+/** O que a comissão diz do temperamento do atleta — sem número cru. */
+export function leituraDaPersonalidade(p: PersonalidadeDoAtleta): string[] {
+  const frases: string[] = []
+  if (p.profissionalismo >= 15) frases.push("Trabalha como profissional; é o primeiro a chegar.")
+  else if (p.profissionalismo <= 7) frases.push("Falta rotina de treino — desperdiça talento.")
+  if (p.ambicao >= 15) frases.push("Quer mais: não se acomoda com o lugar que tem.")
+  else if (p.ambicao <= 7) frases.push("Acomoda-se rápido quando está bem.")
+  if (p.determinacao >= 15) frases.push("Não abaixa a cabeça depois de uma partida ruim.")
+  if (p.temperamento <= 7) frases.push("Explode fácil; o vestiário sente.")
+  if (p.lealdade >= 15) frases.push("Cria raiz no clube; sair não é fácil para ele.")
+  return frases.length ? frases : ["Perfil equilibrado, sem traço dominante."]
+}
+
+/**
+ * O QUE O ATLETA FEZ EM CAMPO — a matéria-prima da evolução orgânica.
+ *
+ * A evolução não vem de gastar pontos num menu: vem daqui. Quem passou a
+ * temporada driblando evolui drible; quem correu para o espaço evolui ritmo;
+ * quem desarmou evolui defesa. É a diferença entre "escolher" o atleta que se
+ * quer ter e DESCOBRIR o atleta que se está formando.
+ */
+export interface AcoesDaTemporada {
+  dribles: number
+  passesChave: number
+  passesCertos: number
+  desarmes: number
+  finalizacoes: number
+  corridas: number
+  duelosGanhos: number
+}
+
+const ACOES_ZERADAS: AcoesDaTemporada = {
+  dribles: 0, passesChave: 0, passesCertos: 0, desarmes: 0, finalizacoes: 0, corridas: 0, duelosGanhos: 0,
 }
 
 export interface PartidaDoAtleta {
@@ -160,7 +329,19 @@ export interface EstadoCarreiraDeJogador {
   }
   ultimasPartidas: PartidaDoAtleta[]
   metas: MetaDaTemporada[]
+  /**
+   * ⚠️ `pontosDisponiveis` SOBREVIVE por compatibilidade de save, mas a evolução
+   * deixou de passar por ele (1.0.325): não se aperta mais "+1 velocidade". O
+   * atleta cresce pelo que FAZ em campo, pelo foco de treino e pela
+   * personalidade. Ver `evoluirOrganicamente`.
+   */
   crescimento: { xp: number; nivel: number; pontosDisponiveis: number }
+  /** Onde o atleta se dedica no treino — inclina a evolução sem decidi-la. */
+  focoDeTreino: keyof AtributosDoAtleta | "equilibrado"
+  /** O que ele fez em campo nesta temporada. */
+  acoes: AcoesDaTemporada
+  /** Ganho de atributo da última virada de temporada, para a tela mostrar. */
+  ultimaEvolucao: { atributo: keyof AtributosDoAtleta; ganho: number }[]
   selecao: { convocada: boolean; nivel: "sub20" | "principal" | null; jogos: number; gols: number }
   historico: TemporadaDoAtleta[]
   propostas: PropostaDeClube[]
@@ -217,7 +398,35 @@ export interface EscolhasDoAtleta {
   alturaCm: number
   pesoKg: number
   numero: number
+  /** Identidade do atleta. Ausente = o jogo escolhe pela posição. */
+  arquetipo?: ArquetipoId
+  /** A história de origem, que desloca overall, potencial e reputação. */
+  origem?: OrigemDoAtleta
 }
+
+/**
+ * HISTÓRIAS DE ORIGEM.
+ *
+ * Duas carreiras com o mesmo atleta têm de começar diferente. A origem não é
+ * enfeite: ela mexe no overall inicial, no teto e na personalidade — e é o que
+ * cria história sem roteiro escrito.
+ */
+export type OrigemDoAtleta =
+  | "joia"          // joia da base: teto alto, cru
+  | "desconhecido"  // ninguém aposta: começa baixo, evolui rápido
+  | "filho"         // filho de craque: reputação e pressão
+  | "desacreditado" // bom, mas ninguém acredita
+  | "lesao"         // volta de lesão: melhor tecnicamente, físico cobrado
+  | "padrao"
+
+export const ORIGENS: { id: OrigemDoAtleta; nome: string; efeito: string }[] = [
+  { id: "joia", nome: "Joia da base", efeito: "Teto alto, pouca experiência." },
+  { id: "desconhecido", nome: "Desconhecido", efeito: "Começa abaixo, evolui mais rápido." },
+  { id: "filho", nome: "Filho de craque", efeito: "Já chega com holofote — e com cobrança." },
+  { id: "desacreditado", nome: "Promessa desacreditada", efeito: "Bom, mas ninguém aposta em você." },
+  { id: "lesao", nome: "Voltando de lesão", efeito: "Técnica de sobra, físico a recuperar." },
+  { id: "padrao", nome: "Trajetória comum", efeito: "Sem bônus nem ônus." },
+]
 
 /**
  * Cria o atleta.
@@ -243,7 +452,32 @@ export function criarAtletaDaCarreira(escolhas: EscolhasDoAtleta, semente = "atl
     defesa: variar(pesos.defesa, 6),
     fisico: variar(pesos.fisico, 7),
   }
-  const overall = overallDoAtleta(escolhas.posicao, atributos)
+  // ── A ORIGEM desloca o ponto de partida e o teto ──
+  const origem = escolhas.origem ?? "padrao"
+  const ajuste: Record<OrigemDoAtleta, { overall: number; teto: number }> = {
+    joia: { overall: -2, teto: +8 },
+    desconhecido: { overall: -5, teto: +5 },
+    filho: { overall: +2, teto: 0 },
+    desacreditado: { overall: -3, teto: +6 },
+    lesao: { overall: +3, teto: -4 },
+    padrao: { overall: 0, teto: 0 },
+  }
+  if (origem === "lesao") atributos.fisico = Math.max(25, atributos.fisico - 8)
+  if (origem === "joia") atributos.ritmo = Math.min(88, atributos.ritmo + 3)
+
+  const overall = Math.max(35, overallDoAtleta(escolhas.posicao, atributos) + ajuste[origem].overall)
+
+  // ── PERSONALIDADE: sorteada e escondida, com a origem inclinando ──
+  const p = (n: number, base: number) => Math.max(1, Math.min(20, Math.round(base + (r(n) - 0.5) * 12)))
+  const personalidade: PersonalidadeDoAtleta = {
+    ambicao: p(10, origem === "desacreditado" || origem === "desconhecido" ? 15 : 11),
+    profissionalismo: p(11, origem === "lesao" ? 14 : 11),
+    determinacao: p(12, origem === "desacreditado" ? 15 : 11),
+    lealdade: p(13, origem === "joia" ? 14 : 10),
+    temperamento: p(14, origem === "filho" ? 8 : 11),
+  }
+
+  const escolhido = escolhas.arquetipo ?? arquetiposDaPosicao(escolhas.posicao)[0].id
 
   return {
     id: `atleta_${hash(`${escolhas.nome}:${escolhas.posicao}:${escolhas.idade}`)}`,
@@ -256,8 +490,14 @@ export function criarAtletaDaCarreira(escolhas: EscolhasDoAtleta, semente = "atl
     pesoKg: escolhas.pesoKg,
     numero: escolhas.numero,
     overall,
-    // Teto: quem começa mais novo pode chegar mais longe.
-    potencial: Math.min(94, overall + 8 + jovem * 2 + Math.round(r(8) * 10)),
+    // Teto: quem começa mais novo pode chegar mais longe. Some a origem e a
+    // DETERMINAÇÃO — é ela que separa dois atletas idênticos aos 20 anos.
+    potencial: Math.min(97, Math.max(overall + 4,
+      overall + 8 + jovem * 2 + Math.round(r(8) * 10) + ajuste[origem].teto
+      + Math.round((personalidade.determinacao - 10) * 0.5))),
+    arquetipo: escolhido,
+    especializacao: null,
+    personalidade,
     atributos,
   }
 }
@@ -329,7 +569,10 @@ export function criarCarreiraDeJogador(
     temporadaAtual: { jogos: 0, titularidades: 0, minutos: 0, gols: 0, assistencias: 0, somaDasNotas: 0, cartoesAmarelos: 0, cartoesVermelhos: 0 },
     ultimasPartidas: [],
     metas: metasIniciais(atleta, clube.prestigio, jogosDoClube),
-    crescimento: { xp: 0, nivel: 1, pontosDisponiveis: 3 },
+    crescimento: { xp: 0, nivel: 1, pontosDisponiveis: 0 },
+    focoDeTreino: "equilibrado",
+    acoes: { ...ACOES_ZERADAS },
+    ultimaEvolucao: [],
     selecao: { convocada: false, nivel: null, jogos: 0, gols: 0 },
     historico: [],
     propostas: [],
@@ -624,6 +867,7 @@ export function jogarProximaRodada(estado: EstadoCarreiraDeJogador): EstadoCarre
       novo.temporadaAtual.somaDasNotas += d.nota
       if (d.cartao === "amarelo") novo.temporadaAtual.cartoesAmarelos++
       if (d.cartao === "vermelho") novo.temporadaAtual.cartoesVermelhos++
+      registrarAcoes(novo, d, `${novo.atleta.id}:${novo.temporada}:${rodada}:acoes`)
       // A nota do treinador se move DEVAGAR: uma partida ruim não tira o
       // titular, e uma boa não faz o reserva virar camisa 10 na semana seguinte.
       novo.notaDoTreinador = limitar(novo.notaDoTreinador + (d.nota - 6.6) * 2.4 + d.gols * 1.5)
@@ -670,6 +914,135 @@ export function jogarProximaRodada(estado: EstadoCarreiraDeJogador): EstadoCarre
 }
 
 function limitar(v: number): number { return Math.max(0, Math.min(100, Math.round(v * 10) / 10)) }
+
+/**
+ * O QUE ELE FEZ NA PARTIDA, derivado do que já aconteceu.
+ *
+ * ⚠️ Sai dos MINUTOS, da POSIÇÃO e da NOTA — não de um sorteio paralelo, pela
+ * mesma razão que os gols saem do placar: número que não conversa com o resto
+ * vira estatística de mentira. Um lateral que jogou 90 e foi bem acumula
+ * corrida e desarme; um meia acumula passe-chave.
+ */
+function registrarAcoes(estado: EstadoCarreiraDeJogador, d: DesempenhoIndividual, semente: string): void {
+  const r = (n: number) => roll(`${semente}:${n}`)
+  const proporcao = d.minutos / 90
+  const bem = Math.max(0.5, d.nota / 7)
+  const pos = estado.atleta.posicao
+  const ofensivo = pos === "ATA" || pos === "MEI"
+  const defensivo = pos === "ZAG" || pos === "VOL" || pos === "GOL"
+  const lateral = pos === "LD" || pos === "LE"
+
+  const acoes = estado.acoes
+  const conta = (base: number, n: number) => Math.round(base * proporcao * bem * (0.6 + r(n) * 0.8))
+
+  acoes.dribles += conta(ofensivo ? 4 : lateral ? 2.5 : 0.8, 1)
+  acoes.passesChave += conta(pos === "MEI" ? 2.5 : ofensivo ? 1.5 : lateral ? 1 : 0.4, 2)
+  acoes.passesCertos += conta(defensivo ? 45 : 32, 3)
+  acoes.desarmes += conta(defensivo ? 5 : lateral ? 3.5 : 1, 4)
+  acoes.finalizacoes += conta(pos === "ATA" ? 3.5 : ofensivo ? 2 : 0.5, 5) + d.gols
+  acoes.corridas += conta(lateral || ofensivo ? 6 : 2.5, 6)
+  acoes.duelosGanhos += conta(defensivo ? 6 : 3.5, 7)
+}
+
+// ─── EVOLUÇÃO ORGÂNICA ──────────────────────────────────────────────────────
+//
+// O atleta cresce pelo que FEZ, não por pontos gastos num menu. Quem passou a
+// temporada driblando evolui drible; quem correu para o espaço evolui ritmo;
+// quem desarmou evolui defesa. Três coisas modulam o tamanho do ganho:
+//
+//   · IDADE — antes dos 24 se aprende rápido; depois dos 30 o corpo cobra;
+//   · PERSONALIDADE — profissionalismo e determinação são o multiplicador que
+//     separa dois atletas idênticos aos 20 anos (é o exemplo do pedido);
+//   · MINUTOS — quem não joga quase não evolui, e é isso que dá peso à decisão
+//     de sair para jogar em vez de ficar no banco de um clube grande.
+//
+// O TETO continua sendo o potencial REAL, que o jogador nunca vê.
+
+/** Quanto cada ação em campo empurra cada atributo. */
+const EMPURRAO: Record<keyof AcoesDaTemporada, [keyof AtributosDoAtleta, number][]> = {
+  dribles: [["drible", 1], ["ritmo", 0.35]],
+  passesChave: [["passe", 1], ["drible", 0.25]],
+  passesCertos: [["passe", 0.35]],
+  desarmes: [["defesa", 1], ["fisico", 0.4]],
+  finalizacoes: [["finalizacao", 1], ["fisico", 0.2]],
+  corridas: [["ritmo", 1], ["fisico", 0.5]],
+  duelosGanhos: [["fisico", 1], ["defesa", 0.4]],
+}
+
+/** Curva de idade: o quanto ainda se aprende. */
+function fatorDaIdade(idade: number): number {
+  if (idade <= 19) return 1.5
+  if (idade <= 23) return 1.2
+  if (idade <= 27) return 0.8
+  if (idade <= 30) return 0.45
+  return 0.15
+}
+
+export interface GanhoDeAtributo { atributo: keyof AtributosDoAtleta; ganho: number }
+
+export const NOME_DO_ATRIBUTO: Record<keyof AtributosDoAtleta, string> = {
+  ritmo: "Ritmo", finalizacao: "Finalização", passe: "Passe",
+  drible: "Drible", defesa: "Defesa", fisico: "Físico",
+}
+
+/**
+ * Aplica a evolução da temporada. Devolve os ganhos para a tela mostrar
+ * — o jogador precisa VER por que evoluiu, senão o sistema vira ruído.
+ */
+export function evoluirOrganicamente(estado: EstadoCarreiraDeJogador): GanhoDeAtributo[] {
+  const { atleta, acoes } = estado
+  const minutos = estado.temporadaAtual.minutos
+  if (minutos < 90) return []   // menos de uma partida inteira no ano: nada muda
+
+  // 1. Peso bruto de cada atributo, a partir do que ele fez.
+  const peso: Record<keyof AtributosDoAtleta, number> = { ritmo: 0, finalizacao: 0, passe: 0, drible: 0, defesa: 0, fisico: 0 }
+  for (const [acao, efeitos] of Object.entries(EMPURRAO) as [keyof AcoesDaTemporada, [keyof AtributosDoAtleta, number][]][]) {
+    for (const [atributo, forca] of efeitos) peso[atributo] += acoes[acao] * forca
+  }
+  // 2. O ARQUÉTIPO puxa o que é dele; o foco de treino inclina um pouco mais.
+  const arq = arquetipo(atleta.arquetipo)
+  for (const a of arq.principais) peso[a] *= 1.45
+  if (estado.focoDeTreino !== "equilibrado") peso[estado.focoDeTreino] *= 1.35
+  // Treino também empurra o foco mesmo sem ação em campo — senão um zagueiro
+  // nunca melhoraria o passe.
+  if (estado.focoDeTreino !== "equilibrado") peso[estado.focoDeTreino] += minutos / 90
+
+  const somaDosPesos = Object.values(peso).reduce((t, v) => t + v, 0)
+  if (somaDosPesos <= 0) return []
+
+  // 3. Quanto de overall a temporada rende, no total.
+  const p = atleta.personalidade
+  const dedicacao = 0.6 + (p.profissionalismo + p.determinacao) / 40   // 0,65 a 1,6
+  const porMinutos = Math.min(1.4, minutos / 1800)                     // ~20 jogos completos satura
+  const espaco = Math.max(0, atleta.potencial - atleta.overall)
+  const bruto = fatorDaIdade(atleta.idade) * dedicacao * porMinutos * 6
+  // Perto do teto, cada ponto custa mais — a subida desacelera sozinha.
+  const total = Math.max(0, Math.min(bruto, espaco * 0.55 + (atleta.idade <= 21 ? 1 : 0)))
+  if (total < 0.5) return []
+
+  // 4. Distribui entre os atributos, na proporção do que ele fez.
+  const ganhos: GanhoDeAtributo[] = []
+  for (const chave of Object.keys(peso) as (keyof AtributosDoAtleta)[]) {
+    const fatia = (peso[chave] / somaDosPesos) * total * 3
+    const ganho = Math.round(fatia)
+    if (ganho <= 0) continue
+    const antes = atleta.atributos[chave]
+    atleta.atributos[chave] = Math.min(99, antes + ganho)
+    if (atleta.atributos[chave] !== antes) ganhos.push({ atributo: chave, ganho: atleta.atributos[chave] - antes })
+  }
+
+  atleta.overall = Math.min(atleta.potencial, overallDoAtleta(atleta.posicao, atleta.atributos))
+
+  // 5. ESPECIALIZAÇÃO: abre quando o atleta amadurece, pelo caminho que ele
+  //    mesmo trilhou — não por escolha num menu no primeiro dia.
+  if (!atleta.especializacao && atleta.overall >= 72 && estado.historico.length >= 2) {
+    const maior = arq.especializacoes
+      .map(e => ({ e, forca: e.foco.reduce((t, f) => t + atleta.atributos[f], 0) }))
+      .sort((a, b) => b.forca - a.forca)[0]
+    if (maior) atleta.especializacao = maior.e.id
+  }
+  return ganhos
+}
 
 /** Clubes da liga desta carreira, com o clube do atleta garantido na lista. */
 function clubesDaLiga(estado: EstadoCarreiraDeJogador): Team[] {
@@ -846,19 +1219,34 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
     }, ...novo.recados].slice(0, 25)
   }
 
+  // ── EVOLUÇÃO ORGÂNICA (1.0.325) ──
+  //
+  // Acontece ANTES do envelhecimento, na temporada que o atleta acabou de
+  // jogar: o que ele fez em campo neste ano é o que o forma. Depois disso a
+  // idade cobra o que tiver de cobrar.
+  novo.ultimaEvolucao = evoluirOrganicamente(novo)
+  if (novo.ultimaEvolucao.length) {
+    const resumo = novo.ultimaEvolucao.map(g => `${NOME_DO_ATRIBUTO[g.atributo]} +${g.ganho}`).join(", ")
+    novo.recados = [{
+      id: `evolucao_${novo.temporada}`, de: "Preparador",
+      texto: `O ano rendeu: ${resumo}. Foi o que você fez em campo que puxou isso.`,
+      temporada: novo.temporada, rodada: novo.rodada,
+    }, ...novo.recados].slice(0, 25)
+  }
+  novo.acoes = { ...ACOES_ZERADAS }
+
   // ── IDADE E DECLÍNIO ──
   novo.atleta.idade++
   const idade = novo.atleta.idade
   if (idade >= 31) {
-    // Cai primeiro o que a idade cobra primeiro: ritmo e físico.
-    const perda = idade >= 35 ? 4 : idade >= 33 ? 3 : 2
+    // Cai primeiro o que a idade cobra primeiro: ritmo e físico. O
+    // PROFISSIONALISMO segura a queda — é o que faz um atleta chegar aos 36
+    // jogando e outro sumir aos 32.
+    const cuidado = novo.atleta.personalidade.profissionalismo >= 15 ? 0.6 : novo.atleta.personalidade.profissionalismo <= 7 ? 1.35 : 1
+    const perda = Math.round((idade >= 35 ? 4 : idade >= 33 ? 3 : 2) * cuidado)
     novo.atleta.atributos.ritmo = Math.max(20, novo.atleta.atributos.ritmo - perda)
     novo.atleta.atributos.fisico = Math.max(20, novo.atleta.atributos.fisico - Math.round(perda * 0.7))
     novo.atleta.overall = overallDoAtleta(novo.atleta.posicao, novo.atleta.atributos)
-  } else {
-    // Antes dos 31 o crescimento natural existe, mas é pequeno — o grosso vem
-    // dos pontos ganhos jogando. É o que faz jogar valer mais do que esperar.
-    novo.crescimento.pontosDisponiveis += t.jogos >= 15 ? 3 : t.jogos >= 6 ? 2 : 1
   }
 
   novo.propostas = gerarPropostas(novo, media)

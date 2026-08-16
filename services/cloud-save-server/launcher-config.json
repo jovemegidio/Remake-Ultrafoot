@@ -252,9 +252,23 @@
   ],
   "changelog": [
     {
-      "version": "1.0.324",
+      "version": "1.0.325",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "A carreira de jogador ganhou profundidade de manager",
+      "itens": [
+        "ARQUETIPOS: seu atleta agora tem uma identidade de jogo (Maestro, Explosivo, Matador, Muralha, General ou Guardiao). Ela decide quais atributos crescem mais rapido e abre uma ESPECIALIZACAO mais adiante — que o jogo escolhe pelo caminho que voce trilhou, nao por um menu no primeiro dia. Dois atletas de overall 85 passam a jogar diferente.",
+        "O POTENCIAL FICOU ESCONDIDO. A tela nao mostra mais 'potencial 87': mostra uma FAIXA, que comeca larga e vai apertando conforme voce joga — como um olheiro que precisa de tempo para cravar. Saber o teto no primeiro dia transformava a carreira numa barra de progresso.",
+        "EVOLUCAO ORGANICA: acabaram os botoes de gastar ponto em '+1 velocidade'. Voce evolui pelo que FAZ em campo — dribles puxam drible, desarmes puxam defesa, corrida puxa ritmo e fisico —, com o arquetipo e o foco de treino inclinando a curva. A tela mostra o ganho de cada temporada e de onde ele veio.",
+        "PERSONALIDADE ESCONDIDA (ambicao, profissionalismo, determinacao, lealdade e temperamento). Ela nunca aparece em numero: a comissao te descreve em frases. Dois atletas identicos aos 18 anos terminam diferentes — no teste da casa, o dedicado chegou a 75 e o relaxado a 70 em tres temporadas. E profissionalismo alto segura o declinio depois dos 31.",
+        "HISTORIAS DE ORIGEM na criacao: joia da base, desconhecido, filho de craque, promessa desacreditada ou voltando de lesao. Cada uma desloca overall inicial, teto e personalidade.",
+        "A DISPUTA PELA POSICAO virou tela: voce ve em que lugar da fila esta no elenco (ex.: 3o de 5), quem esta na sua frente, a confianca do treinador e quanto ela DEVERIA ser pelo seu lugar na fila."
+      ]
+    },
+    {
+      "version": "1.0.324",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "Jogo mais leve, cartas certas e a carreira de jogador no menu",
       "itens": [
         "CORRECAO GRAVE na carreira de jogador: o atleta ficava FORA DOS PLANOS e nunca mais entrava em campo. A confianca do treinador caia a cada rodada no banco e, abaixo de um limite, ele parava de ser relacionado — sem nenhum caminho de volta. Agora a confianca persegue o MERITO: a sua posicao na fila real da sua posicao no elenco, com a forma e a idade pesando. Quem esta atras na fila entra menos, mas entra; e quem evolui acima dos concorrentes assume o lugar.",
