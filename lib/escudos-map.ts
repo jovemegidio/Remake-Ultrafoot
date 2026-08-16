@@ -351,6 +351,19 @@ function chaveDeEscudo(fileKey: string): string {
 }
 
 export function getEscudoUrl(fileKey: string): string {
+  // A EXCECAO vem antes da regra. O time feminino usa o escudo do clube-mãe,
+  // MENOS quando ele tem brasão próprio (algumas equipes têm) — e aí existe uma
+  // arte empacotada na chave com sufixo. Consultar o mapa com a chave inteira
+  // primeiro é o que permite essa excecao; cortando o sufixo de saída, como era
+  // antes, o escudo próprio nunca teria como aparecer.
+  // (As camadas de usuário, canal e mod já respeitam a chave com sufixo — quem
+  // desenha passa por getCustomLogoUrl, que não corta nada.)
+  // So no app instalado: na web nao existe pasta local, e o repositorio remoto
+  // (de terceiros) nao tem arte com sufixo — apontar para la daria 404 e o
+  // escudo generico, que e pior que o brasão do clube-mãe.
+  if (isTauri() && fileKey.endsWith(SUFIXO_FEMININO) && localEscudoMap[fileKey]) {
+    return gameAssetUrl(localEscudoMap[fileKey])
+  }
   fileKey = chaveDeEscudo(fileKey)
   // No app desktop (Tauri) os escudos sao empacotados localmente.
   // Na web nao existe pasta public/escudos, entao usamos o repositorio remoto
@@ -371,6 +384,10 @@ export function getEscudoUrl(fileKey: string): string {
 // `getRemoteEscudoUrl` aponta para um repositório de terceiros que continua
 // servindo PNG — mudar a extensão lá quebraria o download.
 export function getLocalEscudoPath(fileKey: string): string {
+  // Mesma excecao de getEscudoUrl: brasão próprio do time feminino, quando a
+  // arte existe empacotada com o sufixo, vence o do clube-mãe.
+  const proprio = fileKey.endsWith(SUFIXO_FEMININO) ? localEscudoMap[fileKey] : undefined
+  if (proprio) return proprio
   fileKey = chaveDeEscudo(fileKey)
   return localEscudoMap[fileKey] ?? `/escudos/${fileKey}.webp`
 }

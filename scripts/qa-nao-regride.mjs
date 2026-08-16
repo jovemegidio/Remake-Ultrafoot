@@ -73,6 +73,8 @@ const INVENTARIO = [
   ["1.0.334", "Modo controle (barra + anel de foco)", "components/modo-controle.tsx", "data-controle"],
   ["1.0.334", "Modo controle montado no layout", "app/layout.tsx", "<ModoControle />"],
   ["1.0.334", "Gate da navegacao por controle", "scripts/test-gamepad-navegacao.ts", "desce na MESMA coluna"],
+  ["1.0.334", "Escudo feminino com excecao", "lib/escudos-map.ts", "A EXCECAO vem antes da regra"],
+  ["1.0.334", "Gate do escudo feminino", "scripts/test-escudo-feminino.ts", "a excecao vence"],
   ["—", "Arbitragem / VAR", "lib/arbitragem.ts", ""],
   ["—", "Eventos para o 3D", "lib/eventos-para-3d.ts", ""],
   ["—", "Histórico de lesões", "lib/historico-de-lesoes.ts", ""],
