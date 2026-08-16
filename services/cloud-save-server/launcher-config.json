@@ -252,9 +252,19 @@
   ],
   "changelog": [
     {
-      "version": "1.0.330",
+      "version": "1.0.332",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "De volta o que tinha sumido: Divisao de Acesso, VAR e a carreira de jogador inteira",
+      "itens": [
+        "CORRECAO DE REGRESSAO. Uma arvore antiga estava circulando com o numero novo, e por isso 20 funcionalidades ja entregues nao apareciam no jogo: a DIVISAO DE ACESSO (a base da piramide, com os 260 clubes), o VAR/arbitragem, os eventos do 3D, o historico de lesoes, a confianca da diretoria, o menu ONLINE inteiro, o Manager Rivals, o VIVER A PARTIDA e tudo o que a carreira de jogador ganhou da 1.0.324 a 1.0.329 (fila da posicao, arquetipos, potencial oculto, evolucao organica, empresario, entrevistas e a aposentadoria virando carreira de tecnico).",
+        "Esta versao sai da arvore COMPLETA, e agora existe um gate que impede a repeticao:  lista cada funcionalidade ja entregue e reprova a build quando alguma sumir. Ele nao confere so se o arquivo existe — confere se e a VERSAO CERTA do arquivo, que foi como a carreira de jogador reapareceu vazia por dentro."
+      ]
+    },
+    {
+      "version": "1.0.330",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "Manager Rivals: matchmaking, ranking e anti-cheat no servidor",
       "itens": [
         "MANAGER RIVALS no servidor que ja existia. O relay ganhou fila, ranking por divisao (10 ate a Elite) e validacao de resultado. O jogo manda INTENCAO — quero jogar, o placar foi 2 a 1 —; adversario, validacao e rating sao decididos LA. Save editado no PC nao muda uma linha do ranking.",
