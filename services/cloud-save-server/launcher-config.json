@@ -252,9 +252,21 @@
   ],
   "changelog": [
     {
-      "version": "1.0.325",
+      "version": "1.0.326",
       "data": "2026-08-16",
       "latest": true,
+      "titulo": "Empresario, contratos de verdade e a aposentadoria que vira carreira de tecnico",
+      "itens": [
+        "O MUNDO PROCURA VOCE. Em vez de escolher um clube num menu e cumprir metas, os clubes acompanham quem esta jogando: o interesse sai do overall, da media, dos gols e dos minutos. Quem esta sem espaco recebe proposta de EMPRESTIMO — o caminho real de quem precisa jogar.",
+        "EMPRESARIO como personagem: negociacao arranca salario e luvas, influencia decide quantas portas se abrem e rede internacional libera o exterior. Cada um cobra a sua comissao, e trocar de agente e uma decisao da carreira — os bons so aceitam quem ja tem o que negociar.",
+        "CONTRATOS DE VERDADE: luvas na assinatura (descontada a comissao), bonus por gol que cai no bolso a cada partida, bonus por titulo e — o que mais pesa — o STATUS PROMETIDO. O clube grande paga mais e oferece rodizio; o clube medio paga menos e promete a vaga. Quem promete titularidade te poe em campo na chegada, mas a fila da posicao volta a mandar assim que a bola rola.",
+        "APOSENTADORIA VIRA COMECO: ao pendurar as chuteiras, o MESMO save continua — o atleta aposentado assume como treinador do ultimo clube, com uma reputacao de estreia construida pelo que ele fez em campo (titulos, premios, jogos de selecao e o auge de overall). Da para comecar aos 17 como jogador e seguir ate os 60 como tecnico, no mesmo universo."
+      ]
+    },
+    {
+      "version": "1.0.325",
+      "data": "2026-08-16",
+      "latest": false,
       "titulo": "A carreira de jogador ganhou profundidade de manager",
       "itens": [
         "ARQUETIPOS: seu atleta agora tem uma identidade de jogo (Maestro, Explosivo, Matador, Muralha, General ou Guardiao). Ela decide quais atributos crescem mais rapido e abre uma ESPECIALIZACAO mais adiante — que o jogo escolhe pelo caminho que voce trilhou, nao por um menu no primeiro dia. Dois atletas de overall 85 passam a jogar diferente.",

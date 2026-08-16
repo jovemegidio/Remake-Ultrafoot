@@ -10,19 +10,22 @@
 
 import { useMemo, useState } from "react"
 import {
-  Award, BarChart3, CalendarDays, ChevronRight, Flag, Play, Star, Target, TrendingUp, Users,
+  Award, BarChart3, BriefcaseBusiness, CalendarDays, ChevronRight, Flag, Play, Star, Target, TrendingUp, Users,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { GameSidebar } from "@/components/game-sidebar"
 import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
 import { useGameState } from "@/lib/save-system"
+import { useGameManager } from "@/lib/use-game-manager"
+import { getTeamByFileKey } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
 import {
   aceitarProposta, arquetipo, confiancaMerecida, encerrarTemporada, fazerPedido,
   hierarquiaDaPosicao, jogarProximaRodada, leituraDaPersonalidade, potencialVisivel,
+  reputacaoDeTreinador, resumoDaCarreira, trocarEmpresario, EMPRESARIOS,
   mediaDaTemporada, minutosEsperados, papelNoElenco, recusarPropostas,
   type AtributosDoAtleta, type EstadoCarreiraDeJogador,
 } from "@/lib/carreira-de-jogador"
@@ -58,6 +61,7 @@ function corDaNota(nota: number): string {
 export default function CarreiraDeJogadorPage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
   const { state, setState } = useGameState()
+  const { initializeNewGame } = useGameManager()
   const carreira = state.carreiraDeJogador
   const [aba, setAba] = useState<"temporada" | "evolucao" | "tabela" | "historico">("temporada")
 
@@ -91,6 +95,7 @@ export default function CarreiraDeJogadorPage() {
   const merecida = confiancaMerecida(carreira)
   const jogosNaCarreira = carreira.historico.reduce((n, h) => n + h.jogos, 0) + carreira.temporadaAtual.jogos
   const faixaDePotencial = potencialVisivel(atleta, jogosNaCarreira)
+  const resumo = resumoDaCarreira(carreira)
 
   return (
     <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
@@ -130,10 +135,39 @@ export default function CarreiraDeJogadorPage() {
           <section className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
             <h2 className="font-black">Carreira encerrada</h2>
             <p className="mt-1 text-sm text-white/65">
-              {carreira.historico.reduce((n, h) => n + h.jogos, 0)} jogos · {carreira.historico.reduce((n, h) => n + h.gols, 0)} gols ·{" "}
-              {carreira.historico.reduce((n, h) => n + h.assistencias, 0)} assistências · {carreira.titulos.length} títulos ·{" "}
-              {carreira.selecao.jogos} jogos pela seleção.
+              {resumo.jogos} jogos · {resumo.gols} gols · {resumo.assistencias} assistências ·{" "}
+              {resumo.titulos.length} títulos · {resumo.premios.length} prêmios individuais ·{" "}
+              {resumo.selecao.jogos} jogos pela seleção · auge em {resumo.overallMaximo} de overall.
             </p>
+            {/* ── E AGORA, TREINADOR ────────────────────────────────────────
+                A mecânica que o usuário chamou de mais forte: o MESMO save
+                continua, quinze ou vinte temporadas depois do começo, com o
+                atleta aposentado virando o técnico. O clube é o último em que
+                ele jogou, e a reputação com que ele senta no banco vem do que
+                fez em campo — quem ganhou Bola de Ouro não começa igual a quem
+                pendurou as chuteiras no banco de reservas. */}
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button
+                onClick={() => {
+                  const time = getTeamByFileKey(resumo.ultimoClubeFileKey)
+                  if (!time) return
+                  initializeNewGame(time.curto, atleta.nome, {
+                    modalidade: "profissional",
+                    // O legado do atleta viaja junto: o técnico novo não nasce
+                    // sem passado, que é o ponto da transição.
+                    carreiraDeJogador: { ...carreira, aposentado: true },
+                  }, time.file_key)
+                  hardNavigate("/?career=1")
+                }}
+                className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[#00d9b0]"
+              >
+                <BriefcaseBusiness className="mr-2 h-4 w-4" />
+                Tornar-se treinador do {carreira.clubeNome}
+              </Button>
+              <span className="text-[11px] text-white/45">
+                Reputação de estreia: {reputacaoDeTreinador(resumo)} — construída pelo que você fez como atleta.
+              </span>
+            </div>
           </section>
         )}
 
@@ -244,9 +278,45 @@ export default function CarreiraDeJogadorPage() {
                   <Button variant="ghost" size="sm" onClick={() => aplicar(fazerPedido(carreira, "nenhum"))}>Retirar pedido</Button>
                 )}
               </div>
-              <p className="mt-3 text-[11px] text-white/35">
-                Contrato até {carreira.contrato.ateTemporada} · R$ {carreira.contrato.salarioSemanal.toLocaleString("pt-BR")}/semana
-              </p>
+              {/* ── CONTRATO E EMPRESÁRIO (1.0.326) ──────────────────────────
+                  O contrato deixou de ser um número decorativo: luvas, bônus
+                  por gol e por título entram no bolso, e o STATUS PROMETIDO é o
+                  que o clube se comprometeu a te dar. O empresário é
+                  personagem: negociação vira salário, influência vira número de
+                  propostas e rede internacional abre o exterior. */}
+              <div className="mt-4 space-y-1 border-t border-white/10 pt-3 text-[11px] text-white/45">
+                <p>
+                  Contrato até <b className="text-white/70">{carreira.contrato.ateTemporada}</b> ·{" "}
+                  R$ {carreira.contrato.salarioSemanal.toLocaleString("pt-BR")}/semana
+                  {carreira.contrato.statusPrometido ? ` · prometido: ${carreira.contrato.statusPrometido}` : ""}
+                </p>
+                {(carreira.contrato.bonusPorGol ?? 0) > 0 && (
+                  <p>
+                    Bônus: R$ {(carreira.contrato.bonusPorGol ?? 0).toLocaleString("pt-BR")} por gol ·{" "}
+                    R$ {(carreira.contrato.bonusPorTitulo ?? 0).toLocaleString("pt-BR")} por título
+                  </p>
+                )}
+                <p>
+                  Ganhos na temporada: <b className="text-emerald-300/80">R$ {carreira.ganhosDaTemporada.toLocaleString("pt-BR")}</b>
+                </p>
+                <p className="pt-1">
+                  Empresário: <b className="text-white/70">{carreira.empresario.nome}</b> ·{" "}
+                  negociação {carreira.empresario.negociacao} · influência {carreira.empresario.influencia} ·{" "}
+                  exterior {carreira.empresario.redeInternacional} · {carreira.empresario.comissao}% de comissão
+                </p>
+                <select
+                  value={carreira.empresario.nome}
+                  onChange={e => aplicar(trocarEmpresario(carreira, e.target.value))}
+                  aria-label="Trocar de empresário"
+                  className="mt-1 h-9 w-full rounded-lg border border-white/15 bg-black/50 px-2 text-[11px] text-white"
+                >
+                  {EMPRESARIOS.map(emp => (
+                    <option key={emp.nome} value={emp.nome}>
+                      {emp.nome} — {emp.comissao}% · neg {emp.negociacao} / infl {emp.influencia} / ext {emp.redeInternacional}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </section>
 
             {/* METAS */}

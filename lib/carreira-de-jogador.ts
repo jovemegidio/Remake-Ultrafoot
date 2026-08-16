@@ -271,7 +271,48 @@ export interface PropostaDeClube {
   salarioSemanal: number
   temporadas: number
   motivo: string
+  /**
+   * ⚠️ O CONTRATO É UMA DECISÃO, NÃO UM NÚMERO DECORATIVO (1.0.326).
+   *
+   * Antes a proposta era só "salário + temporadas", e aceitar era sempre pegar
+   * o maior número. Com luvas, bônus e — principalmente — o STATUS PROMETIDO,
+   * a escolha passa a ter contrapartida: o clube grande paga mais e oferece
+   * rodízio; o clube médio paga menos e promete a vaga.
+   */
+  luvas: number
+  bonusPorGol: number
+  bonusPorTitulo: number
+  /** O que o clube promete: é isto que vira a confiança inicial lá. */
+  statusPrometido: PapelNoElenco
+  /** Só existe quando o clube quer o atleta por empréstimo. */
+  emprestimo?: boolean
 }
+
+/**
+ * O EMPRESÁRIO — personagem da carreira, não um botão.
+ *
+ * É ele que traz proposta, negocia salário e abre porta no exterior. Um agente
+ * ruim deixa dinheiro na mesa e não alcança clube grande; um bom multiplica as
+ * duas coisas — e cobra por isso. Trocar de agente é uma decisão da carreira.
+ */
+export interface EmpresarioDoAtleta {
+  nome: string
+  /** 1–20. Quanto ele arranca a mais em salário e luvas. */
+  negociacao: number
+  /** 1–20. Quantas portas ele abre (quantas propostas chegam). */
+  influencia: number
+  /** 1–20. Alcance fora do país. */
+  redeInternacional: number
+  /** Fatia do salário, em %. */
+  comissao: number
+}
+
+export const EMPRESARIOS: EmpresarioDoAtleta[] = [
+  { nome: "Ricardo Martins", negociacao: 17, influencia: 14, redeInternacional: 16, comissao: 8 },
+  { nome: "Helena Prado", negociacao: 14, influencia: 17, redeInternacional: 12, comissao: 6 },
+  { nome: "Tião Barbosa", negociacao: 9, influencia: 8, redeInternacional: 5, comissao: 3 },
+  { nome: "Marco Aurélio Diniz", negociacao: 12, influencia: 11, redeInternacional: 18, comissao: 7 },
+]
 
 export interface TemporadaDoAtleta {
   temporada: number
@@ -303,7 +344,21 @@ export interface EstadoCarreiraDeJogador {
   /** Calendário da liga do clube. As partidas do clube trazem `isUserMatch`. */
   calendario: MatchFixture[]
   tabela: StandingEntry[]
-  contrato: { salarioSemanal: number; ateTemporada: number; valorDePasse: number }
+  contrato: {
+    salarioSemanal: number
+    ateTemporada: number
+    valorDePasse: number
+    /** Luvas e bônus do contrato vigente (1.0.326). Opcionais em saves antigos. */
+    luvas?: number
+    bonusPorGol?: number
+    bonusPorTitulo?: number
+    /** O que o clube prometeu ao assinar — cobrável quando não se cumpre. */
+    statusPrometido?: PapelNoElenco
+  }
+  /** Quem cuida da carreira fora de campo (1.0.326). */
+  empresario: EmpresarioDoAtleta
+  /** Quanto o atleta já ganhou de bônus nesta temporada. */
+  ganhosDaTemporada: number
   /**
    * A NOTA DO TREINADOR (0–100) — o número que decide tudo.
    *
@@ -560,7 +615,19 @@ export function criarCarreiraDeJogador(
     rodada: 0,
     calendario,
     tabela: initStandings(times),
-    contrato: { salarioSemanal: salario, ateTemporada: temporada + 2, valorDePasse: Math.max(200_000, atleta.overall ** 3 * 12) },
+    contrato: {
+      salarioSemanal: salario,
+      ateTemporada: temporada + 2,
+      valorDePasse: Math.max(200_000, atleta.overall ** 3 * 12),
+      luvas: 0,
+      bonusPorGol: Math.round(salario * 0.12),
+      bonusPorTitulo: Math.round(salario * 4),
+      statusPrometido: "rodízio",
+    },
+    // O PRIMEIRO empresário é o que aparece para um garoto sem nome: barato e
+    // sem alcance. Trocar por um bom é uma decisão da carreira, com custo.
+    empresario: EMPRESARIOS[2],
+    ganhosDaTemporada: 0,
     // Provisória: logo abaixo é substituída pela confiança MERECIDA, que depende
     // do elenco do clube e por isso precisa do estado já montado.
     notaDoTreinador: 40,
@@ -868,6 +935,9 @@ export function jogarProximaRodada(estado: EstadoCarreiraDeJogador): EstadoCarre
       if (d.cartao === "amarelo") novo.temporadaAtual.cartoesAmarelos++
       if (d.cartao === "vermelho") novo.temporadaAtual.cartoesVermelhos++
       registrarAcoes(novo, d, `${novo.atleta.id}:${novo.temporada}:${rodada}:acoes`)
+      // BÔNUS POR GOL vira dinheiro na hora — é o que faz o contrato ser uma
+      // decisão e não um enfeite na tela de proposta.
+      if (d.gols > 0) novo.ganhosDaTemporada += d.gols * (novo.contrato.bonusPorGol ?? 0)
       // A nota do treinador se move DEVAGAR: uma partida ruim não tira o
       // titular, e uma boa não faz o reserva virar camisa 10 na semana seguinte.
       novo.notaDoTreinador = limitar(novo.notaDoTreinador + (d.nota - 6.6) * 2.4 + d.gols * 1.5)
@@ -1126,33 +1196,74 @@ export function fazerPedido(estado: EstadoCarreiraDeJogador, pedido: EstadoCarre
 
 // ─── Fim de temporada ───────────────────────────────────────────────────────
 
+/**
+ * O MUNDO PROCURA VOCÊ — e não o contrário (1.0.326).
+ *
+ * A regra do pedido: em vez de escolher "Real Madrid" num menu e cumprir metas,
+ * os clubes acompanham quem está jogando. O interesse sai do que aconteceu —
+ * overall, média, gols, minutos e o degrau do clube atual —, e o EMPRESÁRIO
+ * decide quantas portas abrem e o quanto se arranca em cada uma.
+ *
+ * Quem está fora dos planos também recebe: aí a proposta vem por EMPRÉSTIMO,
+ * que é o caminho real de quem precisa jogar. Sem isso, ficar sem espaço num
+ * clube grande era um beco — o mesmo defeito que a 1.0.324 corrigiu do outro
+ * lado.
+ */
 function gerarPropostas(estado: EstadoCarreiraDeJogador, media: number): PropostaDeClube[] {
   const { atleta } = estado
-  const interesse = atleta.overall + media * 4 + estado.temporadaAtual.gols * 1.2 + (estado.pedido === "transferencia" ? 8 : 0)
-  if (interesse < 78) return []
+  const agente = estado.empresario
+  const t = estado.temporadaAtual
+  const jogou = t.jogos >= 6
+  const interesse = atleta.overall
+    + media * 4
+    + t.gols * 1.2
+    + (estado.pedido === "transferencia" ? 8 : 0)
+    + (agente.influencia - 10) * 0.8
+  const semEspaco = papelNoElenco(estado.notaDoTreinador) === "fora dos planos" || (!jogou && atleta.idade <= 23)
 
-  // Os interessados saem das ligas de MAIOR prestígio do jogo — é para onde um
-  // atleta em ascensão vai. Clube do mesmo país aparece primeiro por afinidade.
+  if (interesse < 74 && !semEspaco) return []
+
+  const quantas = Math.max(1, Math.min(4, Math.round(1 + (agente.influencia - 8) / 4)))
+  const doExterior = agente.redeInternacional >= 12
+
   const candidatos = completarLigaComPool(estado.divisao)
-    .filter(t => t.file_key !== estado.clubeFileKey)
-    .concat(ligasVizinhas(estado))
-    .filter(t => t.prestigio > 0)
+    .filter(c => c.file_key !== estado.clubeFileKey)
+    .concat(doExterior ? ligasVizinhas(estado) : [])
+    .filter(c => c.prestigio > 0)
     .sort((a, b) => b.prestigio - a.prestigio)
-    .filter(t => t.prestigio <= interesse + 12 && t.prestigio >= interesse - 30)
-    .slice(0, 3)
+    .filter(c => c.prestigio <= interesse + 12 && c.prestigio >= interesse - 30)
+    .slice(0, quantas)
 
-  return candidatos.map((clube, i) => ({
-    id: `proposta_${estado.temporada}_${clube.file_key}`,
-    clubeCurto: clube.curto,
-    clubeNome: clube.nome,
-    clubeFileKey: clube.file_key,
-    divisao: String(clube.divisao),
-    ligaNome: String(clube.divisao),
-    prestigio: clube.prestigio,
-    salarioSemanal: Math.round(estado.contrato.salarioSemanal * (1.15 + i * 0.22 + clube.prestigio / 400)),
-    temporadas: 3 + (i % 2),
-    motivo: clube.prestigio > estado.tabela.length ? "Quer você como titular imediato." : "Projeto de crescimento com minutos garantidos.",
-  }))
+  return candidatos.map((clube, i) => {
+    // O AGENTE arranca mais: negociação alta vira salário e luvas maiores.
+    const talento = 1 + (agente.negociacao - 10) * 0.035
+    const salario = Math.round(estado.contrato.salarioSemanal * (1.15 + i * 0.22 + clube.prestigio / 400) * talento)
+    // O clube menor compra a vaga com STATUS; o maior, com dinheiro.
+    const status: PapelNoElenco = clube.prestigio >= atleta.overall + 8 ? "rodízio"
+      : clube.prestigio >= atleta.overall - 4 ? "titular"
+        : "titular absoluto"
+    return {
+      id: `proposta_${estado.temporada}_${clube.file_key}`,
+      clubeCurto: clube.curto,
+      clubeNome: clube.nome,
+      clubeFileKey: clube.file_key,
+      divisao: String(clube.divisao),
+      ligaNome: String(clube.divisao),
+      prestigio: clube.prestigio,
+      salarioSemanal: salario,
+      temporadas: semEspaco ? 1 : 3 + (i % 2),
+      luvas: semEspaco ? 0 : Math.round(salario * 12 * talento),
+      bonusPorGol: Math.round(salario * 0.16),
+      bonusPorTitulo: Math.round(salario * 6),
+      statusPrometido: semEspaco ? "titular" : status,
+      emprestimo: semEspaco,
+      motivo: semEspaco
+        ? "Quer você por empréstimo, para jogar todo fim de semana."
+        : status === "rodízio"
+          ? "Clube grande: você entra na disputa, sem vaga garantida."
+          : "Quer você como peça central do projeto.",
+    }
+  })
 }
 
 /** Clubes de fora da liga atual que podem se interessar (as ligas mais fortes). */
@@ -1259,6 +1370,11 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
       texto: `Fim de linha: ${novo.historico.reduce((n, h) => n + h.jogos, 0)} jogos, ${novo.historico.reduce((n, h) => n + h.gols, 0)} gols e ${novo.titulos.length} títulos. Obrigado por tudo.`,
       temporada: novo.temporada, rodada: novo.rodada,
     }, ...novo.recados].slice(0, 25)
+    novo.recados = [{
+      id: `pos_carreira_${novo.temporada}`, de: "Diretoria",
+      texto: `Sua carreira acabou dentro de campo — não neste clube. Quer continuar aqui como treinador? O mundo segue de onde você parou.`,
+      temporada: novo.temporada, rodada: novo.rodada,
+    }, ...novo.recados].slice(0, 25)
     return novo
   }
 
@@ -1297,12 +1413,29 @@ export function aceitarProposta(estado: EstadoCarreiraDeJogador, propostaId: str
     salarioSemanal: proposta.salarioSemanal,
     ateTemporada: novo.temporada + proposta.temporadas,
     valorDePasse: Math.max(200_000, novo.atleta.overall ** 3 * 12),
+    luvas: proposta.luvas,
+    bonusPorGol: proposta.bonusPorGol,
+    bonusPorTitulo: proposta.bonusPorTitulo,
+    statusPrometido: proposta.statusPrometido,
   }
+  // LUVAS entram como ganho no ato da assinatura, descontada a comissão do
+  // empresário — que é o preço de ter alguém bom cuidando disso.
+  novo.ganhosDaTemporada += Math.round((proposta.luvas ?? 0) * (1 - novo.empresario.comissao / 100))
   // Clube novo, treinador novo: a confiança recomeça no mérito daquele elenco —
   // é o que dá peso à decisão de subir de degrau cedo demais. Trocar o Santos
   // pelo Barcelona pode significar cair para o 4º da fila, e o modo agora diz
   // isso na cara antes de a temporada começar.
-  novo.notaDoTreinador = limitar(confiancaMerecida(novo) * 0.8)
+  //
+  // ⚠️ O STATUS PROMETIDO vale como piso na chegada: quem foi contratado para
+  // ser titular não senta no banco no primeiro dia. Ele não vira garantia
+  // eterna — a fila da posição volta a mandar assim que a bola rola.
+  const pisoPrometido: Record<PapelNoElenco, number> = {
+    "titular absoluto": 80, titular: 62, "rodízio": 45, reserva: 28, "fora dos planos": 12,
+  }
+  novo.notaDoTreinador = limitar(Math.max(
+    confiancaMerecida(novo) * 0.8,
+    pisoPrometido[proposta.statusPrometido ?? "rodízio"] * 0.9,
+  ))
   novo.metas = metasIniciais(novo.atleta, clube.prestigio, novo.calendario.filter(f => f.isUserMatch).length)
   novo.propostas = []
   novo.pedido = "nenhum"
@@ -1316,6 +1449,95 @@ export function aceitarProposta(estado: EstadoCarreiraDeJogador, propostaId: str
 
 export function recusarPropostas(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
   return { ...estado, propostas: [], pedido: "nenhum" }
+}
+
+/**
+ * TROCAR DE EMPRESÁRIO.
+ *
+ * Um agente melhor traz mais propostas, arranca mais salário e alcança o
+ * exterior — e come uma fatia maior. A troca só faz sentido quando o atleta já
+ * vale alguma coisa, e é essa a decisão: pagar mais para chegar mais longe.
+ */
+export function trocarEmpresario(estado: EstadoCarreiraDeJogador, nome: string): EstadoCarreiraDeJogador {
+  const novo = EMPRESARIOS.find(e => e.nome === nome)
+  if (!novo || novo.nome === estado.empresario.nome) return estado
+  // Agente grande não pega qualquer um: é preciso ter o que negociar.
+  const exigencia = 55 + novo.influencia * 1.6
+  if (estado.atleta.overall < exigencia) {
+    return {
+      ...estado,
+      recados: [{
+        id: `agente_recusa_${novo.nome}_${estado.temporada}`,
+        de: novo.nome,
+        texto: `Obrigado pelo contato, mas hoje não consigo fazer um bom trabalho por você. Procure quando estiver jogando mais.`,
+        temporada: estado.temporada, rodada: estado.rodada,
+      }, ...estado.recados].slice(0, 25),
+    }
+  }
+  return {
+    ...estado,
+    empresario: novo,
+    recados: [{
+      id: `agente_${novo.nome}_${estado.temporada}`,
+      de: novo.nome,
+      texto: `Assumi a sua carreira. Comissão de ${novo.comissao}% — e eu trabalho por ela.`,
+      temporada: estado.temporada, rodada: estado.rodada,
+    }, ...estado.recados].slice(0, 25),
+  }
+}
+
+/**
+ * O QUE A CARREIRA FOI, em números — para a despedida e para a transição.
+ *
+ * ⚠️ Existe por causa da mecânica que o usuário pediu e que é a mais forte do
+ * modo: aposentar aos 36 e CONTINUAR O MESMO SAVE como treinador, 15–20
+ * temporadas depois do começo. Para isso a carreira de atleta precisa deixar um
+ * legado legível — senão o técnico novo nasce sem passado, e a graça era
+ * justamente ser o mesmo universo.
+ */
+export interface ResumoDaCarreira {
+  jogos: number
+  gols: number
+  assistencias: number
+  temporadas: number
+  titulos: string[]
+  premios: string[]
+  selecao: { jogos: number; gols: number }
+  ultimoClube: string
+  ultimoClubeFileKey: string
+  overallMaximo: number
+}
+
+export function resumoDaCarreira(estado: EstadoCarreiraDeJogador): ResumoDaCarreira {
+  const h = estado.historico
+  return {
+    jogos: h.reduce((n, x) => n + x.jogos, 0),
+    gols: h.reduce((n, x) => n + x.gols, 0),
+    assistencias: h.reduce((n, x) => n + x.assistencias, 0),
+    temporadas: h.length,
+    titulos: estado.titulos,
+    premios: estado.premios,
+    selecao: { jogos: estado.selecao.jogos, gols: estado.selecao.gols },
+    ultimoClube: estado.clubeNome,
+    ultimoClubeFileKey: estado.clubeFileKey,
+    overallMaximo: Math.max(estado.atleta.overall, ...h.map(x => x.overallFinal)),
+  }
+}
+
+/**
+ * A REPUTAÇÃO com que o ex-atleta começa a carreira de técnico.
+ *
+ * Quem ganhou Bola de Ouro não começa dirigindo o mesmo clube que um reserva
+ * aposentado — é o que faz valer a pena ter jogado bem antes.
+ */
+export function reputacaoDeTreinador(resumo: ResumoDaCarreira): number {
+  return Math.round(Math.min(100,
+    20
+    + resumo.overallMaximo * 0.4
+    + resumo.titulos.length * 3
+    + resumo.premios.length * 4
+    + Math.min(15, resumo.selecao.jogos * 0.2),
+  ))
 }
 
 /** Média da temporada corrente — a tela mostra em três lugares. */
