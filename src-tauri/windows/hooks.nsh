@@ -74,6 +74,15 @@
 ; Pré-requisito do Ultrafoot: Microsoft Visual C++ v14 x64 Runtime.
 ; Evita falhas MSVCP140.dll, VCRUNTIME140.dll e dependências nativas do Discord SDK.
 !macro NSIS_HOOK_POSTINSTALL
+  ; ── SOBRA DA VERSAO ANTERIOR ────────────────────────────────────────────────
+  ; O NSIS instala POR CIMA e nao remove arquivo que deixou de existir no pacote.
+  ; Ate a 1.0.322 o aviso de licenca do Discord ficava solto na raiz; da 1.0.323
+  ; em diante ele mora em `licencas\`. Sem esta linha quem ATUALIZA fica com os
+  ; DOIS — o novo na pasta e o velho na raiz —, que e justamente a bagunca que
+  ; esta versao existe para tirar. Em instalacao nova o Delete nao acha nada e
+  ; segue em frente.
+  Delete "$INSTDIR\Discord-Social-SDK-License-Notices.txt"
+
   ; Builds locais/CI podem empacotar milhares de ativos em um unico ZIP para evitar
   ; que o Tauri/NSIS catalogue cada imagem duas vezes. Eles continuam dados globais do
   ; jogo no $INSTDIR (nunca dentro do save). Compatível também com instaladores antigos
@@ -216,3 +225,4 @@
 !macro NSIS_HOOK_PREUNINSTALL
   RMDir "$INSTDIR\sav"
 !macroend
+
