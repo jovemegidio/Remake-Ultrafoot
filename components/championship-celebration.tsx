@@ -8,6 +8,7 @@ import { ControllerButton, ControllerToolbar, ControllerTypeContext } from "@/co
 import { cn } from "@/lib/utils"
 import { type Team } from "@/lib/teams-data"
 import { getCompetitionTheme, type CompetitionId } from "@/lib/competition-themes"
+import { siglaExibivel } from "@/lib/club-identity"
 
 interface ChampionshipCelebrationProps {
   team: Team
@@ -197,7 +198,7 @@ export function ChampionshipCelebration({
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-4">
                 <TeamCrest team={team} size="lg" />
-                <span className="text-lg font-bold text-white">{team.curto}</span>
+                <span className="text-lg font-bold text-white">{siglaExibivel(team.curto, team.nome)}</span>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-5xl font-black text-white">{finalScore.home}</span>
@@ -205,7 +206,7 @@ export function ChampionshipCelebration({
                 <span className="text-5xl font-black text-white">{finalScore.away}</span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-lg font-bold text-white">{opponent.curto}</span>
+                <span className="text-lg font-bold text-white">{siglaExibivel(opponent.curto, opponent.nome)}</span>
                 <TeamCrest team={opponent} size="lg" />
               </div>
             </div>

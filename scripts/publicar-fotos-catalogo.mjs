@@ -68,8 +68,19 @@ const pares = process.argv
     return { fileKey: a.slice(0, i).trim(), pasta: a.slice(i + 1).trim() }
   })
 
-if (!pares.length) {
-  console.error('uso: --exportar saida.json fileKey="caminho da pasta" [outro=...]')
+// ─── --catalogo: a pasta INTEIRA, sem um par por clube ───────────────────────
+//
+// O catalogo passou de 6 pastas para 288 e escrever `fileKey="caminho"` para
+// cada uma na linha de comando deixou de ser possivel. Com `--catalogo <raiz>`
+// as subpastas viram os pares sozinhas: o nome da pasta e o nome FORMAL
+// ("Clube de Regatas do Flamengo") e o casamento e por contencao do nome curto,
+// com desempate pela UF entre parenteses. Ver acharClubeDaPasta.
+const catalogo = process.argv.includes("--catalogo")
+  ? process.argv[process.argv.indexOf("--catalogo") + 1]
+  : ""
+
+if (!pares.length && !catalogo && !process.argv.includes("--pares-de")) {
+  console.error('uso: --exportar saida.json fileKey="caminho da pasta" [outro=...]   |   --catalogo "<raiz>"')
   process.exit(1)
 }
 
@@ -334,21 +345,349 @@ function elencosPorNome() {
 const CLUBES = clubesDoJogo()
 const ELENCOS = elencosPorNome()
 
+// ─── O POOL, e por que ele precisou entrar ───────────────────────────────────
+//
+// Ate 06/08 o universo era so lib/teams-data.ts: 79 clubes, todos brasileiros
+// de A/B/C/D. O catalogo de hoje tem 288 pastas — estadual, base e Serie D
+// inteira —, e para essas o clube so existe no POOL (imported-bf2026), com
+// elenco proprio em imported-bf2026-elencos.json (indexado pelo `id`, nao pelo
+// fileKey). Sem isto, 200 das 288 pastas cairiam como "clube desconhecido".
+const POOL = JSON.parse(readFileSync(path.join(RAIZ, "data/seeds/imported-bf2026.json"), "utf-8")).teams ?? []
+const ELENCO_POOL = JSON.parse(readFileSync(path.join(RAIZ, "data/seeds/imported-bf2026-elencos.json"), "utf-8"))
+const poolPorChave = new Map()
+for (const t of POOL) if (t.fileKey && t.nome) poolPorChave.set(t.fileKey, t)
+
+// ⚠️ A MESMA LICAO DO UNIFORME: quem a tela desenha nas Series A/B/C/D e o
+// CURADO, e o mesmo clube tem chave diferente nos dois (`santa` x
+// `santacruz_pe`). Foto publicada so na chave do pool nao aparece, e sem erro.
+const fonteCurada = readFileSync(path.join(RAIZ, "lib/teams-data.ts"), "utf-8")
+  + "\n" + readFileSync(path.join(RAIZ, "lib/international-teams.ts"), "utf-8")
+const curadoPorNome = new Map()
+const chavesCuradas = new Set()
+for (const m of fonteCurada.matchAll(/\{[^{}]*\}/g)) {
+  const fk = m[0].match(/file_key:\s*"([^"]+)"/)
+  const nm = m[0].match(/(?:^|[\s,{])nome:\s*"([^"]+)"/) // `estadio_nome` tambem casa "nome:"
+  if (!fk || !nm) continue
+  chavesCuradas.add(fk[1])
+  if (!curadoPorNome.has(norm(nm[1]))) curadoPorNome.set(norm(nm[1]), fk[1])
+}
+const gemeoCurado = (fileKey, nome) => {
+  if (chavesCuradas.has(fileKey)) return null
+  const g = curadoPorNome.get(norm(nome))
+  return g && g !== fileKey ? g : null
+}
+
+/** Elenco do clube, venha ele do curado ou do pool. */
+function elencoDe(fileKey) {
+  const nomeCurado = CLUBES.get(fileKey)
+  if (nomeCurado) {
+    const a = ELENCOS.get(normClube(nomeCurado))
+    if (a?.elenco?.length) return { ...a, nomeClube: nomeCurado }
+  }
+  const t = poolPorChave.get(fileKey)
+  if (t) {
+    // Antes do pool, ainda vale o TM/curado pelo nome: onde as duas fontes
+    // existem, o jogo mostra o nome do TM, e a foto e indexada pelo nome que o
+    // jogo mostra.
+    const porNome = ELENCOS.get(normClube(t.nome))
+    if (porNome?.elenco?.length) return { ...porNome, nomeClube: t.nome }
+    const e = ELENCO_POOL[t.id]
+    if (e?.length) return { fonte: "pool", elenco: e.map(p => ({ ...p, n: p.nome })), nomeClube: t.nome }
+  }
+  return null
+}
+
+// ─── --catalogo: casar PASTA -> clube ────────────────────────────────────────
+//
+// A pasta traz o nome FORMAL ("Clube de Regatas do Flamengo", "Esporte Clube
+// Vitória") e o jogo guarda o curto ("Flamengo", "Vitória"). O casamento e por
+// CONTENCAO do nome do jogo dentro do nome da pasta, com duas travas:
+//
+//   1. vence o nome MAIS LONGO contido (senao "Nacional" ganha de "Nacional
+//      Atlético Clube de Patos" em qualquer pasta que contenha os dois);
+//   2. a UF entre parenteses ("(SP)", "(MG)") desempata — e ela existe na pasta
+//      exatamente porque ha homonimo.
+//
+// Empate que sobra NAO e chutado: sai no relatorio e a pasta fica de fora.
+// Rosto errado e pior do que rosto faltando.
+const PARES_CATALOGO = new Map(Object.entries({
+  // Conferidos a mao: o nome do jogo nao esta contido no da pasta.
+  "Red Bull Bragantino": "bragantino_bra",
+  "Grêmio Foot-Ball Porto Alegrense": "gremio",
+  "Clube Athlético Paranaense": "atleticopr_bra",
+  "Esporte Clube Bahia SAF": "bahia",
+  "Sociedade Esportiva e Recreativa Caxias do Sul": "caxias_rs",
+  "Osasco Sporting": "oestesp_bra",
+  "Associação Desportiva Vasco da Gama": "vascoac_bra",
+  "Club de Regatas Vasco da Gama SAF": "vasco",
+  "Instituto de Adm. de Projetos Educacionais FC": "iape_ma",
+  // Homonimo em que a UF da pasta nao aparece em nenhum candidato, mas o clube
+  // do jogo E aquele: a Lusa do Caninde e a "Portuguesa" lisa do seed (a de
+  // chave propria e a do Rio), e o Inter e o "Internacional" liso.
+  "Associação Atlética Portuguesa (SP)": "portuguesa_bra",
+  "Esporte Clube Internacional (RS)": "internacional_bra",
+  "América Futebol Clube de Propriá": "americase_bra",          // Propria e SE
+  "Associação Desportiva Ferroviária Vale do Rio Doce": "desportivaferroviaria_es",
+  "Clube Esportivo Operário Várzea-Grandense": "operariomt",     // Varzea Grande e MT
+  "Athletic Club SAF (MG)": "athleticclub_mg",
+  // ─── Clubes CRIADOS em 15/08 que o casamento nao alcanca ──────────────
+  // A ancora no fim do nome formal nao chega neles: "Associação Atlética
+  // Internacional de Bebedouro" termina em "bebedouro" e o clube se chama
+  // "Inter de Bebedouro"; "Associação Desportiva Atlética Gloriense" tem
+  // "atletica" onde o clube tem "atletico"; e "Academia" e "Atlético-PI"
+  // viram nomes 100% genericos depois do filtro. Par manual resolve.
+  "Academia Futebol Clube (MT)": "academia_mt",
+  "Clube Sociedade Esportiva": "cseal_bra",              // CSE de Palmeira dos Índios (AL)
+  "Vila Operária Clube Esporte Mariano": "vocem_sp",     // o clube se chama VOCEM no seed
+  "Associação Atlética Internacional de Bebedouro": "interbebedouro_sp",
+  "Associação Desportiva Atlética Gloriense": "gloriense_se",
+  "Associação Desportiva Jaboatão dos Guararapes": "jaboatao_pe",
+  "Clube Atlético Piauiense": "atleticopi",
+  "Coimbra Sports SAF": "coimbra_mg",
+  "Confiança Esporte Clube de Sapé": "confiancasape_pb",
+  "Desportivo Brasil Participações Ltda": "desportivobrasil_sp",
+  "Esporte Clube de Patos": "ecpatos_pb",
+  "Esporte Clube XV de Novembro de Jaú": "xvdejau_sp",
+  "Grêmio Desportivo Prudente": "gremioprudente_sp",
+  "Rondoniense Social Clube": "rondoniense_ro",
+  "Sporting Club Paulinense": "paulinense_sp",
+
+  // ─── Homonimos que o veto de UF deixou em aberto ──────────────────────
+  // Aqui os DOIS clubes existem e a pasta nao diz a UF; quem separa e o
+  // apelido/forma juridica do nome formal. Conferido um a um.
+  "Esporte Clube Primavera SAF": "primavera_bra",       // Primavera de Indaiatuba (SP)
+  "Primavera Atlético Clube": "primavera_mt",           // Primavera do Leste (MT)
+  // "Rio Branco Esporte Clube" (Americana/SP) NAO existe no seed — entra na
+  // leva de criacao, nao aqui. Escrevi `riobrancosp_bra` de cabeca e a trava
+  // de chave inexistente pegou: sem ela a foto iria para chave nenhuma.
+  "Rio Branco Sport Club SAF": "riobrancovn_es",        // Rio Branco de Venda Nova (ES)
+  "Ypiranga Clube": "ypiranga_ap",                      // o de Erechim (RS) e "Ypiranga Futebol Clube (RS)"
+  // ─── Clubes que EXISTEM no seed com outro nome (15/08/2026) ───────────
+  // O casamento e ancorado no FIM do nome formal, e essas 26 pastas nao tem
+  // como casar: o seed escreve "Atlético Alagoinhas" e a pasta "Alagoinhas
+  // Atlético Clube" (ordem trocada); guarda o ESTADIO no campo nome
+  // (`lagunarn` = "Nazarenão"); ou usa sigla ("ABECAT", "URT", "CRAC").
+  // Sem estes pares o rosto desses clubes nunca era publicado — e criar o
+  // clube "que faltava" teria gerado 26 duplicatas.
+  "Alagoinhas Atlético Clube": "atleticoalagoinhas_bra",
+  "Associação Beneficente e Esportiva Ouvidorense": "abecat",
+  "Associação Cultural e Desp. Potyguar Seridoense": "potyguarrn_bra",
+  "Associação Esportiva Velo Clube Rioclarense": "veloclube_bra",
+  "Atlético Clube Goianiense SAF": "atleticogo_bra",
+  "Bragantino Clube do Pará": "bragantino_pa",
+  "Centro Sportivo Alagoano": "csa_bra",
+  "Centro de Formação de Atletas do Tirol": "tirol_ce",
+  "Clube Atlético Mineiro SAF": "atleticomg_bra",
+  "Clube Atlético Piauiense": "atleticopi",
+  "Clube Esportivo Bento Gonçalves": "esportivors_bra",
+  "Clube Laguna SAF": "lagunarn",
+  "Clube Náutico Capibaribe": "nautico_pe",
+  "Clube Recreativo e Atlético Catalano": "cracgo_bra",
+  "Clube de Regatas Brasil": "crb_bra",
+  "Decisão Goiana Futebol Clube": "decisaope_bra",
+  "Esporte Clube Democrata": "ecdemocrata_mg",
+  "Esporte Clube XV de Novembro SAF": "xvdepiracicaba_sp",
+  "Forte Futebol Clube": "fortefc",
+  "Futebol Clube Atlético Cearense": "atleticoce_bra",
+  "Moto Club de São Luís": "motoclub_ma",
+  "Nacional Atlético Clube de Patos": "nacional_pb",
+  "Paulista Futebol Clube": "paulista_sp",
+  "Sport Club do Recife": "sport",
+  "União Agrícola Barbarense Futebol Clube": "uniaobarbarense_bra",
+  "União Recreativa dos Trabalhadores": "urt_bra",                   // "Athletic Club" sozinho e generico demais para casar
+}))
+
+const ufDaPasta = (nome) => (nome.match(/\(([A-Z]{2})\)\s*$/)?.[1] ?? "").toUpperCase()
+const semUf = (nome) => nome.replace(/\s*\([A-Z]{2}\)\s*$/, "").trim()
+
+// ⚠️ CONTENCAO CRUA COLA CLUBE ERRADO, e em silencio. Comparando as letras
+// coladas, "1º de Maio Esporte Clube" contem "Esporte" (que e um clube de
+// verdade, `esporte_pb`), "Atlético Clube Paranavaí" contem "Avaí" e
+// "Freipaulistano" contem "Paulista". Foram 30+ trocas de clube na primeira
+// versao. As duas travas que resolvem:
+//
+//   1. a comparacao e por PALAVRA INTEIRA, em sequencia contigua;
+//   2. o nome do clube precisa ter ao menos uma palavra que nao seja generica —
+//      "Esporte", "Sport" e "Clube" sozinhos nao identificam ninguem.
+const GENERICAS = new Set([
+  "esporte", "esportes", "esportivo", "esportiva", "sport", "sporting", "clube", "club",
+  "futebol", "football", "foot", "ball", "associacao", "sociedade", "desportivo", "desportiva", "desportos",
+  "atletico", "atletica", "athletico", "athletic", "recreativo", "recreativa", "cultural", "regatas", "academia",
+  "de", "do", "da", "dos", "das", "e", "saf", "ltda", "fc", "ec", "ac", "sc", "aa", "ad", "cf",
+])
+// ⚠️ E NEM PALAVRA INTEIRA BASTA: "Grêmio Desportivo Prudente" contem "Grêmio"
+// (o de Porto Alegre), "União São João" contem "União" e "Guarani de Palhoça"
+// contem "Guarani". Todos casavam, e todos sao outro clube. O que separa
+// "Clube de Regatas do Flamengo" -> Flamengo desses casos e a POSICAO: o nome
+// do clube TERMINA o nome formal; o que vem depois dele ("Prudente", "Palhoça",
+// "São João") e justamente o que diz que o clube e outro.
+//
+// Palavras que podem sobrar no fim sem mudar o clube — o Corinthians "Paulista"
+// e o Retrô "Brasil" nao sao outro clube.
+const CAUDA_OK = new Set(["paulista", "brasil", "brasileiro", "brasileira"])
+const tokens = (s) => semAcento(s).toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean)
+const semCauda = (ts) => {
+  const r = [...ts]
+  while (r.length && (GENERICAS.has(r.at(-1)) || CAUDA_OK.has(r.at(-1)))) r.pop()
+  return r
+}
+const terminaEmSequencia = (agulha, palheiro) => {
+  if (!agulha.length || agulha.length > palheiro.length) return false
+  const i = palheiro.length - agulha.length
+  return agulha.every((t, j) => t === palheiro[i + j])
+}
+
+// A pasta e do BRASIL. Sem o recorte, "Barcelona Futebol Clube (RO)" casa com o
+// Barcelona da Espanha e "Guarani" com o do Paraguai.
+const UFS_BR = new Set(["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"])
+const ehBrasileiro = (t) => {
+  const p = (t.pais ?? "").toUpperCase()
+  return normClube(t.pais ?? "") === "brasil" || UFS_BR.has(p)
+    || UFS_BR.has((t.estado ?? "").toUpperCase())
+    || /_(bra|br)$/i.test(t.fileKey ?? "")
+    // ⚠️ HA CHAVE COM HIFEN (`santacruz-ac`), e so com `_` ela ficava de fora do
+    // universo brasileiro — o Santa Cruz do Acre sumia do casamento inteiro.
+    || UFS_BR.has(((t.fileKey ?? "").split(/[_-]/).at(-1) ?? "").toUpperCase())
+}
+
+// ⚠️ PAR MANUAL COM CHAVE ERRADA SOME EM SILENCIO. Escrevi `gremio_bra`,
+// `bahia_bra` e `vasco_bra`, que nao existem — e os tres clubes simplesmente
+// nao apareceram no pacote, sem uma linha de erro. Agora a chave e conferida
+// contra o pool e o curado antes de qualquer casamento.
+for (const [pasta, fk] of PARES_CATALOGO) {
+  if (!poolPorChave.has(fk) && !CLUBES.has(fk) && !chavesCuradas.has(fk)) {
+    console.error(`PARES_CATALOGO: "${pasta}" aponta para "${fk}", que nao existe nem no pool nem no curado.`)
+    process.exit(1)
+  }
+}
+
+// ⚠️ O NOME DA PASTA PODE VIR EM NFD. "Clube Atlético Piauiense" chega do disco
+// como `Atle` + acento COMBINANTE + `tico`; a chave escrita aqui esta em NFC.
+// As duas strings mostram o mesmo texto e `===` diz que sao diferentes — o par
+// manual simplesmente nao era encontrado, sem erro nenhum. Normalizar os dois
+// lados e o que faz a busca funcionar.
+const PARES_NFC = new Map([...PARES_CATALOGO].map(([k, v]) => [k.normalize("NFC"), v]))
+
+function acharClubeDaPasta(nomePastaCru) {
+  const nomePasta = nomePastaCru.normalize("NFC")
+  const manual = PARES_NFC.get(nomePasta) ?? PARES_NFC.get(semUf(nomePasta))
+  if (manual) return { fileKey: manual, via: "par manual" }
+
+  const alvo = semCauda(tokens(semUf(nomePasta)))
+  const uf = ufDaPasta(nomePasta)
+  const candidatos = []
+  const ver = (fileKey, nome, estado) => {
+    // ⚠️ O SEED GUARDA A UF DENTRO DO NOME: "Botafogo-SP", "Cruzeiro - AL",
+    // "Santa Cruz - RN". Comparada crua, "Botafogo-SP" nunca esta contida em
+    // "Botafogo Futebol Clube (SP)" — e o casamento cai no "Botafogo" liso, que
+    // e o do Rio. A UF sai do nome e vira prova, em vez de atrapalhar.
+    const m = String(nome).match(/\s*-\s*([A-Za-z]{2})\s*$/)
+    const ufClube = (m && UFS_BR.has(m[1].toUpperCase()) ? m[1] : (estado ?? "")).toUpperCase()
+    const base = m && UFS_BR.has(m[1].toUpperCase()) ? nome.slice(0, m.index) : nome
+    const t = tokens(base)
+    if (!t.length || t.every(w => GENERICAS.has(w))) return
+    if (!terminaEmSequencia(semCauda(t), alvo)) return
+    // Peso: palavras proprias contam, genericas nao — assim "Vitória" nao ganha
+    // de "Vitória das Tabocas" so por empatar em numero de palavras.
+    const peso = t.filter(w => !GENERICAS.has(w)).join("").length
+    candidatos.push({ fileKey, nome, tamanho: peso, uf: UFS_BR.has(ufClube) ? ufClube : "" })
+  }
+  for (const [fk, nome] of CLUBES) ver(fk, nome, "")
+  for (const t of POOL) { if (ehBrasileiro(t)) ver(t.fileKey, t.nome, t.estado || ((t.pais ?? "").length === 2 ? t.pais : "")) }
+  if (!candidatos.length) return { nada: true }
+
+  let melhor = candidatos.filter(c => c.tamanho === Math.max(...candidatos.map(c => c.tamanho)))
+
+  // ⚠️ A UF ENTRE PARENTESES SO EXISTE PORQUE HA HOMONIMO — e por isso ela e
+  // VETO, nao so desempate. Sem isto, "Botafogo Futebol Clube (PB)" casava com
+  // o Botafogo do Rio e "Cruzeiro Esporte Clube (PB)" com o de Belo Horizonte,
+  // porque esses sao os que se chamam so "Botafogo" e "Cruzeiro" no seed.
+  // Quando nenhum candidato traz a UF pedida, o certo e NAO publicar: o clube
+  // daquela UF provavelmente nao esta no jogo. Sai no relatorio para virar par
+  // manual se for o caso.
+  if (uf) {
+    const doUf = melhor.filter(c => c.uf === uf)
+    if (!doUf.length) return { ufNaoConfere: melhor.map(c => `${c.fileKey}${c.uf ? `/${c.uf}` : ""}`) }
+    melhor = doUf
+  } else {
+    // Pasta SEM UF e o clube "padrao" — entre "Cruzeiro" e "Cruzeiro - AL",
+    // e o primeiro. Sem esta regra os dois empatam e o clube fica sem foto.
+    const semUfClube = melhor.filter(c => !c.uf)
+    if (semUfClube.length) melhor = semUfClube
+  }
+
+  // ⚠️ CURADO + POOL COM O MESMO NOME NAO E AMBIGUIDADE, E GEMEO. `remo` e
+  // `remo_pa`, `nautico` e `nautico_pe`, `figueirense` e `figueirense_sc` sao o
+  // mesmo clube com as duas chaves do jogo (ver a nota grande la em cima).
+  // Chamar isso de empate deixava 8 clubes sem rosto nenhum. Fica o do POOL, e
+  // o gemeoCurado acrescenta a chave curada na hora de gravar.
+  const unicas = new Set(melhor.map(c => c.fileKey))
+  if (unicas.size > 1) {
+    const nomes = new Set(melhor.map(c => norm(c.nome)))
+    const doPool = melhor.filter(c => !chavesCuradas.has(c.fileKey))
+    const chavesPool = new Set(doPool.map(c => c.fileKey))
+    if (nomes.size === 1 && chavesPool.size === 1) melhor = doPool
+  }
+  if (new Set(melhor.map(c => c.fileKey)).size > 1) return { ambiguo: [...unicas] }
+  return { fileKey: melhor[0].fileKey, via: `contencao ("${melhor[0].nome}")` }
+}
+
+// ─── --pares-de: arvore cujas SUBPASTAS JA SAO file_key ──────────────────────
+// Usado pelas variacoes de rosto (montar-variacoes-de-rosto.mjs), onde o
+// casamento de clube ja foi feito. 92 pares nao cabem na linha de comando.
+const paresDe = process.argv.includes("--pares-de")
+  ? process.argv[process.argv.indexOf("--pares-de") + 1]
+  : ""
+if (paresDe) {
+  for (const d of readdirSync(paresDe, { withFileTypes: true }).filter(d => d.isDirectory())) {
+    pares.push({ fileKey: d.name, pasta: path.join(paresDe, d.name), rotulo: d.name })
+  }
+  console.log(`${pares.length} pastas vindas de --pares-de.
+`)
+}
+
+const semClube = [], semElenco = [], ambiguos = []
+if (catalogo) {
+  for (const nome of readdirSync(catalogo, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name)) {
+    const r = acharClubeDaPasta(nome)
+    if (r.ambiguo) { ambiguos.push(`${nome} -> ${r.ambiguo.join(", ")}`); continue }
+    if (r.ufNaoConfere) { ambiguos.push(`${nome} -> nenhum candidato dessa UF (achei ${r.ufNaoConfere.join(", ")})`); continue }
+    if (!r.fileKey) { semClube.push(nome); continue }
+    pares.push({ fileKey: r.fileKey, pasta: path.join(catalogo, nome), rotulo: nome })
+  }
+  console.log(`Catalogo: ${pares.length} pastas casadas, ${semClube.length} sem clube, ${ambiguos.length} ambiguas.\n`)
+  // Conferir o casamento custa segundos; converter 3 mil rostos custa dezenas de
+  // minutos. `--casar` para aqui, que e onde mora o erro que importa.
+  if (process.argv.includes("--casar")) {
+    for (const p of pares) console.log(`  ${p.rotulo} -> ${p.fileKey}${elencoDe(p.fileKey) ? "" : "   [SEM ELENCO]"}`)
+    if (ambiguos.length) console.log(`\nAMBIGUAS:\n   ${ambiguos.join("\n   ")}`)
+    if (semClube.length) console.log(`\nSEM CLUBE:\n   ${semClube.join("\n   ")}`)
+    process.exit(0)
+  }
+}
+
 const itens = []
 const relatorio = []
 
-for (const { fileKey, pasta } of pares) {
-  const nomeClube = CLUBES.get(fileKey)
-  if (!nomeClube) {
-    console.error(`file_key desconhecido: "${fileKey}" — confira em lib/teams-data.ts`)
-    process.exit(1)
-  }
-  const achado = ELENCOS.get(normClube(nomeClube))
+for (const { fileKey, pasta, rotulo } of pares) {
+  let achado = elencoDe(fileKey)
   if (!achado?.elenco?.length) {
-    console.error(`sem elenco para "${nomeClube}" (${fileKey}) — nem Transfermarkt nem curado`)
-    process.exit(1)
+    // Em modo catalogo isto e rotina (clube sem elenco no jogo), nao erro fatal.
+    // ⚠️ CLUBE SEM ELENCO AINDA PODE RECEBER FOTO — se ela veio do `--incluir`.
+    // Ali o nome nao e conferido contra elenco nenhum (e o atleta que chega por
+    // transferencia, ou a variacao de rosto publicada para um clube onde ele
+    // ainda nao joga). Pular o clube inteiro descartava justamente esses.
+    if (incluir.size) {
+      const nome = poolPorChave.get(fileKey)?.nome ?? CLUBES.get(fileKey) ?? fileKey
+      achado = { elenco: [], fonte: "so --incluir", nomeClube: nome }
+      semElenco.push(`${rotulo ?? fileKey} (${fileKey}) — so --incluir`)
+    } else if (catalogo || paresDe) { semElenco.push(`${rotulo ?? fileKey} (${fileKey})`); continue }
+    else {
+      console.error(`sem elenco para "${fileKey}" — nem Transfermarkt, nem curado, nem pool`)
+      process.exit(1)
+    }
   }
-  const { elenco, fonte } = achado
+  const { elenco, fonte, nomeClube } = achado
 
   // nome normalizado -> nome COMO O JOGO ESCREVE (e ele que vira nome_original)
   const porNome = new Map()
@@ -453,15 +792,16 @@ for (const { fileKey, pasta } of pares) {
       .webp({ quality: 82 })
       .toBuffer()
 
-    itens.push({
-      file_key: fileKey,
-      nome_original: doJogo,
-      foto_data: `data:image/webp;base64,${imagem.toString("base64")}`,
-    })
+    const foto_data = `data:image/webp;base64,${imagem.toString("base64")}`
+    itens.push({ file_key: fileKey, nome_original: doJogo, foto_data })
+    // A chave curada tambem, quando existe: e ela que a tela consulta nas
+    // Series A/B/C/D. Mesma imagem, e o servidor deduplica por sha.
+    const gemeo = gemeoCurado(fileKey, nomeClube)
+    if (gemeo) itens.push({ file_key: gemeo, nome_original: doJogo, foto_data })
     casados++
   }
 
-  relatorio.push({ fileKey, nomeClube, fonte, naPasta: arquivos.length, casados, sobraram, inferidos, incluidos, semRecorte })
+  relatorio.push({ fileKey, nomeClube, fonte, gemeo: gemeoCurado(fileKey, nomeClube), naPasta: arquivos.length, casados, sobraram, inferidos, incluidos, semRecorte })
 }
 
 console.log("CASAMENTO POR CLUBE")
@@ -482,12 +822,44 @@ for (const r of relatorio) {
   }
 }
 
-const mb = (itens.reduce((s, i) => s + i.foto_data.length, 0) / 1024 / 1024).toFixed(1)
-console.log(`\n${itens.length} rostos prontos (~${mb} MB em base64)`)
+if (catalogo) {
+  if (ambiguos.length) console.log(`\nPASTA AMBIGUA (nenhuma foto publicada) — ${ambiguos.length}:\n   ${ambiguos.join("\n   ")}`)
+  if (semClube.length) console.log(`\nSEM CLUBE no jogo — ${semClube.length}:\n   ${semClube.join("\n   ")}`)
+  if (semElenco.length) console.log(`\nCLUBE SEM ELENCO no jogo — ${semElenco.length}:\n   ${semElenco.join("\n   ")}`)
+}
+
+// ⚠️ DOIS ARQUIVOS NA MESMA CHAVE, E NINGUEM RECLAMA. A pasta do Athletico tem
+// "Dudu" e "Dudu Marques" e o elenco do jogo so tem "Dudu": os dois viram
+// `atleticopr_bra__dudu`, o upsert do carregador grava por chave e vence o
+// ULTIMO da ordem alfabetica — ou seja, o rosto e sorteado.
+//
+// Quem fica e quem casou por IGUALDADE de nome; a inferencia por sobrenome
+// perde. Quando os dois sao inferencia, NENHUM fica: nao ha como saber, e cara
+// de outra pessoa e pior do que silhueta.
+const porChave = new Map()
+for (const i of itens) {
+  const k = `${i.file_key}__${norm(i.nome_original)}`
+  const antes = porChave.get(k)
+  if (!antes) { porChave.set(k, i); continue }
+  if (antes.exato === i.exato) porChave.set(k, { ...antes, empatado: true })
+  else if (i.exato) porChave.set(k, i)
+}
+const disputadas = [...porChave].filter(([, i]) => i.empatado)
+const perdidas = itens.length - porChave.size
+if (perdidas) console.log(`\n⚠️ ${perdidas} arquivos caiam na chave de outro ja presente (ficou o de nome exato).`)
+if (disputadas.length) {
+  console.log(`\n⚠️ ${disputadas.length} CHAVES EM EMPATE, nenhuma publicada:`)
+  for (const [k] of disputadas) { console.log(`   ${k}`); porChave.delete(k) }
+}
+const finais = [...porChave.values()].map(({ exato, empatado, ...resto }) => resto)
+
+const mb = (finais.reduce((s, i) => s + i.foto_data.length, 0) / 1024 / 1024).toFixed(1)
+console.log(`
+${finais.length} rostos prontos (~${mb} MB em base64)`)
 
 if (!saida) {
   console.log("Ensaio. Use --exportar <arquivo> para gravar o pacote.")
   process.exit(0)
 }
-writeFileSync(saida, JSON.stringify({ jogadores: itens }), "utf-8")
+writeFileSync(saida, JSON.stringify({ jogadores: finais }), "utf-8")
 console.log(`Exportado para ${saida}`)

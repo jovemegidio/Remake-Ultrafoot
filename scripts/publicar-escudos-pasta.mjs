@@ -182,12 +182,24 @@ const PAISES = {
   ESC: { pais: ["escocia"], sufixos: ["esc"] },
   CRO: { pais: ["croacia"], sufixos: ["cro"] },
   SER: { pais: ["servia"], sufixos: ["ser", "srb"] },
+  // ⚠️ O SUFIXO QUE O ARQUIVO USA TAMBEM PRECISA SER CHAVE AQUI. A tabela e
+  // consultada pelo texto depois do tracinho: `EQU` existia, mas a pasta escreve
+  // `ECU`, e por isso "Aucas - ECU.png" virava o clube "Aucas - ECU" — 15
+  // equatorianos que EXISTEM no seed sairam como "sem clube", sem erro nenhum.
+  ECU: { pais: ["equador"], sufixos: ["equ", "ecu"] },
+  CHILE: { pais: ["chile"], sufixos: ["chi"] },
+  CROACIA: { pais: ["croacia"], sufixos: ["cro"] },
 }
 
 /** "A.C Monza - ITA.png" -> { nome: "A.C Monza", sufixo: "ITA" } */
 function partesDoArquivo(arquivo) {
   const base = arquivo.replace(/\.(png|webp|jpg|jpeg)$/i, "")
-  const m = base.match(/^(.*?)\s*-\s*([A-Za-z]{2,4})$/)
+  // ⚠️ O SUFIXO NEM SEMPRE E SIGLA. A pasta tambem escreve o pais por extenso
+  // ("- CHILE", "- Croacia"), e com o limite de 4 letras esses arquivos ficavam
+  // com o pais grudado no nome do clube ("Dinamo Zagreb - Croacia"). Abrir o
+  // limite nao afrouxa nada: o token so vale se for uma UF ou uma chave da
+  // tabela PAISES, que continua sendo a trava.
+  const m = base.match(/^(.*?)\s*-\s*([A-Za-z]{2,10})$/)
   if (m) {
     const suf = m[2].toUpperCase()
     if (UFS.has(suf) || PAISES[suf]) return { nome: m[1].trim(), sufixo: suf }

@@ -32,6 +32,7 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { generateDynamicNews, NEWS_SOURCES, type NewsItem } from "@/components/news-feed"
 import { getGameDate } from "@/lib/game-date"
 import { useGameState } from "@/lib/save-system"
+import { siglaExibivel } from "@/lib/club-identity"
 
 /** Sentinela: nao e rota, e a acao de virar o ano. */
 const PROXIMA_TEMPORADA = "__proxima-temporada__"
@@ -451,7 +452,7 @@ export default function PreOfficePage() {
                     <span className="text-white text-2xl font-bold">vs</span>
                     <div className="flex flex-col items-center gap-2">
                       <TeamCrest team={nextOpponent} size="lg" />
-                      <span className="text-xs text-white/50">{nextOpponent.curto}</span>
+                      <span className="text-xs text-white/50">{siglaExibivel(nextOpponent.curto, nextOpponent.nome)}</span>
                     </div>
                     <div className="ml-4 text-right">
                       <div className="text-xs text-white/40 uppercase tracking-wider">{nextUserMatch.competition}</div>

@@ -1244,7 +1244,10 @@ export default function NovoJogoPage() {
                 >
                   <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
                   <span>
-                    Sem registro voce comeca no <strong className="font-semibold text-amber-100">Brasil, Franca ou Espanha</strong>.
+                    {/* A lista vem de `PAISES_SEM_REGISTRO`, não escrita à mão:
+                        o texto dizia "Brasil, França ou Espanha" desde
+                        30/07/2026 e a regra virou SÓ o Brasil no dia seguinte. */}
+                    Sem registro voce comeca no <strong className="font-semibold text-amber-100">Brasil</strong>.
                     Registre o jogo para abrir os outros {paisesBloqueados} paises.
                   </span>
                 </button>

@@ -56,7 +56,12 @@ async function clubesDoCadastro() {
     if (pais && liga) liga.pais = pais[1]
     const clube = linha.match(/\{\s*nome:\s*"([^"]+)",\s*cidade:\s*"([^"]+)"/)
     if (clube && liga) {
-      clubes.push({ nome: clube[1], cidade: clube[2], liga: liga.id, ligaNome: liga.nome, pais: liga.pais ?? "" })
+      clubes.push({
+        nome: clube[1], cidade: clube[2], liga: liga.id, ligaNome: liga.nome, pais: liga.pais ?? "",
+        // `base` = existe clube MASCULINO de mesmo nome no catálogo. Muda a
+        // trava do casamento (ver `acharPagina`).
+        temMasculino: /\bbase:\s*"/.test(linha),
+      })
     }
   }
   return clubes
@@ -125,7 +130,19 @@ async function acharPagina(clube) {
       const dados = await api(idioma, { action: "query", list: "search", srsearch: consulta, srlimit: "8" })
       for (const achado of dados?.query?.search ?? []) {
         const titulo = achado.title
-        if (!pareceFeminina(titulo)) continue
+        // TRAVA 2 — e a exceção que a primeira rodada obrigou a escrever.
+        //
+        // Exigir "women"/"feminino" no TÍTULO protege contra importar o elenco
+        // masculino do clube homônimo. Só que **clube que só existe no futebol
+        // feminino não tem homônimo nenhum** — e o título dele não traz a
+        // marca: a NWSL inteira ("Portland Thorns FC", "Kansas City Current"),
+        // o Fleury 91, o UAI Urquiza. Resultado medido na primeira rodada: 14
+        // clubes da NWSL rejeitados por uma trava que ali não protegia de nada.
+        //
+        // A trava vale, então, para quem TEM clube masculino no catálogo. Para
+        // os outros sobra a trava 3 (elenco com 11+ atletas e uma goleira), que
+        // é a que realmente separa página de elenco de página de qualquer coisa.
+        if (clube.temMasculino && !pareceFeminina(titulo)) continue
         // TRAVA 1: o núcleo do nome tem de estar no título.
         const t = semAcento(titulo)
         if (nucleo.length && !nucleo.some(p => t.includes(p))) continue

@@ -101,6 +101,7 @@ import { useCorDoUniforme } from "@/lib/cor-do-uniforme"
 import { useMatchSounds } from "@/hooks/use-match-sounds"
 import { clearQueue as clearCommentary, enqueueEvent, initAudio } from "@/lib/audio-commentary"
 import { applyPlayedYouthMatch } from "@/lib/youth-career-engine"
+import { siglaExibivel } from "@/lib/club-identity"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Converte jogadores reais para o formato MatchPlayer
@@ -312,7 +313,7 @@ function SideLineup({ team, squad, side }: { team: Team; squad: MatchPlayer[]; s
     <div className="flex w-full flex-col">
       <div className={cn("mb-2 flex items-center gap-2 border-b border-white/[0.06] pb-2", side === "right" && "flex-row-reverse")}>
         <TeamCrest team={team} size="xs" />
-        <span className="truncate text-[11px] font-bold uppercase tracking-wider text-white/70">{team.curto}</span>
+        <span className="truncate text-[11px] font-bold uppercase tracking-wider text-white/70">{siglaExibivel(team.curto, team.nome)}</span>
         <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider text-white/30">Titulares</span>
       </div>
       <div className="flex flex-col">
@@ -1217,7 +1218,7 @@ export default function PartidaAoVivoPage() {
     // ÁRBITRO DA PARTIDA. Determinístico pelos clubes + temporada + semana: o
     // mesmo jogo tem sempre o mesmo juiz, senão o nome mudaria entre a tela de
     // pré-jogo e a súmula. Ele altera só a frequência de cartão.
-    arbitro: arbitroDaPartida(`${homeTeam.curto}-${awayTeam.curto}-${savedGame.season}-${savedGame.week}`),
+    arbitro: arbitroDaPartida(`${siglaExibivel(homeTeam.curto, homeTeam.nome)}-${siglaExibivel(awayTeam.curto, awayTeam.nome)}-${savedGame.season}-${savedGame.week}`),
     durationMinutes: matchCtx.duration,
     // Diz ao motor qual lado e o do usuario: no penalti dele, o motor PARA e espera
     // a escolha do batedor em vez de cobrar sozinho.
@@ -2293,7 +2294,7 @@ export default function PartidaAoVivoPage() {
               <div className="flex items-center gap-2.5 py-2 pl-3 pr-4 sm:gap-3 sm:pl-4 sm:pr-5">
                 <span className="h-7 w-[3px] rounded-full sm:h-8" style={{ backgroundColor: homeTeam.cor1 }} />
                 <TeamCrest team={homeTeam} size="sm" />
-                <span className="text-lg font-bold tracking-wide text-white sm:text-2xl">{homeTeam.curto}</span>
+                <span className="text-lg font-bold tracking-wide text-white sm:text-2xl">{siglaExibivel(homeTeam.curto, homeTeam.nome)}</span>
               </div>
 
               {/* Placar */}
@@ -2305,7 +2306,7 @@ export default function PartidaAoVivoPage() {
 
               {/* Visitante */}
               <div className="flex items-center gap-2.5 py-2 pl-4 pr-3 sm:gap-3 sm:pl-5 sm:pr-4">
-                <span className="text-lg font-bold tracking-wide text-white sm:text-2xl">{awayTeam.curto}</span>
+                <span className="text-lg font-bold tracking-wide text-white sm:text-2xl">{siglaExibivel(awayTeam.curto, awayTeam.nome)}</span>
                 <TeamCrest team={awayTeam} size="sm" />
                 <span className="h-7 w-[3px] rounded-full sm:h-8" style={{ backgroundColor: awayTeam.cor1 }} />
               </div>
@@ -2358,9 +2359,9 @@ export default function PartidaAoVivoPage() {
   {/* Stats Comparativas */}
   <div className="space-y-3">
   <div className="grid grid-cols-[1fr_auto_1fr] items-center text-[10px] font-bold uppercase tracking-wider text-white/40">
-  <span>{homeTeam.curto}</span>
+  <span>{siglaExibivel(homeTeam.curto, homeTeam.nome)}</span>
   <span className="px-2 text-white/20">{t.match.live.statLabel}</span>
-  <span className="text-right">{awayTeam.curto}</span>
+  <span className="text-right">{siglaExibivel(awayTeam.curto, awayTeam.nome)}</span>
   </div>
   <StatBar label="Posse de Bola" homeValue={state.home?.possession ?? 50} awayValue={state.away?.possession ?? 50} suffix="%" />
   <StatBar label="Chutes" homeValue={state.home?.shots ?? 0} awayValue={state.away?.shots ?? 0} />
@@ -2454,11 +2455,11 @@ export default function PartidaAoVivoPage() {
                         // Sem o resto da tela, o placar e o minuto precisam vir
                         // junto: assistir sem saber como está o jogo é inútil.
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-white">{homeTeam.curto}</span>
+                          <span className="text-sm font-bold text-white">{siglaExibivel(homeTeam.curto, homeTeam.nome)}</span>
                           <span className="rounded-lg bg-white/[0.08] px-3 py-1 text-lg font-black tabular-nums text-white">
                             {state.home.goals} <span className="text-white/30">×</span> {state.away.goals}
                           </span>
-                          <span className="text-sm font-bold text-white">{awayTeam.curto}</span>
+                          <span className="text-sm font-bold text-white">{siglaExibivel(awayTeam.curto, awayTeam.nome)}</span>
                           <span className="ml-2 rounded-md bg-[var(--brand)]/15 px-2 py-0.5 text-xs font-bold tabular-nums text-[var(--brand)]">
                             {state.minute}&apos;
                           </span>
@@ -2655,7 +2656,7 @@ export default function PartidaAoVivoPage() {
                       <div className="bg-white/5 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-2">
                           <TeamCrest team={homeTeam} size="xs" />
-                          <span className="text-white text-sm font-medium">{homeTeam.curto}</span>
+                          <span className="text-white text-sm font-medium">{siglaExibivel(homeTeam.curto, homeTeam.nome)}</span>
                         </div>
                         <div className="text-[var(--brand)] text-lg font-bold">{userSide === "home" ? liveFormation : "4-4-2"}</div>
                         <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
@@ -2666,7 +2667,7 @@ export default function PartidaAoVivoPage() {
                       <div className="bg-white/5 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-2">
                           <TeamCrest team={awayTeam} size="xs" />
-                          <span className="text-white text-sm font-medium">{awayTeam.curto}</span>
+                          <span className="text-white text-sm font-medium">{siglaExibivel(awayTeam.curto, awayTeam.nome)}</span>
                         </div>
                         <div className="text-[var(--brand)] text-lg font-bold">{userSide === "away" ? liveFormation : "4-4-2"}</div>
                         <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>

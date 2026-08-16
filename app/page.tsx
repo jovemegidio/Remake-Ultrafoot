@@ -58,6 +58,7 @@ import { NationalOffice } from "@/components/national-office"
 import { IniciarTemporadaCard } from "@/components/iniciar-temporada"
 import { WorldCupCenter } from "@/components/world-cup-center"
 import { DataFifaCenter } from "@/components/data-fifa-center"
+import { siglaExibivel } from "@/lib/club-identity"
 
 const HOME_MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 const HOME_WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"]
@@ -971,7 +972,7 @@ export default function DashboardPage() {
                       <span className={cn("text-xs font-medium", position <= 4 ? "text-[var(--brand)]" : position >= 17 ? "text-red-500" : "text-white/50")}>{position}</span>
                       <div className="flex items-center gap-2 min-w-0">
                         {standingTeam && <TeamCrest team={standingTeam} size="xs" />}
-                        <span className="truncate text-xs text-white">{standingTeam?.curto ?? s.teamShort}</span>
+                        <span className="truncate text-xs text-white">{standingTeam ? siglaExibivel(standingTeam.curto, standingTeam.nome) : s.teamShort}</span>
                       </div>
                       <span className="text-center font-semibold text-white">{s.points}</span>
                       <span className="text-center text-xs text-white/50">{s.won}</span>

@@ -291,6 +291,17 @@ const PAISES_PASTA = {
   EQU: { pais: ["equador"], sufixos: ["equ", "ecu"] },
   JAP: { pais: ["japao", "jpn"], sufixos: ["jap", "jpn"] },
   CHN: { pais: ["china", "chn"], sufixos: ["chn", "chi_na"] },
+  // Ligas que entraram no lote de 15/08. O `pais` do seed e o nome por extenso
+  // OU a propria sigla (ha 33 clubes com pais "ARA" e 1 com "Arabia Saudita"),
+  // por isso as duas formas entram — a mesma licao do lote mundial de escudos.
+  BEL: { pais: ["belgica", "bel"], sufixos: ["bel"] },
+  EST: { pais: ["estonia", "est"], sufixos: ["est"] },
+  FIN: { pais: ["finlandia", "fin"], sufixos: ["fin"] },
+  PAR: { pais: ["paraguai", "par"], sufixos: ["par"] },
+  PER: { pais: ["peru", "per"], sufixos: ["per"] },
+  ARA: { pais: ["arabia saudita", "ara", "sau"], sufixos: ["ara", "sau"] },
+  SUE: { pais: ["suecia", "sue"], sufixos: ["sue"] },
+  URU: { pais: ["uruguai", "uru"], sufixos: ["uru"] },
 }
 if (paisPedido && !PAISES_PASTA[paisPedido]) {
   console.error(`--pais ${paisPedido} desconhecido. Use um de: ${Object.keys(PAISES_PASTA).join(", ")}`)
@@ -315,7 +326,20 @@ if (paisPedido) {
 
 const camadas = [
   { nome: "fileKey", chave: (t) => [norm(t.fileKey)] },
-  { nome: "fileKey sem pais", chave: (t) => [norm(t.fileKey.replace(/_bra$/i, ""))] },
+  // ⚠️ ESTA CAMADA SO TIRAVA `_bra`, apesar do nome. Numa pasta estrangeira ela
+  // nunca fazia nada: `malmo_sue`, `levadia_est` e `hammarby_sue` existem no
+  // seed e os arquivos se chamam "malmo1.png", "levadia1.png" — a Allsvenskan
+  // inteira saiu como "SEM CLUBE NO SEED" (2 clubes de 14) porque o sufixo
+  // continuava colado. Tirar o sufixo DO PAIS PEDIDO (que veio do proprio seed,
+  // logo acima) e a mesma prova de sempre, so que para a pasta certa.
+  {
+    nome: "fileKey sem pais",
+    chave: (t) => {
+      const sufixos = paisPedido ? PAISES_PASTA[paisPedido].sufixos : ["bra"]
+      const re = new RegExp(`_(${[...sufixos, "bra"].join("|")})$`, "i")
+      return [norm(t.fileKey.replace(re, ""))]
+    },
+  },
   {
     nome: "nome",
     chave: (t) => {
@@ -337,7 +361,16 @@ const camadas = [
   // prova suficiente (a camada 1 nunca exigiu origem); vem por ULTIMO para que
   // qualquer casamento dentro do pais ganhe dele.
   { nome: "fileKey no pool inteiro", universo: times, chave: (t) => [norm(t.fileKey)] },
+  // ⚠️ CONTENCAO, E SO DENTRO DO PAIS PEDIDO. O seed guarda o nome longo
+  // ("Flora Tallinn", "Parnu JK Vaprus", "Hamburgo SV") e a pasta usa o apelido
+  // ("flora", "vaprus", "hamburg"); nenhuma camada de igualdade junta os dois.
+  // Aqui o slug so precisa ESTAR DENTRO do fileKey ou do nome — e por isso vem
+  // por ultimo, exige 5 letras e vale apenas se devolver UM clube. Sem o
+  // recorte por pais isto casaria clube de outro continente, entao fica
+  // desligado quando nao ha `--pais`.
+  { nome: "contido no nome (dentro do pais)", contido: true },
 ].map(c => {
+  if (c.contido) return { ...c, mapa: new Map() }
   const mapa = new Map()
   for (const t of (c.universo ?? universo)) {
     for (const k of c.chave(t)) {
@@ -365,7 +398,13 @@ function acharClube(slug) {
   const alvo = norm(slug)
   let ambiguo = null
   for (const camada of camadas) {
-    const c = camada.mapa.get(alvo)
+    let c
+    if (camada.contido) {
+      if (!paisPedido || alvo.length < 5) continue
+      c = universo.filter(t => norm(t.fileKey).includes(alvo) || norm(t.nome).includes(alvo))
+    } else {
+      c = camada.mapa.get(alvo)
+    }
     if (!c?.length) continue
     if (c.length === 1) return { time: c[0], via: camada.nome }
     // ⚠️ PASTA BRASILEIRA: homonimo estrangeiro nao e candidato. E o que separa

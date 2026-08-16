@@ -77,6 +77,7 @@ import { agenteDoJovem, comissaoEmReais, responderOferta } from "@/lib/agente-do
 import { generateYouthMarketProspects } from "@/lib/youth-academy"
 import { capacidadeDaBase, vagasNaBase } from "@/lib/youth-academy-rules"
 import { flushPersistentStore } from "@/lib/persistent-store"
+import { siglaExibivel } from "@/lib/club-identity"
 
 // Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
 // via generateDetailedMarketTargets. Determinístico por temporada.
@@ -2877,7 +2878,7 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
           {/* Team badge on right */}
           <div className="flex flex-col items-center">
             <TeamCrest team={player.team} size="lg" />
-            <span className="text-white/50 text-xs mt-1">{player.team.curto}</span>
+            <span className="text-white/50 text-xs mt-1">{siglaExibivel(player.team.curto, player.team.nome)}</span>
           </div>
         </div>
 

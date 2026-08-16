@@ -7,9 +7,10 @@
   "Spurs - ING.png",
   "Al_Hillal - ARB.PNG",
   "Corinthians Retro - SP.png",
-  "Fluminense.png"
+  "Fluminense.png",
+  "Barracas - ARG.png"
  ],
- "_excluir_porque": "Al-Faisaly SC e o de AMMAN (Jordania), o do seed e o saudita de 1954; os outros sao segunda arte de clube que ja entra por outro arquivo — sem isto os dois casam na mesma chave e a trava de duplicado derruba OS DOIS. Corinthians Retro e escudo RETRO: trocaria o atual do Corinthians por um de 1910. Fluminense.png foi RETIRADO do flurj em 06/08/2026: a arte e um brasao com duas estrelas e o escudo do Fluminense do Rio e o monograma FFC — era outro Fluminense, e ninguem soube dizer qual.",
+ "_excluir_porque": "Al-Faisaly SC e o de AMMAN (Jordania), o do seed e o saudita de 1954; os outros sao segunda arte de clube que ja entra por outro arquivo — sem isto os dois casam na mesma chave e a trava de duplicado derruba OS DOIS. Corinthians Retro e escudo RETRO: trocaria o atual do Corinthians por um de 1910. Fluminense.png foi RETIRADO do flurj em 06/08/2026: a arte e um brasao com duas estrelas e o escudo do Fluminense do Rio e o monograma FFC — era outro Fluminense, e ninguem soube dizer qual. | 15/08/2026: 'Barracas - ARG.png' e segunda arte do Barracas Central e caia na mesma chave de 'Barracas Central - ARG.png' (artes DIFERENTES), derrubando as duas.",
  "_1_lido_no_proprio_escudo": "renderizado e lido; nome, sigla e UF batiam e ainda assim o clube era outro",
  "caxiasc_bra": "Caixias - SC.png",
  "caxias": "Caixias.png",
@@ -144,5 +145,24 @@
  "dijon_fr": "Dijon FCO - FRA.png",
  "guingamp_fr": "EA Guingamp - FRA.png",
  "sochaux_fr": "FC Sochaux-Montbéliard - FRA.png",
- "lehavre_fr": "Le Havre AC - FRA.png"
+ "lehavre_fr": "Le Havre AC - FRA.png",
+ "_8_lote_15_08_2026": "Pares do lote de 15/08/2026. Grupo A: arquivo escreve a UF DENTRO do nome antes do pais ('Ferroviaria SP - BRA'), padrao que o parser nao conhece. Grupo B: apelido x nome longo do seed. Todos conferidos por busca no pool (nome e fileKey).",
+ "ferroviaria_sp": "Ferroviaria SP - BRA.png",
+ "marilia_sp": "MARILIA SP - BRA.png",
+ "linense_sp": "Linense SP - BRA.png",
+ "paulista_sp": "Paulista SP - BRA.png",
+ "sertaozinho_sp": "Sertaozinho SP - BRA.png",
+ "jaguare_bra": "Jaguaré ES - BRA.png",
+ "parintins_bra": "Paritins - BRA.png",
+ "hamburgo_ale": "Hamburgo - ALE.png",
+ "leipzig_ale": "RB Leipig - ALE.png",
+ "lyon": "Lyon - FRA.png",
+ "temperley_arg": "Club Atletico Temperley - ARG.png",
+ "indepmedellin_col": "Independiente Medellín - COL.png",
+ "portob": "FC Porto B - POR.png",
+ "univconcepcion_chi": "Universidad de Concepcion - CHILE.png",
+ "independiente_equ": "Independente del Vale - ECU.png",
+ "univcatolicaquito_equ": "Universidade Catolica - ECU.png",
+ "guayaquilcity_equ": "Guayaquil City Fútbol Club - ECU.png",
+ "barcelona_equ": "Barcelona - ECU.png"
 }

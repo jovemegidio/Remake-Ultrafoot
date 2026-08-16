@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { TeamCrest } from "@/components/team-crest"
 import type { Team } from "@/lib/teams-data"
 import { corDoClubeSobreEscuro } from "@/lib/cor-legivel"
+import { siglaExibivel } from "@/lib/club-identity"
 
 /**
  * Fecha a animacao sozinha depois de `ms` — e o que devolve a partida ao relogio.
@@ -381,7 +382,7 @@ function FoulAnimation({ team, minute, onComplete }: Omit<EventAnimationProps, "
           <span className="text-amber-400 font-bold text-lg">FALTA</span>
           <div className="flex items-center gap-2 text-white/60 text-sm">
             {team && <TeamCrest team={team} size="xs" />}
-            <span>{team?.curto}</span>
+            <span>{team ? siglaExibivel(team.curto, team.nome) : ""}</span>
             <span>{minute}&apos;</span>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react"
 import type { Team } from "@/lib/teams-data"
+import { siglaExibivel } from "@/lib/club-identity"
 
 interface RadarPlayer {
   id: number
@@ -635,10 +636,10 @@ export function MatchRadar({
       <div className="flex w-full shrink-0 items-center justify-between px-1 text-[11px] font-semibold uppercase tracking-wider">
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full" style={{ background: homeColor }} />
-          <span className="text-white/80">{homeTeam.curto}</span>
+          <span className="text-white/80">{siglaExibivel(homeTeam.curto, homeTeam.nome)}</span>
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="text-white/80">{awayTeam.curto}</span>
+          <span className="text-white/80">{siglaExibivel(awayTeam.curto, awayTeam.nome)}</span>
           <span className="h-2.5 w-2.5 rounded-full" style={{ background: awayColor }} />
         </span>
       </div>

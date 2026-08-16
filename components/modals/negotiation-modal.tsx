@@ -39,6 +39,7 @@ import {
 } from "@/lib/emprestimos"
 import { DollarSign, Check, X, AlertCircle, Handshake, Clock, ArrowRight, Sparkles, Users, Swords, Link2, Gavel, Timer } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { siglaExibivel } from "@/lib/club-identity"
 
 interface Player {
   id: number
@@ -587,7 +588,7 @@ export function NegotiationModal({
                   {player.team && (
                     <>
                       <TeamCrest team={player.team} size="xs" />
-                      <span>{player.team.curto}</span>
+                      <span>{siglaExibivel(player.team.curto, player.team.nome)}</span>
                     </>
                   )}
                 </div>
