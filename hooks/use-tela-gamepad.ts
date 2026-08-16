@@ -42,6 +42,17 @@ export interface OpcoesTelaGamepad {
   quando?: boolean
 }
 
+/**
+ * Quantas telas estao com o controle assumido AGORA.
+ *
+ * A camada global (components/gamepad-navegacao-global.tsx) so age quando este
+ * numero e zero. Sem isso o B voltaria duas vezes e o A clicaria o item errado —
+ * foi exatamente por esse conflito que o piloto automatico do provider ficou
+ * desligado, deixando 47 das 64 telas sem controle nenhum.
+ */
+let telasAtivas = 0
+export const telaAssumiuOGamepad = (): boolean => telasAtivas > 0
+
 export function useTelaGamepad(opcoes: OpcoesTelaGamepad = {}): void {
   // Tudo em ref: o listener e registrado UMA vez e le sempre a versao atual,
   // sem se re-registrar a cada render (foi o bug que matou o gamepad antes).
@@ -94,7 +105,11 @@ export function useTelaGamepad(opcoes: OpcoesTelaGamepad = {}): void {
         // Y/START abrem o menu [W] — tratado globalmente pelo game-header.
       }
     }
+    telasAtivas++
     window.addEventListener("gamepad:button", onBotao)
-    return () => window.removeEventListener("gamepad:button", onBotao)
+    return () => {
+      telasAtivas = Math.max(0, telasAtivas - 1)
+      window.removeEventListener("gamepad:button", onBotao)
+    }
   }, [])
 }

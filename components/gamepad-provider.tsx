@@ -320,8 +320,21 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
         [data-gamepad-focused="true"] {
           outline: 2px solid var(--brand) !important;
           outline-offset: 2px;
-          box-shadow: 0 0 0 4px rgba(29, 185, 84, 0.3);
+          /* O halo seguia chumbado no verde do Spotify e brigava com o tema do
+             clube. Agora e a propria cor da marca, so mais fraca. */
+          box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 30%, transparent);
         }
+        /* Com o controle na mao o anel e a UNICA pista de onde o jogador esta —
+           por isso engrossa. Sem controle, a regra acima ja basta. */
+        [data-controle="on"] [data-gamepad-focused="true"] {
+          outline-width: 3px;
+          outline-offset: 3px;
+          box-shadow: 0 0 0 6px color-mix(in srgb, var(--brand) 35%, transparent);
+          border-radius: inherit;
+        }
+        /* A barra de comandos fica fixa no rodape; sem esta folga ela cobre o
+           ultimo item de toda lista longa. */
+        [data-controle="on"] body { padding-bottom: 56px; }
       `}</style>
       </GamepadContext.Provider>
     </ControllerTypeContext.Provider>

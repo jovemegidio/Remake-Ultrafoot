@@ -18,6 +18,7 @@ import { AvisoAtualizacaoElencos } from "@/components/aviso-atualizacao-elencos"
 import { PerformanceProfileBootstrap } from "@/components/performance-profile"
 import { MotionProfileProvider } from "@/components/motion-profile"
 import { BotaoMinimizar } from "@/components/botao-minimizar"
+import { ModoControle } from "@/components/modo-controle"
 import "./globals.css"
 
 const performanceBootstrapScript = `try{const k="ultrafoot:performance-profile";const s=localStorage.getItem(k);const low=(navigator.deviceMemory||8)<=4||(navigator.hardwareConcurrency||8)<=4;const p=s==="economy"||s==="balanced"||s==="quality"?s:(low?"economy":"balanced");document.documentElement.dataset.performance=p;localStorage.setItem(k,p);const forced=localStorage.getItem("ultrafoot:performance-mode");if(forced==="on"||(forced!=="off"&&low)){document.documentElement.setAttribute("data-performance-mode","");document.documentElement.setAttribute("data-a11y-reduce-motion","")}}catch{document.documentElement.dataset.performance="balanced"}`
@@ -102,6 +103,10 @@ export default function RootLayout({
                     some na splash e no editor, e sair do jogo precisa valer em
                     qualquer tela. */}
                 <BotaoMinimizar />
+                {/* Conectou o controle, o jogo entra em modo controle: navegação
+                    global nas telas que não têm handler próprio + barra de
+                    comandos. Sem controle não monta nada. */}
+                <ModoControle />
               </NotificationsProvider>
             </GamepadProvider>
           </ThemeProvider>

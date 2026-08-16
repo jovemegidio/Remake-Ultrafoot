@@ -68,6 +68,34 @@ for (const a of soTeclado.slice(0, 25)) console.log(`   ${a.arquivo}`)
 
 const rotas = interativas.filter(a => a.arquivo.startsWith("app/") && a.arquivo.endsWith("/page.tsx"))
 const rotasSemPad = rotas.filter(a => !a.pad)
-console.log(`\nROTAS (page.tsx) interativas: ${rotas.length} | sem controle: ${rotasSemPad.length}`)
-for (const a of rotasSemPad.slice(0, 40)) console.log(`   ${a.arquivo}`)
-if (rotasSemPad.length > 40) console.log(`   ... e mais ${rotasSemPad.length - 40}`)
+console.log(`\nROTAS (page.tsx) interativas: ${rotas.length}`)
+console.log(`  com controle PROPRIO      : ${rotas.length - rotasSemPad.length}`)
+console.log(`  pela camada global (1.0.334): ${rotasSemPad.length}`)
+
+// A CAMADA GLOBAL. `ModoControle` no layout monta `GamepadNavegacaoGlobal`, que
+// navega pelo DOM (botao/link/aba/campo visiveis) quando NENHUMA tela assumiu o
+// gamepad. Ou seja: as rotas acima nao ficam sem controle — elas ficam com o
+// controle padrao. O que este gate ainda vigia e a camada existir e estar
+// montada; se sair do layout, todas as rotas de baixo voltam a ficar mudas.
+const CAMADA = "components/gamepad-navegacao-global.tsx"
+const INTERRUPTOR = "components/modo-controle.tsx"
+const temCamada = fs.existsSync(CAMADA)
+const montada = fs.existsSync("app/layout.tsx") && fs.readFileSync("app/layout.tsx", "utf8").includes("<ModoControle />")
+const respeitaTela = temCamada && fs.readFileSync(CAMADA, "utf8").includes("telaAssumiuOGamepad()")
+console.log(`\nCAMADA GLOBAL`)
+console.log(`  ${temCamada ? "OK   " : "FALTA"} ${CAMADA}`)
+console.log(`  ${fs.existsSync(INTERRUPTOR) ? "OK   " : "FALTA"} ${INTERRUPTOR}`)
+console.log(`  ${montada ? "OK   " : "FALTA"} <ModoControle /> montado em app/layout.tsx`)
+console.log(`  ${respeitaTela ? "OK   " : "FALTA"} cede a vez para a tela que tem handler proprio`)
+
+if (rotasSemPad.length) {
+  console.log(`\nrotas que dependem da camada global:`)
+  for (const a of rotasSemPad.slice(0, 40)) console.log(`   ${a.arquivo}`)
+  if (rotasSemPad.length > 40) console.log(`   ... e mais ${rotasSemPad.length - 40}`)
+}
+
+const falhou = !temCamada || !montada || !respeitaTela
+console.log(falhou
+  ? "\nCONTROLE INCOMPLETO — a camada global nao esta no ar."
+  : "\nCONTROLE OK — toda rota responde ao gamepad (propria ou pela camada global).")
+process.exit(falhou ? 1 : 0)
