@@ -257,6 +257,8 @@
       "latest": true,
       "titulo": "Jogo mais leve, cartas certas e a carreira de jogador no menu",
       "itens": [
+        "CORRECAO GRAVE na carreira de jogador: o atleta ficava FORA DOS PLANOS e nunca mais entrava em campo. A confianca do treinador caia a cada rodada no banco e, abaixo de um limite, ele parava de ser relacionado — sem nenhum caminho de volta. Agora a confianca persegue o MERITO: a sua posicao na fila real da sua posicao no elenco, com a forma e a idade pesando. Quem esta atras na fila entra menos, mas entra; e quem evolui acima dos concorrentes assume o lugar.",
+        "A escolha entre carreira PROFISSIONAL, FEMININA e SUB-20 virou botao no alto da tela de criacao. Ela estava escondida num seletor do rodape, do lado de controles bem menos importantes — e e ela que troca o pais, a liga e o clube que aparecem embaixo.",
         "O jogo pesa menos: 20.193 fotos de atleta e as artes de fundo mais pesadas (temas de competicao, telas de selecao e o anuncio) passaram para WebP. Sao 34 MB a menos, sem trocar imagem por outra pior — cada arquivo so foi trocado quando encolheu.",
         "CORRECAO: as cartas do elenco na prancheta deitada mostravam os atributos FORA da carta, pendurados no vazio. O afunilamento da silhueta comecava em 64% da altura enquanto a grade de numeros ia ate 80% — 17 pixels de sobra de cada lado. Agora os lados seguem retos ate depois da grade, como no modelo.",
         "CORRECAO: a tela de criar o proprio clube nao rolava. O jogo trava a rolagem da pagina inteira para se comportar como aplicativo, e essa tela e mais alta que a janela: metade do formulario ficava inalcancavel. As telas de carreira na base e de carreira de jogador tinham o mesmo defeito e foram corrigidas junto.",

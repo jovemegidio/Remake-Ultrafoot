@@ -1224,6 +1224,37 @@ export default function NovoJogoPage() {
             {/* ── Zona 1: Info do clube ── */}
             <div className="flex flex-col w-full lg:w-[300px] shrink-0">
 
+              {/* ── AS TRÊS CARREIRAS DE TÉCNICO, EM BOTÃO ────────────────────
+                  Pedido do usuário (1.0.324), com print apontando este espaço.
+                  A escolha existia só no `<select>` do rodapé, junto de "modo de
+                  mundo" e "dívida inicial" — três controles cinzas iguais, e o
+                  que decide o JOGO INTEIRO era o do meio. Aqui em cima ela vira
+                  a primeira decisão da tela, que é o que ela de fato é: trocar
+                  de modalidade troca o país, a liga e o clube embaixo.
+
+                  Some quando a carreira é de ATLETA (entrou pelo menu
+                  principal): ali a modalidade já está decidida. */}
+              {!modoTravado && (
+                <div className="mb-3 grid grid-cols-3 gap-1 rounded-xl border border-white/10 bg-black/45 p-1">
+                  {MODALIDADES.map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => setModalidade(m.id)}
+                      title={m.resumo}
+                      aria-pressed={modalidade === m.id}
+                      className={cn(
+                        "rounded-lg px-2 py-2 text-[10px] font-black uppercase leading-tight tracking-wide transition-colors",
+                        modalidade === m.id
+                          ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                          : "text-white/55 hover:bg-white/10 hover:text-white",
+                      )}
+                    >
+                      {m.id === "profissional" ? "Profissional" : m.id === "feminino" ? "Feminino" : "Sub-20"}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Pais (com setas, navega nos dois sentidos pelos paises disponiveis) */}
               <div className="flex items-center gap-1.5 mb-2">
                 <button

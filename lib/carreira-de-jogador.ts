@@ -23,6 +23,9 @@ import { generateSeasonFixtures, initStandings, sortStandings, updateStandings }
 import type { MatchFixture, StandingEntry } from "@/lib/career-types"
 import { simulateFullMatch } from "@/lib/match-engine"
 import { completarLigaComPool, getTeamByFileKey, type Team } from "@/lib/teams-data"
+// O elenco REAL do clube — é dele que sai a fila da posição (ver
+// `hierarquiaDaPosicao`). Sem isto a disputa seria contra um número inventado.
+import { getPlayersForTeam } from "@/lib/players-data"
 
 export type PosicaoDoAtleta = "GOL" | "ZAG" | "LD" | "LE" | "VOL" | "MEI" | "ATA"
 
@@ -304,7 +307,7 @@ export function criarCarreiraDeJogador(
   // um clube menor com salário maior ser uma decisão de verdade.
   const salario = Math.round((clube.prestigio * 220 + Math.max(0, atleta.overall - 55) * 900) * (atleta.idade < 20 ? 0.6 : 1))
 
-  return {
+  const estado: EstadoCarreiraDeJogador = {
     versao: 1,
     atleta,
     clubeCurto: clube.curto,
@@ -318,9 +321,9 @@ export function criarCarreiraDeJogador(
     calendario,
     tabela: initStandings(times),
     contrato: { salarioSemanal: salario, ateTemporada: temporada + 2, valorDePasse: Math.max(200_000, atleta.overall ** 3 * 12) },
-    // Ninguém chega titular. A nota inicial é o "vamos ver" do treinador — um
-    // atleta bom para o nível do clube começa mais perto de jogar.
-    notaDoTreinador: Math.max(18, Math.min(70, 40 + (atleta.overall - clube.prestigio * 0.85))),
+    // Provisória: logo abaixo é substituída pela confiança MERECIDA, que depende
+    // do elenco do clube e por isso precisa do estado já montado.
+    notaDoTreinador: 40,
     forma: 50,
     moral: 70,
     temporadaAtual: { jogos: 0, titularidades: 0, minutos: 0, gols: 0, assistencias: 0, somaDasNotas: 0, cartoesAmarelos: 0, cartoesVermelhos: 0 },
@@ -342,6 +345,21 @@ export function criarCarreiraDeJogador(
       temporada, rodada: 0,
     }],
   }
+
+  // NINGUÉM CHEGA TITULAR: 80% do que o mérito justifica. O atleta começa um
+  // degrau abaixo do lugar dele e sobe jogando — mas o lugar EXISTE desde o
+  // primeiro dia, e é o da fila da posição no elenco de verdade.
+  estado.notaDoTreinador = limitar(confiancaMerecida(estado) * 0.8)
+  const h = hierarquiaDaPosicao(estado)
+  if (h.posto > 1) {
+    estado.recados.unshift({
+      id: `hierarquia_${temporada}`,
+      de: "Treinador",
+      texto: `Na sua posição a fila tem ${h.concorrentes}. Hoje ${h.nomeDoMelhorRival} (${h.melhorRival}) começa na frente — você é o ${h.posto}º. Quem convencer, joga.`,
+      temporada, rodada: 0,
+    })
+  }
+  return estado
 }
 
 // ─── O papel no elenco ──────────────────────────────────────────────────────
@@ -354,6 +372,88 @@ export function papelNoElenco(nota: number): PapelNoElenco {
   if (nota >= 42) return "rodízio"
   if (nota >= 24) return "reserva"
   return "fora dos planos"
+}
+
+// ─── A DISPUTA PELA POSIÇÃO ─────────────────────────────────────────────────
+//
+// ⚠️ ISTO NASCEU DE UM DEFEITO RELATADO COM PRINT (1.0.324): um atleta de 18
+// anos no River Plate terminou a temporada com **uma** partida, nota 6.20,
+// "FORA DOS PLANOS" e a lista de atuações inteira dizendo "não saiu do banco".
+//
+// A causa não era balanceamento fino — era uma ESPIRAL SEM VOLTA. A confiança
+// caía 0,8 por rodada no banco; abaixo de 24 o atleta parava de entrar; sem
+// entrar, não havia nada que a fizesse subir. O modo se fechava sozinho e a
+// carreira acabava na segunda temporada, sem o jogador ter feito nada de errado.
+//
+// O conserto não é aumentar o número: é mudar o que ele significa. A confiança
+// do treinador passa a PUXAR PARA O MÉRITO — a posição do atleta na hierarquia
+// real do elenco naquela posição. Quem é o terceiro melhor ponta do clube tende
+// ao banco mesmo jogando bem; quem virou o melhor tende à titularidade mesmo
+// vindo de uma partida ruim. É como funciona no vestiário, e tem volta: evoluir
+// acima dos concorrentes reabre a porta sozinho.
+
+/** Famílias de posição — o elenco usa códigos mais finos que os do atleta. */
+const FAMILIA_DA_POSICAO: Record<PosicaoDoAtleta, string[]> = {
+  GOL: ["GOL"],
+  ZAG: ["ZAG", "DEF"],
+  LD: ["LD", "LAT"],
+  LE: ["LE", "LAT"],
+  VOL: ["VOL", "MC"],
+  MEI: ["MEI", "MC", "ME", "MD", "MEA"],
+  ATA: ["ATA", "CA", "PD", "PE", "SA"],
+}
+
+export interface HierarquiaDaPosicao {
+  /** 1 = melhor da posição no elenco. */
+  posto: number
+  /** Quantos disputam a mesma vaga (o atleta incluído). */
+  concorrentes: number
+  /** Overall do melhor rival — o número que o atleta precisa alcançar. */
+  melhorRival: number
+  nomeDoMelhorRival: string
+}
+
+/**
+ * Onde o atleta está na fila da própria posição, dentro do elenco REAL do clube.
+ *
+ * Lê o elenco pelo mesmo caminho do resto do jogo (`getPlayersForTeam`), então
+ * a disputa acompanha contratação, venda e envelhecimento do clube sem nenhum
+ * espelho de dado para envelhecer.
+ */
+export function hierarquiaDaPosicao(estado: EstadoCarreiraDeJogador): HierarquiaDaPosicao {
+  const clube = getTeamByFileKey(estado.clubeFileKey)
+  const familia = FAMILIA_DA_POSICAO[estado.atleta.posicao]
+  const rivais = (clube ? getPlayersForTeam(clube) : [])
+    .filter(p => familia.includes(String(p.pos)))
+    .map(p => ({ nome: p.nome, overall: p.base }))
+    .sort((a, b) => b.overall - a.overall)
+  const melhor = rivais[0]
+  const acima = rivais.filter(r => r.overall > estado.atleta.overall).length
+  return {
+    posto: acima + 1,
+    concorrentes: rivais.length + 1,
+    melhorRival: melhor?.overall ?? 0,
+    nomeDoMelhorRival: melhor?.nome ?? "—",
+  }
+}
+
+/**
+ * A confiança que o desempenho e a hierarquia JUSTIFICAM (0–100).
+ *
+ * É o alvo para onde a confiança real caminha a cada rodada. Não é a confiança
+ * em si: um atleta que acabou de chegar leva algumas rodadas para chegar nela,
+ * e uma sequência ruim afunda abaixo dela — o que é diferente de ficar preso.
+ */
+export function confiancaMerecida(estado: EstadoCarreiraDeJogador): number {
+  const h = hierarquiaDaPosicao(estado)
+  // O posto manda: 1º ≈ 82, 2º ≈ 62, 3º ≈ 45, 4º ≈ 32, daí para baixo.
+  const porPosto = Math.max(18, 82 - (h.posto - 1) * 18)
+  // A forma move ±12 em torno disso.
+  const porForma = (estado.forma - 50) * 0.24
+  // JOVEM DE CLUBE GRANDE não é ignorado: aos 20 anos ou menos o clube investe
+  // minutos em quem tem teto, e é isso que evita o beco do relato.
+  const porIdade = estado.atleta.idade <= 20 ? 6 : estado.atleta.idade >= 33 ? -5 : 0
+  return Math.max(8, Math.min(96, porPosto + porForma + porIdade))
 }
 
 /** Minutos esperados na próxima partida — o que o jogador vê ANTES de jogar. */
@@ -401,7 +501,14 @@ function desempenhoDaPartida(
 
   const titular = papel === "titular absoluto" || papel === "titular"
     || (papel === "rodízio" && r(1) < 0.5)
-  const entrou = titular || (papel === "rodízio" && r(2) < 0.75) || (papel === "reserva" && r(2) < 0.35)
+  // ⚠️ "fora dos planos" TAMBÉM entra de vez em quando (12%). Não é generosidade:
+  // é o que existe no futebol — lesão do titular, expulsão, jogo decidido,
+  // rodada de copa. Sem essa fresta, quem cai ali nunca mais mostra serviço, e
+  // era isso que travava a carreira inteira (relato com print, 1.0.324).
+  const entrou = titular
+    || (papel === "rodízio" && r(2) < 0.75)
+    || (papel === "reserva" && r(2) < 0.35)
+    || (papel === "fora dos planos" && r(2) < 0.12)
   const minutos = !entrou ? 0
     : titular ? (r(3) < 0.75 ? 90 : 60 + Math.floor(r(4) * 30))
       : 8 + Math.floor(r(5) * 30)
@@ -523,10 +630,35 @@ export function jogarProximaRodada(estado: EstadoCarreiraDeJogador): EstadoCarre
       novo.forma = limitar(novo.forma * 0.72 + d.nota * 8.4)
       novo.moral = limitar(novo.moral + (d.nota >= 7 ? 3 : d.nota >= 6 ? 0 : -3) + (golsPro > golsContra ? 2 : golsPro === golsContra ? 0 : -2))
     } else {
-      novo.notaDoTreinador = limitar(novo.notaDoTreinador - 0.8)
-      novo.forma = limitar(novo.forma - 4)
+      // ⚠️ FICAR NO BANCO NÃO DERRUBA MAIS A CONFIANÇA (ver a nota da
+      // hierarquia). Era esta linha que fechava a carreira: -0,8 por rodada sem
+      // NENHUM caminho de volta, porque abaixo de 24 o atleta parava de entrar.
+      // A forma esfria — isso é real —, mas quem decide o lugar dele é o mérito.
+      novo.forma = limitar(novo.forma - 3)
       novo.moral = limitar(novo.moral - (novo.pedido === "mais_minutos" ? 4 : 2))
+      // Treinar sem jogar rende pouco, mas rende: é o que dá ao reserva um
+      // caminho para crescer e ULTRAPASSAR o concorrente.
+      aplicarXP(novo, 6)
     }
+
+    // ── A CONFIANÇA CAMINHA PARA O MÉRITO, DENTRO DE UMA FAIXA ──
+    //
+    // Um passo pequeno por rodada (12% da distância): a mudança de status
+    // acontece ao longo de semanas, não de uma partida — e, o que importa,
+    // acontece nos DOIS sentidos.
+    //
+    // ⚠️ E A FAIXA DE ±22 NÃO É DETALHE. Sem ela o pêndulo ia para o outro
+    // extremo: no teste, um atleta de overall 60 que é o **11º de 11** da
+    // posição terminou a temporada com 41 titularidades e média 8,10 — porque
+    // cada boa atuação somava sem teto e o mérito não segurava nada. Com a
+    // faixa, atuação boa ainda promove (dá para sair de "fora dos planos" a
+    // "rodízio" jogando bem), mas ninguém passa por cima da fila inteira sem
+    // antes ficar melhor que ela de verdade. Quem muda o teto é a EVOLUÇÃO.
+    const merecida = confiancaMerecida(novo)
+    novo.notaDoTreinador = limitar(Math.max(
+      merecida - 22,
+      Math.min(merecida + 22, novo.notaDoTreinador + (merecida - novo.notaDoTreinador) * 0.12),
+    ))
     aplicarXP(novo, d.xp)
     atualizarMetas(novo)
   }
@@ -778,9 +910,11 @@ export function aceitarProposta(estado: EstadoCarreiraDeJogador, propostaId: str
     ateTemporada: novo.temporada + proposta.temporadas,
     valorDePasse: Math.max(200_000, novo.atleta.overall ** 3 * 12),
   }
-  // Clube novo, treinador novo: a confiança recomeça, calibrada pelo tamanho do
-  // clube. É o que dá peso à decisão de subir de degrau cedo demais.
-  novo.notaDoTreinador = Math.max(20, Math.min(72, 42 + (novo.atleta.overall - clube.prestigio * 0.9)))
+  // Clube novo, treinador novo: a confiança recomeça no mérito daquele elenco —
+  // é o que dá peso à decisão de subir de degrau cedo demais. Trocar o Santos
+  // pelo Barcelona pode significar cair para o 4º da fila, e o modo agora diz
+  // isso na cara antes de a temporada começar.
+  novo.notaDoTreinador = limitar(confiancaMerecida(novo) * 0.8)
   novo.metas = metasIniciais(novo.atleta, clube.prestigio, novo.calendario.filter(f => f.isUserMatch).length)
   novo.propostas = []
   novo.pedido = "nenhum"
