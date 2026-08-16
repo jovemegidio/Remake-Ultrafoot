@@ -1,9 +1,15 @@
 {
-  "version": "1.0.322",
-  "notes": "Futebol feminino e carreira de jogador. 70 clubes brasileiros novos, com cidade, cores, estadio e divisao conferidos - e 54 deles ja com atletas reais no elenco. Corrigida a sigla dos clubes, que aparecia como pedaco do nome de arquivo (MACHESTE, DEPORTIV) no placar da partida, no radar, na cerimonia de titulo e na tabela. As imagens do canal de atualizacao passaram para WebP sem perdas: mesma qualidade, metade do peso.",
-  "sizeMb": 685,
-  "sha256": "711DEB00716C8F4A7D448BE040D0A4F2A56AE4A0597E8649FFA108DE07CEAE2B",
+  "version": "1.0.330",
+  "notes": "Manager Rivals com matchmaking, ranking e anti-cheat no servidor; carreira de jogador aprofundada nas versões 1.0.324 a 1.0.329.",
+  "sizeMb": 732,
+  "sha256": "F352FCE536AD14F439EAADF808077EFD6F93CC8254305BC178FB919CB458DAD0",
   "anteriores": [
+    {
+      "version": "1.0.322",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.322/Ultrafoot.26_1.0.322_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.322",
+      "sizeMb": 685
+    },
     {
       "version": "1.0.321",
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.321/Ultrafoot.26_1.0.321_x64-setup.exe",
@@ -51,18 +57,12 @@
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.314/Ultrafoot.26_1.0.314_x64-setup.exe",
       "notes": "Ultrafoot 26 v1.0.314",
       "sizeMb": 685
-    },
-    {
-      "version": "1.0.312",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.312/Ultrafoot.26_1.0.312_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.312",
-      "sizeMb": 682
     }
   ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUtpUStaMnc1STljS2E4dzQzWHM4OURRUlVhM0VHekp2Tit4YXBHQmR2dkJuMjRuUDZYTXdVbjFVakVHVktDalZUREZOMGRERnZxRHRZM0JzZnVlSncwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2ODg0MDMwCWZpbGU6VWx0cmFmb290IDI2XzEuMC4zMjJfeDY0LXNldHVwLmV4ZQpuOUIvOGxQdTAxdDlYWVJZQTh0TVMvZHZ1OXlQd0tKTjVqV212SGVDbTZDTEd2eCthcWtSQXI2aXFpYWkvTzdXQ2hTazg5cEVCSmRMbGtWSGg3TEJCZz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.322_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRU9hd3A2T3dEWDJ5cmlVNHoxbzFJVGxBUGdyUFhvZ3NUaW9YektpcXBYWkw1UnZsWEZFckJQdjdMcGl0Rko3TkZUUHRIZDNGSXFSSTFKd0NRVHBnUXd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2OTA1NzIxCWZpbGU6VWx0cmFmb290IDI2XzEuMC4zMzBfeDY0LXNldHVwLmV4ZQptdVR0MmJ6UWdTVURpSTdaTkErK2FpQ3BxQ0Jjcll1Yy8xSExJbi9xeEpoSnRiTFZBU0l2dGM4RlNGOUpQREdnZU0xWkJkMmlrcDZlemdLMGRqbW9DZz09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.330_x64-setup.exe"
     }
   }
 }
