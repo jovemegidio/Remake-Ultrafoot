@@ -6305,9 +6305,14 @@ export const useGameEngine = create<GameEngineState>()(
           tacticalAssignments: {
             ...state.tacticalAssignments,
             ...assignments,
+            // `?? {}` nos DOIS ramos: o estado pode ter chegado sem o mapa
+            // (save antigo, ou o retrato de clube que o co-op restaura inteiro,
+            // que não passa pela re-hidratação). Sem isto, gravar uma função
+            // devolvia `playerRoles` indefinido ao estado e a tela voltava a
+            // quebrar na leitura seguinte.
             playerRoles: assignments.playerRoles
-              ? { ...state.tacticalAssignments.playerRoles, ...assignments.playerRoles }
-              : state.tacticalAssignments.playerRoles,
+              ? { ...(state.tacticalAssignments?.playerRoles ?? {}), ...assignments.playerRoles }
+              : state.tacticalAssignments?.playerRoles ?? {},
           },
         }))
       },
@@ -7801,6 +7806,49 @@ export const useGameEngine = create<GameEngineState>()(
         }
 
         return state as GameEngineState
+      },
+      /**
+       * ⚠️ SAVE ANTIGO CHEGA SEM OS MAPAS QUE AS TELAS INDEXAM — E A TELA CRASHA.
+       *
+       * Relato: "/elenco/gerenciamento/ — Cannot read properties of undefined
+       * (reading 'Gabriel Batista')", em TODOS os clubes. O nome do atleta na
+       * mensagem é a pista: alguém fez `mapa[jogador.nome]` com `mapa`
+       * indefinido. Era `tacticalAssignments.playerRoles`, que passou a existir
+       * junto com as funções individuais — em save gravado ANTES disso a chave
+       * simplesmente não está lá.
+       *
+       * Por que o `migrate` acima não resolve: ele só roda quando a versão
+       * persistida é MENOR que a atual. Campo novo acrescentado sem bump de
+       * versão entra num save que o zustand considera atualizado, e o merge do
+       * persist é RASO — o `tacticalAssignments` do disco substitui o objeto
+       * padrão inteiro, levando embora o `playerRoles: {}` que o padrão tinha.
+       * Nenhuma migração corrige um save que não é migrado.
+       *
+       * Aqui a rede é por classe, não por linha: todo mapa de estado tático que
+       * as telas leem por chave nasce vazio quando falta. Preencher com vazio é
+       * semanticamente igual a "nada definido" — não inventa configuração
+       * nenhuma, só impede que a ausência vire tela de erro.
+       */
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        // Campo a campo, sem espalhar o objeto do disco por cima de um padrão:
+        // o espalhamento repetiria as mesmas chaves e o TypeScript reprova
+        // (TS2783) — com razão, porque a ordem de quem vence fica implícita.
+        // Aqui o valor do disco vence explicitamente, e a falta vira vazio.
+        const taticas = state.tacticalAssignments
+        state.tacticalAssignments = {
+          corner: taticas?.corner ?? "",
+          freeKick: taticas?.freeKick ?? "",
+          freeKickLeft: taticas?.freeKickLeft ?? "",
+          freeKickRight: taticas?.freeKickRight ?? "",
+          penalty: taticas?.penalty ?? "",
+          captain: taticas?.captain ?? "",
+          playerRoles: taticas?.playerRoles ?? {},
+        }
+        state.tacticalPlayerPositions = state.tacticalPlayerPositions ?? {}
+        state.tacticalPlayerMovements = state.tacticalPlayerMovements ?? {}
+        state.playerInstructions = state.playerInstructions ?? {}
+        state.setPieceTakers = state.setPieceTakers ?? {}
       },
       // Persistido no persistent-store (arquivo, sobrevive a reinstalacao) em vez do
       // localStorage da webview, que era limpo nos updates e fazia o elenco/tabela

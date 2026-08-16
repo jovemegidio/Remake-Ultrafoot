@@ -23,8 +23,13 @@ interface PendingChampion {
   competition: string
   season: string
   type: "league" | "cup"
-  /** Como o título de mata-mata veio. Ausente em saves anteriores à 1.0.228. */
-  decidedBy?: "penaltis" | "agregado" | "jogo_unico"
+  /**
+   * Como o título veio. Ausente em saves anteriores à 1.0.228.
+   * `classificacao` é o título de FASE (Taça Guanabara): não houve final —
+   * o campeão é quem liderou a tabela. Sem este caso, a tela caía no ramo do
+   * agregado e anunciava "final de 1 jogos", uma final que nunca existiu.
+   */
+  decidedBy?: "penaltis" | "agregado" | "jogo_unico" | "classificacao"
   /** Quantos jogos teve a final (1 ou 2). */
   legs?: number
   stats: { won: number; drawn: number; lost: number; goalsFor: number } | null
@@ -280,7 +285,9 @@ export default function CampeaoPage() {
           <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-yellow-300/70">
             {champion.decidedBy === "penaltis"
               ? "Decidido nos pênaltis"
-              : `Título no agregado · final de ${champion.legs ?? 2} jogos`}
+              : champion.decidedBy === "classificacao"
+                ? "Líder da classificação geral · título de primeira fase"
+                : `Título no agregado · final de ${champion.legs ?? 2} jogos`}
           </p>
         )}
 

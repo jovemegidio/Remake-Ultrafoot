@@ -53,7 +53,7 @@ import {
   amistososVencidos, atribuirDiasDoMes, construirFixturesDeAmistoso, diaDaPartida, ehAmistoso,
   fixturesQueContamNaTemporada, migrarAmistososSemSemana,
 } from "@/lib/amistosos-calendario"
-import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
+import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity, type MatchdayRevenue, type TicketTier } from "@/lib/stadium-economy"
 import { calcularRenda, precosSugeridos, obraConcluida, aplicarObra } from "@/lib/stadium-sectors"
 import { leaguePrizeMoney } from "@/lib/club-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
@@ -1308,6 +1308,62 @@ function generateCrossGroupRounds(teams: Team[], groupCount: number, roundCount:
     remaining = remaining.filter(([a, b]) => !used.has([a.curto, b.curto].sort().join(":")))
   }
   return rounds
+}
+
+/**
+ * A BILHETERIA DE UM JOGO COM MANDO — a conta ÚNICA do jogo.
+ *
+ * ⚠️ O QUE ISTO CORRIGE: a renda só entrava no caixa quando o técnico disputava
+ * a partida na tela. Jogo em casa resolvido pelo avanço da semana (partida
+ * atrasada, temporada simulada, técnico que só clica "avançar") rendia
+ * **zero** — e o clube ainda pagava a folha da semana. Quem simulava a
+ * temporada via o caixa afundar sem entender por quê, e a projeção de
+ * /financas, que estima pela CONTAGEM de jogos em casa, prometia um dinheiro
+ * que nunca chegava.
+ *
+ * REGRA DE MANDO, explícita porque é a pergunta que sempre volta: a renda é
+ * INTEIRA do mandante. O visitante não leva percentual nenhum — é assim no
+ * Brasileirão e na Copa do Brasil desde que o mando passou a ser do clube da
+ * casa. Por isso a função só é chamada quando o clube do técnico joga em casa,
+ * e jogo fora credita rigorosamente nada.
+ *
+ * O setorizado manda quando existe (camarote/cadeira/arquibancada com preços
+ * próprios); sem ele, o preço único de sempre. Nos dois caminhos a OCUPAÇÃO
+ * sai do mesmo `calcMatchdayRevenue`, então público e renda continuam
+ * reagindo a prestígio, torcida, títulos e resultado.
+ */
+function bilheteriaDoMando(params: {
+  time: Team
+  infraestruturaDoEstadio: number
+  torcida: number
+  titulos: number
+  resultado: "win" | "draw" | "loss"
+  ehLiga: boolean
+  tier: TicketTier
+  // Vem do save (`GameState.estadioSetores`), que declara o formato inline —
+  // não há tipo exportado para referenciar, e copiá-lo à mão criaria uma
+  // segunda definição para divergir no primeiro ajuste de setor.
+  setores: NonNullable<GameState["estadioSetores"]> | null | undefined
+}): { renda: number; matchday: MatchdayRevenue } {
+  const matchday = calcMatchdayRevenue({
+    capacity: stadiumCapacity(params.time.estadio_cap ?? 30000, params.infraestruturaDoEstadio),
+    prestige: params.time.prestigio,
+    fanBase: params.torcida,
+    ticketTier: params.tier,
+    titles: params.titulos,
+    result: params.resultado,
+    // Copa e continental enchem mais e valem ingresso mais caro que rodada de liga.
+    competitionWeight: params.ehLiga ? 1 : 1.12,
+  })
+  const setorizada = params.setores
+    ? calcularRenda({
+        capacidades: params.setores.capacidades,
+        precos: params.setores.usarSugeridos ? precosSugeridos(params.time.prestigio) : params.setores.precos,
+        prestigio: params.time.prestigio,
+        atracao: matchday.occupancy,
+      })
+    : null
+  return { renda: setorizada ? setorizada.renda : matchday.revenue, matchday }
 }
 
 export function generateStateChampionshipFixtures(
@@ -3546,7 +3602,7 @@ export function useGameManager() {
         }))
       }
 
-      return { newSeason: true, champion, leagueChampion }
+      return { newSeason: true, champion, leagueChampion, phaseTitle: null }
     }
 
     // Simula partidas de outros times desta rodada
@@ -3676,6 +3732,75 @@ export function useGameManager() {
         ` (${userGoals > rivalGoals ? "vitória" : userGoals < rivalGoals ? "derrota" : "empate"})`,
       )
     }
+
+    // ── TAÇA GUANABARA: O TÍTULO DA PRIMEIRA FASE DO ESTADUAL ────────────────
+    //
+    // A Taça Guanabara não é torneio à parte: é o nome que a FERJ dá à fase de
+    // grupos do Carioca, e quem lidera a classificação geral ao fim dela leva
+    // um título. O jogo já disputava exatamente essa fase (`carioca_a1`: dois
+    // grupos de seis, seis rodadas cruzadas), mas ela terminava sem vencedor —
+    // só o campeão do mata-mata virava troféu. Quem entrasse nas quartas como
+    // líder geral não recebia nada, e o histórico do clube não registrava uma
+    // conquista que existe no futebol de verdade.
+    //
+    // POR QUE AQUI E NÃO EM `registerUserMatchResult`: o líder só está definido
+    // depois que os jogos dos ADVERSÁRIOS da última rodada são simulados, e é o
+    // laço logo acima que os simula. Emitir no apito da partida do usuário
+    // coroaria o líder de uma tabela pela metade — o time que jogou no sábado
+    // seria campeão antes do jogo de domingo do rival.
+    let tituloDePrimeiraFase: import("@/lib/career-types").SeasonRecord | null = null
+    try {
+      const nomeDoTitulo = getStateCompetitionRule(userShort)?.firstPhaseTitle
+      const userTeamDoEstadual = getTeamByShort(userShort)
+      const nomeDoEstadual = ESTADO_CAMPEONATO[userTeamDoEstadual?.estado ?? ""] ?? ""
+      // Idempotente pelo mesmo motivo do título de copa: avançar a semana duas
+      // vezes não pode render dois troféus.
+      const jaRegistrado = (currentState.seasonHistory ?? []).some(
+        registro => registro.season === currentState.season && registro.competition === nomeDoTitulo,
+      )
+      if (nomeDoTitulo && nomeDoEstadual && !jaRegistrado) {
+        const hidratado = reconcilePlayedFixtures(
+          seasonCalendarRef.current.fixtures,
+          useGameEngine.getState().matchResults,
+          currentState.season,
+          currentState.completedFixtureKeys ?? [],
+        )
+        const primeiraFase = hidratado.filter(fixture =>
+          fixture.competitionType === "state" && fixture.competition === nomeDoEstadual &&
+          String(fixture.stage ?? "") === "fase_classificatoria",
+        )
+        // FASE COMPLETA, não "a minha última rodada acabou": com um só jogo
+        // pendente a liderança ainda pode trocar de dono.
+        const faseCompleta = primeiraFase.length > 0 && primeiraFase.every(fixture => fixture.played)
+        const lider = faseCompleta ? computeStandingsFromFixtures(primeiraFase, nomeDoEstadual)[0] : null
+        if (lider && lider.teamShort === userShort) {
+          safeLocalSet("ultrafoot-pending-champion", JSON.stringify({
+            competition: nomeDoTitulo,
+            season: String(currentState.season),
+            type: "cup",
+            // Este título não sai de uma final: sai da tabela. A cerimônia diz
+            // isso em vez de anunciar um agregado ou pênaltis que não houve.
+            decidedBy: "classificacao",
+            legs: 1,
+            stats: { won: lider.won, drawn: lider.drawn, lost: lider.lost, goalsFor: lider.goalsFor },
+          }))
+          tituloDePrimeiraFase = {
+            season: currentState.season,
+            competition: nomeDoTitulo,
+            position: 1,
+            points: lider.points,
+            won: lider.won, drawn: lider.drawn, lost: lider.lost,
+            goalsFor: lider.goalsFor, goalsAgainst: lider.goalsAgainst,
+            champion: userShort,
+            managerName: currentState.managerName || "Técnico",
+            promoted: false,
+            relegated: false,
+            teamCurto: userShort,
+            teamNome: userTeamDoEstadual?.nome ?? userShort,
+          }
+        }
+      }
+    } catch { /* um título de fase nunca pode impedir o avanço da semana */ }
 
     // Minutos ANTES do avanço: é o que permite saber quem realmente jogou na
     // semana (a adesão aos princípios depende disso). Precisa ser lido de
@@ -4223,7 +4348,16 @@ export function useGameManager() {
     const patchDaSemana = { week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, universo286, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos, posturasDaIA, socialDaIA, estadioSetores, gestao282,
       ...(crescimentoDaSemana && crescimentoDaSemana !== currentState.managerGrowth26
         ? { managerGrowth26: crescimentoDaSemana } : {}),
-      ...(ehMultitecnico(tecnicosDaSemana) ? { rodadaCompartilhada: iniciarRodada(newWeek) } : {}) }
+      ...(ehMultitecnico(tecnicosDaSemana) ? { rodadaCompartilhada: iniciarRodada(newWeek) } : {}),
+      // Título de fase (Taça Guanabara) entra no histórico na MESMA gravação da
+      // semana. Pelo mesmo motivo do título de copa, ele conta na reputação do
+      // técnico: é o que as propostas de clube e de seleção leem.
+      ...(tituloDePrimeiraFase
+        ? {
+            seasonHistory: [...(currentState.seasonHistory ?? []), tituloDePrimeiraFase],
+            coachTotalTitles: (currentState.coachTotalTitles ?? 0) + 1,
+          }
+        : {}) }
     saveStateRef.current = { ...currentState, ...patchDaSemana } as typeof currentState & { fixtures: unknown }
     // ⚠️ NAO TROQUE ISTO POR `commitGameState` (tentado em 07/08/2026 e
     // REVERTIDO: o office ficava carregando para sempre depois de escolher o
@@ -4452,7 +4586,7 @@ export function useGameManager() {
               patchExtra: { managingNationalTeamId: selecaoAtual },
             })
             if (typeof window !== "undefined") hardNavigate("/")
-            return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null }
+            return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null, phaseTitle: null }
           }
           addNotificationRef.current({
             type: "system",
@@ -4482,7 +4616,7 @@ export function useGameManager() {
           })
           if (typeof window !== "undefined") hardNavigate("/treinador")
           // Encerra o avanco: sem clube, nao ha ceremonia de campeao a checar.
-          return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null }
+          return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null, phaseTitle: null }
         }
       }
     } catch {
@@ -4494,6 +4628,13 @@ export function useGameManager() {
       simulatedMatches: roundFixtures.length,
       nextUserMatch: seasonCalendarRef.current.nextUserMatch,
       leagueChampion,
+      // TÍTULO DE FASE (Taça Guanabara) PRECISA DE QUEM O LEVE À CERIMÔNIA.
+      // Título de copa é descoberto pela tela da partida logo após o apito; este
+      // nasce no avanço da semana, quando não há tela de partida nenhuma para
+      // notar o flag. Sem devolvê-lo aqui, o clube ganharia a Taça Guanabara e
+      // o jogador seria mandado direto para /partida — o mesmo "ganhou e nem
+      // percebeu" que a cerimônia de campeão existe para evitar.
+      phaseTitle: tituloDePrimeiraFase?.competition ?? null,
     }
   }, [setSaveState, gameEngine])
   
@@ -4714,35 +4855,19 @@ export function useGameManager() {
     let fanBase = currentState.fanBase ?? userTeamForComp?.torcida ?? 50000
     if (userIsHome && userTeamForComp) {
       const engineState = useGameEngine.getState()
-      const capacity = stadiumCapacity(
-        userTeamForComp.estadio_cap ?? 30000,
-        engineState.clubInfrastructure?.stadium ?? 2,
-      )
-      const matchday = calcMatchdayRevenue({
-        capacity,
-        prestige: userTeamForComp.prestigio,
-        fanBase,
-        ticketTier: engineState.ticketTier ?? "normal",
-        titles: countCareerTitles(currentState.seasonHistory, userTeamForComp.curto),
-        result: won ? "win" : lost ? "loss" : "draw",
-        competitionWeight: isLeagueMatch ? 1 : 1.12,
+      const resultado = won ? "win" : lost ? "loss" : "draw"
+      const { renda, matchday } = bilheteriaDoMando({
+        time: userTeamForComp,
+        infraestruturaDoEstadio: engineState.clubInfrastructure?.stadium ?? 2,
+        torcida: fanBase,
+        titulos: countCareerTitles(currentState.seasonHistory, userTeamForComp.curto),
+        resultado,
+        ehLiga: isLeagueMatch,
+        tier: engineState.ticketTier ?? "normal",
+        setores: currentState.estadioSetores,
       })
-      // ESTADIO POR SETORES manda quando existe. Sem isto a tela de setores seria
-      // enfeite: o tecnico ampliaria o camarote, cobraria caro na cadeira, e a
-      // bilheteria continuaria saindo de um preco global unico. A OCUPACAO vem da
-      // mesma conta de sempre, entao publico e renda seguem reagindo a prestigio,
-      // torcida, titulos e resultado — o que muda e o preco, agora POR SETOR.
-      const setores = currentState.estadioSetores
-      const rendaFinal = setores
-        ? calcularRenda({
-            capacidades: setores.capacidades,
-            precos: setores.usarSugeridos ? precosSugeridos(userTeamForComp.prestigio) : setores.precos,
-            prestigio: userTeamForComp.prestigio,
-            atracao: matchday.occupancy,
-          })
-        : null
-      gameEngine.addClubRevenue(rendaFinal ? rendaFinal.renda : matchday.revenue)
-      fanBase = fanBaseGrowth(fanBase, matchday, won ? "win" : lost ? "loss" : "draw", engineState.ticketTier ?? "normal")
+      gameEngine.addClubRevenue(renda)
+      fanBase = fanBaseGrowth(fanBase, matchday, resultado, engineState.ticketTier ?? "normal")
     }
 
     // XP: +10 por jogo, +15 por vitoria, +5 por empate

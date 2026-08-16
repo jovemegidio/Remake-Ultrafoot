@@ -61,6 +61,13 @@ teste("a ordem das regras resolve os nomes que se contêm", () => {
   assert.equal(trofeuDaCompeticao("Supercopa do Brasil"), "/trofeus/tr_supercopa_BRA.webp")
 })
 
+teste("a Taça Guanabara não usa a arte do Carioca", () => {
+  // Ela é o título da primeira fase, não o estadual. Mesmo desenho para as duas
+  // deixaria o histórico de uma temporada com dois "campeão carioca".
+  assert.equal(trofeuDaCompeticao("Taça Guanabara"), "/trofeus/tr_copa.webp")
+  assert.notEqual(trofeuDaCompeticao("Taça Guanabara"), trofeuDaCompeticao("Campeonato Carioca"))
+})
+
 teste("nome desconhecido devolve genérico coerente com o tipo", () => {
   assert.equal(trofeuDaCompeticao("Torneio Xis", "cup"), "/trofeus/tr_copa.webp")
   assert.equal(trofeuDaCompeticao("Liga Xis", "league"), "/trofeus/tr_nacionalgenerico.webp")

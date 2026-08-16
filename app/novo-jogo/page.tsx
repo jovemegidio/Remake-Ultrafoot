@@ -982,6 +982,24 @@ export default function NovoJogoPage() {
   const cor2 = selectedTeam?.cor2 || "#059669"
   const hasMultipleLeagues = activeCountry.leagues.length > 1
 
+  /**
+   * TAMANHO DA FONTE DO NOME — em degraus, pelo comprimento.
+   *
+   * Não é `clamp()` do CSS porque o que aperta aqui não é a largura da tela: é
+   * a quantidade de letras num espaço fixo. Dois clubes na MESMA tela precisam
+   * de tamanhos diferentes, e só o texto sabe disso. Degrau, e não conta
+   * contínua, para o título não mudar de tamanho a cada clube por um caractere
+   * de diferença — o que faria a tela tremer ao navegar com as setas.
+   */
+  const tamanhoDoNome = useMemo(() => {
+    const letras = (selectedTeam?.nome ?? "").length
+    if (letras <= 11) return "2.5rem"
+    if (letras <= 15) return "2.05rem"
+    if (letras <= 19) return "1.7rem"
+    if (letras <= 24) return "1.4rem"
+    return "1.2rem"
+  }, [selectedTeam?.nome])
+
   // Reseta o uniforme exibido ao trocar de time
   useEffect(() => { setUniformIndex(0) }, [teamIndex, leagueIndex, countryIndex])
   // Tenta novamente a imagem real ao trocar de time ou de uniforme
@@ -1150,7 +1168,21 @@ export default function NovoJogoPage() {
               {/* NOME + ESCUDO, na hierarquia da referência: o nome manda, o
                   escudo vem grande logo abaixo, sem moldura nem círculo. O halo
                   fica na COR DO CLUBE e troca junto com ele. */}
-              <h1 className="text-[2.1rem] sm:text-[2.5rem] font-black uppercase tracking-[-0.02em] text-white leading-[0.95] text-balance">
+              {/* O NOME CABE EM UMA LINHA, SEMPRE.
+                  "RB Bragantino" quebrava em duas e empurrava o escudo para
+                  baixo — a tela inteira dançava conforme o clube selecionado.
+                  `text-balance` piorava: ele existe justamente para distribuir
+                  o texto em várias linhas. A regra é o contrário — nunca
+                  quebrar, e encolher a fonte na medida do nome. Os cortes saem
+                  da largura real da coluna (~330px) com a fonte black e o
+                  `tracking` apertado; nomes de verdade que forçam cada faixa:
+                  "Vasco da Gama" (13), "RB Bragantino" (13), "Sampaio Corrêa-RJ"
+                  (17), "Borussia Mönchengladbach" (24). */}
+              <h1
+                className="whitespace-nowrap font-black uppercase tracking-[-0.02em] text-white leading-[1.05]"
+                style={{ fontSize: tamanhoDoNome }}
+                title={selectedTeam?.nome}
+              >
                 {selectedTeam?.nome}
               </h1>
               {squadQuality && (
@@ -1188,6 +1220,29 @@ export default function NovoJogoPage() {
                   quente) para ele descolar do fundo em qualquer escudo, claro
                   ou escuro. */}
               <div className="relative my-7 flex items-center justify-center">
+                {/* ── SETAS DE TROCAR DE TIME ────────────────────────────────
+                    Elas chamam `prevTeam`/`nextTeam`, que são EXATAMENTE os
+                    mesmos callbacks de ←/→ no teclado e do direcional do
+                    controle. Nada de lógica nova: o botão na tela passa a ser
+                    a terceira porta para o mesmo comando, e por isso não há
+                    como as três discordarem.
+                    Ficam por FORA do halo (`-left-2`/`-right-2`, acima dele em
+                    z) porque o borrão de 288px cobre a largura toda da coluna:
+                    dentro dele, o clique cairia no halo e não no botão. */}
+                <button
+                  onClick={prevTeam}
+                  aria-label="Time anterior"
+                  className="absolute -left-2 z-20 flex h-16 w-9 items-center justify-center rounded-xl text-white/40 transition-all hover:bg-white/10 hover:text-white active:scale-95 sm:-left-4"
+                >
+                  <ChevronLeft className="h-7 w-7" />
+                </button>
+                <button
+                  onClick={nextTeam}
+                  aria-label="Próximo time"
+                  className="absolute -right-2 z-20 flex h-16 w-9 items-center justify-center rounded-xl text-white/40 transition-all hover:bg-white/10 hover:text-white active:scale-95 sm:-right-4"
+                >
+                  <ChevronRight className="h-7 w-7" />
+                </button>
                 <div
                   aria-hidden
                   className="absolute h-72 w-72 rounded-full blur-[70px] transition-colors duration-500"

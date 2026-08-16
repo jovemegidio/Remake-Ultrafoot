@@ -77,6 +77,12 @@ const REGRAS: [RegExp, string][] = [
   [/ofc champions/, "tr_ligaofc"],
 
   // Copas nacionais e regionais do Brasil.
+  // A Taça Guanabara é o título da PRIMEIRA FASE do Carioca, não o Carioca:
+  // por isso NÃO recebe `tr_estadual_RJ`. Dar a arte do troféu estadual a ela
+  // colocaria duas conquistas diferentes da mesma temporada com o mesmo
+  // desenho no histórico — quem ganhou só a fase pareceria campeão carioca.
+  // Enquanto não houver arte própria, a taça genérica diz a verdade.
+  [/taca guanabara/, "tr_copa"],
   [/copa do nordeste/, "tr_copanordeste"],
   [/copa verde/, "tr_copaverde"],
   [/rio-?sao paulo/, "tr_riosaopaulo"],

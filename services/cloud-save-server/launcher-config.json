@@ -252,9 +252,22 @@
   ],
   "changelog": [
     {
+      "version": "1.0.321",
+      "data": "2026-08-16",
+      "latest": true,
+      "titulo": "Correcao do crash no elenco, cartas novas e Taca Guanabara",
+      "itens": [
+        "CORRECAO IMPORTANTE: a tela de Elenco / Gerenciamento quebrava com 'Cannot read properties of undefined' em QUALQUER clube, nao so nos da Divisao de Acesso. Save gravado antes das funcoes individuais chegava sem o mapa de funcoes, e a tela lia esse mapa pelo nome do atleta. Agora todo mapa tatico que falta no save nasce vazio, em vez de derrubar a tela.",
+        "As cartas dos atletas na prancheta ganharam o acabamento metalico da referencia: fundo em degrade, facetas, o recorte de escudo, o nome sobre o metal e os seis atributos em uma linha so.",
+        "TACA GUANABARA: a primeira fase do Carioca passou a valer titulo, para quem termina em primeiro na classificacao geral. Ela entra no historico do clube e conta na reputacao do tecnico, como qualquer outra conquista.",
+        "Bilheteria: jogo em casa resolvido pelo avanco da semana passa a creditar a renda no caixa. Antes so a partida disputada na tela rendia dinheiro, e quem simulava a temporada via o caixa cair sem entender o motivo. A renda e INTEIRA do mandante.",
+        "Tela de novo jogo: o nome do clube nunca mais quebra em duas linhas (RB Bragantino, Sampaio Correa-RJ) e ganhou setas ao lado do escudo para trocar de time, com o mesmo comando do teclado e do controle."
+      ]
+    },
+    {
       "version": "1.0.320",
       "data": "2026-08-15",
-      "latest": true,
+      "latest": false,
       "titulo": "Correcao: dirigir clube da Divisao de Acesso",
       "itens": [
         "CORRECAO IMPORTANTE: o jogo travava ao abrir o elenco, o mercado e os juniores de um clube da Divisao de Acesso, e a simulacao quebrava de ponta a ponta. Os 260 clubes do novo nivel estavam sem torcida e sem capacidade de estadio — a bilheteria divide pela capacidade, e o resultado contaminava saldo, folha e forca.",

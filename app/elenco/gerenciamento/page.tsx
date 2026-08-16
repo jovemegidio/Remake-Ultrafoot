@@ -68,6 +68,9 @@ import { prestigioDe } from "@/lib/prestigio-do-atleta"
 // Bragantino que vazava para todos os clubes quando o save ainda nao havia hidratado.
 // Sem time nao se monta elenco nenhum — a tela mostra "carregando".
 
+/** Mapa vazio de referência ESTÁVEL — ver o comentário no seletor que o usa. */
+const SEM_MOVIMENTOS: Record<string, { x: number; y: number }> = {}
+
 const positionColors: Record<string, { bg: string; text: string; border: string }> = {
   GOL: { bg: "bg-amber-500/30", text: "text-amber-400", border: "border-amber-500/50" },
   ZAG: { bg: "bg-blue-500/30", text: "text-blue-400", border: "border-blue-500/50" },
@@ -140,34 +143,54 @@ function faixaPorOverall(overall: number): FaixaDaCarta {
 }
 
 /**
- * ⚠️ A CARTA É BRANCA — e isto é a decisão de desenho, não um valor a ajustar.
+ * A CARTA É METÁLICA, no acabamento da referência que o usuário mandou.
  *
- * O protótipo (`Nova pasta/cartoes-eafc`) tinha o acabamento do EA FC: fundo em
- * degradê metálico, brilho diagonal e listras. Sobre o gramado, onze desses
- * fundos brigavam entre si e com o campo — o que dava para ler de relance era o
- * BRILHO, não o atleta. Com a carta branca sobra exatamente um lugar para onde
- * a vista vai, e é onde a informação está: o NOME e os ATRIBUTOS.
+ * ⚠️ ISTO REVERTE, A PEDIDO, A CARTA BRANCA. A versão anterior era branca de
+ * propósito — o argumento registrado aqui era que onze fundos metálicos brigam
+ * entre si e com o gramado, e que o branco deixava o nome e os atributos serem
+ * a única coisa a ler. O pedido é explícito e é a decisão de quem manda no
+ * desenho; fica o registro do motivo antigo para ninguém "consertar" de volta
+ * sem saber que houve escolha, dos dois lados.
  *
- * Por isso a faixa (o patamar do atleta) não colore mais a carta inteira: ela
- * colore só a tarja do nome e o número dos atributos. A leitura "craque /
- * titular / resto" continua imediata, e sem repintar o card.
+ * O metal é construído em três camadas, e é o conjunto que faz o efeito:
+ *   · `fundo`   — degradê do corpo, claro no alto e escuro na base;
+ *   · `brilho`  — a faixa de luz diagonal que atravessa a carta;
+ *   · `facetas` — as linhas retas que cortam o alto, como na referência.
+ * A cor da tinta acompanha o metal: sobre ouro, texto marrom escuro lê melhor
+ * que preto puro, e é o que a referência usa.
  */
-const ESTILO_DA_FAIXA: Record<FaixaDaCarta, { destaque: string; tintaNaTarja: string; texto: string }> = {
+const ESTILO_DA_FAIXA: Record<FaixaDaCarta, {
+  fundo: string
+  brilho: string
+  facetas: string
+  destaque: string
+  tintaNaTarja: string
+  texto: string
+}> = {
   preta: {
-    // Grafite: o patamar mais alto é o mais sóbrio, como na referência.
-    destaque: "#171820",
+    // Grafite: o patamar mais alto é o mais sóbrio, como nas cartas especiais.
+    fundo: "linear-gradient(160deg, #4a4d59 0%, #2a2c35 34%, #16171d 62%, #33353f 100%)",
+    brilho: "linear-gradient(118deg, transparent 34%, rgba(255,255,255,.20) 46%, transparent 58%)",
+    facetas: "rgba(255,255,255,.22)",
+    destaque: "#0e0f14",
     tintaNaTarja: "#f4f5f7",
-    texto: "#171820",
+    texto: "#f2f3f7",
   },
   dourada: {
-    destaque: "#b8860b",
-    tintaNaTarja: "#fff8e1",
-    texto: "#7a5a06",
+    fundo: "linear-gradient(160deg, #f6e6a8 0%, #e6c76a 34%, #c9a24b 62%, #eddc9a 100%)",
+    brilho: "linear-gradient(118deg, transparent 34%, rgba(255,255,255,.55) 46%, transparent 58%)",
+    facetas: "rgba(255,255,255,.45)",
+    destaque: "#7a5a06",
+    tintaNaTarja: "#4a3405",
+    texto: "#4a3405",
   },
   bronze: {
-    destaque: "#9a5b2d",
+    fundo: "linear-gradient(160deg, #e3b48c 0%, #c68a5c 34%, #9a5b2d 62%, #d9a377 100%)",
+    brilho: "linear-gradient(118deg, transparent 34%, rgba(255,255,255,.42) 46%, transparent 58%)",
+    facetas: "rgba(255,255,255,.38)",
+    destaque: "#5f3417",
     tintaNaTarja: "#fdf1e6",
-    texto: "#7c4620",
+    texto: "#4a2711",
   },
 }
 
@@ -178,9 +201,17 @@ const ESTILO_DA_FAIXA: Record<FaixaDaCarta, { destaque: string; tintaNaTarja: st
  * interna (`::before` do protótipo, aqui um segundo elemento): as duas PRECISAM
  * ser o mesmo polígono, e duas cópias divergiriam no primeiro ajuste.
  */
-const RECORTE_DA_CARTA = "polygon(14% 8%, 27% 3%, 73% 3%, 87% 8%, 97% 22%, 97% 79%, 87% 91%, 50% 99%, 13% 91%, 3% 79%, 3% 22%)"
+const RECORTE_DA_CARTA = "polygon(7% 1%, 43% 1%, 50% 6%, 57% 1%, 93% 1%, 98% 7%, 98% 64%, 50% 99%, 2% 64%, 2% 7%)"
 
-/** As seis siglas do card, na ordem do EA FC. */
+/**
+ * As seis siglas do card.
+ *
+ * ⚠️ EM PORTUGUÊS, de propósito. A imagem de referência é a versão espanhola
+ * (RIT/TIR/PAS/REG/DEF/FÍS); copiá-la ao pé da letra colocaria "TIR" e "REG"
+ * num jogo em português, onde o atributo se chama finalização e condução. O que
+ * se copia da referência é o DESENHO — a linha única de seis, sigla em cima e
+ * número embaixo —, não o idioma.
+ */
 const SIGLAS_DOS_ATRIBUTOS = ["RIT", "FIN", "PAS", "CON", "DEF", "FIS"] as const
 
 /**
@@ -247,15 +278,40 @@ function CartaDeJogador({
           ? `${nome} — improvisado: ${posicao} jogando de ${slot}. Rende ${overallEfetivo} em vez de ${overall}.`
           : nome}
       >
+        {/* Camada 1: o corpo do metal. */}
         <div
-          className="absolute inset-0 bg-white"
-          style={{ clipPath: RECORTE_DA_CARTA }}
+          className="absolute inset-0"
+          style={{ clipPath: RECORTE_DA_CARTA, background: estilo.fundo }}
         />
-        {/* Moldura interna: a linha fina que dá o acabamento de carta. Na cor da
-            faixa, a 25% — é acabamento, não destaque. */}
+        {/* Camada 2: as FACETAS — as retas que cortam o alto da carta na
+            referência. São o que faz o fundo parecer metal lapidado em vez de
+            um degradê liso, e por isso vivem acima do corpo e abaixo de tudo
+            que é informação. `preserveAspectRatio="none"` para acompanharem o
+            recorte nos dois tamanhos da carta. */}
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          viewBox="0 0 100 140"
+          preserveAspectRatio="none"
+          aria-hidden
+          style={{ clipPath: RECORTE_DA_CARTA }}
+        >
+          <g stroke={estilo.facetas} strokeWidth="0.9" fill="none">
+            <path d="M -5 44 L 105 6" />
+            <path d="M -5 20 L 105 62" />
+            <path d="M 18 -5 L 74 76" />
+            <path d="M 84 -5 L 24 78" />
+            <path d="M -5 70 L 105 30" />
+          </g>
+        </svg>
+        {/* Camada 3: o brilho diagonal, por cima das facetas. */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ clipPath: RECORTE_DA_CARTA, background: estilo.brilho }}
+        />
+        {/* Moldura interna: a linha fina que dá o acabamento de carta. */}
         <div
           className="pointer-events-none absolute inset-[3px] border"
-          style={{ clipPath: RECORTE_DA_CARTA, borderColor: `${estilo.destaque}40` }}
+          style={{ clipPath: RECORTE_DA_CARTA, borderColor: `${estilo.destaque}55` }}
         />
 
         {/* OVERALL EFETIVO + slot, no canto que a referência usa.
@@ -275,7 +331,12 @@ function CartaDeJogador({
             {slot}
           </span>
           {improvisado && (
-            <span className="text-[6px] font-bold leading-none text-black/35 line-through md:text-[7px]">
+            // Tinta da FAIXA com alpha, não `text-black/35`: na carta preta o
+            // preto sobre grafite não se enxerga.
+            <span
+              className="text-[6px] font-bold leading-none line-through md:text-[7px]"
+              style={{ color: `${estilo.texto}80` }}
+            >
               {overall}
             </span>
           )}
@@ -316,27 +377,48 @@ function CartaDeJogador({
         {/* A camisa fica ABAIXO da nota, na coluna branca: no canto direito ela
             caía sobre o retrato e sumia. */}
         {numero != null && (
-          <span className="absolute left-[10px] top-[40px] z-10 text-[7px] font-black text-black/35 md:top-[48px] md:text-[8px]">
+          <span
+            className="absolute left-[10px] top-[40px] z-10 text-[7px] font-black md:top-[48px] md:text-[8px]"
+            style={{ color: `${estilo.texto}80` }}
+          >
             {numero}
           </span>
         )}
 
-        {/* ── DESTAQUE 1: A TARJA DO NOME ──────────────────────────────────── */}
+        {/* ── O NOME ───────────────────────────────────────────────────────
+            Sobre o metal e entre dois fios, como na referência — não mais numa
+            tarja sólida. A tarja existia para dar contraste sobre o branco;
+            sobre o degradê ela viraria uma barra escura no meio da carta,
+            justamente onde a referência tem o metal aparecendo. */}
         <div
-          className="absolute inset-x-[8px] top-[60px] z-10 truncate px-1 text-center text-[7px] font-black uppercase leading-[13px] md:top-[73px] md:text-[8px] md:leading-[15px]"
-          style={{ background: estilo.destaque, color: estilo.tintaNaTarja }}
+          className="pointer-events-none absolute inset-x-[7px] top-[57px] z-10 h-px md:top-[69px]"
+          style={{ background: `${estilo.destaque}66` }}
+        />
+        <div
+          className="absolute inset-x-[6px] top-[58px] z-10 truncate text-center text-[7.5px] font-black uppercase leading-[12px] tracking-[.02em] md:top-[70px] md:text-[9px] md:leading-[14px]"
+          style={{ color: estilo.texto }}
         >
           {nomeCurto}
         </div>
+        <div
+          className="pointer-events-none absolute inset-x-[7px] top-[70px] z-10 h-px md:top-[84px]"
+          style={{ background: `${estilo.destaque}66` }}
+        />
 
-        {/* ── DESTAQUE 2: OS ATRIBUTOS ─────────────────────────────────────── */}
-        <div className="absolute inset-x-[9px] top-[76px] z-10 grid grid-cols-3 gap-x-[3px] gap-y-[1px] md:top-[91px]">
+        {/* ── OS ATRIBUTOS ─────────────────────────────────────────────────
+            UMA linha de seis, sigla em cima e número embaixo: é o desenho da
+            referência. Antes eram três colunas em duas linhas, que é o formato
+            das cartas antigas do FIFA — a diferença muda a silhueta da carta
+            inteira, não só a grade. */}
+        <div className="absolute inset-x-[4px] top-[72px] z-10 grid grid-cols-6 md:top-[87px]">
           {SIGLAS_DOS_ATRIBUTOS.map((sigla, i) => (
-            <span key={sigla} className="flex items-baseline justify-center gap-[1px] leading-none">
-              <b className="text-[7px] font-black md:text-[8px]" style={{ color: estilo.destaque }}>
+            <span key={sigla} className="flex flex-col items-center leading-none">
+              <small className="text-[4px] font-black md:text-[5px]" style={{ color: `${estilo.texto}b3` }}>
+                {sigla}
+              </small>
+              <b className="mt-[1px] text-[7px] font-black md:text-[8.5px]" style={{ color: estilo.texto }}>
                 {atributos[i] ?? "—"}
               </b>
-              <small className="text-[4px] font-black text-black/40 md:text-[5px]">{sigla}</small>
             </span>
           ))}
         </div>
@@ -394,7 +476,12 @@ export default function ElencoPage() {
   const engineToggleTransferListed = useGameEngine(s => s.toggleTransferListed)
   const engineDevolverEmprestimo = useGameEngine(s => s.devolverEmprestimo)
   const engineRenovarEmprestimo = useGameEngine(s => s.renovarEmprestimo)
-  const movimentos = useGameEngine(s => s.tacticalPlayerMovements)
+  // `?? SEM_MOVIMENTOS`, e não `?? {}`: um objeto novo a cada leitura muda a
+  // referência que o zustand compara e a tela re-renderiza sem parar. A
+  // constante é a mesma sempre. Motivo do guard: save antigo chega sem este
+  // mapa, e a tela o lê por NOME de atleta e com `Object.keys` — os dois
+  // estouram em estado indefinido, do mesmo jeito que `playerRoles` estourava.
+  const movimentos = useGameEngine(s => s.tacticalPlayerMovements ?? SEM_MOVIMENTOS)
   const setMovimentos = useGameEngine(s => s.setTacticalPlayerMovements)
   const engineTerminateContract = useGameEngine(s => s.terminateContract)
   const engineSellPlayer = useGameEngine(s => s.sellPlayer)
@@ -675,9 +762,14 @@ export default function ElencoPage() {
   // Funcao individual por jogador (o <select> antes nao tinha estado nem onChange).
   const [playerRoles, setPlayerRoles] = useState<Record<number, string>>({})
   useEffect(() => {
-    const restored = Object.fromEntries(allPlayers.map(player => [player.id, tacticalAssignments.playerRoles[player.name] ?? player.function]))
+    // `?.` de propósito, mesmo com a rede na re-hidratação do motor: este é o
+    // ponto que estourava ("Cannot read properties of undefined (reading
+    // '<nome do atleta>')") e ele também roda para estado que NÃO veio do
+    // disco — o retrato de clube do co-op, por exemplo. A tela de elenco não
+    // pode depender de quem preencheu o mapa para conseguir abrir.
+    const restored = Object.fromEntries(allPlayers.map(player => [player.id, tacticalAssignments?.playerRoles?.[player.name] ?? player.function]))
     setPlayerRoles(restored)
-  }, [allPlayers, tacticalAssignments.playerRoles])
+  }, [allPlayers, tacticalAssignments?.playerRoles])
 
   const updatePlayerRole = (playerId: number, role: string) => {
     const player = allPlayers.find(item => item.id === playerId)

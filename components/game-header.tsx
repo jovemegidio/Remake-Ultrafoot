@@ -564,10 +564,21 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         // proximo tecnico ATRAS da tela de troca, que e o que ela impede.
         setPassagem({
           para: primeiro, de: null, novaRodada: true,
-          irPara: resultado?.newSeason ? null : "/partida",
+          irPara: resultado?.newSeason ? null : resultado?.phaseTitle ? "/campeao" : "/partida",
         })
         return
       }
+    }
+
+    // TÍTULO DE FASE (Taça Guanabara) TEM CERIMÔNIA COMO QUALQUER OUTRO.
+    // Ele não vem do apito de uma final — nasce aqui, na apuração da semana,
+    // depois que os jogos dos rivais são simulados. A tela da partida, que é
+    // quem descobre os títulos de copa, nem chega a existir neste caminho: sem
+    // este desvio o técnico seria levado direto para a próxima partida com o
+    // troféu registrado no histórico e nenhuma tela dizendo que ele o ganhou.
+    if (resultado?.phaseTitle) {
+      hardNavigate("/campeao")
+      return
     }
 
     if (!resultado?.newSeason) {
