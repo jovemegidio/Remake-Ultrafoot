@@ -83,21 +83,37 @@ const INVENTARIO = [
 ]
 
 console.log(`auditando: ${RAIZ}\n`)
+
+// A versão declarada nos dois arquivos tem de bater — o desalinhamento entre
+// eles já publicou binário anunciando uma versão e se identificando como outra.
+// Ela é lida ANTES do inventário porque também define o corte: uma árvore
+// 1.0.333 não pode ser reprovada por não ter o que só existe na 1.0.334.
+let declarada = null
+try {
+  const pkg = JSON.parse(conteudo("package.json")).version
+  const tauri = JSON.parse(conteudo("src-tauri/tauri.conf.json")).version
+  if (pkg !== tauri) erro(`versões desalinhadas: package.json ${pkg} × tauri.conf.json ${tauri}`)
+  else { declarada = pkg; console.log(`versão declarada: ${pkg}\n`) }
+} catch { erro("não consegui ler as versões declaradas") }
+
+const numero = v => (v ?? "").split(".").map(n => parseInt(n, 10) || 0)
+/** A entrada já deveria existir nesta árvore? "—" = sempre; futura = ainda não. */
+const jaDevia = versao => {
+  if (versao === "—" || !declarada) return true
+  const a = numero(versao), b = numero(declarada)
+  for (let i = 0; i < 3; i++) { if (a[i] !== b[i]) return a[i] < b[i] }
+  return true
+}
+
+let adiante = 0
 for (const [versao, nome, arquivo, marca] of INVENTARIO) {
+  if (!jaDevia(versao)) { adiante++; continue }
   if (!temArquivo(arquivo)) { erro(`[${versao}] ${nome} — arquivo ausente: ${arquivo}`); continue }
   if (marca && !conteudo(arquivo).includes(marca)) {
     erro(`[${versao}] ${nome} — o arquivo existe mas é uma versão ANTIGA (sem "${marca}" em ${arquivo})`)
   }
 }
-
-// A versão declarada nos dois arquivos tem de bater — o desalinhamento entre
-// eles já publicou binário anunciando uma versão e se identificando como outra.
-try {
-  const pkg = JSON.parse(conteudo("package.json")).version
-  const tauri = JSON.parse(conteudo("src-tauri/tauri.conf.json")).version
-  if (pkg !== tauri) erro(`versões desalinhadas: package.json ${pkg} × tauri.conf.json ${tauri}`)
-  else console.log(`versão declarada: ${pkg}`)
-} catch { erro("não consegui ler as versões declaradas") }
+if (adiante) console.log(`(${adiante} item(ns) do inventário são de versão posterior a ${declarada} — não cobrados aqui)`)
 
 console.log(falhas === 0
   ? "\nTUDO PRESENTE — nenhuma funcionalidade entregue sumiu."
