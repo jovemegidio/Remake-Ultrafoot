@@ -13,6 +13,7 @@
     "qa:smoke": "tsx scripts/qa-smoke.ts",
     "qa:nao-regride": "node scripts/qa-nao-regride.mjs",
     "qa:destinos-online": "tsx scripts/test-destinos-online.ts",
+    "qa:campo-atleta": "tsx scripts/test-campo-do-atleta.ts",
     "qa:rivals-no-ar": "node scripts/qa-rivals-no-ar.mjs",
     "qa:rivals": "node scripts/qa-rivals-servidor.mjs",
     "qa:carreira-jogador": "tsx scripts/qa-carreira-de-jogador.ts",

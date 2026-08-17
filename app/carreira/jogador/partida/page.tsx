@@ -17,6 +17,7 @@ import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
 import { concluirPartidaDoAtleta } from "@/lib/carreira-de-jogador"
 import { decidirMomento, partidaTerminou } from "@/lib/partida-do-atleta"
+import { CampoDoAtleta } from "@/components/match/campo-do-atleta"
 
 export default function PartidaDoAtletaPage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador") })
@@ -39,6 +40,15 @@ export default function PartidaDoAtletaPage() {
 
   const momento = partida.momentos[partida.atual]
   const acabou = partidaTerminou(partida)
+
+  // ⚠️ A SIGLA DO ADVERSARIO NAO ESTA NA PARTIDA EM CURSO — ela guarda so o
+  // NOME. Em vez de acrescentar o campo (o que exigiria migrar as partidas ja
+  // em andamento nos saves), ela sai do proprio fixture que originou a partida,
+  // que e a fonte de onde o nome tambem veio.
+  const fixture = carreira.calendario.find(f => f.id === partida.fixtureId)
+  const adversarioCurto = fixture
+    ? (partida.emCasa ? fixture.awayCurto : fixture.homeCurto)
+    : ""
 
   const decidir = (escolhaId: string) => {
     const r = decidirMomento(carreira, partida, escolhaId)
@@ -81,6 +91,29 @@ export default function PartidaDoAtletaPage() {
             <span className="text-white/50">{partida.gols}G · {partida.assistencias}A</span>
           </div>
         </header>
+
+        {/* ── O CAMPO (1.0.338) ────────────────────────────────────────────
+            O modo atleta era a unica partida do jogo sem campo nenhum. Ele
+            ENCENA o que ja foi decidido — placar fechado, momentos sorteados —
+            exatamente como o motor 3D faz na partida do tecnico. */}
+        {adversarioCurto && (
+          <div className="mb-5 overflow-hidden rounded-2xl border border-white/10 bg-black/30">
+            <CampoDoAtleta
+              atleta={carreira.atleta}
+              clubeFileKey={carreira.clubeFileKey}
+              adversarioCurto={adversarioCurto}
+              emCasa={partida.emCasa}
+              tipoDoMomento={momento?.tipo}
+            />
+            <p className="border-t border-white/[.06] px-4 py-2 text-center text-[11px] text-white/35">
+              {acabou
+                ? "Apito final."
+                : momento
+                  ? `${momento.minuto}′ — a bola chega em você.`
+                  : "Aguardando o próximo lance."}
+            </p>
+          </div>
+        )}
 
         {ultimo && (
           <p className="mb-4 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center text-sm text-white/75">
