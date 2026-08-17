@@ -2620,13 +2620,35 @@ function _nomeComparavel(nome: string): string {
  * quem digitou o nome curto quase sempre quis dizer.
  */
 export function getTeamByName(nome: string): Team | undefined {
-  // Os femininos entram no FIM da lista: o nome deles termina em " Feminino",
-  // então nunca ganham de um clube masculino por igualdade — só respondem
-  // quando a busca é pelo nome feminino mesmo.
+  // ⚠️ ESTE COMENTÁRIO ESTAVA VELHO, E O CÓDIGO CONFIAVA NELE (corrigido 1.0.343).
+  //
+  // Ele dizia: "os femininos entram no fim da lista, e o nome deles termina em
+  // ' Feminino', então nunca ganham de um clube masculino por igualdade". A
+  // primeira metade continua verdadeira; a segunda morreu na 1.0.335, que
+  // limpou o sufixo do nome dos clubes femininos — de propósito, e a pedido.
+  //
+  // O efeito foi um homônimo EXATO onde antes não havia. `getTeamByName("Ajax")`
+  // passou a devolver o Ajax FEMININO (`ajax__fem`), porque o masculino se chama
+  // "AFC Ajax" e não bate na igualdade. Estar no fim da lista não protege quando
+  // o masculino nem chega a empatar. Isso colocou o clube feminino como clube
+  // FORMADOR no Mercado de Juniores, e sem escudo — o gate do formador acusou.
+  //
+  // A regra volta a ser a documentada: o feminino só responde quando a busca é
+  // pelo clube feminino mesmo, e nunca passa na frente de um masculino que
+  // casa pelo nome comparável ("Ajax" é o AFC Ajax antes de ser o time feminino).
   const times = [...allTeams, ...timesFemininos()].map(applyTeamOverride)
+  const ehFeminino = (t: Team) => t.file_key?.endsWith("__fem") ?? false
 
-  const exato = times.find(t => t.nome.toLowerCase() === nome.toLowerCase())
-  if (exato) return exato
+  const exatos = times.filter(t => t.nome.toLowerCase() === nome.toLowerCase())
+  const exatoMasculino = exatos.find(t => !ehFeminino(t))
+  if (exatoMasculino) return exatoMasculino
+  if (exatos.length) {
+    const alvoDoExato = _nomeComparavel(nome)
+    const masculinos = alvoDoExato
+      ? times.filter(t => !ehFeminino(t) && _nomeComparavel(t.nome) === alvoDoExato)
+      : []
+    return masculinos.length ? _maisPrestigiado(masculinos) : exatos[0]
+  }
 
   const alvoNorm = _semAcento(nome).replace(/[^a-z0-9]+/g, " ").trim()
   const porNorm = times.filter(t => _semAcento(t.nome).replace(/[^a-z0-9]+/g, " ").trim() === alvoNorm)

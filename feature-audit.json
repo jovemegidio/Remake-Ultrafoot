@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-08-16T22:07:51.344Z",
-  "scannedFiles": 468,
+  "generatedAt": "2026-08-17T18:15:16.460Z",
+  "scannedFiles": 474,
   "totals": {
     "notImplemented": 0,
-    "skeleton": 30,
+    "skeleton": 33,
     "todo": 2,
     "mock": 12
   },
   "activeNotImplementedFunctions": 0,
-  "actionableMarkers": 0,
+  "actionableMarkers": 3,
   "documentationMarkers": 44,
   "priorityFiles": [],
   "findings": [
@@ -53,6 +53,24 @@
       "file": "app/partida/page.tsx",
       "line": 771,
       "text": "// existe no calendario, que e a tela mock relatada."
+    },
+    {
+      "type": "skeleton",
+      "file": "components/match/campo-do-atleta.tsx",
+      "line": 31,
+      "text": "const ESQUELETO: { pos: string[]; quantos: number }[] = ["
+    },
+    {
+      "type": "skeleton",
+      "file": "components/match/campo-do-atleta.tsx",
+      "line": 57,
+      "text": "for (const faixa of ESQUELETO) {"
+    },
+    {
+      "type": "skeleton",
+      "file": "components/match/campo-do-atleta.tsx",
+      "line": 117,
+      "text": "const familia = ESQUELETO.find(f => f.pos.includes(atleta.posicao))?.pos ?? [atleta.posicao]"
     },
     {
       "type": "skeleton",
