@@ -27,6 +27,8 @@ import { PassagemDeVez } from "@/components/passagem-de-vez"
 import {
   ehMultitecnico, faltamFechar, iniciarRodada, tecnicosDoSave, type TecnicoDoSave,
 } from "@/lib/tecnicos-do-save"
+import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
+import { mediaDaTemporada, POSICOES_JOGAVEIS } from "@/lib/carreira-de-jogador"
 import { siglaExibivel } from "@/lib/club-identity"
 
 const MONTHS_SHORT = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
@@ -129,7 +131,17 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   // Dirigindo uma selecao o menu perde os itens de clube (mercado, financas,
   // juniores...) e recebe os da selecao. Ver buildNavMenuItems.
   const { isNational: emModoSelecao } = useManagingNational()
-  const navMenuItems = useMemo(() => buildNavMenuItems(emModoSelecao), [emModoSelecao])
+  // ⚠️ CARREIRA DE ATLETA NAO E CARREIRA DE TECNICO, e o cabecalho tratava as
+  // duas como a mesma coisa: no modo jogador o menu abria Financas, Mercado,
+  // Infraestrutura e "Pedir demissao" — telas de quem DIRIGE o clube. Quem e
+  // atleta nao contrata ninguem nem pede demissao do clube; ele pede
+  // transferencia. Ver NAV_MENU_PLAYER_ITEMS.
+  const carreiraDeAtleta = state.carreiraDeJogador
+  const ehCarreiraDeAtleta = modalidadeDoSave(state) === "jogador" && Boolean(carreiraDeAtleta)
+  const navMenuItems = useMemo(
+    () => buildNavMenuItems(emModoSelecao, ehCarreiraDeAtleta),
+    [emModoSelecao, ehCarreiraDeAtleta],
+  )
 
 
   const [saving, setSaving] = useState(false)
@@ -414,6 +426,45 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   // Estatisticas REAIS da temporada, derivadas das partidas ja jogadas do usuario
   // no calendario (antes eram valores fixos: 24 jogos / 16V / 5E / 3D / +5V).
   const { coachData, form } = useMemo(() => {
+    // ⚠️ NO MODO ATLETA ESTE BLOCO CONTAVA A CARREIRA ERRADA. Ele le o
+    // `seasonCalendar` do TECNICO, que numa carreira de jogador nao existe —
+    // por isso o cartao mostrava 0 jogos, 0% de aproveitamento e o cargo
+    // "Tecnico Principal" para um atacante de 18 anos. Os numeros do atleta
+    // moram em `carreiraDeJogador.temporadaAtual`.
+    if (ehCarreiraDeAtleta && carreiraDeAtleta) {
+      const t = carreiraDeAtleta.temporadaAtual
+      // `ultimasPartidas` ja traz o placar do ponto de vista do atleta
+      // (golsPro/golsContra), entao a forma sai daqui e nao do calendario —
+      // que nesta carreira tem outro formato.
+      const formaDoAtleta = carreiraDeAtleta.ultimasPartidas.slice(-5).map(p =>
+        p.golsPro > p.golsContra ? "V" : p.golsPro === p.golsContra ? "E" : "D",
+      ) as ("V" | "E" | "D")[]
+      const notaMedia = mediaDaTemporada(carreiraDeAtleta)
+      const nomeDaPosicao =
+        POSICOES_JOGAVEIS.find(p => p.id === carreiraDeAtleta.atleta.posicao)?.nome
+        ?? carreiraDeAtleta.atleta.posicao
+      return {
+        coachData: {
+          nome: carreiraDeAtleta.atleta.nome,
+          cargo: `${nomeDaPosicao} · ${carreiraDeAtleta.clubeNome}`,
+          partidasTotal: t.jogos,
+          // No cartao do atleta as quatro caixas deixam de ser V/E/D (que sao do
+          // clube) e passam a ser o que a carreira dele mede.
+          vitorias: t.gols,
+          empates: t.assistencias,
+          derrotas: t.titularidades,
+          aproveitamento: Math.round(notaMedia * 10),
+          titulosTemporada: (carreiraDeAtleta.historico ?? []).reduce((n, h) => n + h.titulos.length, 0),
+          sequencia: t.minutos > 0 ? `${t.minutos} min` : "-",
+          rotulos: {
+            vitorias: "Gols", empates: "Assist.", derrotas: "Titular",
+            taxa: "Nota media", sequencia: "Minutos",
+          },
+        },
+        form: formaDoAtleta,
+      }
+    }
+
     const userCurto = userTeam.curto
     const jogadas = (seasonCalendar?.fixtures ?? []).filter(
       f => f.isUserMatch && f.played && f.homeScore !== undefined && f.awayScore !== undefined,
@@ -461,15 +512,34 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         aproveitamento,
         titulosTemporada,
         sequencia,
+        rotulos: undefined as undefined | Record<"vitorias" | "empates" | "derrotas" | "taxa" | "sequencia", string>,
       },
       form: resultados.slice(-5),
     }
-  }, [seasonCalendar, userTeam.curto, userTeam.nome, state.managerName, state.seasonHistory, currentSeason])
+  }, [seasonCalendar, userTeam.curto, userTeam.nome, state.managerName, state.seasonHistory, currentSeason,
+    ehCarreiraDeAtleta, carreiraDeAtleta])
 
   // O jogo e organizado por temporada (comecando 01/01) e nao por "rodada" isolada —
   // mostra a data corrente do calendario em vez de um contador de rodadas.
   // Durante o avanco mostra a data da animacao (dia a dia); fora dele, a data real.
-  const gameDate = advanceDate ?? getGameDate(currentSeason, currentWeek)
+  /**
+   * ⚠️ NA CARREIRA DE ATLETA O RELOGIO DO CABECALHO FICAVA PARADO EM 01 JAN.
+   *
+   * A data sai de `getGameDate(currentSeason, currentWeek)`, e `currentWeek` e a
+   * semana do TECNICO — que numa carreira de jogador ninguem avanca: quem anda
+   * e a `rodada` da propria carreira, movida por "Viver a partida" / "Simular
+   * rodada". Resultado: o atleta chegava a rodada 12 com o cabecalho ainda
+   * dizendo 01 JAN, e a "Temporada 2026" ao lado nem era lida da carreira dele.
+   *
+   * `rodada` e a ultima jogada, entao o presente e a proxima (+1) — do mesmo
+   * jeito que a semana do tecnico aponta para o jogo que ainda vai acontecer.
+   */
+  const temporadaCorrente = ehCarreiraDeAtleta && carreiraDeAtleta
+    ? carreiraDeAtleta.temporada
+    : currentSeason
+  const gameDate = advanceDate ?? (ehCarreiraDeAtleta && carreiraDeAtleta
+    ? getGameDate(carreiraDeAtleta.temporada, carreiraDeAtleta.rodada + 1)
+    : getGameDate(currentSeason, currentWeek))
   const gameDateLabel = `${gameDate.getDate().toString().padStart(2, "0")} ${MONTHS_SHORT[gameDate.getMonth()]}`
 
   /**
@@ -487,9 +557,9 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
    * apresentacao — nao muda o calendario nem o motor.
    */
   const anoDaData = gameDate.getFullYear()
-  const temporadaLabel = anoDaData > currentSeason
-    ? `${currentSeason}/${String(anoDaData).slice(-2)}`
-    : String(currentSeason)
+  const temporadaLabel = anoDaData > temporadaCorrente
+    ? `${temporadaCorrente}/${String(anoDaData).slice(-2)}`
+    : String(temporadaCorrente)
 
   const handleSave = async () => {
     // Sem carreira iniciada no pre-office nao ha o que salvar (salvarTudo checa
@@ -523,6 +593,20 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   // rodada e simulada.
   const handleAdvance = async () => {
     if (advancing) return
+
+    // ⚠️ NA CARREIRA DE ATLETA ESTE BOTAO MEXIA NO MUNDO ERRADO. Ele chama
+    // `advanceGameWeek()`, o motor do TECNICO — que numa carreira de jogador
+    // avanca a semana de uma carreira que nao existe, enquanto a rodada do
+    // atleta (movida por `jogarProximaRodada`) fica onde estava.
+    //
+    // O certo aqui e a MESMA regra que o botao ja aplica para o tecnico logo
+    // abaixo: havendo partida por disputar, ele LEVA ao jogo em vez de adiantar
+    // o relogio. Quem decide entre viver e simular e o jogador, na tela dele —
+    // avancar nao pode consumir a partida dele em silencio.
+    if (ehCarreiraDeAtleta) {
+      hardNavigate("/carreira/jogador")
+      return
+    }
 
     // Com jogo pendente o botao LEVA A PARTIDA em vez de avancar o relogio.
     if (partidaPendenteAgora) {
@@ -762,7 +846,15 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           >
             <TeamCrest team={userTeam} size="sm" />
             <div className="hidden md:flex flex-col items-start leading-none gap-1">
-              <span className="text-[12px] font-bold text-white">{siglaExibivel(userTeam.curto, userTeam.nome)}</span>
+              {/* ⚠️ NO MODO ATLETA O SELO MOSTRAVA A SIGLA DO CLUBE ("DCI").
+                  Isso e identidade de TECNICO: quem dirige o clube e o clube.
+                  O atleta e uma pessoa dentro dele — o selo passa a ser o nome
+                  dele, que e o que ele reconhece como "eu" na tela. */}
+              <span className="text-[12px] font-bold text-white">
+                {ehCarreiraDeAtleta && carreiraDeAtleta
+                  ? carreiraDeAtleta.atleta.nome
+                  : siglaExibivel(userTeam.curto, userTeam.nome)}
+              </span>
               <FormBars results={form} />
             </div>
             <Star className="hidden lg:block h-3.5 w-3.5 text-[#ffd700] fill-[#ffd700]" />
@@ -801,30 +893,32 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                   </div>
                   <div className="text-center p-3 rounded-lg bg-[var(--brand)]/10 border border-[var(--brand)]/20">
                     <div className="text-lg font-bold text-[var(--brand)]">{coachData.vitorias}</div>
-                    <div className="text-[9px] text-white/40 uppercase">V</div>
+                    <div className="text-[9px] text-white/40 uppercase">{coachData.rotulos?.vitorias ?? "V"}</div>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-[#ffd700]/10 border border-[#ffd700]/20">
                     <div className="text-lg font-bold text-yellow-400">{coachData.empates}</div>
-                    <div className="text-[9px] text-white/40 uppercase">E</div>
+                    <div className="text-[9px] text-white/40 uppercase">{coachData.rotulos?.empates ?? "E"}</div>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                     <div className="text-lg font-bold text-red-400">{coachData.derrotas}</div>
-                    <div className="text-[9px] text-white/40 uppercase">D</div>
+                    <div className="text-[9px] text-white/40 uppercase">{coachData.rotulos?.derrotas ?? "D"}</div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-[var(--brand)]" />
-                    <span className="text-xs text-white/60">{t.header.winRate}</span>
+                    <span className="text-xs text-white/60">{coachData.rotulos?.taxa ?? t.header.winRate}</span>
                   </div>
-                  <span className="text-sm font-bold text-[var(--brand)]">{coachData.aproveitamento}%</span>
+                  <span className="text-sm font-bold text-[var(--brand)]">
+                    {coachData.rotulos ? (coachData.aproveitamento / 10).toFixed(2) : `${coachData.aproveitamento}%`}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-white/40" />
-                    <span className="text-xs text-white/60">{t.header.streak}</span>
+                    <span className="text-xs text-white/60">{coachData.rotulos?.sequencia ?? t.header.streak}</span>
                   </div>
                   <span className="text-sm font-bold text-[var(--brand)]">{coachData.sequencia}</span>
                 </div>
@@ -1170,7 +1264,32 @@ const NAV_MENU_NATIONAL_ITEMS: NavMenuItem[] = [
   { secao: "Selecao", label: "Contrato e gestao", href: "/selecao", icon: Flag },
 ]
 
-function buildNavMenuItems(isNational: boolean): NavMenuItem[] {
+/**
+ * O MENU DE QUEM E ATLETA.
+ *
+ * ⚠️ Ate a 1.0.337 nao existia: o modo jogador herdava o menu inteiro do
+ * tecnico. A tela abria "Financas", "Infraestrutura", "Mercado", "Area do
+ * Treinador" e "Pedir demissao" para um atleta de 18 anos que nao dirige coisa
+ * nenhuma — e o "Escritorio" apontava para `/`, o escritorio do TECNICO.
+ *
+ * A carreira de atleta e UMA tela com abas (ver app/carreira/jogador), de
+ * proposito: o modo e partida-a-partida e espalhar isso em seis rotas viraria
+ * peregrinacao de menu entre uma rodada e outra. Entao este menu e curto e
+ * honesto — leva ao que existe, e nada mais.
+ */
+const NAV_MENU_PLAYER_ITEMS: NavMenuItem[] = [
+  { secao: "Carreira", label: "Meu escritorio", href: "/carreira/jogador", icon: User },
+  { secao: "Carreira", label: "Calendario e tabela", href: "/carreira/jogador?aba=tabela", icon: Calendar },
+  { secao: "Carreira", label: "Evolucao e atributos", href: "/carreira/jogador?aba=evolucao", icon: TrendingUp },
+  { secao: "Carreira", label: "Trajetoria", href: "/carreira/jogador?aba=historico", icon: BarChart3 },
+]
+
+function buildNavMenuItems(isNational: boolean, ehAtleta = false): NavMenuItem[] {
+  // O atleta vem primeiro: uma carreira de jogador nunca e tambem uma selecao.
+  if (ehAtleta) {
+    const configuracoes = NAV_MENU_ITEMS.find(i => i.href === "/configuracoes")!
+    return [...NAV_MENU_PLAYER_ITEMS, configuracoes]
+  }
   if (!isNational) return NAV_MENU_ITEMS
   const comuns = NAV_MENU_ITEMS.filter(i => !i.clubOnly)
   const ultimo = comuns.pop()! // Configuracoes fica no fim

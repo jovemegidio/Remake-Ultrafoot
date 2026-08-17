@@ -55,6 +55,17 @@ function Estrelas({ nota }: { nota: number }) {
   )
 }
 
+type AbaDoAtleta = "temporada" | "evolucao" | "tabela" | "historico"
+
+const ABAS_DO_ATLETA: AbaDoAtleta[] = ["temporada", "evolucao", "tabela", "historico"]
+
+/** A aba pedida na query, quando o jogador chega pelo menu. */
+function abaDaUrl(): AbaDoAtleta {
+  if (typeof window === "undefined") return "temporada"
+  const pedida = new URLSearchParams(window.location.search).get("aba")
+  return ABAS_DO_ATLETA.find(a => a === pedida) ?? "temporada"
+}
+
 function corDaNota(nota: number): string {
   return nota >= 8 ? "text-emerald-400" : nota >= 7 ? "text-[var(--brand)]" : nota >= 6 ? "text-amber-300" : "text-red-400"
 }
@@ -64,7 +75,11 @@ export default function CarreiraDeJogadorPage() {
   const { state, setState } = useGameState()
   const { initializeNewGame } = useGameManager()
   const carreira = state.carreiraDeJogador
-  const [aba, setAba] = useState<"temporada" | "evolucao" | "tabela" | "historico">("temporada")
+  // ⚠️ A ABA VEM DA URL QUANDO VEM DE FORA. O menu do modo atleta linka para
+  // `?aba=tabela|evolucao|historico`; sem ler isso aqui o link abriria sempre
+  // "temporada" e o item do menu viraria promessa falsa — o mesmo defeito de
+  // `/?hub=1`, que era escrito num lugar e lido em nenhum.
+  const [aba, setAba] = useState<AbaDoAtleta>(() => abaDaUrl())
 
   const proxima = useMemo(
     () => carreira?.calendario.find(f => !f.played && f.isUserMatch),
