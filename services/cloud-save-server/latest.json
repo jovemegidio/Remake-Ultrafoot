@@ -1,9 +1,21 @@
 {
-  "version": "1.0.333",
-  "notes": "Ultrafoot 26 v1.0.333 — A uniao completa. RESTAURADO PARA TODOS: Divisao de Acesso com 260 clubes, VAR e arbitragem, eventos do 3D, historico de lesoes, confianca da diretoria, menu Online, Manager Rivals, Viver a Partida e toda a carreira de jogador da 1.0.324 a 1.0.329. VAR REALISTA: gols e penaltis raros entram em checagem, o relogio para durante a apreensao e a decisao aparece separada. IDENTIDADE DOS CLUBES: clube estrangeiro nao entra em divisao brasileira por coincidencia de sigla, e cada carreira mantem save, elenco, caixa e tatica separados.",
+  "version": "1.0.335",
+  "notes": "Mercado por modalidade: numa carreira feminina o mercado e o leilao passam a mostrar atletas femininas, e no Sub-20 apenas atletas em idade de base. O clube feminino perde o sufixo do nome (Botafogo, e nao Botafogo Feminino) em todas as telas, sem misturar elencos. O tipo de carreira (profissional, feminino, Sub-20) saiu do rodape para o alto da tela de nova carreira. Na carreira de jogador, escolher o modo abre direto a ficha do atleta, e os clubes mais fortes de cada liga ficam fora da estreia.",
   "sizeMb": 732,
-  "sha256": "0752296CB2140716373CC58FCBD10ABC314E277FF89D7D5DDBF2423618499714",
+  "sha256": "A977C8A0624993ECD257B8F94A4ED171C82D52D5BD04136594B2B8CDA5D9885D",
   "anteriores": [
+    {
+      "version": "1.0.334",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.334/Ultrafoot.26_1.0.334_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.334",
+      "sizeMb": 755
+    },
+    {
+      "version": "1.0.333",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.333/Ultrafoot.26_1.0.333_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.333",
+      "sizeMb": 732
+    },
     {
       "version": "1.0.331",
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.331/Ultrafoot.26_1.0.331_x64-setup.exe",
@@ -45,24 +57,12 @@
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.318/Ultrafoot.26_1.0.318_x64-setup.exe",
       "notes": "Ultrafoot 26 v1.0.318",
       "sizeMb": 685
-    },
-    {
-      "version": "1.0.317",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.317/Ultrafoot.26_1.0.317_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.317",
-      "sizeMb": 685
-    },
-    {
-      "version": "1.0.316",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.316/Ultrafoot.26_1.0.316_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.316",
-      "sizeMb": 685
     }
   ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRURYOG84WDVIOWM5cFlUbDY3ZUVjbnBuTnFLdWtjSWIySW9wWW5tZllRVXJtOEF6SlFXcXJNM2xrZFpiZ2VVYWNoNGUva3lqWVc5Sm1xLzhWTElFR3dZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2OTIwNDYwCWZpbGU6VWx0cmFmb290IDI2XzEuMC4zMzNfeDY0LXNldHVwLmV4ZQpWMk5DR2NwL25sNnZjcWhhOEpqWFE5L1dvbXpDcmhWajFQTzN1K2xlSktvNkxoSnVRQy9IU0F2c2RHZFNPNzNxZlNPQ2pTL1d0MVE5d0ZFWTRjS05Ddz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.333_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUpTREdYZ3BwM04walRNd1MxRFhCRU1lNzV0aVR2SFNoMi9tbldZNnI3VEdlWCt2bkt1Z2NzYUtnVlYyRzFod2VHSEZDVFFDQzlOR3JoOWpCNUhrMVFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2OTMzOTU0CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zMzVfeDY0LXNldHVwLmV4ZQpMMk9BNDBTeDZqVUxDZHRnVFFxY3dXdThDRFAvV2dnejIxK3NzSDFjZ3NlOE1tRFdaRFlpRU01MG03eVF2SnNnelphQi8zMFlEN3lvcGFhQU9LelhBZz09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.335_x64-setup.exe"
     }
   }
 }

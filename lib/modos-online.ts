@@ -32,8 +32,13 @@ export const MODOS_ONLINE: ModoOnline[] = [
     id: "amistoso",
     nome: "Amistoso online",
     resumo: "Sala com código: você e um amigo, sem ranking e sem recompensa.",
-    href: "/multiplayer-local?online=1",
-    estado: "em obras",
+    // ⚠️ ATÉ A 1.0.335 ISTO APONTAVA PARA `/multiplayer-local?online=1`, que é um
+    // stub de 36 linhas cujo único trabalho é REDIRECIONAR PARA O DRAFT. O modo
+    // não estava "em obras": estava sem destino, e clicar nele levava a outro
+    // modo. Um `href` quebrado é pior que um estado "planejado" honesto — o
+    // estado avisa, o link mente.
+    href: "/online/amistoso",
+    estado: "pronto",
     fase: 1,
   },
   {

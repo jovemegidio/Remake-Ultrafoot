@@ -259,9 +259,19 @@
   ],
   "changelog": [
     {
-      "version": "1.0.335",
+      "version": "1.0.336",
       "data": "2026-08-17",
       "latest": true,
+      "titulo": "O amistoso online ganha destino",
+      "itens": [
+        "AMISTOSO 1v1 ONLINE DE VERDADE: abra uma sala, passe o codigo de seis caracteres a um amigo, vejam-se na tela e confirmem — o apito so sai com os dois prontos. Ate aqui o modo Amistoso levava para outra tela (o Draft), porque o link apontava para uma rota que so redirecionava.",
+        "Sem ranking, sem recompensa e sem efeito na carreira, como o modo sempre prometeu. Para partida valendo rating, o modo continua sendo o Manager Rivals."
+      ]
+    },
+    {
+      "version": "1.0.335",
+      "data": "2026-08-17",
+      "latest": false,
       "titulo": "O mercado segue a modalidade, e o clube feminino perde o rotulo",
       "itens": [
         "MERCADO POR MODALIDADE: numa carreira feminina o mercado e o leilao passam a mostrar ATLETAS FEMININAS. Ate aqui a vitrine saia sempre do catalogo masculino — com os filtros aplicados, a busca simplesmente devolvia \"nenhum atleta\". No Sub-20 o mercado mostra apenas atletas em idade de base.",

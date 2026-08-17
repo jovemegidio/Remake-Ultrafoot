@@ -82,6 +82,8 @@ const INVENTARIO = [
   ["1.0.335", "Fontes masculinas fechadas para clube feminino", "lib/players-data.ts", "ehFeminino"],
   ["1.0.335", "Clube de estreia da carreira de atleta", "lib/carreira-de-jogador.ts", "clubesDeEstreia"],
   ["1.0.335", "Gate do mercado por modalidade", "scripts/qa-mercado-por-modalidade.ts", "vazou"],
+  ["1.0.336", "Amistoso 1v1 online (tela da sala)", "app/online/amistoso/page.tsx", "AMISTOSO 1v1 ONLINE"],
+  ["1.0.336", "Amistoso aponta para a propria tela", "lib/modos-online.ts", "/online/amistoso"],
   ["—", "Arbitragem / VAR", "lib/arbitragem.ts", ""],
   ["—", "Eventos para o 3D", "lib/eventos-para-3d.ts", ""],
   ["—", "Histórico de lesões", "lib/historico-de-lesoes.ts", ""],
