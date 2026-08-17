@@ -28,6 +28,44 @@ import { completarLigaComPool, getTeamByFileKey, type Team } from "@/lib/teams-d
 import { getPlayersForTeam } from "@/lib/players-data"
 import { montarPartidaDoAtleta, partidaTerminou, type PartidaEmCurso } from "@/lib/partida-do-atleta"
 
+// ─── ONDE UMA PROMESSA PODE ESTREAR ─────────────────────────────────────────
+//
+// Pedido do usuário (1.0.335): "para ficar realista o jogador não pode começar
+// por um clube grande, deve começar por clubes mais modestos assim como os
+// modos carreira de jogador do EA FC".
+//
+// ⚠️ A REGRA É RELATIVA À LIGA, NUNCA UM PRESTÍGIO FIXO. Um corte absoluto
+// ("prestígio até 62") é o erro que a Divisão de Acesso já cometeu uma vez: as
+// escalas de prestígio são MUITO diferentes entre países, e o mesmo número que
+// deixa de fora os grandes do Brasil deixaria de fora a liga albanesa INTEIRA —
+// a modalidade abriria sem nenhum clube escolhível e pareceria quebrada.
+//
+// Aqui o corte é por posição dentro da própria liga: a promessa assina com
+// qualquer clube que não esteja entre os mais fortes DAQUELA liga. Assim a
+// regra vale igual no Brasileirão, na Premier League e na Divisão de Acesso, e
+// subir para um grande continua sendo o que a carreira conquista — não o que
+// ela recebe pronta na primeira tela.
+
+/** Fatia dos clubes mais fortes de cada liga fechada para a estreia. */
+export const FATIA_DE_ELITE_FECHADA = 0.3
+
+/**
+ * Os clubes de uma liga em que um atleta em começo de carreira pode assinar.
+ *
+ * Devolve a lista inteira quando ela é pequena demais para cortar (uma liga de
+ * 4 clubes não tem "elite" a separar) — ficar sem opção nenhuma é pior do que
+ * abrir uma exceção honesta.
+ */
+export function clubesDeEstreia(daLiga: readonly Team[]): Team[] {
+  if (daLiga.length <= 4) return [...daLiga]
+  const porForca = [...daLiga].sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0))
+  const fechados = Math.max(1, Math.round(porForca.length * FATIA_DE_ELITE_FECHADA))
+  const permitidos = new Set(porForca.slice(fechados).map(t => t.file_key))
+  // A ordem original da liga é preservada: a lista da tela é um carrossel, e
+  // reordená-la por força faria o clube sob o dedo mudar ao trocar de modalidade.
+  return daLiga.filter(t => permitidos.has(t.file_key))
+}
+
 export type PosicaoDoAtleta = "GOL" | "ZAG" | "LD" | "LE" | "VOL" | "MEI" | "ATA"
 
 export const POSICOES_JOGAVEIS: { id: PosicaoDoAtleta; nome: string }[] = [

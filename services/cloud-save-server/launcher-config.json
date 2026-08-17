@@ -259,9 +259,33 @@
   ],
   "changelog": [
     {
+      "version": "1.0.335",
+      "data": "2026-08-17",
+      "latest": true,
+      "titulo": "O mercado segue a modalidade, e o clube feminino perde o rotulo",
+      "itens": [
+        "MERCADO POR MODALIDADE: numa carreira feminina o mercado e o leilao passam a mostrar ATLETAS FEMININAS. Ate aqui a vitrine saia sempre do catalogo masculino — com os filtros aplicados, a busca simplesmente devolvia \"nenhum atleta\". No Sub-20 o mercado mostra apenas atletas em idade de base.",
+        "CLUBE FEMININO SEM O SUFIXO: o nome volta a ser \"Botafogo\", e nao \"Botafogo Feminino\", em toda tela — tabela, calendario, escalacao e cabecalho. A separacao entre o elenco feminino e o masculino continua garantida, agora pela identidade do clube e nao pelo rotulo.",
+        "TIPO DE CARREIRA FORA DO RODAPE: profissional, feminino e Sub-20 se escolhem no alto da tela de nova carreira, onde a decisao acontece — o seletor duplicado do rodape saiu.",
+        "CARREIRA DE JOGADOR MAIS REALISTA: escolher a carreira de atleta abre direto a ficha do jogador (posicao, idade, arquetipo e origem), em vez de deixar o atleta nascer no padrao. E ninguem estreia num gigante: os clubes mais fortes de cada liga ficam fora da escolha inicial, como nos modos carreira de jogador do mercado.",
+        "GATE NOVO: um teste de publicacao confere que nenhum clube feminino recebeu atletas do elenco masculino homonimo e que o mercado profissional continua exatamente como era."
+      ]
+    },
+    {
+      "version": "1.0.334",
+      "data": "2026-08-16",
+      "latest": false,
+      "titulo": "Siglas legiveis, controle em toda tela e escudo feminino",
+      "itens": [
+        "SIGLAS DE VERDADE: no lugar do nome do arquivo cortado (MACHESTE), cada clube mostra a sigla que se usa de fato, com desempate por liga quando dois clubes disputam o mesmo codigo.",
+        "CONTROLE EM TODA TELA: a navegacao por controle passou a valer no jogo inteiro, com anel de foco e barra de acoes, e nao so nas telas que ja a tinham.",
+        "ESCUDO FEMININO: o clube feminino que tem brasao proprio passa a usa-lo; os demais continuam herdando o escudo do clube-mae, sem duplicar arquivo."
+      ]
+    },
+    {
       "version": "1.0.333",
       "data": "2026-08-16",
-      "latest": true,
+      "latest": false,
       "titulo": "A uniao completa: restauracoes, saves isolados e clubes corretos",
       "itens": [
         "RESTAURADO PARA TODOS: Divisao de Acesso com 260 clubes, VAR/arbitragem, eventos do 3D, historico de lesoes, confianca da diretoria, simulacao da partida, menu Online, Manager Rivals, Viver a Partida e toda a carreira de jogador entregue da 1.0.324 a 1.0.329.",

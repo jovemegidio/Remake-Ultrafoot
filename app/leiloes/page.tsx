@@ -21,7 +21,8 @@ import { useUserTeam } from "@/lib/time-da-carreira"
 import { useRequireClub } from "@/lib/use-require-team"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { generateDetailedMarketTargets } from "@/lib/transfer-engine"
+import { vitrineDaModalidade } from "@/lib/mercado-da-modalidade"
+import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
 import { useGameEngine, isTransferWindowOpen } from "@/lib/game-engine"
 import { chaveLeilao, resolverLancesPendentes, type DesfechoDeLeilao } from "@/lib/leilao"
 import { resolverLeiloesDeVenda, type DesfechoDaVenda, type LeilaoDeVenda } from "@/lib/leilao-de-venda"
@@ -49,9 +50,18 @@ export default function LeiloesPage() {
   }, [meuElencoLeilao])
 
   // Mesmo catálogo da aba Buscar do Mercado — os atletas em disputa saem dele.
+  // E "mesmo catálogo" inclui a MODALIDADE: um leilão de atleta masculino numa
+  // carreira feminina seria a mesma incoerência do mercado, num lugar onde ela
+  // custa dinheiro.
+  const modalidade = modalidadeDoSave(state)
   const pool = useMemo(
-    () => generateDetailedMarketTargets(userTeam?.curto ?? "", undefined, season, userTeam?.nome),
-    [userTeam?.curto, userTeam?.nome, season],
+    () => vitrineDaModalidade({
+      modalidade,
+      clubeCurto: userTeam?.curto ?? "",
+      clubeNome: userTeam?.nome,
+      temporada: season,
+    }),
+    [modalidade, userTeam?.curto, userTeam?.nome, season],
   )
 
   // Concorrentes: os clubes do próprio catálogo, com caixa estimado pelo

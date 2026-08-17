@@ -22,7 +22,7 @@ import { saiuDoClube, chegouAoClube, temTransferencias } from "@/lib/atualizacao
 import { envelhecerElenco } from "@/lib/mundo-vivo"
 import { temporadasDesdeOSeed, getClubeDoUsuario } from "@/lib/temporada-do-mundo"
 import { elencoPersistente286 } from "@/lib/universo-286"
-import { ehDivisaoFeminina, nomesFemininosDoPais } from "@/lib/futebol-feminino"
+import { ehClubeFeminino, ehDivisaoFeminina, nomesFemininosDoPais } from "@/lib/futebol-feminino"
 import { elencoFemininoDoClube } from "@/lib/elencos-femininos"
 
 const REAL_SQUADS = realSquadsJson as unknown as Record<
@@ -1313,7 +1313,20 @@ function getRealSquad(team: Team): Player[] | null {
 }
 
 export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[] {
-  const indexed = getPlayersByTeam(team.nome)
+  // ⚠️ AS TRÊS FONTES MASCULINAS FICAM FECHADAS PARA CLUBE FEMININO (1.0.335).
+  //
+  // O índice curado (`getPlayersByTeam`), o overlay de elenco real dos CSVs
+  // (`findRealSquad`) e o do Transfermarkt (`getRealSquad`) casam o clube pelo
+  // NOME. Até a 1.0.334 o clube feminino se chamava "Botafogo Feminino" e, por
+  // isso, nunca casava com nenhuma das três — a separação era um efeito
+  // colateral do rótulo, não uma regra escrita.
+  //
+  // O nome agora é limpo ("Botafogo"), porque é o que as telas mostram, então a
+  // separação passou a ser DECLARADA aqui. Sem esta guarda o Corinthians
+  // feminino entra em campo com o elenco masculino inteiro — e em silêncio,
+  // porque um elenco cheio de atletas reais não parece um erro.
+  const ehFeminino = ehClubeFeminino(team.file_key)
+  const indexed = ehFeminino ? [] : getPlayersByTeam(team.nome)
   // Clubes do pool completo não fazem parte de `allTeams` e, portanto, não entram no
   // índice curado criado no boot. Consultar a importação diretamente evita que os quase
   // 3 mil clubes recebam um elenco inteiramente genérico.
@@ -1339,13 +1352,13 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
     const femininas = calibrateSquadRatings(team, ensurePlayableSquad(team, comEdicoesFem))
     return opts?.raw ? femininas : applyPlayerOverrides(team.file_key, femininas)
   }
-  const temOverlayCsv = Boolean(findRealSquad(team, teamAliasOverrides[team.file_key ?? ""] ?? []))
+  const temOverlayCsv = !ehFeminino && Boolean(findRealSquad(team, teamAliasOverrides[team.file_key ?? ""] ?? []))
   // `refinarPosicoes` fecha a inconsistencia entre a vitrine e o elenco: o
   // mercado ja cruzava a posicao real do Transfermarkt por nome, os elencos nao.
   // So troca posicao GROSSEIRA (MEI/ZAG/DEF/BAN) — ver a nota do mapa.
   const sourceRaw = refinarPosicoes(
-    (temOverlayCsv ? null : getRealSquad(team))
-      ?? enrichWithSeedNationality(team, indexed.length ? indexed : getImportedPlayersForTeam(team)),
+    (temOverlayCsv || ehFeminino ? null : getRealSquad(team))
+      ?? enrichWithSeedNationality(team, indexed.length ? indexed : ehFeminino ? [] : getImportedPlayersForTeam(team)),
   )
   // Remove quem foi contratado pelo usuário: sem isto o atleta ficava nos DOIS
   // elencos (relato "contratei o Neymar mas ele continua no Santos"). O editor

@@ -18,9 +18,11 @@
 //      duplicar um único arquivo de imagem;
 //   2. `curto` ganha sufixo até não colidir com nenhum código masculino — a
 //      tabela e o calendário são indexados por ele;
-//   3. `nome` recebe " Feminino" — é o que impede `getPlayersByTeam` de
-//      devolver o ELENCO MASCULINO para o clube feminino (o índice curado é por
-//      nome, e "Corinthians" já existe nele).
+//   3. o ELENCO é separado por `file_key`, não pelo nome (1.0.335). O nome do
+//      clube feminino é limpo ("Botafogo", não "Botafogo Feminino") porque é
+//      ele que todas as telas mostram; quem impede `getPlayersByTeam` de
+//      devolver o elenco MASCULINO é a guarda de `getPlayersForTeam` sobre o
+//      sufixo `__fem`. Ver `construirTimesFemininos`.
 
 import type { Regiao, Team } from "@/lib/teams-data"
 
@@ -652,10 +654,20 @@ export function construirTimesFemininos(
       const cor2 = clube.cor2 ?? masculino?.cor2 ?? "#ffffff"
 
       times.push({
-        // " Feminino" no nome é o que separa o elenco: o índice curado de
-        // atletas é POR NOME, e sem isso o Corinthians feminino receberia o
-        // elenco masculino inteiro.
-        nome: `${clube.nome} Feminino`,
+        // NOME LIMPO (1.0.335). Até aqui era `${clube.nome} Feminino`, e o
+        // sufixo aparecia em toda tela — "Botafogo Feminino" na tabela, no
+        // calendário, no cabeçalho e na escalação (pedido do usuário para
+        // removê-lo). Ele nunca foi um rótulo: era a TRAVA que impedia o índice
+        // curado de atletas, que é POR NOME, de devolver o elenco masculino
+        // inteiro para o clube feminino.
+        //
+        // ⚠️ A trava não sumiu, MUDOU DE LUGAR: `getPlayersForTeam` agora fecha
+        // as três fontes masculinas (índice curado, CSV de elenco real e
+        // Transfermarkt) para quem tem `file_key` terminado em `__fem`. Se
+        // alguém reabrir qualquer uma delas, o Corinthians feminino volta a
+        // entrar em campo com o elenco masculino — o defeito que este sufixo
+        // existia para evitar. Ver a nota em `lib/players-data.ts`.
+        nome: clube.nome,
         curto,
         cidade: clube.cidade,
         estado: clube.estado ?? masculino?.estado ?? "",

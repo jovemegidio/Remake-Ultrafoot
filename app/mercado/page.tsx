@@ -43,7 +43,9 @@ import { announceOnlineAction } from "@/lib/online-multiplayer"
 import { markRejection, getRejectionCooldown, CARENCIA_POR_MOTIVO } from "@/lib/transfer-cooldown"
 import { confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
 import { formatCurrency, formatCurrencyFor } from "@/lib/currency"
-import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
+import { type DetailedMarketTarget } from "@/lib/transfer-engine"
+import { vitrineDaModalidade } from "@/lib/mercado-da-modalidade"
+import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
 import { useGameState, type GameState, type SquadPlayer } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { useRequireClub } from "@/lib/use-require-team"
@@ -415,9 +417,22 @@ export default function MercadoPage() {
   // Catálogo completo: todos os atletas de todos os clubes importados, estáveis
   // dentro da temporada. A versão anterior passava `60` e, por isso, filtros de
   // país/liga/time pesquisavam somente uma vitrine aleatória — não o mercado real.
+  //
+  // ⚠️ A VITRINE É A DA MODALIDADE DA CARREIRA (1.0.335). Esta linha chamava
+  // `generateDetailedMarketTargets` direto, e aquele gerador percorre o pool
+  // masculino do Brasfoot: numa carreira feminina o mercado exibia homens (e,
+  // com filtro de posição/idade aplicado, "nenhum atleta com esses filtros").
+  // `vitrineDaModalidade` troca a FONTE dos candidatos; para a carreira
+  // profissional ela devolve exatamente o que esta linha devolvia antes.
+  const modalidade = modalidadeDoSave(careerState)
   const transferTargets = useMemo(
-    () => generateDetailedMarketTargets(userTeam?.curto ?? "", undefined, gameEngine.currentSeason, userTeam?.nome),
-    [userTeam?.curto, userTeam?.nome, gameEngine.currentSeason],
+    () => vitrineDaModalidade({
+      modalidade,
+      clubeCurto: userTeam?.curto ?? "",
+      clubeNome: userTeam?.nome,
+      temporada: gameEngine.currentSeason,
+    }),
+    [modalidade, userTeam?.curto, userTeam?.nome, gameEngine.currentSeason],
   )
 
   // LEILAO VENCIDO em /leiloes: a tela de leiloes NAO conclui a transferencia —

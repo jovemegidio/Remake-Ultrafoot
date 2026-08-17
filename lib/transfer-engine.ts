@@ -143,7 +143,7 @@ function multiplicadorDeLiga(pais?: string | null): number {
   return LIGAS_CARAS[(pais ?? "").trim()] ?? 1
 }
 
-function calcMarketValueFromAttrs(overall: number, age: number, pais?: string | null): number {
+export function calcMarketValueFromAttrs(overall: number, age: number, pais?: string | null): number {
   const ageM = age < 22 ? 1.4 : age < 26 ? 1.2 : age < 30 ? 1.0 : age < 33 ? 0.7 : 0.4
   // PREMIO DE ELITE. A curva cubica sozinha e achatada no topo: um camisa 9 de
   // overall 88 com 32 anos saia por ~11 milhoes, e o relato era exatamente esse
@@ -257,7 +257,7 @@ export interface DetailedMarketTarget {
 }
 
 // RNG determinístico (mulberry32) — a vitrine fica estável dentro da temporada
-function mulberry32(seed: number): () => number {
+export function mulberry32(seed: number): () => number {
   let a = seed >>> 0
   return () => {
     a = (a + 0x6d2b79f5) >>> 0
@@ -268,7 +268,7 @@ function mulberry32(seed: number): () => number {
   }
 }
 
-function hashSeed(s: string): number {
+export function hashSeed(s: string): number {
   let h = 2166136261
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i)
@@ -331,7 +331,7 @@ const SECONDARY_POS: Record<string, string[]> = {
   PE: ["ATA", "LE"], ATA: ["MEI"],
 }
 
-function deriveStats(position: string, overall: number, rng: () => number) {
+export function deriveStats(position: string, overall: number, rng: () => number) {
   const n = (spread: number) => Math.round((rng() - 0.5) * spread)
   const clamp = (v: number) => Math.max(30, Math.min(99, v))
   switch (position) {

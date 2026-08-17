@@ -80,7 +80,7 @@ import { carregarElencosFemininos, clubesComElencoFeminino } from "@/lib/elencos
 import { LIGAS_FEMININAS } from "@/lib/futebol-feminino"
 import { MODALIDADES, MODALIDADE_DE_JOGADOR, type ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
 import {
-  ORIGENS, POSICOES_JOGAVEIS, arquetiposDaPosicao, criarAtletaDaCarreira, criarCarreiraDeJogador,
+  ORIGENS, POSICOES_JOGAVEIS, arquetiposDaPosicao, clubesDeEstreia, criarAtletaDaCarreira, criarCarreiraDeJogador,
   type ArquetipoId, type OrigemDoAtleta, type PosicaoDoAtleta,
 } from "@/lib/carreira-de-jogador"
 import qualidadeDasLigas from "@/data/seeds/qualidade-das-ligas.json"
@@ -586,6 +586,19 @@ export default function NovoJogoPage() {
     if (new URLSearchParams(window.location.search).get("modo") !== "jogador") return
     setModalidade("jogador")
     setModoTravado(true)
+    // ⚠️ O MODAL DO ATLETA ABRE SOZINHO (1.0.335).
+    //
+    // Relato do usuário: "ao selecionar a opção de carreira de jogador, deve
+    // abrir o modal com as informações do jogador". Quem escolhia a carreira de
+    // atleta no menu principal caía nesta tela e via um seletor de CLUBE — o
+    // corpo (posição, idade, arquétipo, origem) ficava escondido atrás do botão
+    // "Configurações iniciais", que ninguém tem motivo para abrir. Dava para
+    // começar a carreira inteira sem nunca decidir quem se é em campo, e o
+    // atleta nascia no padrão: atacante, 18 anos, "matador".
+    //
+    // Quem decide o corpo primeiro e o clube depois é a ordem do próprio modo —
+    // e é por isso que a carreira de atleta entra por outra porta.
+    setShowInitialSettings(true)
   }, [])
   /**
    * O ATLETA da carreira de jogador. Só é usado quando a modalidade é
@@ -649,24 +662,30 @@ export default function NovoJogoPage() {
       // num clube que existe).
       const catalogo = modalidade === "feminino" ? COUNTRIES_FEMININOS : COUNTRIES
       const lista = registrado ? catalogo : catalogo.filter(c => PAISES_SEM_REGISTRO.includes(c.code))
+      // CARREIRA DE ATLETA: os grandes da liga ficam de fora da ESTREIA.
+      // Aplicado sobre a lista já montada (e não em cada ramo abaixo) para que
+      // nenhum caminho — liga curada, do pool ou Divisão de Acesso — escape da
+      // regra. Ver `clubesDeEstreia`.
+      const comRegraDeEstreia = <L extends { teams: Team[] }>(liga: L): L =>
+        modalidade === "jogador" ? { ...liga, teams: clubesDeEstreia(liga.teams) } : liga
       return lista.map(pais => ({
         ...pais,
         leagues: pais.leagues.map(liga => {
-          if (modalidade === "feminino") return { ...liga, teams: getTeamsFemininosByDivision(liga.key) }
+          if (modalidade === "feminino") return comRegraDeEstreia({ ...liga, teams: getTeamsFemininosByDivision(liga.key) })
           // A Divisao de Acesso e o unico nivel em que a lista de ESCOLHA nao
           // pode ser a tabela: sao 260 clubes disputando 20 vagas, e mostrar so
           // as 20 deixaria o Serra-ES invisivel — que e exatamente o clube que
           // este nivel existe para tornar jogavel. A tabela dele e montada em
           // torno da escolha (ver a ancora em completarLigaComPool).
           if (liga.todosDaDivisao) {
-            return {
+            return comRegraDeEstreia({
               ...liga,
               teams: [...getTeamsByDivision(liga.key)].sort((a, b) =>
                 (a.estado || "ZZ").localeCompare(b.estado || "ZZ")
                 || a.nome.localeCompare(b.nome)),
-            }
+            })
           }
-          return liga.doPool ? { ...liga, teams: completarLigaComPool(liga.key) } : liga
+          return comRegraDeEstreia(liga.doPool ? { ...liga, teams: completarLigaComPool(liga.key) } : liga)
         }),
       }))
     },
@@ -1854,29 +1873,24 @@ export default function NovoJogoPage() {
               <select value={modoDeMundo} onChange={event => setModoDeMundo(event.target.value as ModoDeMundo)} aria-label="Modo do mundo" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
                 <option value="original">Original</option><option value="mundo_real">Mundo Real</option><option value="seu_mundo">Seu Mundo</option>
               </select>
-              {/* MODALIDADE. Este seletor já existiu como "Profissional" e foi
-                  REMOVIDO por ser um controle de uma opção só — não havia
-                  caminho para o sub-20, e um controle que não controla nada
-                  sugere uma escolha que não existe. Ele volta agora que as
-                  quatro carreiras existem de verdade. */}
-              {modoTravado ? (
-                // Entrou pelo menu principal: a modalidade já está decidida, e
-                // um seletor aqui só ofereceria desfazer a escolha que a pessoa
-                // acabou de fazer na tela anterior.
+              {/* ⚠️ O SELETOR DE MODALIDADE NÃO MORA MAIS AQUI (1.0.335).
+                  Pedido do usuário: "implemente a seleção de profissional,
+                  sub-20, feminino ao invés de ficar no rodapé". Ele existia nos
+                  DOIS lugares — nos botões do alto da coluna do clube e neste
+                  `<select>` —, e dois controles para a mesma decisão é pior que
+                  um no lugar errado: enfileirado entre "modo de mundo" e
+                  "dívida inicial", o que decide o jogo inteiro parecia a
+                  terceira configuração cinza da fila.
+
+                  O que sobra aqui é o RÓTULO de quem entrou pelo menu principal
+                  na carreira de atleta: ali a escolha já foi feita na tela
+                  anterior, os botões do alto somem, e sem esta faixa o rodapé
+                  não diria que carreira está sendo criada. */}
+              {modoTravado && (
                 <span className="inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/10 px-3 text-[10px] font-bold uppercase tracking-wide text-[var(--brand)]">
                   <User className="h-4 w-4" />
                   {MODALIDADE_DE_JOGADOR.titulo}
                 </span>
-              ) : (
-                <select
-                  value={modalidade}
-                  onChange={event => setModalidade(event.target.value as ModalidadeDeCarreira)}
-                  aria-label="Modalidade da carreira"
-                  title={MODALIDADES.find(m => m.id === modalidade)?.resumo}
-                  className="h-11 rounded-xl border border-[var(--brand)]/35 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/85"
-                >
-                  {MODALIDADES.map(m => <option key={m.id} value={m.id}>{m.titulo}</option>)}
-                </select>
               )}
               <select value={debtPreset} onChange={event => setDebtPreset(event.target.value as DebtPreset)} aria-label="Dívida inicial do clube" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
                 <option value="none">Sem dívida</option><option value="light">Dívida leve</option><option value="realistic">Dívida realista</option><option value="high">Dívida alta</option>
@@ -1992,6 +2006,13 @@ export default function NovoJogoPage() {
                   <p className="mt-0.5 text-[11px] text-white/45">
                     Começa como promessa: overall modesto e teto alto. Quem decide se você joga é o treinador —
                     e ele decide pela sua nota.
+                  </p>
+                  {/* A lista de clubes encolheu de propósito, e a tela precisa
+                      dizer isso: sem esta linha, não achar o Flamengo no
+                      carrossel parece defeito, não regra. */}
+                  <p className="mt-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[11px] leading-relaxed text-amber-100/70">
+                    Ninguém estreia num gigante: os clubes mais fortes de cada liga não aparecem no seletor.
+                    Chegar a um deles é o que a carreira conquista — por proposta, depois das suas temporadas.
                   </p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <label className="text-[11px] text-white/55">
