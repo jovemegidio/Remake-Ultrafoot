@@ -28,6 +28,7 @@ import {
   reputacaoDeTreinador, resumoDaCarreira, trocarEmpresario, EMPRESARIOS,
   entrevistaDaVez, responderEntrevista,
   mediaDaTemporada, minutosEsperados, papelNoElenco, recusarPropostas,
+  definirIntensidadeDeTreino, type IntensidadeDeTreino,
   type AtributosDoAtleta, type EstadoCarreiraDeJogador,
 } from "@/lib/carreira-de-jogador"
 
@@ -483,6 +484,35 @@ export default function CarreiraDeJogadorPage() {
                   {ATRIBUTOS.map(a => <option key={a.chave} value={a.chave}>{a.nome}</option>)}
                 </select>
               </label>
+
+              {/* ── INTENSIDADE DA SEMANA (1.0.339) ──────────────────────────
+                  O foco dizia ONDE treinar e nada dizia QUANTO — e o foco só
+                  produzia efeito na virada de temporada. A intensidade é o que
+                  torna o treino uma decisão semanal com preço: puxar rende mais
+                  e chega pior no jogo, porque a forma entra na nota da partida. */}
+              <label className="mt-4 block text-[11px] text-white/55">
+                Intensidade da semana
+                <select
+                  value={carreira.intensidadeDeTreino ?? "normal"}
+                  onChange={e => aplicar(definirIntensidadeDeTreino(carreira, e.target.value as IntensidadeDeTreino))}
+                  className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                >
+                  <option value="leve">Leve — preserva a forma, evolui devagar</option>
+                  <option value="normal">Normal — equilíbrio</option>
+                  <option value="puxada">Puxada — evolui mais, chega cansado</option>
+                </select>
+              </label>
+
+              {carreira.treinoDaSemana && (
+                <div className="mt-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-white/40">Última semana de treino</p>
+                  <p className="mt-1 text-sm text-white/80">{carreira.treinoDaSemana.texto}</p>
+                  <p className="mt-1 text-[11px] text-white/45">
+                    Forma {carreira.treinoDaSemana.deltaForma >= 0 ? "+" : ""}{carreira.treinoDaSemana.deltaForma}
+                    {" · "}forma atual {Math.round(carreira.forma)}
+                  </p>
+                </div>
+              )}
 
               <div className="mt-4 space-y-3">
                 {ATRIBUTOS.map(({ chave, nome }) => {

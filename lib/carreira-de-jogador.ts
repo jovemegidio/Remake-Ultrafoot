@@ -353,6 +353,115 @@ export const EMPRESARIOS: EmpresarioDoAtleta[] = [
   { nome: "Marco Aurélio Diniz", negociacao: 12, influencia: 11, redeInternacional: 18, comissao: 7 },
 ]
 
+/**
+ * A INTENSIDADE DA SEMANA DE TREINO (1.0.339).
+ *
+ * Três, e não cinco, porque cada uma precisa significar uma coisa distinta que
+ * o jogador consiga prever antes de escolher. Um seletor de cinco graus em que
+ * dois se parecem é um seletor de três com ruído.
+ */
+export type IntensidadeDeTreino = "leve" | "normal" | "puxada"
+
+export interface RelatorioDoTreino {
+  intensidade: IntensidadeDeTreino
+  /** XP que a semana rendeu, já com dedicação aplicada. */
+  xp: number
+  /** Efeito na forma: puxar cansa, aliviar recupera. */
+  deltaForma: number
+  /** O atributo que ganhou um ponto nesta semana, se algum ganhou. */
+  ganho: { atributo: keyof AtributosDoAtleta; ganho: number } | null
+  /** O que dizer ao jogador — inclusive quando ele não treinou direito. */
+  texto: string
+}
+
+/**
+ * O QUE CADA INTENSIDADE CUSTA E RENDE.
+ *
+ * ⚠️ O custo é em FORMA, e a forma entra na partida logo em seguida — é isso que
+ * impede "puxada" de ser a escolha óbvia. Sem custo, um seletor de intensidade
+ * é só um botão de "sim, quero evoluir mais rápido".
+ */
+const TREINO: Record<IntensidadeDeTreino, { xp: number; forma: number; rotulo: string }> = {
+  leve:   { xp: 4,  forma: +3, rotulo: "Semana leve" },
+  normal: { xp: 9,  forma: 0,  rotulo: "Semana normal" },
+  puxada: { xp: 16, forma: -5, rotulo: "Semana puxada" },
+}
+
+/** Quanto progresso o foco precisa acumular para virar +1 no atributo. */
+const CUSTO_DO_PONTO_DE_FOCO = 130
+
+export function definirIntensidadeDeTreino(
+  estado: EstadoCarreiraDeJogador,
+  intensidade: IntensidadeDeTreino,
+): EstadoCarreiraDeJogador {
+  return { ...estado, intensidadeDeTreino: intensidade }
+}
+
+/**
+ * A SEMANA DE TREINO, aplicada antes da rodada.
+ *
+ * ⚠️ ELA ALIMENTA A MESMA PROGRESSÃO DE SEMPRE (`aplicarXP` e os atributos do
+ * atleta), nunca uma paralela. Um segundo contador de evolução discordaria do
+ * primeiro na primeira temporada — é o erro que este projeto já cometeu com
+ * outras contabilidades duplicadas.
+ *
+ * ⚠️ E É AQUI QUE O `profissionalismo` GANHA DENTES. A leitura da personalidade
+ * já dizia "falta rotina de treino — desperdiça talento" desde a 1.0.325, mas
+ * era só uma frase: o atributo não mexia em nada. Agora ele multiplica o que a
+ * semana rende, então um atleta relaxado treina e aproveita pouco — que é
+ * exatamente o que a frase promete.
+ */
+function treinarNaSemana(estado: EstadoCarreiraDeJogador): void {
+  const intensidade = estado.intensidadeDeTreino ?? "normal"
+  const plano = TREINO[intensidade]
+  const p = estado.atleta.personalidade
+
+  // Dedicação: 0,45 (relaxado) a ~1,55 (profissional obsessivo).
+  const dedicacao = 0.45 + (p.profissionalismo + p.determinacao) / 40
+  const xp = Math.round(plano.xp * dedicacao)
+
+  // ⚠️ QUEM SE PUXA SEM BASE SE QUEBRA MENOS QUE QUEM SE PUXA CANSADO. Treinar
+  // puxado com a forma no chão cobra o dobro — é o que faz a escolha ter uma
+  // resposta errada em vez de uma escolha "de sabor".
+  const castigo = intensidade === "puxada" && estado.forma < 40 ? plano.forma * 2 : plano.forma
+  estado.forma = Math.max(0, Math.min(100, estado.forma + castigo))
+
+  aplicarXP(estado, xp)
+
+  // O foco vira ponto de atributo quando acumula o bastante — e nunca passa do
+  // potencial real, que continua escondido do jogador.
+  let ganho: RelatorioDoTreino["ganho"] = null
+  if (estado.focoDeTreino !== "equilibrado") {
+    const atual = estado.progressoDoFoco ?? 0
+    const somado = atual + xp * (intensidade === "puxada" ? 1.3 : 1)
+    if (somado >= CUSTO_DO_PONTO_DE_FOCO) {
+      const atributo = estado.focoDeTreino
+      const teto = estado.atleta.potencial
+      if (estado.atleta.atributos[atributo] < teto) {
+        estado.atleta.atributos[atributo] = Math.min(teto, estado.atleta.atributos[atributo] + 1)
+        estado.atleta.overall = overallDoAtleta(estado.atleta.posicao, estado.atleta.atributos)
+        ganho = { atributo, ganho: 1 }
+      }
+      estado.progressoDoFoco = somado - CUSTO_DO_PONTO_DE_FOCO
+    } else {
+      estado.progressoDoFoco = somado
+    }
+  }
+
+  const relaxado = p.profissionalismo <= 7
+  estado.treinoDaSemana = {
+    intensidade,
+    xp,
+    deltaForma: castigo,
+    ganho,
+    texto: ganho
+      ? `${plano.rotulo}: ${NOME_DO_ATRIBUTO[ganho.atributo]} +1.`
+      : relaxado
+        ? `${plano.rotulo}: rendeu pouco — ele não leva o treino a sério.`
+        : `${plano.rotulo}: ${xp} de experiência.`,
+  }
+}
+
 export interface TemporadaDoAtleta {
   temporada: number
   clubeNome: string
@@ -446,6 +555,22 @@ export interface EstadoCarreiraDeJogador {
   crescimento: { xp: number; nivel: number; pontosDisponiveis: number }
   /** Onde o atleta se dedica no treino — inclina a evolução sem decidi-la. */
   focoDeTreino: keyof AtributosDoAtleta | "equilibrado"
+  /**
+   * QUANTO ELE SE PUXA NA SEMANA (1.0.339). Opcional em saves anteriores, onde
+   * a ausência significa "normal".
+   *
+   * ⚠️ Até aqui `focoDeTreino` era um seletor cujo único efeito acontecia UMA
+   * VEZ POR ANO, em `evoluirOrganicamente`. Entre uma rodada e outra o atleta
+   * não treinava: não havia sessão, nem custo, nem progresso visível — e a
+   * comissão ainda cobrava "falta rotina de treino", uma rotina que o jogo não
+   * oferecia. A intensidade é o que torna o treino uma DECISÃO: puxado rende
+   * mais e chega cansado no jogo; leve preserva a forma e rende pouco.
+   */
+  intensidadeDeTreino?: IntensidadeDeTreino
+  /** O que a última semana de treino rendeu, para a tela poder mostrar. */
+  treinoDaSemana?: RelatorioDoTreino
+  /** Progresso acumulado rumo ao próximo ponto do atributo focado. */
+  progressoDoFoco?: number
   /** O que ele fez em campo nesta temporada. */
   acoes: AcoesDaTemporada
   /** Ganho de atributo da última virada de temporada, para a tela mostrar. */
@@ -908,8 +1033,15 @@ function desempenhoDaPartida(
   const defensiva = ["GOL", "ZAG", "VOL", "LD", "LE"].includes(atleta.posicao)
     ? (golsContra === 0 ? 0.75 : golsContra >= 3 ? -0.6 : -0.15 * golsContra)
     : 0
+  // ⚠️ A FORMA PESAVA /160, ou seja, QUASE NADA: a diferença entre chegar ao
+  // jogo inteiro e chegar arrasado valia 0,3 de nota na escala toda. Com o
+  // treino por intensidade (1.0.339) isso deixaria a semana puxada sem preço —
+  // um seletor cujo custo o jogador não sente é enfeite, e enfeite é o defeito
+  // que este modo já teve com o próprio foco de treino. Em /70 a faixa inteira
+  // de forma vale ~1,4 de nota: sentida, e ainda menor que o que ele FAZ em
+  // campo (gol vale 1,05 sozinho).
   const bruta = 6 + gols * 1.05 + assistencias * 0.65 + resultado + defensiva
-    + qualidade * 1.8 + (estado.forma - 50) / 160 + (r(40) - 0.5) * 1.1
+    + qualidade * 1.8 + (estado.forma - 50) / 70 + (r(40) - 0.5) * 1.1
   const nota = Math.max(3, Math.min(10, Math.round(bruta * 10) / 10))
 
   const cartao: DesempenhoIndividual["cartao"] =
@@ -945,6 +1077,10 @@ export function jogarProximaRodada(
   if (!proxima) return { ...estado, temporadaEncerrada: true }
 
   const novo: EstadoCarreiraDeJogador = structuredClone(estado)
+  // ⚠️ A SEMANA DE TREINO VEM ANTES DA PARTIDA, e não é detalhe de ordem: é o
+  // custo em forma da semana puxada que precisa chegar ao jogo. Treinar depois
+  // faria a intensidade não ter preço nenhum no dia em que ela importa.
+  treinarNaSemana(novo)
   const rodada = proxima.round
   const daRodada = novo.calendario.filter(f => f.round === rodada && !f.played)
   // Os clubes da liga são resolvidos UMA vez por rodada. Resolver por partida
