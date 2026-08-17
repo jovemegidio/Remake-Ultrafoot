@@ -18,11 +18,19 @@ import { useGameState } from "@/lib/save-system"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
-import { MODOS_ONLINE, ROTULO_DO_ESTADO } from "@/lib/modos-online"
+import { MODOS_ONLINE, ROTULO_DO_ESTADO, temDestino, type ModoOnline } from "@/lib/modos-online"
 
 export default function OnlinePage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
   const { state } = useGameState()
+
+  // O Hub é montado pelo layout em toda tela (components/fc-hub-loader), esta
+  // inclusive — então abrir o modo é disparar o mesmo evento do atalho Tab, sem
+  // navegar para lugar nenhum.
+  const abrirModo = (modo: ModoOnline) => {
+    if (modo.acao === "abrir-hub") { window.dispatchEvent(new Event("ultrafoot:fc-hub")); return }
+    if (modo.href) hardNavigate(modo.href)
+  }
 
   if (!state.multiplayerEnabled) {
     return (
@@ -56,12 +64,12 @@ export default function OnlinePage() {
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {MODOS_ONLINE.map(modo => {
-            const jogavel = modo.estado !== "planejado" && Boolean(modo.href)
+            const jogavel = modo.estado !== "planejado" && temDestino(modo)
             return (
               <button
                 key={modo.id}
                 disabled={!jogavel}
-                onClick={() => modo.href && hardNavigate(modo.href)}
+                onClick={() => abrirModo(modo)}
                 className={cn(
                   "rounded-2xl border p-4 text-left transition-colors",
                   jogavel

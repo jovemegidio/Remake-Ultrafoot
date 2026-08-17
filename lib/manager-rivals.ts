@@ -10,6 +10,7 @@
 // endpoints `/v1/competitivo/*` acrescentados na 1.0.330.
 
 import { ONLINE_PROTOCOL_VERSION } from "@/lib/online-multiplayer"
+import { configuredRelayUrl } from "@/lib/internet-multiplayer"
 
 export interface DivisaoCompetitiva { id: number; nome: string; piso: number }
 
@@ -29,9 +30,19 @@ export type EstadoDaFila =
   | { estado: "pareado"; pareamento: Pareamento }
   | { estado: "erro"; erro: string }
 
-/** Endereço do relay. O mesmo que o resto do online usa. */
+/**
+ * Endereço do relay. O MESMO que o resto do online usa — e "o mesmo" aqui é
+ * literal, não uma cópia parecida.
+ *
+ * ⚠️ Até a 1.0.336 este arquivo tinha o endereço próprio, lido de
+ * `NEXT_PUBLIC_RELAY_URL`, enquanto o resto do jogo usa `configuredRelayUrl()`
+ * — que lê outra variável (`NEXT_PUBLIC_ULTRAFOOT_RELAY_URL`) e ainda respeita
+ * o relay personalizado que o jogador salva em Configurações. Quem trocasse de
+ * relay entrava na fila de um servidor e na sala de outro: o pareamento saía e
+ * o código não existia do outro lado.
+ */
 function servidor(): string {
-  return process.env.NEXT_PUBLIC_RELAY_URL || "https://ultrafoot.179-198-103-30.sslip.io/relay"
+  return configuredRelayUrl()
 }
 
 async function pedir<T>(caminho: string, corpo: unknown): Promise<T | { erro: string }> {

@@ -16,15 +16,35 @@
 
 export type EstadoDoModo = "pronto" | "em obras" | "planejado"
 
+/**
+ * Nem todo modo é uma ROTA. O FC Hub e o Draft moram numa camada sobreposta que
+ * o jogo monta em toda tela (ver components/fc-hub-loader) e que se abre por
+ * evento — Tab, ou `ultrafoot:fc-hub`. Um modo assim declara `acao` em vez de
+ * `href`.
+ *
+ * ⚠️ ATÉ A 1.0.336 OS DOIS DECLARAVAM `href: "/?hub=1"` e `href: "/?draft=1"`.
+ * Nenhum arquivo do projeto lê `hub` ou `draft` da query: clicar levava à raiz
+ * com um parâmetro que ninguém consome — a MESMA falha do amistoso, e no hub
+ * ela é pior, porque ele se declarava "pronto".
+ */
+export type AcaoDoModo = "abrir-hub"
+
 export interface ModoOnline {
   id: string
   nome: string
   resumo: string
   /** Para onde o item leva quando está pronto. */
   href?: string
+  /** Modos que não são rota: o item dispara isto no lugar de navegar. */
+  acao?: AcaoDoModo
   estado: EstadoDoModo
   /** Fase do plano de desenvolvimento (1 a 5). */
   fase: 1 | 2 | 3 | 4 | 5
+}
+
+/** Um modo é clicável quando tem para onde ir — rota OU ação. */
+export function temDestino(modo: ModoOnline): boolean {
+  return Boolean(modo.href || modo.acao)
 }
 
 export const MODOS_ONLINE: ModoOnline[] = [
@@ -45,7 +65,8 @@ export const MODOS_ONLINE: ModoOnline[] = [
     id: "hub",
     nome: "FC Hub",
     resumo: "Quem está conectado agora, conversa e convite para partida.",
-    href: "/?hub=1",
+    // O Hub não é rota: é a camada que abre por Tab em qualquer tela.
+    acao: "abrir-hub",
     estado: "pronto",
     fase: 1,
   },
@@ -53,7 +74,11 @@ export const MODOS_ONLINE: ModoOnline[] = [
     id: "draft",
     nome: "Manager Draft",
     resumo: "Monte um elenco escolhendo atleta por atleta e dispute o mata-mata.",
-    href: "/?draft=1",
+    // O draft vive DENTRO da sala de internet do Hub (components/hub-draft), e
+    // só depois de o anfitrião abrir "draft x draft nesta sala". Por isso o
+    // destino é o Hub, e por isso o estado continua "em obras": o caminho até
+    // ele existe inteiro, mas passa por três passos que a tela não explica.
+    acao: "abrir-hub",
     estado: "em obras",
     fase: 3,
   },
