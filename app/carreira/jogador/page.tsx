@@ -22,6 +22,7 @@ import { getTeamByFileKey } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
+import { conversasDoMomento, responderConversa, rotuloDoInterlocutor } from "@/lib/conversas-do-atleta"
 import {
   aceitarProposta, arquetipo, confiancaMerecida, encerrarTemporada, fazerPedido,
   hierarquiaDaPosicao, jogarProximaRodada, leituraDaPersonalidade, potencialVisivel,
@@ -81,6 +82,7 @@ export default function CarreiraDeJogadorPage() {
   // "temporada" e o item do menu viraria promessa falsa — o mesmo defeito de
   // `/?hub=1`, que era escrito num lugar e lido em nenhum.
   const [aba, setAba] = useState<AbaDoAtleta>(() => abaDaUrl())
+  const [respostaDaConversa, setRespostaDaConversa] = useState<string>("")
 
   const proxima = useMemo(
     () => carreira?.calendario.find(f => !f.played && f.isUserMatch),
@@ -114,6 +116,7 @@ export default function CarreiraDeJogadorPage() {
   const faixaDePotencial = potencialVisivel(atleta, jogosNaCarreira)
   const resumo = resumoDaCarreira(carreira)
   const entrevista = entrevistaDaVez(carreira)
+  const conversas = conversasDoMomento(carreira)
 
   return (
     <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
@@ -404,6 +407,52 @@ export default function CarreiraDeJogadorPage() {
                       <p className="text-[13px] text-white/80">“{r.texto}”</p>
                       <p className="mt-1.5 text-[10px] uppercase tracking-wide text-sky-200/60">{r.efeito}</p>
                     </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ── AS CONVERSAS (1.0.340) ───────────────────────────────────
+                Família, empresário e diretoria. O modo já falava com a
+                imprensa e já tinha empresário como DADO; o que faltava era o
+                resto da vida do atleta. Cada resposta mexe em moral, forma,
+                confiança do treinador, reputação ou torcida — números que o
+                modo já lê. Diálogo que não altera nada é a mesma armadilha do
+                foco de treino que só valia uma vez por ano. */}
+            {conversas.length > 0 && !carreira.aposentado && (
+              <section className="rounded-2xl border border-violet-400/25 bg-violet-400/[.05] p-5 lg:col-span-3">
+                <h2 className="flex items-center gap-2 text-xl font-black">
+                  <Users className="text-violet-300" />Conversas
+                </h2>
+                {respostaDaConversa && (
+                  <p className="mt-3 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white/75">
+                    {respostaDaConversa}
+                  </p>
+                )}
+                <div className="mt-3 space-y-3">
+                  {conversas.map(c => (
+                    <div key={c.id} className="rounded-xl border border-white/10 bg-black/25 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-violet-200/70">
+                        {rotuloDoInterlocutor(c.com)} · {c.quem}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-white/40">{c.assunto}</p>
+                      <p className="mt-2 text-sm text-white/85">“{c.fala}”</p>
+                      <div className="mt-3 grid gap-2 md:grid-cols-3">
+                        {c.escolhas.map(e => (
+                          <button
+                            key={e.id}
+                            onClick={() => {
+                              const d = responderConversa(carreira, c.id, e.id)
+                              setRespostaDaConversa(d.texto)
+                              aplicar(d.estado)
+                            }}
+                            className="rounded-lg border border-white/10 bg-black/40 p-3 text-left text-[13px] text-white/80 transition-colors hover:border-violet-400/40 hover:bg-violet-400/[.08]"
+                          >
+                            {e.texto}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </section>

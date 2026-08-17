@@ -518,6 +518,8 @@ export interface EstadoCarreiraDeJogador {
   reputacao?: number
   torcida?: number
   entrevistasRespondidas?: string[]
+  /** Conversas já tidas com família, empresário e diretoria (1.0.340). */
+  conversasRespondidas?: string[]
   repercussao?: PostDeRepercussao[]
   /** Partida sendo VIVIDA momento a momento (1.0.329). */
   partidaEmCurso?: PartidaEmCurso
