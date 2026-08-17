@@ -110,9 +110,13 @@ function partes(arquivo) {
   // duas regras abaixo a enxerga — o numero nao esta no fim (o ")" esta) e
   // "Camisa" nao e palavra de variante. Sem isto a pasta inteira saia em "SEM
   // VARIANTE RECONHECIVEL", que e como 23 arquivos viram zero pecas sem erro.
-  let m = base.match(/^(.*?)[\s_-]*\((?:camisa|kit|uniforme)[\s_-]*(\d)\)$/i)
+  let m = base.match(/^(.*?)[\s_-]*\((?:camisa|kit|uniforme)[\s_-]*(\d|i{1,3})\)$/i)
   if (m) {
-    const v = VARIANTES_POR_PALAVRA.find(([re]) => re.test(m[2]))?.[1] ?? null
+    // ⚠️ E O NUMERO PODE SER ROMANO: "URT (Camisa I).png" e "(Camisa II).png"
+    // apareceram na mesma pasta, ao lado dos arabicos. Sem isto o clube inteiro
+    // cai em "SEM VARIANTE RECONHECIVEL" — dois arquivos, zero pecas, sem erro.
+    const romano = { i: "1", ii: "2", iii: "3" }[m[2].toLowerCase()] ?? m[2]
+    const v = VARIANTES_POR_PALAVRA.find(([re]) => re.test(romano))?.[1] ?? null
     if (v) return { slug: m[1].replace(/[\s_-]+$/, ""), variante: v }
   }
   // O DIGITO FINAL vem primeiro, com ou sem separador — e o caso dominante

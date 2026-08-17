@@ -259,9 +259,24 @@
   ],
   "changelog": [
     {
-      "version": "1.0.336",
+      "version": "1.0.343",
       "data": "2026-08-17",
       "latest": true,
+      "titulo": "O jogo abre e anda mais leve",
+      "itens": [
+        "MUITO MAIS LEVE: o JavaScript que o jogo carrega caiu de 23,4 MB para 16,8 MB (-28%), e o maior arquivo isolado foi de 8,0 MB para 3,4 MB. Os dois maiores pacotes eram as listas de elencos, e o que pesava neles nao era o dado — eram os nomes dos campos, repetidos em 127 mil atletas. Nenhum dado foi perdido: um teste reconstroi as duas listas inteiras e compara atleta por atleta, campo por campo.",
+        "SIMULAR NAO PERDE MAIS A PARTIDA: ao simular um jogo e voltar ao escritorio, a partida podia reaparecer como se nunca tivesse sido disputada. Acontecia quando o calendario era remontado e a partida ficava orfa. Agora ela sobrevive.",
+        "MERCADO DE JUNIORES: o Ajax feminino aparecia no lugar do AFC Ajax como clube formador, e sem escudo. Efeito colateral de quando os clubes femininos ganharam nome limpo.",
+        "CARREIRA DE JOGADOR — MENU E IDENTIDADE PROPRIOS: o modo de atleta usava o menu e o cabecalho do modo tecnico. Abria Financas, Mercado, Infraestrutura e ate \"Pedir demissao\", mostrava a sigla do clube no lugar do seu nome, dizia \"Tecnico Principal\" e deixava a data parada em 01 JAN para sempre.",
+        "VIVER A PARTIDA AGORA TEM CAMPO: a partida vivida era so texto. Agora tem o campo com os onze de cada lado, voce entre eles, e a bola acompanhando o lance que voce esta decidindo.",
+        "TREINO DE VERDADE NA CARREIRA DE ATLETA: o foco de treino so valia uma vez por ano. Agora a semana tem intensidade (leve, normal ou puxada) com preco real — puxar rende mais e voce chega pior no jogo, e puxar cansado custa o dobro. Quem nao leva treino a serio rende menos, como a comissao sempre avisou.",
+        "CONVERSAS COM FAMILIA, EMPRESARIO E DIRETORIA: elas aparecem quando a situacao pede — moral baixa, proposta na mesa, contrato acabando — e nenhuma resposta e de graca. Desabafar alivia e cansa; forcar a saida esquenta o mercado e esfria a arquibancada.",
+        "FC HUB E DRAFT ABREM DE VERDADE: no menu online os dois levavam a uma pagina em branco. O Manager Rivals tambem deixou de terminar num beco apos encontrar adversario."
+      ]
+    },
+    {
+      "version": "1.0.336",
+      "data": "2026-08-17",
       "titulo": "O amistoso online ganha destino",
       "itens": [
         "AMISTOSO 1v1 ONLINE DE VERDADE: abra uma sala, passe o codigo de seis caracteres a um amigo, vejam-se na tela e confirmem — o apito so sai com os dois prontos. Ate aqui o modo Amistoso levava para outra tela (o Draft), porque o link apontava para uma rota que so redirecionava.",
