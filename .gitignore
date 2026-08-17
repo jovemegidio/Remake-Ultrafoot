@@ -179,3 +179,4 @@ canal-webp-relatorio.json
 # Gerado pelo prebuild a partir de imported-bf2026-elencos.json (1.0.342).
 data/seeds/pool-elencos-compacto.json
 data/seeds/real-squads-tm-compacto.json
+data/seeds/faces-manifest-compacto.json

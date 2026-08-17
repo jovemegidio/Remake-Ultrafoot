@@ -48,6 +48,7 @@ rodar("node", ["scripts/build-team-player-photos.mjs"])
 // silencio, porque o catch existe justamente para nao travar a tela.
 rodar("node", ["scripts/compactar-elencos-do-pool.mjs"])
 rodar("node", ["scripts/compactar-elencos-tm.mjs"])
+rodar("node", ["scripts/compactar-manifesto-de-fotos.mjs"])
 
 // 2 a 4.
 reservar("guardar")

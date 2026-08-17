@@ -1,4 +1,4 @@
-import manifest from "@/data/seeds/faces-manifest.json"
+import manifestoCompacto from "@/data/seeds/faces-manifest-compacto.json"
 // Índice leve + elencos sob demanda: o seed completo de 8,91 MB caía no chunk
 // compartilhado de toda rota. Ver `lib/pool-elencos.ts`.
 import importedBF from "@/data/seeds/imported-bf2026-index.json"
@@ -13,7 +13,34 @@ import { guardarImagem, resolverImagem } from "@/lib/banco-de-imagens"
 // O manifesto contém apenas arquivos fisicamente empacotados. O mapa editorial é
 // maior e inclui fotos planejadas; consultá-lo gerava milhares de 404 e prejudicava
 // máquinas com pouca memória/disco lento.
-const photoMap = (manifest as { entries: Record<string, string> }).entries
+//
+// ⚠️ ELE VEM COMPACTADO (1.0.344), e é expandido UMA vez aqui na carga do módulo.
+// O arquivo original repetia `"/jogadores/"` e `".webp"` em 26.702 entradas —
+// 1,36 MB dentro do chunk COMPARTILHADO, que toda tela baixa mesmo sem desenhar
+// foto nenhuma. Compactado: 0,77 MB.
+//
+// A expansão é síncrona de propósito. Este mapa é lido em RENDER para decidir a
+// foto de cada atleta; carregá-lo sob demanda (como foi feito com os elencos)
+// mostraria as INICIAIS no lugar do rosto até o arquivo chegar. Aqui o ganho é
+// só de bytes, sem mudar o momento da carga — e sem trocar peso por regressão.
+// Ver `scripts/compactar-manifesto-de-fotos.mjs` e o gate do manifesto.
+interface ManifestoDeFotos {
+  dir: string; ext: string
+  deriv: string[]
+  base: Record<string, string>
+  excecoes: Record<string, string>
+}
+
+function expandirManifestoDeFotos(m: ManifestoDeFotos): Record<string, string> {
+  const mapa: Record<string, string> = {}
+  for (const chave of m.deriv) mapa[chave] = `${m.dir}${chave}${m.ext}`
+  for (const [chave, base] of Object.entries(m.base)) mapa[chave] = `${m.dir}${base}${m.ext}`
+  for (const [chave, caminho] of Object.entries(m.excecoes)) mapa[chave] = caminho
+  return mapa
+}
+
+export const __expandirManifestoDeFotos = expandirManifestoDeFotos
+const photoMap = expandirManifestoDeFotos(manifestoCompacto as ManifestoDeFotos)
 
 // ─── Fotos reais do Transfermarkt ─────────────────────────────────────────────
 // O seed principal carrega `ft` ("371247-1780359299"), assado por

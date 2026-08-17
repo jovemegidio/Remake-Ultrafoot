@@ -58,6 +58,12 @@ const recursivo = args.includes("--recursivo")
 const RESUMO = args.includes("--resumo")
 // Reduzir para 256px? Ver a nota grande na conversao — por padrao NAO reduz.
 const reduzir = args.includes("--reduzir")
+// So relatorio: casa os arquivos e NAO encoda imagem nenhuma. Existe para a
+// AUDITORIA — varrer as 29 pastas de liga encodando 6.500 camisas leva mais de
+// uma hora, e a pergunta "quem ja tem uniforme no canal" nao precisa de um byte
+// de imagem. O `--exportar` continua valendo: sai o mesmo pacote com `data`
+// nulo, que o comparador de cobertura le.
+const semImagem = args.includes("--sem-imagem")
 if (!pasta) {
   console.error('uso: node scripts/publicar-uniformes-pasta.mjs --pasta "<pasta>" [--pais ITA] [--recursivo] [--clube <fileKey>] [--divisoes b,c,d] [--resumo] [--exportar <arquivo.json>]')
   process.exit(1)
@@ -188,6 +194,20 @@ const SOCIEDADE = new Set([
 
 /** Nome comparavel sem as palavras de sociedade. O hifen SEPARA palavra (o seed
  *  escreve "Botafogo-PB"); o ponto, nao ("A.C Monza"). */
+/** Palavras normalizadas do nome, sem as de sociedade. Usado pela camada de
+ *  PALAVRA INTEIRA: sigla curta (HJK, SJK, ADT) nao alcanca a contencao, que
+ *  exige 5 letras, e sem isto o clube some do lote sem uma linha de erro. */
+/** O mesmo que chaveNome, para o slug do ARQUIVO. ⚠️ O separador do arquivo e
+ *  o UNDERSCORE, e `chaveNome` so quebra em espaco e hifen: sem trocar, o slug
+ *  "club_nacional" continua UMA palavra ("clubnacional"), nenhuma palavra de
+ *  sociedade cai e o Nacional de Montevideu fica sem uniforme, calado. */
+const chaveSlug = (slug) => chaveNome(String(slug ?? "").replace(/[_.]+/g, " "))
+
+function palavrasDoNome(nome) {
+  return semAcento(nome ?? "").split(/[\s–-]+/)
+    .map(p => p.toLowerCase().replace(/[^a-z0-9]/g, "")).filter(p => p && !SOCIEDADE.has(p))
+}
+
 function chaveNome(nome) {
   const palavras = semAcento(nome ?? "").split(/[\s\u2013-]+/)
     .map(p => p.toLowerCase().replace(/[^a-z0-9]/g, "")).filter(Boolean)
@@ -217,12 +237,17 @@ const fonteCurada = await readFile(path.join(RAIZ, "lib/teams-data.ts"), "utf8")
 const curadoPorNome = new Map()
 const curadoPorChave = new Map()
 const chavesCuradas = new Set()
+const paisCurado = new Map()
 // Cada clube curado e um objeto sem chaves aninhadas — `{...}` sem `{` dentro basta.
 for (const m of fonteCurada.matchAll(/\{[^{}]*\}/g)) {
   const fk = m[0].match(/file_key:\s*"([^"]+)"/)
   const nm = m[0].match(/(?:^|[\s,{])nome:\s*"([^"]+)"/) // `estadio_nome` tambem casa "nome:"
   if (!fk || !nm) continue
   chavesCuradas.add(fk[1])
+  // O pais do clube curado e o que impede o gemeo POR NOME de atravessar
+  // fronteira (ver a trava em gemeoCurado).
+  const ps = m[0].match(/(?:^|[\s,{])pais:\s*"([^"]+)"/)
+  if (ps) paisCurado.set(fk[1], norm(ps[1]))
   const k = norm(nm[1])
   if (!curadoPorNome.has(k)) curadoPorNome.set(k, fk[1])
   const ck = norm(fk[1])
@@ -239,10 +264,24 @@ for (const m of fonteCurada.matchAll(/\{[^{}]*\}/g)) {
  * sonda, e e boa justamente porque a pasta usa o apelido, que e o que o catalogo
  * curado costuma guardar ("liverpool", "wolves", "brighton", "tottenham").
  */
+// ⚠️ O GEMEO POR NOME ATRAVESSAVA FRONTEIRA. "Nacional" e o de Montevideu no
+// pool e o da MADEIRA no catalogo curado; sem trava, a camisa uruguaia era
+// publicada tambem em `nacional_portugal` e o clube portugues passava a jogar
+// com ela. E a mesma familia do `everton` (Liverpool x Vina del Mar) que o
+// casamento de escudo resolveu por pais em 06/08 - aqui faltava. A trava vale
+// so para a sonda por NOME: quando o SLUG do arquivo e igual a chave curada,
+// isso ja e prova propria.
+const gemeoDeOutroPais = []
 function gemeoCurado(time, slug) {
   if (chavesCuradas.has(time.fileKey)) return null
-  const g = curadoPorNome.get(norm(time.nome))
-    ?? (slug ? curadoPorChave.get(norm(slug)) ?? curadoPorNome.get(norm(slug)) : null)
+  const porNome = curadoPorNome.get(norm(time.nome))
+  if (porNome && porNome !== time.fileKey) {
+    const p = paisCurado.get(porNome)
+    const aceitos = paisPedido ? PAISES_PASTA[paisPedido]?.pais ?? [] : null
+    if (!aceitos || !p || aceitos.some(a => norm(a) === p)) return porNome
+    gemeoDeOutroPais.push(`${time.fileKey} [${time.nome}] x ${porNome} (pais ${p})`)
+  }
+  const g = slug ? curadoPorChave.get(norm(slug)) ?? curadoPorNome.get(norm(slug)) : null
   return g && g !== time.fileKey ? g : null
 }
 
@@ -363,6 +402,12 @@ const camadas = [
   },
   {
     nome: "nome sem sociedade",
+    // ⚠️ A PALAVRA DE SOCIEDADE CAIA SO DE UM LADO. O indice do seed ja vinha
+    // sem ela, mas a consulta usava o slug CRU: "club_nacional" procurava
+    // "clubnacional" e nao achava o `nacional_uru`, que e o Nacional de
+    // Montevideu. Derrubar dos DOIS lados e o que o casamento de escudo sempre
+    // fez; aqui faltava.
+    alvoDoSlug: (slug) => chaveSlug(slug),
     chave: (t) => {
       const uf = norm(t.estado || ((t.pais ?? "").length === 2 ? t.pais : ""))
       return uf ? [chaveNome(t.nome), chaveNome(t.nome) + uf] : [chaveNome(t.nome)]
@@ -383,8 +428,15 @@ const camadas = [
   // recorte por pais isto casaria clube de outro continente, entao fica
   // desligado quando nao ha `--pais`.
   { nome: "contido no nome (dentro do pais)", contido: true },
+  // ⚠️ PALAVRA INTEIRA DO NOME, e so dentro do pais pedido. A contencao acima
+  // exige 5 letras porque comparar pedaco de palavra casa clube errado; so que
+  // metade dos apelidos de arquivo e SIGLA de 3 ou 4 letras ("hjk" para HJK
+  // Helsinki, "grau" para Atletico Grau, "adt" para ADT Tarma). Comparando
+  // PALAVRA INTEIRA nao ha pedaco: ou a sigla e uma palavra do nome, ou nao e.
+  // Vem por ultimo e so vale se devolver UM clube.
+  { nome: "palavra inteira do nome (dentro do pais)", palavra: true },
 ].map(c => {
-  if (c.contido) return { ...c, mapa: new Map() }
+  if (c.contido || c.palavra) return { ...c, mapa: new Map() }
   const mapa = new Map()
   for (const t of (c.universo ?? universo)) {
     for (const k of c.chave(t)) {
@@ -416,8 +468,11 @@ function acharClube(slug) {
     if (camada.contido) {
       if (!paisPedido || alvo.length < 5) continue
       c = universo.filter(t => norm(t.fileKey).includes(alvo) || norm(t.nome).includes(alvo))
+    } else if (camada.palavra) {
+      if (!paisPedido || alvo.length < 3) continue
+      c = universo.filter(t => palavrasDoNome(t.nome).includes(alvo))
     } else {
-      c = camada.mapa.get(alvo)
+      c = camada.mapa.get(camada.alvoDoSlug ? camada.alvoDoSlug(slug) : alvo)
     }
     if (!c?.length) continue
     if (c.length === 1) return { time: c[0], via: camada.nome }
@@ -534,6 +589,11 @@ for (const { time, div, via, slug, kits } of [...porClube.values()].sort((a, b) 
     // ⚠️ E O `trim()` SO VALE COM REDUCAO. Ele tira a margem transparente, que
     // varia por arquivo; sem redimensionar depois, cada camisa sairia com uma
     // dimensao diferente e a tela desenharia uma maior que a outra.
+    if (semImagem) {
+      saida[v] = { data: null }
+      linhas.push(v)
+      continue
+    }
     const buf = reduzir
       ? await sharp(k.origem)
         .trim()
@@ -574,6 +634,7 @@ if (comGemeo.length) {
 }
 if (disputadas.length) { console.log("\nCHAVE CURADA DISPUTADA por mais de um clube:"); for (const d of disputadas) console.log("  ! " + d) }
 if (duplicados.length) { console.log("\nARQUIVO REPETIDO PARA A MESMA VARIANTE:"); for (const d of duplicados) console.log("  ! " + d) }
+if (gemeoDeOutroPais.length) { console.log("\nGEMEO CURADO RECUSADO por ser de outro pais:"); for (const g of gemeoDeOutroPais) console.log("  x " + g) }
 if (ambiguos.length) { console.log("\nAMBIGUO (resolva no MAPA_MANUAL ou com --clube):"); for (const a of ambiguos) console.log("  ? " + a) }
 if (semClube.length) { console.log("\nSEM CLUBE NO SEED:"); console.log("  " + semClube.join("\n  ")) }
 if (semVariante.length) { console.log("\nSEM VARIANTE RECONHECIVEL:"); console.log("  " + semVariante.join("\n  ")) }

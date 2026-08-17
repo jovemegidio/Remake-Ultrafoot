@@ -259,9 +259,18 @@
   ],
   "changelog": [
     {
-      "version": "1.0.343",
+      "version": "1.0.344",
       "data": "2026-08-17",
       "latest": true,
+      "titulo": "Menos peso em toda tela",
+      "itens": [
+        "ABERTURA MAIS LEVE EM QUALQUER TELA: o catalogo de rostos dos atletas era carregado inteiro junto com o jogo, mesmo numa tela que nao mostra foto nenhuma. Ele repetia a mesma pasta e a mesma extensao em 26.702 entradas; agora isso e reconstruido na hora e o arquivo ficou 43% menor. Cada atleta continua com exatamente a mesma foto — um teste confere as 26.702, uma a uma.",
+        "Somando a 1.0.343, o jogo carrega 16,4 MB de codigo contra os 23,4 MB de duas versoes atras."
+      ]
+    },
+    {
+      "version": "1.0.343",
+      "data": "2026-08-17",
       "titulo": "O jogo abre e anda mais leve",
       "itens": [
         "MUITO MAIS LEVE: o JavaScript que o jogo carrega caiu de 23,4 MB para 16,8 MB (-28%), e o maior arquivo isolado foi de 8,0 MB para 3,4 MB. Os dois maiores pacotes eram as listas de elencos, e o que pesava neles nao era o dado — eram os nomes dos campos, repetidos em 127 mil atletas. Nenhum dado foi perdido: um teste reconstroi as duas listas inteiras e compara atleta por atleta, campo por campo.",
