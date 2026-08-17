@@ -102,6 +102,8 @@ const INVENTARIO = [
   ["1.0.340", "Conversas com familia, empresario e diretoria", "lib/conversas-do-atleta.ts", "conversasDoMomento"],
   ["1.0.340", "Conversas na tela do atleta", "app/carreira/jogador/page.tsx", "responderConversa"],
   ["1.0.340", "Gate das conversas do atleta", "scripts/test-conversas-do-atleta.ts", "e enfeite"],
+  ["1.0.341", "Partida disputada sobrevive a calendario regenerado", "lib/use-game-manager.ts", "concluidasPorConfronto"],
+  ["1.0.341", "Gate da partida simulada que persiste", "scripts/test-simular-persiste.ts", "como se nao tivesse sido simulada"],
   ["—", "Arbitragem / VAR", "lib/arbitragem.ts", ""],
   ["—", "Eventos para o 3D", "lib/eventos-para-3d.ts", ""],
   ["—", "Histórico de lesões", "lib/historico-de-lesoes.ts", ""],

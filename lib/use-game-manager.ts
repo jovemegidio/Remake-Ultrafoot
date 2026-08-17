@@ -1804,6 +1804,32 @@ export function reconcilePlayedFixtures(
   const seasonResults = results.filter(result => result.season === season)
   const consumedResults = new Set<number>()
 
+  /**
+   * ⚠️ A CHAVE EXATA NAO SOBREVIVE A UM CALENDARIO REGENERADO (1.0.341).
+   *
+   * `completedFixtureKeys` guarda temporada::tipo::competicao::SEMANA::ID::casa::fora.
+   * Semana e ID mudam sempre que o calendario e remontado com outro regulamento,
+   * outra migracao ou outra ordem — e ai a chave salva nao casa com nenhuma
+   * fixture, a partida disputada volta como POR DISPUTAR, e o jogador ve o
+   * escritorio "como se nao tivesse sido simulada".
+   *
+   * Os RESULTADOS ja tinham esse cuidado logo abaixo (o pareamento por clubes +
+   * competicao); as chaves, nao. Aqui elas ganham a mesma rede, com a mesma
+   * identidade que o projeto ja considera segura: direcional (casa x fora) e
+   * dentro da mesma competicao, entao ida e volta continuam sendo duas partidas
+   * distintas e confronto alheio nunca e marcado.
+   */
+  const identidadeFrouxa = (competitionType: string, competition: string, casa: string, fora: string) =>
+    [competitionType, competition, casa, fora].join("::")
+  const concluidasPorConfronto = new Set<string>()
+  for (const chave of completedFixtureKeys) {
+    const partes = chave.split("::")
+    if (partes.length < 7) continue
+    const [temporadaDaChave, tipo, competicao] = partes
+    if (Number(temporadaDaChave) !== season) continue
+    concluidasPorConfronto.add(identidadeFrouxa(tipo, competicao, partes[5], partes[6]))
+  }
+
   return fixtures.map(fixture => {
     const key = getCalendarFixtureKey(fixture, season)
     let resultIndex = seasonResults.findIndex((result, index) =>
@@ -1826,7 +1852,10 @@ export function reconcilePlayedFixtures(
 
     if (resultIndex >= 0) consumedResults.add(resultIndex)
     const result = resultIndex >= 0 ? seasonResults[resultIndex] : undefined
-    if (!completed.has(key) && !result) return fixture
+    const concluidaPorConfronto = concluidasPorConfronto.has(identidadeFrouxa(
+      fixture.competitionType, fixture.competition, fixture.homeTeam.curto, fixture.awayTeam.curto,
+    ))
+    if (!completed.has(key) && !concluidaPorConfronto && !result) return fixture
     return {
       ...fixture,
       played: true,

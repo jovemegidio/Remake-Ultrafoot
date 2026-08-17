@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.340",
+  "version": "1.0.341",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -16,6 +16,7 @@
     "qa:campo-atleta": "tsx scripts/test-campo-do-atleta.ts",
     "qa:treino-atleta": "tsx scripts/test-treino-do-atleta.ts",
     "qa:conversas-atleta": "tsx scripts/test-conversas-do-atleta.ts",
+    "qa:simular-persiste": "tsx scripts/test-simular-persiste.ts",
     "qa:rivals-no-ar": "node scripts/qa-rivals-no-ar.mjs",
     "qa:rivals": "node scripts/qa-rivals-servidor.mjs",
     "qa:carreira-jogador": "tsx scripts/qa-carreira-de-jogador.ts",
