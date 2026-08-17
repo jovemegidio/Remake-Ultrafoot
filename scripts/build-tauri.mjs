@@ -41,6 +41,13 @@ const reservar = (acao) => rodar("node", ["scripts/reservar-imagens-pesadas.mjs"
 rodar("node", ["scripts/preparar-env-licenca.mjs"])
 rodar("node", ["scripts/embutir-edicoes.mjs"])
 rodar("node", ["scripts/build-team-player-photos.mjs"])
+// ⚠️ TEM DE ESTAR AQUI TAMBEM, e nao so no `prebuild` do package.json: o passo 3
+// roda o next build com --ignore-scripts, entao o prebuild do npm NAO dispara
+// neste caminho. Sem esta linha o `pool-elencos-compacto.json` nao e gerado, o
+// import dinamico cai no catch e o jogo abre com os elencos VAZIOS — em
+// silencio, porque o catch existe justamente para nao travar a tela.
+rodar("node", ["scripts/compactar-elencos-do-pool.mjs"])
+rodar("node", ["scripts/compactar-elencos-tm.mjs"])
 
 // 2 a 4.
 reservar("guardar")

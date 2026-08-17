@@ -30,6 +30,51 @@ export interface AtletaRealTM {
 /** Chave `<CURTO>|<nome normalizado>` -> elenco. */
 type MapaDeElencosTM = Record<string, AtletaRealTM[]>
 
+/**
+ * O FORMATO COMPACTO QUE O BUNDLE CARREGA (1.0.342).
+ *
+ * ⚠️ Este arquivo já usava chave de uma letra e ainda assim era o SEGUNDO maior
+ * chunk do jogo (4,38 MB) — a prova de que encurtar chave não basta: `"n":`
+ * custa 4 bytes por campo, em seis campos e 60.488 atletas. A linha vira array
+ * posicional e os dois vocabulários fechados viram índice. Medido: 4,31 -> 2,27 MB.
+ *
+ * ⚠️ A ORDEM É CONTRATO com `scripts/compactar-elencos-tm.mjs`, e erra em
+ * SILÊNCIO — trocar duas posições dá atleta com idade no lugar do overall. O
+ * gate `test-elencos-compactos.ts` compara campo a campo por isso.
+ */
+type LinhaTM = [
+  n: string, p: number | null, o: number | null, i: number | null,
+  c?: number | null, f?: string | null,
+]
+
+export interface ElencosTMCompactos {
+  v: number
+  ordem: string[]
+  pos: string[]
+  nac: string[]
+  clubes: Record<string, LinhaTM[]>
+}
+
+export function expandirElencosTM(compacto: ElencosTMCompactos): MapaDeElencosTM {
+  const mapa: MapaDeElencosTM = {}
+  const poss = compacto.pos ?? []
+  const nacs = compacto.nac ?? []
+  for (const [clube, elenco] of Object.entries(compacto.clubes ?? {})) {
+    mapa[clube] = elenco.map(([n, p, o, i, c, f]) => {
+      const atleta: AtletaRealTM = {
+        n,
+        p: p == null ? "" : (poss[p] ?? ""),
+        o: o ?? 0,
+        i: i ?? 0,
+      }
+      if (c != null) atleta.c = nacs[c]
+      if (f != null) atleta.f = f
+      return atleta
+    })
+  }
+  return mapa
+}
+
 let cache: MapaDeElencosTM | null = null
 let carregando: Promise<MapaDeElencosTM> | null = null
 let falhas = 0
@@ -61,9 +106,10 @@ export function carregarElencosReaisTM(): Promise<MapaDeElencosTM> {
     cache = doNode
     return Promise.resolve(cache)
   }
-  carregando = import("@/data/seeds/real-squads-tm.json")
+  carregando = import("@/data/seeds/real-squads-tm-compacto.json")
     .then((modulo) => {
-      cache = ((modulo as { default?: MapaDeElencosTM }).default ?? modulo) as MapaDeElencosTM
+      const bruto = ((modulo as { default?: unknown }).default ?? modulo) as ElencosTMCompactos
+      cache = expandirElencosTM(bruto)
       return cache
     })
     .catch(() => {

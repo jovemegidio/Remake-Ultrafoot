@@ -169,3 +169,13 @@ data/faces-fm/paginas/
 # `node scripts/mapear-faces-fm.mjs casar` a qualquer momento.
 data/faces-fm/casamento-relatorio.json
 .imagens-reservadas/
+
+# Cópia em WebP do acervo bruto do canal (escudos, uniformes, rostos) — ~1,5 GB
+# de matéria-prima dos lotes. Fica na árvore para não depender da pasta de
+# Downloads; o que vai ao jogador é o que o canal publica, não estes arquivos.
+Canal de Atualização/
+canal-webp-relatorio.json
+
+# Gerado pelo prebuild a partir de imported-bf2026-elencos.json (1.0.342).
+data/seeds/pool-elencos-compacto.json
+data/seeds/real-squads-tm-compacto.json

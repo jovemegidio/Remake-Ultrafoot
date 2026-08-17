@@ -38,6 +38,78 @@ export interface PoolPlayerRaw {
 
 type MapaDeElencos = Record<string, PoolPlayerRaw[]>
 
+/**
+ * O FORMATO COMPACTO QUE O BUNDLE CARREGA (1.0.342).
+ *
+ * ⚠️ O arquivo verboso saía no export como o MAIOR chunk do jogo: 7,99 MB, mais
+ * que o dobro do segundo. O peso não era dos dados e sim dos NOMES DOS CAMPOS,
+ * repetidos em 66.820 atletas. `scripts/compactar-elencos-do-pool.mjs` gera a
+ * versão de chave curta que o runtime importa; a FONTE verbosa continua no
+ * repositório, intocada, porque sete scripts a leem e escrevem.
+ *
+ * O formato é POSICIONAL (array), não objeto de chave curta: a v1 encurtou os
+ * nomes dos campos e caiu para 5,84 MB, mas a medição mostrou que ~2,1 MB ainda
+ * eram só as chaves — `"n":` custa 4 bytes, vezes 8 campos, vezes 66.820
+ * atletas. Nacionalidade e posição viram índice numa tabela (199 e 12 valores
+ * distintos). Medido: 7,93 -> 3,42 MB.
+ *
+ * As codificações de `id` e `ft` desfazem redundâncias do próprio arquivo, e
+ * ambas têm exceção real — por isso são reversíveis, nunca uma regra de "99% é
+ * sempre". Ver o cabeçalho do script e o gate `test-elencos-compactos.ts`.
+ */
+/**
+ * ⚠️ A ORDEM ABAIXO É CONTRATO com `scripts/compactar-elencos-do-pool.mjs`, e um
+ * contrato que erra em SILÊNCIO: trocar duas posições não quebra a tela, dá
+ * atleta com a idade no lugar do overall. O arquivo carrega a própria `ordem`
+ * dentro dele e o gate compara campo a campo justamente por isso.
+ */
+type LinhaDeAtleta = [
+  nome: string,
+  posicao: number | null,
+  overall: number | null,
+  idade: number | null,
+  id?: string | null,
+  salario?: number | null,
+  nac?: number | null,
+  ft?: string | null,
+]
+
+export interface ElencosCompactos {
+  v: number
+  ordem: string[]
+  nac: string[]
+  pos: string[]
+  clubes: Record<string, LinhaDeAtleta[]>
+}
+
+export function expandirElencosCompactos(compacto: ElencosCompactos): MapaDeElencos {
+  const mapa: MapaDeElencos = {}
+  const nacs = compacto.nac ?? []
+  const poss = compacto.pos ?? []
+  for (const [clube, elenco] of Object.entries(compacto.clubes ?? {})) {
+    mapa[clube] = elenco.map((linha) => {
+      const [nome, iPos, overall, idade, idCurto, salario, iNac, ft] = linha
+      const id = idCurto == null ? undefined : /^\d+$/.test(idCurto) ? `tm_${idCurto}` : idCurto
+      const atleta: PoolPlayerRaw = {
+        nome,
+        posicao: iPos == null ? "" : (poss[iPos] ?? ""),
+        overall: overall ?? 0,
+        idade: idade ?? 0,
+      }
+      if (id !== undefined) atleta.id = id
+      if (salario != null) atleta.salario = salario
+      if (iNac != null) atleta.nac = nacs[iNac]
+      if (ft != null) {
+        // "!" marca o valor que NÃO seguia o padrão e foi guardado inteiro.
+        atleta.ft = ft.startsWith("!") ? ft.slice(1)
+          : idCurto && /^\d+$/.test(idCurto) ? `${idCurto}-${ft}` : ft
+      }
+      return atleta
+    })
+  }
+  return mapa
+}
+
 let cache: MapaDeElencos | null = null
 let carregando: Promise<MapaDeElencos> | null = null
 let falhas = 0
@@ -52,6 +124,9 @@ function lerNoNode(): MapaDeElencos | null {
     const req = eval("require") as NodeRequire
     const fs = req("node:fs") as typeof import("node:fs")
     const path = req("node:path") as typeof import("node:path")
+    // No Node a FONTE verbosa e lida direto: os scripts de QA rodam sem
+    // prebuild, e exigir o arquivo compacto faria 19 deles quebrarem em arvore
+    // recem-clonada. O compacto existe para o BUNDLE.
     const arquivo = path.join(process.cwd(), "data/seeds/imported-bf2026-elencos.json")
     return JSON.parse(fs.readFileSync(arquivo, "utf-8")) as MapaDeElencos
   } catch {
@@ -73,9 +148,10 @@ export function carregarElencosDoPool(): Promise<MapaDeElencos> {
     cache = doNode
     return Promise.resolve(cache)
   }
-  carregando = import("@/data/seeds/imported-bf2026-elencos.json")
+  carregando = import("@/data/seeds/pool-elencos-compacto.json")
     .then((modulo) => {
-      cache = ((modulo as { default?: MapaDeElencos }).default ?? modulo) as MapaDeElencos
+      const bruto = ((modulo as { default?: unknown }).default ?? modulo) as ElencosCompactos
+      cache = expandirElencosCompactos(bruto)
       return cache
     })
     .catch(() => {

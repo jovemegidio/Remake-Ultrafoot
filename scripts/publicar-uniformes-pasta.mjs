@@ -105,10 +105,20 @@ const VARIANTES_POR_PALAVRA = [
  */
 function partes(arquivo) {
   const base = arquivo.replace(/\.[a-z0-9]+$/i, "")
+  // ⚠️ TERCEIRA CONVENCAO: "Santo Andre (Camisa 1).png". A pasta "Divisões de
+  // Acesso - Camisas" (17/08) escreve a variante ENTRE PARENTESES, e nenhuma das
+  // duas regras abaixo a enxerga — o numero nao esta no fim (o ")" esta) e
+  // "Camisa" nao e palavra de variante. Sem isto a pasta inteira saia em "SEM
+  // VARIANTE RECONHECIVEL", que e como 23 arquivos viram zero pecas sem erro.
+  let m = base.match(/^(.*?)[\s_-]*\((?:camisa|kit|uniforme)[\s_-]*(\d)\)$/i)
+  if (m) {
+    const v = VARIANTES_POR_PALAVRA.find(([re]) => re.test(m[2]))?.[1] ?? null
+    if (v) return { slug: m[1].replace(/[\s_-]+$/, ""), variante: v }
+  }
   // O DIGITO FINAL vem primeiro, com ou sem separador — e o caso dominante
   // ("goias1.png", "abcrn_1.png"). Sem esta regra propria, um `([a-z0-9]+)$`
   // engole o nome inteiro e nenhum arquivo colado tem variante.
-  let m = base.match(/^(.*?)[\s_-]*(\d)$/)
+  m = base.match(/^(.*?)[\s_-]*(\d)$/)
   let ultimo = m?.[2] ?? null
   if (!m) {
     // Palavra no fim, separada ("Portuguesa 1 Casa.png").
