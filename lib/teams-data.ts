@@ -1682,6 +1682,71 @@ export function getClubDivisions(): Record<string, string> {
 let _clubesPersonalizados: Team[] = []
 export function setClubesPersonalizados(times: Team[]): void {
   _clubesPersonalizados = times
+  invalidarIndicesDeBusca()
+}
+
+/**
+ * ÍNDICES DE BUSCA MEMOIZADOS (1.0.345) — a correção do travamento.
+ *
+ * ⚠️ O PROBLEMA, MEDIDO. `getTeamByShort` custava **3,45 ms por chamada**, e ela
+ * é usada em RENDER por praticamente toda tela que lista clube. Uma tabela de
+ * 500 linhas congelava quase 2 segundos; a seleção de times, que percorre
+ * milhares, travava de vez. `getTeamByName` custava 1,39 ms pelo mesmo motivo.
+ *
+ * A causa não era a busca: era a PREPARAÇÃO. As duas refaziam
+ * `allTeams.map(applyTeamOverride)` — e `getTeamByShort` ainda mapeava os ~3.000
+ * clubes do pool com `_withPlayablePoolIdentity` — a cada chamada. Ou seja, um
+ * trabalho O(n) por consulta, o que vira O(n²) numa tela que consulta em laço.
+ * É o mesmo formato do O(n²) que travou o apito na 1.0.300.
+ *
+ * ⚠️ E CACHE AQUI TEM UM RISCO PRÓPRIO: edição do jogador que não aparece. Por
+ * isso a invalidação é explícita nos DOIS pontos em que os dados mudam — o
+ * clube próprio (`setClubesPersonalizados`, acima) e a edição de clube, que já
+ * anunciava `ultrafoot:team:changed`. Sem isso, trocar um escudo não teria
+ * efeito até reiniciar o jogo, e eu teria trocado um defeito por outro.
+ */
+interface IndicesDeBusca {
+  curados: Team[]
+  pool: Team[]
+  femininos: Team[]
+  /** nome em minúsculas -> clube, com o MASCULINO vencendo o homônimo feminino. */
+  porNome: Map<string, Team>
+}
+let _indices: IndicesDeBusca | null = null
+
+export function invalidarIndicesDeBusca(): void {
+  _indices = null
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("ultrafoot:team:changed", invalidarIndicesDeBusca)
+  window.addEventListener("ultrafoot:store:ready", invalidarIndicesDeBusca)
+}
+
+function ehClubeFemininoPorChave(t: Team): boolean {
+  return t.file_key?.endsWith("__fem") ?? false
+}
+
+function indices(): IndicesDeBusca {
+  if (_indices) return _indices
+  const curados = allTeams.map(applyTeamOverride)
+  const pool = allPoolTeams.map(team => _withPlayablePoolIdentity(applyTeamOverride(team)))
+  const femininos = timesFemininos().map(applyTeamOverride)
+
+  const porNome = new Map<string, Team>()
+  for (const t of [...curados, ...femininos]) {
+    const chave = typeof t.nome === "string" ? t.nome.toLowerCase() : ""
+    if (!chave) continue
+    const atual = porNome.get(chave)
+    // Primeiro a chegar fica, MENOS quando o que está é feminino e o novo não:
+    // é a regra da 1.0.343 (o feminino não ganha do masculino por homônimo).
+    if (!atual || (ehClubeFemininoPorChave(atual) && !ehClubeFemininoPorChave(t))) {
+      porNome.set(chave, t)
+    }
+  }
+
+  _indices = { curados, pool, femininos, porNome }
+  return _indices
 }
 export function getClubesPersonalizados(): Team[] {
   return _clubesPersonalizados
@@ -2543,8 +2608,9 @@ export function completarLigaComPool(
  * sem divisao. Qualquer tela que resolva clube por codigo tinha o mesmo furo.
  */
 export function getTeamByShort(curto: string, divisao?: string): Team | undefined {
-  const curados = allTeams.map(applyTeamOverride)
-  const pool = allPoolTeams.map(team => _withPlayablePoolIdentity(applyTeamOverride(team)))
+  // ⚠️ MEMOIZADO (1.0.345): estas duas listas eram refeitas a CADA chamada, e
+  // era isso — não a busca — que custava 3,45 ms por consulta. Ver `indices()`.
+  const { curados, pool } = indices()
   // ⚠️ O clube PRÓPRIO vem primeiro. Se ele ficasse por último, um código curto
   // que por acaso exista no pool (são ~134 códigos para 3.000 clubes) devolveria
   // outro clube — e a tela mostraria escudo, cores e elenco alheios para o time
@@ -2636,18 +2702,24 @@ export function getTeamByName(nome: string): Team | undefined {
   // A regra volta a ser a documentada: o feminino só responde quando a busca é
   // pelo clube feminino mesmo, e nunca passa na frente de um masculino que
   // casa pelo nome comparável ("Ajax" é o AFC Ajax antes de ser o time feminino).
-  const times = [...allTeams, ...timesFemininos()].map(applyTeamOverride)
-  const ehFeminino = (t: Team) => t.file_key?.endsWith("__fem") ?? false
+  // ⚠️ MEMOIZADO (1.0.345). Antes esta função refazia a lista inteira de clubes
+  // a cada chamada — 1,39 ms por consulta, mesmo repetindo o mesmo nome. O
+  // índice já resolve o homônimo feminino na montagem, então a igualdade exata
+  // virou uma consulta de mapa em vez de uma varredura.
+  const { curados, femininos, porNome } = indices()
+  const times = [...curados, ...femininos]
+  const ehFeminino = ehClubeFemininoPorChave
 
-  const exatos = times.filter(t => t.nome.toLowerCase() === nome.toLowerCase())
-  const exatoMasculino = exatos.find(t => !ehFeminino(t))
-  if (exatoMasculino) return exatoMasculino
-  if (exatos.length) {
+  const exato = porNome.get(nome.toLowerCase())
+  if (exato && !ehFeminino(exato)) return exato
+  if (exato) {
+    // Só o feminino bate exato: antes de aceitá-lo, ver se algum masculino casa
+    // pelo nome comparável — "Ajax" é o AFC Ajax antes de ser o time feminino.
     const alvoDoExato = _nomeComparavel(nome)
     const masculinos = alvoDoExato
       ? times.filter(t => !ehFeminino(t) && _nomeComparavel(t.nome) === alvoDoExato)
       : []
-    return masculinos.length ? _maisPrestigiado(masculinos) : exatos[0]
+    return masculinos.length ? _maisPrestigiado(masculinos) : exato
   }
 
   const alvoNorm = _semAcento(nome).replace(/[^a-z0-9]+/g, " ").trim()

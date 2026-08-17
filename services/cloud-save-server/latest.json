@@ -1,9 +1,21 @@
 {
-  "version": "1.0.335",
-  "notes": "Mercado por modalidade: numa carreira feminina o mercado e o leilao passam a mostrar atletas femininas, e no Sub-20 apenas atletas em idade de base. O clube feminino perde o sufixo do nome (Botafogo, e nao Botafogo Feminino) em todas as telas, sem misturar elencos. O tipo de carreira (profissional, feminino, Sub-20) saiu do rodape para o alto da tela de nova carreira. Na carreira de jogador, escolher o modo abre direto a ficha do atleta, e os clubes mais fortes de cada liga ficam fora da estreia.",
-  "sizeMb": 732,
-  "sha256": "A977C8A0624993ECD257B8F94A4ED171C82D52D5BD04136594B2B8CDA5D9885D",
+  "version": "1.0.344",
+  "notes": "Ultrafoot 26 v1.0.344",
+  "sizeMb": 492,
+  "sha256": "CA873E9E6ADCCBB073D64B59E3D2EFD79EFB01AC9C926F8C3B5F234F07A6ED2E",
   "anteriores": [
+    {
+      "version": "1.0.343",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.343/Ultrafoot.26_1.0.343_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.343",
+      "sizeMb": 492
+    },
+    {
+      "version": "1.0.335",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.335/Ultrafoot.26_1.0.335_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.335",
+      "sizeMb": 732
+    },
     {
       "version": "1.0.334",
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.334/Ultrafoot.26_1.0.334_x64-setup.exe",
@@ -45,24 +57,12 @@
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.320/Ultrafoot.26_1.0.320_x64-setup.exe",
       "notes": "Ultrafoot 26 v1.0.320",
       "sizeMb": 685
-    },
-    {
-      "version": "1.0.319",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.319/Ultrafoot.26_1.0.319_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.319",
-      "sizeMb": 685
-    },
-    {
-      "version": "1.0.318",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.318/Ultrafoot.26_1.0.318_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.318",
-      "sizeMb": 685
     }
   ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUpTREdYZ3BwM04walRNd1MxRFhCRU1lNzV0aVR2SFNoMi9tbldZNnI3VEdlWCt2bkt1Z2NzYUtnVlYyRzFod2VHSEZDVFFDQzlOR3JoOWpCNUhrMVFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2OTMzOTU0CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zMzVfeDY0LXNldHVwLmV4ZQpMMk9BNDBTeDZqVUxDZHRnVFFxY3dXdThDRFAvV2dnejIxK3NzSDFjZ3NlOE1tRFdaRFlpRU01MG03eVF2SnNnelphQi8zMFlEN3lvcGFhQU9LelhBZz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.335_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUdEcUUwREJxbEp2VWlZS3ZyZnJtMnBIZVZ4WGZVYkoxTlFsNzl2QUlRYVJYRGZUQmVycE8vUzluQUVJNnFVdzR0Uk9xamx0M0pDRThaamoyUEZEWUFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2OTk0MzkyCWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNDRfeDY0LXNldHVwLmV4ZQphbVJEMGZFT045aEJoRkJzTWROQ0lWZVlIYUdGM3NsV1IyOTN0S0R3bVU1VEk4VmczL25uVmZJQ0ZTazhoQ2FCOWp1MU5DK2N6c1FySFNsWHlMNURCZz09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.344_x64-setup.exe"
     }
   }
 }
