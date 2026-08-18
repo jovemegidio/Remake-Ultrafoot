@@ -177,6 +177,17 @@ pub fn abrir(app: &AppHandle, caminho: &str) -> Result<(), String> {
         comando.current_dir(dir);
     }
 
+    // ⚠️ SEM CONSOLE. Este era o unico spawn do launcher no Windows sem
+    // `CREATE_NO_WINDOW` — os outros seis ja o usavam. O jogo e aplicacao
+    // grafica e normalmente nao mostraria console, mas deixar o unico furo
+    // aberto e como o prompt piscando volta na proxima mudanca.
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        comando.creation_flags(CREATE_NO_WINDOW);
+    }
+
     let filho = comando
         .spawn()
         .map_err(|e| format!("não consegui abrir o jogo: {e}"))?;

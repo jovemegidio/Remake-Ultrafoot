@@ -1,5 +1,5 @@
 {
-  "version": "1.0.31",
+  "version": "1.0.32",
   "notes": "O launcher nao fechava. Clicar no X (ou apertar Alt+F4) simplesmente nao fazia nada, e a unica saida era o Sair da bandeja ou o gerenciador de tarefas — agora fecha, e antes de sair ele pergunta se e isso mesmo que voce quer, avisando quando ha download em andamento ou jogo aberto. Esta versao tambem encerra o aviso de atualizacao que voltava sem parar na 1.0.29.",
   "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe",
   "sha256": "0FAB9E5104816A1596A952FF4E488CF45EF4734740819BD4A78A1A95692AF6B6",

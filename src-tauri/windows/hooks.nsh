@@ -89,7 +89,19 @@
   ; que ainda trazem as pastas individualmente.
   ${If} ${FileExists} "$INSTDIR\resources\install-game-assets.ps1"
     DetailPrint "Instalando escudos, uniformes, faces e narração..."
-    ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\install-game-assets.ps1"' $9
+    ; ⚠ nsExec::ExecToLog, NAO ExecWait — o prompt que piscava era este.
+    ;
+    ; `ExecWait` mostra a janela do processo, e o powershell.exe e aplicacao de
+    ; CONSOLE: toda instalacao e toda atualizacao abriam um prompt preto por
+    ; alguns segundos, mesmo com o instalador rodando em /S pelo launcher. As
+    ; opcoes -NoLogo/-NonInteractive calam a SAIDA, nunca a janela.
+    ;
+    ; `nsExec` roda com a janela oculta e ainda manda a saida para o log do
+    ; instalador, o que MELHORA o diagnostico: antes o texto se perdia no
+    ; console que fechava sozinho. O codigo de saida sai pela pilha, dai o Pop
+    ; no lugar da variavel de resultado.
+    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\install-game-assets.ps1"'
+    Pop $9
     ${If} $9 == 0
       Delete "$INSTDIR\resources\install-game-assets.ps1"
     ${Else}

@@ -87,7 +87,18 @@
     },
     "shortDescription": "Ultrafoot 26 - Football Manager",
     "longDescription": "Ultrafoot 26 é um jogo de gerenciamento de futebol com times do mundo inteiro.",
-    "copyright": "Copyright © 2026 Ultrafoot Studio"
+    "copyright": "Copyright © 2026 Ultrafoot Studio",
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    },
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0"
+        ]
+      }
+    }
   },
   "plugins": {
     "updater": {
