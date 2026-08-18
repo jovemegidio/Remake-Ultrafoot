@@ -9,11 +9,17 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "1.0.348: cartas novas e 136 MB a menos",
+      "category": "Atualizacao",
+      "body": "A carta do atleta ganhou a arte definitiva, com recorte proprio e as tres faixas saindo da mesma imagem. O jogo tambem ficou 136 MB mais leve: fotos de estadio e imagens importadas viraram WebP sem perder qualidade. E cada carreira passou a ter o escritorio dela — o Sub-20 deixou de receber tarefas de clube profissional, e quem joga como atleta tem as proprias. Suas carreiras continuam intactas.",
+      "date": "2026-08-18",
+      "pinned": true
+    },
+    {
       "title": "1.0.346: se o jogo nao abria para voce, abre agora",
       "category": "Correcao",
       "body": "A tela preta ao abrir o jogo tinha uma causa fora do codigo: o arquivo de dados crescia sem limite porque cada carreira salva guardava uma copia do mundo inteiro e nenhuma era removida. Chegou a 546 MB numa maquina de teste, e nenhuma versao abria — nem as antigas. Agora so o mundo da carreira ativa fica salvo, e ele se reconstroi sozinho em segundos. De quebra, salvar ficou 7x mais barato e o jogo abre mais rapido. Suas carreiras continuam intactas.",
-      "date": "2026-08-17",
-      "pinned": true
+      "date": "2026-08-17"
     },
     {
       "title": "1.0.333: tudo restaurado, sem perder as correcoes novas",
@@ -264,9 +270,23 @@
   ],
   "changelog": [
     {
+      "version": "1.0.348",
+      "data": "2026-08-18",
+      "latest": true,
+      "titulo": "Cartas novas, jogo mais leve e cada carreira com o seu escritorio",
+      "itens": [
+        "CARTAS COM ARTE NOVA: a carta do atleta deixou de ser desenhada em CSS e passou a usar a arte de verdade, com recorte proprio. Bronze, ouro e preta saem da mesma arte. De quebra, os numeros dos atributos pararam de se encostar uns nos outros.",
+        "O JOGO FICOU 136 MB MAIS LEVE: as fotos de estadio e as imagens importadas viraram WebP. Estadios cairam de 113 para 63 MB e as imagens do editor de 23 para 6,7 MB, sem perder qualidade.",
+        "CADA CARREIRA TEM O SEU ESCRITORIO: quem dirige o Sub-20 nao recebe mais tarefa de mercado nem amistoso de pre-temporada de profissional, e ganhou \"promover garotos ao profissional\". Quem faz carreira de ATLETA tem escritorio proprio — treino da semana, conversas e propostas — em vez de tarefas de treinador.",
+        "A DIRETORIA, A IMPRENSA E O TREINO SABEM ONDE ESTAO: no Sub-20 formar pesa mais que resultado na avaliacao da diretoria, a imprensa pergunta sobre a base e sobre o departamento feminino, e o treino da categoria rende mais.",
+        "CARREIRA DE JOGADOR: lesao agora tira rodadas de verdade, existe a bracadeira de capitao e a pre-temporada virou um periodo proprio, em que o treino rende mais.",
+        "VAR COMO NA TV: o arbitro so vai ao monitor quando o VAR ve erro claro. Impedimento a cabine resolve, e checagem que confirma nem para o jogo.",
+        "O modo Online aparece sempre no menu principal, e o vestiario voltou a abrir em carreiras antigas."
+      ]
+    },
+    {
       "version": "1.0.346",
       "data": "2026-08-17",
-      "latest": true,
       "titulo": "O jogo volta a abrir, e cada acao pesa menos",
       "itens": [
         "O JOGO NAO ABRIA MAIS EM ALGUMAS MAQUINAS: quem tinha varias carreiras salvas via a janela abrir preta e nada acontecer — inclusive em versoes antigas que antes funcionavam. Cada carreira guardava uma copia inteira do mundo (~42 MB) e nenhuma era apagada; num caso real o arquivo do jogo chegou a 546 MB e travava o carregamento. Agora fica so o mundo da carreira que voce esta jogando, e ele se refaz sozinho em cerca de 2 segundos ao voltar a uma carreira antiga.",

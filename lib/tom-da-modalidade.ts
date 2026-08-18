@@ -35,6 +35,13 @@ export interface TomDaModalidade {
   id: ModalidadeDeCarreira
   /** Como a diretoria e a imprensa chamam o time. Entra no meio de frases. */
   equipe: string
+  /**
+   * ⚠️ A MESMA COISA, JA CONTRAIDA COM "DE". Sem este campo, montar
+   * `de ${equipe}` produzia "Tarefas de o elenco" na tela do escritorio. Nao da
+   * para derivar sem regra de genero, e uma regra de genero para tres strings
+   * fixas e mais fragil do que escrever as tres.
+   */
+  deQuem: string
   /** O plural de quem joga, para as falas ("os atletas", "as atletas"). */
   atletas: string
   /**
@@ -60,6 +67,7 @@ const TONS: Record<ModalidadeDeCarreira, TomDaModalidade> = {
   profissional: {
     id: "profissional",
     equipe: "o elenco",
+    deQuem: "do elenco",
     atletas: "os atletas",
     escalaFinanceira: 1,
     prioridade: "resultado",
@@ -70,6 +78,7 @@ const TONS: Record<ModalidadeDeCarreira, TomDaModalidade> = {
   feminino: {
     id: "feminino",
     equipe: "a equipe feminina",
+    deQuem: "da equipe feminina",
     atletas: "as atletas",
     // A mesma fração que o cadastro do clube já usa para caixa. Sem isto, a
     // diretoria de um clube feminino chamava de "gasto controlado" uma folha
@@ -84,6 +93,7 @@ const TONS: Record<ModalidadeDeCarreira, TomDaModalidade> = {
   sub20: {
     id: "sub20",
     equipe: "o Sub-20",
+    deQuem: "do Sub-20",
     atletas: "os garotos",
     // Base vive de orçamento de formação, não de folha de profissional.
     escalaFinanceira: 0.05,
@@ -96,6 +106,7 @@ const TONS: Record<ModalidadeDeCarreira, TomDaModalidade> = {
   jogador: {
     id: "jogador",
     equipe: "o elenco",
+    deQuem: "da sua carreira",
     atletas: "os companheiros",
     escalaFinanceira: 1,
     prioridade: "resultado",

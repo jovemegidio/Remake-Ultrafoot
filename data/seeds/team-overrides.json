@@ -1,12 +1,12 @@
 {
  "saobernardo_sp": {
-  "logoUrl": "/overrides/saobernardo_sp-logo.png"
+  "logoUrl": "/overrides/saobernardo_sp-logo.webp"
  },
  "aguasanta_sp": {
-  "logoUrl": "/overrides/aguasanta_sp-logo.png"
+  "logoUrl": "/overrides/aguasanta_sp-logo.webp"
  },
  "barcelona": {
-  "logoUrl": "/overrides/barcelona-logo.png",
+  "logoUrl": "/overrides/barcelona-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/barcelona-kit-home.png"
@@ -20,10 +20,10 @@
   }
  },
  "ypiranga_rs": {
-  "logoUrl": "/overrides/ypiranga_rs-logo.png"
+  "logoUrl": "/overrides/ypiranga_rs-logo.webp"
  },
  "atleticomg_bra": {
-  "logoUrl": "/overrides/atleticomg_bra-logo.png",
+  "logoUrl": "/overrides/atleticomg_bra-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:5bb670533a4bdeb59c8e966e3768dcbcfc1285d31402eb8623a44d0cded15cf0.png"
@@ -37,7 +37,7 @@
   }
  },
  "americamg_bra": {
-  "logoUrl": "/overrides/americamg_bra-logo.png",
+  "logoUrl": "/overrides/americamg_bra-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/americamg_bra-kit-home.png"
@@ -48,7 +48,7 @@
   }
  },
  "remo_pa": {
-  "logoUrl": "/overrides/remo_pa-logo.png",
+  "logoUrl": "/overrides/remo_pa-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:b180a0e06a0245c7180c5db393389493fb3778140ecbd72fb90fb3a82369a717.png"
@@ -65,7 +65,7 @@
   }
  },
  "internacional_bra": {
-  "logoUrl": "/overrides/internacional_bra-logo.png",
+  "logoUrl": "/overrides/internacional_bra-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/internacional_bra-kit-home.png"
@@ -79,7 +79,7 @@
   }
  },
  "banfield_arg": {
-  "logoUrl": "/overrides/banfield_arg-logo.png",
+  "logoUrl": "/overrides/banfield_arg-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/banfield_arg-kit-home.png"
@@ -93,13 +93,13 @@
   }
  },
  "paysandu": {
-  "logoUrl": "/overrides/paysandu-logo.png"
+  "logoUrl": "/overrides/paysandu-logo.webp"
  },
  "nautico_pe": {
-  "logoUrl": "/overrides/nautico_pe-logo.png"
+  "logoUrl": "/overrides/nautico_pe-logo.webp"
  },
  "rosario_central": {
-  "logoUrl": "/overrides/rosario_central-logo.png",
+  "logoUrl": "/overrides/rosario_central-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/rosario_central-kit-home.png"
@@ -110,7 +110,7 @@
   }
  },
  "cruzeiro_bra": {
-  "logoUrl": "/overrides/cruzeiro_bra-logo.png",
+  "logoUrl": "/overrides/cruzeiro_bra-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:f12cc7c20b1e7baabefa55965df37374be0f5f46bbda6c42d94c8f1971c5d808.png"
@@ -124,7 +124,7 @@
   }
  },
  "caxias_rs": {
-  "logoUrl": "/overrides/caxias_rs-logo.png",
+  "logoUrl": "/overrides/caxias_rs-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/caxias_rs-kit-home.png"
@@ -138,7 +138,7 @@
   }
  },
  "flarj": {
-  "logoUrl": "/overrides/flarj-logo.png",
+  "logoUrl": "/overrides/flarj-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:d49d4bdadcf81d502bdd36b4b80010fc6c224283565a725812590d8fad21fa60.png"
@@ -152,10 +152,10 @@
   }
  },
  "pontepreta_bra": {
-  "logoUrl": "/overrides/pontepreta_bra-logo.png"
+  "logoUrl": "/overrides/pontepreta_bra-logo.webp"
  },
  "botafogorj_bra": {
-  "logoUrl": "/overrides/botafogorj_bra-logo.png",
+  "logoUrl": "/overrides/botafogorj_bra-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:410aa5d848c0762ae88e88477ddf0a2dfac28d2f00debf7e5b6516a464d3add2.png"
@@ -169,7 +169,7 @@
   }
  },
  "bahia": {
-  "logoUrl": "/overrides/bahia-logo.png",
+  "logoUrl": "/overrides/bahia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:cc7b039cb467095ccbefc87fed6b5256c0189e883336f279ef5fa6e7c8c2f884.png"
@@ -183,13 +183,13 @@
   }
  },
  "botafogosp_bra": {
-  "logoUrl": "/overrides/botafogosp_bra-logo.png"
+  "logoUrl": "/overrides/botafogosp_bra-logo.webp"
  },
  "guaranisp_bra": {
-  "logoUrl": "/overrides/guaranisp_bra-logo.png"
+  "logoUrl": "/overrides/guaranisp_bra-logo.webp"
  },
  "juventude": {
-  "logoUrl": "/overrides/juventude-logo.png",
+  "logoUrl": "/overrides/juventude-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/juventude-kit-home.png"
@@ -203,7 +203,7 @@
   }
  },
  "flurj": {
-  "logoUrl": "/overrides/flurj-logo.png",
+  "logoUrl": "/overrides/flurj-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:cd5d0dc1cfd54c654fcb2c8d156c86ffa4bb6858ba87bf103dce28cdcc6f7c0c.png"
@@ -217,7 +217,7 @@
   }
  },
  "miirassol_sp": {
-  "logoUrl": "/overrides/miirassol_sp-logo.png",
+  "logoUrl": "/overrides/miirassol_sp-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:8c93d938d1df226069f01af75e5c46581e833e1da189e98c3409b117be8da652.png",
@@ -235,7 +235,7 @@
   }
  },
  "athletic_mg": {
-  "logoUrl": "/overrides/athletic_mg-logo.png",
+  "logoUrl": "/overrides/athletic_mg-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/athletic_mg-kit-home.png"
@@ -246,16 +246,16 @@
   }
  },
  "river_plate": {
-  "logoUrl": "/overrides/river_plate-logo.png"
+  "logoUrl": "/overrides/river_plate-logo.webp"
  },
  "manchester_city": {
-  "logoUrl": "/overrides/manchester_city-logo.png"
+  "logoUrl": "/overrides/manchester_city-logo.webp"
  },
  "huracan_arg": {
-  "logoUrl": "/overrides/huracan_arg-logo.png"
+  "logoUrl": "/overrides/huracan_arg-logo.webp"
  },
  "racing_arg": {
-  "logoUrl": "/overrides/racing_arg-logo.png",
+  "logoUrl": "/overrides/racing_arg-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/racing_arg-kit-home.png"
@@ -266,7 +266,7 @@
   }
  },
  "tombense_mg": {
-  "logoUrl": "/overrides/tombense_mg-logo.png",
+  "logoUrl": "/overrides/tombense_mg-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "/overrides/tombense_mg-kit-home.png"
@@ -280,7 +280,7 @@
   }
  },
  "santos": {
-  "logoUrl": "/overrides/santos-logo.png",
+  "logoUrl": "/overrides/santos-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:6a474b05a0174e272c0ae302e5aebc8a9992db0e9438f7cacf072f84b933de23.png"
@@ -294,10 +294,10 @@
   }
  },
  "voltaredonda_rj": {
-  "logoUrl": "/overrides/voltaredonda_rj-logo.png"
+  "logoUrl": "/overrides/voltaredonda_rj-logo.webp"
  },
  "gremio": {
-  "logoUrl": "/overrides/gremio-logo.png",
+  "logoUrl": "/overrides/gremio-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:c24c30148b27aba29e29f17b81bed0ad07ad90c07a9feda921076874cb02f277.png"
@@ -311,22 +311,22 @@
   }
  },
  "noroeste_sp": {
-  "logoUrl": "/overrides/noroeste_sp-logo.png"
+  "logoUrl": "/overrides/noroeste_sp-logo.webp"
  },
  "veloclube_sp": {
-  "logoUrl": "/overrides/veloclube_sp-logo.png"
+  "logoUrl": "/overrides/veloclube_sp-logo.webp"
  },
  "inter_sp": {
-  "logoUrl": "/overrides/inter_sp-logo.png"
+  "logoUrl": "/overrides/inter_sp-logo.webp"
  },
  "novorinzontino_sp": {
-  "logoUrl": "/overrides/novorinzontino_sp-logo.png"
+  "logoUrl": "/overrides/novorinzontino_sp-logo.webp"
  },
  "portuguesa_bra": {
-  "logoUrl": "/overrides/portuguesa_bra-logo.png"
+  "logoUrl": "/overrides/portuguesa_bra-logo.webp"
  },
  "saopaulo_bra": {
-  "logoUrl": "/overrides/saopaulo_bra-logo.png",
+  "logoUrl": "/overrides/saopaulo_bra-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:5f1f0374875db818655cd4b36f6a1bd07344b08e0deef89eb8bd51d1d30a25e2.png"
@@ -340,7 +340,7 @@
   }
  },
  "vasco": {
-  "logoUrl": "/overrides/vasco-logo.png",
+  "logoUrl": "/overrides/vasco-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:cf199f698949a0ef317c94d9f8d95c11bc83a90269fa27c5489202776d3e4c00.png"
@@ -354,7 +354,7 @@
   }
  },
  "palmeiras": {
-  "logoUrl": "/overrides/palmeiras-logo.png",
+  "logoUrl": "/overrides/palmeiras-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:b886121448407599ba0014bc99024d03263a3267f13c22080040015b7bc8f7a5.png"
@@ -368,7 +368,7 @@
   }
  },
  "bragantino_bra": {
-  "logoUrl": "/overrides/bragantino_bra-logo.png",
+  "logoUrl": "/overrides/bragantino_bra-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:faf2936172cfd98c874fee4d5298085ef0e7589adb78c7bcd8cc036e4621d379.png"
@@ -382,7 +382,7 @@
   }
  },
  "corinthians_bra": {
-  "logoUrl": "/overrides/corinthians_bra-logo.png",
+  "logoUrl": "/overrides/corinthians_bra-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:496a90c28ac72e563d4b2754fa92f57122546dbbdb141704a263a763af2d38a8.png"
@@ -396,7 +396,7 @@
   }
  },
  "inter_milan": {
-  "logoUrl": "/overrides/inter_milan-logo.png"
+  "logoUrl": "/overrides/inter_milan-logo.webp"
  },
  "independiente_arg": {
   "kits": {
@@ -407,7 +407,7 @@
     "imageUrl": "/overrides/independiente_arg-kit-away.png"
    }
   },
-  "logoUrl": "/overrides/independiente_arg-logo.png"
+  "logoUrl": "/overrides/independiente_arg-logo.webp"
  },
  "ceara_bra": {
   "kits": {
@@ -421,7 +421,7 @@
     "imageUrl": "/overrides/ceara_bra-kit-third.png"
    }
   },
-  "logoUrl": "/overrides/ceara_bra-logo.png"
+  "logoUrl": "/overrides/ceara_bra-logo.webp"
  },
  "newells_old_boys": {
   "kits": {
@@ -432,7 +432,7 @@
     "imageUrl": "/overrides/newells_old_boys-kit-away.png"
    }
   },
-  "logoUrl": "/overrides/newells_old_boys-logo.png"
+  "logoUrl": "/overrides/newells_old_boys-logo.webp"
  },
  "fortaleza": {
   "kits": {
@@ -446,7 +446,7 @@
     "imageUrl": "/overrides/fortaleza-kit-third.png"
    }
   },
-  "logoUrl": "/overrides/fortaleza-logo.png"
+  "logoUrl": "/overrides/fortaleza-logo.webp"
  },
  "atleticopr_bra": {
   "kits": {
@@ -460,7 +460,7 @@
     "imageUrl": "/overrides/atleticopr_bra-kit-third.png"
    }
   },
-  "logoUrl": "/overrides/atleticopr_bra-logo.png"
+  "logoUrl": "/overrides/atleticopr_bra-logo.webp"
  },
  "goias": {
   "kits": {
@@ -474,7 +474,7 @@
     "imageUrl": "/overrides/goias-kit-third.png"
    }
   },
-  "logoUrl": "/overrides/goias-logo.png"
+  "logoUrl": "/overrides/goias-logo.webp"
  },
  "sport": {
   "kits": {
@@ -488,7 +488,7 @@
     "imageUrl": "/overrides/sport-kit-third.png"
    }
   },
-  "logoUrl": "/overrides/sport-logo.png"
+  "logoUrl": "/overrides/sport-logo.webp"
  },
  "vitoria": {
   "kits": {
@@ -502,7 +502,7 @@
     "imageUrl": "/overrides/vitoria-kit-third.png"
    }
   },
-  "logoUrl": "/overrides/vitoria-logo.png"
+  "logoUrl": "/overrides/vitoria-logo.webp"
  },
  "boca_juniors": {
   "kits": {
@@ -513,7 +513,7 @@
     "imageUrl": "/overrides/boca_juniors-kit-away.png"
    }
   },
-  "logoUrl": "/overrides/boca_juniors-logo.png"
+  "logoUrl": "/overrides/boca_juniors-logo.webp"
  },
  "estudiantes_lp": {
   "kits": {
@@ -527,7 +527,7 @@
     "imageUrl": "/overrides/estudiantes_lp-kit-third.png"
    }
   },
-  "logoUrl": "/overrides/estudiantes_lp-logo.png"
+  "logoUrl": "/overrides/estudiantes_lp-logo.webp"
  },
  "velez_sarsfield": {
   "kits": {
@@ -538,7 +538,7 @@
     "imageUrl": "/overrides/velez_sarsfield-kit-away.png"
    }
   },
-  "logoUrl": "/overrides/velez_sarsfield-logo.png"
+  "logoUrl": "/overrides/velez_sarsfield-logo.webp"
  },
  "coritiba_bra": {
   "kits": {
@@ -552,7 +552,7 @@
     "imageUrl": "/overrides/coritiba_bra-kit-third.png"
    }
   },
-  "logoUrl": "/overrides/coritiba_bra-logo.png"
+  "logoUrl": "/overrides/coritiba_bra-logo.webp"
  },
  "lanus_arg": {
   "kits": {
@@ -566,49 +566,49 @@
     "imageUrl": "/overrides/lanus_arg-kit-third.png"
    }
   },
-  "logoUrl": "/overrides/lanus_arg-logo.png"
+  "logoUrl": "/overrides/lanus_arg-logo.webp"
  },
  "cuiaba_bra": {
-  "logoUrl": "/overrides/cuiaba_bra-logo.png"
+  "logoUrl": "/overrides/cuiaba_bra-logo.webp"
  },
  "sampaiocorrea_rj": {
-  "logoUrl": "/overrides/sampaiocorrea_rj-logo.png"
+  "logoUrl": "/overrides/sampaiocorrea_rj-logo.webp"
  },
  "portuguesarj_bra": {
-  "logoUrl": "/overrides/portuguesarj_bra-logo.png"
+  "logoUrl": "/overrides/portuguesarj_bra-logo.webp"
  },
  "ferroviario_ce": {
-  "logoUrl": "/overrides/ferroviario_ce-logo.png"
+  "logoUrl": "/overrides/ferroviario_ce-logo.webp"
  },
  "novaiguacu_rj": {
-  "logoUrl": "/overrides/novaiguacu_rj-logo.png"
+  "logoUrl": "/overrides/novaiguacu_rj-logo.webp"
  },
  "madureira_bra": {
-  "logoUrl": "/overrides/madureira_bra-logo.png"
+  "logoUrl": "/overrides/madureira_bra-logo.webp"
  },
  "saojose_rs": {
-  "logoUrl": "/overrides/saojose_rs-logo.png"
+  "logoUrl": "/overrides/saojose_rs-logo.webp"
  },
  "bangu": {
-  "logoUrl": "/overrides/bangu-logo.png"
+  "logoUrl": "/overrides/bangu-logo.webp"
  },
  "boavista_bra": {
-  "logoUrl": "/overrides/boavista_bra-logo.png"
+  "logoUrl": "/overrides/boavista_bra-logo.webp"
  },
  "guarany_ce": {
-  "logoUrl": "/overrides/guarany_ce-logo.png"
+  "logoUrl": "/overrides/guarany_ce-logo.webp"
  },
  "marica_rj": {
-  "logoUrl": "/overrides/marica_rj-logo.png"
+  "logoUrl": "/overrides/marica_rj-logo.webp"
  },
  "criciuma_bra": {
-  "logoUrl": "/overrides/criciuma_bra-logo.png"
+  "logoUrl": "/overrides/criciuma_bra-logo.webp"
  },
  "operario_pr": {
-  "logoUrl": "/overrides/operario_pr-logo.png"
+  "logoUrl": "/overrides/operario_pr-logo.webp"
  },
  "floresta_ce": {
-  "logoUrl": "/overrides/floresta_ce-logo.png"
+  "logoUrl": "/overrides/floresta_ce-logo.webp"
  },
  "abc_rn": {
   "kits": {
@@ -622,7 +622,7 @@
     "imageUrl": "uf-img:99cff557cbbd612a31611c6db5af1b6b50d3444121c3375b004ced044fd253a0.png"
    }
   },
-  "logoUrl": "/overrides/abc_rn-logo.png"
+  "logoUrl": "/overrides/abc_rn-logo.webp"
  },
  "botafogo_pb": {
   "kits": {
@@ -635,97 +635,97 @@
   }
  },
  "nycfc": {
-  "logoUrl": "/overrides/nycfc-logo.png"
+  "logoUrl": "/overrides/nycfc-logo.webp"
  },
  "altos_pi": {
-  "logoUrl": "/overrides/altos_pi-logo.png"
+  "logoUrl": "/overrides/altos_pi-logo.webp"
  },
  "figueirense_sc": {
-  "logoUrl": "/overrides/figueirense_sc-logo.png"
+  "logoUrl": "/overrides/figueirense_sc-logo.webp"
  },
  "toronto_fc": {
-  "logoUrl": "/overrides/toronto_fc-logo.png"
+  "logoUrl": "/overrides/toronto_fc-logo.webp"
  },
  "audaxrj_bra": {
-  "logoUrl": "/overrides/audaxrj_bra-logo.png"
+  "logoUrl": "/overrides/audaxrj_bra-logo.webp"
  },
  "americanorj_bra": {
-  "logoUrl": "/overrides/americanorj_bra-logo.png"
+  "logoUrl": "/overrides/americanorj_bra-logo.webp"
  },
  "americarj_bra": {
-  "logoUrl": "/overrides/americarj_bra-logo.png"
+  "logoUrl": "/overrides/americarj_bra-logo.webp"
  },
  "fc_juarez": {
-  "logoUrl": "/overrides/fc_juarez-logo.png"
+  "logoUrl": "/overrides/fc_juarez-logo.webp"
  },
  "portland_timbers": {
-  "logoUrl": "/overrides/portland_timbers-logo.png"
+  "logoUrl": "/overrides/portland_timbers-logo.webp"
  },
  "atleticoibirama_bra": {
-  "logoUrl": "/overrides/atleticoibirama_bra-logo.png"
+  "logoUrl": "/overrides/atleticoibirama_bra-logo.webp"
  },
  "seattle_sounders": {
-  "logoUrl": "/overrides/seattle_sounders-logo.png"
+  "logoUrl": "/overrides/seattle_sounders-logo.webp"
  },
  "vancouver_whitecaps": {
-  "logoUrl": "/overrides/vancouver_whitecaps-logo.png"
+  "logoUrl": "/overrides/vancouver_whitecaps-logo.webp"
  },
  "leon": {
-  "logoUrl": "/overrides/leon-logo.png"
+  "logoUrl": "/overrides/leon-logo.webp"
  },
  "puebla": {
-  "logoUrl": "/overrides/puebla-logo.png"
+  "logoUrl": "/overrides/puebla-logo.webp"
  },
  "lafc": {
-  "logoUrl": "/overrides/lafc-logo.png"
+  "logoUrl": "/overrides/lafc-logo.webp"
  },
  "flamengopi_bra": {
-  "logoUrl": "/overrides/flamengopi_bra-logo.png"
+  "logoUrl": "/overrides/flamengopi_bra-logo.webp"
  },
  "santos_laguna": {
-  "logoUrl": "/overrides/santos_laguna-logo.png"
+  "logoUrl": "/overrides/santos_laguna-logo.webp"
  },
  "inter_miami": {
-  "logoUrl": "/overrides/inter_miami-logo.png"
+  "logoUrl": "/overrides/inter_miami-logo.webp"
  },
  "friburguense_bra": {
-  "logoUrl": "/overrides/friburguense_bra-logo.png"
+  "logoUrl": "/overrides/friburguense_bra-logo.webp"
  },
  "fluminensepi_bra": {
-  "logoUrl": "/overrides/fluminensepi_bra-logo.png"
+  "logoUrl": "/overrides/fluminensepi_bra-logo.webp"
  },
  "araruamarj_bra": {
-  "logoUrl": "/overrides/araruamarj_bra-logo.png"
+  "logoUrl": "/overrides/araruamarj_bra-logo.webp"
  },
  "la_galaxy": {
-  "logoUrl": "/overrides/la_galaxy-logo.png"
+  "logoUrl": "/overrides/la_galaxy-logo.webp"
  },
  "chicago_fire": {
-  "logoUrl": "/overrides/chicago_fire-logo.png"
+  "logoUrl": "/overrides/chicago_fire-logo.webp"
  },
  "fc_cincinnati": {
-  "logoUrl": "/overrides/fc_cincinnati-logo.png"
+  "logoUrl": "/overrides/fc_cincinnati-logo.webp"
  },
  "ny_red_bulls": {
-  "logoUrl": "/overrides/ny_red_bulls-logo.png"
+  "logoUrl": "/overrides/ny_red_bulls-logo.webp"
  },
  "tijuana": {
-  "logoUrl": "/overrides/tijuana-logo.png"
+  "logoUrl": "/overrides/tijuana-logo.webp"
  },
  "mogimirim_bra": {
-  "logoUrl": "/overrides/mogimirim_bra-logo.png"
+  "logoUrl": "/overrides/mogimirim_bra-logo.webp"
  },
  "columbus_crew": {
-  "logoUrl": "/overrides/columbus_crew-logo.png"
+  "logoUrl": "/overrides/columbus_crew-logo.webp"
  },
  "tigres": {
-  "logoUrl": "/overrides/tigres-logo.png"
+  "logoUrl": "/overrides/tigres-logo.webp"
  },
  "orlandocity433_eua": {
-  "logoUrl": "/overrides/orlandocity433_eua-logo.png"
+  "logoUrl": "/overrides/orlandocity433_eua-logo.webp"
  },
  "nashville433_eua": {
-  "logoUrl": "/overrides/nashville433_eua-logo.png"
+  "logoUrl": "/overrides/nashville433_eua-logo.webp"
  },
  "chapecoense_bra": {
   "kits": {
@@ -742,163 +742,163 @@
     "disabled": true
    }
   },
-  "logoUrl": "/overrides/chapecoense_bra-logo.png"
+  "logoUrl": "/overrides/chapecoense_bra-logo.webp"
  },
  "jacuipense_bra": {
-  "logoUrl": "/overrides/jacuipense_bra-logo.png"
+  "logoUrl": "/overrides/jacuipense_bra-logo.webp"
  },
  "atleticoalagoinhas_bra": {
-  "logoUrl": "/overrides/atleticoalagoinhas_bra-logo.png"
+  "logoUrl": "/overrides/atleticoalagoinhas_bra-logo.webp"
  },
  "saojosers_bra": {
-  "logoUrl": "/overrides/saojosers_bra-logo.png"
+  "logoUrl": "/overrides/saojosers_bra-logo.webp"
  },
  "ananindeua_bra": {
-  "logoUrl": "/overrides/ananindeua_bra-logo.png"
+  "logoUrl": "/overrides/ananindeua_bra-logo.webp"
  },
  "macaerj_bra": {
-  "logoUrl": "/overrides/macaerj_bra-logo.png"
+  "logoUrl": "/overrides/macaerj_bra-logo.webp"
  },
  "vitoriaconquista_bra": {
-  "logoUrl": "/overrides/vitoriaconquista_bra-logo.png"
+  "logoUrl": "/overrides/vitoriaconquista_bra-logo.webp"
  },
  "resenderj_bra": {
-  "logoUrl": "/overrides/resenderj_bra-logo.png"
+  "logoUrl": "/overrides/resenderj_bra-logo.webp"
  },
  "vitoriape_bra": {
-  "logoUrl": "/overrides/vitoriape_bra-logo.png"
+  "logoUrl": "/overrides/vitoriape_bra-logo.webp"
  },
  "salgueirope_bra": {
-  "logoUrl": "/overrides/salgueirope_bra-logo.png"
+  "logoUrl": "/overrides/salgueirope_bra-logo.webp"
  },
  "pelotas_bra": {
-  "logoUrl": "/overrides/pelotas_bra-logo.png"
+  "logoUrl": "/overrides/pelotas_bra-logo.webp"
  },
  "avenida_bra": {
-  "logoUrl": "/overrides/avenida_bra-logo.png"
+  "logoUrl": "/overrides/avenida_bra-logo.webp"
  },
  "sampaio_ma": {
-  "logoUrl": "/overrides/sampaio_ma-logo.png"
+  "logoUrl": "/overrides/sampaio_ma-logo.webp"
  },
  "afogadospe_bra": {
-  "logoUrl": "/overrides/afogadospe_bra-logo.png"
+  "logoUrl": "/overrides/afogadospe_bra-logo.webp"
  },
  "primavera_bra": {
-  "logoUrl": "/overrides/primavera_bra-logo.png"
+  "logoUrl": "/overrides/primavera_bra-logo.webp"
  },
  "argentinojnrs_arg": {
-  "logoUrl": "/overrides/argentinojnrs_arg-logo.png"
+  "logoUrl": "/overrides/argentinojnrs_arg-logo.webp"
  },
  "cabofriense_bra": {
-  "logoUrl": "/overrides/cabofriense_bra-logo.png"
+  "logoUrl": "/overrides/cabofriense_bra-logo.webp"
  },
  "central_bra": {
-  "logoUrl": "/overrides/central_bra-logo.png"
+  "logoUrl": "/overrides/central_bra-logo.webp"
  },
  "uniaors_bra": {
-  "logoUrl": "/overrides/uniaors_bra-logo.png"
+  "logoUrl": "/overrides/uniaors_bra-logo.webp"
  },
  "platense_arg": {
-  "logoUrl": "/overrides/platense_arg-logo.png"
+  "logoUrl": "/overrides/platense_arg-logo.webp"
  },
  "talleres_arg": {
-  "logoUrl": "/overrides/talleres_arg-logo.png"
+  "logoUrl": "/overrides/talleres_arg-logo.webp"
  },
  "comercial_sp": {
-  "logoUrl": "/overrides/comercial_sp-logo.png"
+  "logoUrl": "/overrides/comercial_sp-logo.webp"
  },
  "motoclub_ma": {
-  "logoUrl": "/overrides/motoclub_ma-logo.png"
+  "logoUrl": "/overrides/motoclub_ma-logo.webp"
  },
  "londrina_pr": {
-  "logoUrl": "/overrides/londrina_pr-logo.png"
+  "logoUrl": "/overrides/londrina_pr-logo.webp"
  },
  "portuguesasantista_bra": {
-  "logoUrl": "/overrides/portuguesasantista_bra-logo.png"
+  "logoUrl": "/overrides/portuguesasantista_bra-logo.webp"
  },
  "tapajospa_bra": {
-  "logoUrl": "/overrides/tapajospa_bra-logo.png"
+  "logoUrl": "/overrides/tapajospa_bra-logo.webp"
  },
  "portope_bra": {
-  "logoUrl": "/overrides/portope_bra-logo.png"
+  "logoUrl": "/overrides/portope_bra-logo.webp"
  },
  "galvez_bra": {
-  "logoUrl": "/overrides/galvez_bra-logo.png"
+  "logoUrl": "/overrides/galvez_bra-logo.webp"
  },
  "monsoon_rs_bra": {
-  "logoUrl": "/overrides/monsoon_rs_bra-logo.png"
+  "logoUrl": "/overrides/monsoon_rs_bra-logo.webp"
  },
  "toledopr_bra": {
-  "logoUrl": "/overrides/toledopr_bra-logo.png"
+  "logoUrl": "/overrides/toledopr_bra-logo.webp"
  },
  "saobento_bra": {
-  "logoUrl": "/overrides/saobento_bra-logo.png"
+  "logoUrl": "/overrides/saobento_bra-logo.webp"
  },
  "riobrancoac_bra": {
-  "logoUrl": "/overrides/riobrancoac_bra-logo.png"
+  "logoUrl": "/overrides/riobrancoac_bra-logo.webp"
  },
  "aguiapa_bra": {
-  "logoUrl": "/overrides/aguiapa_bra-logo.png"
+  "logoUrl": "/overrides/aguiapa_bra-logo.webp"
  },
  "serranope_bra": {
-  "logoUrl": "/overrides/serranope_bra-logo.png"
+  "logoUrl": "/overrides/serranope_bra-logo.webp"
  },
  "retrope_bra": {
-  "logoUrl": "/overrides/retrope_bra-logo.png"
+  "logoUrl": "/overrides/retrope_bra-logo.webp"
  },
  "vascoac_bra": {
-  "logoUrl": "/overrides/vascoac_bra-logo.png"
+  "logoUrl": "/overrides/vascoac_bra-logo.webp"
  },
  "vilago": {
-  "logoUrl": "/overrides/vilago-logo.png"
+  "logoUrl": "/overrides/vilago-logo.webp"
  },
  "tigre_arg": {
-  "logoUrl": "/overrides/tigre_arg-logo.png"
+  "logoUrl": "/overrides/tigre_arg-logo.webp"
  },
  "ipitanga_bra": {
-  "logoUrl": "/overrides/ipitanga_bra-logo.png"
+  "logoUrl": "/overrides/ipitanga_bra-logo.webp"
  },
  "capivariano_bra": {
-  "logoUrl": "/overrides/capivariano_bra-logo.png"
+  "logoUrl": "/overrides/capivariano_bra-logo.webp"
  },
  "novohamburgo_bra": {
-  "logoUrl": "/overrides/novohamburgo_bra-logo.png"
+  "logoUrl": "/overrides/novohamburgo_bra-logo.webp"
  },
  "gimnasia_la_plata": {
-  "logoUrl": "/overrides/gimnasia_la_plata-logo.png"
+  "logoUrl": "/overrides/gimnasia_la_plata-logo.webp"
  },
  "coventry_ing": {
-  "logoUrl": "/overrides/coventry_ing-logo.png"
+  "logoUrl": "/overrides/coventry_ing-logo.webp"
  },
  "atletico_tucuman": {
-  "logoUrl": "/overrides/atletico_tucuman-logo.png"
+  "logoUrl": "/overrides/atletico_tucuman-logo.webp"
  },
  "tottenham": {
-  "logoUrl": "/overrides/tottenham-logo.png"
+  "logoUrl": "/overrides/tottenham-logo.webp"
  },
  "juventus_sp": {
-  "logoUrl": "/overrides/juventus_sp-logo.png"
+  "logoUrl": "/overrides/juventus_sp-logo.webp"
  },
  "sarmiento_arg": {
-  "logoUrl": "/overrides/sarmiento_arg-logo.png"
+  "logoUrl": "/overrides/sarmiento_arg-logo.webp"
  },
  "hullcity_ing": {
-  "logoUrl": "/overrides/hullcity_ing-logo.png"
+  "logoUrl": "/overrides/hullcity_ing-logo.webp"
  },
  "brentford": {
-  "logoUrl": "/overrides/brentford-logo.png"
+  "logoUrl": "/overrides/brentford-logo.webp"
  },
  "belgrano_cordoba": {
-  "logoUrl": "/overrides/belgrano_cordoba-logo.png"
+  "logoUrl": "/overrides/belgrano_cordoba-logo.webp"
  },
  "newcastle": {
-  "logoUrl": "/overrides/newcastle-logo.png"
+  "logoUrl": "/overrides/newcastle-logo.webp"
  },
  "brighton": {
-  "logoUrl": "/overrides/brighton-logo.png"
+  "logoUrl": "/overrides/brighton-logo.webp"
  },
  "saojosesp_bra": {
-  "logoUrl": "/overrides/saojosesp_bra-logo.png",
+  "logoUrl": "/overrides/saojosesp_bra-logo.webp",
   "kits": {
    "home": {
     "primary": "#ffff00",
@@ -918,13 +918,13 @@
   }
  },
  "fluminenseba_bra": {
-  "logoUrl": "/overrides/fluminenseba_bra-logo.png"
+  "logoUrl": "/overrides/fluminenseba_bra-logo.webp"
  },
  "bournemouth": {
-  "logoUrl": "/overrides/bournemouth-logo.png"
+  "logoUrl": "/overrides/bournemouth-logo.webp"
  },
  "uniaobarbarense_bra": {
-  "logoUrl": "/overrides/uniaobarbarense_bra-logo.png",
+  "logoUrl": "/overrides/uniaobarbarense_bra-logo.webp",
   "kits": {
    "home": {
     "primary": "#000000",
@@ -944,10 +944,10 @@
   }
  },
  "manchester_united": {
-  "logoUrl": "/overrides/manchester_united-logo.png"
+  "logoUrl": "/overrides/manchester_united-logo.webp"
  },
  "saocaetano_bra": {
-  "logoUrl": "/overrides/saocaetano_bra-logo.png",
+  "logoUrl": "/overrides/saocaetano_bra-logo.webp",
   "kits": {
    "home": {
     "primary": "#067512",
@@ -967,7 +967,7 @@
   }
  },
  "ituano_sp": {
-  "logoUrl": "/overrides/ituano_sp-logo.png",
+  "logoUrl": "/overrides/ituano_sp-logo.webp",
   "kits": {
    "home": {
     "primary": "#000000",
@@ -987,13 +987,13 @@
   }
  },
  "talleres_cordoba": {
-  "logoUrl": "/overrides/talleres_cordoba-logo.png"
+  "logoUrl": "/overrides/talleres_cordoba-logo.webp"
  },
  "ipswich": {
-  "logoUrl": "/overrides/ipswich-logo.png"
+  "logoUrl": "/overrides/ipswich-logo.webp"
  },
  "Instituto_arg": {
-  "logoUrl": "/overrides/Instituto_arg-logo.png",
+  "logoUrl": "/overrides/Instituto_arg-logo.webp",
   "kits": {
    "home": {
     "primary": "#ee2d36",
@@ -1013,307 +1013,307 @@
   }
  },
  "nottingham_forest": {
-  "logoUrl": "/overrides/nottingham_forest-logo.png"
+  "logoUrl": "/overrides/nottingham_forest-logo.webp"
  },
  "brighton_ing": {
-  "logoUrl": "/overrides/brighton_ing-logo.png"
+  "logoUrl": "/overrides/brighton_ing-logo.webp"
  },
  "tottenhamhotspur_ing": {
-  "logoUrl": "/overrides/tottenhamhotspur_ing-logo.png"
+  "logoUrl": "/overrides/tottenhamhotspur_ing-logo.webp"
  },
  "everton": {
-  "logoUrl": "/overrides/everton-logo.png"
+  "logoUrl": "/overrides/everton-logo.webp"
  },
  "liverpool": {
-  "logoUrl": "/overrides/liverpool-logo.png"
+  "logoUrl": "/overrides/liverpool-logo.webp"
  },
  "san_lorenzo": {
-  "logoUrl": "/overrides/san_lorenzo-logo.png"
+  "logoUrl": "/overrides/san_lorenzo-logo.webp"
  },
  "villarreal": {
-  "logoUrl": "/overrides/villarreal-logo.png"
+  "logoUrl": "/overrides/villarreal-logo.webp"
  },
  "dep_la_serena": {
-  "logoUrl": "/overrides/dep_la_serena-logo.png"
+  "logoUrl": "/overrides/dep_la_serena-logo.webp"
  },
  "ohod_ara": {
-  "logoUrl": "/overrides/ohod_ara-logo.png"
+  "logoUrl": "/overrides/ohod_ara-logo.webp"
  },
  "al_qadsiah": {
-  "logoUrl": "/overrides/al_qadsiah-logo.png"
+  "logoUrl": "/overrides/al_qadsiah-logo.webp"
  },
  "wolves": {
-  "logoUrl": "/overrides/wolves-logo.png"
+  "logoUrl": "/overrides/wolves-logo.webp"
  },
  "argentinos_jrs": {
-  "logoUrl": "/overrides/argentinos_jrs-logo.png"
+  "logoUrl": "/overrides/argentinos_jrs-logo.webp"
  },
  "al_taawoun": {
-  "logoUrl": "/overrides/al_taawoun-logo.png"
+  "logoUrl": "/overrides/al_taawoun-logo.webp"
  },
  "dep_antofagasta": {
-  "logoUrl": "/overrides/dep_antofagasta-logo.png"
+  "logoUrl": "/overrides/dep_antofagasta-logo.webp"
  },
  "west_ham": {
-  "logoUrl": "/overrides/west_ham-logo.png"
+  "logoUrl": "/overrides/west_ham-logo.webp"
  },
  "rayo_vallecano": {
-  "logoUrl": "/overrides/rayo_vallecano-logo.png"
+  "logoUrl": "/overrides/rayo_vallecano-logo.webp"
  },
  "deportivo_riestra": {
-  "logoUrl": "/overrides/deportivo_riestra-logo.png"
+  "logoUrl": "/overrides/deportivo_riestra-logo.webp"
  },
  "valladolid": {
-  "logoUrl": "/overrides/valladolid-logo.png"
+  "logoUrl": "/overrides/valladolid-logo.webp"
  },
  "aston_villa": {
-  "logoUrl": "/overrides/aston_villa-logo.png"
+  "logoUrl": "/overrides/aston_villa-logo.webp"
  },
  "sarmiento": {
-  "logoUrl": "/overrides/sarmiento-logo.png"
+  "logoUrl": "/overrides/sarmiento-logo.webp"
  },
  "al_nassr": {
-  "logoUrl": "/overrides/al_nassr-logo.png"
+  "logoUrl": "/overrides/al_nassr-logo.webp"
  },
  "aeklarnaca_chi": {
-  "logoUrl": "/overrides/aeklarnaca_chi-logo.png"
+  "logoUrl": "/overrides/aeklarnaca_chi-logo.webp"
  },
  "al_hilal": {
-  "logoUrl": "/overrides/al_hilal-logo.png"
+  "logoUrl": "/overrides/al_hilal-logo.webp"
  },
  "real_madrid": {
-  "logoUrl": "/overrides/real_madrid-logo.png"
+  "logoUrl": "/overrides/real_madrid-logo.webp"
  },
  "defensa_y_justicia": {
-  "logoUrl": "/overrides/defensa_y_justicia-logo.png"
+  "logoUrl": "/overrides/defensa_y_justicia-logo.webp"
  },
  "crystal_palace": {
-  "logoUrl": "/overrides/crystal_palace-logo.png"
+  "logoUrl": "/overrides/crystal_palace-logo.webp"
  },
  "coquimbo_unido": {
-  "logoUrl": "/overrides/coquimbo_unido-logo.png"
+  "logoUrl": "/overrides/coquimbo_unido-logo.webp"
  },
  "al_qadisiyah": {
-  "logoUrl": "/overrides/al_qadisiyah-logo.png"
+  "logoUrl": "/overrides/al_qadisiyah-logo.webp"
  },
  "leganes": {
-  "logoUrl": "/overrides/leganes-logo.png"
+  "logoUrl": "/overrides/leganes-logo.webp"
  },
  "u_de_chile": {
-  "logoUrl": "/overrides/u_de_chile-logo.png"
+  "logoUrl": "/overrides/u_de_chile-logo.webp"
  },
  "damac_fc": {
-  "logoUrl": "/overrides/damac_fc-logo.png"
+  "logoUrl": "/overrides/damac_fc-logo.webp"
  },
  "al_fayha": {
-  "logoUrl": "/overrides/al_fayha-logo.png"
+  "logoUrl": "/overrides/al_fayha-logo.webp"
  },
  "nublense": {
-  "logoUrl": "/overrides/nublense-logo.png"
+  "logoUrl": "/overrides/nublense-logo.webp"
  },
  "ohiggins": {
-  "logoUrl": "/overrides/ohiggins-logo.png"
+  "logoUrl": "/overrides/ohiggins-logo.webp"
  },
  "girona": {
-  "logoUrl": "/overrides/girona-logo.png"
+  "logoUrl": "/overrides/girona-logo.webp"
  },
  "magallanes_chi": {
-  "logoUrl": "/overrides/magallanes_chi-logo.png"
+  "logoUrl": "/overrides/magallanes_chi-logo.webp"
  },
  "abha_club": {
-  "logoUrl": "/overrides/abha_club-logo.png"
+  "logoUrl": "/overrides/abha_club-logo.webp"
  },
  "dep_limache": {
-  "logoUrl": "/overrides/dep_limache-logo.png"
+  "logoUrl": "/overrides/dep_limache-logo.webp"
  },
  "al_ahli_saudi": {
-  "logoUrl": "/overrides/al_ahli_saudi-logo.png"
+  "logoUrl": "/overrides/al_ahli_saudi-logo.webp"
  },
  "al_shabab": {
-  "logoUrl": "/overrides/al_shabab-logo.png"
+  "logoUrl": "/overrides/al_shabab-logo.webp"
  },
  "al_wehda": {
-  "logoUrl": "/overrides/al_wehda-logo.png"
+  "logoUrl": "/overrides/al_wehda-logo.webp"
  },
  "audax_italiano": {
-  "logoUrl": "/overrides/audax_italiano-logo.png"
+  "logoUrl": "/overrides/audax_italiano-logo.webp"
  },
  "al_shoalah_ara": {
-  "logoUrl": "/overrides/al_shoalah_ara-logo.png"
+  "logoUrl": "/overrides/al_shoalah_ara-logo.webp"
  },
  "al_hazm": {
-  "logoUrl": "/overrides/al_hazm-logo.png"
+  "logoUrl": "/overrides/al_hazm-logo.webp"
  },
  "alokhdood_ara": {
-  "logoUrl": "/overrides/alokhdood_ara-logo.png"
+  "logoUrl": "/overrides/alokhdood_ara-logo.webp"
  },
  "al_raed": {
-  "logoUrl": "/overrides/al_raed-logo.png"
+  "logoUrl": "/overrides/al_raed-logo.webp"
  },
  "jeddah_ara": {
-  "logoUrl": "/overrides/jeddah_ara-logo.png"
+  "logoUrl": "/overrides/jeddah_ara-logo.webp"
  },
  "real_betis": {
-  "logoUrl": "/overrides/real_betis-logo.png"
+  "logoUrl": "/overrides/real_betis-logo.webp"
  },
  "huachipato": {
-  "logoUrl": "/overrides/huachipato-logo.png"
+  "logoUrl": "/overrides/huachipato-logo.webp"
  },
  "colo_colo": {
-  "logoUrl": "/overrides/colo_colo-logo.png"
+  "logoUrl": "/overrides/colo_colo-logo.webp"
  },
  "palestino": {
-  "logoUrl": "/overrides/palestino-logo.png"
+  "logoUrl": "/overrides/palestino-logo.webp"
  },
  "rangers_talca": {
-  "logoUrl": "/overrides/rangers_talca-logo.png"
+  "logoUrl": "/overrides/rangers_talca-logo.webp"
  },
  "neom_ara": {
-  "logoUrl": "/overrides/neom_ara-logo.png"
+  "logoUrl": "/overrides/neom_ara-logo.webp"
  },
  "sevilla": {
-  "logoUrl": "/overrides/sevilla-logo.png"
+  "logoUrl": "/overrides/sevilla-logo.webp"
  },
  "central_cordoba": {
-  "logoUrl": "/overrides/central_cordoba-logo.png"
+  "logoUrl": "/overrides/central_cordoba-logo.webp"
  },
  "barracas_central": {
-  "logoUrl": "/overrides/barracas_central-logo.png"
+  "logoUrl": "/overrides/barracas_central-logo.webp"
  },
  "najran_ara": {
-  "logoUrl": "/overrides/najran_ara-logo.png"
+  "logoUrl": "/overrides/najran_ara-logo.webp"
  },
  "atletico_madrid": {
-  "logoUrl": "/overrides/atletico_madrid-logo.png"
+  "logoUrl": "/overrides/atletico_madrid-logo.webp"
  },
  "getafe": {
-  "logoUrl": "/overrides/getafe-logo.png"
+  "logoUrl": "/overrides/getafe-logo.webp"
  },
  "celta_vigo": {
-  "logoUrl": "/overrides/celta_vigo-logo.png"
+  "logoUrl": "/overrides/celta_vigo-logo.webp"
  },
  "instituto_acc": {
-  "logoUrl": "/overrides/instituto_acc-logo.png"
+  "logoUrl": "/overrides/instituto_acc-logo.webp"
  },
  "espanyol": {
-  "logoUrl": "/overrides/espanyol-logo.png"
+  "logoUrl": "/overrides/espanyol-logo.webp"
  },
  "iberia_chi": {
-  "logoUrl": "/overrides/iberia_chi-logo.png"
+  "logoUrl": "/overrides/iberia_chi-logo.webp"
  },
  "u_catolica_chi": {
-  "logoUrl": "/overrides/u_catolica_chi-logo.png"
+  "logoUrl": "/overrides/u_catolica_chi-logo.webp"
  },
  "osasuna": {
-  "logoUrl": "/overrides/osasuna-logo.png"
+  "logoUrl": "/overrides/osasuna-logo.webp"
  },
  "athletic_bilbao": {
-  "logoUrl": "/overrides/athletic_bilbao-logo.png"
+  "logoUrl": "/overrides/athletic_bilbao-logo.webp"
  },
  "real_sociedad": {
-  "logoUrl": "/overrides/real_sociedad-logo.png"
+  "logoUrl": "/overrides/real_sociedad-logo.webp"
  },
  "independiente_rivadavia": {
-  "logoUrl": "/overrides/independiente_rivadavia-logo.png"
+  "logoUrl": "/overrides/independiente_rivadavia-logo.webp"
  },
  "leicester": {
-  "logoUrl": "/overrides/leicester-logo.png"
+  "logoUrl": "/overrides/leicester-logo.webp"
  },
  "valencia": {
-  "logoUrl": "/overrides/valencia-logo.png"
+  "logoUrl": "/overrides/valencia-logo.webp"
  },
  "platense": {
-  "logoUrl": "/overrides/platense-logo.png"
+  "logoUrl": "/overrides/platense-logo.webp"
  },
  "aljabalain_ara": {
-  "logoUrl": "/overrides/aljabalain_ara-logo.png"
+  "logoUrl": "/overrides/aljabalain_ara-logo.webp"
  },
  "mallorca": {
-  "logoUrl": "/overrides/mallorca-logo.png"
+  "logoUrl": "/overrides/mallorca-logo.webp"
  },
  "aldosivi": {
-  "logoUrl": "/overrides/aldosivi-logo.png"
+  "logoUrl": "/overrides/aldosivi-logo.webp"
  },
  "union_la_calera": {
-  "logoUrl": "/overrides/union_la_calera-logo.png"
+  "logoUrl": "/overrides/union_la_calera-logo.webp"
  },
  "eibar_esp": {
-  "logoUrl": "/overrides/eibar_esp-logo.png"
+  "logoUrl": "/overrides/eibar_esp-logo.webp"
  },
  "al_orobah": {
-  "logoUrl": "/overrides/al_orobah-logo.png"
+  "logoUrl": "/overrides/al_orobah-logo.webp"
  },
  "escuelamacul_chi": {
-  "logoUrl": "/overrides/escuelamacul_chi-logo.png"
+  "logoUrl": "/overrides/escuelamacul_chi-logo.webp"
  },
  "al_riyadh": {
-  "logoUrl": "/overrides/al_riyadh-logo.png"
+  "logoUrl": "/overrides/al_riyadh-logo.webp"
  },
  "union_santa_fe": {
-  "logoUrl": "/overrides/union_santa_fe-logo.png"
+  "logoUrl": "/overrides/union_santa_fe-logo.webp"
  },
  "las_palmas": {
-  "logoUrl": "/overrides/las_palmas-logo.png"
+  "logoUrl": "/overrides/las_palmas-logo.webp"
  },
  "al_ittihad": {
-  "logoUrl": "/overrides/al_ittihad-logo.png"
+  "logoUrl": "/overrides/al_ittihad-logo.webp"
  },
  "al_ettifaq": {
-  "logoUrl": "/overrides/al_ettifaq-logo.png"
+  "logoUrl": "/overrides/al_ettifaq-logo.webp"
  },
  "al_kholood": {
-  "logoUrl": "/overrides/al_kholood-logo.png"
+  "logoUrl": "/overrides/al_kholood-logo.webp"
  },
  "dep_iquique": {
-  "logoUrl": "/overrides/dep_iquique-logo.png"
+  "logoUrl": "/overrides/dep_iquique-logo.webp"
  },
  "al_fateh": {
-  "logoUrl": "/overrides/al_fateh-logo.png"
+  "logoUrl": "/overrides/al_fateh-logo.webp"
  },
  "stoke_city": {
-  "logoUrl": "/overrides/stoke_city-logo.png"
+  "logoUrl": "/overrides/stoke_city-logo.webp"
  },
  "alaves": {
-  "logoUrl": "/overrides/alaves-logo.png"
+  "logoUrl": "/overrides/alaves-logo.webp"
  },
  "chelsea": {
-  "logoUrl": "/overrides/chelsea-logo.png"
+  "logoUrl": "/overrides/chelsea-logo.webp"
  },
  "cd_tenerife": {
-  "logoUrl": "/overrides/cd_tenerife-logo.png"
+  "logoUrl": "/overrides/cd_tenerife-logo.webp"
  },
  "tenerife_esp": {
-  "logoUrl": "/overrides/tenerife_esp-logo.png"
+  "logoUrl": "/overrides/tenerife_esp-logo.webp"
  },
  "hercilioluzsc_bra": {
-  "logoUrl": "/overrides/hercilioluzsc_bra-logo.png"
+  "logoUrl": "/overrides/hercilioluzsc_bra-logo.webp"
  },
  "Boluspor_tur": {
-  "logoUrl": "/overrides/Boluspor_tur-logo.png"
+  "logoUrl": "/overrides/Boluspor_tur-logo.webp"
  },
  "bodo_glimt": {
-  "logoUrl": "/overrides/bodo_glimt-logo.png"
+  "logoUrl": "/overrides/bodo_glimt-logo.webp"
  },
  "arsenal": {
-  "logoUrl": "/overrides/arsenal-logo.png"
+  "logoUrl": "/overrides/arsenal-logo.webp"
  },
  "itabunaba_bra": {
-  "logoUrl": "/overrides/itabunaba_bra-logo.png"
+  "logoUrl": "/overrides/itabunaba_bra-logo.webp"
  },
  "aimorers_bra": {
-  "logoUrl": "/overrides/aimorers_bra-logo.png"
+  "logoUrl": "/overrides/aimorers_bra-logo.webp"
  },
  "caxiasc_bra": {
-  "logoUrl": "/overrides/caxiasc_bra-logo.png"
+  "logoUrl": "/overrides/caxiasc_bra-logo.webp"
  },
  "cerro_porteno": {
-  "logoUrl": "/overrides/cerro_porteno-logo.png"
+  "logoUrl": "/overrides/cerro_porteno-logo.webp"
  },
  "avai_bra": {
-  "logoUrl": "/overrides/avai_bra-logo.png"
+  "logoUrl": "/overrides/avai_bra-logo.webp"
  },
  "nation_nova_zelandia": {
-  "logoUrl": "/overrides/nation_nova_zelandia-logo.png",
+  "logoUrl": "/overrides/nation_nova_zelandia-logo.webp",
   "kits": {
    "home": {
     "primary": "#101820",
@@ -1333,7 +1333,7 @@
   }
  },
  "nation_franca": {
-  "logoUrl": "/overrides/nation_franca-logo.png",
+  "logoUrl": "/overrides/nation_franca-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:0b122ff983d461216c8cc773b02783165f92c29363ea8beec3c36effdc332942.png"
@@ -1350,10 +1350,10 @@
   }
  },
  "nation_coreia_do_sul": {
-  "logoUrl": "/overrides/nation_coreia_do_sul-logo.png"
+  "logoUrl": "/overrides/nation_coreia_do_sul-logo.webp"
  },
  "nation_espanha": {
-  "logoUrl": "/overrides/nation_espanha-logo.png",
+  "logoUrl": "/overrides/nation_espanha-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:50dff02d2c90a992d79a7f442123656de2833c60de11404ec7ad58e475c92873.png"
@@ -1370,7 +1370,7 @@
   }
  },
  "nation_belgica": {
-  "logoUrl": "/overrides/nation_belgica-logo.png",
+  "logoUrl": "/overrides/nation_belgica-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:7ccadec65777ceb3c91848c84a51bd61f38cd1a1591b5af174e82dc5d830efbf.png"
@@ -1381,7 +1381,7 @@
   }
  },
  "nation_paraguai": {
-  "logoUrl": "/overrides/nation_paraguai-logo.png",
+  "logoUrl": "/overrides/nation_paraguai-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:7b9d83fbbcc10311bc007f3fe70fc47a399417503eab2471d52819fc2ce0e408.png"
@@ -1392,7 +1392,7 @@
   }
  },
  "nation_inglaterra": {
-  "logoUrl": "/overrides/nation_inglaterra-logo.png",
+  "logoUrl": "/overrides/nation_inglaterra-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:4bd4c5bfaff4e7a17549b9b25efe7f4325e5b9e858a4e2044625202a09f423ad.png"
@@ -1409,7 +1409,7 @@
   }
  },
  "nation_italia": {
-  "logoUrl": "/overrides/nation_italia-logo.png",
+  "logoUrl": "/overrides/nation_italia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:c1e9343734b6325a557ec75747a6f39b7c43138efd8e12b6200061c550eb5e5a.png"
@@ -1420,28 +1420,28 @@
   }
  },
  "nation_gana": {
-  "logoUrl": "/overrides/nation_gana-logo.png"
+  "logoUrl": "/overrides/nation_gana-logo.webp"
  },
  "nation_panama": {
-  "logoUrl": "/overrides/nation_panama-logo.png"
+  "logoUrl": "/overrides/nation_panama-logo.webp"
  },
  "nation_haiti": {
-  "logoUrl": "/overrides/nation_haiti-logo.png"
+  "logoUrl": "/overrides/nation_haiti-logo.webp"
  },
  "nation_ira": {
-  "logoUrl": "/overrides/nation_ira-logo.png"
+  "logoUrl": "/overrides/nation_ira-logo.webp"
  },
  "nation_marrocos": {
-  "logoUrl": "/overrides/nation_marrocos-logo.png"
+  "logoUrl": "/overrides/nation_marrocos-logo.webp"
  },
  "nation_iraque": {
-  "logoUrl": "/overrides/nation_iraque-logo.png"
+  "logoUrl": "/overrides/nation_iraque-logo.webp"
  },
  "nation_argelia": {
-  "logoUrl": "/overrides/nation_argelia-logo.png"
+  "logoUrl": "/overrides/nation_argelia-logo.webp"
  },
  "nation_suica": {
-  "logoUrl": "/overrides/nation_suica-logo.png",
+  "logoUrl": "/overrides/nation_suica-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:ba0c770da3caa86484b99cc57eb31010310be6a34524fdfecf5325f8518c5b59.png"
@@ -1452,22 +1452,22 @@
   }
  },
  "nation_egito": {
-  "logoUrl": "/overrides/nation_egito-logo.png"
+  "logoUrl": "/overrides/nation_egito-logo.webp"
  },
  "nation_senegal": {
-  "logoUrl": "/overrides/nation_senegal-logo.png"
+  "logoUrl": "/overrides/nation_senegal-logo.webp"
  },
  "nation_estados_unidos": {
-  "logoUrl": "/overrides/nation_estados_unidos-logo.png"
+  "logoUrl": "/overrides/nation_estados_unidos-logo.webp"
  },
  "nation_africa_do_sul": {
-  "logoUrl": "/overrides/nation_africa_do_sul-logo.png"
+  "logoUrl": "/overrides/nation_africa_do_sul-logo.webp"
  },
  "nation_jordania": {
-  "logoUrl": "/overrides/nation_jordania-logo.png"
+  "logoUrl": "/overrides/nation_jordania-logo.webp"
  },
  "nation_equador": {
-  "logoUrl": "/overrides/nation_equador-logo.png",
+  "logoUrl": "/overrides/nation_equador-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:0d37c5ec4a3d6ce1a70c5e85b7ca2133c8031173d9040a1d084657719aed6c62.png"
@@ -1481,13 +1481,13 @@
   }
  },
  "nation_canada": {
-  "logoUrl": "/overrides/nation_canada-logo.png"
+  "logoUrl": "/overrides/nation_canada-logo.webp"
  },
  "nation_uzbequistao": {
-  "logoUrl": "/overrides/nation_uzbequistao-logo.png"
+  "logoUrl": "/overrides/nation_uzbequistao-logo.webp"
  },
  "nation_russia": {
-  "logoUrl": "/overrides/nation_russia-logo.png",
+  "logoUrl": "/overrides/nation_russia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:a6baee0b898f4e8f2ef18a7dad0299cd66a3b5592e00485aecfd9b89ccf88fc4.png"
@@ -1498,7 +1498,7 @@
   }
  },
  "nation_chile": {
-  "logoUrl": "/overrides/nation_chile-logo.png",
+  "logoUrl": "/overrides/nation_chile-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:0792baac72ce07cf635011c74de100f9dee312ce5b49025588ce7fb3d0a137fc.png"
@@ -1512,7 +1512,7 @@
   }
  },
  "nation_brasil": {
-  "logoUrl": "/overrides/nation_brasil-logo.png",
+  "logoUrl": "/overrides/nation_brasil-logo.webp",
   "kits": {
    "home": {
     "primary": "#ffd400",
@@ -1534,7 +1534,7 @@
   }
  },
  "nation_portugal": {
-  "logoUrl": "/overrides/nation_portugal-logo.png",
+  "logoUrl": "/overrides/nation_portugal-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:5a95f08400aad804443b1410212f494b10273f88b20cbfdac3c655d72409e117.png"
@@ -1545,7 +1545,7 @@
   }
  },
  "nation_colombia": {
-  "logoUrl": "/overrides/nation_colombia-logo.png",
+  "logoUrl": "/overrides/nation_colombia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:5838a9b8aa7e3661fdf6d8afd0b3e14101c1bcd3c2d1feaf434bc2ce166cb0d2.png"
@@ -1556,10 +1556,10 @@
   }
  },
  "nation_tunisia": {
-  "logoUrl": "/overrides/nation_tunisia-logo.png"
+  "logoUrl": "/overrides/nation_tunisia-logo.webp"
  },
  "nation_noruega": {
-  "logoUrl": "/overrides/nation_noruega-logo.png",
+  "logoUrl": "/overrides/nation_noruega-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:759355d6fff258d0704ec240802fdbd30fdc61f037a453abd6129801952859b7.png"
@@ -1573,10 +1573,10 @@
   }
  },
  "nation_congo_dr": {
-  "logoUrl": "/overrides/nation_congo_dr-logo.png"
+  "logoUrl": "/overrides/nation_congo_dr-logo.webp"
  },
  "nation_holanda": {
-  "logoUrl": "/overrides/nation_holanda-logo.png",
+  "logoUrl": "/overrides/nation_holanda-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:c24bd0c55c847bb3d5d35d8c30cf151a04b64fdfc8f70e34ee9f3f72f97551d3.png"
@@ -1587,7 +1587,7 @@
   }
  },
  "nation_bosnia": {
-  "logoUrl": "/overrides/nation_bosnia-logo.png",
+  "logoUrl": "/overrides/nation_bosnia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:5252f97e6c635a931aee6a67064fad4d82fac650f3ca929ac7eacc15ae485555.png"
@@ -1598,7 +1598,7 @@
   }
  },
  "nation_escocia": {
-  "logoUrl": "/overrides/nation_escocia-logo.png",
+  "logoUrl": "/overrides/nation_escocia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:45690be670c7ab3ae3292b8b47974294b8f62a2664c085215fb522d2700e3b3f.png"
@@ -1609,7 +1609,7 @@
   }
  },
  "nation_turquia": {
-  "logoUrl": "/overrides/nation_turquia-logo.png",
+  "logoUrl": "/overrides/nation_turquia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:c487db1f4de5f74c282c1fd216e0a3ea7de31bb948b28f40840ca30b638ce904.png"
@@ -1620,13 +1620,13 @@
   }
  },
  "nation_japao": {
-  "logoUrl": "/overrides/nation_japao-logo.png"
+  "logoUrl": "/overrides/nation_japao-logo.webp"
  },
  "nation_cabo_verde": {
-  "logoUrl": "/overrides/nation_cabo_verde-logo.png"
+  "logoUrl": "/overrides/nation_cabo_verde-logo.webp"
  },
  "nation_suecia": {
-  "logoUrl": "/overrides/nation_suecia-logo.png",
+  "logoUrl": "/overrides/nation_suecia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:6cf0ae763a5c84f5d1ceac0caf03f72dfeb76ef1f49fbcfeb53b928bc4546f86.png"
@@ -1637,7 +1637,7 @@
   }
  },
  "nation_tchequia": {
-  "logoUrl": "/overrides/nation_tchequia-logo.png",
+  "logoUrl": "/overrides/nation_tchequia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:b869d26772c517c4cf7d1b07fc704041e98ffa5807db02df780bbbf63a955f8a.png"
@@ -1648,7 +1648,7 @@
   }
  },
  "nation_argentina": {
-  "logoUrl": "/overrides/nation_argentina-logo.png",
+  "logoUrl": "/overrides/nation_argentina-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:59c73ddc3b320c07361441277b27e96d29bf4e9cd3d1ccfab3df8001aa025432.png"
@@ -1659,19 +1659,19 @@
   }
  },
  "nation_mexico": {
-  "logoUrl": "/overrides/nation_mexico-logo.png"
+  "logoUrl": "/overrides/nation_mexico-logo.webp"
  },
  "nation_qatar": {
-  "logoUrl": "/overrides/nation_qatar-logo.png"
+  "logoUrl": "/overrides/nation_qatar-logo.webp"
  },
  "nation_australia": {
-  "logoUrl": "/overrides/nation_australia-logo.png"
+  "logoUrl": "/overrides/nation_australia-logo.webp"
  },
  "nation_china": {
-  "logoUrl": "/overrides/nation_china-logo.png"
+  "logoUrl": "/overrides/nation_china-logo.webp"
  },
  "nation_uruguai": {
-  "logoUrl": "/overrides/nation_uruguai-logo.png",
+  "logoUrl": "/overrides/nation_uruguai-logo.webp",
   "kits": {
    "home": {
     "primary": "#5cbfeb",
@@ -1693,7 +1693,7 @@
   }
  },
  "nation_austria": {
-  "logoUrl": "/overrides/nation_austria-logo.png",
+  "logoUrl": "/overrides/nation_austria-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:86d91ef3d7818d261c5819eb0c02db114a16cac2f9395940b5cfe91c5af9ca69.png"
@@ -1704,7 +1704,7 @@
   }
  },
  "nation_croacia": {
-  "logoUrl": "/overrides/nation_croacia-logo.png",
+  "logoUrl": "/overrides/nation_croacia-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:ed5f2efc501c844eeb0c39ad0bb23129bdf8f3d4746607fab6657a25d0d32777.png"
@@ -1715,10 +1715,10 @@
   }
  },
  "nation_costa_do_marfim": {
-  "logoUrl": "/overrides/nation_costa_do_marfim-logo.png"
+  "logoUrl": "/overrides/nation_costa_do_marfim-logo.webp"
  },
  "nation_alemanha": {
-  "logoUrl": "/overrides/nation_alemanha-logo.png",
+  "logoUrl": "/overrides/nation_alemanha-logo.webp",
   "kits": {
    "home": {
     "imageUrl": "uf-img:6cbe3a78cddcb14d29e721e5a178ff58675b5532594000853234690b623ea7e5.png"
@@ -1735,7 +1735,7 @@
   }
  },
  "nation_curacao": {
-  "logoUrl": "/overrides/nation_curacao-logo.png"
+  "logoUrl": "/overrides/nation_curacao-logo.webp"
  },
  "mixto_mt": {
   "kits": {

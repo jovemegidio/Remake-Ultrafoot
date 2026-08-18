@@ -33,9 +33,99 @@ import { generateDynamicNews, NEWS_SOURCES, type NewsItem } from "@/components/n
 import { getGameDate } from "@/lib/game-date"
 import { useGameState } from "@/lib/save-system"
 import { siglaExibivel } from "@/lib/club-identity"
+import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
+import { tomDaModalidade } from "@/lib/tom-da-modalidade"
 
 /** Sentinela: nao e rota, e a acao de virar o ano. */
 const PROXIMA_TEMPORADA = "__proxima-temporada__"
+
+/** Uma tarefa do escritorio. Nomeado para a adaptacao por modalidade poder cita-lo. */
+interface TarefaDoEscritorio {
+  id: number
+  title: string
+  icon: React.ElementType
+  action: string
+  actionLabel: string
+  priority: "high" | "medium" | "low"
+}
+
+/** As tarefas que NAO fazem sentido em cada modalidade, por rota de destino. */
+const TAREFAS_FORA_DA_MODALIDADE: Record<string, string[]> = {
+  // Na base nao se compra atleta nem se marca amistoso de pre-temporada de
+  // profissional: o calendario e o da categoria e o elenco vem de dentro de casa.
+  sub20: ["/mercado", "/amistosos"],
+  // O atleta nao gere elenco, nao cuida de contrato alheio e nao abre mercado.
+  jogador: ["/mercado", "/amistosos", "/elenco", "/competicoes"],
+}
+
+/**
+ * O ESCRITORIO DE CADA CARREIRA.
+ *
+ * ⚠️ Tira o que nao e daquele trabalho e poe o que e. A regra da lista original
+ * continua valendo aqui: tarefa que aponta para tela que nao serve aquela
+ * carreira e pior do que tarefa nenhuma, porque ensina o jogador a ignorar o
+ * escritorio inteiro.
+ */
+function adaptarTarefasAModalidade(
+  tarefas: TarefaDoEscritorio[],
+  modalidade: string,
+): TarefaDoEscritorio[] {
+  const fora = TAREFAS_FORA_DA_MODALIDADE[modalidade] ?? []
+  const restantes = tarefas.filter(t => !fora.includes(t.action))
+
+  if (modalidade === "sub20") {
+    restantes.push({
+      id: 201,
+      title: "Promover garotos ao profissional",
+      icon: TrendingUp,
+      action: "/base/carreira",
+      actionLabel: "Ver a base",
+      priority: "high",
+    })
+    return restantes
+  }
+
+  if (modalidade === "jogador") {
+    // O escritorio do ATLETA: o que ele de fato decide na semana.
+    return [
+      {
+        id: 301,
+        title: "Sua semana de treino",
+        icon: Dumbbell,
+        action: "/carreira/jogador?aba=treino",
+        actionLabel: "Definir intensidade",
+        priority: "high",
+      },
+      {
+        id: 302,
+        title: "Conversas e entrevistas",
+        icon: MessageSquare,
+        action: "/carreira/jogador?aba=conversas",
+        actionLabel: "Responder",
+        priority: "medium",
+      },
+      {
+        id: 303,
+        title: "Propostas e contrato",
+        icon: FileText,
+        action: "/carreira/jogador?aba=propostas",
+        actionLabel: "Ver propostas",
+        priority: "medium",
+      },
+      {
+        id: 304,
+        title: "Sua carreira",
+        icon: Trophy,
+        action: "/carreira/jogador",
+        actionLabel: "Abrir",
+        priority: "low",
+      },
+      ...restantes.filter(t => t.action === "/partida"),
+    ]
+  }
+
+  return restantes
+}
 
 const WEEKDAYS = ["DOMINGO", "SEGUNDA-FEIRA", "TERCA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA", "SABADO"]
 const MONTHS = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
@@ -94,6 +184,8 @@ export default function PreOfficePage() {
   // pre-office o tecnico ainda esta no fluxo de criacao, e salvar gravava um
   // slot vazio que aparecia em "Carregar" sem temporada nenhuma.
   const { state: estadoSalvo, setState: setEstadoSalvo } = useGameState()
+  const modalidade = modalidadeDoSave(estadoSalvo)
+  const tomDaCarreira = tomDaModalidade(modalidade)
   useEffect(() => {
     if (!hydrated) return
     if (!estadoSalvo.selectedTeamShort || estadoSalvo.preOfficeVisitado) return
@@ -182,14 +274,7 @@ export default function PreOfficePage() {
     if (!userTeam) return []
     const engineWeek = gameEngine.currentWeek
     const engineSeason = gameEngine.currentSeason
-    const tasks: Array<{
-      id: number
-      title: string
-      icon: React.ElementType
-      action: string
-      actionLabel: string
-      priority: "high" | "medium" | "low"
-    }> = []
+    const tasks: TarefaDoEscritorio[] = []
 
     // FIM DE TEMPORADA. Sem partida marcada, a lista ficava sem o item principal
     // e o tecnico nao tinha por onde seguir — nao havia como iniciar o ano
@@ -314,8 +399,19 @@ export default function PreOfficePage() {
       priority: "low"
     })
 
-    return tasks
-  }, [gameEngine.squadPlayers, gameEngine.transferOffers, gameEngine.currentWeek, nextUserMatch, userTeam, estadoSalvo.renewalStatus])
+    // ⚠️ O ESCRITORIO ERA SO DO TECNICO PROFISSIONAL (corrigido na 1.0.348).
+    //
+    // A lista acima nasceu para um clube masculino de Serie A e era servida
+    // igual a todo mundo: quem dirige o Sub-20 recebia "Ofertas de
+    // Transferencia" e "Marcar amistosos da pre-temporada" como se comandasse um
+    // profissional, e quem faz carreira de ATLETA recebia tarefas de treinador —
+    // gerir elenco, cuidar de contrato, abrir o mercado. Nenhuma delas e o
+    // trabalho dele.
+    //
+    // Aqui a lista passa pela modalidade antes de ir para a tela. Ver
+    // lib/tom-da-modalidade.
+    return adaptarTarefasAModalidade(tasks, modalidade)
+  }, [gameEngine.squadPlayers, gameEngine.transferOffers, gameEngine.currentWeek, nextUserMatch, userTeam, estadoSalvo.renewalStatus, modalidade])
 
   // A tarefa de virar a temporada nao e uma rota: precisa RODAR o avanco, que e
   // quem apura campeao, acesso/rebaixamento e monta o calendario novo.
@@ -485,8 +581,10 @@ export default function PreOfficePage() {
               {/* Lista de Tarefas dinamica */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
+                  {/* O escritorio diz de quem ele e: quem dirige o Sub-20 le
+                      "o Sub-20", e quem faz carreira de atleta nao le "elenco". */}
                   <h2 className="text-white/50 text-sm font-medium">
-                    Lista de Tarefas ({realTasks.length})
+                    Tarefas {tomDaCarreira.deQuem} ({realTasks.length})
                   </h2>
                   {saveState.week > 0 && (
                     <span className="text-xs text-white/30">Rodada {saveState.week}</span>

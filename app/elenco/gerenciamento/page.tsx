@@ -160,34 +160,35 @@ function faixaPorOverall(overall: number): FaixaDaCarta {
  * que preto puro, e é o que a referência usa.
  */
 const ESTILO_DA_FAIXA: Record<FaixaDaCarta, {
-  fundo: string
-  brilho: string
-  facetas: string
+  /**
+   * ⚠️ UMA ARTE, TRES FAIXAS. A imagem que o usuario mandou e DOURADA, e o jogo
+   * tem tres patamares. Repintar a mesma arte por filtro mantem o mesmo metal,
+   * o mesmo recorte e o mesmo relevo nos tres — e evita pedir duas artes novas
+   * so para bronze e preta. `none` no ouro porque ali a arte ja e o que deve ser.
+   */
+  filtroDaArte: string
   destaque: string
   tintaNaTarja: string
   texto: string
 }> = {
   preta: {
     // Grafite: o patamar mais alto é o mais sóbrio, como nas cartas especiais.
-    fundo: "linear-gradient(160deg, #4a4d59 0%, #2a2c35 34%, #16171d 62%, #33353f 100%)",
-    brilho: "linear-gradient(118deg, transparent 34%, rgba(255,255,255,.20) 46%, transparent 58%)",
-    facetas: "rgba(255,255,255,.22)",
+    // Tira a cor e escurece, preservando o relevo que a arte tem.
+    filtroDaArte: "grayscale(1) brightness(.42) contrast(1.25)",
     destaque: "#0e0f14",
     tintaNaTarja: "#f4f5f7",
     texto: "#f2f3f7",
   },
   dourada: {
-    fundo: "linear-gradient(160deg, #f6e6a8 0%, #e6c76a 34%, #c9a24b 62%, #eddc9a 100%)",
-    brilho: "linear-gradient(118deg, transparent 34%, rgba(255,255,255,.55) 46%, transparent 58%)",
-    facetas: "rgba(255,255,255,.45)",
+    // A arte E dourada: aqui ela vai como veio.
+    filtroDaArte: "none",
     destaque: "#7a5a06",
     tintaNaTarja: "#4a3405",
     texto: "#4a3405",
   },
   bronze: {
-    fundo: "linear-gradient(160deg, #e3b48c 0%, #c68a5c 34%, #9a5b2d 62%, #d9a377 100%)",
-    brilho: "linear-gradient(118deg, transparent 34%, rgba(255,255,255,.42) 46%, transparent 58%)",
-    facetas: "rgba(255,255,255,.38)",
+    // Puxa o ouro para o cobre e baixa um pouco o brilho.
+    filtroDaArte: "hue-rotate(-24deg) saturate(1.18) brightness(.88)",
     destaque: "#5f3417",
     tintaNaTarja: "#fdf1e6",
     texto: "#4a2711",
@@ -195,30 +196,11 @@ const ESTILO_DA_FAIXA: Record<FaixaDaCarta, {
 }
 
 /**
- * O RECORTE DA CARTA — o octógono alongado da referência.
- *
- * Vive fora do componente porque é usado no `clip-path` da casca E na moldura
- * interna (`::before` do protótipo, aqui um segundo elemento): as duas PRECISAM
- * ser o mesmo polígono, e duas cópias divergiriam no primeiro ajuste.
+ * ⚠️ O RECORTE POLIGONAL SAIU NA 1.0.348. A silhueta agora vem do ALFA da arte
+ * (`public/cartas/carta-base.webp`), que tem ombros entalhados e ponta na base —
+ * um desenho que o `polygon()` antigo nao reproduzia. Se algum dia a arte voltar
+ * a ser CSS, o historico do git tem o poligono e o motivo do afunilamento em 82%.
  */
-/**
- * ⚠️ O AFUNILAMENTO COMEÇAVA EM 64% E A CARTA VAZAVA (corrigido na 1.0.324).
- *
- * Relato do usuário, com print: a grade de atributos aparecia FORA da silhueta,
- * pendurada no vazio abaixo da carta. Não era estilo, era geometria — medido na
- * carta média (88 × 124 px):
- *
- *   y = 87px (70% da altura) → a carta ocupa  9px .. 79px
- *   y = 99px (80% da altura) → a carta ocupa 21px .. 67px
- *   a grade de atributos ocupa                4px .. 84px
- *
- * Ou seja: 17px de sobra de cada lado, justamente onde ficam os números das
- * colunas 1 e 6. Com o afunilamento em 82% os dois lados seguem retos até
- * depois da grade, e a ponta continua existindo nos últimos 17% — que é a
- * silhueta da referência (lados retos, bico curto no pé), não um triângulo que
- * começa no meio da carta.
- */
-const RECORTE_DA_CARTA = "polygon(7% 1%, 43% 1%, 50% 6%, 57% 1%, 93% 1%, 98% 7%, 98% 82%, 50% 99%, 2% 82%, 2% 7%)"
 
 /**
  * As seis siglas do card.
@@ -297,41 +279,26 @@ function CartaDeJogador({
           ? `${nome} — improvisado: ${posicao} jogando de ${slot}. Rende ${overallEfetivo} em vez de ${overall}.`
           : nome}
       >
-        {/* Camada 1: o corpo do metal. */}
+        {/* ⚠️ O CORPO DA CARTA E UMA IMAGEM (1.0.348), a pedido do usuario.
+            Antes eram tres camadas de CSS — degrade, facetas em SVG e brilho
+            diagonal — desenhando metal na mao. A arte que ele mandou ja tem os
+            tres, com um recorte proprio (ombros entalhados e ponta na base) que
+            nenhum `clip-path` poligonal reproduzia.
+
+            O ALFA da imagem e que define a silhueta: por isso nao ha clip-path
+            aqui. E por isso a conversao para WebP precisou de `alphaQuality`
+            alto — sem alfa, a carta viraria um retangulo dourado. */}
         <div
-          className="absolute inset-0"
-          style={{ clipPath: RECORTE_DA_CARTA, background: estilo.fundo }}
+          className="absolute inset-0 bg-[length:100%_100%] bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url(/cartas/carta-base.webp)",
+            filter: estilo.filtroDaArte,
+          }}
         />
-        {/* Camada 2: as FACETAS — as retas que cortam o alto da carta na
-            referência. São o que faz o fundo parecer metal lapidado em vez de
-            um degradê liso, e por isso vivem acima do corpo e abaixo de tudo
-            que é informação. `preserveAspectRatio="none"` para acompanharem o
-            recorte nos dois tamanhos da carta. */}
-        <svg
-          className="pointer-events-none absolute inset-0 h-full w-full"
-          viewBox="0 0 100 140"
-          preserveAspectRatio="none"
-          aria-hidden
-          style={{ clipPath: RECORTE_DA_CARTA }}
-        >
-          <g stroke={estilo.facetas} strokeWidth="0.9" fill="none">
-            <path d="M -5 44 L 105 6" />
-            <path d="M -5 20 L 105 62" />
-            <path d="M 18 -5 L 74 76" />
-            <path d="M 84 -5 L 24 78" />
-            <path d="M -5 70 L 105 30" />
-          </g>
-        </svg>
-        {/* Camada 3: o brilho diagonal, por cima das facetas. */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ clipPath: RECORTE_DA_CARTA, background: estilo.brilho }}
-        />
-        {/* Moldura interna: a linha fina que dá o acabamento de carta. */}
-        <div
-          className="pointer-events-none absolute inset-[3px] border"
-          style={{ clipPath: RECORTE_DA_CARTA, borderColor: `${estilo.destaque}55` }}
-        />
+        {/* As camadas de FACETAS e BRILHO sairam: a arte ja traz as duas, e
+            desenhar por cima dela so sujava o metal. */}
+        {/* A moldura interna tambem saiu: a arte tem a propria borda em relevo,
+            e uma linha desenhada por cima aparecia atravessando a silhueta. */}
 
         {/* OVERALL EFETIVO + slot, no canto que a referência usa.
             Improvisado vira âmbar: é a diferença que explica por que o time
@@ -409,20 +376,19 @@ function CartaDeJogador({
             tarja sólida. A tarja existia para dar contraste sobre o branco;
             sobre o degradê ela viraria uma barra escura no meio da carta,
             justamente onde a referência tem o metal aparecendo. */}
+        {/* ⚠️ MEDIDO NA ARTE, NAO CHUTADO (1.0.348). O painel liso da carta nova
+            comeca a 64% da altura e a ponta comeca a 88%; o nome estava a 53%,
+            ou seja, EM CIMA das facetas — legivel a muito custo e feio de perto.
+            Aqui ele desce para o painel, que e o lugar que a arte reservou.
+            Os dois fios saíram: a arte tem a propria aresta ali, e desenhar
+            outra por cima criava uma linha dupla. Conferido por foto
+            (scripts/foto-da-carta.mjs), nao por suposicao. */}
         <div
-          className="pointer-events-none absolute inset-x-[7px] top-[57px] z-10 h-px md:top-[69px]"
-          style={{ background: `${estilo.destaque}66` }}
-        />
-        <div
-          className="absolute inset-x-[6px] top-[58px] z-10 truncate text-center text-[7.5px] font-black uppercase leading-[12px] tracking-[.02em] md:top-[70px] md:text-[9px] md:leading-[14px]"
+          className="absolute inset-x-[5px] top-[70px] z-10 truncate text-center text-[7.5px] font-black uppercase leading-[11px] tracking-[.01em] md:top-[84px] md:text-[9px] md:leading-[13px]"
           style={{ color: estilo.texto }}
         >
           {nomeCurto}
         </div>
-        <div
-          className="pointer-events-none absolute inset-x-[7px] top-[70px] z-10 h-px md:top-[84px]"
-          style={{ background: `${estilo.destaque}66` }}
-        />
 
         {/* ── OS ATRIBUTOS ─────────────────────────────────────────────────
             UMA linha de seis, sigla em cima e número embaixo: é o desenho da
@@ -432,13 +398,18 @@ function CartaDeJogador({
         {/* `inset-x-[6px]`: as colunas das pontas eram as que encostavam na
             borda inclinada. Dois pixels a mais de cada lado custam nada e tiram
             o número de cima da aresta. */}
-        <div className="absolute inset-x-[6px] top-[74px] z-10 grid grid-cols-6 md:top-[90px]">
+        {/* ⚠️ OS NUMEROS SE ENCOSTAVAM: a foto mostrou "8888" onde deviam estar
+            dois valores de dois digitos. Sao seis colunas em ~76px, e 8,5px de
+            fonte preta nao cabem. Fonte menor e `tracking-tighter` resolvem sem
+            tirar coluna — e a linha desce junto com o nome, para dentro do
+            painel. */}
+        <div className="absolute inset-x-[4px] top-[83px] z-10 grid grid-cols-6 md:top-[99px]">
           {SIGLAS_DOS_ATRIBUTOS.map((sigla, i) => (
             <span key={sigla} className="flex flex-col items-center leading-none">
-              <small className="text-[4px] font-black md:text-[5px]" style={{ color: `${estilo.texto}b3` }}>
+              <small className="text-[3.5px] font-black md:text-[4.5px]" style={{ color: `${estilo.texto}b3` }}>
                 {sigla}
               </small>
-              <b className="mt-[1px] text-[7px] font-black md:text-[8.5px]" style={{ color: estilo.texto }}>
+              <b className="mt-[1px] text-[6.5px] font-black tracking-tighter md:text-[7.5px]" style={{ color: estilo.texto }}>
                 {atributos[i] ?? "—"}
               </b>
             </span>

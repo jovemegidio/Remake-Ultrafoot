@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[254],{6254:(e,n,p)=>{p.d(n,{openUrl:()=>a});var u=p(6479);async function a(e,n){await (0,u.invoke)("plugin:opener|open_url",{url:e,with:n})}}}]);

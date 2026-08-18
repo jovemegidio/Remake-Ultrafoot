@@ -25,6 +25,7 @@ import {
 import { confiancaPorArea, areaMaisFragil } from "@/lib/confianca-da-diretoria"
 import { aberturaDaDiretoria } from "@/lib/conversa-diretoria"
 import { allTeams } from "@/lib/teams-data"
+import { semearMotorDePartida } from "@/lib/match-engine"
 import {
   criarAtletaDaCarreira, criarCarreiraDeJogador, jogarProximaRodada, encerrarTemporada,
   type EstadoCarreiraDeJogador,
@@ -163,6 +164,12 @@ const ok = (m: string) => console.log("ok   " + m)
     nome: "Teste Modalidade", posicao: "MEI", idade: 24, nacionalidade: "Brasil",
     pePreferido: "direito", alturaCm: 178, pesoKg: 72, numero: 8,
   })
+  // ⚠️ SEM SEMENTE, ESTE GATE MENTE. A partida usa `Math.random()` no jogo — e
+  // deve mesmo —, entao duas execucoes seguidas davam veredictos DIFERENTES:
+  // numa o atleta recebia a bracadeira, na outra nao, e o gate reprovava por
+  // sorte, nao por defeito. Um teste instavel e pior que teste nenhum, porque
+  // ensina a ignorar reprovacao. O motor ja expoe a semente exatamente para isto.
+  semearMotorDePartida(20260818)
   let carreira: EstadoCarreiraDeJogador = criarCarreiraDeJogador(clube, atleta, "Brasileirao Serie A", 2026)
 
   let lesoes = 0
@@ -207,6 +214,7 @@ const ok = (m: string) => console.log("ok   " + m)
   // criterio de personalidade tao alto que a bracadeira NUNCA saia — um atleta
   // que chegou a nota 100 em seis temporadas no mesmo clube seguia sem capitania.
   // Um teste que aceita o silencio nao testa nada.
+  semearMotorDePartida(null)
   if (!carreira.capitao) {
     erro("seis temporadas de titular no mesmo clube e nenhuma bracadeira — a capitania nao acontece")
   } else {

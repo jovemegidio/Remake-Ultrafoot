@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[5275,[],"ViewportBoundary"]
+3:I[5275,[],"MetadataBoundary"]
+4:"$Sreact.suspense"
+5:I[1090,[],"IconMark"]
+0:{"rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#0b1220"}],["$","meta","3",{"name":"color-scheme","content":"dark"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Ultrafoot — Launcher oficial do football manager"}],["$","meta","1",{"name":"description","content":"Baixe, atualize e acompanhe as novidades do Ultrafoot, o simulador definitivo de football manager, em um launcher rápido e seguro."}],["$","meta","2",{"name":"generator","content":"v0.app"}],["$","link","3",{"rel":"icon","href":"/games/ultrafoot-icon.png"}],["$","$L5","4",{}]]}]}]}],null]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"2-HL61rIUmUUMLZ_OOT0p"}
