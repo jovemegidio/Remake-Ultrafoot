@@ -102,7 +102,7 @@ export function BarraDeTitulo({
   return (
     <div
       data-tauri-drag-region
-      className="relative z-[250] flex h-9 shrink-0 select-none items-center justify-between border-b border-white/[0.06] bg-[#05090b] px-3"
+      className="relative z-[250] flex h-9 shrink-0 select-none items-center justify-between border-b border-white/[0.06] bg-background px-3"
     >
       {/* O texto também arrasta: barra em que só o vazio arrasta é a pegadinha
           clássica de janela sem decoração. */}

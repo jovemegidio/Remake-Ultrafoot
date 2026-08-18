@@ -32,6 +32,10 @@ const MarketNotificationsBridge = dynamic(() => import("@/components/market-noti
 const FinanceInfraNotificationsBridge = dynamic(() => import("@/components/finance-infra-notifications-bridge").then(m => m.FinanceInfraNotificationsBridge), { ssr: false })
 const SeasonReviewBridge = dynamic(() => import("@/components/season-review-bridge").then(m => m.SeasonReviewBridge), { ssr: false })
 const BenchTalk = dynamic(() => import("@/components/bench-talk").then(m => m.BenchTalk), { ssr: false })
+// Publica no mural do FC Hub o que a carreira conquista (titulo, acesso,
+// contratacao de peso). Global pelo mesmo motivo das outras pontes: preso a
+// uma tela, quase nada seria publicado.
+const HubAtividadeBridge = dynamic(() => import("@/components/hub-atividade-bridge").then(m => m.HubAtividadeBridge), { ssr: false })
 
 export function CarreiraAtiva() {
   const { state, hydrated } = useGameState()
@@ -49,6 +53,7 @@ export function CarreiraAtiva() {
       <FinanceInfraNotificationsBridge />
       <SeasonReviewBridge />
       <BenchTalk />
+      <HubAtividadeBridge />
     </>
   )
 }

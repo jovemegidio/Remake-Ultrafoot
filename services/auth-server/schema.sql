@@ -27,7 +27,12 @@ CREATE TABLE IF NOT EXISTS contas (
   -- contexto e ninguem consegue revisar a decisao depois.
   motivo_bloqueio TEXT NOT NULL DEFAULT '',
   bloqueada_em   INTEGER,
-  admin          INTEGER NOT NULL DEFAULT 0
+  admin          INTEGER NOT NULL DEFAULT 0,
+  -- Codigo de amigo (7KM2-49XB): o identificador curto que a pessoa passa para
+  -- quem quer adiciona-la, como o Riot ID. NULO ate ela pedir o dela — e por
+  -- isso o UNIQUE mora num indice PARCIAL, criado pelo servidor: varios NULL
+  -- precisam conviver.
+  codigo_amigo   TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_contas_google ON contas(google_sub);
@@ -142,6 +147,14 @@ CREATE TABLE IF NOT EXISTS presenca (
   nome      TEXT    NOT NULL DEFAULT '',
   clube     TEXT    NOT NULL DEFAULT '',
   situacao  TEXT    NOT NULL DEFAULT '',
+  -- O que a pessoa está fazendo agora, em uma linha pronta para a tela
+  -- ("Flamengo 2 × 1 Palmeiras · 67'"). `atividade` é o mesmo em código
+  -- (partida, mercado, treino…) para a interface escolher ícone e cor sem
+  -- tentar interpretar texto. `origem` separa quem está no jogo de quem só
+  -- abriu o launcher — chamar alguém para jogar vira loteria sem isso.
+  detalhe   TEXT    NOT NULL DEFAULT '',
+  atividade TEXT    NOT NULL DEFAULT '',
+  origem    TEXT    NOT NULL DEFAULT '',
   visto_em  INTEGER NOT NULL
 );
 
@@ -301,3 +314,80 @@ CREATE TABLE IF NOT EXISTS licencas (
 );
 
 CREATE INDEX IF NOT EXISTS idx_licencas_conta ON licencas(conta_id);
+
+-- ─── Amizades ────────────────────────────────────────────────────────────────
+--
+-- Uma LINHA POR PAR, com `a_id < b_id` sempre (ver `_par` no servidor). Guardar
+-- as duas direções pareceria mais simples, mas abre a porta para o estado ficar
+-- meio-aceito: A vê B como amigo e B não vê A. Com par canônico isso é
+-- impossível — só existe um registro para decidir.
+--
+-- `pedido_por` é quem mandou o convite. É o que permite mostrar "aguardando
+-- resposta" para um lado e "responder" para o outro sem uma coluna extra, e o
+-- que impede a pessoa de aceitar o próprio pedido.
+CREATE TABLE IF NOT EXISTS amizades (
+  a_id          INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  b_id          INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  estado        TEXT    NOT NULL DEFAULT 'pendente',   -- pendente | aceita
+  pedido_por    INTEGER NOT NULL,
+  criada_em     INTEGER NOT NULL,
+  respondida_em INTEGER,
+  PRIMARY KEY (a_id, b_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_amizades_b ON amizades(b_id, estado);
+
+-- Bloqueio é de MÃO ÚNICA e independente da amizade: quem bloqueia deixa de
+-- receber pedido e mensagem daquela conta, e o bloqueado não é avisado (avisar
+-- transforma o bloqueio em convite para criar outra conta e insistir).
+CREATE TABLE IF NOT EXISTS bloqueios (
+  conta_id INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  alvo_id  INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  quando   INTEGER NOT NULL,
+  PRIMARY KEY (conta_id, alvo_id)
+);
+
+-- ─── Mensagens diretas ───────────────────────────────────────────────────────
+--
+-- Conversa privada entre DUAS contas amigas. Diferente do chat do saguão, isto
+-- NÃO é descartável: quem manda "topa uma liga sábado?" espera que a mensagem
+-- ainda esteja lá quando o outro abrir o launcher amanhã. Por isso a limpeza é
+-- por CONVERSA (as últimas N de cada par), e não um teto global — senão duas
+-- pessoas conversando apagariam a conversa de todas as outras.
+--
+-- `lida_em` é NULO enquanto o destinatário não abriu: é dele que sai o "2 não
+-- lidas" no ícone. Só o destinatário marca como lida.
+CREATE TABLE IF NOT EXISTS mensagens (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,
+  de_id    INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  para_id  INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  texto    TEXT    NOT NULL,
+  quando   INTEGER NOT NULL,
+  lida_em  INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_mensagens_par ON mensagens(de_id, para_id, id DESC);
+CREATE INDEX IF NOT EXISTS idx_mensagens_caixa ON mensagens(para_id, lida_em);
+
+-- ─── Mural de atividade ──────────────────────────────────────────────────────
+--
+-- "O que os outros estão fazendo no Ultrafoot" que SOBREVIVE a estar offline.
+-- Presença responde "quem está online AGORA" e some em 90s; título ganho,
+-- contratação e virada de temporada são justamente o que a pessoa quer ver
+-- quando abre o launcher depois de dois dias.
+--
+-- Quem publica é o JOGO, em eventos que ele já conhece. `chave` existe para o
+-- mesmo evento não entrar duas vezes quando o jogador reabre um save antigo ou
+-- a resposta se perde e o cliente repete.
+CREATE TABLE IF NOT EXISTS feed (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,
+  conta_id INTEGER NOT NULL REFERENCES contas(id) ON DELETE CASCADE,
+  tipo     TEXT    NOT NULL DEFAULT '',   -- titulo | contratacao | temporada | partida | marco
+  texto    TEXT    NOT NULL,
+  clube    TEXT    NOT NULL DEFAULT '',
+  chave    TEXT    NOT NULL DEFAULT '',
+  quando   INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_feed_conta ON feed(conta_id, id DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_feed_chave ON feed(conta_id, chave) WHERE chave <> '';

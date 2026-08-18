@@ -49,15 +49,15 @@ export function GameHero({
   const displaySizeMb = live?.sizeMb || game.sizeMb
   const downloadSizeMb = live?.sizeMb || latest?.sizeMb || game.sizeMb
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#07100f] shadow-[0_28px_90px_rgba(0,0,0,.35)]">
+    <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-card shadow-[0_28px_90px_rgba(0,0,0,.35)]">
       <div className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {/* A arte tem o tecnico a DIREITA e o gramado a esquerda. O veu era pensado
             para a arte antiga (clara, assunto ao centro) e nesta apagava o campo
             inteiro — por isso ele agora e leve e so na faixa do texto. */}
         <img src="/games/ultrafoot-hero.png" alt="" className="h-full w-full object-cover object-[62%_center]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#05090b] via-[#05090b]/55 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#05090b] via-[#05090b]/45 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/55 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/45 to-transparent" />
       </div>
 
       <div className="relative flex min-h-[520px] flex-col justify-end gap-4 p-6 md:p-10">

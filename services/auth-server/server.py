@@ -63,6 +63,15 @@ PRESENCA_JANELA = 90
 CHAT_INTERVALO = 2      # segundos entre mensagens da mesma conta
 CHAT_LIMITE = 300       # mensagens guardadas no total
 
+# Mensagem direta: mais frouxa que o chat do saguao (conversa a dois tem ritmo de
+# conversa), mas ainda com freio — sem ele um cliente com defeito enche o banco.
+DM_INTERVALO = 1        # segundos entre mensagens diretas da mesma conta
+DM_LIMITE = 400         # mensagens guardadas POR CONVERSA, nao no total
+FEED_LIMITE = 40        # eventos de mural guardados por conta
+AMIGOS_MAX = 300        # teto de amizades aceitas por conta
+PEDIDOS_MAX = 60        # teto de pedidos PENDENTES enviados por conta
+BUSCA_MIN = 3           # letras minimas para procurar alguem pelo nome
+
 # A VPS roda em UTC, mas quem le o painel esta no Brasil. Sem um fuso explicito,
 # "contas de hoje" viraria "contas desde as 21h de ontem" e o grafico por dia
 # ficaria com as barras deslocadas. -3 e o horario de Brasilia (sem horario de
@@ -106,6 +115,10 @@ def iniciar_banco() -> None:
         for coluna, definicao in (
             ("telefone", "TEXT NOT NULL DEFAULT ''"),
             ("ativado", "INTEGER NOT NULL DEFAULT 0"),
+            # Codigo de amigo (7KM2-49XB). NULO ate a conta pedir o dela pela
+            # primeira vez: gerar para as milhares de contas existentes num
+            # ALTER seria trabalho para quem talvez nunca use o FC Hub.
+            ("codigo_amigo", "TEXT"),
             ("licenca_serie", "INTEGER"),
             ("licenca_lote", "INTEGER"),
             ("asaas_cliente", "TEXT"),
@@ -117,6 +130,26 @@ def iniciar_banco() -> None:
         # nunca foi guardada e nao da para inventar depois. O painel mostra "—".
         if "forma" not in _colunas(con, "pedidos"):
             con.execute("ALTER TABLE pedidos ADD COLUMN forma TEXT NOT NULL DEFAULT ''")
+
+        # UNIQUE por indice parcial, e nao na coluna: o SQLite nao aceita
+        # ALTER TABLE ... ADD COLUMN UNIQUE, e varios NULL precisam conviver
+        # (todas as contas que ainda nao pediram codigo).
+        con.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_contas_codigo"
+                    " ON contas(codigo_amigo) WHERE codigo_amigo IS NOT NULL")
+
+        # PRESENCA RICA. `situacao` sozinha so dizia "Em carreira"; quem abre o
+        # FC Hub quer saber o que a pessoa esta fazendo AGORA (que partida, que
+        # tela, se esta no launcher ou no jogo). Colunas novas em tabela que ja
+        # existe precisam de ALTER: o CREATE TABLE IF NOT EXISTS do schema nao
+        # toca em tabela criada antes, e o banco de producao ja tem presenca.
+        presenca = _colunas(con, "presenca")
+        for coluna, definicao in (
+            ("detalhe", "TEXT NOT NULL DEFAULT ''"),
+            ("atividade", "TEXT NOT NULL DEFAULT ''"),
+            ("origem", "TEXT NOT NULL DEFAULT ''"),
+        ):
+            if presenca and coluna not in presenca:
+                con.execute(f"ALTER TABLE presenca ADD COLUMN {coluna} {definicao}")
 
 
 # ─── Codigo de ativacao ───────────────────────────────────────────────────────
@@ -636,6 +669,95 @@ def trocar_codigo_google(code: str, verifier: str, redirect_uri: str) -> dict | 
     return info
 
 
+# ─── FC Hub social: amizades, mensagens e mural ───────────────────────────────
+#
+# AMIZADE E UM PAR, NAO DUAS LINHAS. Guardar "A e amigo de B" e "B e amigo de A"
+# separados permite o estado meio-aceito — A ve B na lista e B nao ve A —, e nao
+# ha consulta que conserte isso depois. Com par canonico (`a_id < b_id`) existe
+# um unico registro para decidir, e aceitar e um UPDATE, nao dois INSERTs.
+
+
+def _par(a: int, b: int) -> tuple:
+    return (a, b) if a < b else (b, a)
+
+
+def _amizade(con, a: int, b: int):
+    x, y = _par(a, b)
+    return con.execute("SELECT * FROM amizades WHERE a_id = ? AND b_id = ?", (x, y)).fetchone()
+
+
+def sao_amigos(con, a: int, b: int) -> bool:
+    linha = _amizade(con, a, b)
+    return bool(linha and linha["estado"] == "aceita")
+
+
+def ha_bloqueio(con, a: int, b: int) -> bool:
+    """True se QUALQUER um dos dois bloqueou o outro.
+
+    O bloqueio e declarado por um lado so, mas corta o contato nos DOIS sentidos:
+    de nada adianta parar de receber de alguem e continuar podendo mandar.
+    """
+    return con.execute(
+        "SELECT 1 FROM bloqueios WHERE (conta_id = ? AND alvo_id = ?)"
+        " OR (conta_id = ? AND alvo_id = ?)", (a, b, b, a)).fetchone() is not None
+
+
+def nome_publico(linha) -> str:
+    """Como a pessoa aparece para os outros.
+
+    Cai para a parte local do e-mail quando nao ha nome — nunca para o e-mail
+    inteiro: a lista de online e publica para quem tem conta, e ela nao pode
+    virar um catalogo de enderecos.
+    """
+    nome = (linha["nome"] or "").strip()
+    if nome:
+        return nome[:40]
+    return (linha["email"] or "?").split("@")[0][:40]
+
+
+def formatar_codigo_amigo(cru: str) -> str:
+    """`7KM249XB` -> `7KM2-49XB`. O traco e so para ler e ditar."""
+    return f"{cru[:4]}-{cru[4:]}" if len(cru) == 8 else cru
+
+
+def normalizar_codigo_amigo(bruto: str) -> str:
+    """Aceita como a pessoa colar: com traco, minusculo, com espaco."""
+    limpo = re.sub(r"[^0-9A-Za-z]", "", bruto or "").upper()
+    # Confusoes classicas de quem DITA o codigo. O alfabeto Crockford nao tem
+    # I, L, O nem U justamente para isto; aqui fechamos o circulo aceitando o
+    # engano em vez de responder "nao encontrado".
+    tabela = str.maketrans({"I": "1", "L": "1", "O": "0", "U": "V"})
+    return limpo.translate(tabela)
+
+
+def garantir_codigo_amigo(con, conta_id: int) -> str:
+    """Codigo desta conta, criando-o na primeira vez que alguem pergunta.
+
+    O UNIQUE do indice e quem garante que nao ha dois iguais — nao a raridade do
+    sorteio. Duas contas pedindo ao mesmo tempo: uma insere, a outra falha e
+    tenta de novo, em vez de as duas acharem que ficaram com o mesmo codigo.
+    """
+    linha = con.execute("SELECT codigo_amigo FROM contas WHERE id = ?", (conta_id,)).fetchone()
+    if linha and linha["codigo_amigo"]:
+        return formatar_codigo_amigo(linha["codigo_amigo"])
+    for _ in range(12):
+        cru = "".join(secrets.choice(ALFABETO) for _ in range(8))
+        try:
+            con.execute("UPDATE contas SET codigo_amigo = ? WHERE id = ?", (cru, conta_id))
+            return formatar_codigo_amigo(cru)
+        except sqlite3.IntegrityError:
+            continue
+    return ""
+
+
+def ids_amigos(con, conta_id: int) -> list:
+    linhas = con.execute(
+        "SELECT CASE WHEN a_id = ? THEN b_id ELSE a_id END AS outro"
+        " FROM amizades WHERE (a_id = ? OR b_id = ?) AND estado = 'aceita'",
+        (conta_id, conta_id, conta_id)).fetchall()
+    return [l["outro"] for l in linhas]
+
+
 # ─── HTTP ─────────────────────────────────────────────────────────────────────
 
 class Handler(BaseHTTPRequestHandler):
@@ -732,8 +854,19 @@ class Handler(BaseHTTPRequestHandler):
                     "ativado": bool(conta["ativado"]),
                     "pagamento_ligado": bool(ASAAS_TOKEN),
                 })
-        if self.path.split("?")[0] == "/hub/chat":
+        rota_get = self.path.split("?")[0]
+        if rota_get == "/hub/chat":
             return self._chat_ler()
+        if rota_get == "/hub/amigos":
+            return self._amigos()
+        if rota_get == "/hub/perfil":
+            return self._perfil()
+        if rota_get == "/hub/buscar":
+            return self._buscar_pessoas()
+        if rota_get == "/hub/dm":
+            return self._dm_ler()
+        if rota_get == "/hub/feed":
+            return self._feed_ler()
         if self.path == "/saves":
             with conectar() as con:
                 conta = conta_da_sessao(con, self._token())
@@ -789,6 +922,18 @@ class Handler(BaseHTTPRequestHandler):
             return self._presenca(corpo)
         if rota == "/hub/chat":
             return self._chat_enviar(corpo)
+        if rota == "/hub/amigos/pedir":
+            return self._amigo_pedir(corpo)
+        if rota == "/hub/amigos/responder":
+            return self._amigo_responder(corpo)
+        if rota == "/hub/amigos/remover":
+            return self._amigo_remover(corpo)
+        if rota == "/hub/bloquear":
+            return self._bloquear(corpo)
+        if rota == "/hub/dm":
+            return self._dm_enviar(corpo)
+        if rota == "/hub/feed":
+            return self._feed_publicar(corpo)
         if rota == "/saves/registrar":
             return self._registrar_save(corpo)
         if rota == "/saves/esquecer":
@@ -1101,29 +1246,55 @@ class Handler(BaseHTTPRequestHandler):
             if not conta:
                 return self._responder(401, {"erro": "sessao invalida"})
             agora = int(time.time())
-            nome = (corpo.get("nome") or conta["nome"] or conta["email"].split("@")[0])[:40]
+            nome = (corpo.get("nome") or "").strip()[:40] or nome_publico(conta)
             clube = (corpo.get("clube") or "")[:40]
             situacao = (corpo.get("situacao") or "")[:60]
+            # O QUE A PESSOA ESTA FAZENDO. `detalhe` ja vem pronto para a tela
+            # ("Flamengo 2 x 1 Palmeiras - 67'"); `atividade` e o mesmo em codigo,
+            # para a interface escolher icone sem interpretar texto; `origem`
+            # separa quem esta no jogo de quem so abriu o launcher.
+            detalhe = (corpo.get("detalhe") or "")[:80]
+            atividade = (corpo.get("atividade") or "")[:24]
+            origem = (corpo.get("origem") or "")[:16]
             con.execute(
-                "INSERT INTO presenca (conta_id, nome, clube, situacao, visto_em)"
-                " VALUES (?,?,?,?,?)"
+                "INSERT INTO presenca (conta_id, nome, clube, situacao, detalhe, atividade, origem, visto_em)"
+                " VALUES (?,?,?,?,?,?,?,?)"
                 " ON CONFLICT(conta_id) DO UPDATE SET nome=excluded.nome, clube=excluded.clube,"
-                " situacao=excluded.situacao, visto_em=excluded.visto_em",
-                (conta["id"], nome, clube, situacao, agora))
+                " situacao=excluded.situacao, detalhe=excluded.detalhe, atividade=excluded.atividade,"
+                " origem=excluded.origem, visto_em=excluded.visto_em",
+                (conta["id"], nome, clube, situacao, detalhe, atividade, origem, agora))
 
             corte = agora - PRESENCA_JANELA
             # Limpa o que envelheceu aqui mesmo: sem isso a tabela so cresce e a
             # consulta abaixo teria de filtrar uma lista cada vez maior.
             con.execute("DELETE FROM presenca WHERE visto_em < ?", (agora - 3600,))
             linhas = con.execute(
-                "SELECT p.conta_id, p.nome, p.clube, p.situacao, p.visto_em"
+                "SELECT p.conta_id, p.nome, p.clube, p.situacao, p.detalhe, p.atividade,"
+                " p.origem, p.visto_em"
                 " FROM presenca p JOIN contas c ON c.id = p.conta_id"
                 " WHERE p.visto_em >= ? AND c.bloqueada = 0"
                 " ORDER BY p.visto_em DESC LIMIT 200",
                 (corte,)).fetchall()
+
+            # A BATIDA JA TRAZ O CONTADOR. Sem isto, o launcher precisaria de uma
+            # segunda sondagem so para saber se ha pedido de amizade ou mensagem
+            # nova — o dobro de requisicoes para mostrar um numerinho.
+            amigos = set(ids_amigos(con, conta["id"]))
+            pedidos = self._um(
+                con, "SELECT COUNT(*) FROM amizades WHERE estado = 'pendente'"
+                " AND pedido_por <> ? AND (a_id = ? OR b_id = ?)",
+                conta["id"], conta["id"], conta["id"])
+            nao_lidas = self._um(
+                con, "SELECT COUNT(*) FROM mensagens WHERE para_id = ? AND lida_em IS NULL",
+                conta["id"])
         return self._responder(200, {
             "eu": conta["id"],
             "online": [dict(l) for l in linhas],
+            # Quem da lista de online e amigo. A interface destaca os amigos sem
+            # ter de cruzar com outra chamada.
+            "amigos_online": [l["conta_id"] for l in linhas if l["conta_id"] in amigos],
+            "pedidos": pedidos,
+            "nao_lidas": nao_lidas,
         })
 
     def _chat_enviar(self, corpo: dict):
@@ -1168,6 +1339,390 @@ class Handler(BaseHTTPRequestHandler):
                 " ORDER BY id DESC LIMIT 60", (desde,)).fetchall()
         # Devolvemos em ordem cronologica: quem consome so anexa no fim da lista.
         return self._responder(200, {"mensagens": [dict(l) for l in reversed(linhas)]})
+
+    # ── FC Hub social: amigos, mensagens diretas e mural ──
+    #
+    # A REGRA QUE SUSTENTA TUDO: mensagem direta so entre AMIGOS ACEITOS, e
+    # pedido de amizade so para quem nao bloqueou. Sem isso, qualquer conta nova
+    # mandaria mensagem para qualquer pessoa da lista de online — que e publica
+    # para quem tem conta — e o saguao viraria canal de spam sem volta.
+
+    def _conta_ou_401(self, con):
+        conta = conta_da_sessao(con, self._token())
+        if not conta:
+            self._responder(401, {"erro": "sessao invalida"})
+            return None
+        return conta
+
+    def _perfil(self):
+        """Quem sou eu no FC Hub — inclusive o codigo que dou para os amigos."""
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            codigo = garantir_codigo_amigo(con, conta["id"])
+        return self._responder(200, {
+            "conta_id": conta["id"],
+            "nome": nome_publico(conta),
+            "codigo_amigo": codigo,
+        })
+
+    def _amigos(self):
+        """Lista de amigos com presenca, nao lidas e pedidos em aberto.
+
+        Uma chamada so de proposito: a tela de amigos precisa das tres coisas ao
+        mesmo tempo, e tres rotas separadas triplicariam a sondagem sem entregar
+        nada a mais.
+        """
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            eu = conta["id"]
+            corte = int(time.time()) - PRESENCA_JANELA
+            amigos = con.execute(
+                "SELECT c.id AS conta_id, c.nome, c.email,"
+                " COALESCE(p.clube, '') AS clube, COALESCE(p.situacao, '') AS situacao,"
+                " COALESCE(p.detalhe, '') AS detalhe, COALESCE(p.atividade, '') AS atividade,"
+                " COALESCE(p.origem, '') AS origem, COALESCE(p.visto_em, 0) AS visto_em,"
+                " (SELECT COUNT(*) FROM mensagens m WHERE m.de_id = c.id AND m.para_id = ?"
+                "   AND m.lida_em IS NULL) AS nao_lidas,"
+                " (SELECT m2.texto FROM mensagens m2 WHERE (m2.de_id = c.id AND m2.para_id = ?)"
+                "   OR (m2.de_id = ? AND m2.para_id = c.id) ORDER BY m2.id DESC LIMIT 1) AS ultima,"
+                " (SELECT m3.quando FROM mensagens m3 WHERE (m3.de_id = c.id AND m3.para_id = ?)"
+                "   OR (m3.de_id = ? AND m3.para_id = c.id) ORDER BY m3.id DESC LIMIT 1) AS ultima_em"
+                " FROM amizades a"
+                " JOIN contas c ON c.id = CASE WHEN a.a_id = ? THEN a.b_id ELSE a.a_id END"
+                " LEFT JOIN presenca p ON p.conta_id = c.id"
+                " WHERE (a.a_id = ? OR a.b_id = ?) AND a.estado = 'aceita' AND c.bloqueada = 0"
+                " ORDER BY p.visto_em DESC",
+                (eu, eu, eu, eu, eu, eu, eu, eu)).fetchall()
+
+            pendentes = con.execute(
+                "SELECT a.pedido_por, a.criada_em, c.id AS conta_id, c.nome, c.email"
+                " FROM amizades a"
+                " JOIN contas c ON c.id = CASE WHEN a.a_id = ? THEN a.b_id ELSE a.a_id END"
+                " WHERE (a.a_id = ? OR a.b_id = ?) AND a.estado = 'pendente' AND c.bloqueada = 0"
+                " ORDER BY a.criada_em DESC",
+                (eu, eu, eu)).fetchall()
+
+            bloqueados = con.execute(
+                "SELECT c.id AS conta_id, c.nome, c.email FROM bloqueios b"
+                " JOIN contas c ON c.id = b.alvo_id WHERE b.conta_id = ?", (eu,)).fetchall()
+
+        def amigo(l):
+            return {
+                "conta_id": l["conta_id"],
+                "nome": nome_publico(l),
+                "online": l["visto_em"] >= corte,
+                "clube": l["clube"],
+                "situacao": l["situacao"],
+                "detalhe": l["detalhe"],
+                "atividade": l["atividade"],
+                "origem": l["origem"],
+                "visto_em": l["visto_em"],
+                "nao_lidas": l["nao_lidas"],
+                "ultima": l["ultima"] or "",
+                "ultima_em": l["ultima_em"] or 0,
+            }
+
+        return self._responder(200, {
+            "eu": eu,
+            "amigos": [amigo(l) for l in amigos],
+            # Recebidos = alguem pediu e cabe a mim responder. Enviados = ja
+            # pedi e estou esperando. Sao listas diferentes porque os botoes sao
+            # diferentes: uma tem "aceitar", a outra so "cancelar".
+            "recebidos": [{"conta_id": l["conta_id"], "nome": nome_publico(l), "quando": l["criada_em"]}
+                          for l in pendentes if l["pedido_por"] != eu],
+            "enviados": [{"conta_id": l["conta_id"], "nome": nome_publico(l), "quando": l["criada_em"]}
+                         for l in pendentes if l["pedido_por"] == eu],
+            "bloqueados": [{"conta_id": l["conta_id"], "nome": nome_publico(l)} for l in bloqueados],
+        })
+
+    def _buscar_pessoas(self):
+        """Procura alguem para adicionar.
+
+        E-MAIL SO CASA EXATO, e o e-mail nunca volta na resposta. Busca por
+        pedaco de e-mail deixaria qualquer pessoa varrer a base atras de contas
+        alheias; casar exato so confirma o que quem procura ja sabia.
+        """
+        parametros = urllib.parse.parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
+        alvo = (parametros.get("q", [""])[0] or "").strip()
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            eu = conta["id"]
+            if len(alvo) < BUSCA_MIN:
+                return self._responder(200, {"pessoas": [], "erro": f"digite ao menos {BUSCA_MIN} letras"})
+            codigo = normalizar_codigo_amigo(alvo)
+            # CODIGO ANTES DE TUDO: e o caminho que a pessoa usa quando ja sabe
+            # quem procura. Cair na busca por nome com um codigo digitado daria
+            # "ninguem encontrado" para um codigo perfeitamente valido.
+            if len(codigo) == 8 and all(c in ALFABETO for c in codigo):
+                linhas = con.execute(
+                    "SELECT id AS conta_id, nome, email FROM contas"
+                    " WHERE codigo_amigo = ? AND bloqueada = 0 AND id <> ?",
+                    (codigo, eu)).fetchall()
+            elif EMAIL_RE.match(alvo):
+                linhas = con.execute(
+                    "SELECT id AS conta_id, nome, email FROM contas"
+                    " WHERE email = ? AND bloqueada = 0 AND id <> ?",
+                    (normalizar_email(alvo), eu)).fetchall()
+            else:
+                linhas = con.execute(
+                    "SELECT id AS conta_id, nome, email FROM contas"
+                    " WHERE bloqueada = 0 AND id <> ? AND nome <> '' AND nome LIKE ?"
+                    " ORDER BY nome LIMIT 20",
+                    (eu, f"%{alvo}%")).fetchall()
+
+            pessoas = []
+            for l in linhas:
+                if ha_bloqueio(con, eu, l["conta_id"]):
+                    continue   # bloqueado nao aparece, nem para quem bloqueou
+                liga = _amizade(con, eu, l["conta_id"])
+                if liga is None:
+                    relacao = "nenhuma"
+                elif liga["estado"] == "aceita":
+                    relacao = "amigo"
+                elif liga["pedido_por"] == eu:
+                    relacao = "enviado"
+                else:
+                    relacao = "recebido"
+                pessoas.append({"conta_id": l["conta_id"], "nome": nome_publico(l), "relacao": relacao})
+        return self._responder(200, {"pessoas": pessoas})
+
+    def _amigo_pedir(self, corpo: dict):
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            eu = conta["id"]
+            alvo = corpo.get("conta_id")
+            if not alvo and corpo.get("codigo"):
+                codigo = normalizar_codigo_amigo(str(corpo["codigo"]))
+                linha = con.execute("SELECT id FROM contas WHERE codigo_amigo = ?",
+                                    (codigo,)).fetchone()
+                alvo = linha["id"] if linha else None
+            if not alvo and corpo.get("email"):
+                linha = con.execute("SELECT id FROM contas WHERE email = ?",
+                                    (normalizar_email(str(corpo["email"])),)).fetchone()
+                alvo = linha["id"] if linha else None
+            try:
+                alvo = int(alvo)
+            except (TypeError, ValueError):
+                # MESMA resposta de "conta nao encontrada": distinguir permitiria
+                # descobrir quais e-mails tem conta, um pedido de cada vez.
+                return self._responder(404, {"erro": "não encontramos essa pessoa"})
+            if alvo == eu:
+                return self._responder(400, {"erro": "esse é você"})
+            destino = con.execute("SELECT id, nome, email, bloqueada FROM contas WHERE id = ?",
+                                  (alvo,)).fetchone()
+            if not destino or destino["bloqueada"]:
+                return self._responder(404, {"erro": "não encontramos essa pessoa"})
+            if ha_bloqueio(con, eu, alvo):
+                # Nao dizemos "voce foi bloqueado": isso avisa o bloqueado a criar
+                # outra conta e insistir. Do lado de fora parece um pedido enviado.
+                return self._responder(201, {"ok": True, "estado": "pendente"})
+
+            atual = _amizade(con, eu, alvo)
+            if atual and atual["estado"] == "aceita":
+                return self._responder(200, {"ok": True, "estado": "aceita"})
+            if atual and atual["pedido_por"] != eu:
+                # ELE JA TINHA PEDIDO. Pedir de volta E aceitar — obrigar a pessoa
+                # a achar o pedido na outra aba seria só burocracia.
+                x, y = _par(eu, alvo)
+                con.execute("UPDATE amizades SET estado = 'aceita', respondida_em = ?"
+                            " WHERE a_id = ? AND b_id = ?", (int(time.time()), x, y))
+                return self._responder(200, {"ok": True, "estado": "aceita"})
+            if atual:
+                return self._responder(200, {"ok": True, "estado": "pendente"})
+
+            quantos = self._um(con, "SELECT COUNT(*) FROM amizades"
+                               " WHERE estado = 'aceita' AND (a_id = ? OR b_id = ?)", eu, eu)
+            if quantos >= AMIGOS_MAX:
+                return self._responder(409, {"erro": "sua lista de amigos está cheia"})
+            abertos = self._um(con, "SELECT COUNT(*) FROM amizades"
+                               " WHERE estado = 'pendente' AND pedido_por = ?", eu)
+            if abertos >= PEDIDOS_MAX:
+                # Freio de spam: sem ele uma conta manda pedido para a base toda.
+                return self._responder(429, {"erro": "muitos pedidos aguardando resposta"})
+
+            x, y = _par(eu, alvo)
+            con.execute("INSERT INTO amizades (a_id, b_id, estado, pedido_por, criada_em)"
+                        " VALUES (?,?,'pendente',?,?)", (x, y, eu, int(time.time())))
+        return self._responder(201, {"ok": True, "estado": "pendente"})
+
+    def _amigo_responder(self, corpo: dict):
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            eu = conta["id"]
+            try:
+                alvo = int(corpo.get("conta_id"))
+            except (TypeError, ValueError):
+                return self._responder(400, {"erro": "pedido inválido"})
+            atual = _amizade(con, eu, alvo)
+            if not atual or atual["estado"] != "pendente":
+                return self._responder(404, {"erro": "esse pedido não existe mais"})
+            if atual["pedido_por"] == eu:
+                # Aceitar o proprio pedido criaria amizade de um lado so.
+                return self._responder(403, {"erro": "quem responde é a outra pessoa"})
+            x, y = _par(eu, alvo)
+            if corpo.get("aceitar"):
+                con.execute("UPDATE amizades SET estado = 'aceita', respondida_em = ?"
+                            " WHERE a_id = ? AND b_id = ?", (int(time.time()), x, y))
+                return self._responder(200, {"ok": True, "estado": "aceita"})
+            # Recusa APAGA o registro em vez de guardar "recusado": senao a pessoa
+            # nunca mais poderia pedir, e mudar de ideia e comum.
+            con.execute("DELETE FROM amizades WHERE a_id = ? AND b_id = ?", (x, y))
+        return self._responder(200, {"ok": True, "estado": "nenhuma"})
+
+    def _amigo_remover(self, corpo: dict):
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            try:
+                alvo = int(corpo.get("conta_id"))
+            except (TypeError, ValueError):
+                return self._responder(400, {"erro": "pedido inválido"})
+            x, y = _par(conta["id"], alvo)
+            con.execute("DELETE FROM amizades WHERE a_id = ? AND b_id = ?", (x, y))
+        # As mensagens ficam: desfazer amizade nao e apagar o que foi dito, e
+        # refazer a amizade devolve a conversa onde parou.
+        return self._responder(200, {"ok": True, "estado": "nenhuma"})
+
+    def _bloquear(self, corpo: dict):
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            eu = conta["id"]
+            try:
+                alvo = int(corpo.get("conta_id"))
+            except (TypeError, ValueError):
+                return self._responder(400, {"erro": "pedido inválido"})
+            if alvo == eu:
+                return self._responder(400, {"erro": "esse é você"})
+            if corpo.get("bloquear", True):
+                con.execute("INSERT OR IGNORE INTO bloqueios (conta_id, alvo_id, quando)"
+                            " VALUES (?,?,?)", (eu, alvo, int(time.time())))
+                # Bloquear DESFAZ a amizade: continuar amigo de quem foi bloqueado
+                # deixaria a pessoa na lista sem poder falar — parece defeito.
+                x, y = _par(eu, alvo)
+                con.execute("DELETE FROM amizades WHERE a_id = ? AND b_id = ?", (x, y))
+            else:
+                con.execute("DELETE FROM bloqueios WHERE conta_id = ? AND alvo_id = ?", (eu, alvo))
+        return self._responder(200, {"ok": True})
+
+    def _dm_ler(self):
+        parametros = urllib.parse.parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
+        try:
+            com = int(parametros.get("com", ["0"])[0])
+            desde = int(parametros.get("desde", ["0"])[0])
+        except ValueError:
+            return self._responder(400, {"erro": "pedido inválido"})
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            eu = conta["id"]
+            if not sao_amigos(con, eu, com):
+                return self._responder(403, {"erro": "vocês não são amigos"})
+            linhas = con.execute(
+                "SELECT id, de_id, para_id, texto, quando, lida_em FROM mensagens"
+                " WHERE id > ? AND ((de_id = ? AND para_id = ?) OR (de_id = ? AND para_id = ?))"
+                " ORDER BY id DESC LIMIT 80",
+                (desde, eu, com, com, eu)).fetchall()
+            # ABRIR A CONVERSA E LER. Marcamos so o que veio DELE: marcar as
+            # minhas zeraria o "nao lida" do outro lado sem ele ter visto nada.
+            con.execute("UPDATE mensagens SET lida_em = ? WHERE para_id = ? AND de_id = ?"
+                        " AND lida_em IS NULL", (int(time.time()), eu, com))
+        return self._responder(200, {"mensagens": [dict(l) for l in reversed(linhas)]})
+
+    def _dm_enviar(self, corpo: dict):
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            eu = conta["id"]
+            try:
+                para = int(corpo.get("para"))
+            except (TypeError, ValueError):
+                return self._responder(400, {"erro": "pedido inválido"})
+            texto = (corpo.get("texto") or "").strip()[:500]
+            if not texto:
+                return self._responder(400, {"erro": "mensagem vazia"})
+            if not sao_amigos(con, eu, para):
+                return self._responder(403, {"erro": "vocês não são amigos"})
+            if ha_bloqueio(con, eu, para):
+                return self._responder(403, {"erro": "não é possível enviar para essa pessoa"})
+            agora = int(time.time())
+            ultima = con.execute("SELECT quando FROM mensagens WHERE de_id = ?"
+                                 " ORDER BY id DESC LIMIT 1", (eu,)).fetchone()
+            if ultima and agora - ultima["quando"] < DM_INTERVALO:
+                return self._responder(429, {"erro": "espere um instante antes de enviar de novo"})
+            con.execute("INSERT INTO mensagens (de_id, para_id, texto, quando) VALUES (?,?,?,?)",
+                        (eu, para, texto, agora))
+            # Limpeza POR CONVERSA. Um teto global faria duas pessoas conversando
+            # apagarem a conversa de todo mundo.
+            con.execute(
+                "DELETE FROM mensagens WHERE ((de_id = ? AND para_id = ?) OR (de_id = ? AND para_id = ?))"
+                " AND id <= (SELECT MAX(id) - ? FROM mensagens"
+                "            WHERE (de_id = ? AND para_id = ?) OR (de_id = ? AND para_id = ?))",
+                (eu, para, para, eu, DM_LIMITE, eu, para, para, eu))
+        return self._responder(201, {"ok": True})
+
+    def _feed_ler(self):
+        """Mural: o que os amigos andaram fazendo, inclusive offline.
+
+        Presenca responde "quem esta jogando agora" e some em 90 segundos. Titulo
+        ganho, contratacao e virada de temporada e o que a pessoa quer ver quando
+        abre o launcher depois de dois dias — e isso precisa sobreviver.
+        """
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            eu = conta["id"]
+            ids = ids_amigos(con, eu) + [eu]
+            marcas = ",".join("?" * len(ids))
+            linhas = con.execute(
+                f"SELECT f.id, f.conta_id, f.tipo, f.texto, f.clube, f.quando, c.nome, c.email"
+                f" FROM feed f JOIN contas c ON c.id = f.conta_id"
+                f" WHERE f.conta_id IN ({marcas}) AND c.bloqueada = 0"
+                f" ORDER BY f.id DESC LIMIT 60", ids).fetchall()
+        return self._responder(200, {"eventos": [{
+            "id": l["id"], "conta_id": l["conta_id"], "nome": nome_publico(l),
+            "tipo": l["tipo"], "texto": l["texto"], "clube": l["clube"], "quando": l["quando"],
+        } for l in linhas]})
+
+    def _feed_publicar(self, corpo: dict):
+        with conectar() as con:
+            conta = self._conta_ou_401(con)
+            if not conta:
+                return
+            eu = conta["id"]
+            texto = (corpo.get("texto") or "").strip()[:140]
+            if not texto:
+                return self._responder(400, {"erro": "evento vazio"})
+            chave = (corpo.get("chave") or "")[:60]
+            agora = int(time.time())
+            try:
+                con.execute("INSERT INTO feed (conta_id, tipo, texto, clube, chave, quando)"
+                            " VALUES (?,?,?,?,?,?)",
+                            (eu, (corpo.get("tipo") or "")[:20], texto,
+                             (corpo.get("clube") or "")[:40], chave, agora))
+            except sqlite3.IntegrityError:
+                # Mesma `chave` de novo: o jogo reabriu um save e republicou o
+                # que ja estava la. Sucesso do ponto de vista de quem chamou.
+                return self._responder(200, {"ok": True, "repetido": True})
+            con.execute(
+                "DELETE FROM feed WHERE conta_id = ? AND id <= "
+                "(SELECT MAX(id) - ? FROM feed WHERE conta_id = ?)", (eu, FEED_LIMITE, eu))
+        return self._responder(201, {"ok": True})
 
     # ── Catalogo de saves da conta ──
     #

@@ -5,10 +5,13 @@ import type { GameWithReleases, NewsWithGame, ReleaseWithChangelog } from "@/lib
 import { GameHero } from "./game-hero"
 import { NewsFeed } from "./news-feed"
 import { ChangelogView } from "./changelog-view"
+import { RailDireita } from "./rail-direita"
 import { SecurityPanel } from "./security-panel"
 import { SettingsDialog } from "./settings-dialog"
 import { AuthDialog } from "./auth-dialog"
 import { SocialPanel } from "./social-panel"
+import { ligarHub, usePresencaDoHub } from "@/lib/hub-store"
+import { ChatDock } from "./chat-dock"
 import { StorePanel } from "./store-panel"
 import { sessaoSalva, sair, revalidar, type Sessao } from "@/lib/auth"
 import {
@@ -678,6 +681,25 @@ export function LauncherShell({
     runInstall(url)
   }, [install.downloading, logado, online, latest.url, game.latestRelease?.downloadUrl, runInstall])
 
+  // PRESENCA DO LAUNCHER INTEIRO, numa sondagem so.
+  //
+  // A batida vivia dentro do painel do FC Hub: a pessoa so aparecia online
+  // enquanto AQUELA aba estivesse aberta, e em Inicio ou Loja sumia da lista dos
+  // outros com o launcher aberto na frente dela. Agora quem sonda e o
+  // `lib/hub-store`, e ele serve o painel da direita, a doca de conversa e a aba
+  // do FC Hub com a MESMA resposta — inclusive pedidos de amizade e nao lidas,
+  // que alimentam o selo vermelho sem uma segunda requisicao.
+  //
+  // ⚠️ Desligar quando nao ha sessao/rede/servidor tambem LIMPA o estado: manter
+  // a lista de amigos de quem acabou de sair mostraria dado alheio para a
+  // proxima pessoa a entrar.
+  const servidorNoAr = serverStatus?.online ?? false
+  useEffect(() => {
+    ligarHub(Boolean(sessao) && online && servidorNoAr)
+  }, [sessao, online, servidorNoAr])
+  const presencaHub = usePresencaDoHub()
+  const avisosDoHub = (presencaHub?.pedidos ?? 0) + (presencaHub?.nao_lidas ?? 0)
+
   const tabs: { key: Tab; label: string; icon: typeof Home }[] = [
     { key: "home", label: t("nav.inicio"), icon: Home },
     { key: "loja", label: t("nav.loja"), icon: ShoppingBag },
@@ -824,7 +846,7 @@ export function LauncherShell({
       {/* NAVEGACAO LATERAL — padrao de launcher de plataforma (Epic, EA App).
           As abas horizontais viviam no header e faziam a tela parecer um site;
           na lateral, o conteudo ganha a largura toda e a navegacao fica fixa. */}
-      <aside className="relative z-20 flex w-[76px] shrink-0 flex-col items-center gap-1 border-r border-white/[0.07] bg-[#070b0d]/95 py-4 backdrop-blur-xl lg:w-[210px] lg:items-stretch lg:px-3">
+      <aside className="relative z-20 flex w-[76px] shrink-0 flex-col items-center gap-1 border-r border-white/[0.07] bg-background/95 py-4 backdrop-blur-xl lg:w-[210px] lg:items-stretch lg:px-3">
         <div className="mb-5 flex items-center gap-2.5 px-1 lg:px-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/games/ultrafoot-logo.png" alt="Ultrafoot 26" className="h-9 w-auto object-contain" />
@@ -855,9 +877,54 @@ export function LauncherShell({
               )} />
               <item.icon className="h-[18px] w-[18px] shrink-0" />
               <span className="hidden lg:inline">{item.label}</span>
+              {/* Pedido de amizade e mensagem nova avisam na lateral: quem esta
+                  em Inicio nao tem por que adivinhar que ha algo no FC Hub. Na
+                  barra estreita (sem rotulo) o selo vira um ponto no canto. */}
+              {item.key === "social" && avisosDoHub > 0 && (
+                <span className="absolute right-2 top-2 rounded-full bg-red-500/90 px-1.5 text-[10px] font-black text-white lg:static lg:ml-auto">
+                  <span className="hidden lg:inline">{avisosDoHub}</span>
+                  <span className="lg:hidden">&nbsp;</span>
+                </span>
+              )}
             </button>
           )
         })}
+
+        {/* JOGOS INSTALADOS — a secao que faltava para a lateral responder
+            "o que eu tenho aqui?" sem trocar de aba.
+            ⚠️ So aparece com o jogo INSTALADO: uma secao com titulo e nada
+            embaixo e pior que secao nenhuma, e no modo estreito (76px) ela
+            viraria um titulo cortado sem item visivel. */}
+        {install.installed && (
+          <div className="mt-5 hidden w-full lg:block">
+            <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
+              Jogos instalados
+            </p>
+            <button
+              onClick={() => setTab("home")}
+              className={cn(
+                "flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors",
+                tab === "home" ? "bg-white/[0.06]" : "hover:bg-white/[0.04]",
+              )}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/games/ultrafoot-logo.png" alt="" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[12px] font-medium text-foreground">{game.name}</span>
+                <span className="block truncate text-[10px] text-primary">
+                  {jogo?.rodando
+                    ? "Jogando agora"
+                    : install.downloading
+                      ? "Baixando…"
+                      : status === "update"
+                        ? "Atualização disponível"
+                        : `v${install.version ?? game.latestRelease?.version ?? ""}`}
+                </span>
+              </span>
+            </button>
+          </div>
+        )}
+
 
         {/* PERFIL NO RODAPE DA LATERAL — e onde EA App e Epic colocam a conta.
             Fica sempre visivel, sem competir com os botoes de acao do topo. */}
@@ -913,7 +980,7 @@ export function LauncherShell({
       </aside>
 
       <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-      <header className="relative z-10 flex shrink-0 flex-col border-b border-white/[0.07] bg-[#080d0f]/88 px-4 backdrop-blur-xl md:px-6">
+      <header className="relative z-10 flex shrink-0 flex-col border-b border-white/[0.07] bg-background/88 px-4 backdrop-blur-xl md:px-6">
         <div className="flex h-16 items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div>
@@ -972,12 +1039,18 @@ export function LauncherShell({
 
       </header>
 
-      <CommunityBar config={config} serverStatus={serverStatus} onOpen={openExternal} />
+      <CommunityBar config={config} serverStatus={serverStatus} tecnicosOnline={presencaHub?.online.length} onOpen={openExternal} />
 
       <div className="relative z-[1] flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-[1500px] flex-col gap-6 p-4 md:p-6 lg:p-8">
+            {/* ⚠️ A COLUNA DE NOTICIAS SO VOLTA EM 2xl (1536px+).
+                O painel da direita ocupa 248px em xl (1280px). Com a lateral de
+                210px, sobravam ~820px para hero + 360px de noticias — o hero
+                ficava com 460px e a arte do jogo espremida. Agora, entre 1280 e
+                1536, o hero pega a largura toda e as noticias descem para
+                baixo dele; a partir de 1536 as duas colunas cabem de novo. */}
           {tab === "home" && (
-            <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="grid items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
               <GameHero
                 game={game}
                 status={status}
@@ -1004,6 +1077,7 @@ export function LauncherShell({
 
           {tab === "social" && (
             <SocialPanel
+              presenca={presencaHub}
               sessao={sessao}
               prefs={prefs}
               serverStatus={serverStatus}
@@ -1032,6 +1106,21 @@ export function LauncherShell({
         </div>
       </div>
       </div>
+
+      {/* O painel da direita acompanha TODAS as abas: conta e quem esta online
+          sao as duas coisas que dizem se da para jogar com alguem agora, e
+          antes sumiam assim que se saia da Inicio. Ver rail-direita.tsx. */}
+      <RailDireita
+        sessao={sessao}
+        serverStatus={serverStatus}
+        comRede={online}
+        onEntrar={() => setShowAuth(true)}
+        onAbrirHub={() => setTab("social")}
+      />
+
+      {/* CONVERSA FLUTUANTE, como nos launchers grandes: acompanha a pessoa por
+          Loja, Changelog e download em vez de morrer ao trocar de aba. */}
+      <ChatDock />
       </div>
     </div>
   )

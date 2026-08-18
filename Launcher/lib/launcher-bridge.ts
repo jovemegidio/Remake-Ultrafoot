@@ -523,7 +523,15 @@ export type VersaoDisponivel = {
   manifesto: string | null
 }
 
-/** Versões às quais dá para voltar quando a mais nova sai com defeito. */
+/**
+ * Versões às quais dá para voltar quando a mais nova sai com defeito.
+ *
+ * ⚠️ Este wrapper e o comando Rust existiam desde sempre e NUNCA devolveram
+ * nada: o `latest.json` publicado não trazia o campo `anteriores` e nenhuma tela
+ * chamava a função. Três pontas do mesmo recurso, soltas — o comando, o dado e a
+ * interface. `scripts/listar-versoes-anteriores.mjs` fechou a de cima e a aba
+ * Gerenciar fechou a de baixo.
+ */
 export async function versoesAnteriores(): Promise<VersaoDisponivel[]> {
   if (!isTauri()) return []
   try {

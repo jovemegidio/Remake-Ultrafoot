@@ -28,6 +28,8 @@ import {
   type OnlineSession,
 } from "@/lib/online-multiplayer"
 import { HubOnlineChat } from "@/components/hub-online-chat"
+import { HubAmigos, type SecaoDoHub } from "@/components/hub-amigos"
+import { atividadeDaRota } from "@/lib/hub-social"
 import { HubCampeonato } from "@/components/hub-campeonato"
 import { HubDraft } from "@/components/hub-draft"
 import type { AtletaDoDraft } from "@/lib/draft-online"
@@ -47,6 +49,8 @@ import {
   type InternetRoomSocket,
   type InternetSession,
 } from "@/lib/internet-multiplayer"
+import { competicoesDaModalidadeOnline, type ModalidadeOnline } from "@/lib/competicoes-online"
+import { NIVEIS, type NivelDeDificuldade } from "@/lib/dificuldade"
 
 const TOTAL_PLAYTIME_KEY = "ultrafoot:playtime:total-seconds"
 const SESSION_START_KEY = "ultrafoot:playtime:session-start"
@@ -147,6 +151,8 @@ export function FcHub() {
   const [internetJoinCode, setInternetJoinCode] = useState("")
   const [relayUrl, setRelayUrl] = useState("")
   const [onlineLeague, setOnlineLeague] = useState("brasileirao_a")
+  const [onlineModalidade, setOnlineModalidade] = useState<ModalidadeOnline>("profissional")
+  const [onlineDifficulty, setOnlineDifficulty] = useState<NivelDeDificuldade>("normal")
   const [onlineSpeed, setOnlineSpeed] = useState<"normal" | "rapida">("normal")
   const [roundDeadline, setRoundDeadline] = useState<24 | 48 | 72 | 168>(72)
   const [allowSpectators, setAllowSpectators] = useState(true)
@@ -159,6 +165,26 @@ export function FcHub() {
   const { state } = useGameState()
   const { team } = useUserTeam()
   const pathname = usePathname()
+  const competicoesOnline = competicoesDaModalidadeOnline(onlineModalidade)
+
+  useEffect(() => {
+    const sugerida: ModalidadeOnline = state.managingNationalTeamId
+      ? "selecao"
+      : state.modalidade === "feminino"
+        ? "feminino"
+        : state.modalidade === "sub20"
+          ? "sub20"
+          : state.modalidade === "jogador" && state.carreiraDeJogador?.atleta.genero === "feminino"
+            ? "feminino"
+            : "profissional"
+    setOnlineModalidade(sugerida)
+    setOnlineDifficulty(state.dificuldade ?? "normal")
+  }, [state.managingNationalTeamId, state.modalidade, state.dificuldade, state.carreiraDeJogador?.atleta.genero])
+
+  useEffect(() => {
+    const primeira = competicoesDaModalidadeOnline(onlineModalidade)[0]
+    if (primeira && !competicoesDaModalidadeOnline(onlineModalidade).some(item => item.id === onlineLeague)) setOnlineLeague(primeira.id)
+  }, [onlineModalidade, onlineLeague])
 
   useEffect(() => {
     setOnline(restoreOnlineSession())
@@ -375,15 +401,19 @@ export function FcHub() {
     )
   }
 
-  const hubTabs = [
-    { id: "friends", label: "Amigos", icon: Users, target: "hub-friends" },
-    { id: "groups", label: "Grupo", icon: Users, target: "hub-groups" },
-    { id: "messages", label: "Mensagens", icon: MessagesSquare, target: "hub-discord" },
-    { id: "requests", label: "Solicitações", icon: Inbox, target: "hub-friends" },
-    { id: "search", label: "Buscar pessoas", icon: Search, target: "hub-discord" },
+  // AS ABAS DE AMIGOS APONTAM PARA A CONTA DO ULTRAFOOT, nao para o Discord.
+  // "Mensagens", "Solicitacoes" e "Buscar pessoas" levavam ao botao de abrir o
+  // Discord — ou seja, quem nao usa Discord clicava e nao acontecia nada util.
+  const hubTabs: { id: string; label: string; icon: typeof Users; target: string; secao?: SecaoDoHub }[] = [
+    { id: "friends", label: "Amigos", icon: Users, target: "hub-friends", secao: "amigos" },
+    { id: "messages", label: "Mensagens", icon: MessagesSquare, target: "hub-friends", secao: "amigos" },
+    { id: "requests", label: "Solicitações", icon: Inbox, target: "hub-friends", secao: "pedidos" },
+    { id: "search", label: "Buscar pessoas", icon: Search, target: "hub-friends", secao: "buscar" },
+    { id: "activity", label: "Atividade", icon: Clock3, target: "hub-friends", secao: "mural" },
+    { id: "groups", label: "Liga online", icon: Wifi, target: "hub-groups" },
     { id: "club", label: "Meu clube", icon: ShieldCheck, target: "hub-club" },
-    { id: "recent", label: "Recentes", icon: Clock3, target: "hub-groups" },
   ]
+  const secaoDeAmigos: SecaoDoHub = hubTabs.find(tab => tab.id === hubTab)?.secao ?? "amigos"
   const goToSection = (id: string, target: string) => {
     setHubTab(id)
     window.setTimeout(() => document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0)
@@ -402,7 +432,7 @@ export function FcHub() {
       </nav>
       <section className="grid min-h-0 flex-1 lg:grid-cols-[260px_1fr]">
         <aside className="hidden min-h-0 overflow-y-auto border-r border-white/[0.10] bg-black/[.10] p-4 lg:block">
-          <p className="mb-3 text-[9px] font-black uppercase tracking-[.18em] text-white/30">Online · {onlineFriends.length}</p>
+          <p className="mb-3 text-[9px] font-black uppercase tracking-[.18em] text-white/30">Discord · {onlineFriends.length} online</p>
           <div className="space-y-1.5">
             <div className="flex items-center gap-2.5 rounded-lg bg-[var(--brand)]/7 p-2"><div className="grid h-8 w-8 place-items-center rounded-full bg-[var(--brand)]/15 text-xs font-black text-[var(--brand)]">{(state.managerName || "T").slice(0,1)}</div><div className="min-w-0"><p className="truncate text-xs font-bold text-white">{state.managerName || "Técnico"}</p><p className="truncate text-[9px] text-emerald-300">No {team.nome}</p></div></div>
             {onlineFriends.map(friend => <div key={friend.id} className="flex items-center gap-2.5 rounded-lg p-2 hover:bg-white/[0.04]"><img src={friend.avatarUrl} alt="" className="h-8 w-8 rounded-full"/><div className="min-w-0"><p className="truncate text-xs font-semibold text-white/80">{friend.displayName}</p><p className="text-[9px] text-emerald-300">● Jogando Ultrafoot</p></div></div>)}
@@ -419,6 +449,8 @@ export function FcHub() {
           <HubOnlineChat
             clube={team.nome}
             situacao={state.nationalCareer?.nationalTeamName ? "Comandando selecao" : "Em carreira"}
+            detalhe={presenceFor(pathname, state, team.nome, livePresence).details}
+            atividade={atividadeDaRota(pathname)}
           />
         </div>
 
@@ -443,9 +475,19 @@ export function FcHub() {
           {!internet ? <div className="mt-4 space-y-3">
             <input value={relayUrl} onChange={event => setRelayUrl(event.target.value)} placeholder="https://relay.ultrafoot..." aria-label="Endereço do relay público" className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs text-white outline-none focus:border-violet-300/60"/>
             <div className="grid gap-2 sm:grid-cols-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Modalidade
+                <select value={onlineModalidade} onChange={event => setOnlineModalidade(event.target.value as ModalidadeOnline)} className="mt-1 w-full rounded-lg border border-white/10 bg-[#12131a] px-3 py-2 text-xs normal-case text-white">
+                  <option value="profissional">Profissional masculino</option><option value="feminino">Futebol feminino</option><option value="sub20">Categoria Sub-20</option><option value="selecao">Seleções</option>
+                </select>
+              </label>
               <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Liga
                 <select value={onlineLeague} onChange={event => setOnlineLeague(event.target.value)} className="mt-1 w-full rounded-lg border border-white/10 bg-[#12131a] px-3 py-2 text-xs normal-case text-white">
-                  <option value="brasileirao_a">Brasileirão Série A</option><option value="brasileirao_b">Brasileirão Série B</option><option value="premier_league">Premier League</option><option value="la_liga">La Liga</option><option value="serie_a_ita">Serie A</option><option value="bundesliga">Bundesliga</option><option value="ligue_1">Ligue 1</option><option value="champions">Champions League</option>
+                  {competicoesOnline.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                </select>
+              </label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Dificuldade
+                <select value={onlineDifficulty} onChange={event => setOnlineDifficulty(event.target.value as NivelDeDificuldade)} className="mt-1 w-full rounded-lg border border-white/10 bg-[#12131a] px-3 py-2 text-xs normal-case text-white">
+                  {NIVEIS.map(nivel => <option key={nivel.id} value={nivel.id}>{nivel.nome}</option>)}
                 </select>
               </label>
               <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Prazo por rodada
@@ -461,8 +503,8 @@ export function FcHub() {
               <button disabled={internetBusy || !relayUrl || !state.selectedTeamShort} onClick={() => void runInternet(async () => {
                 const { checkForUpdates } = await import("@/lib/updater")
                 if (await checkForUpdates({ silent: true }) === "available") throw new Error("Instale a atualização do jogo/elencos antes de criar o campeonato.")
-                const leagueNames: Record<string, string> = { brasileirao_a: "Brasileirão Série A", brasileirao_b: "Brasileirão Série B", premier_league: "Premier League", la_liga: "La Liga", serie_a_ita: "Serie A", bundesliga: "Bundesliga", ligue_1: "Ligue 1", champions: "Champions League" }
-                return createInternetRoom({ managerName: state.managerName || "Técnico", teamShort: state.selectedTeamShort || team.curto, maxPlayers: 32, mode: "tournament", leagueSettings: { leagueId: onlineLeague, leagueName: leagueNames[onlineLeague] ?? "Liga FC Hub", matchSpeed: onlineSpeed, roundDeadlineHours: roundDeadline, allowSpectators } })
+                const competicao = competicoesOnline.find(item => item.id === onlineLeague)
+                return createInternetRoom({ managerName: state.managerName || "Técnico", teamShort: team.curto || state.selectedTeamShort || "", maxPlayers: 32, mode: "tournament", leagueSettings: { leagueId: onlineLeague, leagueName: competicao?.nome ?? "Liga FC Hub", modalidade: onlineModalidade, dificuldade: onlineDifficulty, matchSpeed: onlineSpeed, roundDeadlineHours: roundDeadline, allowSpectators } })
               })} className="flex items-center justify-center gap-2 rounded-lg bg-violet-300 py-2.5 text-xs font-black text-black disabled:opacity-35">{internetBusy ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <Power className="h-4 w-4"/>}Criar campeonato</button>
               <div className="space-y-2">
                 <div className="flex gap-2">
@@ -502,10 +544,11 @@ export function FcHub() {
             </div>
             {!relayUrl && <p className="rounded-lg border border-amber-300/20 bg-amber-300/5 p-2 text-[11px] text-amber-200">O relay público ainda precisa ser implantado com domínio e TLS antes desta função poder ser liberada aos jogadores.</p>}
           </div> : <div className="mt-4 space-y-3">
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-4">
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Código</p><button onClick={() => void navigator.clipboard.writeText(internet.room.code)} className="mt-1 flex items-center gap-2 text-base font-black tracking-[.18em] text-violet-200">{internet.room.code}<Copy className="h-3 w-3 text-white/40"/></button></div>
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Participantes</p><p className="mt-1 text-base font-black text-white">{internet.room.participants.length}/{internet.room.maxPlayers}</p><p className="text-[9px] text-white/35">mínimo 2 para iniciar</p></div>
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Conexão</p><p className={`mt-1 text-xs font-black ${internetState === "connected" ? "text-emerald-300" : "text-amber-200"}`}>{internetState === "connected" ? "CONECTADO" : internetState.toUpperCase()}</p></div>
+              <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Regra da sala</p><p className="mt-1 text-xs font-black text-violet-200">{internet.room.leagueSettings.modalidade ?? "profissional"}</p><p className="text-[9px] text-white/35">{internet.room.leagueSettings.dificuldade ?? "normal"}</p></div>
             </div>
             <div className="grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">{internet.room.participants.map(participant => <div key={participant.id} className="flex items-center gap-2 rounded-lg bg-black/20 p-2"><span className={`h-2 w-2 rounded-full ${participant.connected ? "bg-emerald-400" : "bg-white/20"}`}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-white">{participant.managerName}{participant.id === internet.room.hostId ? " · host" : ""}</p><p className="text-[9px] text-white/40">{participant.teamShort}</p></div><span className={`text-[9px] font-black ${participant.ready ? "text-emerald-300" : "text-white/30"}`}>{participant.ready ? "PRONTO" : "AGUARDANDO"}</span></div>)}</div>
             {/* DRAFT X DRAFT. Vale ANTES de existir tabela: primeiro cada técnico
@@ -577,11 +620,12 @@ export function FcHub() {
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] text-white/35"><span className="flex items-center gap-1"><Wifi className="h-3 w-3"/>v{ONLINE_GAME_VERSION}</span><span>dados {GAME_DATA_VERSION}</span><span className="font-mono">hash {GAME_DATA_HASH.slice(0,8)}</span></div>
           {onlineError && <p className="mt-3 rounded-lg border border-red-400/20 bg-red-400/5 p-2 text-xs text-red-300">{onlineError}</p>}
         </div> : <div className="rounded-xl border border-cyan-400/15 bg-cyan-400/[.03] p-4 text-xs text-white/50"><b className="text-white">Sala local / LAN</b><p className="mt-1">Disponível no aplicativo instalado. No navegador e no mobile, use a Liga Online Beta acima.</p></div>}
-        <div id="hub-friends" className="scroll-mt-5 rounded-xl border border-white/10 bg-white/[.03] p-4">
-          <div className="flex items-center gap-2 text-white"><Users className="h-4 w-4"/><b>Amigos jogando Ultrafoot</b><span className="ml-auto rounded bg-white/10 px-2 py-0.5 text-xs">{social?.friends.filter(friend => friend.playingUltrafoot).length ?? 0}</span></div>
-          {!social?.authenticated && <p className="mt-2 text-sm text-white/45">Conecte sua conta para carregar sua lista real de amigos. Nenhum usuário fictício é exibido.</p>}
-          {social?.authenticated && social.friends.length === 0 && <p className="mt-2 text-sm text-white/45">Nenhum amigo conectado foi encontrado agora.</p>}
-          <div className="mt-3 space-y-2">{social?.friends.filter(friend => friend.playingUltrafoot).map(friend => <div key={friend.id} className="flex items-center gap-3 rounded-lg bg-black/20 p-2"><img src={friend.avatarUrl} alt="" className="h-9 w-9 rounded-full"/><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{friend.displayName}</p><p className="text-xs text-emerald-400">● Jogando Ultrafoot</p></div></div>)}</div>
+        {/* AMIGOS DE VERDADE. Este bloco mostrava a lista do Discord — vazia
+            para quem nao usa Discord, que e a maioria. Agora e a conta do
+            Ultrafoot: adicionar, conversar em particular e ver o que os amigos
+            andaram fazendo. */}
+        <div id="hub-friends" className="scroll-mt-5">
+          <HubAmigos secao={secaoDeAmigos} />
         </div>
         <div id="hub-club" className="scroll-mt-5 rounded-xl border border-white/10 bg-white/[.03] p-4">
           <div className="flex items-center gap-2 text-white"><Clock3 className="h-4 w-4 text-[var(--brand)]"/><b>Tempo de jogo</b></div>

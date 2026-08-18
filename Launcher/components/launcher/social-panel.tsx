@@ -4,15 +4,16 @@ import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   Users, Wifi, WifiOff, MessageCircle, ExternalLink, KeyRound, LogIn, ShieldCheck,
-  Send, ShieldAlert,
+  Send, ShieldAlert, UserPlus,
 } from "lucide-react"
 import type { LauncherConfig, ServerStatus } from "@/lib/launcher-bridge"
 import type { Sessao } from "@/lib/auth"
 import { iniciais, type Preferencias } from "@/lib/preferencias"
 import {
-  baterPresenca, lerChat, enviarMensagem,
-  type JogadorOnline, type MensagemDoChat,
+  lerChat, enviarMensagem,
+  type MensagemDoChat, type RespostaDePresenca,
 } from "@/lib/hub"
+import { AmigosPanel } from "@/components/launcher/amigos-panel"
 
 /**
  * FC HUB — a aba social do launcher.
@@ -27,6 +28,7 @@ export function SocialPanel({
   serverStatus,
   config,
   ativado,
+  presenca,
   ehAdmin,
   comRede = true,
   onEntrar,
@@ -38,6 +40,13 @@ export function SocialPanel({
   serverStatus: ServerStatus | null
   config: LauncherConfig | null
   ativado: boolean
+  /** Resultado da batida de presença, que agora mora no shell.
+   *
+   *  ⚠️ A BATIDA SAIU DAQUI DE PROPÓSITO. Enquanto ela vivia neste painel, a
+   *  pessoa só aparecia online para os outros ENQUANTO a aba FC Hub estivesse
+   *  aberta — em qualquer outra aba do launcher ela sumia da lista, mesmo com o
+   *  launcher aberto na frente dela. */
+  presenca: RespostaDePresenca | null
   /** false = sem rede (ou modo offline). Presenca e chat sao 100% servidor:
    *  offline a gente PARA de sondar e diz o motivo, em vez de mostrar um saguao
    *  vazio que parece defeito. */
@@ -48,12 +57,20 @@ export function SocialPanel({
   onAtivar: () => void
   onOpen: (url: string) => void
 }) {
-  // PRESENCA E CHAT. Batida a cada 30s (a janela do servidor e 90s, entao ha
-  // folga de sobra para rede ruim) e conversa buscada a cada 5s. Sondagem, e nao
-  // WebSocket, de proposito: o servidor de contas e HTTP simples, sem dependencia
-  // externa, e um saguao nao precisa de tempo real ao segundo.
-  const [naSala, setNaSala] = useState<JogadorOnline[]>([])
-  const [eu, setEu] = useState(0)
+  // CHAT DO SAGUAO, buscado a cada 5s. Sondagem, e nao WebSocket, de proposito:
+  // o servidor de contas e HTTP simples, sem dependencia externa, e um saguao
+  // nao precisa de tempo real ao segundo. (A batida de PRESENCA mora no shell —
+  // ver a propriedade `presenca` acima.)
+  //
+  // SAGUAO x AMIGOS. Sao coisas diferentes: o saguao e publico (quem tem conta
+  // esta la) e a aba de amigos e a sua rede — conversa privada, pedidos e o
+  // mural. Uma tela so, com tudo empilhado, so faria rolagem.
+  const [visao, setVisao] = useState<"saguao" | "amigos">("saguao")
+  // Contadores que a PROPRIA batida de presenca devolve. Sem eles, o launcher
+  // precisaria de uma segunda sondagem so para mostrar um numerinho vermelho.
+  const naSala = presenca?.online ?? []
+  const eu = presenca?.eu ?? 0
+  const avisos = { pedidos: presenca?.pedidos ?? 0, nao_lidas: presenca?.nao_lidas ?? 0 }
   const [mensagens, setMensagens] = useState<MensagemDoChat[]>([])
   const [texto, setTexto] = useState("")
   const [erroChat, setErroChat] = useState("")
@@ -62,21 +79,7 @@ export function SocialPanel({
   const fimDoChat = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!sessao || !comRede) return
-    let vivo = true
-    const bater = async () => {
-      const r = await baterPresenca()
-      if (!vivo || !r) return
-      setEu(r.eu)
-      setNaSala(r.online)
-    }
-    void bater()
-    const t = setInterval(bater, 30_000)
-    return () => { vivo = false; clearInterval(t) }
-  }, [sessao, comRede])
-
-  useEffect(() => {
-    if (!sessao || !comRede) return
+    if (!sessao || !comRede || visao !== "saguao") return
     let vivo = true
     const buscar = async () => {
       const novas = await lerChat(ultimoId.current)
@@ -89,7 +92,7 @@ export function SocialPanel({
     void buscar()
     const t = setInterval(buscar, 5_000)
     return () => { vivo = false; clearInterval(t) }
-  }, [sessao, comRede])
+  }, [sessao, comRede, visao])
 
   useEffect(() => {
     fimDoChat.current?.scrollIntoView({ behavior: "smooth", block: "end" })
@@ -181,6 +184,36 @@ export function SocialPanel({
         </div>
       </section>
 
+      {sessao && comRede && (
+        <div className="flex gap-1 rounded-2xl border border-border bg-card p-1.5">
+          {([
+            { id: "saguao" as const, nome: "Saguão", icone: MessageCircle, contador: 0 },
+            { id: "amigos" as const, nome: "Amigos", icone: UserPlus, contador: avisos.pedidos + avisos.nao_lidas },
+          ]).map(item => {
+            const Icone = item.icone
+            return (
+              <button
+                key={item.id}
+                onClick={() => setVisao(item.id)}
+                className={cn(
+                  "flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors",
+                  visao === item.id ? "bg-primary/12 text-primary" : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
+                )}
+              >
+                <Icone className="h-4 w-4" />{item.nome}
+                {item.contador > 0 && (
+                  <span className="rounded-full bg-red-500/85 px-1.5 text-[10px] font-black text-white">{item.contador}</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {sessao && comRede && visao === "amigos" && (
+        <AmigosPanel temSessao={!!sessao} comRede={comRede} />
+      )}
+
       {!comRede && (
         <section className="flex items-start gap-3 rounded-2xl border border-accent/25 bg-accent/[0.07] p-5">
           <WifiOff className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
@@ -196,7 +229,7 @@ export function SocialPanel({
 
       {/* QUEM ESTA ONLINE + CONVERSA. So aparece com sessao: sem conta nao ha como
           identificar ninguem, e uma lista vazia sem explicacao parece defeito. */}
-      {sessao && comRede ? (
+      {sessao && comRede && visao === "saguao" ? (
         <section className="grid gap-4 lg:grid-cols-[240px_1fr]">
           <div className="rounded-2xl border border-border bg-card p-4">
             <p className="mb-2.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -225,7 +258,7 @@ export function SocialPanel({
                       {j.conta_id === eu && <span className="text-muted-foreground"> (você)</span>}
                     </span>
                     <span className="block truncate text-[10px] text-primary/70">
-                      {j.clube || j.situacao || "No Ultrafoot"}
+                      {j.origem === "launcher" ? "No launcher" : j.detalhe || j.clube || j.situacao || "No Ultrafoot"}
                     </span>
                   </span>
                 </div>

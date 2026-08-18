@@ -23,7 +23,14 @@ import {
 const INTERVALO_PRESENCA = 30_000
 const INTERVALO_CHAT = 5_000
 
-export function HubOnlineChat({ clube, situacao }: { clube: string; situacao: string }) {
+export function HubOnlineChat({ clube, situacao, detalhe = "", atividade = "" }: {
+  clube: string
+  situacao: string
+  /** O que o jogador está fazendo agora, pronto para a tela dos outros. */
+  detalhe?: string
+  /** O mesmo em código (partida, mercado, treino…). */
+  atividade?: string
+}) {
   const [temConta, setTemConta] = useState<boolean | null>(null)
   const [online, setOnline] = useState<JogadorOnline[]>([])
   const [eu, setEu] = useState(0)
@@ -46,7 +53,9 @@ export function HubOnlineChat({ clube, situacao }: { clube: string; situacao: st
     if (!temConta) return
     let vivo = true
     const bater = async () => {
-      const r = await baterPresenca({ clube, situacao })
+      // `origem: "jogo"` separa quem está JOGANDO de quem só abriu o launcher.
+      // Sem isso, chamar alguém para uma partida vira loteria.
+      const r = await baterPresenca({ clube, situacao, detalhe, atividade, origem: "jogo" })
       if (!vivo || !r) return
       setEu(r.eu)
       setOnline(r.online)
@@ -54,7 +63,7 @@ export function HubOnlineChat({ clube, situacao }: { clube: string; situacao: st
     void bater()
     const t = setInterval(bater, INTERVALO_PRESENCA)
     return () => { vivo = false; clearInterval(t) }
-  }, [temConta, clube, situacao])
+  }, [temConta, clube, situacao, detalhe, atividade])
 
   useEffect(() => {
     if (!temConta) return
@@ -128,7 +137,7 @@ export function HubOnlineChat({ clube, situacao }: { clube: string; situacao: st
                   {j.nome}{j.conta_id === eu && <span className="text-white/35"> (você)</span>}
                 </span>
                 <span className="block truncate text-[9px] text-emerald-300/80">
-                  {j.clube || j.situacao || "No Ultrafoot"}
+                  {j.origem === "launcher" ? "No launcher" : j.detalhe || j.clube || j.situacao || "No Ultrafoot"}
                 </span>
               </span>
             </div>

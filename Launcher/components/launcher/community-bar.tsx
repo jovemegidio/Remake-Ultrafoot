@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import type { LauncherConfig, ServerStatus } from "@/lib/launcher-bridge"
-import { MessageCircle, ExternalLink, Megaphone } from "lucide-react"
+import { MessageCircle, ExternalLink, Megaphone, Users } from "lucide-react"
 
 function SocialButton({ label, href, onOpen, discord }: { label: string; href: string; onOpen: (u: string) => void; discord?: boolean }) {
   return (
@@ -19,16 +19,21 @@ function SocialButton({ label, href, onOpen, discord }: { label: string; href: s
 export function CommunityBar({
   config,
   serverStatus,
+  tecnicosOnline,
   onOpen,
 }: {
   config: LauncherConfig | null
   serverStatus: ServerStatus | null
+  /** Quantos tecnicos estao no Ultrafoot agora (presenca da conta). `undefined`
+   *  = deslogado ou sem rede: nesse caso a barra NAO diz "0 online", que pareceria
+   *  jogo morto quando o problema e so nao termos como perguntar. */
+  tecnicosOnline?: number
   onOpen: (url: string) => void
 }) {
   const social = config?.social
   const hasSocial = Boolean(social && (social.discord || social.youtube || social.tiktok || social.instagram))
   const announcement = config?.announcement
-  if (!announcement && !hasSocial && !serverStatus) return null
+  if (!announcement && !hasSocial && !serverStatus && tecnicosOnline === undefined) return null
 
   return (
     <div className="flex flex-col">
@@ -46,7 +51,7 @@ export function CommunityBar({
         </div>
       )}
 
-      {(hasSocial || serverStatus) && (
+      {(hasSocial || serverStatus || tecnicosOnline !== undefined) && (
         <div className="flex flex-wrap items-center gap-3 border-b border-border bg-background/60 px-4 py-2 md:px-6">
           {serverStatus && (
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -57,6 +62,16 @@ export function CommunityBar({
                 )}
               />
               Servidor {serverStatus.online ? "online" : "offline"}
+            </span>
+          )}
+
+          {/* QUEM ESTA NO JOGO AGORA, na barra de sempre. Antes esse numero so
+              existia dentro da aba FC Hub — ou seja, era preciso ir procurar
+              para descobrir que havia gente online. */}
+          {tecnicosOnline !== undefined && (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              {tecnicosOnline === 1 ? "1 técnico no Ultrafoot" : `${tecnicosOnline} técnicos no Ultrafoot`}
             </span>
           )}
 
