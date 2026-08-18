@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.352",
+  "version": "1.0.353",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -22,6 +22,7 @@
     "qa:busca-clube": "tsx scripts/test-busca-de-clube-rapida.ts",
     "qa:universo": "tsx scripts/test-universo-nao-incha.ts",
     "qa:online-save": "tsx scripts/test-online-nao-toca-no-save.ts",
+    "qa:narracao-atleta": "tsx scripts/test-narracao-do-atleta.ts",
     "qa:modalidades-ponta": "tsx scripts/test-modalidades-ponta-a-ponta.ts",
     "qa:traducao": "node scripts/qa-traducao.mjs",
     "qa:idiomas": "tsx scripts/test-idiomas-com-reserva.ts",

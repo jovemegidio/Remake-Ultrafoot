@@ -59,6 +59,24 @@ export interface ResultadoDoMomento {
 }
 
 /** O estado de uma partida em curso, guardado no save enquanto ela não acaba. */
+/**
+ * UM LANCE DA NARRAÇÃO — a partida inteira, não só os seus momentos.
+ *
+ * ⚠️ POR QUE ISTO PRECISOU EXISTIR. O usuário pediu que a partida do atleta
+ * fosse "como a tela ao vivo do técnico" e depois foi direto ao ponto: "sem
+ * narração". Ele estava certo. O modo tinha campo e tinha as SUAS decisões, mas
+ * o jogo em volta acontecia no escuro: o placar aparecia pronto no cabeçalho e
+ * ninguém contava quando os gols saíram, quem marcou, se veio pênalti.
+ *
+ * A partida JÁ está decidida quando esta tela abre — isso não muda, e é o que
+ * mantém o modo honesto. O que muda é que agora ela é CONTADA.
+ */
+export interface LanceNarrado {
+  minuto: number
+  texto: string
+  tipo: "apito" | "gol-pro" | "gol-contra" | "intervalo" | "voce"
+}
+
 export interface PartidaEmCurso {
   fixtureId: string
   adversario: string
@@ -79,6 +97,11 @@ export interface PartidaEmCurso {
   gols: number
   assistencias: number
   historico: { minuto: number; texto: string; delta: number }[]
+  /**
+   * A NARRAÇÃO DA PARTIDA INTEIRA (1.0.353). Opcional: partidas já em andamento
+   * em saves antigos não têm, e a tela trata a ausência sem quebrar.
+   */
+  narracaoDaPartida?: LanceNarrado[]
 }
 
 // ─── Sorteio semeado (mesmo padrão do resto da carreira) ────────────────────
@@ -204,7 +227,67 @@ export function montarPartidaDoAtleta(
     gols: 0,
     assistencias: 0,
     historico: [],
+    narracaoDaPartida: montarNarracao(dados, semente),
   }
+}
+
+/**
+ * A NARRAÇÃO DA PARTIDA — o jogo em volta do atleta, contado.
+ *
+ * ⚠️ ELA NÃO INVENTA PLACAR. O motor já decidiu quantos gols cada lado fez antes
+ * desta tela abrir; o que falta é DISTRIBUIR esses gols no relógio e dar-lhes
+ * palavras. Sortear um gol a mais aqui faria a narração mentir sobre o placar
+ * que o cabeçalho mostra — o defeito clássico de encenação que contradiz o dado.
+ *
+ * Os minutos saem do mesmo sorteio semeado do resto do modo, então a mesma
+ * partida é contada igual toda vez que o jogador voltar a ela.
+ */
+function montarNarracao(
+  dados: { adversario: string; emCasa: boolean; golsPro: number; golsContra: number; minutos: number; titular: boolean },
+  semente: string,
+): LanceNarrado[] {
+  const lances: LanceNarrado[] = [
+    { minuto: 0, tipo: "apito", texto: "Bola rolando." },
+  ]
+
+  // Minutos dos gols: sorteados e ORDENADOS, para a narração não voltar no tempo.
+  const minutoDoGol = (lado: string, i: number) =>
+    1 + Math.floor(roll(`${semente}:gol:${lado}:${i}`) * 89)
+
+  const doTime = Array.from({ length: dados.golsPro }, (_, i) => ({
+    minuto: minutoDoGol("pro", i), tipo: "gol-pro" as const,
+  }))
+  const doAdversario = Array.from({ length: dados.golsContra }, (_, i) => ({
+    minuto: minutoDoGol("contra", i), tipo: "gol-contra" as const,
+  }))
+
+  // ⚠️ O PLACAR CORRENDO, e não uma frase genérica. "GOL!" sozinho obriga o
+  // jogador a olhar para o cabeçalho para saber como o jogo está; a narração de
+  // verdade diz o número. Por isso os gols são ordenados ANTES de ganhar texto.
+  let pro = 0
+  let contra = 0
+  for (const g of [...doTime, ...doAdversario].sort((a, b) => a.minuto - b.minuto)) {
+    if (g.tipo === "gol-pro") pro++
+    else contra++
+    lances.push({
+      minuto: g.minuto,
+      tipo: g.tipo,
+      texto: g.tipo === "gol-pro"
+        ? `GOL do seu time! ${pro}–${contra}.`
+        : `Gol do ${dados.adversario}. ${pro}–${contra}.`,
+    })
+  }
+
+  lances.push({ minuto: 45, tipo: "intervalo", texto: "Fim do primeiro tempo." })
+  if (!dados.titular && dados.minutos > 0) {
+    lances.push({
+      minuto: 90 - dados.minutos, tipo: "voce",
+      texto: "Você entra em campo.",
+    })
+  }
+  lances.push({ minuto: 90, tipo: "apito", texto: "Apito final." })
+
+  return lances.sort((a, b) => a.minuto - b.minuto)
 }
 
 /**

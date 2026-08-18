@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { useGameState } from "@/lib/save-system"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { concluirPartidaDoAtleta } from "@/lib/carreira-de-jogador"
 import { decidirMomento, partidaTerminou } from "@/lib/partida-do-atleta"
@@ -22,6 +23,7 @@ import { CampoDoAtleta } from "@/components/match/campo-do-atleta"
 export default function PartidaDoAtletaPage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador") })
   const { state, setState } = useGameState()
+  const t = useTranslation()
   const carreira = state.carreiraDeJogador
   const partida = carreira?.partidaEmCurso
   const [ultimo, setUltimo] = useState<string | null>(null)
@@ -40,6 +42,8 @@ export default function PartidaDoAtletaPage() {
 
   const momento = partida.momentos[partida.atual]
   const acabou = partidaTerminou(partida)
+  /** Até onde a narração pode ser lida sem entregar o que ainda não aconteceu. */
+  const minutoAtual = momento?.minuto ?? 90
 
   // ⚠️ A SIGLA DO ADVERSARIO NAO ESTA NA PARTIDA EM CURSO — ela guarda so o
   // NOME. Em vez de acrescentar o campo (o que exigiria migrar as partidas ja
@@ -80,7 +84,7 @@ export default function PartidaDoAtletaPage() {
           </h1>
           <div className="mt-3 flex items-center justify-center gap-6 text-sm">
             <span className="text-white/50">
-              {partida.titular ? "Titular" : "Entrou do banco"} · {partida.minutos}′
+              {partida.titular ? t.carreiraDeJogador.titular : t.carreiraDeJogador.entrou_do_banco} · {partida.minutos}′
             </span>
             <span className={cn(
               "text-2xl font-black",
@@ -107,12 +111,46 @@ export default function PartidaDoAtletaPage() {
             />
             <p className="border-t border-white/[.06] px-4 py-2 text-center text-[11px] text-white/35">
               {acabou
-                ? "Apito final."
+                ? t.carreiraDeJogador.apito_final
                 : momento
                   ? `${momento.minuto}′ — a bola chega em você.`
-                  : "Aguardando o próximo lance."}
+                  : t.carreiraDeJogador.aguardando_proximo_lance}
             </p>
           </div>
+        )}
+
+        {/* ── A NARRAÇÃO (1.0.353) ─────────────────────────────────────────
+            ⚠️ O usuário pediu a partida "como a tela ao vivo do técnico" e depois
+            foi direto: "sem narração". Estava certo — o modo tinha campo e tinha
+            as decisões dele, mas o jogo em volta acontecia no escuro: o placar
+            aparecia pronto no cabeçalho e ninguém contava QUANDO os gols saíram.
+
+            Ela é revelada até o minuto do lance atual: ler agora que o
+            adversário vai marcar aos 80' estragaria a partida que ainda não
+            aconteceu. No fim, a súmula inteira fica visível. */}
+        {(partida.narracaoDaPartida?.length ?? 0) > 0 && (
+          <section className="mb-5 rounded-2xl border border-white/10 bg-black/30 p-4">
+            <h2 className="mb-2 text-xs font-black uppercase tracking-wide text-white/40">
+              {t.carreiraDeJogador.narracao}
+            </h2>
+            <div className="max-h-[220px] space-y-1.5 overflow-auto">
+              {(partida.narracaoDaPartida ?? [])
+                .filter(l => acabou || l.minuto <= minutoAtual)
+                .map((l, i) => (
+                  <div key={`${l.minuto}-${i}`} className="flex items-baseline gap-3 text-[13px]">
+                    <span className="w-9 shrink-0 text-right font-mono text-white/35">{l.minuto}&apos;</span>
+                    <span className={cn(
+                      l.tipo === "gol-pro" ? "font-bold text-emerald-400"
+                        : l.tipo === "gol-contra" ? "text-red-400"
+                          : l.tipo === "voce" ? "text-[var(--brand)]"
+                            : "text-white/60",
+                    )}>
+                      {l.texto}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </section>
         )}
 
         {ultimo && (
@@ -142,7 +180,7 @@ export default function PartidaDoAtletaPage() {
         ) : (
           <section className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5 text-center">
             <Trophy className="mx-auto h-8 w-8 text-amber-300" />
-            <h2 className="mt-3 text-xl font-black">Fim de jogo</h2>
+            <h2 className="mt-3 text-xl font-black">{t.carreiraDeJogador.fim_de_jogo}</h2>
             <p className="mt-1 text-sm text-white/65">
               Sua partida: nota {partida.nota.toFixed(1)} · {partida.gols} gol(s) · {partida.assistencias} assistência(s) em {partida.minutos} minutos.
             </p>

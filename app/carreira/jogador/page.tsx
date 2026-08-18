@@ -733,6 +733,79 @@ export default function CarreiraDeJogadorPage() {
         )}
 
         {aba === "tabela" && (
+          <>
+          {/* ── CALENDÁRIO (1.0.353, pedido do usuário) ──────────────────────
+              Ele pediu "uma cópia do calendário do profissional, adaptando para
+              a carreira de jogador". O calendário do técnico é uma grade de MÊS
+              com mil linhas — copiá-lo literalmente traria a moldura sem o
+              conteúdo, porque o atleta não gerencia semana: ele joga rodada.
+
+              O que se copia é a LINGUAGEM: cartão por partida, competição
+              marcada, mando visível, placar quando já aconteceu. O que se
+              acrescenta é o que só existe aqui — a SUA linha em cada jogo:
+              minutos, nota e participação. Um calendário de atleta que não diz
+              se ele jogou seria o calendário do clube, não o dele. */}
+          <section className="mb-5 rounded-2xl border border-white/10 bg-white/[.03] p-5">
+            <h2 className="flex items-center gap-2 text-xl font-black">
+              <CalendarDays className="text-[var(--brand)]" />{t.carreiraDeJogador.calendario}
+            </h2>
+            <p className="mt-1 text-xs text-white/45">
+              {carreira.calendario.filter(f => f.isUserMatch).length} jogos do {carreira.clubeNome} nesta temporada
+            </p>
+            <div className="mt-4 max-h-[520px] space-y-1.5 overflow-auto pr-1">
+              {carreira.calendario.filter(f => f.isUserMatch).map(f => {
+                const emCasa = f.homeCurto === carreira.clubeCurto
+                const adversario = emCasa ? f.awayNome : f.homeNome
+                const golsPro = emCasa ? f.homeGoals : f.awayGoals
+                const golsContra = emCasa ? f.awayGoals : f.homeGoals
+                const minha = carreira.ultimasPartidas.find(
+                  p => p.rodada === f.round && p.temporada === carreira.temporada,
+                )
+                const proximo = !f.played && f.id === proxima?.id
+                return (
+                  <div
+                    key={f.id}
+                    className={cn(
+                      "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border px-3 py-2.5 text-sm",
+                      proximo
+                        ? "border-[var(--brand)]/40 bg-[var(--brand)]/[.07]"
+                        : f.played ? "border-white/[.07] bg-black/25" : "border-white/[.06] bg-black/10",
+                    )}
+                  >
+                    <span className="w-10 shrink-0 font-mono text-[11px] text-white/35">R{f.round}</span>
+                    <span className="w-16 shrink-0 text-[10px] font-black uppercase tracking-wide text-white/35">
+                      {emCasa ? t.carreiraDeJogador.casa : t.carreiraDeJogador.fora}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate font-bold">{adversario}</span>
+                    {f.played ? (
+                      <span className={cn(
+                        "shrink-0 font-mono font-black",
+                        (golsPro ?? 0) > (golsContra ?? 0) ? "text-emerald-400"
+                          : (golsPro ?? 0) === (golsContra ?? 0) ? "text-white/60" : "text-red-400",
+                      )}>
+                        {golsPro}–{golsContra}
+                      </span>
+                    ) : (
+                      <span className="shrink-0 text-[11px] uppercase tracking-wide text-white/30">
+                        {proximo ? t.carreiraDeJogador.proxima : t.carreiraDeJogador.a_jogar}
+                      </span>
+                    )}
+                    {/* A SUA linha — o que separa este calendário do calendário do clube. */}
+                    {minha && (
+                      <span className="w-full pl-10 text-[11px] text-white/45">
+                        {minha.minutos > 0
+                          ? `você: ${minha.minutos}′ · nota ${minha.nota.toFixed(1)}`
+                            + (minha.gols > 0 ? ` · ${minha.gols}G` : "")
+                            + (minha.assistencias > 0 ? ` · ${minha.assistencias}A` : "")
+                          : t.carreiraDeJogador.nao_saiu_do_banco_min}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+
           <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
             <h2 className="text-xl font-black">{carreira.ligaNome} · {carreira.temporada}</h2>
             <p className="mt-1 text-xs text-white/45">Seu clube está em {posicaoNaTabela}º.</p>
@@ -758,6 +831,7 @@ export default function CarreiraDeJogadorPage() {
               </table>
             </div>
           </section>
+          </>
         )}
 
         {aba === "historico" && (
