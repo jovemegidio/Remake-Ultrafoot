@@ -97,7 +97,14 @@ for (const route of ROUTES) {
   try {
     const routeUrl = route === "/" ? `${base}/` : `${base}${route}/`
     await page.goto(routeUrl, { waitUntil: "networkidle", timeout: 20000 })
-    await page.waitForTimeout(600)
+    // ⚠️ 600 ms MEDIA A TELA NO MEIO DO CAMINHO. As telas que esperam o save
+    // (portao de hidratacao — /central, /editar) mostram um "Abrindo…" de 17
+    // caracteres por alguns centesimos, e a auditoria acusava "TELA VAZIA" de
+    // uma tela que estava perfeitamente viva 600 ms depois (medido: /editar
+    // assenta em 1.572 caracteres aos 600-1500 ms). Medir cedo demais e a mesma
+    // familia de erro que reprovar por CORS de outro ambiente: o problema esta
+    // no medidor. Tela que continuar vazia aos 1,5 s segue reprovando.
+    await page.waitForTimeout(1500)
     bodyText = (await page.locator("body").innerText().catch(() => "")) || ""
     mockHits = MOCK_PATTERNS.filter(p => p.test(bodyText)).map(p => p.source)
   } catch (e) { errors.push("NAV: " + e.message.split("\n")[0]) }

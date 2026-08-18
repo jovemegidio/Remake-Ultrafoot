@@ -67,6 +67,14 @@ export interface InternetLeagueSettings {
   matchSpeed: "normal" | "rapida"
   roundDeadlineHours: 24 | 48 | 72 | 168
   allowSpectators: boolean
+  /**
+   * ⚠️ TAMBEM EXIGIDOS POR CODIGO JA PUBLICADO (1.0.356). O `fc-hub` grava e le
+   * os dois ao criar a sala; sem eles o commit `be0ac1b` nao compilava.
+   * Opcionais porque sala antiga nao os tem — e sala sem modalidade e sala
+   * profissional, que era o unico modo quando ela foi criada.
+   */
+  modalidade?: string
+  dificuldade?: string
 }
 
 /**

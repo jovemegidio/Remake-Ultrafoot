@@ -203,6 +203,16 @@ export interface PersonalidadeDoAtleta {
 export interface AtletaDaCarreira {
   id: string
   nome: string
+  /**
+   * ⚠️ CAMPO EXIGIDO POR CODIGO JA PUBLICADO (1.0.356). O `fc-hub` do commit
+   * `be0ac1b` le `atleta.genero` para sugerir a modalidade da sala online, mas
+   * o campo nunca chegou ao repositorio — o ramo remoto nao compilava por isso.
+   *
+   * Opcional de proposito: save antigo nao tem, e ausencia significa "nao
+   * declarado", nunca "masculino". Quem decide a modalidade ja tem o
+   * `state.modalidade` como fonte principal.
+   */
+  genero?: "masculino" | "feminino"
   posicao: PosicaoDoAtleta
   idade: number
   nacionalidade: string
