@@ -713,8 +713,14 @@ fn fetch_latest_desktop(ext: &str) -> Result<LatestInfo, String> {
 }
 
 #[tauri::command]
-async fn download_and_install(app: AppHandle, url: String, version: String) -> Result<(), String> {
-    tauri::async_runtime::spawn_blocking(move || do_install(&app, &url, &version))
+async fn download_and_install(
+    app: AppHandle,
+    url: String,
+    version: String,
+    sha256: Option<String>,
+    size: Option<u64>,
+) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || do_install(&app, &url, &version, &sha256, size))
         .await
         .map_err(|e| format!("tarefa interrompida: {e}"))?
 }
@@ -861,29 +867,40 @@ fn download_attempt(app: &AppHandle, url: &str, dest: &std::path::Path) -> Resul
 
 // ── Instalação por plataforma ──
 
-fn do_install(app: &AppHandle, url: &str, version: &str) -> Result<(), String> {
+fn do_install(
+    app: &AppHandle,
+    url: &str,
+    version: &str,
+    sha256: &Option<String>,
+    size: Option<u64>,
+) -> Result<(), String> {
     #[cfg(windows)]
     {
         let _ = version;
-        do_install_windows(app, url)
+        do_install_windows(app, url, sha256, size)
     }
     #[cfg(target_os = "linux")]
     {
-        do_install_linux(app, url, version)
+        do_install_linux(app, url, version, sha256, size)
     }
     #[cfg(target_os = "macos")]
     {
-        do_install_macos(app, url, version)
+        do_install_macos(app, url, version, sha256, size)
     }
     #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
     {
-        let _ = (app, url, version);
+        let _ = (app, url, version, sha256, size);
         Err("plataforma não suportada".into())
     }
 }
 
 #[cfg(windows)]
-fn do_install_windows(app: &AppHandle, url: &str) -> Result<(), String> {
+fn do_install_windows(
+    app: &AppHandle,
+    url: &str,
+    sha_esperado: &Option<String>,
+    size_esperado: Option<u64>,
+) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
     // NSIS silencioso, SEM janela (pedido: instalar/atualizar dentro do launcher
     // sem abrir o instalador nem piscar console). O /S já roda sem UI; o
@@ -924,6 +941,26 @@ fn do_install_windows(app: &AppHandle, url: &str) -> Result<(), String> {
     }
 
     download_with_progress(app, url, &tmp)?;
+
+    // ⚠️ CONFERIR ANTES DE EXECUTAR (1.0.346). ESTA LINHA NAO EXISTIA.
+    //
+    // O launcher baixava este .exe e o EXECUTAVA direto, sem conferir nada — nem
+    // hash, nem tamanho, nem sequer o cabecalho do arquivo. Qualquer coisa que
+    // chegasse por aquela URL virava um processo na maquina do jogador, com o
+    // `/S` do NSIS (sem janela, sem pergunta). O caminho de auto-atualizacao do
+    // PROPRIO launcher ja conferia desde 02/08/2026; o do jogo ficou de fora, e
+    // nada falhava — por isso passou despercebido.
+    //
+    // O hash vem do latest.json, que passou a publica-lo na mesma versao. Quando
+    // ele falta (release antigo), `conferir_instalador` ainda barra arquivo que
+    // nao e executavel do Windows, truncado, ou de tamanho diferente do
+    // anunciado — menos que autenticidade, mas muito acima de nada.
+    if let Err(e) = conferir_instalador(&tmp, sha_esperado, size_esperado.or(if tamanho > 0 { Some(tamanho) } else { None })) {
+        let _ = std::fs::remove_file(&tmp); // nao deixa lixo para a proxima tentativa
+        diario!("ERRO", "instalador recusado: {e}");
+        return Err(e);
+    }
+
     emit(app, "installing");
     diario!("INFO", "instalando o jogo ({} bytes)", tamanho);
 
@@ -963,11 +1000,22 @@ fn do_install_windows(app: &AppHandle, url: &str) -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
-fn do_install_linux(app: &AppHandle, url: &str, version: &str) -> Result<(), String> {
+fn do_install_linux(
+    app: &AppHandle,
+    url: &str,
+    version: &str,
+    sha_esperado: &Option<String>,
+    size_esperado: Option<u64>,
+) -> Result<(), String> {
     use std::os::unix::fs::PermissionsExt;
 
     let tmp = std::env::temp_dir().join("Ultrafoot26.AppImage.part");
     download_with_progress(app, url, &tmp)?;
+    // Confere ANTES de marcar executavel e rodar — ver a nota em do_install_windows.
+    if let Err(e) = conferir_baixado(&tmp, sha_esperado, size_esperado) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e);
+    }
     emit(app, "installing");
 
     let dir = launcher_data_dir();
@@ -991,9 +1039,20 @@ fn do_install_linux(app: &AppHandle, url: &str, version: &str) -> Result<(), Str
 }
 
 #[cfg(target_os = "macos")]
-fn do_install_macos(app: &AppHandle, url: &str, version: &str) -> Result<(), String> {
+fn do_install_macos(
+    app: &AppHandle,
+    url: &str,
+    version: &str,
+    sha_esperado: &Option<String>,
+    size_esperado: Option<u64>,
+) -> Result<(), String> {
     let dmg = std::env::temp_dir().join("Ultrafoot26.dmg");
     download_with_progress(app, url, &dmg)?;
+    // Confere ANTES de montar o volume — ver a nota em do_install_windows.
+    if let Err(e) = conferir_baixado(&dmg, sha_esperado, size_esperado) {
+        let _ = std::fs::remove_file(&dmg);
+        return Err(e);
+    }
     emit(app, "installing");
 
     let mount = std::env::temp_dir().join("ultrafoot-mnt");
@@ -1143,6 +1202,38 @@ fn conferir_instalador(
         let obtido = sha256_do_arquivo(caminho)?;
         if !obtido.eq_ignore_ascii_case(esperado) {
             return Err("o instalador baixado está corrompido (assinatura não confere)".into());
+        }
+    }
+    Ok(())
+}
+
+/// Confere um arquivo baixado que NAO e executavel do Windows (AppImage, DMG).
+///
+/// Mesmo papel de `conferir_instalador`, sem o teste do cabecalho `MZ`: um
+/// AppImage comeca com ELF e um DMG com outra coisa, entao aquele teste
+/// reprovaria justamente os arquivos certos. O que importa aqui — tamanho
+/// anunciado e sha256 — vale igual nas tres plataformas.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn conferir_baixado(
+    caminho: &std::path::Path,
+    sha_esperado: &Option<String>,
+    tamanho_esperado: Option<u64>,
+) -> Result<(), String> {
+    let tamanho = std::fs::metadata(caminho).map_err(|e| e.to_string())?.len();
+    if tamanho < 1_000_000 {
+        return Err(format!("o arquivo baixado está incompleto ({tamanho} bytes)"));
+    }
+    if let Some(esperado) = tamanho_esperado {
+        if tamanho != esperado {
+            return Err(format!(
+                "o arquivo baixado tem {tamanho} bytes, mas deveria ter {esperado}"
+            ));
+        }
+    }
+    if let Some(esperado) = sha_esperado {
+        let obtido = sha256_do_arquivo(caminho)?;
+        if !obtido.eq_ignore_ascii_case(esperado) {
+            return Err("o arquivo baixado está corrompido (assinatura não confere)".into());
         }
     }
     Ok(())

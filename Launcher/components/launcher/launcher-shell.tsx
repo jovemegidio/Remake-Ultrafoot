@@ -126,10 +126,18 @@ export function LauncherShell({
     url: string | null
     /** Manifesto de arquivos: é ele que habilita a atualização diferencial. */
     manifesto: string | null
+    /**
+     * O que o instalador baixado TEM de ser (1.0.346). Sem isto o launcher
+     * executava o .exe que viesse da rede, sem conferir nada.
+     */
+    sha256: string | null
+    size: number | null
   }>(() => ({
     version: game.latestRelease?.version ?? null,
     url: game.latestRelease?.downloadUrl ?? null,
     manifesto: null,
+    sha256: null,
+    size: null,
   }))
 
   const [install, setInstall] = useState<InstallState>({
@@ -414,6 +422,8 @@ export function LauncherShell({
           version: remote.version,
           url: remote.url,
           manifesto: remote.manifesto ?? null,
+          sha256: remote.sha256 ?? null,
+          size: remote.size ?? null,
         })
       }
     })()
@@ -437,6 +447,10 @@ export function LauncherShell({
         // O manifesto vem do latest.json (comando Rust); a API do GitHub não o
         // conhece. Preservar em vez de zerar é o que mantém o delta disponível.
         manifesto: prev.manifesto,
+        // Mesma razão para o hash: a API do GitHub não publica sha256. Zerar
+        // aqui faria o launcher voltar a instalar sem conferir nada.
+        sha256: prev.sha256,
+        size: prev.size,
       }))
     }
   }, [live])
@@ -537,7 +551,12 @@ export function LauncherShell({
             console.warn("[launcher] delta falhou, usando o instalador completo:", e)
           }
         }
-        await installOrUpdate(url, latest.version ?? "", aoProgredir)
+        // O hash/tamanho esperados viajam junto: e o que permite ao Rust RECUSAR
+        // um instalador que nao seja o publicado, em vez de executa-lo.
+        await installOrUpdate(url, latest.version ?? "", aoProgredir, {
+          sha256: latest.sha256,
+          size: latest.size,
+        })
       }
 
       caminho()

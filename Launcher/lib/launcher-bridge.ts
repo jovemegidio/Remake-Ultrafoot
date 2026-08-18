@@ -86,6 +86,16 @@ export async function installOrUpdate(
   url: string,
   version: string,
   onProgress: (p: ProgressPayload) => void,
+  /**
+   * ⚠️ O QUE O INSTALADOR BAIXADO TEM DE SER (1.0.346).
+   *
+   * Sem isto o Rust nao tinha contra o que conferir e EXECUTAVA o .exe que
+   * viesse da rede. Vem do `latest.json`, que passou a publicar `sha256` e
+   * `size` na mesma versao. Opcional de proposito: release antigo nao tem os
+   * campos, e ai a conferencia cai no que da para checar sozinha (cabecalho e
+   * tamanho anunciado) em vez de impedir a instalacao.
+   */
+  esperado?: { sha256?: string | null; size?: number | null },
 ): Promise<void> {
   if (!isTauri()) {
     // Simulação para o modo navegador (dev): download depois instalação.
@@ -96,7 +106,12 @@ export async function installOrUpdate(
   const { listen } = await import("@tauri-apps/api/event")
   const unlisten = await listen<ProgressPayload>("launcher://progress", (e) => onProgress(e.payload))
   try {
-    await invoke("download_and_install", { url, version })
+    await invoke("download_and_install", {
+      url,
+      version,
+      sha256: esperado?.sha256 ?? null,
+      size: esperado?.size ?? null,
+    })
   } finally {
     unlisten()
   }

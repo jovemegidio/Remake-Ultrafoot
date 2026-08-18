@@ -16,6 +16,7 @@
 // Requer, para publicar: GitHub CLI (`gh`) autenticado — https://cli.github.com
 
 import { readFile, writeFile, access } from "node:fs/promises"
+import { createHash } from "node:crypto"
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 import path from "node:path"
@@ -54,10 +55,28 @@ async function main() {
   const assetName = setupName.replace(/ /g, ".")
   const tag = `build-${version}`
 
+  // ⚠️ SHA256 E TAMANHO SAO O QUE PERMITE O LAUNCHER RECUSAR UM ARQUIVO RUIM
+  //     (1.0.346).
+  //
+  // O launcher BAIXA E EXECUTA este instalador. Ate aqui o latest.json nao
+  // publicava hash nem tamanho, entao o `do_install_windows` nao tinha contra o
+  // que conferir e rodava o .exe que viesse — qualquer coisa que chegasse pela
+  // rede naquele endereco era executada na maquina do jogador.
+  //
+  // A `signature` ao lado NAO cobre isso: ela e do updater in-game do Tauri, um
+  // outro caminho, e o launcher nem a le. O launcher.json do proprio launcher ja
+  // publicava sha256 desde 02/08/2026 (quando um download de 94 MB de lixo virou
+  // um laco de instalacao); o do JOGO ficou sem, e ninguem notou porque nada
+  // falhava — falhar e justamente o que faltava.
+  const bytesDoInstalador = await readFile(setupPath)
+  const sha256 = createHash("sha256").update(bytesDoInstalador).digest("hex")
+
   const latest = {
     version,
     notes: process.env.RELEASE_NOTES ?? `Ultrafoot 26 v${version}`,
     pub_date: new Date().toISOString(),
+    sha256,
+    size: bytesDoInstalador.length,
     platforms: {
       "windows-x86_64": {
         signature,

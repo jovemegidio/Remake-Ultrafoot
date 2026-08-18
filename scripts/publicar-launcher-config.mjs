@@ -12,7 +12,7 @@
 // EXIGIR_VERSAO reprova o deploy que esqueceu de escrever a novidade.
 
 import { execFileSync } from "node:child_process"
-import { readFileSync } from "node:fs"
+import { readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
 
 const RAIZ = path.resolve(import.meta.dirname, "..")
@@ -41,7 +41,7 @@ const marcadas = changelog.filter((r) => r.latest)
 if (marcadas.length !== 1) {
   throw new Error(`o changelog precisa de exatamente um "latest": true (achei ${marcadas.length})`)
 }
-const versaoDoChangelog = marcadas[0].version
+let versaoDoChangelog = marcadas[0].version
 if (versaoDoChangelog !== changelog[0].version) {
   throw new Error(`o "latest" (${versaoDoChangelog}) nao e a primeira entrada (${changelog[0].version})`)
 }
@@ -57,12 +57,60 @@ console.log(`  changelog   ${changelog.length} versoes, a mais nova ${versaoDoCh
 console.log(`  novidades   ${noticias.length} itens, a mais nova de ${noticiaMaisNova ?? "sem data"}`)
 console.log(`  anuncio     ${config.announcement?.text ?? "(nenhum)"}`)
 
+/**
+ * ⚠️ O DEPLOY NAO ABORTA MAIS POR FALTA DE CHANGELOG (1.0.346).
+ *
+ * Antes, publicar o jogo exigia PARAR e escrever a entrada da versao nova aqui
+ * a mao — e o deploy morria no meio se voce esquecesse. Aconteceu duas vezes em
+ * 17/08/2026, na 1.0.343 e na 1.0.344. O launcher virou um passo manual de toda
+ * publicacao do jogo, que e exatamente o que ninguem quer manter.
+ *
+ * Agora a entrada e ESCRITA SOZINHA quando falta. O titulo sai do commit da
+ * versao — neste projeto ele ja e escrito em portugues legivel
+ * ("1.0.344: o catalogo de rostos sai do peso de toda tela") — e vira a nota
+ * que o jogador le no launcher.
+ *
+ * ⚠️ QUEM ESCREVEU A MAO CONTINUA MANDANDO: havendo entrada para a versao, nada
+ * e gerado nem sobrescrito. O automatico e rede de seguranca, nao dono do texto.
+ */
+function tituloDoCommitDaVersao(versao) {
+  try {
+    const linha = rodar("git", ["log", "-1", "--format=%s", `--grep=^${versao}:`], { cwd: RAIZ }).trim()
+    if (!linha) return null
+    const semPrefixo = linha.slice(linha.indexOf(":") + 1).trim()
+    return semPrefixo || null
+  } catch {
+    return null
+  }
+}
+
 if (exigirVersao && versaoDoChangelog !== exigirVersao) {
-  throw new Error(
-    `o launcher anunciaria a ${versaoDoChangelog}, mas o deploy e da ${exigirVersao}.\n`
-    + `  Escreva a novidade e o changelog da ${exigirVersao} em services/cloud-save-server/launcher-config.json\n`
-    + `  (e mova o "latest": true para ela) antes de publicar.`,
-  )
+  if (changelog.some((r) => r.version === exigirVersao)) {
+    throw new Error(
+      `existe entrada da ${exigirVersao}, mas o "latest": true esta na ${versaoDoChangelog}.\n`
+      + `  Mova o "latest" para a ${exigirVersao} — a ordem do changelog e editorial, nao mexo nela sozinho.`,
+    )
+  }
+
+  const titulo = tituloDoCommitDaVersao(exigirVersao)
+  const entrada = {
+    version: exigirVersao,
+    data: new Date().toISOString().slice(0, 10),
+    latest: true,
+    titulo: titulo ?? `Versao ${exigirVersao}`,
+    itens: [
+      titulo
+        ? `${titulo[0].toUpperCase()}${titulo.slice(1)}.`
+        : `Correcoes e melhorias da versao ${exigirVersao}.`,
+    ],
+  }
+  for (const r of changelog) delete r.latest
+  changelog.unshift(entrada)
+  config.changelog = changelog
+  writeFileSync(ARQUIVO, JSON.stringify(config, null, 2), "utf-8")
+  versaoDoChangelog = exigirVersao
+  console.log(`  gerada      entrada da ${exigirVersao}: "${entrada.titulo}"`)
+  console.log(`              (escreva a sua em launcher-config.json antes do deploy para substituir)`)
 }
 
 if (!publicar) {
