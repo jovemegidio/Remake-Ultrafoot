@@ -340,8 +340,21 @@ function CartaDeJogador({
         <div
           className="absolute right-[6px] top-[5px] z-[5]"
           style={{
-            WebkitMaskImage: "linear-gradient(to bottom, #000 74%, transparent 99%)",
-            maskImage: "linear-gradient(to bottom, #000 74%, transparent 99%)",
+            // ⚠️ A FOTO VEM COM FUNDO, E O FUNDO APARECIA (1.0.350, pedido do
+            // usuário: "deixar a foto sem fundo para ficar agradável nas
+            // cartas"). O acervo de rostos traz recortes com um fundo sólido ou
+            // em degradê atrás da cabeça; sobre a carta dourada isso virava um
+            // retângulo azulado colado no meio da arte.
+            //
+            // A máscara antiga desvanecia só o PÉ da foto — as laterais e o topo
+            // continuavam com a aresta reta. Uma elipse desvanece os quatro
+            // lados: a cabeça fica nítida no centro e o fundo da foto se dissolve
+            // no metal, que é o que as cartas de verdade fazem.
+            //
+            // Isto NÃO substitui recorte de verdade no acervo; é o que dá para
+            // fazer sem reprocessar 26 mil imagens, e resolve o caso comum.
+            WebkitMaskImage: "radial-gradient(ellipse 78% 86% at 50% 38%, #000 52%, rgba(0,0,0,.55) 76%, transparent 100%)",
+            maskImage: "radial-gradient(ellipse 78% 86% at 50% 38%, #000 52%, rgba(0,0,0,.55) 76%, transparent 100%)",
           }}
         >
           {/* `size="xl"` é pelo desenho da SILHUETA (o caso sem foto): ela tem

@@ -40,6 +40,11 @@ export interface ModoOnline {
   estado: EstadoDoModo
   /** Fase do plano de desenvolvimento (1 a 5). */
   fase: 1 | 2 | 3 | 4 | 5
+  /**
+   * A arte do modo, em `public/online`. Cada modo tem a sua — antes a lista era
+   * só texto, e dez cartões de texto puro numa grade viram parede.
+   */
+  icone: string
 }
 
 /** Um modo é clicável quando tem para onde ir — rota OU ação. */
@@ -50,6 +55,7 @@ export function temDestino(modo: ModoOnline): boolean {
 export const MODOS_ONLINE: ModoOnline[] = [
   {
     id: "amistoso",
+    icone: "/online/01_amistoso_online.webp",
     nome: "Amistoso online",
     resumo: "Sala com código: você e um amigo, sem ranking e sem recompensa.",
     // ⚠️ ATÉ A 1.0.335 ISTO APONTAVA PARA `/multiplayer-local?online=1`, que é um
@@ -63,6 +69,7 @@ export const MODOS_ONLINE: ModoOnline[] = [
   },
   {
     id: "hub",
+    icone: "/online/02_fc_hub.webp",
     nome: "FC Hub",
     resumo: "Quem está conectado agora, conversa e convite para partida.",
     // O Hub não é rota: é a camada que abre por Tab em qualquer tela.
@@ -72,6 +79,7 @@ export const MODOS_ONLINE: ModoOnline[] = [
   },
   {
     id: "draft",
+    icone: "/online/03_manager_draft.webp",
     nome: "Manager Draft",
     resumo: "Monte um elenco escolhendo atleta por atleta e dispute o mata-mata.",
     // O draft vive DENTRO da sala de internet do Hub (components/hub-draft), e
@@ -84,6 +92,7 @@ export const MODOS_ONLINE: ModoOnline[] = [
   },
   {
     id: "rivals",
+    icone: "/online/04_manager_rivals.webp",
     nome: "Manager Rivals",
     resumo: "Divisões e ranking por habilidade. O motor joga; quem gerencia melhor vence.",
     href: "/online/rivals",
@@ -92,6 +101,7 @@ export const MODOS_ONLINE: ModoOnline[] = [
   },
   {
     id: "champions",
+    icone: "/online/05_manager_champions.webp",
     nome: "Manager Champions",
     resumo: "O competitivo do fim de semana, com classificação por desempenho.",
     estado: "planejado",
@@ -99,6 +109,7 @@ export const MODOS_ONLINE: ModoOnline[] = [
   },
   {
     id: "carreira-online",
+    icone: "/online/06_carreira_online.webp",
     nome: "Carreira Online",
     resumo: "Um mundo, vários técnicos humanos: o mercado e as vagas são compartilhados.",
     estado: "planejado",
@@ -106,6 +117,7 @@ export const MODOS_ONLINE: ModoOnline[] = [
   },
   {
     id: "coop",
+    icone: "/online/07_carreira_cooperativa.webp",
     nome: "Carreira cooperativa",
     resumo: "Duas pessoas no mesmo clube — uma no banco, outra na diretoria.",
     estado: "planejado",
@@ -113,6 +125,7 @@ export const MODOS_ONLINE: ModoOnline[] = [
   },
   {
     id: "diretoria",
+    icone: "/online/08_diretoria_online.webp",
     nome: "Diretoria online",
     resumo: "Presidente, treinador, diretor e olheiro: cada função com uma pessoa.",
     estado: "planejado",
@@ -120,6 +133,7 @@ export const MODOS_ONLINE: ModoOnline[] = [
   },
   {
     id: "rush",
+    icone: "/online/09_rush.webp",
     nome: "Manager Rush",
     resumo: "Partida começada aos 60 minutos: vire o jogo em dez minutos de relógio.",
     estado: "planejado",
@@ -127,6 +141,7 @@ export const MODOS_ONLINE: ModoOnline[] = [
   },
   {
     id: "eventos",
+    icone: "/online/10_eventos_da_semana.webp",
     nome: "Eventos da semana",
     resumo: "Regras diferentes a cada semana: só sub-23, teto salarial, só clubes pequenos.",
     estado: "planejado",

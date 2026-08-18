@@ -505,6 +505,14 @@ export const ptBR = {
     buscar_tela_clube_atleta_ou_competicao: "Buscar tela, clube, atleta ou competição",
     buscar_no_jogo: "Buscar no jogo",
   },
+  online: {
+    o_modo_online_esta_desligado: "O modo online está desligado",
+    configuracoes_configuracoes_online: "Configurações → Configurações online",
+    abrir_configuracoes: "Abrir configurações",
+    ultrafoot_online: "Ultrafoot online",
+    modos_entre_tecnicos: "Modos entre técnicos",
+    em_breve: "em breve",
+  },
 }
 
 export type Translations = typeof ptBR

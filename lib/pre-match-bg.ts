@@ -7,6 +7,11 @@
 // Três fundos empacotados para não repetir o mesmo estádio em toda a carreira.
 // A seleção é estável por competição/ligas: não há piscada ao voltar para a tela.
 const DEFAULT_BACKGROUNDS = [
+  // Arte nova enviada pelo usuário (1.0.350), convertida de PNG para WebP:
+  // 1,39 MB -> 65 KB, sem perda visível. Entra primeiro porque é a melhor do
+  // conjunto; as três antigas continuam para não repetir o mesmo estádio em
+  // toda a carreira.
+  "/images/pre-jogo/in-game-02.webp",
   "/images/pre-jogo/in-game-1.webp",
   "/images/pre-jogo/in-game-4.webp",
   "/images/pre-jogo/in-game-5.webp",

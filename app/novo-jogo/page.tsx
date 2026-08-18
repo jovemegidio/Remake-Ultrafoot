@@ -92,6 +92,7 @@ import { applyPerformanceProfile } from "@/components/performance-profile"
 import {
   iniciarRodada, MAXIMO_DE_TECNICOS, validarTecnicos, type TecnicoDoSave,
 } from "@/lib/tecnicos-do-save"
+import { bandeiraUrl } from "@/lib/bandeiras"
 import {
   PERFIL_TREINADOR_26_PADRAO,
   criarPerfilTreinador26,
@@ -151,8 +152,11 @@ const QUALIDADE_DAS_LIGAS = qualidadeDasLigas as Record<string, {
 }>
 
 function getFlagUrl(code: string) {
+  // ⚠️ A EXTENSAO NAO E MAIS CRAVADA (1.0.350). Chegaram 71 bandeiras em WebP,
+  // mas o acervo cobre de "Afghanistan" a "Grenada": `it`, `mx`, `pt`, `sa` e
+  // `us` seguem so no PNG antigo. Quem decide e `lib/bandeiras`, pelo manifesto.
   const key = FLAG_MAP[code] || code.toLowerCase()
-  return `/flags/${key}.png`
+  return bandeiraUrl(key) ?? `/flags/${key}.png`
 }
 
 interface LeagueTab {

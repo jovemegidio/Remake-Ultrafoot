@@ -733,14 +733,19 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           href="/"
           aria-label={t.header.home}
           onClick={(e) => { e.preventDefault(); hardNavigate("/") }}
-          className="flex h-11 shrink-0 items-center justify-center rounded-lg px-1 transition-opacity hover:opacity-80"
+          className="flex h-14 shrink-0 items-center justify-center rounded-lg transition-opacity hover:opacity-80"
         >
+          {/* ⚠️ A MARCA ESTAVA PEQUENA DEMAIS (1.0.350, pedido do usuário): 36 px
+              de altura num cabeçalho escuro, ao lado de textos de 14 px — ela
+              sumia. Agora 52 px, sem o `px-1` que ainda comia largura. WebP no
+              lugar do PNG: mesma arte, um terço do peso. */}
           <Image
-            src="/brand/uf26-logo.png"
+            src="/brand/uf26-logo.webp"
             alt="UF26"
-            width={120}
-            height={44}
-            className="h-9 w-auto object-contain"
+            width={180}
+            height={66}
+            className="h-13 w-auto object-contain"
+            style={{ height: 52 }}
             priority
           />
         </Link>

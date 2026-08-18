@@ -242,7 +242,9 @@ export default function ConfiguracoesPage() {
   const handleSaveSettings = async () => {
     setSaving(true)
     await new Promise(resolve => setTimeout(resolve, 500))
-    setState({ selectedUniform, language, multiplayerEnabled, managers, controllerType, commentaryEnabled, commentaryVoice, commentaryVolume: commentaryVolume[0], autoSaveInterval, sfxVolume: sfxVolume[0], matchSpeed, notificationsEnabled: notifications })
+    // Salvar as configuracoes E uma decisao sobre o online: a partir daqui o
+    // jogo para de ligar/desligar sozinho por causa da internet.
+    setState({ selectedUniform, language, multiplayerEnabled, multiplayerDefinidoPeloJogador: true, managers, controllerType, commentaryEnabled, commentaryVoice, commentaryVolume: commentaryVolume[0], autoSaveInterval, sfxVolume: sfxVolume[0], matchSpeed, notificationsEnabled: notifications })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)

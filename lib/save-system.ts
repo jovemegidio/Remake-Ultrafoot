@@ -529,6 +529,18 @@ export interface GameState {
   transferRoom26?: EstadoTransferRoom26
   // Multiplayer
   multiplayerEnabled: boolean
+  /**
+   * ⚠️ O JOGADOR JÁ DECIDIU SOBRE O ONLINE? (1.0.350)
+   *
+   * Ausente significa "nunca mexeu no interruptor" — e nesse caso o jogo LIGA o
+   * online sozinho quando há internet, que é o pedido: "o modo online deve estar
+   * ativo só do fato do jogador abrir o launcher com wifi ligado".
+   *
+   * Presente significa escolha explícita, e escolha explícita manda: quem
+   * desligou de propósito não pode ver o jogo religar a cada boot. É a diferença
+   * entre um padrão conveniente e um software que não obedece.
+   */
+  multiplayerDefinidoPeloJogador?: boolean
   managers: ManagerProfile[]
   activeManagerId: string | null
   // Configuracoes de controle. "auto" = detecta pelo controle conectado; xbox/playstation

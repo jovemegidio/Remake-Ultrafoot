@@ -31,9 +31,10 @@ const detalhe = process.argv.includes("--detalhe")
  * teto que aperte a cada versão ela para na metade e volta a subir sozinha na
  * primeira tela nova. Baixe este número quando extrair; nunca suba.
  */
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5544)
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5539)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.349 .... 5.544  (medição inicial honesta; 79 frases já extraídas)
+//   1.0.350 .... 5.539  (tela do Online extraída; a catraca pegou +1 meu)
 
 const PASTAS = ["app", "components"]
 

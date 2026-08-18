@@ -19,8 +19,10 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
 import { MODOS_ONLINE, ROTULO_DO_ESTADO, temDestino, type ModoOnline } from "@/lib/modos-online"
+import { useTranslation } from "@/lib/i18n"
 
 export default function OnlinePage() {
+  const t = useTranslation()
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
   const { state } = useGameState()
 
@@ -38,12 +40,12 @@ export default function OnlinePage() {
         <GameHeader />
         <div className="mx-auto max-w-xl px-5 pt-28 text-center">
           <Globe className="mx-auto h-10 w-10 text-white/25" />
-          <h1 className="mt-4 text-2xl font-black">O modo online está desligado</h1>
+          <h1 className="mt-4 text-2xl font-black">{t.online.o_modo_online_esta_desligado}</h1>
           <p className="mt-2 text-sm text-white/55">
-            Ligue em <b className="text-white/80">Configurações → Configurações online</b> para
+            Ligue em <b className="text-white/80">{t.online.configuracoes_configuracoes_online}</b> para
             liberar o FC Hub, os amistosos e o resto dos modos entre técnicos.
           </p>
-          <Button className="mt-5" onClick={() => hardNavigate("/configuracoes")}>Abrir configurações</Button>
+          <Button className="mt-5" onClick={() => hardNavigate("/configuracoes")}>{t.online.abrir_configuracoes}</Button>
         </div>
       </main>
     )
@@ -54,8 +56,8 @@ export default function OnlinePage() {
       <GameHeader />
       <div className="mx-auto max-w-[1100px] px-5 pb-14 pt-20">
         <header className="mb-6">
-          <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">Ultrafoot online</p>
-          <h1 className="mt-1 text-3xl font-black">Modos entre técnicos</h1>
+          <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">{t.online.ultrafoot_online}</p>
+          <h1 className="mt-1 text-3xl font-black">{t.online.modos_entre_tecnicos}</h1>
           <p className="mt-1 max-w-2xl text-sm text-white/50">
             Aqui ninguém controla jogador: você escala, monta a tática, mexe na pressão e faz as
             substituições. O motor joga — vence quem gerencia melhor.
@@ -78,7 +80,22 @@ export default function OnlinePage() {
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-black">{modo.nome}</h2>
+                  <div className="flex items-center gap-2.5">
+                    {/* A arte de cada modo (1.0.350). Dez cartões só de texto
+                        viravam parede; o ícone é o que deixa a grade legível de
+                        relance. `opacity` menor no que ainda não existe — o
+                        estado do modo também se lê pela arte. */}
+                    <img
+                      src={modo.icone}
+                      alt=""
+                      aria-hidden
+                      className={cn(
+                        "h-9 w-9 shrink-0 object-contain",
+                        modo.estado === "planejado" && "opacity-40 grayscale",
+                      )}
+                    />
+                    <h2 className="font-black">{modo.nome}</h2>
+                  </div>
                   <span
                     className={cn(
                       "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
@@ -102,7 +119,7 @@ export default function OnlinePage() {
         </div>
 
         <p className="mt-6 max-w-3xl text-[11px] leading-relaxed text-white/35">
-          Os modos marcados como <b className="text-white/50">em breve</b> ainda não existem — estão
+          Os modos marcados como <b className="text-white/50">{t.online.em_breve}</b> ainda não existem — estão
           listados para você saber o que vem, e na ordem em que vêm. Nenhum deles finge funcionar.
         </p>
       </div>
