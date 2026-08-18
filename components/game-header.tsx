@@ -28,7 +28,31 @@ import {
   ehMultitecnico, faltamFechar, iniciarRodada, tecnicosDoSave, type TecnicoDoSave,
 } from "@/lib/tecnicos-do-save"
 import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
-import { mediaDaTemporada, POSICOES_JOGAVEIS } from "@/lib/carreira-de-jogador"
+
+/**
+ * ⚠️ NÃO IMPORTE `lib/carreira-de-jogador` AQUI (corrigido 1.0.346).
+ *
+ * Na 1.0.338 este arquivo passou a importar `POSICOES_JOGAVEIS` e
+ * `mediaDaTemporada` de lá — duas coisas triviais. Só que aquele módulo arrasta
+ * junto o `match-engine`, o `career-engine`, o `players-data` e o
+ * `partida-do-atleta`, e o `GameHeader` está em TODA TELA DO JOGO. O resultado
+ * foi carregar o motor inteiro da carreira de atleta em telas que não têm nada
+ * a ver com ele: lentidão geral, sem um único erro de JavaScript, e por isso
+ * invisível para o type-check, o lint e os portões.
+ *
+ * Foi o jogador quem percebeu ("até a 337 estava ok"). As duas coisas que o
+ * cabeçalho precisa cabem aqui em 10 linhas — e ficam aqui, sem custo nenhum
+ * para as outras telas. Nenhuma funcionalidade da 338-345 se perde nisso.
+ */
+const NOME_DA_POSICAO: Record<string, string> = {
+  GOL: "Goleiro", ZAG: "Zagueiro", LD: "Lateral-direito", LE: "Lateral-esquerdo",
+  VOL: "Volante", MEI: "Meia", ATA: "Atacante",
+}
+
+/** A mesma conta de `mediaDaTemporada`, sem puxar o motor junto. */
+function mediaDasNotas(jogos: number, somaDasNotas: number): number {
+  return jogos > 0 ? Math.round((somaDasNotas / jogos) * 100) / 100 : 0
+}
 import { siglaExibivel } from "@/lib/club-identity"
 
 const MONTHS_SHORT = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
@@ -439,10 +463,9 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       const formaDoAtleta = carreiraDeAtleta.ultimasPartidas.slice(-5).map(p =>
         p.golsPro > p.golsContra ? "V" : p.golsPro === p.golsContra ? "E" : "D",
       ) as ("V" | "E" | "D")[]
-      const notaMedia = mediaDaTemporada(carreiraDeAtleta)
+      const notaMedia = mediaDasNotas(t.jogos, t.somaDasNotas)
       const nomeDaPosicao =
-        POSICOES_JOGAVEIS.find(p => p.id === carreiraDeAtleta.atleta.posicao)?.nome
-        ?? carreiraDeAtleta.atleta.posicao
+        NOME_DA_POSICAO[carreiraDeAtleta.atleta.posicao] ?? carreiraDeAtleta.atleta.posicao
       return {
         coachData: {
           nome: carreiraDeAtleta.atleta.nome,

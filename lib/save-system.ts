@@ -12,7 +12,7 @@ import { useEffect, useState } from "react"
 // `nationalTeamToTeam`)? Está em `lib/time-da-carreira`, que explica o porquê.
 import type { Team } from "@/lib/teams-data"
 import type { NationalCompetitionState } from "@/lib/national-competitions"
-import { storeGet, storeSet, storeRemove, initPersistentStore, flushPersistentStore } from "@/lib/persistent-store"
+import { storeGet, storeSet, storeRemove, storeKeys, initPersistentStore, flushPersistentStore } from "@/lib/persistent-store"
 import { mirrorSaveToFolder, deleteSaveFromFolder, listMirroredCareerSuffixes } from "@/lib/save-folder"
 import type { TransferRecord, MatchFixture, StandingEntry, MatchResult, FinanceEntry, SeasonRecord, InjuryRecord, FatigueMap, CupBracket } from "@/lib/career-types"
 import type { ClubDebtState } from "@/lib/debt-engine"
@@ -1128,13 +1128,53 @@ function lerUniverso(careerId: string): UniversoPersistente286 | undefined {
   }
 }
 
+/**
+ * ⚠️ O UNIVERSO DE CADA CARREIRA PESA ~42 MB, E NINGUÉM OS APAGAVA (1.0.346).
+ *
+ * Foi o que deixou o jogo com TELA PRETA em todas as versões, inclusive nas
+ * antigas: `ultrafoot-clubs.json` chegou a **546 MB** — cerca de treze
+ * universos de carreiras que não existem mais, empilhados. O jogo travava a
+ * thread lendo e interpretando isso no boot, e o sintoma não era erro nenhum:
+ * era a janela preta, porque a webview não conseguia pintar.
+ *
+ * Nada disso aparece em teste: o arquivo cresce na MÁQUINA DO JOGADOR, uma
+ * carreira por vez, e só incomoda depois de algumas. Por isso a limpeza mora
+ * aqui, no único lugar por onde todo universo passa para ser gravado.
+ *
+ * ⚠️ GUARDAR "O DAS CARREIRAS VIVAS" NÃO BASTA — foi a primeira tentativa, e o
+ * gate `test-universo-nao-incha` a derrubou na hora: esta máquina tem **45
+ * carreiras salvas**. Apagar só o de carreira excluída deixaria 45 × 42 MB =
+ * ~1,9 GB crescerem sem um único órfão para limpar. A regra teria adiado o
+ * problema, não resolvido.
+ *
+ * Por isso fica só o universo da carreira ATIVA. Ele é RECONSTRUÍVEL: a
+ * semeadura custa ~1,8 s, então voltar a uma carreira antiga paga essa espera
+ * uma vez, em troca de o estado nunca passar de dezenas de MB. É a troca certa
+ * — 1,8 s ao abrir contra o jogo não abrir de jeito nenhum, que foi o que
+ * aconteceu aos 546 MB.
+ */
+function limparUniversosDeOutrasCarreiras(careerIdAtivo: string): void {
+  if (!careerIdAtivo) return
+  for (const chave of storeKeys()) {
+    if (!chave.startsWith(CAREER_UNIVERSE_PREFIX)) continue
+    if (chave.slice(CAREER_UNIVERSE_PREFIX.length) !== careerIdAtivo) storeRemove(chave)
+  }
+}
+
 function gravarUniverso(careerId: string, estado: UniversoPersistente286 | undefined): void {
   if (!estado) return
+  // ⚠️ A LIMPEZA VEM ANTES DO ATALHO DE "UNIVERSO INALTERADO". Abrir uma carreira
+  // antiga e não virar a semana não grava universo nenhum — `avancarUniverso286`
+  // só devolve objeto novo uma vez por semana — e sem esta ordem o universo da
+  // carreira anterior ficaria em disco a sessão inteira, que é exatamente o
+  // acúmulo que este código existe para impedir.
+  limparUniversosDeOutrasCarreiras(careerId)
   if (universoEmMemoria?.careerId === careerId && universoEmMemoria.estado === estado) return
   const raw = JSON.stringify(estado)
   storeSet(universeKey(careerId), raw)
   universoEmMemoria = { careerId, estado }
   universoRawLido = { careerId, raw }
+  limparUniversosDeOutrasCarreiras(careerId)
 }
 
 // ─── SAVE À PROVA DE ATUALIZAÇÃO ─────────────────────────────────────────────
@@ -1440,6 +1480,10 @@ export function loadGameState(): GameState {
   if (typeof window === "undefined") return DEFAULT_STATE
   const activeId = getActiveCareerId()
   if (activeId) {
+    // ⚠️ ABRIR A CARREIRA JÁ DEVOLVE O DISCO. Sem isto a limpeza dependeria de o
+    // jogador virar uma semana, e um estado inchado herdado de versões antigas
+    // continuaria pesando no boot — que é o momento em que ele derruba o jogo.
+    limparUniversosDeOutrasCarreiras(activeId)
     // O universo volta a se juntar ao estado na LEITURA. Save antigo ainda o traz
     // embutido — nesse caso o de dentro vence, e a próxima gravação o separa
     // sozinha. É a migração inteira: não há passo manual nenhum.

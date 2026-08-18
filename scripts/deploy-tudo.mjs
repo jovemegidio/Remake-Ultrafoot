@@ -265,6 +265,11 @@ const GATES = [
   // no elenco que nunca evolui. A trava que mais importa e "vespera de jogo nunca
   // e treino" — sem ela a interface entrega o time cansado em campo.
   { nome: "rotina da semana", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-rotina-da-semana.ts"] },
+  // O estado em disco cresce na MAQUINA DO JOGADOR, uma carreira por vez, e
+  // nenhum outro gate olha para o TAMANHO dele. Em 17/08/2026 isso deixou o jogo
+  // com tela preta em TODAS as versoes, inclusive nas antigas: o arquivo tinha
+  // chegado a 546 MB. Ver scripts/test-universo-nao-incha.ts.
+  { nome: "o estado em disco nao incha", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-universo-nao-incha.ts"] },
 ]
 // ⚠️ OS GATES RODAM NO DISCO DE BUILD, NAO NO REPOSITORIO.
 //

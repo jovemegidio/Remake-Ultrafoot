@@ -164,5 +164,15 @@
  "independiente_equ": "Independente del Vale - ECU.png",
  "univcatolicaquito_equ": "Universidade Catolica - ECU.png",
  "guayaquilcity_equ": "Guayaquil City Fútbol Club - ECU.png",
- "barcelona_equ": "Barcelona - ECU.png"
+ "barcelona_equ": "Barcelona - ECU.png",
+
+ "_9_lote_17_08_2026": "Lote de 17/08/2026. Mesmo padrao do grupo A acima: a UF vem DENTRO do nome e o sufixo do arquivo e BRA, entao o parser le o clube como 'Penapolense SP'. Os tres conferidos por busca no pool (nome e fileKey), sem homonimo.",
+ "penapolense_sp": "Penapolense SP - BRA.png",
+ "uniaosaojoao_sp": "União São João ARARAS SP - BRA.png",
+ "xvdejau_sp": "XV de Jaú SP - BRA.png",
+
+ "_10_sufixo_do_arquivo_errado_17_08": "⚠️ O sufixo do arquivo diz AM e o clube e do AMAPA — confirmado pelo usuario em 17/08/2026, como ja tinha acontecido com Retro-MA e Serrano-MA (que sao de PE) e ABC-PE (que e do RN). Sem este par o arquivo saia como 'sem clube no seed', porque nenhum 'Cristal' do AM existe.",
+ "cristal_ap": "Cristal AM - BRA.png",
+
+ "_11_atletico_piaui_nao_tem_par": "⚠️ NAO ESCREVA UM PAR PARA 'Atletico Piaui - BRA.png'. A pasta tem DOIS clubes do Piaui e o pool tem UMA chave: `piaui_pi` e o Piaui Esporte Clube (escudo em losango, 'PEC'), que ja esta publicado. O arquivo 'Atletico Piaui' e o Clube Atletico Piauiense, fundado em 2019, que NAO existe no pool. Decidido com o usuario em 17/08/2026: fica o PEC. Mapear os dois para a mesma chave trocaria o escudo certo pelo de outro clube — e o canal vence o embutido."
 }

@@ -127,5 +127,11 @@
 
   "_CHN": "Super League.",
   "CHN:beijing": "beijinggoan_chn",
-  "CHN:shenzhen_peng_city": "shenzhen_chn"
+  "CHN:shenzhen_peng_city": "shenzhen_chn",
+
+  "_BRA_ACESSO": "Pasta 'Divisões de Acesso - Camisas' (17/08/2026). O arquivo traz a sigla colada no nome ('Sousa EC') e a camada de palavra de sociedade nao a derruba, entao o clube — que EXISTE — saia como 'sem clube no seed'.",
+  "BRA:sousa_ec": "sousapb_bra",
+
+  "_BRA_ACESSO_SAO_JOSE": "A pasta tem 'São Jose RS' E 'São Jose E.C', e o seed tem QUATRO São José (RS, SP, AP e o São Joseense do PR). O 'E.C' e o de São Jose dos Campos: a camisa traz Milclean e Pontz, patrocinadores de la, enquanto a do RS traz Banrisul, que e o banco gaucho. Sem par o arquivo sai como 'sem clube'; e um par chutado poria a camisa paulista no clube gaucho, que ja tem a dele nesta mesma pasta.",
+  "BRA:sao_jose_ec": "saojosesp_bra"
 }

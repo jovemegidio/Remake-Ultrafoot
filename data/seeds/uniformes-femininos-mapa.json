@@ -1,0 +1,13 @@
+{
+ "_": "Pares slug->file_key (SEM o sufixo __fem) para o publicar-uniformes-femininos.ts. A chave e namespaced pela LIGA, nao pelo pais: o mesmo apelido aparece em divisoes diferentes e o universo de casamento e sempre uma liga so.",
+
+ "_frauen_bundesliga": "A pasta abrevia o nome ao ponto de nao sobrar palavra: 'czjena' e o Carl Zeiss Jena.",
+ "frauen_bundesliga:czjena": "carl_zeiss_jena",
+
+ "_brasileirao_fem_a1": "'rbbragantino' e o Red Bull Bragantino (o jogo guarda a chave do masculino, bragantino_bra). 'instituto3b' e o 3B da Amazonia, cujo nome oficial e Instituto 3B — nenhuma palavra em comum com o nome do jogo.",
+ "brasileirao_fem_a1:rbbragantino": "bragantino_bra",
+ "brasileirao_fem_a1:instituto3b": "3b_da_amazonia",
+
+ "_liga_f_esp": "A pasta escreve a cidade aportuguesada ('corunha'); o jogo guarda 'Deportivo La Coruna'.",
+ "liga_f_esp:deportivo_corunha": "deportivo_la_coruna"
+}

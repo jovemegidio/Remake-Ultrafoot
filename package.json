@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.345",
+  "version": "1.0.346",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -20,6 +20,7 @@
     "qa:elencos-compactos": "tsx scripts/test-elencos-compactos.ts",
     "qa:manifesto-fotos": "tsx scripts/test-manifesto-de-fotos.ts",
     "qa:busca-clube": "tsx scripts/test-busca-de-clube-rapida.ts",
+    "qa:universo": "tsx scripts/test-universo-nao-incha.ts",
     "qa:rivals-no-ar": "node scripts/qa-rivals-no-ar.mjs",
     "qa:rivals": "node scripts/qa-rivals-servidor.mjs",
     "qa:carreira-jogador": "tsx scripts/qa-carreira-de-jogador.ts",
@@ -81,7 +82,7 @@
     "preqa:regras": "tsx scripts/test-real-clubs-stage1-lower-europe.ts && tsx scripts/test-real-clubs-stage3-czech.ts && tsx scripts/test-official-european-participants-2026.ts && tsx scripts/test-uefa-expansion.ts && tsx scripts/test-performance-center.ts && tsx scripts/test-squad-dynamics.ts && tsx scripts/test-ai-club-social.ts && tsx scripts/test-copas-mundiais.ts && tsx scripts/test-reserve-promotion.ts",
     "qa:regras": "tsx scripts/test-country-competitions.ts && tsx scripts/test-real-clubs-stage1.ts && tsx scripts/test-fixture-catchup.ts && tsx scripts/test-amistoso-calendario.ts && tsx scripts/test-treino-entrosamento.ts && tsx scripts/test-entrosamento.ts && tsx scripts/test-mercado-realista.ts && tsx scripts/test-radar-evento.ts && tsx scripts/test-posicao-por-coordenada.ts && tsx scripts/test-escalacao-salva.ts && tsx scripts/test-liga-curta.ts && tsx scripts/test-posicoes-do-elenco.ts && tsx scripts/test-escudo-clube-formador.ts && tsx scripts/test-contrato-base-de-tempo.ts && tsx scripts/test-piso-de-elenco.ts && tsx scripts/test-diretoria.ts && tsx scripts/test-mundo-vivo.ts && tsx scripts/test-dificuldade-e-diretoria.ts && tsx scripts/test-trofeus.ts && tsx scripts/test-rotina-da-semana.ts && tsx scripts/test-conversa-atleta.ts && tsx scripts/test-coletiva.ts",
     "prebuild": "node scripts/preparar-env-licenca.mjs && node scripts/embutir-edicoes.mjs && node scripts/build-team-player-photos.mjs && node scripts/compactar-elencos-do-pool.mjs && node scripts/compactar-elencos-tm.mjs && node scripts/compactar-manifesto-de-fotos.mjs",
-    "qa:gates": "npm run qa:nao-regride && npm run qa:331 && npm run qa:var && npx tsc --noEmit -p tsconfig.json && npx eslint app components lib hooks && node scripts/audit-feature-gaps.mjs && npx tsx scripts/qa-competition-regulations.ts && npm run qa:pool-elencos && npm run qa:ligas && npm run qa:piramide-br && npm run qa:clube-proprio && npm run qa:modelo-jogador && npm run qa:editor-elenco && npm run qa:busca && npm run qa:treino-diario && npm run qa:elencos-compactos && npm run qa:manifesto-fotos && npm run qa:busca-clube && npm run qa:simular-persiste && npm run qa:smoke && npm run qa:online && npm run qa:mercado-modalidade && npm run qa:regras",
+    "qa:gates": "npm run qa:nao-regride && npm run qa:331 && npm run qa:var && npx tsc --noEmit -p tsconfig.json && npx eslint app components lib hooks && node scripts/audit-feature-gaps.mjs && npx tsx scripts/qa-competition-regulations.ts && npm run qa:pool-elencos && npm run qa:ligas && npm run qa:piramide-br && npm run qa:clube-proprio && npm run qa:modelo-jogador && npm run qa:editor-elenco && npm run qa:busca && npm run qa:treino-diario && npm run qa:elencos-compactos && npm run qa:manifesto-fotos && npm run qa:busca-clube && npm run qa:simular-persiste && npm run qa:smoke && npm run qa:online && npm run qa:mercado-modalidade && npm run qa:regras && npm run qa:universo",
     "qa:carreiras": "tsx scripts/qa-carreiras-longas.ts",
     "qa:save-protegido": "tsx scripts/test-save-protegido.ts",
     "build:loja": "node scripts/build-loja.mjs",

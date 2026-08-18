@@ -17,9 +17,30 @@ type TauriStore = {
 const cache = new Map<string, string>()
 const pendingOperations = new Set<Promise<void>>()
 let writeQueue: Promise<void> = Promise.resolve()
+/**
+ * ⚠️ QUANTAS MUTAÇÕES AINDA ESTÃO NA FILA (1.0.346).
+ *
+ * `store.set()` é barato: mexe na memória do plugin. Quem custa é `store.save()`,
+ * que **reescreve o arquivo inteiro** — medido nesta máquina: 217 ms de
+ * serialização mais 50 MB de disco, por chamada.
+ *
+ * E `saveGameState` não faz uma gravação: faz de cinco a oito seguidas (save,
+ * backup, índice de carreiras, retratos, universo). Uma por uma, cada autosave
+ * reescrevia o arquivo todo várias vezes — segundos de disco enquanto o jogador
+ * clica. Este contador deixa as intermediárias apenas `set()` e guarda o
+ * `save()` para a ÚLTIMA da fila: um commit por rajada, não por chave.
+ *
+ * O que NÃO muda: a fila continua serializada (era o que impedia snapshot
+ * antigo), o cache já respondeu à UI de forma síncrona, e `flushPersistentStore`
+ * espera a fila drenar — logo o commit final sempre acontece antes de um reload.
+ */
+let mutacoesEnfileiradas = 0
+/** Arquivos com `set`/`delete` ainda não commitados. Ver `_commitDosArquivosSujos`. */
+const arquivosSujos = new Set<TauriStore>()
 let _initialized = false
 let _initPromise: Promise<void> | null = null
 let _tauriStore: TauriStore | null = null
+let _universeStore: TauriStore | null = null
 
 // O localStorage e apenas um espelho de compatibilidade. Nunca duplicamos nele
 // blobs/base64 nem valores grandes: isso fazia a WebView manter outra copia de
@@ -44,12 +65,48 @@ function _isTauri(): boolean {
   )
 }
 
+/**
+ * ⚠️ O UNIVERSO MORA EM ARQUIVO PRÓPRIO (1.0.346).
+ *
+ * `store.save()` reescreve o arquivo INTEIRO. Enquanto o universo da carreira
+ * (~42 MB) dividia arquivo com o resto, cada troca de configuração e cada
+ * autosave arrastava esses 42 MB junto — medido nesta máquina: 50 MB e 217 ms
+ * de serialização por commit, contra 7,5 MB e 31 ms sem ele.
+ *
+ * É a mesma jogada que `lib/banco-de-imagens` fez com os escudos em 11/08: o
+ * inquilino grande sai do JSON que é reescrito o tempo todo. A diferença é que
+ * aqui ele continua sendo um plugin-store, carregado para o MESMO cache no
+ * boot — então `storeGet`/`storeKeys` seguem síncronos e nenhuma tela muda.
+ *
+ * Se este arquivo sumir ou corromper, nada se perde de verdade: o universo é
+ * reconstruível pela semeadura (~1,8 s). Ver `lerUniverso` em lib/save-system.
+ */
+const ARQUIVO_PRINCIPAL = "ultrafoot-clubs.json"
+const ARQUIVO_DO_UNIVERSO = "ultrafoot-universo.json"
+const PREFIXO_UNIVERSO = "ultrafoot:universo:"
+
+function ehChaveDeUniverso(key: string): boolean {
+  return key.startsWith(PREFIXO_UNIVERSO)
+}
+
+async function _carregarArquivo(nome: string): Promise<TauriStore> {
+  const { load } = await import("@tauri-apps/plugin-store")
+  return (await load(nome, { autoSave: false } as Parameters<typeof load>[1])) as TauriStore
+}
+
 async function _getStore(): Promise<TauriStore> {
-  if (!_tauriStore) {
-    const { load } = await import("@tauri-apps/plugin-store")
-    _tauriStore = (await load("ultrafoot-clubs.json", { autoSave: false } as Parameters<typeof load>[1])) as TauriStore
-  }
+  if (!_tauriStore) _tauriStore = await _carregarArquivo(ARQUIVO_PRINCIPAL)
   return _tauriStore
+}
+
+async function _getStoreDoUniverso(): Promise<TauriStore> {
+  if (!_universeStore) _universeStore = await _carregarArquivo(ARQUIVO_DO_UNIVERSO)
+  return _universeStore
+}
+
+/** O arquivo a que a chave pertence. É o único ponto que decide isso. */
+async function _getStoreDaChave(key: string): Promise<TauriStore> {
+  return ehChaveDeUniverso(key) ? _getStoreDoUniverso() : _getStore()
 }
 
 async function _migrateLocalStorage(store: TauriStore): Promise<void> {
@@ -92,6 +149,51 @@ async function _promoteLocalOnlyKeys(store: TauriStore): Promise<void> {
   if (promoted > 0) await store.save()
 }
 
+/** Lê `ultrafoot-universo.json` para o cache comum. Falhar aqui não é fatal:
+ *  sem universo em cache a carreira apenas ressemeia (~1,8 s). */
+async function _carregarUniversoParaOCache(): Promise<void> {
+  try {
+    const store = await _getStoreDoUniverso()
+    for (const [k, v] of await store.entries<string>()) {
+      // O espelho no localStorage fica de fora de propósito: são dezenas de MB,
+      // exatamente o que `MAX_LOCAL_MIRROR_LENGTH` existe para manter fora dele.
+      if (typeof v === "string") cache.set(k, v)
+    }
+  } catch (e) {
+    console.warn("[persistent-store] universo indisponivel, sera ressemeado:", e)
+  }
+}
+
+/**
+ * Migração de casa, uma vez por máquina: universo que ainda esteja no arquivo
+ * principal é copiado para o dele e removido de lá.
+ *
+ * ⚠️ A ORDEM IMPORTA. Grava e faz commit no arquivo NOVO antes de apagar do
+ * antigo. Se a energia cair no meio, o pior caso é o universo existir nos dois
+ * — e não em nenhum.
+ */
+async function _mudarUniversoDeArquivo(principal: TauriStore): Promise<void> {
+  const doArquivoAntigo = [...cache.keys()].filter(ehChaveDeUniverso)
+    .filter(k => !!cache.get(k))
+  if (doArquivoAntigo.length === 0) return
+  try {
+    const universo = await _getStoreDoUniverso()
+    let mudou = 0
+    for (const k of doArquivoAntigo) {
+      if (!(await principal.has(k))) continue // ja mora no arquivo novo
+      await universo.set(k, cache.get(k) as string)
+      mudou++
+    }
+    if (mudou === 0) return
+    await universo.save()
+    for (const k of doArquivoAntigo) await principal.delete(k)
+    await principal.save()
+    console.info(`[persistent-store] ${mudou} universo(s) movidos para ${ARQUIVO_DO_UNIVERSO}`)
+  } catch (e) {
+    console.warn("[persistent-store] mudanca do universo de arquivo falhou:", e)
+  }
+}
+
 async function _init(): Promise<void> {
   if (typeof window === "undefined") {
     _initialized = true
@@ -127,6 +229,14 @@ async function _init(): Promise<void> {
       // o que ja e durável. Como cada navegacao recarrega a pagina, roda cedo e
       // frequente; depois de promovida, a chave ja esta no cache e e ignorada.
       await _promoteLocalOnlyKeys(store)
+
+      // O universo vem do arquivo dele para o MESMO cache — por isso storeGet
+      // continua síncrono e nenhuma tela precisou mudar.
+      await _carregarUniversoParaOCache()
+      // E o que ficou no arquivo antigo muda de casa agora. Sem este passo, o
+      // arquivo principal continuaria carregando os 42 MB que o tornam caro de
+      // reescrever, e a separação só valeria para carreira nova.
+      await _mudarUniversoDeArquivo(store)
     } catch (e) {
       console.warn("[persistent-store] Tauri store failed, using localStorage:", e)
       _loadFromLocalStorage()
@@ -152,6 +262,16 @@ function _loadFromLocalStorage(): void {
     const v = localStorage.getItem(k)
     if (v !== null) cache.set(k, v)
   }
+}
+
+/**
+ * Chamada no momento em que a mutação SAI da fila. Se outra já entrou atrás
+ * dela, esta não precisa tocar o disco — a de trás vai reescrever o arquivo
+ * inteiro de qualquer jeito, com este valor já dentro.
+ */
+function ehAUltimaDaFila(): boolean {
+  mutacoesEnfileiradas = Math.max(0, mutacoesEnfileiradas - 1)
+  return mutacoesEnfileiradas === 0
 }
 
 function _dispatch(key: string): void {
@@ -183,7 +303,8 @@ export function storeSet(key: string, value: string): void {
   // O plugin-store usa um unico arquivo. Gravacoes paralelas de save, motor e
   // autosave podiam chamar store.save() ao mesmo tempo e deixar o arquivo com um
   // snapshot antigo. Serializar todas as mutacoes torna o commit deterministico.
-  const operation = writeQueue.then(() => _writeAsync(key, value))
+  mutacoesEnfileiradas++
+  const operation = writeQueue.then(() => _writeAsync(key, value, ehAUltimaDaFila()))
   writeQueue = operation.catch(() => undefined)
   pendingOperations.add(operation)
   void operation.finally(() => pendingOperations.delete(operation))
@@ -214,9 +335,12 @@ export function storeSetMany(entries: Iterable<[string, string]>): Promise<void>
     if (typeof window === "undefined") return
     try {
       if (_isTauri()) {
-        const store = await _getStore()
-        for (const [key, value] of lista) await store.set(key, value)
-        await store.save()
+        for (const [key, value] of lista) {
+          const store = await _getStoreDaChave(key)
+          await store.set(key, value)
+          arquivosSujos.add(store)
+        }
+        await _commitDosArquivosSujos()
       } else {
         for (const [key, value] of lista) localStorage.setItem(key, value)
       }
@@ -241,7 +365,8 @@ export function storeRemove(key: string): void {
     try { localStorage.removeItem(key) } catch { /* ignora */ }
   }
   _dispatch(key)
-  const operation = writeQueue.then(() => _deleteAsync(key))
+  mutacoesEnfileiradas++
+  const operation = writeQueue.then(() => _deleteAsync(key, ehAUltimaDaFila()))
   writeQueue = operation.catch(() => undefined)
   pendingOperations.add(operation)
   void operation.finally(() => pendingOperations.delete(operation))
@@ -254,19 +379,34 @@ export async function flushPersistentStore(): Promise<void> {
   }
 }
 
-async function _writeAsync(key: string, value: string): Promise<void> {
+async function _writeAsync(key: string, value: string, commit: boolean): Promise<void> {
   if (typeof window === "undefined") return
   try {
     if (_isTauri()) {
-      const store = await _getStore()
+      const store = await _getStoreDaChave(key)
       await store.set(key, value)
-      await store.save()
+      arquivosSujos.add(store)
+      if (commit) await _commitDosArquivosSujos()
     } else {
       localStorage.setItem(key, value)
     }
   } catch (e) {
     console.warn("[persistent-store] write failed:", e)
   }
+}
+
+/**
+ * ⚠️ COMMITA TODOS OS ARQUIVOS TOCADOS, não só o da última chave.
+ *
+ * Com dois arquivos, "a última da fila salva" deixaria um buraco: uma rajada que
+ * grava o save (arquivo principal) e depois o universo (arquivo dele) terminaria
+ * commitando só o segundo, e o save ficaria na memória do plugin até alguém
+ * mexer no principal de novo. Aqui a rajada inteira vai ao disco de uma vez.
+ */
+async function _commitDosArquivosSujos(): Promise<void> {
+  const arquivos = [...arquivosSujos]
+  arquivosSujos.clear()
+  for (const store of arquivos) await store.save()
 }
 
 // Storage compativel com o middleware `persist` do zustand, backed pelo
@@ -343,13 +483,14 @@ export function createTauriZustandStorage() {
   }
 }
 
-async function _deleteAsync(key: string): Promise<void> {
+async function _deleteAsync(key: string, commit: boolean): Promise<void> {
   if (typeof window === "undefined") return
   try {
     if (_isTauri()) {
-      const store = await _getStore()
+      const store = await _getStoreDaChave(key)
       await store.delete(key)
-      await store.save()
+      arquivosSujos.add(store)
+      if (commit) await _commitDosArquivosSujos()
     } else {
       localStorage.removeItem(key)
     }
