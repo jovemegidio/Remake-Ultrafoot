@@ -276,14 +276,26 @@ export default function SplashPage() {
     // ATLETA nao esta dirigindo clube nenhum — escolhe um corpo primeiro. As
     // tres de tecnico continuam juntas la dentro; esta ganha porta propria.
     { id: "carreira-jogador", label: "Carreira de jogador", hint: "Um atleta so: da estreia a aposentadoria", grupo: "jogar", href: "/novo-jogo?modo=jogador" },
-    // ONLINE só existe quando o jogo está EM MODO ONLINE (1.0.327, pedido do
-    // usuario: "devem aparecer na tela de novo jogo e menu apenas no modo
-    // online"). O interruptor nao e novo — e o `multiplayerEnabled` do save,
-    // ligado em Configuracoes. Desligado, quem joga sozinho nao ve um item
-    // sequer de online no caminho.
-    ...(gameState.multiplayerEnabled
-      ? [{ id: "online" as MenuOption, label: "Online", hint: "FC Hub, amistosos e modos entre tecnicos", grupo: "jogar" as const, href: "/online" }]
-      : []),
+    // ONLINE FICA SEMPRE VISIVEL (1.0.347, pedido do usuario).
+    //
+    // ⚠️ ELE JA EXISTIA E ESTAVA ESCONDIDO. Na 1.0.327 o item so aparecia com
+    // `multiplayerEnabled` ligado, para "o online nao poluir o caminho de quem
+    // nao usa". O efeito real foi outro: quem nunca abriu Configuracoes nao
+    // descobria que o modo existe, e pedir "implemente os modos online no menu"
+    // era pedir uma tela que ja estava pronta atras de um interruptor invisivel.
+    //
+    // Esconder a porta nao e o mesmo que nao ter porta. `/online` ja trata o
+    // caso desligado com todas as letras — explica onde fica o interruptor e
+    // leva ate ele — entao mostrar o item sempre informa em vez de frustrar.
+    {
+      id: "online",
+      label: "Online",
+      hint: gameState.multiplayerEnabled
+        ? "FC Hub, amistosos e modos entre tecnicos"
+        : "FC Hub e amistosos — precisa ligar o modo online",
+      grupo: "jogar",
+      href: "/online",
+    },
     { id: "carregar", label: t.splash.loadGame, hint: hasSaveGame ? "Continuar uma carreira salva" : "Nenhuma carreira salva ainda", grupo: "jogar" },
     { id: "editar", label: t.splash.clubEditor, hint: "Nomes, escudos, uniformes e elencos", grupo: "ferramentas", href: "/editar" },
     // REGISTRAR so aparece para quem AINDA NAO registrou (pedido 30/07/26): depois

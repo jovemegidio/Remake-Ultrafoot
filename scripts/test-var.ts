@@ -16,6 +16,8 @@ function revisao(overrides: Partial<PendingVarReview>): PendingVarReview {
     originalEventId: "gol-1",
     player: "Atacante",
     reason: "impedimento na origem da jogada",
+    // Impedimento e FATO: a cabine resolve e o arbitro nao vai ao monitor.
+    noMonitor: false,
     ...overrides,
   }
 }

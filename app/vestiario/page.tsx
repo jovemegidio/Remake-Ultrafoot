@@ -127,7 +127,15 @@ export default function VestiarioPage() {
   const [conversationResult, setConversationResult] = useState<{ success: boolean; message: string } | null>(null)
   const { squadPlayers, squadMorale, addMoraleEvent, currentWeek, groupActionCooldowns, performGroupAction } = gameEngine
 
-  const events = squadMorale.recentEvents
+  // ⚠️ SAVE ANTIGO NAO TEM ESTE CAMPO, E A TELA INTEIRA CAI.
+  //
+  // `squadMorale.recentEvents` nasceu depois de muita carreira ja existir. Em
+  // quem salvou antes dele, isto e `undefined`, e o `events.length` la embaixo
+  // derruba a tela com "Cannot read properties of undefined" — sem mensagem que
+  // ajude, so o vestiario em branco. O `migrate` do save NAO alcanca objeto
+  // aninhado, entao a defesa mora no ponto de leitura. Achado pela auditoria de
+  // telas (qa:audit), que injeta justamente um save sem o campo.
+  const events = squadMorale?.recentEvents ?? []
   const dynamics = useMemo(() => analyseSquadDynamics(squadPlayers), [squadPlayers])
   const dynamicsByPlayer = useMemo(
     () => new Map(dynamics.players.map(item => [item.playerId, item])),

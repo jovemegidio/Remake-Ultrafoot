@@ -99,6 +99,8 @@ export interface MatchEvent {
     incident: "goal" | "penalty" | "red_card"
     decision?: "confirmed" | "overturned"
     reason: string
+    /** O árbitro foi ao monitor? Ver `exigeRevisaoNoMonitor`. */
+    noMonitor?: boolean
   }
 }
 
@@ -119,6 +121,13 @@ export interface PendingVarReview {
   originalEventId: string
   player?: string
   reason: string
+  /**
+   * ⚠️ A DIFERENÇA QUE O JOGADOR RECONHECE DA TV. Impedimento é FATO: a cabine
+   * resolve e o árbitro nem sai do lugar. Falta, mão e pênalti são
+   * INTERPRETAÇÃO, e nesses o árbitro é chamado ao monitor — é o momento que
+   * para o estádio. Ver `exigeRevisaoNoMonitor`.
+   */
+  noMonitor: boolean
 }
 
 export interface TeamStats {
@@ -481,44 +490,111 @@ export function createInitialState(): MatchState {
 // baixas de propósito: a maioria dos gols nem é checada, e a maioria das
 // checagens CONFIRMA. O lance anulado é raro — e é por ser raro que dói.
 
+// ⚠️ PONDERADO DE PROPÓSITO, e sem sorteio novo: o motivo continua saindo de um
+// único `rnd()`. No futebol real a esmagadora maioria das checagens de gol é
+// IMPEDIMENTO — falta na origem e mão são a minoria. Com os três pesando igual,
+// dois de cada três gols checados viravam interpretação e o árbitro vivia no
+// monitor, que é o oposto do que faz a revisão significar alguma coisa.
 const MOTIVOS_VAR_GOL = [
+  "impedimento na origem da jogada",
+  "impedimento na origem da jogada",
   "impedimento na origem da jogada",
   "possível falta no ataque",
   "possível toque de mão",
 ] as const
 
+/**
+ * ⚠️ O PROTOCOLO DE VERDADE — e é ele que torna o monitor um MOMENTO.
+ *
+ * O VAR não revisa: ele CHECA e só recomenda revisão em campo quando enxerga
+ * erro claro e evidente. Daí saem três ritos, e o torcedor reconhece os três:
+ *
+ *  · checagem que CONFIRMA  → não há revisão em campo. "Checagem concluída",
+ *    o árbitro nem sai do lugar e o jogo recomeça. É a maioria absoluta.
+ *  · erro claro e FACTUAL (impedimento) → a cabine resolve. O árbitro anula
+ *    sem monitor, porque não há o que interpretar: ou passou da linha ou não.
+ *  · erro claro e SUBJETIVO (falta, mão, pênalti) → aí sim o árbitro é chamado
+ *    ao monitor. É o único caso, e por isso é o que para o estádio.
+ *
+ * A primeira versão disto mandava todo pênalti ao monitor e 84% das checagens
+ * viravam revisão em campo — o rito raro virou rotina, que é exatamente como se
+ * mata a tensão que ele deveria criar.
+ */
+function exigeRevisaoNoMonitor(
+  incident: PendingVarReview["incident"],
+  reason: string,
+  decision: PendingVarReview["decision"],
+): boolean {
+  if (decision === "confirmed") return false
+  if (incident === "goal" && reason.includes("impedimento")) return false
+  return true
+}
+
+/**
+ * ⚠️ O ÁRBITRO TEMPERA A DÚVIDA — SEM SORTEIO NOVO.
+ *
+ * O limiar é comparado com um `rnd()` que já seria tirado de qualquer forma:
+ * acrescentar um sorteio aqui deslocaria toda a sequência do motor e com ela a
+ * calibração de gols, que custou um harness de 20 mil partidas. O que muda é o
+ * limiar, não a quantidade de sorteios.
+ *
+ * O "caseiro" dá a dúvida ao mandante, exatamente como o `peso_da_casa` já faz
+ * nos cartões. E continua valendo a regra do módulo: o árbitro TEMPERA, não
+ * decide — por isso o ajuste é de poucos pontos percentuais.
+ */
+function limiarDeAnulacao(base: number, arbitro: Arbitro | undefined, side: Side): number {
+  if (!arbitro) return base
+  let limiar = base
+  if (arbitro.perfil === "caseiro") limiar += side === "home" ? -0.05 : 0.05
+  else if (arbitro.perfil === "rigoroso") limiar += 0.04
+  else if (arbitro.perfil === "permissivo") limiar -= 0.03
+  return Math.min(0.45, Math.max(0.05, limiar))
+}
+
 /** Abre a revisão de um gol. A decisão só é aplicada por `resolvePendingVar`. */
-function tentarRevisaoDeGol(state: MatchState, side: Side, eventoGol: MatchEvent): void {
+function tentarRevisaoDeGol(state: MatchState, side: Side, eventoGol: MatchEvent, arbitro?: Arbitro): void {
   if (rnd() >= 0.18) return                       // ~18% dos gols são checados
-  const decision = rnd() < 0.18 ? "overturned" : "confirmed"
+  const decision = rnd() < limiarDeAnulacao(0.18, arbitro, side) ? "overturned" : "confirmed"
   const reason = MOTIVOS_VAR_GOL[Math.floor(rnd() * MOTIVOS_VAR_GOL.length)]
+  const noMonitor = exigeRevisaoNoMonitor("goal", reason, decision)
   state.pendingVar = {
     incident: "goal", decision, side, minute: state.minute,
-    originalEventId: eventoGol.id, player: eventoGol.player, reason,
+    originalEventId: eventoGol.id, player: eventoGol.player, reason, noMonitor,
   }
   state.events = [{
     id: nameId(), minute: state.minute, type: "var", side,
-    text: "VAR checando o gol...", player: eventoGol.player, important: true,
-    varReview: { status: "checking", incident: "goal", reason },
+    // A espera é a graça — mas o TEXTO da espera agora diz qual espera é.
+    // ⚠️ A ESPERA NÃO PODE ENTREGAR A DECISÃO. O texto da checagem diz o que
+    // está sendo olhado, nunca o que vai dar — senão a tensão acaba antes de
+    // começar, que é a única coisa que este lance tem para oferecer.
+    text: reason.includes("impedimento")
+      ? "VAR checando impedimento na origem do gol..."
+      : `VAR checando o gol — ${reason}...`,
+    player: eventoGol.player, important: true,
+    varReview: { status: "checking", incident: "goal", reason, noMonitor },
   }, ...state.events]
   state.flash = null
 }
 
 /** Abre a revisão da marcação de pênalti. Devolve `true` quando abriu. */
-function tentarRevisaoDePenalti(state: MatchState, side: Side, minute: number): boolean {
+function tentarRevisaoDePenalti(state: MatchState, side: Side, minute: number, arbitro?: Arbitro): boolean {
   if (rnd() >= 0.30) return false                 // pênalti é mais checado que gol
-  const decision = rnd() < 0.22 ? "overturned" : "confirmed"
+  const decision = rnd() < limiarDeAnulacao(0.22, arbitro, side) ? "overturned" : "confirmed"
   const reason = decision === "overturned"
     ? (rnd() < 0.5 ? "a infração aconteceu fora da área" : "o contato não configura infração")
     : "infração confirmada dentro da área"
+  // Pênalti é interpretação: quando o VAR derruba a marcação, o árbitro VAI ao
+  // monitor. Quando a checagem confirma, não há revisão em campo nenhuma.
+  const noMonitor = exigeRevisaoNoMonitor("penalty", reason, decision)
   state.pendingVar = {
     incident: "penalty", decision, side, minute,
-    originalEventId: nameId(), reason,
+    originalEventId: nameId(), reason, noMonitor,
   }
   state.events = [{
     id: nameId(), minute, type: "var", side,
-    text: "VAR revisando a marcação do pênalti...", important: true,
-    varReview: { status: "checking", incident: "penalty", reason },
+    text: "VAR checando a marcação do pênalti...",
+    important: true,
+    varReview: { status: "checking", incident: "penalty", reason, noMonitor },
   }, ...state.events]
   state.flash = null
   return true
@@ -551,11 +627,19 @@ export function resolvePendingVar(state: MatchState): MatchState {
 
   const rotulo = review.incident === "goal" ? "gol" : review.incident === "penalty" ? "pênalti" : "cartão vermelho"
   const decisao = review.decision === "confirmed" ? `${rotulo} confirmado` : `${rotulo} anulado`
+  // Quem decidiu importa: revisão em campo é o árbitro que volta do monitor e
+  // sinaliza; impedimento é a cabine que avisa e o jogo recomeça.
+  const quemDecidiu = review.noMonitor
+    ? "O árbitro foi ao monitor e voltou"
+    : review.decision === "confirmed" ? "Checagem concluída" : "Decisão do VAR"
   next.events = [{
     id: nameId(), minute: review.minute, type: "var", side: review.side,
-    text: `Decisão do VAR: ${decisao}. ${review.reason}.`,
+    text: `${quemDecidiu}: ${decisao}. ${review.reason}.`,
     player: review.player, important: true,
-    varReview: { status: "decision", incident: review.incident, decision: review.decision, reason: review.reason },
+    varReview: {
+      status: "decision", incident: review.incident, decision: review.decision,
+      reason: review.reason, noMonitor: review.noMonitor,
+    },
   }, ...next.events]
   return next
 }
@@ -1269,7 +1353,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
         text: goalLine(shooterName, team.curto, assistName),
         player: shooterName, assist: assistName, important: true, corredor,
       }, ...state.events]
-      tentarRevisaoDeGol(state, side, state.events[0])
+      tentarRevisaoDeGol(state, side, state.events[0], config.arbitro)
       if (assistName) teamStats.xA += xg * 0.78
       state.flash = { side, type: "goal" }
       state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
@@ -1358,7 +1442,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
                 : `GOOOOL! ${hdrName} marca de cabeça no escanteio!`,
               player: hdrName, assist: cornerTaker, important: true,
             }, ...state.events]
-            tentarRevisaoDeGol(state, side, state.events[0])
+            tentarRevisaoDeGol(state, side, state.events[0], config.arbitro)
             state.flash = { side, type: "goal" }
             state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
             state.momentum = isHome ? 20 : -20
@@ -1378,7 +1462,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
                 text: `GOOOOL! O goleiro rebate a cabeçada de ${hdrName} e ${sobra.nome} aparece na sobra!`,
                 player: sobra.nome, assist: hdrName, important: true,
               }, ...state.events]
-              tentarRevisaoDeGol(state, side, state.events[0])
+              tentarRevisaoDeGol(state, side, state.events[0], config.arbitro)
               state.flash = { side, type: "goal" }
               state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
               state.momentum = isHome ? 20 : -20
@@ -1505,7 +1589,7 @@ function resolveFoul(side: Side, state: MatchState, config: MatchConfig, probs: 
           text: `GOOOOL! ${fkName} marca de falta direto!`,
           player: fkName, important: true,
         }, ...state.events]
-        tentarRevisaoDeGol(state, fkSide, state.events[0])
+        tentarRevisaoDeGol(state, fkSide, state.events[0], config.arbitro)
         state.flash = { side: fkSide, type: "goal" }
         state.ball = { x: 50, y: 50, side: fkIsHome ? "away" : "home" }
         state.momentum = fkIsHome ? 20 : -20
@@ -1653,7 +1737,7 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
 
     // A marcacao pode ser revista antes de qualquer cobranca. Enquanto o VAR
     // decide, nem a IA nem o jogador conhecem ainda o desfecho.
-    if (tentarRevisaoDePenalti(state, side, minute)) return
+    if (tentarRevisaoDePenalti(state, side, minute, config.arbitro)) return
 
     // Penalti do USUARIO: o motor PARA aqui. Antes ele cobrava no mesmo tick — o gol
     // ja estava no placar quando a UI ia reagir, o evento de penalti ficava soterrado

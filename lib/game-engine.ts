@@ -7849,6 +7849,21 @@ export const useGameEngine = create<GameEngineState>()(
         state.tacticalPlayerMovements = state.tacticalPlayerMovements ?? {}
         state.playerInstructions = state.playerInstructions ?? {}
         state.setPieceTakers = state.setPieceTakers ?? {}
+        // ⚠️ MORAL DO ELENCO: CAMPO NOVO EM OBJETO ANTIGO DERRUBA A TELA.
+        //
+        // `recentEvents` entrou depois de muita carreira ja existir. Em quem
+        // salvou antes, `squadMorale` chega do disco SEM ele, e o vestiario
+        // quebrava em "Cannot read properties of undefined (reading 'length')" —
+        // a tela inteira em branco, sem mensagem util. Normalizar aqui conserta
+        // todas as telas que leem moral de uma vez, em vez de cada uma se
+        // defender por conta propria. Achado pela auditoria de telas (qa:audit).
+        const moral = state.squadMorale
+        state.squadMorale = {
+          overall: moral?.overall ?? 75,
+          unity: moral?.unity ?? 70,
+          confidence: moral?.confidence ?? 70,
+          recentEvents: moral?.recentEvents ?? [],
+        }
       },
       // Persistido no persistent-store (arquivo, sobrevive a reinstalacao) em vez do
       // localStorage da webview, que era limpo nos updates e fazia o elenco/tabela
