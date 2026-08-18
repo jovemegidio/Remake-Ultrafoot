@@ -18,11 +18,41 @@
 import { isTauri } from "@/lib/game-asset"
 
 /**
+ * ESTA MAQUINA CONSEGUE FALAR COM ESTA URL?
+ *
+ * ⚠️ FORA DO TAURI, PEDIDO CROSS-ORIGIN PARA A VPS NAO TEM COMO DAR CERTO. O
+ * nginx que serve `/downloads/` e `/atualizacoes/` NAO manda
+ * `Access-Control-Allow-Origin` — so o `/auth` manda, e e por isso que a conta
+ * funciona no navegador. Tentar assim mesmo nao "tenta a sorte": ele so imprime
+ * um erro de CORS no console, um por consumidor, em toda tela.
+ *
+ * Era esse barulho que afogava a auditoria de telas (40 de 40 reprovadas). E a
+ * licao que veio junto: calar o aviso no teste era esconder o sintoma — o lugar
+ * de nao fazer o pedido impossivel e AQUI, onde o pedido nasce.
+ *
+ * Dentro do Tauri tudo passa: a requisicao sai pelo lado nativo, onde CORS nao
+ * existe. Ver `escolherFetch`.
+ */
+export function alcancavelDaqui(url: string): boolean {
+  if (typeof window === "undefined") return false
+  if (isTauri()) return true
+  try {
+    const alvo = new URL(url, window.location.href)
+    if (alvo.origin === window.location.origin) return true
+    // Unico caminho da VPS que responde com CORS.
+    return alvo.pathname.startsWith("/auth")
+  } catch {
+    return false
+  }
+}
+
+/**
  * Le JSON de uma URL com timeout. Devolve null em qualquer falha — quem chama
  * trata "sem atualizacao" e "sem rede" do mesmo jeito, e nada disso pode
  * derrubar o jogo.
  */
 export async function buscarJson<T>(url: string, ms: number): Promise<T | null> {
+  if (!alcancavelDaqui(url)) return null
   const controle = new AbortController()
   const alarme = setTimeout(() => controle.abort(), ms)
   try {

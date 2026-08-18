@@ -22,34 +22,18 @@
 
 import { useEffect } from "react"
 import { useGameState } from "@/lib/save-system"
-import { buscarJson } from "@/lib/buscar-json"
-import { isTauri } from "@/lib/game-asset"
+import { alcancavelDaqui, buscarJson } from "@/lib/buscar-json"
 
 /** O manifesto do jogo na VPS: pequeno, público e sempre no ar. Serve de ping. */
 const ALVO = "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json"
 
 /**
- * ESTA MÁQUINA PODE FALAR COM A VPS?
+ * ⚠️ A REGRA DE ALCANCE MORA EM `lib/buscar-json.ts`, NAO AQUI.
  *
- * ⚠️ ISTO NÃO É DETALHE DE AMBIENTE — ERA O DEFEITO. Dentro do Tauri a página
- * roda em `tauri.localhost` e QUALQUER pedido à VPS é cross-origin; o nginx de
- * `/downloads/` não manda `Access-Control-Allow-Origin`, então o `fetch` da
- * webview é barrado antes de sair (é o que `lib/buscar-json.ts` documenta e
- * resolve fazendo a requisição pelo lado NATIVO). Com `fetch` cru, o online
- * simplesmente NUNCA ligava sozinho no jogo instalado — a funcionalidade inteira
- * dependia de um pedido que o navegador recusa.
- *
- * Fora do Tauri o caminho nativo não existe. Aí só faz sentido perguntar quando
- * a página VEIO da própria VPS (versão web), porque é o único caso em que o
- * pedido é same-origin. Num `localhost` de desenvolvimento ou na auditoria de
- * telas, pingar produção só produz erro de console — que foi exatamente o ruído
- * que afogou a auditoria de 40 telas.
+ * A primeira versao desta correcao escreveu a propria checagem neste arquivo —
+ * e duas escalas para a mesma grandeza e o defeito que este projeto ja pagou
+ * varias vezes. `alcancavelDaqui` responde por todos os consumidores do canal.
  */
-function podeConsultarAVps(): boolean {
-  if (isTauri()) return true
-  if (typeof window === "undefined") return false
-  return window.location.origin === new URL(ALVO).origin
-}
 
 export function OnlinePorConectividade() {
   const { state, setState } = useGameState()
@@ -61,7 +45,7 @@ export function OnlinePorConectividade() {
     if (state.multiplayerEnabled) return
     if (typeof navigator !== "undefined" && navigator.onLine === false) return
 
-    if (!podeConsultarAVps()) return
+    if (!alcancavelDaqui(ALVO)) return
 
     let cancelado = false
     const conferir = async () => {

@@ -34,6 +34,9 @@ export { formatCurrency, formatCurrencyFor, formatNumber } from "@/lib/currency"
  * lista e sumir do elenco.
  */
 import importedBF2026 from "@/data/seeds/imported-bf2026-index.json"
+// Gerado por `scripts/precomputar-pool.mjs` no `prebuild`. Vazio no repositório
+// limpo — e nesse caso a peneira roda em tempo de execução, como antes.
+import poolPrecomputadoJson from "@/data/seeds/pool-filtrado.json"
 // Tabela de acesso/rebaixamento ja consumada em 2026. Ver `_divisoes2026`.
 import divisionOverrides2026 from "@/data/seeds/division_overrides_2026.json"
 import { repairMojibake } from "@/lib/text-normalization"
@@ -1525,7 +1528,32 @@ const { torcidaPorPrestigio, capacidadePorPrestigio } = (() => {
   }
 })()
 
-export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[] }).teams) ?? [])
+/**
+ * ⚠️ O POOL É PRÉ-COMPUTADO NA COMPILAÇÃO (1.0.354) — e isto era metade da
+ * demora para abrir a partida.
+ *
+ * Medido nesta máquina: carregar este módulo custava 543 ms, e a maior parte
+ * era ESTA expressão — 3.064 clubes do banco importado passando por
+ * `repairMojibake`, normalização de país, quatro peneiras de duplicidade e um
+ * `map` que monta cada `Team`. O resultado é sempre o MESMO, porque a entrada é
+ * um seed que não muda em tempo de execução.
+ *
+ * E o custo se pagava INTEIRO a cada tela: no jogo, toda navegação é recarga
+ * completa, então o módulo é reconstruído do zero ao abrir o pré-jogo, ao entrar
+ * na partida, ao voltar ao escritório.
+ *
+ * `scripts/precomputar-pool.mjs` roda a peneira uma vez, na compilação, e grava
+ * o resultado. Aqui o caminho caro só existe como RESERVA: sem o arquivo (ou com
+ * `UF_POOL_SEM_CACHE=1`, que é como o próprio script gera o arquivo), tudo
+ * continua funcionando como antes — mais devagar, e correto.
+ */
+const _poolPrecomputado: Team[] | null = (() => {
+  if (typeof process !== "undefined" && process.env?.UF_POOL_SEM_CACHE === "1") return null
+  const bruto = (poolPrecomputadoJson as { teams?: Team[] } | undefined)?.teams
+  return Array.isArray(bruto) && bruto.length > 0 ? bruto : null
+})()
+
+const _poolFiltradoAgora = (): Team[] => (((importedBF2026 as { teams?: PoolTeamRaw[] }).teams) ?? [])
   .filter((t) => {
     const nome = repairMojibake(String(t.nome ?? ""))
     const fk = _normKey(String(t.fileKey ?? ""))
@@ -1577,6 +1605,8 @@ export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[]
     divisao: `pool:${normalizeCountry(t.pais) || "INT"}`,
     pais: normalizeCountry(t.pais) || undefined,
   }))
+
+export const allPoolTeams: Team[] = _poolPrecomputado ?? _poolFiltradoAgora()
 
 /** Liga oficial 2026/27 por identidade global. Diferentemente do pool antigo,
  * esta tabela não depende de prestígio nem da ordem do seed. */

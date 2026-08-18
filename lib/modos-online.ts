@@ -135,8 +135,13 @@ export const MODOS_ONLINE: ModoOnline[] = [
     id: "rush",
     icone: "/online/09_rush.webp",
     nome: "Manager Rush",
-    resumo: "Partida começada aos 60 minutos: vire o jogo em dez minutos de relógio.",
-    estado: "planejado",
+    resumo: "Partida começada aos 60 minutos: vire o jogo antes do apito.",
+    // ⚠️ SAIU DE "PLANEJADO" PORQUE EXISTE (1.0.354). Ele não precisa de servidor:
+    // é uma variação de REGRA sobre o motor que já existe, e por isso pôde ser
+    // feito enquanto Champions, Carreira Online, Diretoria e Cooperativa
+    // continuam esperando estado compartilhado entre pessoas.
+    href: "/online/rush",
+    estado: "pronto",
     fase: 3,
   },
   {

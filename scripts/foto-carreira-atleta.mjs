@@ -69,7 +69,23 @@ const erros = []
 pagina.on("pageerror", e => erros.push(`JS: ${e.message}`))
 pagina.on("console", m => { if (m.type() === "error") erros.push(`console: ${m.text().slice(0, 140)}`) })
 
-await pagina.addInitScript(s => window.localStorage.setItem("ultrafoot:save", JSON.stringify(s)), SAVE)
+// ⚠️ A CHAVE LEGADA NÃO BASTA — e foi por isso que a primeira reprodução falhou.
+//
+// O jogo guarda o save em `ultrafoot:save:<careerId>` e aponta a carreira aberta
+// em `ultrafoot:active-career`. Escrevendo só `ultrafoot:save`, o jogo não vê
+// carreira nenhuma e manda para o menu inicial — foi exatamente o que a foto
+// mostrou, e por um instante pareceu que a tela do atleta estava quebrada.
+await pagina.addInitScript(s => {
+  const id = s.careerId ?? "career-teste-menu"
+  const comId = { ...s, careerId: id }
+  window.localStorage.setItem("ultrafoot:active-career", id)
+  window.localStorage.setItem(`ultrafoot:save:${id}`, JSON.stringify(comId))
+  window.localStorage.setItem("ultrafoot:save", JSON.stringify(comId))
+  // O aceite de termos também mora no storage: sem ele o modal cobre a tela.
+  // ⚠️ A chave e a versao sao as de `lib/legal.ts` — chutar o nome (foi o que eu
+  // fiz na primeira tentativa) deixa o modal de pe e a foto sai do modal.
+  window.localStorage.setItem("ultrafoot:legal-acceptance", "2026-07-19")
+}, SAVE)
 await pagina.goto(`${base}/carreira/jogador`, { waitUntil: "networkidle" })
 await pagina.waitForTimeout(2000)
 
@@ -93,10 +109,30 @@ for (let i = 0; i < 20; i++) {
   await pagina.waitForTimeout(200)
 }
 await pagina.keyboard.press("Escape").catch(() => {})
-await pagina.waitForTimeout(1200)
 
+// ⚠️ TRES PORTOES ANTES DA TELA, e cada tentativa deste script achou um novo:
+// aceite de TERMOS, a ABERTURA ("APRESENTA...") e o modal de NOVIDADES. Duas
+// fotos saidas daqui pareciam "tela preta do atleta" e eram, na verdade, a
+// abertura rodando. Fotografar cedo demais nao mede a tela: mede a espera.
+for (let i = 0; i < 24; i++) {
+  const texto = (await pagina.locator("body").innerText().catch(() => "")) || ""
+  if (!/APRESENTA|simulacao de gerenciamento|simulação de gerenciamento/i.test(texto)) break
+  await pagina.keyboard.press("Space").catch(() => {})
+  await pagina.mouse.click(720, 450).catch(() => {})
+  await pagina.waitForTimeout(700)
+}
+await pagina.waitForTimeout(1500)
+
+await pagina.waitForTimeout(2500)
 await pagina.screenshot({ path: destino })
 console.log(`escritorio: ${destino}`)
+
+// ⚠️ FOTO PRETA NAO E DIAGNOSTICO. Ela pode ser tela quebrada, render atrasado
+// ou fundo por cima do conteudo — e as tres exigem correcoes diferentes. O texto
+// visivel separa os casos: com texto, a tela existe e o problema e de camada.
+const texto = (await pagina.locator("body").innerText().catch(() => "")) || ""
+console.log(`texto visivel: ${texto.replace(/\s+/g, " ").trim().slice(0, 160) || "(NENHUM)"}`)
+console.log(`caracteres: ${texto.trim().length}`)
 
 // ── Agora o MENU ──
 // O botao do menu no cabecalho nao tem rotulo de texto — e um icone. Procura
