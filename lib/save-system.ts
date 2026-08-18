@@ -43,6 +43,7 @@ import type { ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
 // importa `teams-data` e o motor de partida. Um import de valor traria os dois
 // para dentro da splash.
 import type { EstadoCarreiraDeJogador } from "@/lib/carreira-de-jogador"
+import { sincronizarModalidade } from "@/lib/tom-da-modalidade"
 
 const LEGACY_STORAGE_KEY = "ultrafoot:save"
 const ACTIVE_CAREER_KEY = "ultrafoot:active-career"
@@ -1474,6 +1475,9 @@ function interpretarSave(raw: string): GameState | null {
 function publicarRetratos(state: GameState): void {
   sincronizarDesafioAtivo(state)
   sincronizarTreinador(state)
+  // Que carreira e esta. O motor usa para a imprensa nao perguntar a um Sub-20
+  // sobre briga por titulo. Ver lib/tom-da-modalidade.
+  sincronizarModalidade(state)
 }
 
 export function loadGameState(): GameState {

@@ -30,6 +30,8 @@ import {
 } from "@/lib/conversa-diretoria"
 import { cn } from "@/lib/utils"
 import { BotaoMicrofone } from "@/components/botao-microfone"
+import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
+import { useGameState } from "@/lib/save-system"
 
 /** Uma linha do chat, com hora — como qualquer aplicativo de mensagem. */
 interface Mensagem extends FalaDaConversa {
@@ -63,6 +65,11 @@ export function ConversaDiretoria({
    */
   assuntoInicial?: AssuntoDaDiretoria
 }) {
+  // ⚠️ A DIRETORIA PRECISA SABER QUE CARREIRA E ESTA (1.0.347). Sem isto ela
+  // dizia "o clube ja investiu no elenco que voce tem" para quem dirige o
+  // Sub-20, onde a conta e outra e o trabalho e formar. Ver lib/tom-da-modalidade.
+  const { state: saveDaCarreira } = useGameState()
+  const modalidadeDaCarreira = modalidadeDoSave(saveDaCarreira)
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [texto, setTexto] = useState("")
   const [digitando, setDigitando] = useState(false)
@@ -127,7 +134,7 @@ export function ConversaDiretoria({
 
       // Contexto do assunto + a resposta, em duas falas — é assim que uma
       // reunião soa: eles reconhecem o tema antes de responder.
-      const contexto = aberturaDaDiretoria(assunto, estado)
+      const contexto = aberturaDaDiretoria(assunto, estado, modalidadeDaCarreira)
       const extras: string[] = []
       if (desfecho.verbaLiberada) extras.push(`Liberamos ${formatCurrency(desfecho.verbaLiberada)} para o mercado.`)
       if (desfecho.novaMeta) extras.push(`A meta passa a ser terminar até o ${desfecho.novaMeta}º.`)

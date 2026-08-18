@@ -11,7 +11,19 @@ import { assertFreshBuild } from "./qa-lib.mjs"
 assertFreshBuild()
 
 const outDir = path.resolve("out")
-const mime = new Map([[".html","text/html; charset=utf-8"],[".js","text/javascript"],[".css","text/css"],[".json","application/json"],[".png","image/png"],[".jpg","image/jpeg"],[".jpeg","image/jpeg"],[".svg","image/svg+xml"],[".ico","image/x-icon"],[".webm","audio/webm"],[".mp3","audio/mpeg"],[".woff2","font/woff2"]])
+// ⚠️ O `out/` NAO E O JOGO INSTALADO — e por ignorar isso que esta auditoria
+// mentia (17/08/2026, 1.0.347).
+//
+// O build REMOVE de proposito as pastas pesadas de imagem do `out/` (escudos,
+// camisas, jogadores): no app instalado elas nao viajam pelo HTML, viajam como
+// `bundle.resources` do Tauri. Servindo so o `out/`, todo escudo virava 404 e a
+// auditoria reprovava 39 de 40 TELAS por um defeito que nao existe — 74 alarmes
+// falsos que enterraram os DOIS defeitos reais que ela tinha achado de verdade.
+//
+// A reserva no `public/` faz o servidor entregar o que o jogo instalado entrega.
+// Uma ferramenta de QA que grita errado e uma ferramenta que ninguem le.
+const publicDir = path.resolve("public")
+const mime = new Map([[".html","text/html; charset=utf-8"],[".js","text/javascript"],[".css","text/css"],[".json","application/json"],[".png","image/png"],[".jpg","image/jpeg"],[".jpeg","image/jpeg"],[".webp","image/webp"],[".avif","image/avif"],[".gif","image/gif"],[".svg","image/svg+xml"],[".ico","image/x-icon"],[".webm","audio/webm"],[".mp3","audio/mpeg"],[".ogg","audio/ogg"],[".woff2","font/woff2"],[".woff","font/woff"]])
 
 function resolveReq(urlPath) {
   const dec = decodeURIComponent(urlPath.split("?")[0])
@@ -22,6 +34,10 @@ function resolveReq(urlPath) {
     const idx = path.join(outDir, clean, "index.html")
     if (existsSync(idx)) return idx
   }
+  // Reserva: o que o build podou do `out/` continua em `public/`, e e de la que
+  // o app instalado le. Sem isto a auditoria acusa 404 no que o jogador enxerga.
+  const doPublic = path.join(publicDir, clean)
+  if (existsSync(doPublic)) return doPublic
   return raw
 }
 function server() {

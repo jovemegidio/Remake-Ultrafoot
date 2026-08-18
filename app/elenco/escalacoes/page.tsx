@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { 
@@ -153,18 +153,48 @@ export default function EscalacoesPage() {
     }))
   }, [carreiraViva, engineSquad, userTeam])
 
-  // Initial lineups
+  /**
+   * ⚠️ NADA DO SAVE PODE ENTRAR NA PRIMEIRA RENDERIZACAO (1.0.347).
+   *
+   * O jogo e export ESTATICO: este HTML e gerado na compilacao, quando nao
+   * existe save nenhum e o clube cai no padrao. Na maquina do jogador ele tem
+   * carreira, e o texto sai diferente — o React acusa "hydration failed"
+   * (erro #418) e joga fora a arvore inteira para redesenhar no cliente.
+   *
+   * Ele se recupera sozinho, entao o defeito nao aparece na tela; aparece em
+   * trabalho jogado fora a cada abertura desta tela. A regra e simples: o
+   * estado inicial nao le save, e o que depende dele entra DEPOIS de montar.
+   * Achado pela auditoria de telas (qa:audit).
+   */
+  const [montado, setMontado] = useState(false)
+  useEffect(() => { setMontado(true) }, [])
+
   const [lineups, setLineups] = useState<SavedLineup[]>([
     {
       id: "1",
-      name: `Padrao ${userTeam.nome.toUpperCase().slice(0, 4)}...`,
+      name: "Escalacao padrao",
       formation: "4-3-3",
       style: "ABERTO",
       isDefault: true,
       hasUnavailable: false,
-      players: teamPlayers.slice(0, 11),
+      players: [],
     },
   ])
+
+  // Preenche a escalacao padrao UMA vez, depois de montar. O guarda existe para
+  // nao passar por cima do que o jogador editar depois.
+  const padraoPreenchido = useRef(false)
+  useEffect(() => {
+    if (padraoPreenchido.current || teamPlayers.length === 0) return
+    padraoPreenchido.current = true
+    setLineups(atual => atual.map(l => l.id === "1"
+      ? {
+          ...l,
+          name: `Padrao ${userTeam.nome.toUpperCase().slice(0, 4)}...`,
+          players: teamPlayers.slice(0, 11),
+        }
+      : l))
+  }, [teamPlayers, userTeam])
   
   const [selectedLineupId, setSelectedLineupId] = useState<string>("1")
   const selectedLineup = lineups.find(l => l.id === selectedLineupId) || lineups[0]
@@ -339,7 +369,7 @@ export default function EscalacoesPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-2xl font-black text-white tracking-tight">
-                    Padrao {userTeam.nome.toUpperCase()}
+                    {montado ? `Padrao ${userTeam.nome.toUpperCase()}` : "Escalacao padrao"}
                   </h2>
                   <p className="text-sm text-cyan-300 font-medium">
                     {selectedLineup?.formation} {selectedLineup?.style}

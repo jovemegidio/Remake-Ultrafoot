@@ -13,6 +13,9 @@
 // diretoria DESTE save, olhando confiança, campanha, caixa e o que você já
 // prometeu antes.
 
+import { tomDaModalidade } from "@/lib/tom-da-modalidade"
+import type { ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
+
 export type AssuntoDaDiretoria = "verba" | "meta" | "pressao" | "elenco" | "demissao"
 export type TomDaResposta = "firme" | "diplomatico" | "humilde"
 
@@ -143,23 +146,37 @@ export const PEDIDO_DE_CLAREZA =
   "da pressão em cima do trabalho ou do elenco que você tem."
 
 /** A primeira fala — a diretoria abre de acordo com o estado real da carreira. */
-export function aberturaDaDiretoria(assunto: AssuntoDaDiretoria, e: EstadoDaDiretoria): string {
+/**
+ * ⚠️ A DIRETORIA FALAVA COM TODO MUNDO IGUAL (corrigido na 1.0.347).
+ *
+ * A mesma frase ia para quem dirige um clube de Serie A, um departamento
+ * feminino e um Sub-20 — inclusive "o clube ja investiu no elenco que voce tem",
+ * dita a quem comanda a base, onde a conta e outra e o trabalho e formar. O
+ * `modalidade` e opcional porque ausente significa o modo de sempre, nunca
+ * "nao sei". Ver lib/tom-da-modalidade.
+ */
+export function aberturaDaDiretoria(
+  assunto: AssuntoDaDiretoria,
+  e: EstadoDaDiretoria,
+  modalidade?: ModalidadeDeCarreira,
+): string {
   const acimaDaMeta = e.posicao > 0 && e.posicao <= e.metaPosicao
+  const tom = tomDaModalidade(modalidade)
   switch (assunto) {
     case "verba":
       return e.confianca >= 65
-        ? "Estamos satisfeitos com o trabalho. Diga o que precisa — dentro do razoável, o clube ouve."
-        : "Verba? O clube já investiu no elenco que você tem. Explique por que deveríamos colocar mais."
+        ? `Estamos satisfeitos com o trabalho. Diga o que precisa — dentro do razoável, o clube ouve.`
+        : tom.falaDeVerba
     case "meta":
       return acimaDaMeta
         ? `Você está em ${e.posicao}º, acima do que pedimos. Por que mexer na meta agora?`
-        : `A meta era terminar até o ${e.metaPosicao}º e o time está em ${e.posicao}º. O que aconteceu?`
+        : `A meta era terminar até o ${e.metaPosicao}º e ${tom.equipe} está em ${e.posicao}º. O que aconteceu?`
     case "pressao":
       return e.confianca >= 60
         ? "A imprensa cobra, é o normal. O que você espera da diretoria?"
-        : "Não vamos fingir que está tudo bem. O clube esperava mais. Diga o que pretende fazer."
+        : `Não vamos fingir que está tudo bem. Aqui se espera ${tom.oQueEsperam}. Diga o que pretende fazer.`
     case "elenco":
-      return "Somos todo ouvidos. Como você avalia o grupo que tem em mãos?"
+      return `Somos todo ouvidos. Como você avalia ${tom.equipe} que tem em mãos?`
     case "demissao":
       return e.confianca >= 60
         ? "Você quer mesmo sair? O clube está satisfeito com o trabalho e preferia que ficasse. Pense bem."

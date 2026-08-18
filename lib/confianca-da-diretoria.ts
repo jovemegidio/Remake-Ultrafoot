@@ -27,9 +27,14 @@
 //
 // Este arquivo é PURO: sem React, sem store, sem save.
 
+import { pesoDasAreas } from "@/lib/tom-da-modalidade"
+import type { ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
+
 export type AreaDaDiretoria = "resultados" | "financas" | "mercado" | "base" | "vestiario"
 
 export interface LeituraDaArea {
+  /** Quanto esta area pesa NESTA modalidade. Ver `pesoDasAreas`. */
+  peso?: number
   area: AreaDaDiretoria
   /** 0 a 100, na mesma escala do número geral. */
   nota: number
@@ -50,6 +55,13 @@ export interface ContextoDaConfianca {
   promovidosDaBase: number
   /** Moral do elenco, 0 a 100. */
   moralDoElenco: number
+  /**
+   * ⚠️ QUE CARREIRA E ESTA (1.0.347). Ausente = tecnico profissional, que era o
+   * unico comportamento ate aqui. Sem isto, a diretoria do Sub-20 cobrava
+   * resultado como a de um clube de Serie A e mal olhava para o que a base
+   * formou — que e o trabalho inteiro daquela carreira.
+   */
+  modalidade?: ModalidadeDeCarreira
 }
 
 const limitar = (n: number) => Math.max(0, Math.min(100, Math.round(n)))
@@ -124,6 +136,13 @@ export function confiancaPorArea(ctx: ContextoDaConfianca): LeituraDaArea[] {
       : "O elenco não responde mais ao comando.",
   })
 
+  // ⚠️ O PESO DA AREA DEPENDE DA MODALIDADE. Formar atleta e uma das areas do
+  // tecnico profissional e e O trabalho de quem dirige o Sub-20; caixa aperta um
+  // clube de Serie A de um jeito e um departamento feminino de outro. As faixas
+  // continuam largas — o que muda e o quanto cada leitura pesa no fim.
+  const pesos = pesoDasAreas(ctx.modalidade)
+  for (const area of areas) area.peso = pesos[area.area] ?? 1
+
   return areas
 }
 
@@ -135,7 +154,12 @@ export function confiancaPorArea(ctx: ContextoDaConfianca): LeituraDaArea[] {
  * área é a base, com 74" seria alarme falso.
  */
 export function areaMaisFragil(areas: LeituraDaArea[]): LeituraDaArea | null {
-  const pior = [...areas].sort((a, b) => a.nota - b.nota)[0]
+  // ⚠️ A PIOR NOTA NAO E O PIOR PROBLEMA. Numa carreira de Sub-20, mercado 40 e
+  // irrelevante e base 58 e grave — apontar o mercado mandaria o jogador
+  // consertar o que ninguem esta cobrando dele. Ordena pelo que DOI, que e a
+  // nota lida contra o peso da area nesta modalidade.
+  const dorDe = (a: LeituraDaArea) => a.nota / (a.peso ?? 1)
+  const pior = [...areas].sort((a, b) => dorDe(a) - dorDe(b))[0]
   return pior && pior.nota < 55 ? pior : null
 }
 

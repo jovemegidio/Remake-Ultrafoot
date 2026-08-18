@@ -270,6 +270,9 @@ const GATES = [
   // com tela preta em TODAS as versoes, inclusive nas antigas: o arquivo tinha
   // chegado a 546 MB. Ver scripts/test-universo-nao-incha.ts.
   { nome: "o estado em disco nao incha", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-universo-nao-incha.ts"] },
+  // As tres modalidades tinham motor e tela e NENHUM gate. Um `switch` que
+  // perdesse um `case` voltaria a tratar todo mundo igual sem quebrar teste.
+  { nome: "as tres modalidades sao cobradas pelo que sao", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-modalidades-ponta-a-ponta.ts"] },
 ]
 // ⚠️ OS GATES RODAM NO DISCO DE BUILD, NAO NO REPOSITORIO.
 //

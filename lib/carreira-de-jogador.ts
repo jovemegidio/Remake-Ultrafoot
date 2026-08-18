@@ -426,7 +426,16 @@ function treinarNaSemana(estado: EstadoCarreiraDeJogador): void {
   const castigo = intensidade === "puxada" && estado.forma < 40 ? plano.forma * 2 : plano.forma
   estado.forma = Math.max(0, Math.min(100, estado.forma + castigo))
 
-  aplicarXP(estado, xp)
+  // ⚠️ PRE-TEMPORADA: e onde o ano se constroi (1.0.347). Sem jogo para
+  // recuperar, o trabalho rende mais e a forma sobe — e por isso queimar a
+  // pre-temporada com intensidade leve custa o ano inteiro depois.
+  const naPreTemporada = (estado.preTemporada?.rodadasRestantes ?? 0) > 0
+  if (naPreTemporada) {
+    estado.forma = Math.max(0, Math.min(100, estado.forma + 6))
+    estado.preTemporada = { rodadasRestantes: (estado.preTemporada?.rodadasRestantes ?? 1) - 1 }
+  }
+
+  aplicarXP(estado, naPreTemporada ? Math.round(xp * 1.4) : xp)
 
   // O foco vira ponto de atributo quando acumula o bastante — e nunca passa do
   // potencial real, que continua escondido do jogador.
@@ -523,6 +532,30 @@ export interface EstadoCarreiraDeJogador {
   repercussao?: PostDeRepercussao[]
   /** Partida sendo VIVIDA momento a momento (1.0.329). */
   partidaEmCurso?: PartidaEmCurso
+  /**
+   * LESAO EM CURSO (1.0.347). Opcional: save antigo nunca teve, e ausencia
+   * significa "inteiro", nunca "nao sei".
+   *
+   * ⚠️ A auditoria mediu 5 mencoes a lesao contra 40 a proposta neste modo: o
+   * atleta quase nao sentia o corpo, que e metade do drama de uma carreira. Com
+   * isto ele PERDE rodadas, perde forma e ve a nota do treinador cair enquanto
+   * outro joga na vaga dele.
+   */
+  lesao?: { semanasRestantes: number; gravidade: "leve" | "media" | "grave"; descricao: string; desdeRodada: number }
+  /** Rodadas perdidas por lesao na carreira inteira. Entra no resumo. */
+  rodadasPerdidasPorLesao?: number
+  /**
+   * A BRACADEIRA (1.0.347). Nao existia — e receber a capitania e um dos marcos
+   * mais fortes de uma carreira de atleta.
+   */
+  capitao?: boolean
+  temporadaEmQueVirouCapitao?: number
+  /**
+   * PRE-TEMPORADA (1.0.347). O calendario do atleta nao respirava: uma
+   * temporada colava na outra. Aqui existe um periodo curto em que o treino
+   * rende mais e a forma se recupera — o momento em que se constroi o ano.
+   */
+  preTemporada?: { rodadasRestantes: number }
   /**
    * A NOTA DO TREINADOR (0–100) — o número que decide tudo.
    *
@@ -1070,6 +1103,48 @@ function aplicarXP(estado: EstadoCarreiraDeJogador, xp: number): void {
  * Devolve um estado NOVO (o save é imutável por fora; ver
  * [[ultrafoot-gravacao-do-save-e-react]]).
  */
+/**
+ * O CORPO COBRA (1.0.347).
+ *
+ * ⚠️ A chance e baixa de proposito e sobe com o que a torna real: minutos em
+ * campo, fisico baixo e forma no chao. Um modo em que o atleta se machuca toda
+ * hora nao e realista, e sim irritante; um em que ele nunca se machuca nao tem
+ * carreira nenhuma dentro. Nada aqui e sorteado quando o atleta nao jogou.
+ */
+function sortearLesao(estado: EstadoCarreiraDeJogador, minutos: number, rodada: number): void {
+  if (minutos <= 0 || (estado.lesao?.semanasRestantes ?? 0) > 0) return
+  const fisico = estado.atleta.atributos.fisico
+  // ⚠️ A BASE E POR 90 MINUTOS, NAO POR PARTIDA — e foi assim que a primeira
+  // versao nasceu inofensiva. Com 2,2% "por jogo" e um atleta que entra 20
+  // minutos, a exposicao real virava 0,5% e SEIS TEMPORADAS passavam sem uma
+  // lesao: o gate pegou isso na primeira execucao.
+  //
+  // 6% por 90 minutos da cerca de 1,8 lesao por temporada de titular
+  // (30 jogos inteiros), que e a ordem de grandeza do futebol de verdade — e
+  // quem joga pouco se machuca proporcionalmente menos, como deve ser.
+  const risco = 0.06
+    * (minutos / 90)
+    * (1 + Math.max(0, 70 - fisico) / 70)
+    * (estado.forma < 35 ? 1.6 : 1)
+  if (roll(`${estado.atleta.id}:lesao:${estado.temporada}:${rodada}`) >= risco) return
+
+  const sorte = roll(`${estado.atleta.id}:gravidade:${estado.temporada}:${rodada}`)
+  const gravidade = sorte < 0.62 ? "leve" : sorte < 0.9 ? "media" : "grave"
+  const semanas = gravidade === "leve" ? 1 + Math.floor(sorte * 2)
+    : gravidade === "media" ? 3 + Math.floor(sorte * 3)
+      : 8 + Math.floor(sorte * 8)
+  const descricao = gravidade === "leve" ? "estiramento muscular"
+    : gravidade === "media" ? "lesao na coxa" : "ruptura de ligamento"
+
+  estado.lesao = { semanasRestantes: semanas, gravidade, descricao, desdeRodada: rodada }
+  estado.moral = limitar(estado.moral - (gravidade === "grave" ? 18 : gravidade === "media" ? 9 : 4))
+  estado.recados = [{
+    id: `lesao_${estado.temporada}_${rodada}`, de: "Departamento medico",
+    texto: `${descricao.charAt(0).toUpperCase()}${descricao.slice(1)} confirmada. ${semanas} ${semanas === 1 ? "rodada" : "rodadas"} fora.`,
+    temporada: estado.temporada, rodada,
+  }, ...estado.recados].slice(0, 25)
+}
+
 export function jogarProximaRodada(
   estado: EstadoCarreiraDeJogador,
   opcoes?: { viver?: boolean },
@@ -1106,6 +1181,29 @@ export function jogarProximaRodada(
     novo.tabela = updateStandings(novo.tabela, fixture.homeCurto, fixture.awayCurto, partida.home.goals, partida.away.goals)
 
     if (!fixture.isUserMatch) continue
+
+    // ⚠️ LESIONADO NAO ENTRA EM CAMPO (1.0.347). Esta e a consequencia inteira:
+    // a rodada acontece sem voce, o time joga, a tabela anda, e a nota do
+    // treinador cai devagar porque outro esta fazendo o seu trabalho. Sem isto,
+    // "lesao" era so uma palavra na tela de origem do atleta.
+    if ((novo.lesao?.semanasRestantes ?? 0) > 0) {
+      const lesao = novo.lesao!
+      lesao.semanasRestantes--
+      novo.rodadasPerdidasPorLesao = (novo.rodadasPerdidasPorLesao ?? 0) + 1
+      // Parado, a forma cai; a nota do treinador cede pouco, porque ninguem
+      // perde a vaga por se machucar — perde por ficar fora tempo demais.
+      novo.forma = limitar(novo.forma - 4)
+      novo.notaDoTreinador = limitar(novo.notaDoTreinador - 0.6)
+      if (lesao.semanasRestantes <= 0) {
+        novo.lesao = undefined
+        novo.recados = [{
+          id: `alta_${novo.temporada}_${rodada}`, de: "Departamento medico",
+          texto: `Alta liberada. ${novo.atleta.nome} volta a ficar a disposicao — a forma vai levar algumas rodadas para voltar.`,
+          temporada: novo.temporada, rodada,
+        }, ...novo.recados].slice(0, 25)
+      }
+      continue
+    }
 
     // ── A partida do atleta ──
     const emCasa = fixture.homeCurto === novo.clubeCurto
@@ -1168,6 +1266,7 @@ export function jogarProximaRodada(
       // titular, e uma boa não faz o reserva virar camisa 10 na semana seguinte.
       novo.notaDoTreinador = limitar(novo.notaDoTreinador + (d.nota - 6.6) * 2.4 + d.gols * 1.5)
       novo.forma = limitar(novo.forma * 0.72 + d.nota * 8.4)
+      sortearLesao(novo, d.minutos, rodada)
       novo.moral = limitar(novo.moral + (d.nota >= 7 ? 3 : d.nota >= 6 ? 0 : -3) + (golsPro > golsContra ? 2 : golsPro === golsContra ? 0 : -2))
     } else {
       // ⚠️ FICAR NO BANCO NÃO DERRUBA MAIS A CONFIANÇA (ver a nota da
@@ -1572,6 +1671,47 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
       temporada: novo.temporada, rodada: novo.rodada,
     }, ...novo.recados].slice(0, 25)
   }
+
+  // ── A BRACADEIRA (1.0.347) ──
+  //
+  // ⚠️ Nao se vira capitao por ser o melhor: vira por ser referencia. Por isso o
+  // criterio junta o que o TREINADOR ve (nota), o que o VESTIARIO sente
+  // (lideranca e profissionalismo) e TEMPO de casa — chegar e receber a
+  // bracadeira no primeiro ano seria o tipo de coisa que faz o marco nao valer
+  // nada. Uma vez capitao, so se perde a bracadeira mudando de clube.
+  if (!novo.capitao && !novo.aposentado) {
+    const p = novo.atleta.personalidade
+    // Nao existe atributo "lideranca" neste modo: quem faz referencia dentro do
+    // grupo e a soma de profissionalismo com determinacao, que sao os dois que
+    // o vestiario enxerga todo dia.
+    const referencia = p.profissionalismo + p.determinacao
+    // Tempo de casa sai do HISTORICO, que ja registra o clube de cada temporada
+    // — inclusive a que acabou de ser fechada logo acima.
+    const temporadasNoClube = novo.historico.filter(h => h.clubeNome === novo.clubeNome).length
+    // ⚠️ O LIMIAR DE PERSONALIDADE ERA ALTO DEMAIS e a bracadeira nunca saia: um
+    // atleta que chegou a nota 100 em seis temporadas no mesmo clube seguia sem
+    // capitania, porque a soma exigida (26 de 40) so cabia no terco superior. O
+    // gate pegou. Capitao e REFERENCIA do grupo — o peso esta no que o treinador
+    // ve e no tempo de casa; a personalidade so barra quem nao serve de exemplo.
+    if (novo.notaDoTreinador >= 76 && referencia >= 20 && temporadasNoClube >= 2 && t.jogos >= 12) {
+      novo.capitao = true
+      novo.temporadaEmQueVirouCapitao = novo.temporada
+      novo.moral = limitar(novo.moral + 10)
+      novo.reputacao = Math.min(100, (novo.reputacao ?? 30) + 5)
+      titulos.push(`Capitao do ${novo.clubeNome}`)
+      novo.recados = [{
+        id: `capitao_${novo.temporada}`, de: "Treinador",
+        texto: `A bracadeira e sua. O grupo te escolheu como referencia do ${novo.clubeNome}.`,
+        temporada: novo.temporada, rodada: novo.rodada,
+      }, ...novo.recados].slice(0, 25)
+    }
+  }
+
+  // ── PRE-TEMPORADA (1.0.347) ──
+  //
+  // O ano nao comeca no primeiro jogo. Estas rodadas sem partida rendem mais em
+  // treino e recuperam forma — e sao onde a intensidade escolhida decide o ano.
+  novo.preTemporada = { rodadasRestantes: 3 }
 
   // ── EVOLUÇÃO ORGÂNICA (1.0.325) ──
   //

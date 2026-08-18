@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Award, ClipboardList, Goal, GraduationCap, Handshake, History, Landmark, Scale, Shield, Target, Users } from "lucide-react"
 import { areaMaisFragil, confiancaPorArea, NOME_DA_AREA } from "@/lib/confianca-da-diretoria"
+import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
 
 type Aba = "bolas" | "preparacao" | "mercado" | "metas" | "cultura" | "treino" | "diretoria" | "comissao" | "disciplina" | "timeline"
 const ABAS: { id: Aba; nome: string; icon: typeof Goal }[] = [
@@ -122,6 +123,10 @@ function Diretoria({ gestao, season, confidence, jogadores, liberarVerba, salvar
   liberarVerba: (valor: number, destino: "transferencias" | "caixa") => void
   saldo: number; dividaTotal: number; orcamento: number; moralDoElenco: number
 }) {
+  // A modalidade decide o PESO de cada area na leitura da diretoria: quem dirige
+  // o Sub-20 e cobrado por formar, nao por saldo em caixa. Ver lib/tom-da-modalidade.
+  const { state: saveDaCarreira } = useGameState()
+  const modalidade = modalidadeDoSave(saveDaCarreira)
   const [tipo, setTipo] = useState<PedidoDiretoria282["tipo"]>("orcamento"); const [texto, setTexto] = useState(""); const [prioridade, setPrioridade] = useState(false)
   const prioridadeUsada = gestao.pedidosDiretoria.some(p => p.season === season && p.prioridade)
   // O tamanho do elenco em dinheiro é o termômetro do porte do clube.
@@ -170,7 +175,8 @@ function Diretoria({ gestao, season, confidence, jogadores, liberarVerba, salvar
     // Garotos da base que ja estao no profissional.
     promovidosDaBase: jogadores.filter(j => (j.age ?? 30) <= 21 && (j.overall ?? 0) >= 60).length,
     moralDoElenco,
-  }), [confidence, saldo, dividaTotal, orcamento, valorDoElenco, jogadores, moralDoElenco])
+    modalidade,
+  }), [confidence, saldo, dividaTotal, orcamento, valorDoElenco, jogadores, moralDoElenco, modalidade])
   const fragil = useMemo(() => areaMaisFragil(areasDaDiretoria), [areasDaDiretoria])
 
   return <>

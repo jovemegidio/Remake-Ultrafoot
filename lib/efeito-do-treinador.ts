@@ -43,6 +43,8 @@
 import type { PerfilTreinador26 } from "@/lib/manager-profile-26"
 import type { CoachSkill, CoachSkillId } from "@/lib/save-system"
 import { perfilComProgresso, type ProgressoDoTreinador26 } from "@/lib/evolucao-do-treinador"
+import { rendimentoDeTreinoDaModalidade } from "@/lib/tom-da-modalidade"
+import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
 
 export interface EfeitosDoTreinador {
   /** ×, sobre o rendimento do treino individual. LÊ: `aplicarSemanaDeTreino`. */
@@ -209,7 +211,17 @@ export function sincronizarTreinador(
   const perfil = state?.managerProfile26
     ? perfilComProgresso(state.managerProfile26, state.managerGrowth26)
     : null
-  _retrato = calcularEfeitosDoTreinador(perfil, state?.coachSkills)
+  const efeitos = calcularEfeitosDoTreinador(perfil, state?.coachSkills)
+  // ⚠️ A MODALIDADE ENTRA AQUI, e nao no motor (1.0.347). O motor e um store
+  // separado e nao pode importar o save; este retrato ja atravessa essa parede
+  // a cada carga e a cada gravacao, entao dobrar o fator da modalidade nele faz
+  // o treino do Sub-20 render mais SEM cano novo. Ver lib/tom-da-modalidade.
+  const fatorDaModalidade = rendimentoDeTreinoDaModalidade(
+    modalidadeDoSave(state as Parameters<typeof modalidadeDoSave>[0]),
+  )
+  _retrato = fatorDaModalidade === 1
+    ? efeitos
+    : { ...efeitos, rendimentoDeTreino: efeitos.rendimentoDeTreino * fatorDaModalidade }
 }
 
 /** Os efeitos do técnico agora. Neutro quando não há carreira aberta. */

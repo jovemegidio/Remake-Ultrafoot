@@ -60,6 +60,7 @@ import { analyseSquadDynamics, applyWeeklyPlayingTimeMorale } from "@/lib/squad-
 // O TÉCNICO EM NÚMEROS. Retrato publicado pelo save-system — o motor não pode
 // importar o save (ciclo), como já acontece com o Modo Desafios.
 import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
+import { modalidadeAtual } from "@/lib/tom-da-modalidade"
 
 /**
  * Versao do formato persistido do motor. Fica numa constante porque e usada em
@@ -6842,6 +6843,60 @@ export const useGameEngine = create<GameEngineState>()(
         // pressupoe e o resultado fica preso perto da ordem original. Com 30
         // perguntas e so 3 escolhidas, as primeiras do pool apareciam muito mais
         // — e as dez novas, no fim da lista, quase nunca sairiam.
+        // ⚠️ A IMPRENSA PERGUNTAVA A MESMA COISA A TODA MODALIDADE (1.0.347).
+        //
+        // O pool acima e de clube profissional masculino: briga por titulo,
+        // mercado, pressao da torcida. Perguntado a quem dirige o Sub-20, soa
+        // como se ninguem na sala soubesse que aquilo e uma equipe de formacao —
+        // e essa era a maior fonte da sensacao de "modalidade de segunda".
+        //
+        // Estas perguntas ENTRAM no mesmo sorteio, entao a coletiva continua
+        // variada; o que muda e que agora ela reconhece onde esta.
+        const modalidade = modalidadeAtual()
+        if (modalidade === "sub20") {
+          questionPool.push(
+            {
+              id: 9101, type: "match",
+              question: "Quantos desses garotos o senhor ve jogando no profissional?",
+              options: [
+                { text: "Tenho pelo menos tres prontos para subir.", tone: "positivo", impact: 4 },
+                { text: "Formar leva tempo. Nao vou queimar ninguem.", tone: "neutro", impact: 1 },
+                { text: "Nao e disso que eu cuido aqui.", tone: "negativo", impact: -5 },
+              ],
+            },
+            {
+              id: 9102, type: "match",
+              question: "Vale sacrificar o titulo da categoria para dar minutos a quem precisa?",
+              options: [
+                { text: "Vale. Eles estao aqui para se formar.", tone: "positivo", impact: 3 },
+                { text: "Da para fazer os dois com equilibrio.", tone: "neutro", impact: 1 },
+                { text: "Aqui se joga para ganhar, como em qualquer lugar.", tone: "agressivo", impact: -2 },
+              ],
+            },
+          )
+        } else if (modalidade === "feminino") {
+          questionPool.push(
+            {
+              id: 9201, type: "match",
+              question: "O publico do departamento cresceu. Isso muda a cobranca sobre o time?",
+              options: [
+                { text: "Muda para melhor: elas merecem casa cheia.", tone: "positivo", impact: 4 },
+                { text: "A cobranca ja existia dentro do vestiario.", tone: "neutro", impact: 1 },
+                { text: "Publico nao ganha jogo.", tone: "negativo", impact: -3 },
+              ],
+            },
+            {
+              id: 9202, type: "match",
+              question: "O clube investe o suficiente na estrutura da equipe feminina?",
+              options: [
+                { text: "Temos o que precisamos para competir.", tone: "positivo", impact: 2 },
+                { text: "Sempre da para melhorar, e estamos conversando.", tone: "neutro", impact: 0 },
+                { text: "Nao. E isso precisa ser dito.", tone: "agressivo", impact: -4 },
+              ],
+            },
+          )
+        }
+
         const shuffled = [...questionPool]
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1))
