@@ -9,11 +9,17 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "1.0.349: o caminho da traducao esta aberto",
+      "category": "Atualizacao",
+      "body": "Traduzir o Ultrafoot era impossivel por um motivo tecnico: o jogo exigia que todo idioma tivesse todas as frases, entao cada frase nova em portugues quebrava os outros tres. Isso acabou. Agora cada idioma cresce no seu ritmo e o que ainda nao foi traduzido aparece em portugues, nunca em branco. O ingles ja avancou nas telas de configuracoes e de elenco. O resto vem por partes, e agora da para medir o quanto falta.",
+      "date": "2026-08-18",
+      "pinned": true
+    },
+    {
       "title": "1.0.348: cartas novas e 136 MB a menos",
       "category": "Atualizacao",
       "body": "A carta do atleta ganhou a arte definitiva, com recorte proprio e as tres faixas saindo da mesma imagem. O jogo tambem ficou 136 MB mais leve: fotos de estadio e imagens importadas viraram WebP sem perder qualidade. E cada carreira passou a ter o escritorio dela — o Sub-20 deixou de receber tarefas de clube profissional, e quem joga como atleta tem as proprias. Suas carreiras continuam intactas.",
-      "date": "2026-08-18",
-      "pinned": true
+      "date": "2026-08-18"
     },
     {
       "title": "1.0.346: se o jogo nao abria para voce, abre agora",
@@ -270,9 +276,19 @@
   ],
   "changelog": [
     {
-      "version": "1.0.348",
+      "version": "1.0.349",
       "data": "2026-08-18",
       "latest": true,
+      "titulo": "O jogo comecou a ficar traduzivel de verdade",
+      "itens": [
+        "O QUE TRAVAVA A TRADUCAO NAO ERA FALTA DE TRADUTOR: todo idioma precisava ter TODA frase para o jogo compilar. Escrever uma frase nova em portugues quebrava ingles, espanhol e italiano de uma vez. Agora cada idioma tem o que tem, e o que falta aparece em portugues — nunca em branco e nunca com codigo na tela.",
+        "INGLES MAIS COMPLETO: as telas de Configuracoes, Gerenciamento do Time e a barra de busca ganharam traducao de verdade. O ingles esta em 98% das frases disponiveis.",
+        "A COBERTURA DE CADA IDIOMA VIROU UM NUMERO MEDIDO, e nao um rotulo escrito a mao: um idioma nao pode mais se anunciar completo entregando metade."
+      ]
+    },
+    {
+      "version": "1.0.348",
+      "data": "2026-08-18",
       "titulo": "Cartas novas, jogo mais leve e cada carreira com o seu escritorio",
       "itens": [
         "CARTAS COM ARTE NOVA: a carta do atleta deixou de ser desenhada em CSS e passou a usar a arte de verdade, com recorte proprio. Bronze, ouro e preta saem da mesma arte. De quebra, os numeros dos atributos pararam de se encostar uns nos outros.",

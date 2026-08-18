@@ -1517,8 +1517,8 @@ export default function ElencoPage() {
             </Button>
             <h1 className="text-lg md:text-xl font-bold text-white">{t.squad.tacticalView}</h1>
             <div className="hidden md:flex items-center gap-4 text-white/60">
-              <span>Gestao de Auxiliares Tec.</span>
-              <span>Predefinicoes Taticas</span>
+              <span>{t.gerenciamento.gestao_de_auxiliares_tec}</span>
+              <span>{t.gerenciamento.predefinicoes_taticas}</span>
             </div>
           </div>
           
@@ -1736,7 +1736,7 @@ export default function ElencoPage() {
           >
             <Clock className="h-5 w-5 text-white/60" />
             <div>
-              <p className="text-sm font-semibold text-white">Partida Iniciada</p>
+              <p className="text-sm font-semibold text-white">{t.gerenciamento.partida_iniciada}</p>
               <p className="text-xs text-white/50">{userTeam.nome} x Sao Paulo - Campeonato Brasileiro</p>
             </div>
             <button 
@@ -1792,7 +1792,7 @@ export default function ElencoPage() {
           <div className="flex flex-wrap items-center gap-2 justify-center md:flex-nowrap md:justify-end">
             <button
               onClick={handleSaveTacticalSetup}
-              title="Salvar tática e escalação"
+              title={t.gerenciamento.salvar_tatica_e_escalacao}
               className={cn(
                 "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold transition-all",
                 tacticalSaved
@@ -1813,7 +1813,7 @@ export default function ElencoPage() {
             <select
               value={formation}
               onChange={(e) => { setFormation(e.target.value); setPlayerPositions({}) }}
-              title="Escolher formacao"
+              title={t.gerenciamento.escolher_formacao}
               className="px-3 md:px-4 py-1.5 md:py-2 min-w-[80px] md:min-w-[110px] text-center rounded-lg bg-[var(--brand)]/20 border border-[var(--brand)]/30 text-base md:text-lg font-black text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/50 appearance-none"
             >
               {formationKeys.map((f) => (
@@ -1831,7 +1831,7 @@ export default function ElencoPage() {
                 os 11 na mão toda vez. */}
             <button
               onClick={autoPickLineup}
-              title="Escalar o melhor XI disponível nesta formação"
+              title={t.gerenciamento.escalar_o_melhor_xi_disponivel_nesta}
               className="ml-1 flex items-center gap-1.5 rounded-lg border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-2.5 py-1.5 text-[10px] font-bold text-[var(--brand)] transition hover:bg-[var(--brand)]/20 md:text-xs"
             >
               <Zap className="h-3.5 w-3.5" />
@@ -1853,7 +1853,7 @@ export default function ElencoPage() {
               )}
             >
               <ArrowUpRight className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Movimentação</span>
+              <span className="hidden sm:inline">{t.gerenciamento.movimentacao}</span>
             </button>
 
             {/* ORIENTAÇÃO DA PRANCHETA — em pé (camisas) ou deitada (cartas com
@@ -2254,7 +2254,7 @@ export default function ElencoPage() {
                 >
                   <span>{ballInstruction === "sem_bola" ? "Sem a bola" : "Com a bola"}</span>
                   <span className="text-white/40">|</span>
-                  <span className="text-[var(--brand)]">Trocar instrucao</span>
+                  <span className="text-[var(--brand)]">{t.gerenciamento.trocar_instrucao}</span>
                   <ChevronRight className="h-3 w-3 text-[var(--brand)]" />
                 </button>
 
@@ -2272,7 +2272,7 @@ export default function ElencoPage() {
                         setMovimentos({})
                       }
                     }}
-                    title="Apagar a seta de movimentação e devolver as instruções do atleta ao normal"
+                    title={t.gerenciamento.apagar_a_seta_de_movimentacao_e}
                     className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/60 px-2 py-1 text-[10px] text-white/70 transition-colors hover:border-red-400/40 hover:text-red-300 md:px-3 md:py-1.5 md:text-xs"
                   >
                     <RotateCcw className="h-3 w-3" />
@@ -2317,9 +2317,9 @@ export default function ElencoPage() {
               <>
               {/* Legenda das cores de status — para o técnico ler o elenco de relance. */}
               <div className="mb-2 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-white/45">
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500 ring-1 ring-black/40" /> Lesão / contrato vencido</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-400 ring-1 ring-black/40" /> Empréstimo</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400 ring-1 ring-black/40" /> Contrato a vencer</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500 ring-1 ring-black/40" /> {t.gerenciamento.lesao_contrato_vencido}</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-400 ring-1 ring-black/40" /> {t.gerenciamento.emprestimo}</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400 ring-1 ring-black/40" /> {t.gerenciamento.contrato_a_vencer}</span>
               </div>
 
               {/* min-h-0 + flex-1: a lista ocupa a altura que sobrar dentro do
@@ -2413,7 +2413,7 @@ export default function ElencoPage() {
               <div className="flex-1 overflow-auto rounded-xl border border-white/10 bg-[#111111] p-4 md:rounded-2xl md:p-6">
                 <div className="mx-auto max-w-5xl space-y-6">
                   <div>
-                    <h2 className="mb-1 text-lg font-bold text-white">Condição física e entrosamento</h2>
+                    <h2 className="mb-1 text-lg font-bold text-white">{t.gerenciamento.condicao_fisica_e_entrosamento}</h2>
                     <p className="text-sm text-white/50">
                       Energia é o pique de hoje; fadiga é o desgaste acumulado que só sai com semanas leves;
                       entrosamento são minutos jogados juntos.
@@ -2423,25 +2423,25 @@ export default function ElencoPage() {
                   {/* Resumo do elenco */}
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                     <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
-                      <p className="text-[11px] uppercase tracking-wider text-white/40">Energia média</p>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40">{t.gerenciamento.energia_media}</p>
                       <p className={cn("mt-1 text-2xl font-black tabular-nums", corDaEnergia(resumoCondicao.energiaMedia))}>
                         {resumoCondicao.energiaMedia}%
                       </p>
                     </div>
                     <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
-                      <p className="text-[11px] uppercase tracking-wider text-white/40">Fadiga média</p>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40">{t.gerenciamento.fadiga_media}</p>
                       <p className={cn("mt-1 text-2xl font-black tabular-nums", corDaFadiga(resumoCondicao.fadigaMedia))}>
                         {resumoCondicao.fadigaMedia}
                       </p>
                     </div>
                     <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
-                      <p className="text-[11px] uppercase tracking-wider text-white/40">Entrosamento do XI</p>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40">{t.gerenciamento.entrosamento_do_xi}</p>
                       <p className="mt-1 text-2xl font-black tabular-nums text-[var(--brand)]">
                         {resumoCondicao.entrosamentoXI}%
                       </p>
                     </div>
                     <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
-                      <p className="text-[11px] uppercase tracking-wider text-white/40">Precisam poupar</p>
+                      <p className="text-[11px] uppercase tracking-wider text-white/40">{t.gerenciamento.precisam_poupar}</p>
                       <p className="mt-1 text-2xl font-black tabular-nums text-amber-300">
                         {resumoCondicao.aPoupar}
                       </p>
@@ -2454,7 +2454,7 @@ export default function ElencoPage() {
                       <span>Atleta</span>
                       <span className="text-center md:text-left">Energia</span>
                       <span className="text-center md:text-left">Fadiga</span>
-                      <span className="text-center">Fôlego</span>
+                      <span className="text-center">{t.gerenciamento.folego}</span>
                     </div>
                     <div className="divide-y divide-white/[0.04]">
                       {condicaoDosAtletas.map((linha) => (
@@ -2480,7 +2480,7 @@ export default function ElencoPage() {
                               <p className="text-[10px] text-white/35">
                                 {linha.posicao} · {linha.titular ? "titular" : "reserva"}
                                 {linha.lesionado ? " · lesionado" : ""}
-                                {linha.cria && <span className="text-sky-300/80"> · cria da base</span>}
+                                {linha.cria && <span className="text-sky-300/80"> {t.gerenciamento.cria_da_base}</span>}
                               </p>
                             </div>
                           </div>
@@ -2511,7 +2511,7 @@ export default function ElencoPage() {
                             </span>
                           </div>
 
-                          <span className="text-center text-xs font-bold tabular-nums text-white/70" title="Resistência física — quem tem fôlego se recupera antes">
+                          <span className="text-center text-xs font-bold tabular-nums text-white/70" title={t.gerenciamento.resistencia_fisica_quem_tem_folego_se}>
                             {linha.folego}
                           </span>
                         </div>
@@ -2526,7 +2526,7 @@ export default function ElencoPage() {
                         Duplas mais rodadas
                       </h3>
                       {duplasEntrosadas.melhores.length === 0 ? (
-                        <p className="text-xs text-white/35">Ainda não há minutos suficientes registrados.</p>
+                        <p className="text-xs text-white/35">{t.gerenciamento.ainda_nao_ha_minutos_suficientes_registrad}</p>
                       ) : (
                         <div className="space-y-2">
                           {duplasEntrosadas.melhores.map((d) => (
@@ -2547,7 +2547,7 @@ export default function ElencoPage() {
                         Ainda não se acham
                       </h3>
                       {duplasEntrosadas.piores.length === 0 ? (
-                        <p className="text-xs text-white/35">O XI inteiro já se conhece bem.</p>
+                        <p className="text-xs text-white/35">{t.gerenciamento.o_xi_inteiro_ja_se_conhece}</p>
                       ) : (
                         <div className="space-y-2">
                           {duplasEntrosadas.piores.map((d) => (
@@ -2712,9 +2712,9 @@ export default function ElencoPage() {
                       que o causa. Ver lib/hierarquia-do-elenco.ts. */}
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                     <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                      <h3 className="text-sm font-semibold text-white">Clima do vestiário</h3>
+                      <h3 className="text-sm font-semibold text-white">{t.gerenciamento.clima_do_vestiario}</h3>
                       <span className="flex items-baseline gap-1.5">
-                        <span className="text-xs text-white/40">Lideranças</span>
+                        <span className="text-xs text-white/40">{t.gerenciamento.liderancas}</span>
                         <span className="text-sm font-bold tabular-nums text-white">{clima.clima}</span>
                       </span>
                       <span className="flex items-baseline gap-1.5">
@@ -2767,7 +2767,7 @@ export default function ElencoPage() {
                               <span className="text-[10px] text-white/40">{player.position}</span>
                               {(() => { const d = dadosMotor.get(player.name); return (<>
                                 {d?.nota != null && (
-                                  <span className={cn("rounded bg-white/8 px-1.5 text-[9px] font-black tabular-nums", corDaNota(d.nota))} title="Nota da última partida">
+                                  <span className={cn("rounded bg-white/8 px-1.5 text-[9px] font-black tabular-nums", corDaNota(d.nota))} title={t.gerenciamento.nota_da_ultima_partida}>
                                     {d.nota.toFixed(1)}
                                   </span>
                                 )}
@@ -2780,7 +2780,7 @@ export default function ElencoPage() {
                                     elenco o garoto formado no clube era
                                     indistinguivel de um reforco comprado. */}
                                 {d?.cria && (
-                                  <span className="rounded bg-sky-400/20 px-1.5 text-[9px] font-black uppercase tracking-wide text-sky-300" title="Formado na base do clube">
+                                  <span className="rounded bg-sky-400/20 px-1.5 text-[9px] font-black uppercase tracking-wide text-sky-300" title={t.gerenciamento.formado_na_base_do_clube}>
                                     base
                                   </span>
                                 )}
@@ -2875,7 +2875,7 @@ export default function ElencoPage() {
                     className="rounded border border-white/10 bg-black/50 px-2 py-1 text-xs font-bold text-[var(--brand)]"
                     aria-label={`Número da camisa de ${selectedPlayer.name}`}
                   >
-                    <option value="">Automático</option>
+                    <option value="">{t.gerenciamento.automatico}</option>
                     {Array.from({ length: 99 }, (_, index) => index + 1).map(number => <option key={number} value={number}>{number}</option>)}
                   </select>
                 </label>
@@ -2972,7 +2972,7 @@ export default function ElencoPage() {
             className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
           >
             <RotateCcw className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
-            <span className="hidden md:inline">Editar tatica ativa</span>
+            <span className="hidden md:inline">{t.gerenciamento.editar_tatica_ativa}</span>
           </Button>
         </div>
         
@@ -2982,7 +2982,7 @@ export default function ElencoPage() {
             size="sm"
             onClick={() => setShowLeaderboards(true)}
             aria-label="Destaques"
-            title="Artilheiros, assistências e cartões"
+            title={t.gerenciamento.artilheiros_assistencias_e_cartoes}
             className="bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
           >
             <Trophy className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1 text-yellow-400" />
@@ -2992,12 +2992,12 @@ export default function ElencoPage() {
             variant="ghost"
             size="sm"
             onClick={() => setShowSuggestedSubs(true)}
-            aria-label="Substituicoes sugeridas"
-            title="Substituicoes sugeridas"
+            aria-label={t.gerenciamento.substituicoes_sugeridas_4}
+            title={t.gerenciamento.substituicoes_sugeridas_3}
             className="bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
           >
             <Shuffle className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
-            <span className="inline max-w-[76px] truncate sm:max-w-none">Substituicoes sugeridas</span>
+            <span className="inline max-w-[76px] truncate sm:max-w-none">{t.gerenciamento.substituicoes_sugeridas}</span>
           </Button>
           <Button 
             variant="ghost" 
@@ -3006,7 +3006,7 @@ export default function ElencoPage() {
             className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3 hidden sm:flex"
           >
             <ArrowLeftRight className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
-            <span>Substituicoes rapidas</span>
+            <span>{t.gerenciamento.substituicoes_rapidas}</span>
           </Button>
           <div className="w-px h-4 md:h-6 bg-white/10 hidden md:block" />
           <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3 hidden md:flex">
@@ -3042,7 +3042,7 @@ export default function ElencoPage() {
               className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 max-w-lg w-full"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white">Substituir Jogador</h2>
+                <h2 className="text-lg font-bold text-white">{t.gerenciamento.substituir_jogador}</h2>
                 <button onClick={() => setShowSubstitutionModal(false)} className="p-2 rounded-lg hover:bg-white/10">
                   <X className="h-5 w-5 text-white/60" />
                 </button>
@@ -3350,16 +3350,16 @@ export default function ElencoPage() {
                       <Clock className="h-3 w-3" /> Contrato
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/55">Vínculo até</span>
+                      <span className="text-white/55">{t.gerenciamento.vinculo_ate}</span>
                       <span className={cn("font-bold", st === "expired" ? "text-red-300" : "text-white")}>{endYear ? `dez/${endYear}` : "—"}</span>
                     </div>
                     <div className="mt-1 flex items-center justify-between text-sm">
-                      <span className="text-white/55">Tempo de contrato</span>
+                      <span className="text-white/55">{t.gerenciamento.tempo_de_contrato}</span>
                       <span className={cn("font-semibold", tone)}>{tempo}</span>
                     </div>
                     {c && (
                       <div className="mt-1 flex items-center justify-between text-sm">
-                        <span className="text-white/55">Salário</span>
+                        <span className="text-white/55">{t.gerenciamento.salario}</span>
                         <span className="font-semibold text-white tabular-nums">R$ {(c.salary * 4).toLocaleString("pt-BR")}/mês</span>
                       </div>
                     )}
@@ -3463,7 +3463,7 @@ export default function ElencoPage() {
               {emprestimoDoSelecionado ? (
                 <div className="mt-4 space-y-2 rounded-lg border border-sky-400/30 bg-sky-400/[0.06] p-3">
                   <p className="text-[11px] leading-4 text-sky-100/80">
-                    <span className="font-bold">Atleta emprestado.</span> O passe pertence ao clube de
+                    <span className="font-bold">{t.gerenciamento.atleta_emprestado}</span> O passe pertence ao clube de
                     origem — ele não pode ser vendido nem anunciado. O vínculo vai até a semana{" "}
                     {emprestimoDoSelecionado.loanEndWeek ?? "—"}.
                     {(emprestimoDoSelecionado.loanBuyOption ?? 0) > 0
@@ -3735,7 +3735,7 @@ export default function ElencoPage() {
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
               <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-white/40">{titulo}</div>
               {linhas.length === 0 ? (
-                <div className="py-3 text-center text-[11px] text-white/25">Sem dados ainda — jogue algumas partidas.</div>
+                <div className="py-3 text-center text-[11px] text-white/25">{t.gerenciamento.sem_dados_ainda_jogue_algumas_partidas}</div>
               ) : (
                 <ol className="space-y-1">
                   {linhas.map((l, i) => (
@@ -3755,11 +3755,11 @@ export default function ElencoPage() {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setShowLeaderboards(false)}>
               <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-[#141414] p-5 scrollbar-game" onClick={e => e.stopPropagation()}>
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-lg font-bold text-white"><Trophy className="h-5 w-5 text-yellow-400" /> Destaques da temporada</h2>
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-white"><Trophy className="h-5 w-5 text-yellow-400" /> {t.gerenciamento.destaques_da_temporada}</h2>
                   <button onClick={() => setShowLeaderboards(false)} className="rounded-lg p-2 hover:bg-white/10"><X className="h-5 w-5 text-white/60" /></button>
                 </div>
 
-                <div className="mb-2 text-xs font-semibold text-[var(--brand)]">Seu elenco</div>
+                <div className="mb-2 text-xs font-semibold text-[var(--brand)]">{t.gerenciamento.seu_elenco}</div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Bloco titulo="Artilheiros" linhas={elencoOrd("goals")} sufixo="gols" />
                   <Bloco titulo="Assistências" linhas={elencoOrd("assists")} sufixo="assist" />
@@ -3880,16 +3880,16 @@ export default function ElencoPage() {
               </div>
               <div className="space-y-3">
                 <div className="p-3 rounded-lg bg-white/5">
-                  <h3 className="text-sm font-medium text-white mb-1">Arrastar jogadores</h3>
-                  <p className="text-xs text-white/50">Arraste jogadores no campo para reposiciona-los ou troca-los com reservas.</p>
+                  <h3 className="text-sm font-medium text-white mb-1">{t.gerenciamento.arrastar_jogadores}</h3>
+                  <p className="text-xs text-white/50">{t.gerenciamento.arraste_jogadores_no_campo_para_reposicion}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5">
-                  <h3 className="text-sm font-medium text-white mb-1">Trocar formacao</h3>
-                  <p className="text-xs text-white/50">Escolha a formacao no menu suspenso (ou use as setas ao lado) para alterar entre os esquemas taticos.</p>
+                  <h3 className="text-sm font-medium text-white mb-1">{t.gerenciamento.trocar_formacao}</h3>
+                  <p className="text-xs text-white/50">{t.gerenciamento.escolha_a_formacao_no_menu_suspenso}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5">
-                  <h3 className="text-sm font-medium text-white mb-1">Ver detalhes</h3>
-                  <p className="text-xs text-white/50">Clique em um jogador para ver seus atributos no painel lateral.</p>
+                  <h3 className="text-sm font-medium text-white mb-1">{t.gerenciamento.ver_detalhes}</h3>
+                  <p className="text-xs text-white/50">{t.gerenciamento.clique_em_um_jogador_para_ver}</p>
                 </div>
               </div>
             </motion.div>
@@ -3915,7 +3915,7 @@ export default function ElencoPage() {
               className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 max-w-md w-full"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white">Substituicoes Sugeridas</h2>
+                <h2 className="text-lg font-bold text-white">{t.gerenciamento.substituicoes_sugeridas_2}</h2>
                 <button onClick={() => setShowSuggestedSubs(false)} className="p-2 rounded-lg hover:bg-white/10">
                   <X className="h-5 w-5 text-white/60" />
                 </button>

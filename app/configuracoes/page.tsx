@@ -449,8 +449,8 @@ export default function ConfiguracoesPage() {
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-white">Tamanho da fonte</div>
-                    <div className="text-xs text-white/40">Aumenta o texto de todas as telas</div>
+                    <div className="text-sm text-white">{t.configuracoes.tamanho_da_fonte}</div>
+                    <div className="text-xs text-white/40">{t.configuracoes.aumenta_o_texto_de_todas_as}</div>
                   </div>
                   <span className="text-sm font-bold text-primary tabular-nums">{a11y.fontScale}%</span>
                 </div>
@@ -501,8 +501,8 @@ export default function ConfiguracoesPage() {
             </div>
 
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
-              <h3 className="text-sm font-medium text-white">Desempenho gráfico</h3>
-              <p className="text-xs text-white/40">O modo econômico reduz animações, transparências e efeitos do radar para computadores com 4 GB de RAM e vídeo integrado.</p>
+              <h3 className="text-sm font-medium text-white">{t.configuracoes.desempenho_grafico}</h3>
+              <p className="text-xs text-white/40">{t.configuracoes.o_modo_economico_reduz_animacoes_transpare}</p>
               <select
                 value={performanceProfile}
                 onChange={event => {
@@ -511,9 +511,9 @@ export default function ConfiguracoesPage() {
                   applyPerformanceProfile(profile)
                 }}
                 className="w-full rounded-lg border border-white/10 bg-[#101015] px-3 py-2 text-sm text-white"
-                aria-label="Perfil de desempenho gráfico"
+                aria-label={t.configuracoes.perfil_de_desempenho_grafico}
               >
-                <option value="economy">Econômico — hardware antigo</option>
+                <option value="economy">{t.configuracoes.economico_hardware_antigo}</option>
                 <option value="balanced">Equilibrado</option>
                 <option value="quality">Qualidade</option>
               </select>
@@ -528,7 +528,7 @@ export default function ConfiguracoesPage() {
                 <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5">
                   <div>
                     <div className="text-sm text-white">{t.settings.autoSave}</div>
-                    <div className="text-xs text-white/40">Salva elenco, escalação, calendário e carreira conforme as partidas disputadas.</div>
+                    <div className="text-xs text-white/40">{t.configuracoes.salva_elenco_escalacao_calendario_e_carrei}</div>
                   </div>
                   <select
                     value={autoSaveInterval}
@@ -538,12 +538,12 @@ export default function ConfiguracoesPage() {
                       setState({ autoSaveInterval: value })
                     }}
                     className="min-w-[150px] rounded-lg border border-white/10 bg-[#101015] px-3 py-2 text-sm text-white"
-                    aria-label="Frequência do salvamento automático"
+                    aria-label={t.configuracoes.frequencia_do_salvamento_automatico}
                   >
                     <option value={0}>Desativado</option>
-                    <option value={1}>A cada jogo</option>
-                    <option value={3}>A cada 3 jogos</option>
-                    <option value={5}>A cada 5 jogos</option>
+                    <option value={1}>{t.configuracoes.a_cada_jogo}</option>
+                    <option value={3}>{t.configuracoes.a_cada_3_jogos}</option>
+                    <option value={5}>{t.configuracoes.a_cada_5_jogos}</option>
                   </select>
                 </div>
                 <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5 [&>div]:min-w-0">
@@ -558,8 +558,8 @@ export default function ConfiguracoesPage() {
                 </div>
                 <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5 [&>div]:min-w-0">
                   <div>
-                    <div className="text-sm text-white">Tela cheia</div>
-                    <div className="text-xs text-white/40">Alternar entre janela e tela cheia (tecla F11).</div>
+                    <div className="text-sm text-white">{t.configuracoes.tela_cheia}</div>
+                    <div className="text-xs text-white/40">{t.configuracoes.alternar_entre_janela_e_tela_cheia}</div>
                   </div>
                   <Switch checked={fullscreen} onCheckedChange={(v) => { setFullscreenState(v); void setFullscreen(v) }} />
                 </div>
@@ -767,12 +767,12 @@ export default function ConfiguracoesPage() {
                   />
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-white/5 p-3">
-                  <div><div className="text-sm text-white">Narração durante as partidas</div><div className="text-xs text-white/40">Ativa ou desativa as vozes do jogo</div></div>
+                  <div><div className="text-sm text-white">{t.configuracoes.narracao_durante_as_partidas}</div><div className="text-xs text-white/40">{t.configuracoes.ativa_ou_desativa_as_vozes_do}</div></div>
                   <Switch checked={commentaryEnabled} onCheckedChange={(v) => { setCommentaryEnabled(v); setState({ commentaryEnabled: v }) }} />
                 </div>
                 {commentaryEnabled && <>
                   <div><label className="mb-2 block text-sm text-white/60">Narrador</label><select value={commentaryVoice} onChange={e => { setCommentaryVoice(e.target.value); setState({ commentaryVoice: e.target.value }) }} className="w-full rounded-lg border border-white/10 bg-[#101015] p-3 text-sm text-white">{commentaryVoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></div>
-                  <div><div className="mb-2 flex justify-between"><span className="text-sm text-white/60">Volume da narração</span><span className="text-sm text-white">{commentaryVolume[0]}%</span></div><Slider value={commentaryVolume} onValueChange={setCommentaryVolume} onValueCommit={(v) => setState({ commentaryVolume: v[0] })} max={100} /></div>
+                  <div><div className="mb-2 flex justify-between"><span className="text-sm text-white/60">{t.configuracoes.volume_da_narracao}</span><span className="text-sm text-white">{commentaryVolume[0]}%</span></div><Slider value={commentaryVolume} onValueChange={setCommentaryVolume} onValueCommit={(v) => setState({ commentaryVolume: v[0] })} max={100} /></div>
                 </>}
               </div>
             </div>
@@ -834,8 +834,8 @@ export default function ConfiguracoesPage() {
                   className="flex w-full items-center justify-between rounded-lg border border-white/10 p-3 text-left transition-colors hover:bg-white/5"
                 >
                   <div>
-                    <div className="text-sm text-white">Central de atualizações</div>
-                    <div className="text-xs text-white/40">Versão instalada e como o jogo se atualiza</div>
+                    <div className="text-sm text-white">{t.configuracoes.central_de_atualizacoes}</div>
+                    <div className="text-xs text-white/40">{t.configuracoes.versao_instalada_e_como_o_jogo}</div>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-white/40" />
                 </button>
@@ -858,7 +858,7 @@ export default function ConfiguracoesPage() {
                   escritos no HTML): nao havia escalacao salva nenhuma. */}
               {savedLineups.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
-                  <p className="text-sm text-white/50">Nenhuma escalação salva ainda.</p>
+                  <p className="text-sm text-white/50">{t.configuracoes.nenhuma_escalacao_salva_ainda}</p>
                   <p className="mt-1 text-xs text-white/30">
                     Salve a escalação atual do seu time para reutilizá-la depois.
                   </p>
@@ -1355,7 +1355,7 @@ export default function ConfiguracoesPage() {
                           {hasDpad && (
                             <div className="flex items-center gap-2.5">
                               <ControllerButton button="DPAD" controller={ctrl} size="sm" showLabel={false} />
-                              <span className="text-xs text-white/65">Navegar (cima / baixo / esq / dir)</span>
+                              <span className="text-xs text-white/65">{t.configuracoes.navegar_cima_baixo_esq_dir}</span>
                             </div>
                           )}
                         </div>

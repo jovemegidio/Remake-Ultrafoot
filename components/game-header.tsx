@@ -1007,8 +1007,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 value={termoBusca}
                 autoFocus
                 onChange={(e) => { setTermoBusca(e.target.value); setNavMenuIndex(0) }}
-                placeholder="Buscar tela, clube, atleta ou competição"
-                aria-label="Buscar no jogo"
+                placeholder={t.cabecalho.buscar_tela_clube_atleta_ou_competicao}
+                aria-label={t.cabecalho.buscar_no_jogo}
                 className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[var(--brand)]/60 focus:outline-none"
               />
               {buscando && (

@@ -38,7 +38,11 @@ export interface IdiomaRegistrado {
   label: string
   /** Sigla mostrada no seletor. */
   flag: string
-  textos: Translations
+  /**
+   * O que este idioma TEM. O que faltar cai no português na montagem do mapa —
+   * ver `comReservaEmPortugues`. Só o pt-BR precisa estar completo.
+   */
+  textos: Profunda<Translations>
   variantes?: string[]
   /** Escrita da direita para a esquerda (árabe, hebraico). */
   rtl?: boolean
@@ -58,9 +62,66 @@ export const RELEASE_LANGUAGE_POLICY_291 = {
   previews: ["en-US", "es-ES", "it-IT"],
 } as const
 
+/**
+ * ⚠️ A TRADUÇÃO INCOMPLETA CAI NO PORTUGUÊS — E ISSO É A FUNDAÇÃO DO RESTO.
+ *
+ * Até a 1.0.348 todo idioma era tipado como `Translations` COMPLETO: acrescentar
+ * uma chave em pt-BR quebrava o type-check dos outros três até alguém traduzir
+ * as três. Com 403 chaves isso era administrável. Com o jogo inteiro extraído
+ * — alguns milhares de frases — vira um portão intransponível: ninguém extrai
+ * 200 frases de uma tela sabendo que precisa de 600 traduções no mesmo commit.
+ *
+ * Era ESSA tipagem, e não a falta de tradutor, que mantinha o jogo em 9% de
+ * cobertura. Agora cada idioma declara o que TEM, e o que falta é preenchido
+ * com o texto em português na hora de montar o mapa. O jogador nunca vê chave
+ * crua nem espaço em branco: vê a frase em português, que é a degradação certa.
+ *
+ * A fusão acontece UMA vez, na carga do módulo — não a cada `useTranslation`.
+ */
+type Profunda<T> = { [K in keyof T]?: T[K] extends object ? Profunda<T[K]> : T[K] }
+export type TraducaoParcial = Profunda<Translations>
+
+function comReservaEmPortugues<T>(base: T, parcial: Profunda<T> | undefined): T {
+  if (!parcial) return base
+  const saida = { ...base } as T
+  for (const chave of Object.keys(base as object) as (keyof T)[]) {
+    const doIdioma = parcial[chave]
+    if (doIdioma === undefined) continue
+    const original = base[chave]
+    saida[chave] = (original !== null && typeof original === "object" && !Array.isArray(original))
+      ? comReservaEmPortugues(original, doIdioma as Profunda<typeof original>)
+      : (doIdioma as T[keyof T])
+  }
+  return saida
+}
+
 const map: Record<string, Translations> = Object.fromEntries(
-  IDIOMAS.flatMap(i => [[i.id, i.textos] as const, ...(i.variantes ?? []).map(v => [v, i.textos] as const)]),
+  IDIOMAS.flatMap(i => {
+    const completo = comReservaEmPortugues(ptBR, i.textos as Profunda<Translations>)
+    return [[i.id, completo] as const, ...(i.variantes ?? []).map(v => [v, completo] as const)]
+  }),
 )
+
+/**
+ * Quanto de um idioma está de fato traduzido (0 a 1). É o número que o gate
+ * `qa:traducao` cobra e que a tela de Configurações pode mostrar — "preview"
+ * deixa de ser um rótulo escrito à mão e passa a ser um fato medido.
+ */
+export function coberturaDoIdioma(id: string): number {
+  const idioma = IDIOMAS.find(i => i.id === id || i.variantes?.includes(id))
+  if (!idioma) return 0
+  const contar = (base: unknown, parcial: unknown): [number, number] => {
+    if (base === null || typeof base !== "object") return [1, parcial === undefined ? 0 : 1]
+    let total = 0, traduzidas = 0
+    for (const [k, v] of Object.entries(base as Record<string, unknown>)) {
+      const [t, d] = contar(v, (parcial as Record<string, unknown> | undefined)?.[k])
+      total += t; traduzidas += d
+    }
+    return [total, traduzidas]
+  }
+  const [total, traduzidas] = contar(ptBR, idioma.textos)
+  return total === 0 ? 1 : traduzidas / total
+}
 
 /** O idioma escolhido escreve da direita para a esquerda? */
 export function idiomaEhRtl(id: string): boolean {

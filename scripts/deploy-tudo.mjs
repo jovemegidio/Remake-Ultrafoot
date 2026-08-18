@@ -273,6 +273,11 @@ const GATES = [
   // As tres modalidades tinham motor e tela e NENHUM gate. Um `switch` que
   // perdesse um `case` voltaria a tratar todo mundo igual sem quebrar teste.
   { nome: "as tres modalidades sao cobradas pelo que sao", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-modalidades-ponta-a-ponta.ts"] },
+  // O compilador deixou de garantir que todo idioma tem toda chave (eles agora
+  // sao parciais). Quem garante e este teste; sem ele, chave sem reserva vira
+  // "undefined" no meio da tela do jogador.
+  { nome: "idiomas completos com reserva no portugues", cmd: "node", args: ["node_modules/tsx/dist/cli.mjs", "scripts/test-idiomas-com-reserva.ts"] },
+  { nome: "a traducao nao regride", cmd: "node", args: ["scripts/qa-traducao.mjs"] },
 ]
 // ⚠️ OS GATES RODAM NO DISCO DE BUILD, NAO NO REPOSITORIO.
 //

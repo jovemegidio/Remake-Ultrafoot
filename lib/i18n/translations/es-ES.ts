@@ -1,6 +1,9 @@
-import type { Translations } from "./pt-BR"
+// ⚠️ PARCIAL DE PROPOSITO (1.0.349): o que falta aqui cai no portugues em
+// tempo de carga. Antes este arquivo tinha de ser COMPLETO, e era essa regra
+// que impedia extrair o jogo inteiro para chaves — ver lib/i18n/index.ts.
+import type { TraducaoParcial } from "@/lib/i18n"
 
-export const esES: Translations = {
+export const esES: TraducaoParcial = {
   common: {
     loading: "Cargando...",
     back: "Volver",

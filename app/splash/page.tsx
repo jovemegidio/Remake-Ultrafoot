@@ -733,17 +733,17 @@ export default function SplashPage() {
         return <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[#050508] px-5">
           <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-gradient-to-br from-[#102925] to-[#0b0c10] p-7 text-center shadow-2xl">
             <Globe className="mx-auto h-11 w-11 text-[var(--brand)]" />
-            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--brand)]">Ultrafoot 26</p>
-            <h1 className="mt-2 text-2xl font-black text-white">Escolha o idioma</h1>
-            <p className="mt-2 text-sm text-white/50">Você poderá alterá-lo depois nas configurações.</p>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--brand)]">{t.splash.ultrafoot_26}</p>
+            <h1 className="mt-2 text-2xl font-black text-white">{t.splash.escolha_o_idioma}</h1>
+            <p className="mt-2 text-sm text-white/50">{t.splash.voce_podera_altera_lo_depois_nas}</p>
             <div className="mt-6 flex items-center justify-center gap-3">
-              <button onClick={() => moveLanguage(-1)} aria-label="País anterior" className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[var(--brand)] hover:text-[var(--brand)]">‹</button>
+              <button onClick={() => moveLanguage(-1)} aria-label={t.splash.pais_anterior} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[var(--brand)] hover:text-[var(--brand)]">‹</button>
               <button onClick={() => moveLanguage(-1)} className="hidden w-24 rounded-xl border border-white/10 bg-white/[0.03] p-2 opacity-45 transition hover:opacity-80 sm:block"><Image src={`/flags/${previous.flag}.png`} alt={previous.country} width={48} height={32} className="mx-auto h-8 w-12 object-cover" /><span className="mt-2 block truncate text-[10px] text-white">{previous.code}</span></button>
               <button onClick={() => selectLanguage()} className="w-44 rounded-2xl border-2 border-[var(--brand)] bg-[var(--brand)]/10 px-4 py-4 shadow-[0_0_26px_rgba(0,255,200,.16)] transition hover:bg-[var(--brand)]/20"><Image src={`/flags/${current.flag}.png`} alt={`Bandeira de ${current.country}`} width={96} height={64} className="mx-auto h-14 w-24 rounded object-cover shadow" /><span className="mt-3 block text-lg font-black text-white">{current.language}</span><span className="mt-1 block text-xs text-[var(--brand)]">{current.country}</span></button>
               <button onClick={() => moveLanguage(1)} className="hidden w-24 rounded-xl border border-white/10 bg-white/[0.03] p-2 opacity-45 transition hover:opacity-80 sm:block"><Image src={`/flags/${next.flag}.png`} alt={next.country} width={48} height={32} className="mx-auto h-8 w-12 object-cover" /><span className="mt-2 block truncate text-[10px] text-white">{next.code}</span></button>
-              <button onClick={() => moveLanguage(1)} aria-label="Próximo país" className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[var(--brand)] hover:text-[var(--brand)]">›</button>
+              <button onClick={() => moveLanguage(1)} aria-label={t.splash.proximo_pais} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[var(--brand)] hover:text-[var(--brand)]">›</button>
             </div>
-            <p className="mt-5 text-[11px] text-white/40">← / → ou direcional para trocar país · Enter / A para confirmar</p>
+            <p className="mt-5 text-[11px] text-white/40">{t.splash.ou_direcional_para_trocar_pais_enter}</p>
           </div>
         </div>
       })()}
@@ -802,7 +802,7 @@ export default function SplashPage() {
           >
             <Image
               src="/images/agencia-do-japa-logo.webp"
-              alt="Agencia do Japa"
+              alt={t.splash.agencia_do_japa}
               width={180}
               height={90}
               className="object-contain h-auto w-auto max-w-[45vw]"
@@ -866,7 +866,7 @@ export default function SplashPage() {
           {/* Imagem das ligas */}
           <Image
             src="/images/leagues-ultrafoot.jpg"
-            alt="Ligas e competicoes licenciadas"
+            alt={t.splash.ligas_e_competicoes_licenciadas}
             fill
             className="object-contain"
             unoptimized
@@ -1382,7 +1382,7 @@ export default function SplashPage() {
                       e.stopPropagation()
                       setConfirmarExclusao({ tipo: "um", id: save.id, nome: save.teamName })
                     }}
-                    title="Apagar este save"
+                    title={t.splash.apagar_este_save}
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2.5 text-red-400/50 opacity-0 transition-all group-hover:opacity-100 focus-visible:opacity-100 hover:bg-red-500/15 hover:text-red-400"
                   >
                     <Trash2 className="h-4 w-4" />
