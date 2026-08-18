@@ -1,7 +1,7 @@
 // Auditoria de features: existe? está LIGADO?
 //
 // Motivação: neste projeto vários sistemas estão implementados mas nunca são
-// chamados por tela nenhuma (staff, injury-engine, match-decisions antes da
+// chamados por tela nenhuma (match-decisions antes da
 // 1.0.101). Procurar pelo nome do arquivo dá falso positivo; procurar pelo
 // termo em português dá falso negativo quando o campo tem outro nome.
 //
@@ -43,7 +43,8 @@ const contents = new Map(files.map(f => [path.relative(root, f).replace(/\\/g, "
  *    e não citam o símbolo específico — todas apareceram como "desligadas" e
  *    todas funcionam.
  * 3. Falso POSITIVO quando outro arquivo apenas MENCIONA o nome (ex.: o
- *    staff-engine.ts morto contém "hireStaff" e foi apontado como o consumidor).
+ *    o antigo staff-engine.ts, morto, continha "hireStaff" e foi apontado como o consumidor;
+ *    ele foi apagado na 1.0.351 junto com outros cinco esqueletos sem chamador).
  *
  * Ou seja: este script serve para LEVANTAR SUSPEITAS, nunca para concluir.
  * Cada linha precisa ser verificada no código antes de virar afirmação.
@@ -77,9 +78,9 @@ const FEATURES = [
   ["Bola parada (batedores)", "setPieceTaker", "lib/tactics-engine.ts", "tática define cobradores"],
   ["Vestiário (eventos)", "detectEvents", "lib/dressing-room-engine.ts", "eventos aparecem ao jogador"],
   ["Hall da fama", "buildCareerStats", "lib/hall-of-fame-engine.ts", "carreira registra"],
-  ["Entrevistas (engine)", "interviews", "lib/interviews-engine.ts", "perguntas chegam ao jogador"],
+  ["Coletivas de imprensa", "PressConference", "lib/game-engine.ts", "perguntas chegam ao jogador"],
   ["Treino semanal (plano)", "defaultWeekPlan", "lib/training-engine.ts", "plano semanal aplicado"],
-  ["Recuperação de lesão (engine)", "tickRecovery", "lib/injury-engine.ts", "recuperação usa o engine"],
+  ["Recuperacao de lesao", "PlayerInjury", "lib/game-engine.ts", "lesao evolui e libera o atleta"],
 ]
 
 console.log("\nFEATURE                          EXISTE  LIGADA  ONDE É USADA")

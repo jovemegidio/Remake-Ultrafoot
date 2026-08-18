@@ -1,15 +1,22 @@
-import { applyCard, tickSuspensions, type DisciplinaryRecord } from "../lib/discipline-engine"
+import { suspensaoPorCartoes } from "../lib/player-realism"
 import { resolveDivisionChange } from "../lib/league-pyramid"
 import { completeTransfer, createOffer, runDeadlineDay } from "../lib/transfer-engine"
 import { DEFAULT_STATE, createFreshCareerState } from "../lib/save-system"
 
 const fail = (message: string): never => { throw new Error(message) }
-const record: DisciplinaryRecord = { playerId: "qa-10", yellowCards: 0, redCards: 0, suspensions: [], fines: [], internalIncidents: [] }
-const thirdYellow = applyCard(applyCard(applyCard(record, "yellow", "liga"), "yellow", "liga"), "yellow", "liga")
-if (thirdYellow.suspensions.length !== 1) fail("terceiro amarelo não gerou suspensão")
-if (tickSuspensions(thirdYellow, 1, "liga").suspensions.length) fail("suspensão não foi cumprida")
-const straightRed = applyCard(record, "red", "copa")
-if (straightRed.redCards !== 1 || straightRed.suspensions[0]?.reason !== "red_card") fail("vermelho direto inválido")
+// ⚠️ ATE A 1.0.351 ESTE BLOCO TESTAVA `lib/discipline-engine`, QUE O JOGO NAO
+// USA. O modulo tinha zero importadores fora daqui: o gate ficava verde
+// provando o comportamento de um codigo que nenhuma partida executa, enquanto a
+// disciplina de verdade (`suspensaoPorCartoes` -> `suspendedMatches`, aplicada
+// em lib/game-engine) nao tinha teste nenhum. Gate sobre codigo morto e pior que
+// gate nenhum: ele CONVENCE. Agora o teste e sobre quem manda.
+const quintoAmarelo = suspensaoPorCartoes(4, 1, false)
+if (quintoAmarelo.suspender !== 1) fail("quinto amarelo não gerou suspensão")
+if (quintoAmarelo.amarelosRestantes !== 0) fail("acúmulo de amarelos não zerou ao suspender")
+const quartoAmarelo = suspensaoPorCartoes(3, 1, false)
+if (quartoAmarelo.suspender !== 0 || quartoAmarelo.amarelosRestantes !== 4) fail("quarto amarelo não deveria suspender")
+const vermelhoDireto = suspensaoPorCartoes(0, 0, true, 3)
+if (vermelhoDireto.suspender !== 3) fail("vermelho direto não aplicou a pena do tribunal")
 
 // ⚠️ Estas quatro linhas vinham de `lib/promotion-relegation`, que NINGUEM
 // executa (ver scripts/qa-promotion-relegation.ts). Alem de provar codigo morto,

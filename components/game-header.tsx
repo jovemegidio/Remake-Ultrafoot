@@ -161,10 +161,17 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   // atleta nao contrata ninguem nem pede demissao do clube; ele pede
   // transferencia. Ver NAV_MENU_PLAYER_ITEMS.
   const carreiraDeAtleta = state.carreiraDeJogador
-  const ehCarreiraDeAtleta = modalidadeDoSave(state) === "jogador" && Boolean(carreiraDeAtleta)
+  const modalidadeDaCarreira = modalidadeDoSave(state)
+  const ehCarreiraDeAtleta = modalidadeDaCarreira === "jogador" && Boolean(carreiraDeAtleta)
+  // ⚠️ Exige a carreira ATIVA, nao so a modalidade: quem sobe da base para o
+  // profissional guarda `modalidade: "profissional"` e o `youthCareer` arquivado
+  // com `active: false` (ver `acceptProfessionalOffer`). Olhar so a modalidade
+  // ja bastaria hoje, mas o save antigo sem o campo e resolvido por
+  // `youthCareer.active` — e e ele que decide de verdade quem esta na base.
+  const ehCarreiraDeBase = modalidadeDaCarreira === "sub20" && Boolean(state.youthCareer?.active)
   const navMenuItems = useMemo(
-    () => buildNavMenuItems(emModoSelecao, ehCarreiraDeAtleta),
-    [emModoSelecao, ehCarreiraDeAtleta],
+    () => buildNavMenuItems(emModoSelecao, ehCarreiraDeAtleta, ehCarreiraDeBase),
+    [emModoSelecao, ehCarreiraDeAtleta, ehCarreiraDeBase],
   )
 
 
@@ -1229,6 +1236,12 @@ const NAV_MENU_ITEMS: NavMenuItem[] = [
   // Configuracoes, e quem quer mexer em bilheteria ou obra do estadio nao
   // procura isso em "configuracoes do jogo".
   { secao: "Clube", label: "Infraestrutura", href: "/infraestrutura", icon: Building2, clubOnly: true },
+  // COMISSAO TECNICA. A tela existia e NENHUM menu levava ate ela — o mesmo
+  // defeito que a criou ("o sistema ja existia inteiro no game-engine, so nunca
+  // teve tela"), so que uma camada acima. A aba "Comissao" da Central de Gestao
+  // NAO e esta: la se decide como cada pauta de reuniao chega; aqui se contrata
+  // e se demite quem trabalha no clube.
+  { secao: "Clube", label: "Comissao tecnica", href: "/comissao", icon: Users, clubOnly: true },
 
   { secao: "Elenco", label: "Elenco", href: "/elenco", icon: User, clubOnly: true },
   { secao: "Elenco", label: "Treinamento", href: "/treinamento", icon: User, clubOnly: true },
@@ -1312,11 +1325,49 @@ const NAV_MENU_PLAYER_ITEMS: NavMenuItem[] = [
   { secao: "Carreira", label: "Trajetoria", href: "/carreira/jogador?aba=historico", icon: BarChart3 },
 ]
 
-function buildNavMenuItems(isNational: boolean, ehAtleta = false): NavMenuItem[] {
+/**
+ * O MENU DE QUEM DIRIGE O SUB-20.
+ *
+ * ⚠️ Ate a 1.0.351 nao existia. Quem escolhia a carreira de base recebia o menu
+ * inteiro do tecnico profissional: Financas, Infraestrutura, Treinamento,
+ * Calendario e Competicoes — todas do time PRINCIPAL, que ele nao dirige. A
+ * carreira da base tem calendario, tabela e copa PROPRIOS (ver
+ * `lib/youth-career-engine`), e era para eles que o menu deveria apontar.
+ *
+ * O que fica de fora e por que:
+ *   • `/base` (Juniores) — e a academia de quem dirige o PROFISSIONAL, e
+ *     escreve no MESMO `state.youthPlayers` que e o elenco desta carreira.
+ *     Vender por la o atleta que voce escala aqui e o tipo de porta que so
+ *     produz save quebrado.
+ *   • Financas, Infraestrutura, Central, Elenco, Treinamento, Calendario,
+ *     Competicoes, Performance — sao do clube profissional.
+ *
+ * O que FICA: Mercado e Leiloes ja trocam de fonte por modalidade desde a
+ * 1.0.335 (`lib/mercado-da-modalidade`), a Central de Gestao pesa as areas por
+ * modalidade (`pesoDasAreas`) e a Area do Treinador e a carreira de quem
+ * dirige, nao do clube.
+ */
+const NAV_MENU_YOUTH_ITEMS: NavMenuItem[] = [
+  { secao: "Base", label: "Carreira na base", href: "/base/carreira", icon: Sprout },
+  { secao: "Base", label: "Mercado de jovens", href: "/mercado", icon: TrendingUp },
+  { secao: "Voce", label: "Area do Treinador", href: "/treinador", icon: User },
+  { secao: "Voce", label: "Gestao", href: "/gestao-avancada", icon: Target },
+  { secao: "Voce", label: "Rankings", href: "/rankings", icon: BarChart3 },
+]
+
+function buildNavMenuItems(
+  isNational: boolean,
+  ehAtleta = false,
+  ehCarreiraDeBase = false,
+): NavMenuItem[] {
   // O atleta vem primeiro: uma carreira de jogador nunca e tambem uma selecao.
   if (ehAtleta) {
     const configuracoes = NAV_MENU_ITEMS.find(i => i.href === "/configuracoes")!
     return [...NAV_MENU_PLAYER_ITEMS, configuracoes]
+  }
+  if (ehCarreiraDeBase) {
+    const configuracoes = NAV_MENU_ITEMS.find(i => i.href === "/configuracoes")!
+    return [...NAV_MENU_YOUTH_ITEMS, configuracoes]
   }
   if (!isNational) return NAV_MENU_ITEMS
   const comuns = NAV_MENU_ITEMS.filter(i => !i.clubOnly)

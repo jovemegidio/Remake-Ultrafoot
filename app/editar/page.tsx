@@ -1036,7 +1036,26 @@ export default function EditarPage() {
   // DEPOIS de todos os hooks, nunca antes: um return condicional no meio da
   // lista de hooks muda a contagem entre renders e derruba a tela com o erro
   // #310 do React — foi assim que o escritorio quebrou uma vez.
-  if (registroHidratado && !registrado) {
+  // ⚠️ ANTES DE SABER SE HA REGISTRO, NAO DESENHE NENHUM DOS DOIS LADOS.
+  //
+  // O HTML que o build gera nao tem acesso ao registro nem ao catalogo do
+  // usuario, entao ele congelava o EDITOR INTEIRO (medido: 706 linhas de texto,
+  // incluindo "Diretorio de equipes 3702"). No cliente o mesmo ponto vira outro
+  // numero — e a hidratacao quebra com o React #418, que a auditoria de telas da
+  // 1.0.351 pegou aqui e em /central.
+  //
+  // Segurar os dois lados ate `registroHidratado` faz o primeiro render do
+  // cliente ser IGUAL ao do build. De quebra, o build deixa de embutir a tela
+  // inteira do editor para quem nem registrou o jogo.
+  if (!registroHidratado) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#05080a] text-sm text-white/40">
+        Abrindo o editor…
+      </div>
+    )
+  }
+
+  if (!registrado) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-[#05080a] p-6">
         <AvisoDeRegistro id="editor" className="max-w-xl" />

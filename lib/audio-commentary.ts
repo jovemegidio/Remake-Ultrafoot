@@ -148,7 +148,7 @@ export function clearQueue(): void {
   pararEfeitosBase()
 }
 
-/** Mute/unmute (não persiste no disco — fica no localStorage via save-engine). */
+/** Mute/unmute (nao persiste no disco — fica no localStorage). */
 export function setMute(mute: boolean): void {
   config.mute = mute
   if (audio) audio.muted = mute

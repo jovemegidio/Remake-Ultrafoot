@@ -268,6 +268,27 @@ export const ROTULO_DO_FOCO: Record<FocoColetivo, string> = {
 const PESO_INTENSIDADE: Record<IntensidadeTreino, number> = { leve: 30, media: 55, alta: 82 }
 
 /**
+ * O PESO DA INTENSIDADE, com chão.
+ *
+ * ⚠️ ISTO ERA O "NaN NA TELA DE TREINAMENTO" (aberto desde a 1.0.348, confirmado
+ * pela auditoria de telas da 1.0.351: os QUATRO números da prévia — carga,
+ * energia, fadiga e risco — apareciam como `NaN`).
+ *
+ * `PESO_INTENSIDADE[plano.intensidade]` era lido SEM guarda. Basta o plano
+ * chegar sem `intensidade` — save antigo, estado do motor reidratado pela
+ * metade, `planoDeTreino: {}` — para o valor virar `undefined`, a carga virar
+ * `NaN` e o `NaN` contaminar tudo o que a semana calcula depois dele.
+ *
+ * É o mesmo padrão de [[ultrafoot-save-sem-campo-derruba-tela]]: campo novo,
+ * save velho, tela quebrada. A guarda mora AQUI, e não em cada chamador, porque
+ * quem lê a intensidade são dois caminhos (semana escrita e plano agregado) e o
+ * terceiro que vier nasceria com o mesmo furo.
+ */
+function pesoDaIntensidade(plano: PlanoDeTreino): number {
+  return PESO_INTENSIDADE[plano.intensidade] ?? PESO_INTENSIDADE.media
+}
+
+/**
  * Carga (0-100) da semana.
  *
  * O Centro de Treinamento não deixa o treino mais leve: deixa a MESMA carga
@@ -284,11 +305,11 @@ export function cargaDoPlano(plano: PlanoDeTreino, nivelCentroDeTreinamento = 2)
   // essa combinação que o plano agregado não sabia representar.
   if (plano.semana?.length) {
     const media = plano.semana.reduce((soma, dia) => soma + (CARGA_DA_SESSAO[dia] ?? 0), 0) / plano.semana.length
-    const volume = PESO_INTENSIDADE[plano.intensidade] / PESO_INTENSIDADE.media
+    const volume = pesoDaIntensidade(plano) / PESO_INTENSIDADE.media
     return Math.max(0, Math.min(100, Math.round(media * volume * ganhoEstrutura)))
   }
 
-  const base = PESO_INTENSIDADE[plano.intensidade]
+  const base = pesoDaIntensidade(plano)
   const ajusteFoco = plano.foco === "fisico" ? 12 : plano.foco === "recuperacao" ? -26 : 0
   return Math.max(5, Math.min(100, Math.round((base + ajusteFoco) * ganhoEstrutura)))
 }

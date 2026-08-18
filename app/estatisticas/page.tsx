@@ -24,6 +24,7 @@ import { gerarEstatisticasCompeticao } from "@/lib/competition-scorers"
 import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameEngine } from "@/lib/game-engine"
+import { useGameState } from "@/lib/save-system"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
@@ -40,6 +41,9 @@ export default function EstatisticasPage() {
   const { team: userTeam } = useUserTeam()
   const { squadPlayers, matchResults, currentSeason } = useGameEngine()
   const { standings } = useGameManager()
+  const { state: saveState } = useGameState()
+  /** A premiação mais recente que a carreira registrou (undefined na 1ª temporada). */
+  const premios = saveState.seasonAwards?.[saveState.seasonAwards.length - 1]
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("artilheiros")
   const estatTabsOrder = ["artilheiros", "assistencias", "clean", "amarelos", "vermelhos", "notas"]
@@ -315,6 +319,43 @@ export default function EstatisticasPage() {
             </>
           )}
         </div>
+
+        {/* PRÊMIOS DA TEMPORADA.
+            ⚠️ `state.seasonAwards` é calculado toda virada de temporada
+            (`calcSeasonAwards`, use-game-manager) e até a 1.0.351 só era
+            desenhado em /central-da-temporada — uma tela que NENHUM menu
+            alcançava. Bola de ouro, artilheiro e seleção da temporada existiam
+            e o jogador nunca os via. Aqui é onde se procura por eles. */}
+        {premios && (
+          <section className="mt-6 rounded-2xl border border-[#ffd700]/20 bg-[#ffd700]/[0.04] p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Award className="h-5 w-5 text-[#ffd700]" />
+              <h2 className="text-lg font-black text-white">Prêmios da temporada {premios.season}</h2>
+              <span className="text-xs text-white/40">{premios.competition}</span>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {premios.winners.map(vencedor => (
+                <div key={vencedor.award} className="rounded-xl border border-white/[0.06] bg-black/30 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#ffd700]">{vencedor.title}</p>
+                  <p className="mt-1.5 text-base font-bold text-white">{vencedor.playerName}</p>
+                  <p className="text-xs text-white/45">{vencedor.detail}</p>
+                </div>
+              ))}
+            </div>
+            {premios.teamOfTheSeason?.length ? (
+              <div className="mt-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/40">Seleção da temporada</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {premios.teamOfTheSeason.map(escolhido => (
+                    <span key={`${escolhido.playerName}-${escolhido.position}`} className="rounded-lg bg-white/[0.06] px-3 py-1.5 text-xs text-white/80">
+                      <b className="text-white">{escolhido.playerName}</b> · {escolhido.position}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </section>
+        )}
       </main>
 
     </div>

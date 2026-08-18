@@ -22,9 +22,34 @@
 
 import { useEffect } from "react"
 import { useGameState } from "@/lib/save-system"
+import { buscarJson } from "@/lib/buscar-json"
+import { isTauri } from "@/lib/game-asset"
 
 /** O manifesto do jogo na VPS: pequeno, público e sempre no ar. Serve de ping. */
 const ALVO = "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json"
+
+/**
+ * ESTA MÁQUINA PODE FALAR COM A VPS?
+ *
+ * ⚠️ ISTO NÃO É DETALHE DE AMBIENTE — ERA O DEFEITO. Dentro do Tauri a página
+ * roda em `tauri.localhost` e QUALQUER pedido à VPS é cross-origin; o nginx de
+ * `/downloads/` não manda `Access-Control-Allow-Origin`, então o `fetch` da
+ * webview é barrado antes de sair (é o que `lib/buscar-json.ts` documenta e
+ * resolve fazendo a requisição pelo lado NATIVO). Com `fetch` cru, o online
+ * simplesmente NUNCA ligava sozinho no jogo instalado — a funcionalidade inteira
+ * dependia de um pedido que o navegador recusa.
+ *
+ * Fora do Tauri o caminho nativo não existe. Aí só faz sentido perguntar quando
+ * a página VEIO da própria VPS (versão web), porque é o único caso em que o
+ * pedido é same-origin. Num `localhost` de desenvolvimento ou na auditoria de
+ * telas, pingar produção só produz erro de console — que foi exatamente o ruído
+ * que afogou a auditoria de 40 telas.
+ */
+function podeConsultarAVps(): boolean {
+  if (isTauri()) return true
+  if (typeof window === "undefined") return false
+  return window.location.origin === new URL(ALVO).origin
+}
 
 export function OnlinePorConectividade() {
   const { state, setState } = useGameState()
@@ -36,28 +61,21 @@ export function OnlinePorConectividade() {
     if (state.multiplayerEnabled) return
     if (typeof navigator !== "undefined" && navigator.onLine === false) return
 
+    if (!podeConsultarAVps()) return
+
     let cancelado = false
     const conferir = async () => {
-      try {
-        // ⚠️ `no-store` e timeout curto: isto roda no boot, e um servidor lento
-        // não pode segurar a abertura do jogo. Falhou, fica offline — o jogador
-        // continua com o interruptor manual em Configurações.
-        const controle = new AbortController()
-        const relogio = setTimeout(() => controle.abort(), 4000)
-        const resposta = await fetch(`${ALVO}?cb=${Date.now()}`, {
-          cache: "no-store",
-          signal: controle.signal,
-        })
-        clearTimeout(relogio)
-        if (!resposta.ok || cancelado) return
-        // Conferência pelo CORPO, não pelo status: o nginx deste site devolve
-        // 200 com a página do jogo para caminho inexistente (ver deploy-tudo).
-        const corpo = await resposta.json() as { version?: string }
-        if (!corpo?.version || cancelado) return
-        setState({ multiplayerEnabled: true })
-      } catch {
-        // Sem rede alcançável: segue offline, em silêncio. Não é erro do jogador.
-      }
+      // ⚠️ `buscarJson`, e não `fetch`: dentro do Tauri ele faz a requisição pelo
+      // lado nativo, onde CORS não existe. O timeout curto continua valendo —
+      // isto roda no boot e um servidor lento não pode segurar a abertura do
+      // jogo. Falhou, fica offline: o jogador segue com o interruptor manual em
+      // Configurações.
+      const corpo = await buscarJson<{ version?: string }>(`${ALVO}?cb=${Date.now()}`, 4000)
+      if (cancelado) return
+      // Conferência pelo CORPO, não pelo status: o nginx deste site devolve
+      // 200 com a página do jogo para caminho inexistente (ver deploy-tudo).
+      if (!corpo?.version) return
+      setState({ multiplayerEnabled: true })
     }
 
     void conferir()

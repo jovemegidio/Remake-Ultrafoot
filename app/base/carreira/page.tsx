@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 // CARREIRA DE BASE (Sub-20).
 //
 // A tela mostrava campanha e elenco e mais nada: "Rodada 3/19" com um 19 escrito
@@ -17,7 +19,8 @@ import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
 import { useGameState } from "@/lib/save-system"
 import {
-  acceptProfessionalOffer, finishYouthSeason, proximaPartidaDaBase, simulateYouthRound,
+  acceptProfessionalOffer, candidatosAPromocao, finishYouthSeason, proximaPartidaDaBase,
+  simulateYouthRound, vagasNoProfissional,
 } from "@/lib/youth-career-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -25,13 +28,23 @@ import { saveMatchContext } from "@/lib/match-context"
 import { allTeams, getTeamByShort } from "@/lib/teams-data"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
+import { formatCurrency } from "@/lib/currency"
 
 export default function YouthCareerPage() {
-  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/base") })
-
   const { state, setState } = useGameState()
   const { initializeNewGame } = useGameManager()
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  //
+  // ⚠️ O B LEVAVA A /base — a academia de quem dirige o PROFISSIONAL, que a
+  // 1.0.351 tirou do menu desta modalidade justamente por escrever no mesmo
+  // `state.youthPlayers` que e o elenco desta carreira. Numa carreira de base
+  // esta tela E a casa: o B nao tem para onde voltar.
+  const carreiraDeBaseAtiva = Boolean(state.youthCareer?.active)
+  useTelaGamepad({ aoVoltar: () => hardNavigate(carreiraDeBaseAtiva ? "/base/carreira" : "/base") })
+  // QUEM VOCE ENTREGA AO PROFISSIONAL — a decisão que a modalidade tomava
+  // sozinha até a 1.0.351 (os primeiros da lista com 19+). Ver
+  // `finishYouthSeason`.
+  const [promovidos, setPromovidos] = useState<string[]>([])
   const career = state.youthCareer
   const players = state.youthPlayers ?? []
 
@@ -48,6 +61,8 @@ export default function YouthCareerPage() {
   }
 
   const apply = (next: ReturnType<typeof simulateYouthRound>) => setState(next)
+  const elegiveis = career.seasonFinished ? candidatosAPromocao(state) : []
+  const vagas = vagasNoProfissional(career)
   const proxima = proximaPartidaDaBase(career)
   const totalDeRodadas = career.calendario?.reduce((n, f) => Math.max(n, f.round), 0) ?? 19
   const tabela = career.tabela ?? []
@@ -160,12 +175,61 @@ export default function YouthCareerPage() {
         )}
 
         {career.seasonFinished && (
-          <section className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
-            <div>
-              <h2 className="font-black">Temporada concluída</h2>
-              <p className="text-sm text-white/60">Finalize para registrar título, formar atletas e receber propostas.</p>
+          <section className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="font-black">Temporada concluída</h2>
+                <p className="text-sm text-white/60">
+                  {elegiveis.length > 0
+                    ? `Escolha quem sobe ao profissional — o clube abriu ${vagas} vaga${vagas > 1 ? "s" : ""}.`
+                    : "Nenhum atleta em idade de subir nesta virada."}
+                </p>
+              </div>
+              <Button onClick={() => apply(finishYouthSeason(state, promovidos))}>
+                {promovidos.length > 0 ? `Promover ${promovidos.length} e encerrar` : "Encerrar temporada"}
+              </Button>
             </div>
-            <Button onClick={() => apply(finishYouthSeason(state))}>Encerrar temporada</Button>
+
+            {/* ⚠️ ATÉ AQUI ISTO NÃO EXISTIA. `finishYouthSeason` promovia os
+                primeiros da lista com 19 anos ou mais e a decisão mais
+                importante do modo acontecia sem o técnico. Quem não sobe e já
+                passou dos 20 deixa a base — é o que dá peso à escolha. */}
+            {elegiveis.length > 0 && (
+              <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {elegiveis.map(p => {
+                  const escolhido = promovidos.includes(p.id)
+                  const cheio = promovidos.length >= vagas && !escolhido
+                  return (
+                    <button
+                      key={p.id}
+                      disabled={cheio}
+                      onClick={() => setPromovidos(atual => atual.includes(p.id)
+                        ? atual.filter(x => x !== p.id)
+                        : [...atual, p.id])}
+                      className={cn(
+                        "flex items-center justify-between gap-3 rounded-xl border p-3 text-left transition-colors",
+                        escolhido ? "border-[var(--brand)]/40 bg-[var(--brand)]/10" : "border-white/10 bg-black/25",
+                        cheio && "opacity-35",
+                      )}
+                    >
+                      <span>
+                        <b className="block text-sm">{p.name}</b>
+                        <span className="text-xs text-white/45">{p.position} · {p.age} anos</span>
+                      </span>
+                      <span className="text-right text-xs">
+                        <b className="block text-base">{p.overall}</b>
+                        <span className="text-[var(--brand)]">POT {p.potential}</span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {elegiveis.length > 0 && (
+              <p className="mt-3 text-[11px] text-white/40">
+                Quem ficar de fora e já tiver 20 anos ou mais deixa a categoria.
+              </p>
+            )}
           </section>
         )}
 
@@ -178,7 +242,7 @@ export default function YouthCareerPage() {
                   <div>
                     <p className="font-black">{o.clubNome}</p>
                     <p className="text-xs text-white/50">
-                      {o.role === "head_coach" ? "Técnico principal" : "Comissão profissional"} · R$ {o.monthlySalary.toLocaleString("pt-BR")}/mês · {o.contractMonths} meses
+                      {o.role === "head_coach" ? "Técnico principal" : "Comissão profissional"} · {formatCurrency(o.monthlySalary)}/mês · {o.contractMonths} meses
                     </p>
                     <p className="mt-2 text-[11px] text-white/40">Metas: {o.objectives.join(" · ")}</p>
                   </div>

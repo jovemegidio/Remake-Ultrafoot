@@ -80,6 +80,11 @@ import { generateYouthMarketProspects } from "@/lib/youth-academy"
 import { capacidadeDaBase, vagasNaBase } from "@/lib/youth-academy-rules"
 import { flushPersistentStore } from "@/lib/persistent-store"
 import { siglaExibivel } from "@/lib/club-identity"
+import { calcularFama, faixaDeOverall } from "@/lib/player-fame"
+
+/** A fama de um observado — mesma regra da tela de olheiros (lib/player-fame). */
+const famaDoLead = (atleta: { overall: number; age: number }) =>
+  calcularFama({ overall: atleta.overall, age: atleta.age })
 
 // Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
 // via generateDetailedMarketTargets. Determinístico por temporada.
@@ -1817,16 +1822,22 @@ export default function MercadoPage() {
                               <p className="text-xs text-white/45">{lead.position} - {lead.age} anos - {lead.nationality}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-lg font-bold text-[var(--brand)]">{lead.revealedAttributes ? lead.overall : "?"}</p>
+                              {/* Fama: quem o mundo ja conhece nao esconde numero. Ver
+                                  lib/player-fame e app/olheiros. */}
+                              <p className="text-lg font-bold text-[var(--brand)]">
+                                {lead.revealedAttributes || famaDoLead(lead).revelaOverall
+                                  ? lead.overall
+                                  : faixaDeOverall(lead.overall, famaDoLead(lead))}
+                              </p>
                               <p className="text-[10px] text-white/35">OVR</p>
                             </div>
                           </div>
                           <div className="mt-3 flex items-center justify-between gap-2">
                             <span className="text-xs text-white/45">
-                              Potencial {lead.revealedAttributes ? lead.potential : "??"} - {formatCurrency(lead.marketValue)}
+                              Potencial {lead.revealedAttributes || famaDoLead(lead).revelaAtributos ? lead.potential : "??"} - {formatCurrency(lead.marketValue)}
                             </span>
                             <div className="flex items-center gap-2">
-                              {!lead.revealedAttributes && (
+                              {!lead.revealedAttributes && !famaDoLead(lead).revelaAtributos && (
                                 <button
                                   type="button"
                                   onClick={() => gameEngine.revealScoutedLead(lead.id)}
@@ -1844,7 +1855,7 @@ export default function MercadoPage() {
                               >
                                 Dispensar
                               </button>
-                              {lead.revealedAttributes && (
+                              {(lead.revealedAttributes || famaDoLead(lead).revelaOverall) && (
                                 <button
                                   type="button"
                                   onClick={() => {

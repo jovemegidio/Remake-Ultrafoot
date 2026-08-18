@@ -37,6 +37,22 @@ import {
 import type { Scout } from "@/lib/game-engine"
 import { useGameState } from "@/lib/save-system"
 import { createScoutingDepartment, createScoutMission, departmentReputationLabel, departmentScoutSeverance, fireDepartmentScout, generatePerformanceAnalysis, hireDepartmentScout, type ScoutMissionType, type ScoutTier } from "@/lib/scout-engine"
+import { formatCurrency } from "@/lib/currency"
+import { calcularFama, faixaDeOverall } from "@/lib/player-fame"
+
+/**
+ * A FAMA DE UM ATLETA DESCOBERTO POR OLHEIRO.
+ *
+ * `lib/player-fame` foi escrito para um pedido de jogador ("um Mbappe ou um
+ * Yamal, por serem famosos, voce ja conhece") e ficou sem um unico chamador —
+ * o proprio `lib/prestigio-do-atleta` registra o caso. Aqui ele entra: quem o
+ * mundo ja conhece nao precisa de relatorio pago; o olheiro passa a servir para
+ * o que e realmente desconhecido.
+ *
+ * Observado nao tem clube na ficha, entao a fama sai de overall e idade.
+ */
+const famaDoLead = (atleta: { overall: number; age: number }) =>
+  calcularFama({ overall: atleta.overall, age: atleta.age })
 
 // Regioes disponiveis para scouting
 const SCOUTING_REGIONS = [
@@ -152,7 +168,7 @@ export default function OlheirosPage() {
     const custo = gameEngine.fireScout(alvo.id)
     setScoutParaDemitir(null)
     setAvisoOlheiros(
-      `${alvo.name} foi demitido. Rescisão de R$ ${custo.toLocaleString("pt-BR")} paga` +
+      `${alvo.name} foi demitido. Rescisão de ${formatCurrency(custo)} paga` +
       `${alvo.isSearching ? " e a busca em andamento foi cancelada" : ""}.`,
     )
   }
@@ -163,7 +179,7 @@ export default function OlheirosPage() {
     const custo = departmentScoutSeverance(alvo)
     gameEngine.addClubExpense(custo)
     setSaveState({ scoutingDepartment: fireDepartmentScout(department, scoutId) })
-    setAvisoOlheiros(`${alvo.name} saiu do departamento. Rescisão de R$ ${custo.toLocaleString("pt-BR")}.`)
+    setAvisoOlheiros(`${alvo.name} saiu do departamento. Rescisão de ${formatCurrency(custo)}.`)
   }
 
   const hireStrategicScout = (tier:ScoutTier) => {
@@ -215,7 +231,7 @@ export default function OlheirosPage() {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
           <section className="mb-4 rounded-xl border border-[var(--brand)]/15 bg-[var(--brand)]/[0.04] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Departamento estratégico · {departmentReputationLabel(department.reputation)}</div><p className="mt-1 text-xs text-white/45">Centro de Observação Nv. {department.observationCentreLevel} · Centro de Dados Nv. {department.dataCentreLevel} · custo mensal R$ {department.monthlyCost.toLocaleString("pt-BR")}</p></div><div className="flex flex-wrap gap-2"><button onClick={()=>hireStrategicScout(department.scouts.length<1?"regional":department.scouts.length<3?"national":"continental")} className="rounded-lg bg-[var(--brand)] px-3 py-2 text-[10px] font-bold text-[var(--brand-ink)]">Contratar scout por nível</button><button onClick={()=>assignStrategicMission("young")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Missão: jovens 15–20</button><button onClick={()=>assignStrategicMission("expiring")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Fim de contrato</button><button onClick={analyzePerformance} className="rounded-lg border border-violet-400/30 px-3 py-2 text-[10px] text-violet-300">Analisar elenco/adversário</button></div></div>
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Departamento estratégico · {departmentReputationLabel(department.reputation)}</div><p className="mt-1 text-xs text-white/45">Centro de Observação Nv. {department.observationCentreLevel} · Centro de Dados Nv. {department.dataCentreLevel} · custo mensal {formatCurrency(department.monthlyCost)}</p></div><div className="flex flex-wrap gap-2"><button onClick={()=>hireStrategicScout(department.scouts.length<1?"regional":department.scouts.length<3?"national":"continental")} className="rounded-lg bg-[var(--brand)] px-3 py-2 text-[10px] font-bold text-[var(--brand-ink)]">Contratar scout por nível</button><button onClick={()=>assignStrategicMission("young")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Missão: jovens 15–20</button><button onClick={()=>assignStrategicMission("expiring")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Fim de contrato</button><button onClick={analyzePerformance} className="rounded-lg border border-violet-400/30 px-3 py-2 text-[10px] text-violet-300">Analisar elenco/adversário</button></div></div>
             {/* QUEM ESTÁ NO DEPARTAMENTO — e como tirar alguém dele.
                 Antes só existia o botão de contratar: os scouts contratados por
                 nível não apareciam em lugar nenhum e o custo mensal só subia. */}
@@ -226,13 +242,13 @@ export default function OlheirosPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-bold text-white">{s.name}</p>
                       <p className="text-[10px] text-white/40">
-                        {s.tier.replace("_", " ")} · R$ {s.monthlySalary.toLocaleString("pt-BR")}/mês
+                        {s.tier.replace("_", " ")} · {formatCurrency(s.monthlySalary)}/mês
                         {s.missionId ? " · em missão" : " · livre"}
                       </p>
                     </div>
                     <button
                       onClick={() => demitirScoutEstrategico(s.id)}
-                      title={`Demitir ${s.name} (rescisão de R$ ${departmentScoutSeverance(s).toLocaleString("pt-BR")})`}
+                      title={`Demitir ${s.name} (rescisão de ${formatCurrency(departmentScoutSeverance(s))})`}
                       className="shrink-0 rounded-md border border-red-500/30 p-1.5 text-red-400 transition-colors hover:bg-red-500/10"
                     >
                       <UserMinus className="h-3.5 w-3.5" />
@@ -287,7 +303,7 @@ export default function OlheirosPage() {
                       Custo Semanal
                     </div>
                     <div className="text-2xl font-bold text-white">
-                      R$ {myScouts.reduce((acc, s) => acc + s.salary, 0).toLocaleString("pt-BR")}
+                      {formatCurrency(myScouts.reduce((acc, s) => acc + s.salary, 0))}
                     </div>
                   </div>
                 </div>
@@ -333,7 +349,7 @@ export default function OlheirosPage() {
                                   </span>
                                   <span className="text-xs text-white/50 flex items-center gap-1">
                                     <DollarSign className="h-3 w-3" />
-                                    R$ {scout.salary.toLocaleString("pt-BR")}/sem
+                                    {formatCurrency(scout.salary)}/sem
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-0.5 mt-1">
@@ -447,7 +463,7 @@ export default function OlheirosPage() {
                                           {region.weeksToComplete} sem
                                         </span>
                                         <span className="text-amber-400">
-                                          R$ {region.searchCost.toLocaleString("pt-BR")}
+                                          {formatCurrency(region.searchCost)}
                                         </span>
                                       </div>
                                     </button>
@@ -530,7 +546,7 @@ export default function OlheirosPage() {
                         <div>
                           <p className="text-xs text-white/40">Salario Semanal</p>
                           <p className="text-sm font-semibold text-white">
-                            R$ {scout.salary.toLocaleString("pt-BR")}
+                            {formatCurrency(scout.salary)}
                           </p>
                         </div>
                         <Button
@@ -598,7 +614,7 @@ export default function OlheirosPage() {
                           <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]">
                             <div className="rounded-lg bg-black/30 p-2"><p className="text-white/35">Overall</p><b className="text-white">{report.knownAttributes.overall ?? "?"}</b></div>
                             <div className="rounded-lg bg-black/30 p-2"><p className="text-white/35">Encaixe</p><b className="text-white">{report.tacticalFit != null ? `${report.tacticalFit}%` : "?"}</b></div>
-                            <div className="rounded-lg bg-black/30 p-2"><p className="text-white/35">Custo</p><b className="text-white">{report.estimatedTransferCost != null ? `R$ ${(report.estimatedTransferCost/1_000_000).toFixed(1)} mi` : "?"}</b></div>
+                            <div className="rounded-lg bg-black/30 p-2"><p className="text-white/35">Custo</p><b className="text-white">{report.estimatedTransferCost != null ? formatCurrency(report.estimatedTransferCost) : "?"}</b></div>
                           </div>
                           <p className="mt-3 text-[11px] leading-relaxed text-white/45">{report.notes}</p>
                           <div className="mt-3 flex items-center justify-between gap-2">
@@ -629,7 +645,14 @@ export default function OlheirosPage() {
                             <div className="relative">
                               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--brand)]/20 to-[var(--brand)]/5 flex items-center justify-center">
                                 <span className="text-xl font-black text-[var(--brand)]">
-                                  {player.revealedAttributes ? player.overall : "?"}
+                                  {/* ⚠️ Era "?" seco para TODO atleta nao pago. `lib/player-fame`
+                                      existia desde sempre e nunca foi chamado por ninguem: o
+                                      mundo inteiro sabe o nivel de um craque, e cobrar R$ 50 mil
+                                      para "descobrir" um atleta de overall 88 e o oposto do real.
+                                      Quem a fama nao revela mostra FAIXA, nao interrogacao. */}
+                                  {player.revealedAttributes || famaDoLead(player).revelaOverall
+                                    ? player.overall
+                                    : faixaDeOverall(player.overall, famaDoLead(player))}
                                 </span>
                               </div>
                               <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-white/10 text-[9px] font-bold text-white/70">
@@ -637,7 +660,14 @@ export default function OlheirosPage() {
                               </div>
                             </div>
                             <div>
-                              <h3 className="font-semibold text-white">{player.name}</h3>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="font-semibold text-white">{player.name}</h3>
+                                {famaDoLead(player).nivel !== "desconhecido" && (
+                                  <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white/60">
+                                    {famaDoLead(player).rotulo}
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-3 mt-1">
                                 <span className="text-xs text-white/50">
                                   {player.age} anos
@@ -649,7 +679,7 @@ export default function OlheirosPage() {
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs text-amber-400 flex items-center gap-1">
                                   <TrendingUp className="h-3 w-3" />
-                                  Potencial: {player.revealedAttributes ? player.potential : "??"}
+                                  Potencial: {player.revealedAttributes || famaDoLead(player).revelaAtributos ? player.potential : "??"}
                                 </span>
                               </div>
                             </div>
@@ -659,11 +689,11 @@ export default function OlheirosPage() {
                             <div>
                               <p className="text-xs text-white/40">Valor de Mercado</p>
                               <p className="text-sm font-semibold text-white">
-                                R$ {player.marketValue.toLocaleString("pt-BR")}
+                                {formatCurrency(player.marketValue)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              {!player.revealedAttributes && (
+                              {!player.revealedAttributes && !famaDoLead(player).revelaAtributos && (
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -671,7 +701,7 @@ export default function OlheirosPage() {
                                   className="border-white/10 text-white/70 hover:text-white text-xs"
                                 >
                                   <Eye className="h-3.5 w-3.5 mr-1" />
-                                  Revelar (R$ 50K)
+                                  Revelar ({formatCurrency(50_000)})
                                 </Button>
                               )}
                               <Button
@@ -685,7 +715,7 @@ export default function OlheirosPage() {
                           </div>
                         </div>
 
-                        {player.revealedAttributes && (
+                        {(player.revealedAttributes || famaDoLead(player).revelaAtributos) && (
                           <div className="mt-4 pt-4 border-t border-white/[0.04] grid grid-cols-6 gap-2">
                             {[
                               { label: "RIT", value: player.pace },
@@ -755,18 +785,18 @@ export default function OlheirosPage() {
               <div className="mt-4 space-y-2 rounded-xl bg-white/5 p-4 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-white/50">Salário semanal</span>
-                  <span className="text-white">R$ {scoutParaDemitir.salary.toLocaleString("pt-BR")}</span>
+                  <span className="text-white">{formatCurrency(scoutParaDemitir.salary)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-white/50">Rescisão</span>
                   <span className="font-semibold text-red-300">
-                    R$ {(scoutParaDemitir.salary * 4).toLocaleString("pt-BR")}
+                    {formatCurrency((scoutParaDemitir.salary * 4))}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-white/50">Economia semanal</span>
                   <span className="text-[var(--brand)]">
-                    R$ {scoutParaDemitir.salary.toLocaleString("pt-BR")}
+                    {formatCurrency(scoutParaDemitir.salary)}
                   </span>
                 </div>
               </div>
@@ -855,13 +885,13 @@ export default function OlheirosPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-white/50">Salario Semanal</span>
                   <span className="font-medium text-white">
-                    R$ {selectedScoutToHire.salary.toLocaleString("pt-BR")}
+                    {formatCurrency(selectedScoutToHire.salary)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-white/50">Custo Anual Estimado</span>
                   <span className="font-medium text-amber-400">
-                    R$ {(selectedScoutToHire.salary * 52).toLocaleString("pt-BR")}
+                    {formatCurrency((selectedScoutToHire.salary * 52))}
                   </span>
                 </div>
               </div>

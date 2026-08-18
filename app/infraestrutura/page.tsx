@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { formatCurrency } from "@/lib/currency"
+import { useState, useEffect, useMemo, useRef } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -181,7 +182,27 @@ export default function InfraestruturaPage() {
 
   // Estes dois mapas pertencem ao save da carreira. A tela anterior criava um
   // estado local e a obra desaparecia ao sair dela.
-  const infrastructure = gameEngine.clubInfrastructure
+  // ⚠️ ISTO ERA O "NaN NA TELA DE INFRAESTRUTURA" (e em /clube, que reexporta
+  // esta tela). A auditoria de telas da 1.0.351 pegou dois numeros na primeira
+  // dobra: "Nivel Medio" e "Pressao Casa", os dois `NaN`.
+  //
+  // A causa nao e a conta: e o MAPA. `clubInfrastructure` tem oito chaves
+  // numericas, e basta UMA faltar — save de versao anterior a ela, estado do
+  // motor reidratado pela metade, area nova acrescentada depois — para
+  // `infrastructure.acoustics * 4` e a media de `Object.values` virarem NaN.
+  //
+  // Normalizar na LEITURA resolve para qualquer forma de save, e a tela deixa de
+  // depender de o motor estar perfeito para mostrar um numero honesto. Ver
+  // [[ultrafoot-save-sem-campo-derruba-tela]].
+  const infrastructure = useMemo(() => {
+    const bruto = (gameEngine.clubInfrastructure ?? {}) as Record<string, unknown>
+    const normalizado: Record<string, number> = {}
+    for (const area of INFRASTRUCTURE_AREAS) {
+      const valor = Number(bruto[area.id])
+      normalizado[area.id] = Number.isFinite(valor) ? Math.max(1, Math.min(5, Math.round(valor))) : 1
+    }
+    return normalizado
+  }, [gameEngine.clubInfrastructure])
   const upgradesInProgress = gameEngine.infraUpgradesInProgress
   const knownUpgrades = useRef(upgradesInProgress)
 
@@ -266,13 +287,13 @@ export default function InfraestruturaPage() {
               <div className="text-right">
                 <p className="text-[10px] text-white/40 uppercase">Manutencao Semanal</p>
                 <p className="text-sm font-semibold text-amber-400">
-                  R$ {getMaintenanceCost().toLocaleString("pt-BR")}
+                  {formatCurrency(getMaintenanceCost())}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-[10px] text-white/40 uppercase">Saldo Disponivel</p>
                 <p className="text-sm font-semibold text-[var(--brand)]">
-                  R$ {balance.toLocaleString("pt-BR")}
+                  {formatCurrency(balance)}
                 </p>
               </div>
             </div>
@@ -311,8 +332,8 @@ export default function InfraestruturaPage() {
           destaque
           resumo={<>
             <span>{matchdayProjection.attendance.toLocaleString("pt-BR")} pagantes</span>
-            <span className="text-white/35">R$ {matchdayProjection.ticketPrice.toLocaleString("pt-BR")}/ingresso</span>
-            <span className="font-bold text-[var(--brand)]">R$ {matchdayProjection.revenue.toLocaleString("pt-BR")}</span>
+            <span className="text-white/35">{formatCurrency(matchdayProjection.ticketPrice)}/ingresso</span>
+            <span className="font-bold text-[var(--brand)]">{formatCurrency(matchdayProjection.revenue)}</span>
           </>}
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -328,8 +349,8 @@ export default function InfraestruturaPage() {
             <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
               <div className="rounded bg-black/25 p-2 text-white/55">Capacidade <b className="block text-white">{capacity.toLocaleString("pt-BR")}</b></div>
               <div className="rounded bg-black/25 p-2 text-white/55">Público médio <b className="block text-white">{matchdayProjection.attendance.toLocaleString("pt-BR")}</b></div>
-              <div className="rounded bg-black/25 p-2 text-white/55">Ingresso <b className="block text-white">R$ {matchdayProjection.ticketPrice.toLocaleString("pt-BR")}</b></div>
-              <div className="rounded bg-black/25 p-2 text-white/55">Renda por jogo <b className="block text-[var(--brand)]">R$ {matchdayProjection.revenue.toLocaleString("pt-BR")}</b></div>
+              <div className="rounded bg-black/25 p-2 text-white/55">Ingresso <b className="block text-white">{formatCurrency(matchdayProjection.ticketPrice)}</b></div>
+              <div className="rounded bg-black/25 p-2 text-white/55">Renda por jogo <b className="block text-[var(--brand)]">{formatCurrency(matchdayProjection.revenue)}</b></div>
             </div>
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-3">
@@ -360,7 +381,7 @@ export default function InfraestruturaPage() {
             <span>{pitch.surface === "natural" ? "Natural" : "Sintético"} · {pitch.quality === "good" ? "Bom" : pitch.quality === "medium" ? "Médio" : "Ruim"}</span>
             <span className="text-white/35">lesões {pitchInjuryFrequencyMultiplier(pitch).toFixed(2)}x</span>
           </>}
-        ><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="mt-1 text-xs text-white/45">Qualidade controla a frequência de lesões. O sintético custa menos, mas aumenta em 35% a recuperação quando ocorre uma contusão.</p></div><div className="flex flex-wrap items-end gap-2"><label className="text-[10px] uppercase text-white/45">Superfície<select value={pitchSurface} onChange={e=>setPitchSurface(e.target.value as PitchSurface)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="natural">Natural</option><option value="synthetic">Sintético</option></select></label><label className="text-[10px] uppercase text-white/45">Qualidade<select value={pitchQuality} onChange={e=>setPitchQuality(e.target.value as PitchQuality)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="poor">Ruim</option><option value="medium">Médio</option><option value="good">Bom</option></select></label><Button onClick={applyPitch} disabled={balance<pitchUpgradeCost(pitch,pitchSurface,pitchQuality)}>Aplicar · R$ {pitchUpgradeCost(pitch,pitchSurface,pitchQuality).toLocaleString("pt-BR")}</Button></div></div><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><div className="rounded bg-black/25 p-2 text-white/55">Manutenção mensal <b className="block text-white">R$ {pitch.monthlyMaintenance.toLocaleString("pt-BR")}</b></div><div className="rounded bg-black/25 p-2 text-white/55">Frequência de lesões <b className="block text-white">{pitchInjuryFrequencyMultiplier(pitch).toFixed(2)}x</b></div><div className="rounded bg-black/25 p-2 text-white/55">Duração da lesão <b className="block text-white">{pitchInjuryDurationMultiplier(pitch).toFixed(2)}x</b></div></div></Bloco>
+        ><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="mt-1 text-xs text-white/45">Qualidade controla a frequência de lesões. O sintético custa menos, mas aumenta em 35% a recuperação quando ocorre uma contusão.</p></div><div className="flex flex-wrap items-end gap-2"><label className="text-[10px] uppercase text-white/45">Superfície<select value={pitchSurface} onChange={e=>setPitchSurface(e.target.value as PitchSurface)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="natural">Natural</option><option value="synthetic">Sintético</option></select></label><label className="text-[10px] uppercase text-white/45">Qualidade<select value={pitchQuality} onChange={e=>setPitchQuality(e.target.value as PitchQuality)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="poor">Ruim</option><option value="medium">Médio</option><option value="good">Bom</option></select></label><Button onClick={applyPitch} disabled={balance<pitchUpgradeCost(pitch,pitchSurface,pitchQuality)}>Aplicar · {formatCurrency(pitchUpgradeCost(pitch,pitchSurface,pitchQuality))}</Button></div></div><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><div className="rounded bg-black/25 p-2 text-white/55">Manutenção mensal <b className="block text-white">{formatCurrency(pitch.monthlyMaintenance)}</b></div><div className="rounded bg-black/25 p-2 text-white/55">Frequência de lesões <b className="block text-white">{pitchInjuryFrequencyMultiplier(pitch).toFixed(2)}x</b></div><div className="rounded bg-black/25 p-2 text-white/55">Duração da lesão <b className="block text-white">{pitchInjuryDurationMultiplier(pitch).toFixed(2)}x</b></div></div></Bloco>
 
         {/* SETORES DO ESTADIO — a tela que o `lib/stadium-sectors` esperava desde
             29/07. Fica logo abaixo da superficie porque as duas decisoes sao do
@@ -373,7 +394,7 @@ export default function InfraestruturaPage() {
           titulo="Setores do estádio"
           resumo={<>
             <span>{capacity.toLocaleString("pt-BR")} lug.</span>
-            <span className="text-white/35">renda R$ {matchdayProjection.revenue.toLocaleString("pt-BR")}</span>
+            <span className="text-white/35">renda {formatCurrency(matchdayProjection.revenue)}</span>
           </>}
         >
           <EstadioSetores
@@ -573,7 +594,7 @@ export default function InfraestruturaPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-[var(--brand)]">Proximo Nivel</span>
                     <span className="text-sm font-semibold text-[var(--brand)]">
-                      R$ {selectedAreaData.levels[infrastructure[selectedArea]]?.cost.toLocaleString("pt-BR")}
+                      {formatCurrency(selectedAreaData.levels[infrastructure[selectedArea]]?.cost)}
                     </span>
                   </div>
                   <h4 className="font-semibold text-white">

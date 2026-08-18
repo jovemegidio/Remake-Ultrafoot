@@ -66,7 +66,7 @@ const ROUTES = [
   "/mercado", "/transferencias", "/contratos", "/olheiros", "/base", "/base/carreira", "/treinamento",
   "/partida", "/partida/escalacao", "/partida/ao-vivo", "/calendario", "/competicoes",
   "/clube", "/financas", "/infraestrutura", "/taticas", "/estatisticas", "/historico",
-  "/mensagens", "/notificacoes", "/central", "/central-da-temporada", "/dashboard",
+  "/mensagens", "/notificacoes", "/central", "/comissao", "/dashboard",
   "/reunioes", "/imprensa", "/vestiario", "/desafios", "/relatorios", "/adversarios",
   "/analise-partida", "/selecao", "/salvar", "/configuracoes", "/editar",
 ]

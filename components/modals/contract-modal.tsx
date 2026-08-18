@@ -26,6 +26,7 @@ import { TrilhaDePassos, GrupoDeCampos } from "@/components/modal-kit"
 import { cn } from "@/lib/utils"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { type Player, formatWeeksToDate, getContractStatus } from "@/lib/game-engine"
+import { formatCurrency } from "@/lib/currency"
 
 interface ContractModalProps {
   open: boolean
@@ -91,10 +92,9 @@ export function ContractModal({
   const totalCost = newSalary * contractLength
 
   // Formatar salario
-  const formatSalary = (value: number) => {
-    if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1)}M`
-    return `R$ ${(value / 1000).toFixed(0)}K`
-  }
+  // Moeda do jogador (`lib/currency`), nao R$ chumbado: quem joga em euro via
+  // salario em real dentro do proprio modal de contrato.
+  const formatSalary = (value: number) => formatCurrency(value)
 
   const handleNegotiate = () => {
     if (!isProposalAcceptable) return

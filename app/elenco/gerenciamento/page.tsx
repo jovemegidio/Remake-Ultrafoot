@@ -876,6 +876,11 @@ export default function ElencoPage() {
    * como todo jogo de futebol desenha a prancheta deitada.
    */
   const campoHorizontal = Boolean(state.campoHorizontal)
+  // ⚠️ A ESCOLHA MORA NO SAVE. Recolher o painel a cada visita seria pior do que
+  // não ter o botão: o técnico que joga com o campo grande quer o campo grande
+  // sempre, e não uma preferência que esquece a cada tela.
+  const painelRecolhido = Boolean(state.painelDoAtletaRecolhido)
+  const setPainelRecolhido = (v: boolean) => setState({ painelDoAtletaRecolhido: v })
   const paraTela = useCallback(
     (p: { x: number; y: number }) => (campoHorizontal ? { left: 100 - p.y, top: p.x } : { left: p.x, top: p.y }),
     [campoHorizontal],
@@ -2824,8 +2829,38 @@ export default function ElencoPage() {
             )}
           </div>
 
+          {/* ── O PAINEL DO ATLETA RECOLHE (1.0.352, pedido do usuário) ──────
+              Ele ocupa 288–320 px fixos à direita em TODA a tela, inclusive
+              quando o técnico está só arrastando jogadores no campo. Recolhido,
+              esses pixels vão para o campo, que é onde o trabalho acontece.
+              A escolha fica no save (`painelDoAtletaRecolhido`) — recolher a
+              cada visita é pior do que não ter o botão. */}
+          {/* Recolhido, o painel vira uma faixa de 24 px — fica no fluxo, sem
+              depender de posicionamento absoluto num container que a tela não
+              tem. Clicar nela traz o painel de volta. */}
+          {painelRecolhido && (
+            <button
+              onClick={() => setPainelRecolhido(false)}
+              title={t.gerenciamento.mostrar_painel_do_atleta}
+              className="hidden w-6 flex-shrink-0 items-center justify-center border-l border-white/[0.04] bg-[#050508] text-white/40 transition-colors hover:text-white lg:flex"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          )}
           {/* Right panel - Player details (hidden on mobile, shown in drawer) */}
-          <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 border-l border-white/[0.04] bg-[#050508] overflow-y-auto">
+          <aside className={cn(
+            "hidden flex-shrink-0 border-l border-white/[0.04] bg-[#050508] overflow-y-auto",
+            painelRecolhido ? "lg:hidden" : "lg:block w-72 xl:w-80",
+          )}>
+            <div className="flex justify-end px-2 pt-2">
+              <button
+                onClick={() => setPainelRecolhido(true)}
+                title={t.gerenciamento.ocultar_painel_aumentar_campo}
+                className="rounded-md p-1 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
             {/* Player header - Melhorado */}
             <div className="p-4 border-b border-white/[0.04]" style={{
               background: `linear-gradient(135deg, ${userTeam.cor1}20 0%, transparent 60%)`
@@ -3373,7 +3408,7 @@ export default function ElencoPage() {
                     {c && (
                       <div className="mt-1 flex items-center justify-between text-sm">
                         <span className="text-white/55">{t.gerenciamento.salario}</span>
-                        <span className="font-semibold text-white tabular-nums">R$ {(c.salary * 4).toLocaleString("pt-BR")}/mês</span>
+                        <span className="font-semibold text-white tabular-nums">{formatCurrency((c.salary * 4))}/mês</span>
                       </div>
                     )}
                   </div>
@@ -3633,9 +3668,9 @@ export default function ElencoPage() {
                   const clube = ["Benfica", "Ajax", "Porto", "Palmeiras", "Flamengo", "Sevilla", "Wolves"][Math.floor(Math.random() * 7)]
                   const abaixo = oferta < valor * 0.9
                   const confirmado = await confirmarNoJogo({
-                    titulo: `${clube} oferece R$ ${oferta.toLocaleString("pt-BR")} por ${selectedPlayer.name}`,
+                    titulo: `${clube} oferece ${formatCurrency(oferta)} por ${selectedPlayer.name}`,
                     mensagem:
-                      `Valor de mercado: R$ ${valor.toLocaleString("pt-BR")}` +
+                      `Valor de mercado: ${formatCurrency(valor)}` +
                       (abaixo ? "\n\nA proposta está ABAIXO do valor do atleta." : "") +
                       "\n\nConfirmar a venda? O atleta sai do elenco e o valor entra no caixa.",
                     tom: abaixo ? "perigo" : "alerta",

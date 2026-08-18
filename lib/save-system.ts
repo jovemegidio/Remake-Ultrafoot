@@ -541,6 +541,8 @@ export interface GameState {
    * entre um padrão conveniente e um software que não obedece.
    */
   multiplayerDefinidoPeloJogador?: boolean
+  /** Painel do atleta recolhido na tela de Gerenciamento (1.0.352). */
+  painelDoAtletaRecolhido?: boolean
   managers: ManagerProfile[]
   activeManagerId: string | null
   // Configuracoes de controle. "auto" = detecta pelo controle conectado; xbox/playstation

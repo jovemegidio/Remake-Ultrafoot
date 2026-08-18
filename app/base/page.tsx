@@ -427,14 +427,14 @@ export default function BasePage() {
     if (caixaDoMotor < PROMOTION_FEE) {
       await avisarNoJogo({
         titulo: "Saldo insuficiente",
-        mensagem: "Promover um jovem ao elenco profissional custa R$ 200.000.",
+        mensagem: `Promover um jovem ao elenco profissional custa ${formatCurrency(PROMOTION_FEE)}.`,
         tom: "alerta",
       })
       return
     }
     const confirmado = await confirmarNoJogo({
       titulo: `Promover ${player.name} ao elenco profissional?`,
-      mensagem: "O clube paga R$ 200.000 e o atleta passa a ocupar vaga no elenco principal.",
+      mensagem: `O clube paga ${formatCurrency(PROMOTION_FEE)} e o atleta passa a ocupar vaga no elenco principal.`,
       confirmar: "Promover",
     })
     if (!confirmado) return
@@ -539,7 +539,7 @@ export default function BasePage() {
     const fee = 100_000
     const semCaixa = () => void avisarNoJogo({
       titulo: "Saldo insuficiente",
-      mensagem: "A peneira custa R$ 100.000 e o caixa não cobre esse valor.",
+      mensagem: `A peneira custa ${formatCurrency(fee)} e o caixa não cobre esse valor.`,
       tom: "alerta",
     })
     if (caixaDoMotor < fee) return semCaixa()
@@ -779,7 +779,7 @@ export default function BasePage() {
               <span className={cn("font-semibold", vagas === 0 ? "text-amber-400" : "text-white/70")}>
                 {youth.length}/{capacidade}
               </span>{" "}
-              garotos • {vagas} vaga{vagas !== 1 ? "s" : ""} • Promoção: R$ {(PROMOTION_FEE / 1000).toFixed(0)}k
+              garotos • {vagas} vaga{vagas !== 1 ? "s" : ""} • Promoção: {formatCurrency(PROMOTION_FEE)}
             </p>
           </div>
           <div className="ml-auto flex gap-2">

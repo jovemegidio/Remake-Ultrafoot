@@ -22,10 +22,10 @@
 // (`managerName` + `selectedTeamShort`, no singular) e o mundo inteiro girava em
 // torno dele.
 //
-// ⚠️ `lib/multiplayer-engine.ts` tem sessão com slots e "pronto", mas é uma
-// maquete: NADA além de `app/multiplayer-local/page.tsx` o importa, e ele grava
-// numa chave própria de localStorage, fora do save. Não dirige carreira nenhuma.
-// Este módulo é o que liga a ideia ao mundo de verdade.
+// ⚠️ Existiu um `lib/multiplayer-engine.ts` com sessão, slots e "pronto" — uma
+// maquete que gravava numa chave própria de localStorage, fora do save, e não
+// dirigia carreira nenhuma. Ficou sem um único importador e foi apagado na
+// 1.0.351. Este módulo é o que liga a ideia ao mundo de verdade.
 //
 // Este arquivo é PURO: sem React, sem store, sem localStorage.
 

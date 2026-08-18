@@ -451,7 +451,15 @@ export const ptBR = {
     perfil_de_desempenho_grafico: "Perfil de desempenho gráfico",
     frequencia_do_salvamento_automatico: "Frequência do salvamento automático",
   },
+  carreiraDeJogador: {
+    em_casa: "Em casa",
+    titular: "Titular",
+    nao_saiu_do_banco: "Não saiu do banco",
+    repercussao_vazia: "Ainda não falaram de você. Dois gols numa partida — ou uma nota acima de 8,5 — colocam seu nome na imprensa, e é a reputação que faz clube grande olhar para o seu lado.",
+  },
   gerenciamento: {
+    mostrar_painel_do_atleta: "Mostrar o painel do atleta",
+    ocultar_painel_aumentar_campo: "Ocultar o painel e aumentar o campo",
     gestao_de_auxiliares_tec: "Gestao de Auxiliares Tec.",
     predefinicoes_taticas: "Predefinicoes Taticas",
     partida_iniciada: "Partida Iniciada",

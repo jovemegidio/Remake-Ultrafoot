@@ -1990,10 +1990,15 @@ export default function NovoJogoPage() {
 
               {modalidade === "feminino" && (
                 <p className="mt-3 rounded-lg border border-sky-400/20 bg-sky-400/[0.06] px-3 py-2 text-[11px] leading-relaxed text-sky-100/70">
+                  {/* ⚠️ ESTE TEXTO JA MENTIU AO CONTRARIO. Ele dizia "a modalidade ainda nao tem
+                      elenco real importado" DEPOIS de a 1.0.322 importar 182 clubes — negar o que
+                      se tem e tao ruim quanto prometer o que nao se tem. Os numeros vem de
+                      `data/seeds/elencos-femininos.json` (182 chaves, 4.741 atletas) contra os 282
+                      clubes de `LIGAS_FEMININAS`; para reconferir, contar as chaves do seed. */}
                   {COUNTRIES_FEMININOS.length} países com futebol feminino jogável e {LIGAS_FEMININAS.length} ligas,
                   cada uma com o próprio calendário, a própria copa nacional e a continental da confederação.
-                  Os elencos são gerados: a modalidade ainda não tem elenco real importado, e a tela diz isso
-                  em vez de prometer o que não tem.
+                  182 dos 282 clubes têm elenco real (nome, posição e nacionalidade vindos da Wikipédia);
+                  idade e overall são derivados do prestígio, e os 100 clubes restantes têm elenco gerado.
                 </p>
               )}
               {modalidade === "sub20" && (

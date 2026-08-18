@@ -40,6 +40,7 @@ import { aplicarPunicao, punicoesSugeridas, rotuloPunicao } from "@/lib/punicoes
 import { lerTorcida } from "@/lib/pressao-torcida"
 import type { DisciplinePunishment } from "@/lib/game-engine"
 import { useGameEngine } from "@/lib/game-engine"
+import { formatCurrency } from "@/lib/currency"
 
 type TabType = "vestiario" | "reunioes" | "mensagens" | "contratos" | "eventos" | "disciplina"
 
@@ -65,7 +66,7 @@ export default function CentralPage() {
     window.addEventListener('gamepad:button', handler)
     return () => window.removeEventListener('gamepad:button', handler)
   }, [router])
-  const { state } = useGameState()
+  const { state, hydrated } = useGameState()
   const { team: userTeam } = useUserTeam()
   const { squadPlayers, playerMeetings } = useGameEngine()
   const { notifications, unreadCount, markAsRead } = useNotifications()
@@ -92,7 +93,7 @@ export default function CentralPage() {
   // CONTRATOS reais: jogadores do elenco com contrato, ordenados pelo que vence
   // primeiro. Salario e overall saem do jogador de verdade.
   const contracts = useMemo(() => {
-    const fmtSalary = (weekly: number) => `R$ ${Math.round((weekly || 0) * 4.33).toLocaleString("pt-BR")}`
+    const fmtSalary = (weekly: number) => formatCurrency(Math.round((weekly || 0) * 4.33))
     return (squadPlayers ?? [])
       .filter((p) => p.contract)
       .map((p) => {
@@ -192,6 +193,23 @@ export default function CentralPage() {
   const averageMorale = playerMorale.length
     ? Math.round(playerMorale.reduce((acc, p) => acc + p.morale, 0) / playerMorale.length)
     : 0
+
+  // ⚠️ ANTES DO SAVE CHEGAR, NAO DESENHE O CLUBE.
+  //
+  // O HTML gerado no build nao conhece a carreira: ele congelava o clube PADRAO
+  // (medido pela auditoria da 1.0.351: "XXX", "Cleiton", "de 11 jogadores"),
+  // e o cliente trocava tudo pelo save real (Flamengo, 28 atletas). Alem do
+  // React #418, o jogador via por um instante o elenco de outro time.
+  //
+  // Segurar ate `hydrated` faz o primeiro render do cliente ser igual ao do
+  // build. E o mesmo cuidado que /base, /calendario e /financas ja tomam.
+  if (!hydrated) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#050508] text-sm text-white/40">
+        Abrindo a central do clube…
+      </div>
+    )
+  }
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
@@ -663,7 +681,7 @@ export default function CentralPage() {
                 <p className="text-[11px] font-black uppercase tracking-[.22em] text-red-300">Punição</p>
                 <h2 className="mt-1 text-xl font-black text-white">{punindo}</h2>
                 <p className="mt-1 text-sm text-white/55">
-                  Infração {gravidade} · salário semanal R$ {salarioSemanal.toLocaleString("pt-BR")}
+                  Infração {gravidade} · salário semanal {formatCurrency(salarioSemanal)}
                 </p>
               </div>
               <div className="space-y-2 px-6 py-5">

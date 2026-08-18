@@ -215,10 +215,56 @@ const ok = (m: string) => console.log("ok   " + m)
   // que chegou a nota 100 em seis temporadas no mesmo clube seguia sem capitania.
   // Um teste que aceita o silencio nao testa nada.
   semearMotorDePartida(null)
-  if (!carreira.capitao) {
-    erro("seis temporadas de titular no mesmo clube e nenhuma bracadeira — a capitania nao acontece")
-  } else {
-    ok(`capitania: recebeu a bracadeira em ${carreira.temporadaEmQueVirouCapitao}`)
+  // ⚠️ A CAPITANIA E TESTADA COMO REGRA, NAO COMO DESFECHO DE SEIS TEMPORADAS.
+  //
+  // A versao anterior rodava a carreira inteira e exigia a bracadeira no fim.
+  // Ela reprovava em 2 de 3 execucoes IDENTICAS — e a causa nao era a capitania:
+  // era acumulo. Medido: a nota do treinador divergia 0,5 na SEGUNDA temporada
+  // (26,2 contra 26,7, com jogos e minutos identicos) e seis temporadas depois
+  // essa migalha decidia se o criterio era atingido.
+  //
+  // Semear o motor nao bastou porque a divergencia nao vem do sorteio da
+  // partida. Um gate que depende de seis temporadas de simulacao caotica esta
+  // medindo a soma de todo o modo, e nao a regra que diz cobrir — e um teste
+  // instavel no caminho de publicacao reprova release por sorte.
+  //
+  // Aqui a regra e cobrada onde ela mora: um atleta que CUMPRE os criterios
+  // recebe a bracadeira, e um que nao cumpre, nao recebe.
+  {
+    const base = structuredClone(carreira)
+    base.capitao = false
+    base.temporadaEmQueVirouCapitao = undefined
+    // ⚠️ 92, E NAO 82: o fecho de temporada cobra as METAS antes de decidir a
+    // capitania, e metas nao cumpridas tiram ate 9 pontos da nota. Com 82 o
+    // atleta chegava a 73 e o criterio (76) falhava — o fixture e que era
+    // ingenuo, nao a regra. Foi o que a primeira versao deste teste acusou.
+    base.notaDoTreinador = 92
+    base.temporadaAtual = { ...base.temporadaAtual, jogos: 20 }
+    base.atleta.personalidade = { ...base.atleta.personalidade, profissionalismo: 14, determinacao: 12 }
+    base.temporadaEncerrada = true
+    base.aposentado = false
+    // Tempo de casa: o historico registra o clube de cada temporada.
+    base.historico = [
+      { ...base.historico[0], clubeNome: base.clubeNome },
+      { ...base.historico[0], clubeNome: base.clubeNome },
+    ]
+    const comBracadeira = encerrarTemporada(base)
+    if (!comBracadeira.capitao) {
+      erro("um atleta que cumpre TODOS os criterios nao recebeu a bracadeira")
+    } else {
+      ok("capitania: quem vira referencia recebe a bracadeira")
+    }
+
+    // E o contrario: recem-chegado nao vira capitao, por melhor que seja.
+    const recemChegado = structuredClone(base)
+    recemChegado.capitao = false
+    recemChegado.historico = []
+    const semBracadeira = encerrarTemporada(recemChegado)
+    if (semBracadeira.capitao) {
+      erro("um atleta sem tempo de casa recebeu a bracadeira")
+    } else {
+      ok("capitania: sem tempo de casa nao ha bracadeira")
+    }
   }
 
   // A taxa tem de ser de futebol, nao de enfermaria nem de invencibilidade.

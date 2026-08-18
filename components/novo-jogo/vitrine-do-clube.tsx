@@ -21,6 +21,7 @@ import { Award, Trophy, Globe } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import type { Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
+import { formatCurrency } from "@/lib/currency"
 
 export interface PerfilDoClube {
   foundation: number | null
@@ -46,12 +47,15 @@ interface Props {
   uniforme?: React.ReactNode
 }
 
-/** Dinheiro em escala curta: "R$ 3,41 bi" lê melhor que 3.410.000.000. */
+/**
+ * Dinheiro em escala curta: "R$ 3,41 bi" lê melhor que 3.410.000.000.
+ *
+ * ⚠️ Era um formatador PRÓPRIO com R$ chumbado — quem escolhia euro via o valor
+ * do clube em real justamente na tela que apresenta o clube. `formatCurrency`
+ * passou a conhecer a escala do bilhão (1.0.351) e faz as quatro faixas.
+ */
 function dinheiroCurto(valor: number): string {
-  if (valor >= 1_000_000_000) return `R$ ${(valor / 1_000_000_000).toFixed(2).replace(".", ",")} bi`
-  if (valor >= 1_000_000) return `R$ ${(valor / 1_000_000).toFixed(1).replace(".", ",")} mi`
-  if (valor >= 1_000) return `R$ ${Math.round(valor / 1_000)} mil`
-  return `R$ ${valor}`
+  return formatCurrency(valor)
 }
 
 /**

@@ -20,12 +20,18 @@
 // viajava (ver `chaveamento-de-tecnico`).
 
 import { generateSeasonFixtures, initStandings, sortStandings, updateStandings } from "@/lib/career-engine"
-import type { MatchFixture, StandingEntry } from "@/lib/career-types"
+import type { CupBracket, MatchFixture, StandingEntry } from "@/lib/career-types"
 import { simulateFullMatch } from "@/lib/match-engine"
+import {
+  generateCupBracket, generateLiberBracket, isCupTriggerRound, isLiberTriggerRound,
+  simulateCupRound, simulateLiberRound,
+} from "@/lib/cup-engine"
+import { getContinentalDivisions, getCountryCompetitions } from "@/lib/country-competitions"
 import { completarLigaComPool, getTeamByFileKey, type Team } from "@/lib/teams-data"
 // O elenco REAL do clube — é dele que sai a fila da posição (ver
 // `hierarquiaDaPosicao`). Sem isto a disputa seria contra um número inventado.
 import { getPlayersForTeam } from "@/lib/players-data"
+import { suspensaoPorCartoes } from "@/lib/player-realism"
 import { montarPartidaDoAtleta, partidaTerminou, type PartidaEmCurso } from "@/lib/partida-do-atleta"
 
 // ─── ONDE UMA PROMESSA PODE ESTREAR ─────────────────────────────────────────
@@ -545,6 +551,44 @@ export interface EstadoCarreiraDeJogador {
   /** Rodadas perdidas por lesao na carreira inteira. Entra no resumo. */
   rodadasPerdidasPorLesao?: number
   /**
+   * SUSPENSAO POR CARTAO (1.0.351).
+   *
+   * ⚠️ ATE AQUI O CARTAO NAO CUSTAVA NADA. `cartoesAmarelos` e
+   * `cartoesVermelhos` eram contadores de vitrine: a palavra "suspensao" nao
+   * aparecia uma vez neste arquivo, e o atleta expulso entrava normalmente na
+   * rodada seguinte. O modo de TECNICO ja resolvia isso desde sempre
+   * (`suspensaoPorCartoes` -> `suspendedMatches`, em lib/game-engine); a
+   * carreira de atleta so nao tinha herdado a regra.
+   *
+   * A consequencia e a mesma da lesao: a rodada acontece sem voce, o time joga,
+   * a tabela anda e a nota do treinador cede um pouco.
+   *
+   * Ausente em save antigo — e ausente significa "nao esta suspenso".
+   */
+  suspensao?: { partidasRestantes: number; motivo: string }
+  /** Amarelos rumo a suspensao automatica (a cada 5). Zera na virada da temporada. */
+  amarelosAcumulados?: number
+  /** Partidas perdidas por suspensao na carreira inteira. Entra no resumo. */
+  rodadasPerdidasPorSuspensao?: number
+  /**
+   * COPA NACIONAL E CONTINENTAL (1.0.351).
+   *
+   * ⚠️ ATE AQUI A TEMPORADA DO ATLETA ERA SO O CAMPEONATO. `criarCarreiraDeJogador`
+   * montava `generateSeasonFixtures` e mais nada: um atleta do Flamengo vivia
+   * 2026 inteiro sem Copa do Brasil e sem Libertadores, a unica meta de titulo
+   * possivel era a liga, e metade das noites de um ano de futebol nao existia.
+   *
+   * O mata-mata usa o MESMO chaveamento do modo de tecnico (`lib/cup-engine`),
+   * nas mesmas rodadas-gatilho — nada de um segundo calendario paralelo.
+   *
+   * `continental` so existe quando o clube se classificou (top 4 da liga na
+   * temporada anterior; na primeira, top 4 por prestigio). Ausentes em save
+   * antigo, e ausente significa "esta carreira nao tem" — a temporada em curso
+   * continua exatamente como comecou.
+   */
+  copa?: CupBracket
+  continental?: CupBracket
+  /**
    * A BRACADEIRA (1.0.347). Nao existia — e receber a capitania e um dos marcos
    * mais fortes de uma carreira de atleta.
    */
@@ -877,6 +921,9 @@ export function criarCarreiraDeJogador(
   // degrau abaixo do lugar dele e sobe jogando — mas o lugar EXISTE desde o
   // primeiro dia, e é o da fila da posição no elenco de verdade.
   estado.notaDoTreinador = limitar(confiancaMerecida(estado) * 0.8)
+  // COPA NACIONAL (e a continental, se o clube for de G4). Ver
+  // `montarMataMataDaTemporada`: sem isto a temporada do atleta era so a liga.
+  montarMataMataDaTemporada(estado, times)
   const h = hierarquiaDaPosicao(estado)
   if (h.posto > 1) {
     estado.recados.unshift({
@@ -1151,7 +1198,23 @@ export function jogarProximaRodada(
 ): EstadoCarreiraDeJogador {
   if (estado.aposentado || estado.temporadaEncerrada) return estado
   const proxima = estado.calendario.find(f => !f.played)
-  if (!proxima) return { ...estado, temporadaEncerrada: true }
+  if (!proxima) {
+    // ⚠️ A LIGA PODE ACABAR ANTES DA COPA. As rodadas-gatilho do mata-mata são
+    // 6/14/22/30 (copa) e 10/18/26 (continental); numa liga curta — 14 clubes,
+    // 26 rodadas — as últimas não chegam a cair. Sem fechar aqui, o título
+    // ficaria sem dono e a temporada encerraria com uma final por jogar.
+    const fechando: EstadoCarreiraDeJogador = structuredClone(estado)
+    const emAberto = () => [fechando.copa, fechando.continental].some(b => b && !b.champion)
+    if (emAberto()) {
+      const clubesDoFecho = new Map(clubesDaLiga(fechando).map(t => [t.curto, t]))
+      for (let volta = 0; volta < 8 && emAberto(); volta++) {
+        jogarMataMata(fechando, "copa", fechando.rodada, clubesDoFecho, true)
+        jogarMataMata(fechando, "continental", fechando.rodada, clubesDoFecho, true)
+      }
+    }
+    fechando.temporadaEncerrada = true
+    return fechando
+  }
 
   const novo: EstadoCarreiraDeJogador = structuredClone(estado)
   // ⚠️ A SEMANA DE TREINO VEM ANTES DA PARTIDA, e não é detalhe de ordem: é o
@@ -1205,6 +1268,26 @@ export function jogarProximaRodada(
       continue
     }
 
+    // ⚠️ SUSPENSO NAO ENTRA EM CAMPO (1.0.351). Mesma consequencia da lesao, e
+    // pela mesma razao: sem ela o cartao vermelho e um numero na tabela de
+    // estatisticas, nao um preco. Aqui a rodada acontece sem voce.
+    if ((novo.suspensao?.partidasRestantes ?? 0) > 0) {
+      const suspensao = novo.suspensao!
+      suspensao.partidasRestantes--
+      novo.rodadasPerdidasPorSuspensao = (novo.rodadasPerdidasPorSuspensao ?? 0) + 1
+      novo.forma = limitar(novo.forma - 3)
+      novo.notaDoTreinador = limitar(novo.notaDoTreinador - 0.8)
+      if (suspensao.partidasRestantes <= 0) {
+        novo.suspensao = undefined
+        novo.recados = [{
+          id: `fim_suspensao_${novo.temporada}_${rodada}`, de: "Departamento juridico",
+          texto: `Suspensao cumprida. ${novo.atleta.nome} esta liberado para a proxima rodada.`,
+          temporada: novo.temporada, rodada,
+        }, ...novo.recados].slice(0, 25)
+      }
+      continue
+    }
+
     // ── A partida do atleta ──
     const emCasa = fixture.homeCurto === novo.clubeCurto
     const golsPro = emCasa ? partida.home.goals : partida.away.goals
@@ -1226,87 +1309,295 @@ export function jogarProximaRodada(
       continue
     }
 
-    const registro: PartidaDoAtleta = {
-      temporada: novo.temporada, rodada, competicao: fixture.competition,
-      adversario, casa: emCasa, golsPro, golsContra,
-      titular: d.titular, minutos: d.minutos, gols: d.gols, assistencias: d.assistencias,
-      nota: d.nota, cartao: d.cartao,
-    }
-    novo.ultimasPartidas = [registro, ...novo.ultimasPartidas].slice(0, 12)
-
-    if (d.minutos > 0) {
-      novo.temporadaAtual.jogos++
-      if (d.titular) novo.temporadaAtual.titularidades++
-      novo.temporadaAtual.minutos += d.minutos
-      novo.temporadaAtual.gols += d.gols
-      novo.temporadaAtual.assistencias += d.assistencias
-      novo.temporadaAtual.somaDasNotas += d.nota
-      if (d.cartao === "amarelo") novo.temporadaAtual.cartoesAmarelos++
-      if (d.cartao === "vermelho") novo.temporadaAtual.cartoesVermelhos++
-      registrarAcoes(novo, d, `${novo.atleta.id}:${novo.temporada}:${rodada}:acoes`)
-      // BÔNUS POR GOL vira dinheiro na hora — é o que faz o contrato ser uma
-      // decisão e não um enfeite na tela de proposta.
-      if (d.gols > 0) novo.ganhosDaTemporada += d.gols * (novo.contrato.bonusPorGol ?? 0)
-      // REPERCUSSÃO automática: o mundo comenta o que aconteceu. Dois gols ou
-      // uma nota alta viram post; reputação sobe junto, e é ela que faz clube
-      // grande acordar (ver `gerarPropostas`).
-      if (d.gols >= 2 || d.nota >= 8.5) {
-        novo.reputacao = Math.min(100, (novo.reputacao ?? 30) + (d.gols >= 2 ? 3 : 2))
-        novo.torcida = Math.min(100, (novo.torcida ?? 50) + 2)
-        novo.repercussao = [{
-          id: `post_${novo.temporada}_${rodada}`,
-          autor: "@FutNews",
-          texto: d.gols >= 2
-            ? `${novo.atleta.nome} decide de novo: ${d.gols} gols contra o ${adversario}.`
-            : `Nota ${d.nota.toFixed(1)} para ${novo.atleta.nome} no jogo contra o ${adversario}.`,
-          temporada: novo.temporada,
-        }, ...(novo.repercussao ?? [])].slice(0, 20)
-      }
-      // A nota do treinador se move DEVAGAR: uma partida ruim não tira o
-      // titular, e uma boa não faz o reserva virar camisa 10 na semana seguinte.
-      novo.notaDoTreinador = limitar(novo.notaDoTreinador + (d.nota - 6.6) * 2.4 + d.gols * 1.5)
-      novo.forma = limitar(novo.forma * 0.72 + d.nota * 8.4)
-      sortearLesao(novo, d.minutos, rodada)
-      novo.moral = limitar(novo.moral + (d.nota >= 7 ? 3 : d.nota >= 6 ? 0 : -3) + (golsPro > golsContra ? 2 : golsPro === golsContra ? 0 : -2))
-    } else {
-      // ⚠️ FICAR NO BANCO NÃO DERRUBA MAIS A CONFIANÇA (ver a nota da
-      // hierarquia). Era esta linha que fechava a carreira: -0,8 por rodada sem
-      // NENHUM caminho de volta, porque abaixo de 24 o atleta parava de entrar.
-      // A forma esfria — isso é real —, mas quem decide o lugar dele é o mérito.
-      novo.forma = limitar(novo.forma - 3)
-      novo.moral = limitar(novo.moral - (novo.pedido === "mais_minutos" ? 4 : 2))
-      // Treinar sem jogar rende pouco, mas rende: é o que dá ao reserva um
-      // caminho para crescer e ULTRAPASSAR o concorrente.
-      aplicarXP(novo, 6)
-    }
-
-    // ── A CONFIANÇA CAMINHA PARA O MÉRITO, DENTRO DE UMA FAIXA ──
-    //
-    // Um passo pequeno por rodada (12% da distância): a mudança de status
-    // acontece ao longo de semanas, não de uma partida — e, o que importa,
-    // acontece nos DOIS sentidos.
-    //
-    // ⚠️ E A FAIXA DE ±22 NÃO É DETALHE. Sem ela o pêndulo ia para o outro
-    // extremo: no teste, um atleta de overall 60 que é o **11º de 11** da
-    // posição terminou a temporada com 41 titularidades e média 8,10 — porque
-    // cada boa atuação somava sem teto e o mérito não segurava nada. Com a
-    // faixa, atuação boa ainda promove (dá para sair de "fora dos planos" a
-    // "rodízio" jogando bem), mas ninguém passa por cima da fila inteira sem
-    // antes ficar melhor que ela de verdade. Quem muda o teto é a EVOLUÇÃO.
-    const merecida = confiancaMerecida(novo)
-    novo.notaDoTreinador = limitar(Math.max(
-      merecida - 22,
-      Math.min(merecida + 22, novo.notaDoTreinador + (merecida - novo.notaDoTreinador) * 0.12),
-    ))
-    aplicarXP(novo, d.xp)
-    atualizarMetas(novo)
+    aplicarPartidaNaCarreira(novo, {
+      rodada, competicao: fixture.competition, adversario, emCasa, golsPro, golsContra,
+      semente: `${novo.atleta.id}:${novo.temporada}:${rodada}`,
+    }, d)
   }
+
+  // ── COPA E CONTINENTAL, nas mesmas rodadas-gatilho do modo de tecnico ──
+  jogarMataMata(novo, "copa", rodada, clubes)
+  jogarMataMata(novo, "continental", rodada, clubes)
 
   novo.rodada = rodada
   novo.tabela = sortStandings(novo.tabela)
-  if (!novo.calendario.some(f => !f.played)) novo.temporadaEncerrada = true
+  // ⚠️ A TEMPORADA SO ACABA QUANDO O MATA-MATA ACABA. Fechar no fim da liga
+  // deixaria a final da copa por jogar — e o titulo, sem dono.
+  const mataMataEmAberto = [novo.copa, novo.continental].some(b => b && !b.champion && b.userEliminatedAtRound === undefined)
+  if (!novo.calendario.some(f => !f.played) && !mataMataEmAberto) novo.temporadaEncerrada = true
   return novo
 }
+
+
+/** O contexto de UMA partida do atleta — liga ou copa, a bolsa é a mesma. */
+interface ContextoDaPartidaDoAtleta {
+  rodada: number
+  competicao: string
+  adversario: string
+  emCasa: boolean
+  golsPro: number
+  golsContra: number
+  /** Semente determinística desta partida (entra em ações e evolução). */
+  semente: string
+}
+
+/**
+ * APLICA UMA PARTIDA NA CARREIRA: súmula, estatística, cartão, moral, forma,
+ * nota do treinador, XP e metas.
+ *
+ * ⚠️ Extraído de dentro do laço da rodada na 1.0.351, sem mudar uma regra. O
+ * motivo: a COPA passou a existir para o atleta, e ela precisa da mesma
+ * contabilidade. Duplicar estas noventa linhas era garantir que uma das duas
+ * cópias envelhecesse — foi assim que este projeto acabou com duas escalas para
+ * a mesma grandeza mais de uma vez.
+ */
+function aplicarPartidaNaCarreira(
+  novo: EstadoCarreiraDeJogador,
+  ctx: ContextoDaPartidaDoAtleta,
+  d: DesempenhoIndividual,
+): void {
+  const registro: PartidaDoAtleta = {
+    temporada: novo.temporada, rodada: ctx.rodada, competicao: ctx.competicao,
+    adversario: ctx.adversario, casa: ctx.emCasa, golsPro: ctx.golsPro, golsContra: ctx.golsContra,
+    titular: d.titular, minutos: d.minutos, gols: d.gols, assistencias: d.assistencias,
+    nota: d.nota, cartao: d.cartao,
+  }
+  novo.ultimasPartidas = [registro, ...novo.ultimasPartidas].slice(0, 12)
+
+  if (d.minutos > 0) {
+    novo.temporadaAtual.jogos++
+    if (d.titular) novo.temporadaAtual.titularidades++
+    novo.temporadaAtual.minutos += d.minutos
+    novo.temporadaAtual.gols += d.gols
+    novo.temporadaAtual.assistencias += d.assistencias
+    novo.temporadaAtual.somaDasNotas += d.nota
+    if (d.cartao === "amarelo") novo.temporadaAtual.cartoesAmarelos++
+    if (d.cartao === "vermelho") novo.temporadaAtual.cartoesVermelhos++
+    // CARTAO -> SUSPENSAO, pela MESMA funcao que o modo de tecnico usa
+    // (lib/player-realism): cinco amarelos valem um jogo, vermelho vale um
+    // jogo direto. Escrever uma segunda regra aqui era como o projeto acabou
+    // com duas escalas para a mesma grandeza mais de uma vez.
+    if (d.cartao) {
+      const punicao = suspensaoPorCartoes(
+        novo.amarelosAcumulados ?? 0,
+        d.cartao === "amarelo" ? 1 : 0,
+        d.cartao === "vermelho",
+      )
+      novo.amarelosAcumulados = punicao.amarelosRestantes
+      if (punicao.suspender > 0) {
+        novo.suspensao = {
+          partidasRestantes: (novo.suspensao?.partidasRestantes ?? 0) + punicao.suspender,
+          motivo: d.cartao === "vermelho" ? "expulsao" : "cartoes acumulados",
+        }
+        novo.recados = [{
+          id: `suspensao_${novo.temporada}_${ctx.rodada}`, de: "Departamento juridico",
+          texto: d.cartao === "vermelho"
+            ? `Expulso contra o ${ctx.adversario}. ${novo.atleta.nome} cumpre ${punicao.suspender} jogo(s) de suspensao.`
+            : `Quinto amarelo contra o ${ctx.adversario}. ${novo.atleta.nome} fica de fora da proxima rodada.`,
+          temporada: novo.temporada, rodada: ctx.rodada,
+        }, ...novo.recados].slice(0, 25)
+      }
+    }
+    registrarAcoes(novo, d, `${ctx.semente}:acoes`)
+    // BÔNUS POR GOL vira dinheiro na hora — é o que faz o contrato ser uma
+    // decisão e não um enfeite na tela de proposta.
+    if (d.gols > 0) novo.ganhosDaTemporada += d.gols * (novo.contrato.bonusPorGol ?? 0)
+    // REPERCUSSÃO automática: o mundo comenta o que aconteceu. Dois gols ou
+    // uma nota alta viram post; reputação sobe junto, e é ela que faz clube
+    // grande acordar (ver `gerarPropostas`).
+    if (d.gols >= 2 || d.nota >= 8.5) {
+      novo.reputacao = Math.min(100, (novo.reputacao ?? 30) + (d.gols >= 2 ? 3 : 2))
+      novo.torcida = Math.min(100, (novo.torcida ?? 50) + 2)
+      novo.repercussao = [{
+        id: `post_${novo.temporada}_${ctx.rodada}`,
+        autor: "@FutNews",
+        texto: d.gols >= 2
+          ? `${novo.atleta.nome} decide de novo: ${d.gols} gols contra o ${ctx.adversario}.`
+          : `Nota ${d.nota.toFixed(1)} para ${novo.atleta.nome} no jogo contra o ${ctx.adversario}.`,
+        temporada: novo.temporada,
+      }, ...(novo.repercussao ?? [])].slice(0, 20)
+    }
+    // A nota do treinador se move DEVAGAR: uma partida ruim não tira o
+    // titular, e uma boa não faz o reserva virar camisa 10 na semana seguinte.
+    novo.notaDoTreinador = limitar(novo.notaDoTreinador + (d.nota - 6.6) * 2.4 + d.gols * 1.5)
+    novo.forma = limitar(novo.forma * 0.72 + d.nota * 8.4)
+    sortearLesao(novo, d.minutos, ctx.rodada)
+    novo.moral = limitar(novo.moral + (d.nota >= 7 ? 3 : d.nota >= 6 ? 0 : -3) + (ctx.golsPro > ctx.golsContra ? 2 : ctx.golsPro === ctx.golsContra ? 0 : -2))
+  } else {
+    // ⚠️ FICAR NO BANCO NÃO DERRUBA MAIS A CONFIANÇA (ver a nota da
+    // hierarquia). Era esta linha que fechava a carreira: -0,8 por rodada sem
+    // NENHUM caminho de volta, porque abaixo de 24 o atleta parava de entrar.
+    // A forma esfria — isso é real —, mas quem decide o lugar dele é o mérito.
+    novo.forma = limitar(novo.forma - 3)
+    novo.moral = limitar(novo.moral - (novo.pedido === "mais_minutos" ? 4 : 2))
+    // Treinar sem jogar rende pouco, mas rende: é o que dá ao reserva um
+    // caminho para crescer e ULTRAPASSAR o concorrente.
+    aplicarXP(novo, 6)
+  }
+
+  // ── A CONFIANÇA CAMINHA PARA O MÉRITO, DENTRO DE UMA FAIXA ──
+  //
+  // Um passo pequeno por rodada (12% da distância): a mudança de status
+  // acontece ao longo de semanas, não de uma partida — e, o que importa,
+  // acontece nos DOIS sentidos.
+  //
+  // ⚠️ E A FAIXA DE ±22 NÃO É DETALHE. Sem ela o pêndulo ia para o outro
+  // extremo: no teste, um atleta de overall 60 que é o **11º de 11** da
+  // posição terminou a temporada com 41 titularidades e média 8,10 — porque
+  // cada boa atuação somava sem teto e o mérito não segurava nada. Com a
+  // faixa, atuação boa ainda promove (dá para sair de "fora dos planos" a
+  // "rodízio" jogando bem), mas ninguém passa por cima da fila inteira sem
+  // antes ficar melhor que ela de verdade. Quem muda o teto é a EVOLUÇÃO.
+  const merecida = confiancaMerecida(novo)
+  novo.notaDoTreinador = limitar(Math.max(
+    merecida - 22,
+    Math.min(merecida + 22, novo.notaDoTreinador + (merecida - novo.notaDoTreinador) * 0.12),
+  ))
+  aplicarXP(novo, d.xp)
+  atualizarMetas(novo)
+}
+
+
+// ─── MATA-MATA DA TEMPORADA DO ATLETA ────────────────────────────────────────
+//
+// A liga dá o calendário; a copa e a continental dão as noites. Tudo aqui usa o
+// `lib/cup-engine` que o modo de técnico já usa — mesmo chaveamento, mesmas
+// rodadas-gatilho, mesmo desempate por pênaltis. O que este arquivo acrescenta é
+// só a LINHA INDIVIDUAL do atleta dentro daqueles jogos.
+
+/** Clubes do continente, para o chaveamento continental. */
+function clubesDoContinente(divisao: string, doUsuario: Team | undefined): Team[] {
+  const divisoes = getContinentalDivisions(divisao)
+  const pool = divisoes.flatMap(div => completarLigaComPool(div).slice(0, 6))
+  if (doUsuario && !pool.some(t => t.curto === doUsuario.curto)) return [doUsuario, ...pool]
+  return pool
+}
+
+/**
+ * O clube do atleta disputa a continental nesta temporada?
+ *
+ * Primeira temporada: top 4 por PRESTÍGIO da liga (é o dado que existe antes de
+ * qualquer campanha). Depois: onde ele terminou o ano anterior — que é a regra
+ * de verdade e a que faz o G4 significar alguma coisa para quem joga.
+ */
+function classificadoAContinental(
+  times: Team[],
+  clubeCurto: string,
+  posicaoAnterior?: number,
+): boolean {
+  if (posicaoAnterior !== undefined) return posicaoAnterior <= 4
+  const ordenados = [...times].sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0))
+  return ordenados.slice(0, 4).some(t => t.curto === clubeCurto)
+}
+
+/** Monta copa nacional e continental da temporada. Muta o estado. */
+function montarMataMataDaTemporada(
+  estado: EstadoCarreiraDeJogador,
+  times: Team[],
+  posicaoAnterior?: number,
+): void {
+  const competicoes = getCountryCompetitions(estado.divisao)
+  estado.copa = generateCupBracket(times, estado.clubeCurto, estado.temporada, competicoes.domesticCup)
+  const clube = getTeamByFileKey(estado.clubeFileKey)
+  if (classificadoAContinental(times, estado.clubeCurto, posicaoAnterior)) {
+    const pool = clubesDoContinente(estado.divisao, clube)
+    // `generateLiberBracket` nomeia tudo de "Libertadores"; o nome certo vem da
+    // confederação do clube — um atleta do Ajax não joga a Libertadores.
+    const bracket = generateLiberBracket(pool.length >= 8 ? pool : times, estado.clubeCurto, estado.temporada)
+    estado.continental = { ...bracket, competition: competicoes.continental }
+  } else {
+    estado.continental = undefined
+  }
+}
+
+/**
+ * Joga a fase de mata-mata que cai nesta rodada e registra as partidas do
+ * atleta — uma por jogo (ida e volta são DOIS jogos, a final é um só).
+ */
+function jogarMataMata(
+  novo: EstadoCarreiraDeJogador,
+  chave: "copa" | "continental",
+  rodada: number,
+  clubes: Map<string, Team>,
+  /** Ignora a rodada-gatilho — usado para fechar o mata-mata quando a liga acaba antes. */
+  forcar = false,
+): void {
+  const bracket = novo[chave]
+  if (!bracket || bracket.champion) return
+  const gatilho = chave === "copa" ? isCupTriggerRound(rodada) : isLiberTriggerRound(rodada)
+  if (!gatilho && !forcar) return
+
+  // ⚠️ OS CLUBES DO TORNEIO NÃO SÃO OS DA LIGA. `simulateCupRound` resolve cada
+  // confronto por `teamMap.get(curto)` e PULA em silêncio o que não achar — com
+  // a lista da liga brasileira, todo confronto continental era ignorado, o
+  // chaveamento avançava de fase sem jogo nenhum e a Libertadores terminava sem
+  // campeão e sem uma partida do atleta. Custo: o pool continental é montado só
+  // nas três rodadas-gatilho do ano.
+  const participantes = chave === "copa"
+    ? [...clubes.values()]
+    : clubesDoContinente(novo.divisao, getTeamByFileKey(novo.clubeFileKey))
+  const mapaDoTorneio = new Map(participantes.map(t => [t.curto, t]))
+
+  if (bracket.userEliminatedAtRound !== undefined) {
+    // Eliminado: o chaveamento continua andando (para haver campeão), mas sem
+    // partida do atleta.
+    novo[chave] = chave === "copa"
+      ? simulateCupRound(bracket, novo.clubeCurto, participantes)
+      : simulateLiberRound(bracket, novo.clubeCurto, participantes)
+    return
+  }
+
+  const fase = bracket.currentCupRound
+  const depois = chave === "copa"
+    ? simulateCupRound(bracket, novo.clubeCurto, participantes)
+    : simulateLiberRound(bracket, novo.clubeCurto, participantes)
+  novo[chave] = depois
+
+  const confronto = depois.matches.find(m => m.cupRound === fase && m.isUserMatch && m.played)
+  if (!confronto) return
+
+  const mandanteNaIda = confronto.homeCurto === novo.clubeCurto
+  const jogos: { emCasa: boolean; pro: number; contra: number }[] = [{
+    emCasa: mandanteNaIda,
+    pro: mandanteNaIda ? (confronto.homeGoals ?? 0) : (confronto.awayGoals ?? 0),
+    contra: mandanteNaIda ? (confronto.awayGoals ?? 0) : (confronto.homeGoals ?? 0),
+  }]
+  if (confronto.twoLegged) {
+    // Na VOLTA o mandante é o `awayCurto` — `leg2HomeGoals` são os gols dele.
+    const mandanteNaVolta = confronto.awayCurto === novo.clubeCurto
+    const golsDoMandante = confronto.leg2HomeGoals ?? 0
+    const golsDoVisitante = confronto.leg2AwayGoals ?? 0
+    jogos.push({
+      emCasa: mandanteNaVolta,
+      pro: mandanteNaVolta ? golsDoMandante : golsDoVisitante,
+      contra: mandanteNaVolta ? golsDoVisitante : golsDoMandante,
+    })
+  }
+
+  const adversarioCurto = mandanteNaIda ? confronto.awayCurto : confronto.homeCurto
+  const adversario = mandanteNaIda ? confronto.awayNome : confronto.homeNome
+  const forcaAdversaria = forcaDoTime(mapaDoTorneio.get(adversarioCurto))
+
+  jogos.forEach((jogo, indice) => {
+    // Lesão e suspensão valem para a copa exatamente como valem para a liga —
+    // inclusive o jogo de suspensão CUMPRIDO aqui.
+    if ((novo.lesao?.semanasRestantes ?? 0) > 0) return
+    const suspensao = novo.suspensao
+    if ((suspensao?.partidasRestantes ?? 0) > 0 && suspensao) {
+      suspensao.partidasRestantes--
+      novo.rodadasPerdidasPorSuspensao = (novo.rodadasPerdidasPorSuspensao ?? 0) + 1
+      if (suspensao.partidasRestantes <= 0) novo.suspensao = undefined
+      return
+    }
+    const semente = `${novo.atleta.id}:${novo.temporada}:${bracket.competition}:${fase}:${indice}`
+    const d = desempenhoDaPartida(novo, jogo.pro, jogo.contra, forcaAdversaria, semente)
+    aplicarPartidaNaCarreira(novo, {
+      rodada, competicao: bracket.competition, adversario,
+      emCasa: jogo.emCasa, golsPro: jogo.pro, golsContra: jogo.contra, semente,
+    }, d)
+  })
+}
+
 
 function limitar(v: number): number { return Math.max(0, Math.min(100, Math.round(v * 10) / 10)) }
 
@@ -1612,6 +1903,13 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
 
   const titulos: string[] = []
   if (posicao === 1) titulos.push(`${novo.ligaNome} ${novo.temporada}`)
+  // TÍTULOS DE MATA-MATA (1.0.351). `champion` guarda o NOME do clube, não o
+  // `curto` — comparar com `clubeCurto` daria campeão nenhum para sempre.
+  for (const bracket of [novo.copa, novo.continental]) {
+    if (bracket?.champion && bracket.champion === novo.clubeNome) {
+      titulos.push(`${bracket.competition} ${novo.temporada}`)
+    }
+  }
 
   // PRÊMIOS. Sem inventar concorrência: o critério é o desempenho absoluto do
   // atleta na competição, que é o dado que existe de verdade neste modo.
@@ -1769,7 +2067,13 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
   novo.tabela = initStandings(times)
   novo.rodada = 0
   novo.temporadaAtual = { jogos: 0, titularidades: 0, minutos: 0, gols: 0, assistencias: 0, somaDasNotas: 0, cartoesAmarelos: 0, cartoesVermelhos: 0 }
+  // O ACUMULO DE AMARELOS ZERA NA VIRADA — a suspensao pendente NAO. E o que
+  // acontece de verdade: quem termina o ano expulso comeca o seguinte cumprindo.
+  novo.amarelosAcumulados = 0
   novo.metas = metasIniciais(novo.atleta, clube?.prestigio ?? 60, novo.calendario.filter(f => f.isUserMatch).length)
+  // MATA-MATA DO ANO NOVO. A vaga na continental sai de ONDE O CLUBE TERMINOU —
+  // é o que faz o G4 valer alguma coisa para quem só joga.
+  montarMataMataDaTemporada(novo, times, posicao)
   novo.temporadaEncerrada = false
   novo.contrato.ateTemporada = Math.max(novo.contrato.ateTemporada, novo.temporada)
   return novo
@@ -1792,6 +2096,8 @@ export function aceitarProposta(estado: EstadoCarreiraDeJogador, propostaId: str
   novo.ligaNome = proposta.ligaNome
   novo.calendario = generateSeasonFixtures(times, clube.curto, novo.temporada, novo.ligaNome)
   novo.tabela = initStandings(times)
+  // Clube novo, copa nova: o chaveamento do clube antigo não o acompanha.
+  montarMataMataDaTemporada(novo, times)
   novo.contrato = {
     salarioSemanal: proposta.salarioSemanal,
     ateTemporada: novo.temporada + proposta.temporadas,

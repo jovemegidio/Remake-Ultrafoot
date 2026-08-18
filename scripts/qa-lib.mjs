@@ -62,6 +62,24 @@ export function assertFreshBuild() {
       `Lembre: 'npm run build' puro NAO reescreve o out/ (output:'export' exige TAURI_BUILD=1).\n` +
       `Rode:  npx cross-env TAURI_BUILD=1 npm run build\n`
     )
+    // ⚠️ ESCAPATORIA PARA ARVORE COM DUAS SESSOES (1.0.351).
+    //
+    // Este repositorio e trabalhado por mais de uma sessao ao mesmo tempo. Basta
+    // a outra salvar um arquivo enquanto esta aqui audita o bundle que ACABOU de
+    // construir para a auditoria ficar impossivel de rodar — e auditoria que
+    // nunca roda protege menos do que auditoria que roda avisando.
+    //
+    // `QA_OUT_DEFASADO_OK=1` deixa seguir, mas NUNCA em silencio: o aviso diz
+    // qual arquivo esta mais novo, para quem le o log saber exatamente o que NAO
+    // estava no bundle testado.
+    if (process.env.QA_OUT_DEFASADO_OK === "1") {
+      console.warn(
+        `\n⚠️  SEGUINDO COM out/ DEFASADO (QA_OUT_DEFASADO_OK=1).\n` +
+        `   O bundle testado NAO contem: ${newest.file}\n` +
+        `   (nem nada salvo depois de ${new Date(outTime).toLocaleTimeString()})\n`
+      )
+      return
+    }
     process.exit(1)
   }
 

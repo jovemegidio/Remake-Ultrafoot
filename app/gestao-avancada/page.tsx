@@ -7,6 +7,7 @@ import { useGameState } from "@/lib/save-system"
 import { useGameEngine, type Player } from "@/lib/game-engine"
 import { getTeamByShort, allTeams, serieATeams } from "@/lib/teams-data"
 import { formatCurrency } from "@/lib/currency"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { NATIONAL_TEAMS, getNationalStrength } from "@/lib/national-teams"
 import {
   DESTINO_DO_PEDIDO, PRINCIPIOS, bonusPreparacao, consultarIntermediario, normalizarGestao282,
@@ -211,6 +212,17 @@ function Diretoria({ gestao, season, confidence, jogadores, liberarVerba, salvar
 function Comissao({ gestao, salvar }: Props) {
   const pautas: { id: PautaComissao; nome: string }[] = [{id:"treino",nome:"Treinamento"},{id:"mercado",nome:"Recrutamento"},{id:"medico",nome:"Departamento médico"},{id:"base",nome:"Categorias de base"},{id:"adversario",nome:"Próximo adversário"}]
   return <Secao titulo="Reuniões de comissão configuráveis" texto="Defina como cada pauta chega: reunião completa, resumo na caixa ou ignorar. Os relatórios são gerados na virada de cada semana.">
+    {/* ⚠️ ESTA ABA NÃO CONTRATA NINGUÉM — e a tela que contrata não tinha porta.
+        Aqui se decide como a pauta CHEGA; quem trabalha no clube (auxiliar,
+        preparador, médico, analista, olheiro) é contratado em /comissao, que até
+        a 1.0.351 não era alcançável por nenhum menu. */}
+    <button onClick={() => hardNavigate("/comissao")} className="mb-6 flex w-full items-center justify-between gap-3 rounded-xl border border-emerald-400/25 bg-emerald-400/[.06] p-4 text-left hover:bg-emerald-400/[.1]">
+      <span>
+        <b className="text-emerald-300">Contratar e demitir a comissão</b>
+        <span className="mt-0.5 block text-xs text-white/50">Auxiliar, preparador físico, médico, fisio, analista e olheiro — com competência, lealdade e efeito no elenco.</span>
+      </span>
+      <span className="shrink-0 text-xs text-emerald-300/70">abrir →</span>
+    </button>
     <div className="grid gap-3 md:grid-cols-2">{pautas.map(p => <label key={p.id} className="flex items-center justify-between rounded-xl bg-white/5 p-4"><span>{p.nome}</span><select className={campo} value={gestao.pautaComissao[p.id]} onChange={e => salvar({ pautaComissao: { ...gestao.pautaComissao, [p.id]: e.target.value as EntregaPauta } })}><option value="reuniao">Na reunião</option><option value="resumo">Resumo na caixa</option><option value="ignorar">Ignorar</option></select></label>)}</div>
     <h3 className="mb-3 mt-8 text-lg font-bold">Reunião desta semana</h3>
     {gestao.relatoriosComissao.length === 0

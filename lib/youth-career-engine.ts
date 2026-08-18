@@ -2,6 +2,7 @@ import type { GameState, SquadPlayer, YouthAlumniRecord, YouthCareerState } from
 import type { Team } from "@/lib/teams-data"
 import { completarLigaComPool } from "@/lib/teams-data"
 import { generateYouthBatch } from "@/lib/youth-engine"
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
 import { generateSeasonFixtures, initStandings, sortStandings, updateStandings } from "@/lib/career-engine"
 import { generateCupBracket, isCupTriggerRound, simulateCupRound } from "@/lib/cup-engine"
 import { simulateFullMatch } from "@/lib/match-engine"
@@ -427,10 +428,54 @@ function applyYouthResult(next: GameState, goalsFor: number, goalsAgainst: numbe
   c.competitionStage=format.stages[c.competitionStageIndex].name
 }
 
+/**
+ * O DESENVOLVIMENTO DOS GAROTOS — o coração da modalidade.
+ *
+ * ⚠️ ERA CARA-OU-COROA. A versão anterior era uma linha: 20% de chance de +1 de
+ * overall por rodada, igual para todo mundo. Não olhava quem jogou, quem ficou
+ * no banco, a idade, o quanto falta para o teto, nem o técnico — e o bônus de
+ * treino do Sub-20 (`rendimentoDeTreinoDaModalidade`, 1,25) nunca chegava a um
+ * único garoto, porque ele vive no retrato do treinador e só era lido pelo
+ * treino do elenco PROFISSIONAL (`lib/treino-e-entrosamento`).
+ *
+ * Em FM e no EA FC, formar não é um efeito colateral do trabalho: é O trabalho.
+ * Aqui as quatro coisas que o técnico da base controla passam a valer:
+ *
+ *   • MINUTOS — quem você escala evolui bem mais que quem assiste;
+ *   • IDADE — aos 16 se aprende mais rápido do que aos 20;
+ *   • ESPAÇO ATÉ O TETO — quem está perto do próprio limite avança devagar;
+ *   • TÉCNICO — o `rendimentoDeTreino` do perfil, já multiplicado pela
+ *     modalidade.
+ *
+ * Continua determinístico (mesma semente, mesmo resultado) e continua modesto:
+ * quem forma bem tem vantagem, não um botão de trapaça.
+ */
 function developPlayers(next: GameState, chance: number): void {
-  const c=next.youthCareer!
-  next.youthPlayers=(next.youthPlayers??[]).map(p=>p.age<=20&&p.overall<p.potential&&roll(`${p.id}:${c.currentSeason}:${c.round}`)<chance?{...p,overall:p.overall+1,trend:"up"}:p)
-  next.week++;next.updatedAt=Date.now()
+  const c = next.youthCareer!
+  const titulares = new Set(c.startingPlayerIds ?? [])
+  // Neutro (1) quando não há carreira aberta — é o que o retrato devolve.
+  const doTreinador = Math.max(0.5, Math.min(2, efeitosDoTreinador().rendimentoDeTreino))
+  next.youthPlayers = (next.youthPlayers ?? []).map(p => {
+    if (p.age > 20 || p.overall >= p.potential) return p
+    const jogou = titulares.has(p.id)
+    // 0 a 1: quanto ainda falta para o teto, saturando em 20 pontos de overall.
+    const espaco = Math.min(1, Math.max(0, (p.potential - p.overall) / 20))
+    const juventude = p.age <= 16 ? 1.3 : p.age <= 17 ? 1.15 : p.age <= 18 ? 1 : 0.8
+    const minutos = jogou ? 1.15 : 0.5
+    // ⚠️ CALIBRADO PARA NAO INFLAR. A media da academia continua perto do ritmo
+    // antigo (~0,2 por rodada); o que muda e a DISTRIBUICAO — medido no gate:
+    // titular ganha ~8 de overall na temporada contra ~3 de quem so treina. Uma
+    // versao anterior desta conta dava +11,6 ao titular, o que transformaria
+    // qualquer academia em fabrica de craque em duas temporadas.
+    const probabilidade = Math.min(0.45, chance * doTreinador * minutos * juventude * (0.4 + espaco * 0.6))
+    const evoluiu = roll(`${p.id}:${c.currentSeason}:${c.round}`) < probabilidade
+    if (evoluiu) return { ...p, overall: p.overall + 1, trend: "up" as const }
+    // Quem não joga não regride, mas também não finge que está crescendo: a
+    // seta some, e é ela que o técnico olha na hora de escalar.
+    return jogou ? p : { ...p, trend: "stable" as const }
+  })
+  next.week++
+  next.updatedAt = Date.now()
 }
 
 export function applyPlayedYouthMatch(state: GameState, goalsFor: number, goalsAgainst: number): GameState {
@@ -451,12 +496,54 @@ export function simulateYouthRound(state: GameState): GameState {
   const next=structuredClone(state);applyYouthResult(next,gf,ga);developPlayers(next,.18);return next
 }
 
-export function finishYouthSeason(state: GameState): GameState {
+/**
+ * QUANTOS PODEM SUBIR AO PROFISSIONAL NESTA VIRADA.
+ *
+ * Campeão leva mais gente: título abre porta, e é assim que o clube justifica a
+ * promoção internamente.
+ */
+export function vagasNoProfissional(career: YouthCareerState): number {
+  const campeao = Object.values(career.seasonPlacements ?? {}).includes("Campeao")
+  return Math.max(2, campeao ? 5 : 3)
+}
+
+/**
+ * QUEM PODE SUBIR. Idade 19+ é o critério de sempre; a ordem é por potencial,
+ * porque é isso que o técnico da base defende na reunião.
+ */
+export function candidatosAPromocao(state: GameState): SquadPlayer[] {
+  return (state.youthPlayers ?? [])
+    .filter(p => p.age >= 19)
+    .sort((a, b) => (b.potential - a.potential) || (b.overall - a.overall))
+}
+
+/**
+ * Encerra a temporada da base.
+ *
+ * ⚠️ QUEM SOBE PASSOU A SER DECISÃO SUA (1.0.351). Antes eram os primeiros da
+ * lista com 19 anos ou mais — `filter(p => p.age >= 19).slice(0, 3 ou 5)`, na
+ * ordem em que estivessem no array. A decisão mais importante da modalidade
+ * (quem você entrega ao profissional) acontecia sozinha, e o jogador nem sabia
+ * que ela existia.
+ *
+ * `idsParaPromover` ausente mantém o comportamento antigo — é o que faz save
+ * antigo e chamada antiga continuarem funcionando.
+ */
+export function finishYouthSeason(state: GameState, idsParaPromover?: string[]): GameState {
   if(!state.youthCareer?.seasonFinished)return state
-  const next=structuredClone(state),c=next.youthCareer!,champion=Object.values(c.seasonPlacements??{}).includes("Campeao")
-  const graduates=(next.youthPlayers??[]).filter(p=>p.age>=19).slice(0,Math.max(2,champion?5:3)),elite=["Liverpool","FC Barcelona","Real Madrid","Bayern de Munique","Manchester City"]
+  const next=structuredClone(state),c=next.youthCareer!
+  const elegiveis=candidatosAPromocao(next)
+  const limite=vagasNoProfissional(c)
+  const graduates=idsParaPromover
+    ? elegiveis.filter(p=>idsParaPromover.includes(p.id)).slice(0,limite)
+    : elegiveis.slice(0,limite)
+  const elite=["Liverpool","FC Barcelona","Real Madrid","Bayern de Munique","Manchester City"]
   for(const p of graduates){const level=p.potential>=86?"elite":"professional",record:YouthAlumniRecord={playerId:p.id,playerName:p.name,position:p.position,potential:p.potential,trainedFromSeason:p.seasonSigned??c.currentSeason,trainedToSeason:c.currentSeason,currentClub:level==="elite"?elite[hash(p.id)%elite.length]:c.clubNome.replace(" Sub-20",""),currentLevel:level,careerTitles:[],nationalTeamCaps:0,worldCupTitles:0,relationship:85};c.alumni.push(record);c.promotedPlayerIds.push(p.id)}
-  next.youthPlayers=(next.youthPlayers??[]).filter(p=>!graduates.some(g=>g.id===p.id)).map(p=>({...p,age:p.age+1}));next.youthPlayers.push(...generateYouthBatch(c.currentSeason+1,graduates.length,c.coachReputation+55,{pais:c.pais,feminino:c.feminino}).map((p,i)=>({...p,id:`academy_${c.clubCurto}_${c.currentSeason+1}_${i}`,age:16+i%3,fromTeam:c.clubNome})))
+  // ⚠️ QUEM NAO SOBE E JA PASSOU DA IDADE DEIXA A BASE. Sem isto, escolher a
+  // dedo quem promove encheria a academia de atletas de 21, 22, 23 anos parados
+  // — a categoria e Sub-20, e o teto de idade e o que da peso a escolha.
+  const dispensados=(next.youthPlayers??[]).filter(p=>!graduates.some(g=>g.id===p.id)&&p.age>=20)
+  next.youthPlayers=(next.youthPlayers??[]).filter(p=>!graduates.some(g=>g.id===p.id)&&!dispensados.some(d=>d.id===p.id)).map(p=>({...p,age:p.age+1}));next.youthPlayers.push(...generateYouthBatch(c.currentSeason+1,Math.max(2,graduates.length+dispensados.length),c.coachReputation+55,{pais:c.pais,feminino:c.feminino}).map((p,i)=>({...p,id:`academy_${c.clubCurto}_${c.currentSeason+1}_${i}`,age:16+i%3,fromTeam:c.clubNome})))
   c.alumni=advanceAlumni(c.alumni,c.currentSeason);c.currentSeason++;c.round=0;c.matches=0;c.wins=0;c.draws=0;c.losses=0;c.goalsFor=0;c.goalsAgainst=0;c.points=0;c.seasonFinished=false;c.professionalOffers=generateProfessionalOffers(c)
   const formatosDaTemporada=formatosDeBase(c.pais)
   c.competitionIndex=0;c.competitionStageIndex=0;c.competitionMatchInStage=0;c.competitionPoints=0;c.competitionAggregateFor=0;c.competitionAggregateAgainst=0;c.currentCompetition=formatosDaTemporada[0].name;c.competitionStage=formatosDaTemporada[0].stages[0].name;c.seasonPlacements={}
@@ -467,9 +554,29 @@ export function finishYouthSeason(state: GameState): GameState {
   next.season=c.currentSeason;next.week=0;next.updatedAt=Date.now();return next
 }
 
+/**
+ * AS PROPOSTAS DO FUTEBOL PROFISSIONAL — o fim de linha da carreira de base.
+ *
+ * ⚠️ ERAM TRES CLUBES BRASILEIROS CHUMBADOS: Ponte Preta, CRB e Ceara, mesmo
+ * numa carreira no Ajax, no Kashima ou no Boca. O modo inteiro pode acontecer
+ * fora do Brasil desde que `formatosDeBase` ganhou as competicoes de cada pais;
+ * o convite para subir tinha ficado para tras.
+ *
+ * Agora os clubes saem da DIVISAO do clube-mae, de baixo para cima: quanto
+ * maior a reputacao, maior o clube que chama — e o ultimo convite e sempre o do
+ * proprio clube, como tecnico principal. E a mesma ideia do mercado de
+ * treinadores (`lib/coach-market`): reputacao conquistada define o teto.
+ */
 export function generateProfessionalOffers(career: YouthCareerState): YouthCareerState["professionalOffers"] {
   if(career.coachReputation<22)return[]
-  const clubs=[{clubCurto:"PON",clubNome:"Ponte Preta"},{clubCurto:"CRB",clubNome:"CRB"},{clubCurto:"CEA",clubNome:"Ceara"},{clubCurto:career.clubCurto,clubNome:career.clubNome.replace(" Sub-20","")}]
+  const daDivisao=completarLigaComPool(career.divisao??"serie_a")
+    .filter(t=>t.curto!==career.clubCurto)
+    .sort((a,b)=>(a.prestigio??50)-(b.prestigio??50))
+  // Tres degraus: o mais modesto, um do meio e um forte da divisao.
+  const degraus=[daDivisao[0],daDivisao[Math.floor(daDivisao.length/2)],daDivisao[daDivisao.length-1]]
+    .filter((t,i,lista)=>t&&lista.findIndex(x=>x?.curto===t.curto)===i)
+    .map(t=>({clubCurto:t!.curto,clubNome:t!.nome}))
+  const clubs=[...degraus,{clubCurto:career.clubCurto,clubNome:career.clubNome.replace(" Sub-20","")}]
   return clubs.filter((_,i)=>career.coachReputation>=22+i*12).map((x,i)=>({id:`offer-${career.currentSeason}-${x.clubCurto}`,...x,role:i===clubs.length-1?"head_coach":"assistant",reputationRequired:22+i*12,monthlySalary:18000+i*14000,contractMonths:24,objectives:i<2?["Evitar rebaixamento","Promover 2 atletas da base"]:["Classificar para competicao continental","Valorizar jovens do elenco"]}))
 }
 

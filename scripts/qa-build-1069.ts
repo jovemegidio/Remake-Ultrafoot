@@ -4,7 +4,6 @@ import { readFileSync } from "node:fs"
 import assert from "node:assert/strict"
 import { configurePitch,pitchInjuryDurationMultiplier,pitchInjuryFrequencyMultiplier,pitchUpgradeCost } from "../lib/infrastructure-engine"
 import { counterSponsorOffer,generateOffers } from "../lib/sponsor-engine"
-import { recoveryWeeksForSurface,rollInjuryRisk } from "../lib/injury-engine"
 
 let debt=createClubDebt("realistic",200_000_000);assert(debt.principal>0);const before=debt.principal
 const payment=processDebtMonth(debt,50_000_000);debt=payment.debt;assert(payment.paid>0&&debt.principal<before);assert(debtTransferLimit(debt,100_000_000)<100_000_000);assert(renegotiateDebt(debt).monthlyPayment<debt.monthlyPayment)
@@ -15,6 +14,8 @@ const modal=readFileSync("components/match/substitution-modal.tsx","utf8");// �
 // gate ficou vermelho por motivo nenhum — sem quebrar nada no jogo.
 assert(modal.includes("SubstitutionChange[]")&&/CONFIRMAR \{pending\.length\}/.test(modal))
 const youth=readFileSync("app/base/carreira/page.tsx","utf8"),live=readFileSync("app/partida/ao-vivo/page.tsx","utf8");assert(youth.includes("Jogar partida")&&youth.includes("startingPlayerIds"));assert(live.includes("applyPlayedYouthMatch")&&live.includes("matchCtx.youth"))
-const poor=configurePitch("natural","poor",2026),synthetic=configurePitch("synthetic","good",2026);assert(pitchInjuryFrequencyMultiplier(poor)>pitchInjuryFrequencyMultiplier(synthetic));assert(pitchInjuryDurationMultiplier(synthetic)>1);assert(synthetic.monthlyMaintenance<configurePitch("natural","good",2026).monthlyMaintenance);assert(pitchUpgradeCost(poor,"natural","good")>0);assert(recoveryWeeksForSurface(4,pitchInjuryDurationMultiplier(synthetic))===6);assert(rollInjuryRisk({age:25,fatigue:50,matchIntensity:70,pitchLevel:3,medicalLevel:2,recentInjuries:0,pitchFrequencyMultiplier:1.5}).risk>0)
+const poor=configurePitch("natural","poor",2026),synthetic=configurePitch("synthetic","good",2026);assert(pitchInjuryFrequencyMultiplier(poor)>pitchInjuryFrequencyMultiplier(synthetic));assert(pitchInjuryDurationMultiplier(synthetic)>1);assert(synthetic.monthlyMaintenance<configurePitch("natural","good",2026).monthlyMaintenance);assert(pitchUpgradeCost(poor,"natural","good")>0) // ⚠️ As duas assercoes que existiam aqui chamavam `lib/injury-engine`, modulo
+// sem um unico importador no jogo (removido na 1.0.351). As lesoes de verdade
+// nascem em lib/game-engine, com PlayerInjury e o departamento medico.
 const sponsor=generateOffers(60,2)[0],sponsorCounter=counterSponsorOffer(sponsor,sponsor.sponsor.monthlyValue*1.05,2);assert(sponsorCounter.result==="accepted");const newGame=readFileSync("app/novo-jogo/page.tsx","utf8");assert(!newGame.includes('>Sub-20</button>'))
 console.log("QA 1.0.69 OK: mercado, gramado, lesões, patrocínios e Sub-20 oculto")

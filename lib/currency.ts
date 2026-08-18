@@ -67,6 +67,14 @@ function groupBR(n: number): string {
 function compactBR(value: number, prefix: string): string {
   const neg = value < 0 ? "-" : ""
   const v = Math.abs(value)
+  // BILHAO tem escala propria: sem ela, o valor de mercado de um gigante saia
+  // como "R$ 3410 mi" — numero que ninguem le. Foi por isso que a vitrine do
+  // clube escreveu o proprio formatador com R$ chumbado; agora ela pode usar
+  // este e respeitar a moeda escolhida.
+  if (v >= 1_000_000_000) {
+    const n = (v / 1_000_000_000).toFixed(2).replace(/0$/, "").replace(/\.$/, "").replace(".", ",")
+    return `${neg}${prefix}${n} bi`
+  }
   if (v >= 1_000_000) {
     const n = (v / 1_000_000).toFixed(1).replace(/\.0$/, "").replace(".", ",")
     return `${neg}${prefix}${n} mi`

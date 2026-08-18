@@ -1,5 +1,6 @@
 "use client"
 
+import { formatCurrency } from "@/lib/currency"
 import { useState } from "react"
 import {
   Dialog,
@@ -252,7 +253,7 @@ export function MedicalModal({
                         </div>
                         {custo > 0 && (
                           <div className="text-xs text-[#ffd700] font-semibold">
-                            R$ {(custo / 1000).toFixed(0)}K
+                            {formatCurrency(custo)}
                           </div>
                         )}
                       </button>

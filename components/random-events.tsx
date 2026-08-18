@@ -19,6 +19,7 @@ import {
   ChevronRight
 } from "lucide-react"
 import type { RandomEvent, EventChoice } from "@/lib/game-engine"
+import { formatCurrency } from "@/lib/currency"
 
 interface RandomEventsProps {
   events?: RandomEvent[]
@@ -247,7 +248,7 @@ export function RandomEvents({ events = [], onResolveEvent, compact = false }: R
                       <DollarSign className="h-4 w-4" />
                       <span className="text-sm font-medium">
                         {selectedEvent.financialImpact > 0 ? "+" : ""}
-                        R$ {Math.abs(selectedEvent.financialImpact).toLocaleString("pt-BR")}
+                        {formatCurrency(Math.abs(selectedEvent.financialImpact))}
                       </span>
                     </div>
                   )}
@@ -285,7 +286,7 @@ export function RandomEvents({ events = [], onResolveEvent, compact = false }: R
                           <div className="flex items-center gap-4 mt-2 text-xs text-white/50">
                             {choice.cost > 0 && (
                               <span className="text-red-400">
-                                -R$ {choice.cost.toLocaleString("pt-BR")}
+                                -{formatCurrency(choice.cost)}
                               </span>
                             )}
                             <span className="flex items-center gap-1">

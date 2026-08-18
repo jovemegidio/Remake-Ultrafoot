@@ -38,6 +38,7 @@ import { getCompetitionsForConfederation } from "@/lib/national-competitions"
 import type { NationalOffer } from "@/lib/save-system"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { formatCurrency } from "@/lib/currency"
 
 // ---------------------------------------------------------
 // PROPOSTAS
@@ -94,7 +95,7 @@ function OfferCard({
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-lg bg-white/[0.03] p-3">
           <p className="text-white/40">Salário mensal</p>
-          <p className="mt-1 font-semibold text-white">R$ {baseSalary.toLocaleString("pt-BR")}</p>
+          <p className="mt-1 font-semibold text-white">{formatCurrency(baseSalary)}</p>
         </div>
         <div className="rounded-lg bg-white/[0.03] p-3">
           <p className="text-white/40">Duração</p>
@@ -125,7 +126,7 @@ function OfferCard({
               className="mt-1 w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-white"
             />
             <span className="mt-1 block text-[11px] text-white/35">
-              A federação não passa de R$ {tetoSalarial.toLocaleString("pt-BR")} por mês.
+              A federação não passa de {formatCurrency(tetoSalarial)} por mês.
             </span>
           </label>
           <label className="block text-xs text-white/60">Contrato (meses)

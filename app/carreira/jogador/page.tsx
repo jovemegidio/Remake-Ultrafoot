@@ -21,8 +21,10 @@ import { useGameManager } from "@/lib/use-game-manager"
 import { getTeamByFileKey } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { conversasDoMomento, responderConversa, rotuloDoInterlocutor } from "@/lib/conversas-do-atleta"
+import { formatCurrency } from "@/lib/currency"
 import {
   aceitarProposta, arquetipo, confiancaMerecida, encerrarTemporada, fazerPedido,
   hierarquiaDaPosicao, jogarProximaRodada, leituraDaPersonalidade, potencialVisivel,
@@ -75,6 +77,7 @@ function corDaNota(nota: number): string {
 export default function CarreiraDeJogadorPage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
   const { state, setState } = useGameState()
+  const t = useTranslation()
   const { initializeNewGame } = useGameManager()
   const carreira = state.carreiraDeJogador
   // ⚠️ A ABA VEM DA URL QUANDO VEM DE FORA. O menu do modo atleta linka para
@@ -87,6 +90,18 @@ export default function CarreiraDeJogadorPage() {
   const proxima = useMemo(
     () => carreira?.calendario.find(f => !f.played && f.isUserMatch),
     [carreira],
+  )
+  /**
+   * A liga acabou mas o mata-mata nao (1.0.351).
+   *
+   * Sem esta distincao a tela dizia "Temporada concluida. Encerre para virar o
+   * ano" enquanto o botao de encerrar ainda nao funcionava — porque a temporada
+   * so fecha depois da final da copa. Ver `jogarProximaRodada`.
+   */
+  const mataMataPendente = useMemo(
+    () => !proxima && !carreira?.temporadaEncerrada
+      && [carreira?.copa, carreira?.continental].some(b => b && !b.champion && b.userEliminatedAtRound === undefined),
+    [proxima, carreira],
   )
 
   if (!carreira) {
@@ -119,10 +134,28 @@ export default function CarreiraDeJogadorPage() {
   const conversas = conversasDoMomento(carreira)
 
   return (
-    <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
+    /* ⚠️ O FUNDO E O CORTE, na mesma correção (1.0.352).
+     *
+     * O usuário relatou duas vezes uma "borda preta" no escritório do atleta, e
+     * na segunda foi específico: ela estava CORTANDO OS DADOS. Não era enfeite —
+     * `pb-14` reserva 56 px, e no rodapé há a barra de controle MAIS a barra do
+     * FC Hub. O conteúdo passava por baixo delas e sumia no meio de uma frase.
+     * `pb-36` devolve o fim do cartão ao jogador.
+     *
+     * E o escritório ganha o fundo que o usuário mandou (02.png convertido para
+     * WebP: 1,39 MB → 65 KB). Ele fica FIXO e coberto por um véu escuro: sem o
+     * véu, texto branco sobre foto de estádio é ilegível — e a tela existe para
+     * ser lida, não para exibir a foto. */
+    <main className="relative h-dvh overflow-y-auto text-white">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url(/images/pre-jogo/in-game-02.webp)" }}
+      />
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[#06090d]/88" />
       <GameHeader />
       <GameSidebar />
-      <div className="mx-auto max-w-[1500px] px-5 pb-14 pt-20 lg:pl-24">
+      <div className="mx-auto max-w-[1500px] px-5 pb-36 pt-20 lg:pl-24">
 
         {/* ── Cabeçalho: quem, onde e em que pé está ── */}
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -262,7 +295,7 @@ export default function CarreiraDeJogadorPage() {
                     </div>
                   </div>
                   <p className="mt-3 text-sm text-white/70">
-                    R$ {p.salarioSemanal.toLocaleString("pt-BR")}/semana · {p.temporadas} temporadas
+                    {formatCurrency(p.salarioSemanal)}/semana · {p.temporadas} temporadas
                   </p>
                   <p className="mt-1 text-[11px] text-white/40">{p.motivo}</p>
                   <Button className="mt-3 w-full" onClick={() => aplicar(aceitarProposta(carreira, p.id))}>Aceitar</Button>
@@ -301,14 +334,65 @@ export default function CarreiraDeJogadorPage() {
                     {proxima.homeCurto === carreira.clubeCurto ? proxima.awayNome : proxima.homeNome}
                   </p>
                   <p className="text-xs text-white/45">
-                    {proxima.homeCurto === carreira.clubeCurto ? "Em casa" : "Fora"} · rodada {proxima.round} · {proxima.competition}
+                    {proxima.homeCurto === carreira.clubeCurto ? t.carreiraDeJogador.em_casa : "Fora"} · rodada {proxima.round} · {proxima.competition}
                   </p>
                   <p className="mt-4 text-xs text-white/45">Expectativa do treinador</p>
                   <p className="text-sm font-bold text-[var(--brand)]">{minutosEsperados(carreira)}</p>
+                  {/* INDISPONIBILIDADE. A lesão só falava por recado, e a suspensão
+                      não existia (1.0.351). Quem vê "expectativa: titular" e não entra
+                      em campo acha que o jogo quebrou — a razão precisa estar aqui. */}
+                  {(carreira.suspensao?.partidasRestantes ?? 0) > 0 && (
+                    <p className="mt-3 rounded-lg border border-red-400/25 bg-red-400/[.08] px-3 py-2 text-xs text-red-200/85">
+                      Suspenso por {carreira.suspensao!.motivo}: fica de fora de{" "}
+                      {carreira.suspensao!.partidasRestantes} partida{carreira.suspensao!.partidasRestantes > 1 ? "s" : ""}.
+                    </p>
+                  )}
+                  {(carreira.lesao?.semanasRestantes ?? 0) > 0 && (
+                    <p className="mt-2 rounded-lg border border-amber-400/25 bg-amber-400/[.08] px-3 py-2 text-xs text-amber-100/85">
+                      Lesão {carreira.lesao!.gravidade}: {carreira.lesao!.semanasRestantes} semana(s) de recuperação.
+                    </p>
+                  )}
+                  {(carreira.amarelosAcumulados ?? 0) >= 3 && !carreira.suspensao && (
+                    <p className="mt-2 text-[11px] text-amber-300/70">
+                      {carreira.amarelosAcumulados} amarelos — o quinto suspende.
+                    </p>
+                  )}
                 </>
               ) : (
-                <p className="mt-3 text-white/45">Temporada concluída. Encerre para virar o ano.</p>
+                <p className="mt-3 text-white/45">
+                  {mataMataPendente
+                    ? "Liga encerrada — falta a decisão do mata-mata. Simule para jogá-la."
+                    : "Temporada concluída. Encerre para virar o ano."}
+                </p>
               )}
+
+              {/* COPA E CONTINENTAL (1.0.351). A temporada do atleta era só a liga;
+                  agora ela tem mata-mata, e o jogador precisa ver em que fase está —
+                  senão os jogos aparecem na súmula vindos do nada. */}
+              {(carreira.copa || carreira.continental) && (
+                <div className="mt-4 space-y-1.5 border-t border-white/10 pt-3">
+                  {[carreira.copa, carreira.continental].filter(Boolean).map(chave => {
+                    const bracket = chave!
+                    const campeao = bracket.champion === carreira.clubeNome
+                    const eliminado = bracket.userEliminatedAtRound !== undefined
+                    return (
+                      <p key={bracket.competition} className="flex items-center justify-between gap-3 text-xs">
+                        <span className="text-white/55">{bracket.competition}</span>
+                        <span className={cn(
+                          "font-bold",
+                          campeao ? "text-[var(--brand)]" : eliminado ? "text-white/35" : "text-amber-300/85",
+                        )}>
+                          {campeao ? "campeão!"
+                            : eliminado ? "eliminado"
+                              : bracket.champion ? "encerrada"
+                                : `na disputa · ${bracket.currentCupRound}ª fase`}
+                        </span>
+                      </p>
+                    )
+                  })}
+                </div>
+              )}
+
               <div className="mt-5 flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={() => aplicar(fazerPedido(carreira, "mais_minutos"))}>Pedir minutos</Button>
                 <Button variant="outline" size="sm" onClick={() => aplicar(fazerPedido(carreira, "transferencia"))}>Pedir transferência</Button>
@@ -325,17 +409,17 @@ export default function CarreiraDeJogadorPage() {
               <div className="mt-4 space-y-1 border-t border-white/10 pt-3 text-[11px] text-white/45">
                 <p>
                   Contrato até <b className="text-white/70">{carreira.contrato.ateTemporada}</b> ·{" "}
-                  R$ {carreira.contrato.salarioSemanal.toLocaleString("pt-BR")}/semana
+                  {formatCurrency(carreira.contrato.salarioSemanal)}/semana
                   {carreira.contrato.statusPrometido ? ` · prometido: ${carreira.contrato.statusPrometido}` : ""}
                 </p>
                 {(carreira.contrato.bonusPorGol ?? 0) > 0 && (
                   <p>
-                    Bônus: R$ {(carreira.contrato.bonusPorGol ?? 0).toLocaleString("pt-BR")} por gol ·{" "}
-                    R$ {(carreira.contrato.bonusPorTitulo ?? 0).toLocaleString("pt-BR")} por título
+                    Bônus: {formatCurrency((carreira.contrato.bonusPorGol ?? 0))} por gol ·{" "}
+                    {formatCurrency((carreira.contrato.bonusPorTitulo ?? 0))} por título
                   </p>
                 )}
                 <p>
-                  Ganhos na temporada: <b className="text-emerald-300/80">R$ {carreira.ganhosDaTemporada.toLocaleString("pt-BR")}</b>
+                  Ganhos na temporada: <b className="text-emerald-300/80">{formatCurrency(carreira.ganhosDaTemporada)}</b>
                 </p>
                 <p className="pt-1">
                   Empresário: <b className="text-white/70">{carreira.empresario.nome}</b> ·{" "}
@@ -458,13 +542,24 @@ export default function CarreiraDeJogadorPage() {
               </section>
             )}
 
-            {/* REPERCUSSÃO — o eco do que o save produziu. */}
-            {(carreira.repercussao?.length ?? 0) > 0 && (
-              <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-                <h2 className="text-xl font-black">Repercussão</h2>
-                <p className="mt-1 text-[11px] text-white/40">
-                  Reputação {carreira.reputacao ?? 30} · torcida {carreira.torcida ?? 50}
+            {/* REPERCUSSÃO — o eco do que o save produziu.
+                ⚠️ ELA APARECE SEMPRE (1.0.351). Antes só existia com conteúdo, e
+                numa carreira recém-criada não há nenhum: o bloco sumia e sobrava
+                uma FAIXA PRETA ocupando a metade de baixo da tela — foi o que o
+                usuário relatou com print. Espaço morto num modo novo dá a
+                impressão de tela inacabada, e a correção não é encolher a caixa:
+                é dizer o que vai acontecer ali. */}
+            <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
+              <h2 className="text-xl font-black">Repercussão</h2>
+              <p className="mt-1 text-[11px] text-white/40">
+                Reputação {carreira.reputacao ?? 30} · torcida {carreira.torcida ?? 50}
+              </p>
+              {(carreira.repercussao?.length ?? 0) === 0 && (
+                <p className="mt-4 text-sm leading-relaxed text-white/45">
+                  {t.carreiraDeJogador.repercussao_vazia}
                 </p>
+              )}
+              {(carreira.repercussao?.length ?? 0) > 0 && (
                 <div className="mt-3 max-h-[300px] space-y-2 overflow-auto">
                   {(carreira.repercussao ?? []).map(post => (
                     <div key={post.id} className="rounded-xl bg-black/30 p-3">
@@ -473,8 +568,8 @@ export default function CarreiraDeJogadorPage() {
                     </div>
                   ))}
                 </div>
-              </section>
-            )}
+              )}
+            </section>
 
             {/* ÚLTIMAS PARTIDAS */}
             <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
@@ -489,8 +584,8 @@ export default function CarreiraDeJogadorPage() {
                     </div>
                     <p className="mt-1 text-[11px] text-white/45">
                       {p.minutos > 0
-                        ? <>{p.titular ? "Titular" : "Entrou"} · {p.minutos}′ · {p.gols}G {p.assistencias}A{p.cartao ? ` · cartão ${p.cartao}` : ""}</>
-                        : "Não saiu do banco"}
+                        ? <>{p.titular ? t.carreiraDeJogador.titular : "Entrou"} · {p.minutos}′ · {p.gols}G {p.assistencias}A{p.cartao ? ` · cartão ${p.cartao}` : ""}</>
+                        : t.carreiraDeJogador.nao_saiu_do_banco}
                       {p.minutos > 0 && <span className={cn("ml-2 font-black", corDaNota(p.nota))}>{p.nota.toFixed(1)}</span>}
                     </p>
                   </div>

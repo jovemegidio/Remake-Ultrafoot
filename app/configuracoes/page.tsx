@@ -244,7 +244,14 @@ export default function ConfiguracoesPage() {
     await new Promise(resolve => setTimeout(resolve, 500))
     // Salvar as configuracoes E uma decisao sobre o online: a partir daqui o
     // jogo para de ligar/desligar sozinho por causa da internet.
-    setState({ selectedUniform, language, multiplayerEnabled, multiplayerDefinidoPeloJogador: true, managers, controllerType, commentaryEnabled, commentaryVoice, commentaryVolume: commentaryVolume[0], autoSaveInterval, sfxVolume: sfxVolume[0], matchSpeed, notificationsEnabled: notifications })
+    // ⚠️ SO E "ESCOLHA DO JOGADOR" SE ELE MEXEU NO INTERRUPTOR (corrigido na
+    // 1.0.352). A versao anterior marcava a decisao a CADA salvamento desta
+    // tela: quem entrou aqui para mudar o volume ficava, sem saber, optado para
+    // fora do online automatico — e voltava a ter de ligar tudo na mao, que era
+    // exatamente a reclamacao. Agora a marca so entra quando o valor MUDOU.
+    const mexeuNoOnline = multiplayerEnabled !== Boolean(state.multiplayerEnabled)
+    setState({ selectedUniform, language, multiplayerEnabled,
+      ...(mexeuNoOnline ? { multiplayerDefinidoPeloJogador: true } : {}), managers, controllerType, commentaryEnabled, commentaryVoice, commentaryVolume: commentaryVolume[0], autoSaveInterval, sfxVolume: sfxVolume[0], matchSpeed, notificationsEnabled: notifications })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)

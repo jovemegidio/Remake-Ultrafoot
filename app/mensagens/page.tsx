@@ -11,6 +11,7 @@ import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameEngine } from "@/lib/game-engine"
 import { acceptOffer, counterSponsorOffer, generateOffers } from "@/lib/sponsor-engine"
 import { cn } from "@/lib/utils"
+import { formatCurrency } from "@/lib/currency"
 
 type MessageFilter = "all" | "unread" | "important"
 
@@ -108,8 +109,8 @@ export default function MensagensPage() {
             <div className="mt-3 grid gap-3 lg:grid-cols-3">
               {sponsorOffers.filter(offer => offer.status !== "rejected").map(offer => (
                 <div key={offer.sponsor.id} className="rounded-lg bg-black/30 p-3">
-                  <div className="flex justify-between gap-2"><b>{offer.sponsor.name}</b><span className="text-[var(--brand)]">R$ {offer.sponsor.monthlyValue.toLocaleString("pt-BR")}/mês</span></div>
-                  <p className="mt-1 text-[11px] text-white/45">{offer.durationSeasons} temporada(s) · bônus por título R$ {(offer.sponsor.bonuses.titleBonus ?? 0).toLocaleString("pt-BR")}</p>
+                  <div className="flex justify-between gap-2"><b>{offer.sponsor.name}</b><span className="text-[var(--brand)]">{formatCurrency(offer.sponsor.monthlyValue)}/mês</span></div>
+                  <p className="mt-1 text-[11px] text-white/45">{offer.durationSeasons} temporada(s) · bônus por título {formatCurrency((offer.sponsor.bonuses.titleBonus ?? 0))}</p>
                   {offer.message && <p className="mt-2 text-xs text-amber-200">{offer.message}</p>}
                   {counteringSponsor === offer.sponsor.id && <div className="mt-2 grid grid-cols-2 gap-2"><input aria-label="Valor mensal da contraproposta" type="number" value={counterMonthly} onChange={event => setCounterMonthly(Number(event.target.value))} className="rounded bg-white/10 p-2 text-xs" /><input aria-label="Duração da contraproposta" type="number" min={1} max={5} value={counterDuration} onChange={event => setCounterDuration(Number(event.target.value))} className="rounded bg-white/10 p-2 text-xs" /></div>}
                   <div className="mt-3 flex gap-2"><button onClick={() => acceptSponsor(offer.sponsor.id)} className="flex-1 rounded bg-[var(--brand)] px-2 py-1.5 text-xs font-bold text-[var(--brand-ink)]">Aceitar</button><button onClick={() => { if (counteringSponsor === offer.sponsor.id) counterSponsor(offer.sponsor.id); else { setCounteringSponsor(offer.sponsor.id); setCounterMonthly(Math.round(offer.sponsor.monthlyValue * 1.1)); setCounterDuration(offer.durationSeasons) } }} className="flex-1 rounded bg-amber-400/15 px-2 py-1.5 text-xs text-amber-200">{counteringSponsor === offer.sponsor.id ? "Enviar" : "Contraproposta"}</button></div>

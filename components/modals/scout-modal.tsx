@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { type Scout, type Player } from "@/lib/game-engine"
+import { formatCurrency } from "@/lib/currency"
 
 interface ScoutModalProps {
   open: boolean
@@ -68,10 +69,7 @@ export function ScoutModal({
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
   const [selectedScout, setSelectedScout] = useState<Scout | null>(null)
 
-  const formatSalary = (value: number) => {
-    if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1)}M`
-    return `R$ ${(value / 1000).toFixed(0)}K`
-  }
+  const formatSalary = (value: number) => formatCurrency(value)
 
   const renderStars = (skill: number) => {
     return Array(5).fill(0).map((_, i) => (

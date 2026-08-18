@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { formatCurrency } from "@/lib/currency"
 
 interface FilterOptions {
   positions: string[]
@@ -80,15 +81,8 @@ export function FilterModal({
     setLocalFilters(defaultFilters)
   }
 
-  const formatValue = (value: number) => {
-    if (value >= 1000000) {
-      return `R$ ${(value / 1000000).toFixed(1)}M`
-    }
-    if (value >= 1000) {
-      return `R$ ${(value / 1000).toFixed(0)}K`
-    }
-    return `R$ ${value}`
-  }
+  // Ver components/modals/contract-modal: a moeda vem da preferencia do jogador.
+  const formatValue = (value: number) => formatCurrency(value)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

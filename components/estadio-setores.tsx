@@ -30,6 +30,7 @@ import {
   type PorSetor, type SetorId,
 } from "@/lib/stadium-sectors"
 import type { GameState } from "@/lib/save-system"
+import { formatCurrency, getCurrency } from "@/lib/currency"
 
 /** O que vive no save. `estadoInicialDoEstadio` devolve o mesmo, sem obra. */
 type EstadoDoEstadio = NonNullable<GameState["estadioSetores"]>
@@ -47,7 +48,8 @@ interface Props {
   gastar: (valor: number) => boolean
 }
 
-const brl = (n: number) => `R$ ${Math.round(n).toLocaleString("pt-BR")}`
+// Moeda do jogador, nao R$ chumbado: `formatCurrency` converte pelo cambio escolhido.
+const brl = (n: number) => formatCurrency(Math.round(n))
 
 export function EstadioSetores({
   saveState, setSaveState, capacidadeAtual, prestigio, ocupacaoProjetada, saldo, gastar,
@@ -135,7 +137,7 @@ export function EstadioSetores({
               <label className="mt-2 block text-[10px] uppercase tracking-wide text-white/40">
                 Ingresso
                 <div className="mt-1 flex items-center gap-1">
-                  <span className="text-xs text-white/50">R$</span>
+                  <span className="text-xs text-white/50">{getCurrency().symbol}</span>
                   <input
                     type="number"
                     min={1}

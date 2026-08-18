@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-08-18T14:02:26.251Z",
-  "scannedFiles": 477,
+  "generatedAt": "2026-08-18T18:56:53.302Z",
+  "scannedFiles": 470,
   "totals": {
     "notImplemented": 0,
-    "skeleton": 33,
+    "skeleton": 28,
     "todo": 2,
     "mock": 12
   },
   "activeNotImplementedFunctions": 0,
   "actionableMarkers": 3,
-  "documentationMarkers": 44,
+  "documentationMarkers": 39,
   "priorityFiles": [],
   "findings": [
     {
@@ -188,12 +188,6 @@
     },
     {
       "type": "skeleton",
-      "file": "lib/discipline-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — cartões, suspensão, multa, indisciplina, briga no treino."
-    },
-    {
-      "type": "skeleton",
       "file": "lib/hall-of-fame-engine.ts",
       "line": 2,
       "text": "// Status: skeleton — clubes treinados, títulos, reputação, aproveitamento, ranking."
@@ -218,38 +212,20 @@
     },
     {
       "type": "skeleton",
-      "file": "lib/injury-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — leve, muscular, grave, recaída, sacrifício."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib/interviews-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — impactam moral, imprensa, torcida, diretoria, jogador específico."
-    },
-    {
-      "type": "skeleton",
       "file": "lib/match-decisions.ts",
       "line": 3,
       "text": "// ⚠️ O cabeçalho deste arquivo dizia \"Status: skeleton\" até a 1.0.292 e isso"
     },
     {
-      "type": "skeleton",
-      "file": "lib/multiplayer-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — 2-4 técnicos no mesmo save, turnos semanais,"
-    },
-    {
       "type": "mock",
       "file": "lib/save-system.ts",
-      "line": 1477,
+      "line": 1479,
       "text": "// que era limpo ao atualizar e fazia o jogo \"sumir\" (calendario/partidas em mock)."
     },
     {
       "type": "mock",
       "file": "lib/save-system.ts",
-      "line": 1768,
+      "line": 1770,
       "text": "// primeiro render e as telas ficariam em mock/vazio."
     },
     {
@@ -257,12 +233,6 @@
       "file": "lib/sponsor-engine.ts",
       "line": 2,
       "text": "// Status: skeleton — master, fornecedor, bônus, penalidade, renovação."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib/staff-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — auxiliar, prep físico, médico, fisio, analista, olheiro,"
     },
     {
       "type": "mock",
