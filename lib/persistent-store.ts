@@ -81,6 +81,8 @@ function _isTauri(): boolean {
  * Se este arquivo sumir ou corromper, nada se perde de verdade: o universo é
  * reconstruível pela semeadura (~1,8 s). Ver `lerUniverso` em lib/save-system.
  */
+/** A mesma chave de `save-system`, repetida aqui para não criar ciclo. */
+const CHAVE_CARREIRA_ATIVA = "ultrafoot:active-career"
 const ARQUIVO_PRINCIPAL = "ultrafoot-clubs.json"
 const ARQUIVO_DO_UNIVERSO = "ultrafoot-universo.json"
 const PREFIXO_UNIVERSO = "ultrafoot:universo:"
@@ -232,7 +234,22 @@ async function _init(): Promise<void> {
 
       // O universo vem do arquivo dele para o MESMO cache — por isso storeGet
       // continua síncrono e nenhuma tela precisou mudar.
-      await _carregarUniversoParaOCache()
+      // ⚠️ SEM CARREIRA ABERTA, O UNIVERSO NÃO ENTRA NA MEMÓRIA (1.0.356).
+      //
+      // Medido nesta máquina: o arquivo do universo tem 42,3 MB e custa
+      // **158 MB de heap** — 85 MB só para segurar o texto e mais 74 MB depois
+      // do `JSON.parse` — além de ~300 ms. E como toda navegação do jogo é
+      // recarga completa, isso se paga a cada troca de tela.
+      //
+      // Na splash, no menu principal e nas telas de online não há carreira
+      // aberta e ninguém lê o universo: carregá-lo ali é gastar 158 MB de RAM
+      // numa máquina modesta para não usar nada. É o caminho mais provável de um
+      // "out of memory" logo na abertura, que é justamente onde ele mais dói.
+      //
+      // Com carreira aberta ele continua vindo — quem joga precisa do mundo.
+      if (cache.get(CHAVE_CARREIRA_ATIVA)) {
+        await _carregarUniversoParaOCache()
+      }
       // E o que ficou no arquivo antigo muda de casa agora. Sem este passo, o
       // arquivo principal continuaria carregando os 42 MB que o tornam caro de
       // reescrever, e a separação só valeria para carreira nova.

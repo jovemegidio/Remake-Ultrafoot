@@ -283,6 +283,20 @@ export const CAMPOS_DE_SAVE_DO_MUNDO = [
   "language", "campoHorizontal", "controllerType", "controllerBindings",
   "commentaryEnabled", "commentaryVoice", "commentaryVolume", "sfxVolume",
   "matchSpeed", "notificationsEnabled", "autoSaveInterval", "lastAutoSaveMatchCount",
+  // ⚠️ ACRESCENTADOS DEPOIS, E O GATE COBROU (1.0.356). Campo novo no save que
+  // ninguém classifica não fica "neutro": no co-op ele viaja no bolso de um
+  // técnico ou some na troca, e o defeito aparece semanas depois como
+  // "minha configuração mudou sozinha".
+  //
+  //  · `multiplayerDefinidoPeloJogador` — a decisão sobre o online é da MÁQUINA,
+  //    como o volume: quem desligou no sofá desligou para os dois.
+  //  · `painelDoAtletaRecolhido` — preferência de tela, mesma família.
+  //  · `modalidade` — o que ESTE save é (profissional, feminino, sub-20, atleta).
+  //    Não muda por técnico; se mudasse, um co-op viraria dois jogos diferentes.
+  //  · `carreiraDeJogador` — a carreira de atleta inteira. Ela nem convive com
+  //    co-op de técnicos, e por isso não pode ser tratada como metade de ninguém.
+  "multiplayerDefinidoPeloJogador", "painelDoAtletaRecolhido",
+  "modalidade", "carreiraDeJogador",
 ] as const
 
 /**

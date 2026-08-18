@@ -9,11 +9,17 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "1.0.356: o jogo ficou mais leve para rodar",
+      "category": "Atualizacao",
+      "body": "O mundo simulado era carregado inteiro a cada troca de tela — 158 MB de memoria, inclusive na abertura e no menu, onde ele nao e usado. Agora so entra quando voce esta jogando uma carreira. Junto vem o Manager Rush, um desafio diario jogavel, a partida abrindo mais rapido e quase 1 GB de backups antigos que o jogo passou a reconhecer como descartaveis. Suas carreiras continuam intactas.",
+      "date": "2026-08-18",
+      "pinned": true
+    },
+    {
       "title": "1.0.349: o caminho da traducao esta aberto",
       "category": "Atualizacao",
       "body": "Traduzir o Ultrafoot era impossivel por um motivo tecnico: o jogo exigia que todo idioma tivesse todas as frases, entao cada frase nova em portugues quebrava os outros tres. Isso acabou. Agora cada idioma cresce no seu ritmo e o que ainda nao foi traduzido aparece em portugues, nunca em branco. O ingles ja avancou nas telas de configuracoes e de elenco. O resto vem por partes, e agora da para medir o quanto falta.",
-      "date": "2026-08-18",
-      "pinned": true
+      "date": "2026-08-18"
     },
     {
       "title": "1.0.348: cartas novas e 136 MB a menos",
@@ -276,9 +282,22 @@
   ],
   "changelog": [
     {
-      "version": "1.0.349",
+      "version": "1.0.356",
       "data": "2026-08-18",
       "latest": true,
+      "titulo": "Menos memoria, menos disco e um modo online novo",
+      "itens": [
+        "O JOGO PESA MUITO MENOS NA MEMORIA: o mundo simulado (42 MB) era carregado a cada troca de tela, inclusive na abertura e no menu, onde ninguem o usa. Medido: 158 MB de memoria por tela, gastos a toa. Agora ele so entra quando ha carreira aberta — e isso e o que mais reduz risco de travar em computador modesto.",
+        "MANAGER RUSH, JOGAVEL: um desafio por dia, igual para todo mundo. Voce assume aos 60 minutos perdendo e tem ate o apito para resolver. A partida e disputada pelo motor de verdade, e nada disso encosta na sua carreira.",
+        "A PARTIDA ABRE MAIS RAPIDO: a lista de clubes era peneirada do zero a cada tela (3.064 clubes). Agora isso e feito uma vez, na compilacao.",
+        "MENOS ESPACO EM DISCO: backups antigos de correcoes ja aplicadas ficavam na pasta do jogo ocupando quase 1 GB. O jogo agora sabe reconhece-los.",
+        "CO-OP LOCAL CORRIGIDO: quatro ajustes do save nao eram classificados entre \"do tecnico\" e \"da mesa\", e podiam mudar sozinhos ao trocar de tecnico.",
+        "Bandeiras, icones dos modos online, fundo do escritorio do atleta e narracao da partida na carreira de jogador."
+      ]
+    },
+    {
+      "version": "1.0.349",
+      "data": "2026-08-18",
       "titulo": "O jogo comecou a ficar traduzivel de verdade",
       "itens": [
         "O QUE TRAVAVA A TRADUCAO NAO ERA FALTA DE TRADUTOR: todo idioma precisava ter TODA frase para o jogo compilar. Escrever uma frase nova em portugues quebrava ingles, espanhol e italiano de uma vez. Agora cada idioma tem o que tem, e o que falta aparece em portugues — nunca em branco e nunca com codigo na tela.",
