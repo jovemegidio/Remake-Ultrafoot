@@ -1,9 +1,15 @@
 {
-  "version": "1.0.344",
-  "notes": "Ultrafoot 26 v1.0.344",
+  "version": "1.0.346",
+  "notes": "Se o jogo nao abria para voce, abre agora. A tela preta ao iniciar vinha do arquivo de dados crescendo sem limite: cada carreira salva guardava uma copia do mundo inteiro (~42 MB) e nenhuma era apagada. Agora fica so o mundo da carreira ativa, e ele se refaz sozinho em segundos. Salvar tambem ficou 7x mais barato e a abertura mais rapida. Suas carreiras continuam intactas.",
   "sizeMb": 492,
-  "sha256": "CA873E9E6ADCCBB073D64B59E3D2EFD79EFB01AC9C926F8C3B5F234F07A6ED2E",
+  "sha256": "34E94C0C2F8DF465F27FDD5C3801FC08AFA8DE26C392DBDAD373839E0A4AA506",
   "anteriores": [
+    {
+      "version": "1.0.344",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.344/Ultrafoot.26_1.0.344_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.344",
+      "sizeMb": 492
+    },
     {
       "version": "1.0.343",
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.343/Ultrafoot.26_1.0.343_x64-setup.exe",
@@ -51,18 +57,12 @@
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.321/Ultrafoot.26_1.0.321_x64-setup.exe",
       "notes": "Ultrafoot 26 v1.0.321",
       "sizeMb": 685
-    },
-    {
-      "version": "1.0.320",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.320/Ultrafoot.26_1.0.320_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.320",
-      "sizeMb": 685
     }
   ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUdEcUUwREJxbEp2VWlZS3ZyZnJtMnBIZVZ4WGZVYkoxTlFsNzl2QUlRYVJYRGZUQmVycE8vUzluQUVJNnFVdzR0Uk9xamx0M0pDRThaamoyUEZEWUFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2OTk0MzkyCWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNDRfeDY0LXNldHVwLmV4ZQphbVJEMGZFT045aEJoRkJzTWROQ0lWZVlIYUdGM3NsV1IyOTN0S0R3bVU1VEk4VmczL25uVmZJQ0ZTazhoQ2FCOWp1MU5DK2N6c1FySFNsWHlMNURCZz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.344_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRU1XaTdLMmZlSWpoTlZVVnBuM1A0THp1Z3Vma0VtbVhVZnp3MEJKVTMrV0k3RUMyOStoUlJaODZaSFRTQTNUNmx3MnRQYzdFTjBYKzNmcVhYWWpXSUFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3MDE1NDU3CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNDZfeDY0LXNldHVwLmV4ZQpzd05jb0l3bFl2b2pmdXM5NW16KzJXNmNYeHFOdFdZbnduQWZzYWFtVndYOGh2TWhpeTJ6Q3Z5ZXg2aGRrc2ZhcXo0K3JmQmNLeERrQ2VMYXJjdmJCUT09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.346_x64-setup.exe"
     }
   }
 }
