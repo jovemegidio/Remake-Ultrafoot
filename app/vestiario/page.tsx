@@ -237,7 +237,7 @@ export default function VestiarioPage() {
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3 scrollbar-premium">
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2 scrollbar-premium">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -353,7 +353,7 @@ export default function VestiarioPage() {
               Estado do Elenco
             </h2>
             
-            <div className="space-y-4 max-h-[620px] overflow-y-auto scrollbar-thin">
+            <div className="space-y-4 max-h-[540px] overflow-y-auto scrollbar-thin">
               {Object.entries(playersByMorale).map(([moral, players]) => {
                 if (players.length === 0) return null
                 const Icon = getMoralIcon(moral)

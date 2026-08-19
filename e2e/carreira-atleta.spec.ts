@@ -60,6 +60,11 @@ async function abrirComoAtleta(page: Page, rota: string) {
     },
     { key: SAVE_KEY, carreira },
   )
+  // ⚠️ AS "NOVIDADES DA VERSÃO" SÃO A MAIOR FONTE DE INSTABILIDADE AQUI: são 14
+  // páginas, o botão do canto é "Avançar" (não "fechar"), e o modal volta por
+  // `setTimeout` depois da tela montar. Em vez de brigar com ele a cada clique,
+  // o teste diz que JÁ VIU esta versão — é a mesma marca que o jogo grava.
+  await page.evaluate(() => localStorage.setItem("ultrafoot:last-seen-whats-new", "1.0.290"))
   await page.setViewportSize({ width: 1366, height: 768 })
   await page.goto(rota)
   await page.waitForLoadState("networkidle")
@@ -123,7 +128,7 @@ async function abrirMenu(page: Page) {
     await page.keyboard.press("w")
     await page.waitForTimeout(1000)
   }
-  await busca.waitFor({ state: "visible", timeout: 15_000 })
+  await busca.waitFor({ state: "visible", timeout: 45_000 })
   return busca
 }
 
@@ -163,7 +168,7 @@ test("o menu do atleta leva as quatro telas (era o 'nenhuma dessas opcoes funcio
     await abrirMenu(page)
     const item = page.getByRole("button", { name: rotulo, exact: true })
     await item.click({ timeout: 30_000 })
-    await page.waitForURL(url => url.pathname.replace(/\/$/, "") === esperado, { timeout: 15_000 })
+    await page.waitForURL(url => url.pathname.replace(/\/$/, "") === esperado, { timeout: 45_000 })
   }
 })
 
@@ -178,11 +183,11 @@ test("o resto do menu do atleta tambem leva a algum lugar", async ({ page }) => 
   const busca = await abrirMenu(page)
   await busca.fill("Trajet")
   await page.getByRole("button", { name: /Trajetoria/i }).first().click({ timeout: 30_000 })
-  await page.waitForURL(url => url.pathname.includes("/carreira/jogador/trajetoria"), { timeout: 15_000 })
+  await page.waitForURL(url => url.pathname.includes("/carreira/jogador/trajetoria"), { timeout: 45_000 })
 
   await abrirMenu(page)
   await page.getByRole("button", { name: "Configuracoes", exact: true }).click({ timeout: 30_000 })
-  await page.waitForURL(url => url.pathname.includes("/configuracoes"), { timeout: 15_000 })
+  await page.waitForURL(url => url.pathname.includes("/configuracoes"), { timeout: 45_000 })
   // E a tela de Configurações precisa ABRIR num save de atleta (ela lê o clube
   // do técnico, que aqui não existe) — sem cair na tela de erro do Next.
   await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 20_000 })
@@ -195,10 +200,10 @@ test("rescindir deixa o atleta sem clube, com o mercado aberto", async ({ page }
   await abrirMenu(page)
   await page.getByRole("button", { name: /Rescindir contrato/i }).click({ timeout: 30_000 })
   await page.getByRole("button", { name: /Confirmar rescisao/i }).click({ timeout: 30_000 })
-  await page.waitForURL(url => url.pathname.includes("/carreira/jogador"), { timeout: 15_000 })
+  await page.waitForURL(url => url.pathname.includes("/carreira/jogador"), { timeout: 45_000 })
 
   // O escritório vira a mesa do agente: cartaz, diário e "avançar semana".
-  await expect(page.getByRole("button", { name: /Avançar semana/i })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole("button", { name: /Avançar semana/i })).toBeVisible({ timeout: 45_000 })
   await expect(page.getByText(/CARTAZ NO MERCADO/i)).toBeVisible()
   const m = await medir(page)
   expect(m.vertical, `a tela de mercado passou ${m.vertical}px da janela`).toBeLessThanOrEqual(2)

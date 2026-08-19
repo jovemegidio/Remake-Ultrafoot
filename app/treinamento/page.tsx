@@ -277,7 +277,7 @@ export default function TreinamentoPage() {
 
   // 8 por pagina. Comecou em 12 e a medicao acusou 230px de conteudo CORTADO
   // (4 linhas a mais): com overflow-hidden o excedente nao vira barra, some.
-  const paginaDoElenco = usePaginacao(filteredPlayers, 6)
+  const paginaDoElenco = usePaginacao(filteredPlayers, 4)
 
   const router = useRouter()
   const [gpPlayerIdx, setGpPlayerIdx] = useState(0)
@@ -422,8 +422,53 @@ export default function TreinamentoPage() {
             1/3 da tela estas duas secoes somavam 1.637px junto com o painel
             do atleta. Com a largura inteira, em 2 colunas, cada uma cai para
             ~250px e sobra altura para a lista do elenco embaixo. */}
-        <div className="grid shrink-0 items-start gap-4 xl:grid-cols-2">
-        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+        <div className="grid shrink-0 items-start gap-4 xl:grid-cols-3">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
+            <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
+              <Dumbbell className="h-4 w-4 text-[var(--brand)]" />
+              TIPO DE TREINAMENTO
+            </div>
+
+            <div className="space-y-2">
+              {trainingTypes.map(type => {
+                const Icon = type.icon
+                const isSelected = selectedTraining === type.id
+                const currentValue = selectedPlayer ? (selectedPlayer[type.id as keyof Player] as number) : 0
+                const maxValue = selectedPlayer?.potential || 99
+                const canImprove = currentValue < maxValue
+                
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => selectedPlayer && canImprove && setSelectedTraining(type.id)}
+                    disabled={!selectedPlayer || !canImprove}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left",
+                      isSelected 
+                        ? "border-[var(--brand)] bg-[var(--brand)]/10" 
+                        : "border-white/[0.04] hover:border-white/10 hover:bg-white/5",
+                      (!selectedPlayer || !canImprove) && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", type.bgColor)}>
+                      <Icon className={cn("h-5 w-5", type.color)} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-white text-sm">{type.name}</div>
+                      <div className="text-[10px] text-white/40">{type.description}</div>
+                    </div>
+                    {selectedPlayer && (
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-white">{currentValue}</div>
+                        <div className="text-[10px] text-white/40">max {maxValue}</div>
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-white/60">
@@ -625,7 +670,7 @@ export default function TreinamentoPage() {
             </p>
           )}
         </section>
-        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-medium text-white/60">
               <Users className="h-4 w-4 text-[var(--brand)]" />
@@ -874,7 +919,7 @@ export default function TreinamentoPage() {
 
 
             {/* Jogador Selecionado */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
                 <Target className="h-4 w-4 text-[var(--brand)]" />
                 JOGADOR SELECIONADO
@@ -950,51 +995,6 @@ export default function TreinamentoPage() {
             </div>
 
             {/* Tipos de Treinamento */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
-              <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
-                <Dumbbell className="h-4 w-4 text-[var(--brand)]" />
-                TIPO DE TREINAMENTO
-              </div>
-
-              <div className="space-y-2">
-                {trainingTypes.map(type => {
-                  const Icon = type.icon
-                  const isSelected = selectedTraining === type.id
-                  const currentValue = selectedPlayer ? (selectedPlayer[type.id as keyof Player] as number) : 0
-                  const maxValue = selectedPlayer?.potential || 99
-                  const canImprove = currentValue < maxValue
-                  
-                  return (
-                    <button
-                      key={type.id}
-                      onClick={() => selectedPlayer && canImprove && setSelectedTraining(type.id)}
-                      disabled={!selectedPlayer || !canImprove}
-                      className={cn(
-                        "w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left",
-                        isSelected 
-                          ? "border-[var(--brand)] bg-[var(--brand)]/10" 
-                          : "border-white/[0.04] hover:border-white/10 hover:bg-white/5",
-                        (!selectedPlayer || !canImprove) && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", type.bgColor)}>
-                        <Icon className={cn("h-5 w-5", type.color)} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-white text-sm">{type.name}</div>
-                        <div className="text-[10px] text-white/40">{type.description}</div>
-                      </div>
-                      {selectedPlayer && (
-                        <div className="text-right">
-                          <div className="text-sm font-bold text-white">{currentValue}</div>
-                          <div className="text-[10px] text-white/40">max {maxValue}</div>
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
 
             {/* APRENDER UMA POSICAO.
                 Ate esta versao so se aprendia posicao JOGANDO nela — para adaptar
@@ -1003,7 +1003,7 @@ export default function TreinamentoPage() {
                 gramado (70 minutos equivalentes contra 90), mas sem risco.
                 ⚠️ Ocupa o MESMO slot do treino de atributo. */}
             {selectedPlayer && (
-              <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+              <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
                 <div className="mb-4 flex items-center gap-2 text-xs font-medium text-white/60">
                   <Dumbbell className="h-4 w-4 text-cyan-300" />
                   APRENDER UMA POSICAO

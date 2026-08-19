@@ -124,7 +124,7 @@ export default function DesafiosPage() {
 
         {/* CATÁLOGO */}
         <section>
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-white/40">
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-white/40">
             {emAndamento ? "Outros cenários (indisponíveis enquanto há um desafio ativo)" : "Escolha um cenário"}
           </h2>
           {!emAndamento && comecaNaProxima && state.selectedTeamShort && (
@@ -328,7 +328,7 @@ function CartaoDoDesafio({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-xl border bg-[#0c0c10] p-5 transition",
+        "flex flex-col rounded-xl border bg-[#0c0c10] p-3 transition",
         ehOAtivo ? "border-[var(--brand)]/40" : "border-white/[0.05] hover:border-white/15",
         bloqueado && !ehOAtivo && "opacity-45",
       )}
@@ -343,7 +343,7 @@ function CartaoDoDesafio({
         </span>
       </div>
 
-      <h3 className="mt-3 text-base font-bold text-white">{config.nome}</h3>
+      <h3 className="mt-2 text-base font-bold text-white">{config.nome}</h3>
       <p className="mt-1 text-xs leading-relaxed text-white/50">{config.descricao}</p>
 
       <p className="mt-3 text-[11px] text-white/35">Ideal em: {config.clubeIdeal}</p>

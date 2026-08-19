@@ -591,7 +591,7 @@ export default function DashboardPage() {
         )}
 
         {/* Central hub estilo EA FC */}
-        <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr] items-start">
+        <section className="grid gap-3 lg:grid-cols-[1.2fr_1fr] items-start">
           {/* Coluna esquerda: data, proximo jogo e tarefas */}
           <div>
             {(() => {
@@ -778,7 +778,7 @@ export default function DashboardPage() {
         </section>
 
         <div className="grid items-start gap-3 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-5">
+          <div className="grid items-start gap-3 lg:col-span-2 2xl:grid-cols-2">
             {nextMatches.length > 0 && (
               <MatchCarousel
                 matches={nextMatches.map((f, i) => ({
@@ -864,7 +864,7 @@ export default function DashboardPage() {
             </section>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-3">
             {salaryCritical && (
               <section className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
                 <div className="flex items-start gap-3">

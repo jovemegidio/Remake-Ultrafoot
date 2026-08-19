@@ -69,21 +69,31 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       // caso real de push engolido pelo export estatico, e ai sim o
       // recarregamento e a unica saida. O teto absoluto existe para o caso de a
       // transicao nunca resolver.
-      const INTERVALO_MS = 250
-      // Piso generoso: recarregar custa ~15 MB e ~15 s; esperar custa segundos.
-      // Enquanto a transicao do React estiver pendente, espera-se mais ainda.
-      const PISO_MS = 10000
-      const TETO_MS = 25000
+      // ⚠️ DUAS SITUACOES DIFERENTES, MEDIDAS UMA A UMA (19/08/2026):
+      //
+      //   • De `/carreira/jogador` para as outras telas do atleta, o push
+      //     FUNCIONA e leva de 90 ms a 2,5 s. Um prazo curto e cego mata essa
+      //     navegacao no meio e recarrega o app por nada — 15 MB e ~15 s.
+      //   • De `/novo-jogo` (a criacao de carreira) o push NAO FUNCIONA no
+      //     export: medido sem carreira nenhuma, a URL nao muda em 30 s. Ali o
+      //     recarregamento e a UNICA saida, e cada milissegundo de espera antes
+      //     dele e atraso puro — foi o que deixou o usuario 30 s vendo o aviso
+      //     de "Montando a sua temporada...".
+      //
+      // Por isso o socorro nao e mais um cronometro fixo: enquanto a transicao
+      // do React estiver PENDENTE, a navegacao esta em curso e ninguem
+      // interrompe; quando ela nao esta, o push nao pegou e o recarregamento sai
+      // na hora, sem penalizar quem depende dele.
+      const INTERVALO_MS = 200
+      const RESPIRO_MS = 400   // o push tem esse tempo para virar transicao
+      const TETO_MS = 25000    // transicao que nunca resolve nao prende ninguem
       let esperado = 0
       const conferir = () => {
         const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`
         if (currentHref !== previousHref) return
         esperado += INTERVALO_MS
         if (pendenteRef.current && esperado < TETO_MS) { window.setTimeout(conferir, INTERVALO_MS); return }
-        if (esperado < PISO_MS) { window.setTimeout(conferir, INTERVALO_MS); return }
-        // Migalha de diagnostico: o recarregamento apaga tudo o que estava na
-        // memoria, entao o registro de que ELE aconteceu precisa sobreviver.
-        try { window.sessionStorage.setItem("ultrafoot:nav-recarregou", String(esperado)) } catch {}
+        if (esperado < RESPIRO_MS) { window.setTimeout(conferir, INTERVALO_MS); return }
         const staticHref = normalizeAppHref(clientHref)
         if (replace) window.location.replace(staticHref)
         else window.location.assign(staticHref)

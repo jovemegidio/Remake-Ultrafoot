@@ -365,7 +365,7 @@ export default function FinancasPage() {
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 scrollbar-thin">
+      <main className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2 scrollbar-thin">
         {/* Header + abas, no padrão da referência: título forte à esquerda, abas
             em texto (ativa em branco), contexto da temporada à direita. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -628,7 +628,7 @@ export default function FinancasPage() {
             numa janela de 853px — enquanto sobravam ~800px de largura vazia.
             `items-start` é o que faz a economia existir: sem ele o grid estica
             os irmãos à altura do mais alto e a altura volta ao que era. */}
-        <div className="grid items-start gap-2 xl:grid-cols-2">
+        <div className="grid items-start gap-1 xl:grid-cols-2">
           <div className="grid gap-3 lg:grid-cols-2">
             {/* Income Breakdown */}
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">

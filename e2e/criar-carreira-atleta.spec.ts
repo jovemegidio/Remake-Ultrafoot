@@ -18,6 +18,11 @@ test("cria a carreira de atleta e cai no escritorio", async ({ page }) => {
   await page.addInitScript(() => { sessionStorage.setItem("ultrafoot:session-active", "true") })
   await page.goto("/splash")
   await page.evaluate(() => localStorage.clear())
+  // ⚠️ AS "NOVIDADES DA VERSÃO" SÃO A MAIOR FONTE DE INSTABILIDADE AQUI: são 14
+  // páginas, o botão do canto é "Avançar" (não "fechar"), e o modal volta por
+  // `setTimeout` depois da tela montar. Em vez de brigar com ele a cada clique,
+  // o teste diz que JÁ VIU esta versão — é a mesma marca que o jogo grava.
+  await page.evaluate(() => localStorage.setItem("ultrafoot:last-seen-whats-new", "1.0.290"))
   await page.setViewportSize({ width: 1366, height: 768 })
   await page.goto("/novo-jogo?modo=jogador")
   await page.waitForLoadState("networkidle")
@@ -37,10 +42,23 @@ test("cria a carreira de atleta e cai no escritorio", async ({ page }) => {
   // e engolem o clique. Por isso cada tentativa fecha o que estiver por cima
   // antes de tentar de novo — é o que uma pessoa faria.
   const fecharNovidades = async () => {
-    await page.evaluate(() => {
-      const m = [...document.querySelectorAll("div")].find(d => d.className.toString().includes("z-[9998]"))
-      const b = m?.querySelectorAll("button"); if (b?.length) b[b.length - 1].click()
-    })
+    // ⚠️ O modal tem CATORZE páginas e o botão do canto é "Avançar": um clique só
+    // não fecha nada. Ele também volta por `setTimeout` depois da tela montar,
+    // então cada tentativa precisa insistir do zero.
+    for (let i = 0; i < 18; i++) {
+      // ⚠️ O `evaluate` morre com "execution context destroyed" quando a criação
+      // termina e o app recarrega no meio do laço. Isso não é falha do jogo: é o
+      // teste olhando uma página que já foi embora.
+      const fechou = await page.evaluate(() => {
+        const m = [...document.querySelectorAll("div")].find(d => d.className.toString().includes("z-[9998]"))
+        if (!m) return true
+        const b = m.querySelectorAll("button")
+        if (b.length) b[b.length - 1].click()
+        return false
+      }).catch(() => true)
+      if (fechou) return
+      await page.waitForTimeout(80)
+    }
   }
   const clicarComPaciencia = async (nome: RegExp) => {
     for (let i = 0; i < 12; i++) {
@@ -52,11 +70,18 @@ test("cria a carreira de atleta e cai no escritorio", async ({ page }) => {
       await page.evaluate((texto: string) => {
         const b = [...document.querySelectorAll("button")].find(x => new RegExp(texto, "i").test(x.textContent ?? ""))
         b?.scrollIntoView({ block: "center" })
-      }, nome.source)
+      }, nome.source).catch(() => undefined)
       try {
         await page.getByRole("button", { name: nome }).click({ timeout: 5_000 })
         return
-      } catch { await page.waitForTimeout(500) }
+      } catch {
+        // ⚠️ O CLIQUE PODE TER FUNCIONADO. "Iniciar carreira" leva o app a
+        // recarregar na tela nova: o clique seguinte não acha mais o botão e o
+        // laço acusaria falha numa criação que DEU CERTO — foi assim que este
+        // teste ficou instável. Se o escritório já está na tela, acabou.
+        if (await page.getByRole("heading", { name: "Atleta Repro", level: 1 }).count()) return
+        await page.waitForTimeout(500)
+      }
     }
     throw new Error("nao consegui clicar em " + nome)
   }

@@ -1108,7 +1108,7 @@ export default function CompeticoesPage() {
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 scrollbar-premium">
+      <main className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-1.5 scrollbar-premium">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -1123,185 +1123,194 @@ export default function CompeticoesPage() {
         </div>
 
         {/* Competition Cards */}
-        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
-          {competitions.map((comp) => {
-            const Icon = comp.icon
-            const isActive = activeTab === comp.id
+        {/* LADO A LADO (pedido: tudo na tela, sem rolagem).
+            Empilhados, os cartoes (141px) e a tabela (602px) somavam as duas
+            alturas: a tela pedia 1.047px de 853 disponiveis, com ~800px de
+            largura sobrando ao lado. Em duas colunas a altura passa a ser a do
+            MAIOR dos dois. `items-start` para nao esticar a coluna curta. */}
+        <div className="grid min-h-0 flex-1 items-start gap-3 xl:grid-cols-[240px_1fr]">
+        <div className="flex flex-col gap-2">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+            {competitions.map((comp) => {
+              const Icon = comp.icon
+              const isActive = activeTab === comp.id
             
-            return (
-              <button
-                key={comp.id}
-                onClick={() => setActiveTab(comp.id)}
-                className={cn(
-                  "rounded-xl bg-[#0c0c10] border p-3 text-left transition-all",
-                  isActive 
-                    ? "border-[var(--brand)] ring-1 ring-[var(--brand)]" 
-                    : "border-white/[0.04] hover:border-white/10"
-                )}
-              >
-                <div className="flex items-start justify-between">
-                  {/* Logo real da competicao quando existir; senao, o icone generico. */}
-                  {getCompetitionLogo(comp.name) ? (
-                    <div className="flex h-10 w-10 items-center justify-center">
-                      <img
-                        src={getCompetitionLogo(comp.name)!}
-                        alt={comp.name}
-                        className="h-10 w-10 object-contain"
-                      />
-                    </div>
-                  ) : (
-                    <div className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-lg",
-                      comp.bgColor
-                    )}>
-                      <Icon className={cn("h-5 w-5", comp.color)} />
-                    </div>
+              return (
+                <button
+                  key={comp.id}
+                  onClick={() => setActiveTab(comp.id)}
+                  className={cn(
+                    "rounded-xl bg-[#0c0c10] border p-3 text-left transition-all",
+                    isActive 
+                      ? "border-[var(--brand)] ring-1 ring-[var(--brand)]" 
+                      : "border-white/[0.04] hover:border-white/10"
                   )}
-                  {comp.userPosition && (
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand)]/20 text-sm font-bold text-[var(--brand)]">
-                      {comp.userPosition}
-                    </span>
-                  )}
-                </div>
-                <h3 className="mt-4 font-semibold text-white text-sm">{comp.name}</h3>
-                <div className="mt-1 flex items-center gap-2 text-xs text-white/50">
-                  <span>{comp.type}</span>
-                  <span className="text-white/20">|</span>
-                  <Users className="h-3 w-3" />
-                  <span>{t.competitions.teamCount(comp.teams)}</span>
-                </div>
-                {/* Periodo REAL da competicao em 2026 (Copa do Mundo 11 jun – 19 jul,
-                    etc.). O motor e por semana; isto e a data de verdade exibida.
-                    Casa pelo NOME porque o card usa id generico. */}
-                {periodoLabelPorNome(comp.name, currentSeason) && (
-                  <div className="mt-1 flex items-center gap-1.5 text-[11px] text-white/40">
-                    <CalendarRange className="h-3 w-3" />
-                    <span>{periodoLabelPorNome(comp.name, currentSeason)}</span>
+                >
+                  <div className="flex items-start justify-between">
+                    {/* Logo real da competicao quando existir; senao, o icone generico. */}
+                    {getCompetitionLogo(comp.name) ? (
+                      <div className="flex h-10 w-10 items-center justify-center">
+                        <img
+                          src={getCompetitionLogo(comp.name)!}
+                          alt={comp.name}
+                          className="h-10 w-10 object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-lg",
+                        comp.bgColor
+                      )}>
+                        <Icon className={cn("h-5 w-5", comp.color)} />
+                      </div>
+                    )}
+                    {comp.userPosition && (
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand)]/20 text-sm font-bold text-[var(--brand)]">
+                        {comp.userPosition}
+                      </span>
+                    )}
                   </div>
-                )}
-                <div className={cn(
-                  "mt-3 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wider",
-                  comp.bgColor,
-                  comp.color
-                )}>
-                  {comp.status}
-                </div>
-              </button>
-            )
-          })}
+                  <h3 className="mt-4 font-semibold text-white text-sm">{comp.name}</h3>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-white/50">
+                    <span>{comp.type}</span>
+                    <span className="text-white/20">|</span>
+                    <Users className="h-3 w-3" />
+                    <span>{t.competitions.teamCount(comp.teams)}</span>
+                  </div>
+                  {/* Periodo REAL da competicao em 2026 (Copa do Mundo 11 jun – 19 jul,
+                      etc.). O motor e por semana; isto e a data de verdade exibida.
+                      Casa pelo NOME porque o card usa id generico. */}
+                  {periodoLabelPorNome(comp.name, currentSeason) && (
+                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-white/40">
+                      <CalendarRange className="h-3 w-3" />
+                      <span>{periodoLabelPorNome(comp.name, currentSeason)}</span>
+                    </div>
+                  )}
+                  <div className={cn(
+                    "mt-3 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wider",
+                    comp.bgColor,
+                    comp.color
+                  )}>
+                    {comp.status}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
         </div>
+        <div className="min-h-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="bg-[#1a1a1a] border border-white/10 p-1 h-auto">
+              {/* Rotulos vinham fixos em "Serie A / Serie B / Copa do Brasil / Estadual":
+                  com a Juventus, o jogador via abas brasileiras. Agora seguem o pais do clube. */}
+              <TabsTrigger
+                value="brasileirao"
+                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
+              >
+                {getLeagueName(userTeam.curto)}
+              </TabsTrigger>
+              {/* A aba "Serie B" saiu: ela aparecia para TODO clube brasileiro,
+                  inclusive os que jogam a A, a C ou a D — uma competicao que o
+                  tecnico nao disputa. As demais so aparecem se houver partida
+                  agendada para o clube nelas. */}
+              {competicoesDoClube.copa && (
+                <TabsTrigger
+                  value="copa-do-brasil"
+                  className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
+                >
+                  {competicoesDoClube.nomeDaCopa}
+                </TabsTrigger>
+              )}
+              {competicoesDoClube.estadual && (
+                <TabsTrigger
+                  value="estadual"
+                  className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
+                >
+                  Estadual
+                </TabsTrigger>
+              )}
+              {competicoesDoClube.continental && (
+                <TabsTrigger
+                  value="libertadores"
+                  className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
+                >
+                  {competicoesDoClube.nomeContinental}
+                </TabsTrigger>
+              )}
+            </TabsList>
 
-        {/* Standings Table */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-[#1a1a1a] border border-white/10 p-1 h-auto">
-            {/* Rotulos vinham fixos em "Serie A / Serie B / Copa do Brasil / Estadual":
-                com a Juventus, o jogador via abas brasileiras. Agora seguem o pais do clube. */}
-            <TabsTrigger
-              value="brasileirao"
-              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-            >
-              {getLeagueName(userTeam.curto)}
-            </TabsTrigger>
-            {/* A aba "Serie B" saiu: ela aparecia para TODO clube brasileiro,
-                inclusive os que jogam a A, a C ou a D — uma competicao que o
-                tecnico nao disputa. As demais so aparecem se houver partida
-                agendada para o clube nelas. */}
+            <TabsContent value="brasileirao" className="mt-4">
+              <CompViewTabs value={compView} onChange={setCompView} />
+              {compView === "classificacao" ? (
+                <StandingsTable standings={serieAStandings} userTeam={userTeam} division="serie_a" />
+              ) : (
+                <ScorersTable
+                  rows={scorersFor(serieAStandings.map(s => s.team.curto))}
+                  userCurto={userTeam.curto}
+                  metric={compView === "artilheiros" ? "goals" : "assists"}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="serie-b" className="mt-4">
+              <CompViewTabs value={compView} onChange={setCompView} />
+              {compView === "classificacao" ? (
+                <StandingsTable standings={serieBStandings} userTeam={userTeam} division="serie_b" />
+              ) : (
+                <ScorersTable
+                  rows={scorersFor(serieBStandings.map(s => s.team.curto))}
+                  userCurto={userTeam.curto}
+                  metric={compView === "artilheiros" ? "goals" : "assists"}
+                />
+              )}
+            </TabsContent>
+
+            {/* ⚠️ O GATILHO da aba ja era escondido para quem nao disputa a copa,
+                mas o CONTEUDO nao: bastava o `activeTab` cair em "copa-do-brasil"
+                — pelo estado salvo, ou pelo LB/RB do controle, que percorre a
+                lista de abas sem olhar quem esta disputando — para o chaveamento
+                aparecer inteiro, com o botao de simular. Era o relato "a Copa do
+                Brasil ainda aparece e deixa simular" num clube de Serie D. */}
             {competicoesDoClube.copa && (
-              <TabsTrigger
-                value="copa-do-brasil"
-                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-              >
-                {competicoesDoClube.nomeDaCopa}
-              </TabsTrigger>
-            )}
-            {competicoesDoClube.estadual && (
-              <TabsTrigger
-                value="estadual"
-                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-              >
-                Estadual
-              </TabsTrigger>
-            )}
-            {competicoesDoClube.continental && (
-              <TabsTrigger
-                value="libertadores"
-                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-              >
-                {competicoesDoClube.nomeContinental}
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="brasileirao" className="mt-4">
-            <CompViewTabs value={compView} onChange={setCompView} />
-            {compView === "classificacao" ? (
-              <StandingsTable standings={serieAStandings} userTeam={userTeam} division="serie_a" />
-            ) : (
-              <ScorersTable
-                rows={scorersFor(serieAStandings.map(s => s.team.curto))}
-                userCurto={userTeam.curto}
-                metric={compView === "artilheiros" ? "goals" : "assists"}
+            <TabsContent value="copa-do-brasil" className="mt-4">
+              <CopaBracket
+                userTeam={userTeam}
+                state={copaBrasilStateOficial}
+                onDraw={drawCopaBrasil}
+                onSimulate={() => handleSimulateCopa(
+                  "Copa do Brasil",
+                  `${currentSeason}/${String(currentSeason + 1).slice(-2)}`
+                )}
               />
+            </TabsContent>
             )}
-          </TabsContent>
 
-          <TabsContent value="serie-b" className="mt-4">
-            <CompViewTabs value={compView} onChange={setCompView} />
-            {compView === "classificacao" ? (
-              <StandingsTable standings={serieBStandings} userTeam={userTeam} division="serie_b" />
-            ) : (
-              <ScorersTable
-                rows={scorersFor(serieBStandings.map(s => s.team.curto))}
-                userCurto={userTeam.curto}
-                metric={compView === "artilheiros" ? "goals" : "assists"}
+            <TabsContent value="estadual" className="mt-4">
+              <EstadualView
+                userTeam={userTeam}
+                name={officialStateName}
+                fixtures={officialStateFixtures}
+                standings={officialStateStandings}
+                champion={stateChampion}
               />
-            )}
-          </TabsContent>
+            </TabsContent>
 
-          {/* ⚠️ O GATILHO da aba ja era escondido para quem nao disputa a copa,
-              mas o CONTEUDO nao: bastava o `activeTab` cair em "copa-do-brasil"
-              — pelo estado salvo, ou pelo LB/RB do controle, que percorre a
-              lista de abas sem olhar quem esta disputando — para o chaveamento
-              aparecer inteiro, com o botao de simular. Era o relato "a Copa do
-              Brasil ainda aparece e deixa simular" num clube de Serie D. */}
-          {competicoesDoClube.copa && (
-          <TabsContent value="copa-do-brasil" className="mt-4">
-            <CopaBracket
-              userTeam={userTeam}
-              state={copaBrasilStateOficial}
-              onDraw={drawCopaBrasil}
-              onSimulate={() => handleSimulateCopa(
-                "Copa do Brasil",
-                `${currentSeason}/${String(currentSeason + 1).slice(-2)}`
-              )}
-            />
-          </TabsContent>
-          )}
-
-          <TabsContent value="estadual" className="mt-4">
-            <EstadualView
-              userTeam={userTeam}
-              name={officialStateName}
-              fixtures={officialStateFixtures}
-              standings={officialStateStandings}
-              champion={stateChampion}
-            />
-          </TabsContent>
-
-          <TabsContent value="libertadores" className="mt-4">
-            <LibertadoresView
-              userTeam={userTeam}
-              state={compState.libertadores}
-              onDraw={drawLibertadores}
-              competitionName={continentalName}
-              fixtures={seasonCalendar.fixtures.filter(f =>
-                f.competitionType === "continental" && f.competition === continentalName,
-              )}
-              season={currentSeason}
-              resultados={matchResults ?? []}
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="libertadores" className="mt-4">
+              <LibertadoresView
+                userTeam={userTeam}
+                state={compState.libertadores}
+                onDraw={drawLibertadores}
+                competitionName={continentalName}
+                fixtures={seasonCalendar.fixtures.filter(f =>
+                  f.competitionType === "continental" && f.competition === continentalName,
+                )}
+                season={currentSeason}
+                resultados={matchResults ?? []}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+        </div>
       </main>
 
     </div>

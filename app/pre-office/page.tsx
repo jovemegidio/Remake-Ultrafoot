@@ -500,19 +500,21 @@ export default function PreOfficePage() {
       <main className="relative z-10 flex-1 overflow-hidden flex flex-col">
         <GameHeader team={userTeam} />
 
-        {/* CADA COLUNA ROLA POR DENTRO — a pagina nao rola (pedido).
-            Antes as duas colunas rolavam JUNTAS: o feed de noticias e a coluna
-            de tarefas tem alturas bem diferentes, entao ler o fim do feed levava
-            a data e as tarefas para fora da vista.
-            `min-h-0` e nao altura em `vh`: sob o zoom do jogo o `vh` mede a
-            janela sem escala e deixa faixa morta no pe. */}
-        <div className="flex min-h-0 flex-1 overflow-hidden p-6 md:p-8">
-          <div className="mx-auto grid min-h-0 w-full max-w-7xl grid-cols-1 gap-8 lg:grid-cols-[1fr,420px]">
+        {/* ⚠️ NADA AQUI ROLA (pedido, com print).
+            A tela era duas colunas que rolavam por dentro: a de tarefas cortava
+            os botões "Voltar / Avançar" no meio, e o feed de notícias era um
+            cartão do tamanho de meia tela com foto de estádio, empurrando tudo
+            para baixo. Agora o escritório é uma coluna que CABE: cabeçalho,
+            tarefas (todas visíveis), botões — e as notícias viraram uma BARRA no
+            rodapé, que é onde a informação de uma linha pertence.
 
-            {/* Coluna Esquerda */}
-            <div className="min-h-0 space-y-6 overflow-y-auto pr-1 scrollbar-thin">
+            `min-h-0` em toda a cadeia e nada de altura em `vh`: sob o zoom do
+            jogo o `vh` mede a janela sem escala e deixa faixa morta no pé. */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-5">
+          <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3">
 
-              {/* Data atual do jogo */}
+            {/* Data atual do jogo */}
+            <div className="shrink-0">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={gameDate.toISOString()}
@@ -521,7 +523,7 @@ export default function PreOfficePage() {
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+                  <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
                     {dayOfWeek}, {month} {day}
                   </h1>
                 </motion.div>
@@ -529,94 +531,88 @@ export default function PreOfficePage() {
 
               {/* Proximo evento */}
               <motion.div
-                className="flex items-center gap-4 text-white/70"
+                className="mt-1 flex items-center gap-4 text-white/70"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
                 {daysUntilMatch !== null ? (
-                  <span className="text-lg">
+                  <span className="text-base">
                     Proxima Partida em {daysUntilMatch} dia{daysUntilMatch !== 1 ? "s" : ""}
                   </span>
                 ) : (
-                  <span className="text-lg text-white/40">Sem partidas agendadas</span>
+                  <span className="text-base text-white/40">Sem partidas agendadas</span>
                 )}
               </motion.div>
+            </div>
 
-              {/* Preview da proxima partida */}
-              <div className="flex flex-col items-center py-4">
-                {nextUserMatch && nextOpponent ? (
-                  <div className="flex items-center gap-6">
-                    <div className="flex flex-col items-center gap-2">
-                      <TeamCrest team={userTeam} size="lg" />
-                      <span className="text-xs text-white/50">Seu time</span>
-                    </div>
-                    <span className="text-white text-2xl font-bold">vs</span>
-                    <div className="flex flex-col items-center gap-2">
-                      <TeamCrest team={nextOpponent} size="lg" />
-                      <span className="text-xs text-white/50">{siglaExibivel(nextOpponent.curto, nextOpponent.nome)}</span>
-                    </div>
-                    <div className="ml-4 text-right">
-                      <div className="text-xs text-white/40 uppercase tracking-wider">{nextUserMatch.competition}</div>
-                      {(() => {
-                        const fase = faseDaPartida(nextUserMatch)
-                        if (!fase) return <div className="text-sm text-white/70">Rod. {nextUserMatch.round}</div>
-                        return (
-                          <div className={cn(
-                            "mt-0.5 inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
-                            fase.isFinal
-                              ? "bg-gradient-to-r from-[#ffd700] to-[#ffb300] text-black shadow-[0_0_12px_rgba(255,215,0,0.5)]"
-                              : fase.isKnockout ? "bg-red-500/20 text-red-300" : "bg-white/10 text-white/60",
-                          )}>
-                            {fase.isFinal ? "🏆 " : ""}{fase.label}
-                          </div>
-                        )
-                      })()}
-                    </div>
+            {/* Preview da proxima partida */}
+            <div className="flex shrink-0 flex-col items-center py-1">
+              {nextUserMatch && nextOpponent ? (
+                <div className="flex items-center gap-6">
+                  <div className="flex flex-col items-center gap-1">
+                    <TeamCrest team={userTeam} size="lg" />
+                    <span className="text-xs text-white/50">Seu time</span>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                      <Calendar className="w-8 h-8 text-white/40" />
-                    </div>
-                    <span className="text-white/40 text-sm">Nenhuma partida proxima</span>
+                  <span className="text-2xl font-bold text-white">vs</span>
+                  <div className="flex flex-col items-center gap-1">
+                    <TeamCrest team={nextOpponent} size="lg" />
+                    <span className="text-xs text-white/50">{siglaExibivel(nextOpponent.curto, nextOpponent.nome)}</span>
                   </div>
+                  <div className="ml-4 text-right">
+                    <div className="text-xs uppercase tracking-wider text-white/40">{nextUserMatch.competition}</div>
+                    {(() => {
+                      const fase = faseDaPartida(nextUserMatch)
+                      if (!fase) return <div className="text-sm text-white/70">Rod. {nextUserMatch.round}</div>
+                      return (
+                        <div className={cn(
+                          "mt-0.5 inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
+                          fase.isFinal
+                            ? "bg-gradient-to-r from-[#ffd700] to-[#ffb300] text-black shadow-[0_0_12px_rgba(255,215,0,0.5)]"
+                            : fase.isKnockout ? "bg-red-500/20 text-red-300" : "bg-white/10 text-white/60",
+                        )}>
+                          {fase.isFinal ? "🏆 " : ""}{fase.label}
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                    <Calendar className="h-7 w-7 text-white/40" />
+                  </div>
+                  <span className="text-sm text-white/40">Nenhuma partida proxima</span>
+                </div>
+              )}
+            </div>
+
+            {/* ── LISTA DE TAREFAS: TODAS VISÍVEIS ─────────────────────────
+                Ela ocupa o que sobra e os cartões dividem essa altura entre si.
+                Com muitas tarefas eles ficam mais baixos — o que não acontece
+                mais é a lista rolar por dentro e esconder o que falta fazer. */}
+            <div className="flex min-h-0 flex-1 flex-col gap-2">
+              <div className="flex shrink-0 items-center justify-between">
+                {/* O escritorio diz de quem ele e: quem dirige o Sub-20 le
+                    "o Sub-20", e quem faz carreira de atleta nao le "elenco". */}
+                <h2 className="text-sm font-medium text-white/50">
+                  Tarefas {tomDaCarreira.deQuem} ({realTasks.length})
+                </h2>
+                {saveState.week > 0 && (
+                  <span className="text-xs text-white/30">Rodada {saveState.week}</span>
                 )}
               </div>
-
-              {/* Lista de Tarefas dinamica */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  {/* O escritorio diz de quem ele e: quem dirige o Sub-20 le
-                      "o Sub-20", e quem faz carreira de atleta nao le "elenco". */}
-                  <h2 className="text-white/50 text-sm font-medium">
-                    Tarefas {tomDaCarreira.deQuem} ({realTasks.length})
-                  </h2>
-                  {saveState.week > 0 && (
-                    <span className="text-xs text-white/30">Rodada {saveState.week}</span>
-                  )}
-                </div>
 
               {/*
                 VINHETA LOCAL DA LISTA DE TAREFAS.
 
-                Os cartoes sao quase transparentes (`from-white/[0.03] to-transparent`)
-                de proposito — a arte do escritorio precisa aparecer. Só que
-                justamente ATRÁS desta lista o cenário tem as mesas e as cadeiras,
-                que é a região de maior ruído da imagem: o texto branco caía em
-                cima de bordas claras e o bloco inteiro ficava difícil de ler.
-
-                A saída é uma vinheta escura SÓ aqui, em vez de escurecer a tela
-                toda (o véu global já está no mínimo, `/45`, e subi-lo apagaria o
-                cenário que o usuário quis ver). O gradiente é radial e termina em
-                alfa 0: ele não desenha uma caixa em volta da lista — some antes
-                de chegar na borda. `-inset` faz a sombra nascer um pouco fora dos
-                cartões, senão o contorno do próprio bloco marcaria o limite.
-
-                Sem `backdrop-blur` de propósito: ele está fora do perfil padrão
-                por custo de composição (ver a nota de performance dos fundos).
+                Os cartoes sao quase transparentes de proposito — a arte do
+                escritorio precisa aparecer. Só que justamente ATRÁS desta lista o
+                cenário tem as mesas e as cadeiras, que é a região de maior ruído
+                da imagem. A vinheta é radial e termina em alfa 0: ela não desenha
+                uma caixa em volta da lista.
               */}
-              <div className="relative">
+              <div className="relative flex min-h-0 flex-1 flex-col">
                 <div
                   aria-hidden
                   className="pointer-events-none absolute -inset-x-4 -inset-y-3"
@@ -626,7 +622,7 @@ export default function PreOfficePage() {
                   }}
                 />
 
-                <div className="relative space-y-2">
+                <div className="relative flex min-h-0 flex-1 flex-col gap-2">
                   {realTasks.map((task, index) => {
                     const Icon = task.icon
                     const isSelected = index === selectedTask
@@ -639,7 +635,7 @@ export default function PreOfficePage() {
                           void abrirTarefa(task.action)
                         }}
                         className={cn(
-                          "w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left",
+                          "flex min-h-[52px] w-full flex-1 items-center gap-4 rounded-xl px-4 text-left transition-all",
                           "bg-gradient-to-r from-white/[0.03] to-transparent",
                           "border border-white/[0.06]",
                           isSelected && "border-white/20 bg-white/[0.06]",
@@ -649,191 +645,153 @@ export default function PreOfficePage() {
                         whileTap={{ scale: 0.98 }}
                       >
                         <div className={cn(
-                          "w-14 h-14 rounded-xl flex items-center justify-center",
+                          "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
                           "bg-gradient-to-br from-white/10 to-white/5",
                           task.priority === "high" && "from-amber-500/20 to-amber-500/5"
                         )}>
                           <Icon className={cn(
-                            "w-6 h-6",
+                            "h-5 w-5",
                             task.priority === "high" ? "text-amber-400" : "text-white/60"
                           )} />
                         </div>
 
-                        <div className="flex-1">
-                          <h3 className="text-white font-medium">{task.title}</h3>
-                          <div className="flex items-center gap-2 text-white/40 text-sm mt-0.5">
-                            <span className="text-xs bg-white/10 rounded px-1.5 py-0.5">A</span>
-                            <span>{task.actionLabel}</span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate font-medium text-white">{task.title}</h3>
+                          <div className="mt-0.5 flex items-center gap-2 text-sm text-white/40">
+                            <span className="rounded bg-white/10 px-1.5 py-0.5 text-xs">A</span>
+                            <span className="truncate">{task.actionLabel}</span>
                           </div>
                         </div>
 
-                        <ChevronRight className="w-5 h-5 text-white/20" />
+                        <ChevronRight className="h-5 w-5 shrink-0 text-white/20" />
                       </motion.button>
                     )
                   })}
                 </div>
-                </div>
-
-                {/* Botoes */}
-                <div className="flex items-center gap-3 pt-4">
-                  <Button
-                    variant="outline"
-                    className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10"
-                    onClick={() => hardNavigate("/")}
-                  >
-                    Voltar ao Dashboard
-                  </Button>
-                  <Button
-                    className="flex-1 bg-primary hover:bg-primary/90"
-                    onClick={handleAdvance}
-                    disabled={isAdvancing}
-                  >
-                    {isAdvancing ? "Avancando..." : "Avancar"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Coluna Direita - Feed de Noticias */}
-            <div className="min-h-0 space-y-4 overflow-y-auto pr-1 scrollbar-thin">
-              <div className="flex items-center justify-between">
-                <h2 className="text-white/50 text-sm font-medium flex items-center gap-2">
-                  <Newspaper className="w-4 h-4" />
-                  Feed de Noticias
-                </h2>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentNewsIndex(prev => (prev - 1 + news.length) % news.length)}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4 text-white/60" />
-                  </button>
-                  <button
-                    onClick={() => setCurrentNewsIndex(prev => (prev + 1) % news.length)}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <ChevronRight className="w-4 h-4 text-white/60" />
-                  </button>
-                </div>
               </div>
 
-              {currentNews && (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentNewsIndex}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="rounded-2xl overflow-hidden bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]"
+              {/* Botoes */}
+              <div className="flex shrink-0 items-center gap-3 pt-1">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-white/10 bg-white/5 text-white hover:bg-white/10"
+                  onClick={() => hardNavigate("/")}
                 >
-                  <div className="relative aspect-[16/10] bg-gradient-to-br from-green-900/50 to-green-800/30">
-                    <div
-                      className="absolute inset-0 bg-cover bg-center opacity-80"
-                      style={{ backgroundImage: "url('/stadium-bg.jpg')" }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                    {currentNews.isNew && (
-                      <span className="absolute top-3 right-3 px-3 py-1 rounded-lg bg-[#c8ff00] text-black text-xs font-bold">
-                        New
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="p-5 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center">
-                        <span className="text-xs font-bold text-white">FC</span>
-                      </div>
-                      <span className="text-white font-semibold text-sm">
-                        {NEWS_SOURCES[currentNews.source].name}
-                      </span>
-                      <span className="text-white/40 text-sm">
-                        {currentNews.date}
-                      </span>
-                    </div>
-
-                    <p className="text-white/80 text-sm leading-relaxed">
-                      {currentNews.title}{currentNews.description ? ` — ${currentNews.description}` : ""}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={() => toggleLikeNews(currentNews.id)}
-                          className={cn(
-                            "flex items-center gap-1.5 transition-colors",
-                            likedNews.has(currentNews.id) ? "text-red-400" : "text-white/50 hover:text-red-400"
-                          )}
-                        >
-                          <Heart className={cn("w-4 h-4", likedNews.has(currentNews.id) && "fill-red-400")} />
-                          <span className="text-sm">
-                            {formatNewsCount(currentNews.likes + (likedNews.has(currentNews.id) ? 1 : 0))}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => setCommentsOpen(v => !v)}
-                          className={cn(
-                            "flex items-center gap-1.5 transition-colors",
-                            commentsOpen ? "text-primary" : "text-white/50 hover:text-primary"
-                          )}
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                          <span className="text-sm">{formatNewsCount(currentNews.comments + (extraComments[currentNews.id]?.length ?? 0))}</span>
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => setCommentsOpen(v => !v)}
-                        className="flex items-center gap-1.5 text-white/50 hover:text-white transition-colors text-sm"
-                      >
-                        <PlayCircle className="w-4 h-4" />
-                        {commentsOpen ? "Ocultar Comentarios" : "Ver Comentarios"}
-                      </button>
-                    </div>
-
-                    {commentsOpen && (
-                      <div className="space-y-3 pt-2 border-t border-white/[0.06]">
-                        <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
-                          {visibleComments.map((c, i) => (
-                            <div key={i} className="flex items-start gap-2 text-sm">
-                              <span className="font-semibold text-white/70 shrink-0">{c.author}:</span>
-                              <span className="text-white/60">{c.text}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={commentDraft}
-                            onChange={(e) => setCommentDraft(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") postComment() }}
-                            placeholder="Escreva um comentario..."
-                            className="bg-white/5 border-white/10 text-white text-sm h-9"
-                          />
-                          <Button size="sm" onClick={postComment} disabled={!commentDraft.trim()}>
-                            Enviar
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-              )}
-
-              <div className="flex items-center justify-center gap-2">
-                {news.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentNewsIndex(index)}
-                    className={cn(
-                      "w-2 h-2 rounded-full transition-all",
-                      index === currentNewsIndex ? "bg-white w-6" : "bg-white/30 hover:bg-white/50"
-                    )}
-                  />
-                ))}
+                  Voltar ao Dashboard
+                </Button>
+                <Button
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                  onClick={handleAdvance}
+                  disabled={isAdvancing}
+                >
+                  {isAdvancing ? "Avancando..." : "Avancar"}
+                </Button>
               </div>
             </div>
           </div>
+
+          {/* ── AS NOTÍCIAS VIRARAM UMA BARRA (pedido, com print) ───────────
+              Era um cartão com foto de estádio de meia tela para mostrar UMA
+              frase. A barra diz a mesma coisa numa linha — fonte, quando, e a
+              manchete — com as setas para percorrer o feed e o contador de
+              curtidas/comentários no fim.
+
+              Os comentários não sumiram: eles abrem ACIMA da barra, num painel
+              curto que rola por dentro. É o único lugar da tela que rola, e só
+              quando alguém pede. */}
+          {currentNews && (
+            <div className="mx-auto mt-3 w-full max-w-5xl shrink-0">
+              {commentsOpen && (
+                <div className="mb-2 rounded-xl border border-white/[0.06] bg-black/70 p-3">
+                  <div className="max-h-32 space-y-1.5 overflow-y-auto pr-1 scrollbar-thin">
+                    {visibleComments.map((c, i) => (
+                      <div key={i} className="flex items-start gap-2 text-[13px]">
+                        <span className="shrink-0 font-semibold text-white/70">{c.author}:</span>
+                        <span className="text-white/60">{c.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Input
+                      value={commentDraft}
+                      onChange={(e) => setCommentDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") postComment() }}
+                      placeholder="Escreva um comentario..."
+                      className="h-8 border-white/10 bg-white/5 text-sm text-white"
+                    />
+                    <Button size="sm" onClick={postComment} disabled={!commentDraft.trim()}>
+                      Enviar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-black/70 px-3 py-2 backdrop-blur-sm">
+                <Newspaper className="h-4 w-4 shrink-0 text-white/40" />
+                <button
+                  onClick={() => setCurrentNewsIndex(prev => (prev - 1 + news.length) % news.length)}
+                  aria-label="Noticia anterior"
+                  className="shrink-0 rounded-lg p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentNewsIndex}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.18 }}
+                    className="flex min-w-0 flex-1 items-center gap-2"
+                  >
+                    <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-[var(--brand)]">
+                      {NEWS_SOURCES[currentNews.source].name}
+                    </span>
+                    <span className="shrink-0 text-[11px] text-white/30">{currentNews.date}</span>
+                    {currentNews.isNew && (
+                      <span className="shrink-0 rounded bg-[#c8ff00] px-1.5 text-[10px] font-black text-black">New</span>
+                    )}
+                    <span className="truncate text-sm text-white/80">
+                      {currentNews.title}{currentNews.description ? ` — ${currentNews.description}` : ""}
+                    </span>
+                  </motion.div>
+                </AnimatePresence>
+
+                <button
+                  onClick={() => setCurrentNewsIndex(prev => (prev + 1) % news.length)}
+                  aria-label="Proxima noticia"
+                  className="shrink-0 rounded-lg p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+
+                <button
+                  onClick={() => toggleLikeNews(currentNews.id)}
+                  className={cn(
+                    "flex shrink-0 items-center gap-1 text-xs transition-colors",
+                    likedNews.has(currentNews.id) ? "text-red-400" : "text-white/45 hover:text-red-400"
+                  )}
+                >
+                  <Heart className={cn("h-3.5 w-3.5", likedNews.has(currentNews.id) && "fill-red-400")} />
+                  {formatNewsCount(currentNews.likes + (likedNews.has(currentNews.id) ? 1 : 0))}
+                </button>
+                <button
+                  onClick={() => setCommentsOpen(v => !v)}
+                  className={cn(
+                    "flex shrink-0 items-center gap-1 text-xs transition-colors",
+                    commentsOpen ? "text-[var(--brand)]" : "text-white/45 hover:text-[var(--brand)]"
+                  )}
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  {formatNewsCount(currentNews.comments + (extraComments[currentNews.id]?.length ?? 0))}
+                </button>
+                <span className="hidden shrink-0 items-center gap-1 text-[10px] text-white/25 md:flex">
+                  {currentNewsIndex + 1}/{news.length}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <GamepadControlsBar
