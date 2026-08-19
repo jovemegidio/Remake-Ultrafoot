@@ -1108,7 +1108,7 @@ export default function CompeticoesPage() {
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
-      <main className="flex-1 p-4 overflow-y-auto scrollbar-premium space-y-4">
+      <main className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 scrollbar-premium">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

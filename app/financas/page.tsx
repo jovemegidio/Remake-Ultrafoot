@@ -365,7 +365,7 @@ export default function FinancasPage() {
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
-      <main className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin">
+      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 scrollbar-thin">
         {/* Header + abas, no padrão da referência: título forte à esquerda, abas
             em texto (ativa em branco), contexto da temporada à direita. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -623,251 +623,258 @@ export default function FinancasPage() {
         </div>
 
         {/* Breakdown Section */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Income Breakdown */}
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
-              <TrendingUp className="h-4 w-4 text-blue-400" />
-              <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.income.toUpperCase()}</h2>
-            </div>
-            <div className="p-4 space-y-4">
-              <FinanceItem
-                icon={Tv}
-                label={t.finances.tvRights}
-                value={dynamicFinances.income.tvRights}
-                total={dynamicFinances.income.total}
-                color="text-primary"
-                isIncome
-              />
-              <FinanceItem
-                icon={Ticket}
-                label={t.finances.ticketing}
-                value={dynamicFinances.income.ticketRevenue}
-                total={dynamicFinances.income.total}
-                color="text-accent"
-                isIncome
-                subtitle={t.finances.avgAttendanceN(dynamicFinances.avgAttendance)}
-              />
-              <FinanceItem
-                icon={Building2}
-                label={t.finances.sponsorship}
-                value={dynamicFinances.income.sponsorship}
-                total={dynamicFinances.income.total}
-                color="text-yellow-400"
-                isIncome
-              />
-              <FinanceItem
-                icon={Trophy}
-                label={t.finances.estimatedPrizes}
-                value={dynamicFinances.income.estimatedPrize}
-                total={dynamicFinances.income.total}
-                color="text-purple-400"
-                isIncome
-                subtitle={t.finances.yourPosition(userPosition)}
-              />
-            </div>
-          </div>
-
-          {/* Expense Breakdown */}
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
-              <TrendingDown className="h-4 w-4 text-red-400" />
-              <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.expenses.toUpperCase()}</h2>
-            </div>
-            <div className="p-4 space-y-4">
-              <FinanceItem
-                icon={Users}
-                label={t.finances.playerSalaries}
-                value={dynamicFinances.expenses.wages}
-                total={dynamicFinances.expenses.total}
-                color="text-red-400"
-                isIncome={false}
-                subtitle={t.finances.playersN(gameEngine.squadPlayers.length)}
-              />
-              <FinanceItem
-                icon={Target}
-                label={t.finances.scoutSalaries}
-                value={dynamicFinances.expenses.scoutWages}
-                total={dynamicFinances.expenses.total}
-                color="text-orange-400"
-                isIncome={false}
-                subtitle={t.finances.scoutsN(gameEngine.scouts.length)}
-              />
-              <FinanceItem
-                icon={Building2}
-                label={t.finances.infrastructure}
-                value={dynamicFinances.expenses.infrastructure}
-                total={dynamicFinances.expenses.total}
-                color="text-blue-400"
-                isIncome={false}
-              />
-              <FinanceItem
-                icon={Shirt}
-                label={t.finances.techStaff}
-                value={dynamicFinances.expenses.staff}
-                total={dynamicFinances.expenses.total}
-                color="text-cyan-400"
-                isIncome={false}
-              />
-              <FinanceItem
-                icon={ShoppingCart}
-                label={t.finances.other}
-                value={dynamicFinances.expenses.other}
-                total={dynamicFinances.expenses.total}
-                color="text-white/50"
-                isIncome={false}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Prize Money Section */}
-        <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
-            <Award className="h-4 w-4 text-yellow-400" />
-            <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.prizesByCompetition}</h2>
-          </div>
-          <div className="p-4 grid gap-4 md:grid-cols-3">
-            {/* Brasileirao */}
-            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-              <div className="flex items-center gap-2 mb-3">
-                <Trophy className="h-5 w-5 text-[var(--brand)]" />
-                <span className="text-sm font-medium text-white">{leagueName}</span>
+        {/* DUAS COLUNAS (pedido: tudo na tela, sem rolagem).
+            Empilhados, estes três blocos somavam ~560px e a tela pedia 1.041px
+            numa janela de 853px — enquanto sobravam ~800px de largura vazia.
+            `items-start` é o que faz a economia existir: sem ele o grid estica
+            os irmãos à altura do mais alto e a altura volta ao que era. */}
+        <div className="grid items-start gap-3 xl:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-2">
+            {/* Income Breakdown */}
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
+                <TrendingUp className="h-4 w-4 text-blue-400" />
+                <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.income.toUpperCase()}</h2>
               </div>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-white/50">{t.finances.champion}</span>
-                  <span className="text-[var(--brand)] font-medium">{formatCurrency(PRIZE_MONEY.champion)}</span>
+              <div className="p-4 space-y-4">
+                <FinanceItem
+                  icon={Tv}
+                  label={t.finances.tvRights}
+                  value={dynamicFinances.income.tvRights}
+                  total={dynamicFinances.income.total}
+                  color="text-primary"
+                  isIncome
+                />
+                <FinanceItem
+                  icon={Ticket}
+                  label={t.finances.ticketing}
+                  value={dynamicFinances.income.ticketRevenue}
+                  total={dynamicFinances.income.total}
+                  color="text-accent"
+                  isIncome
+                  subtitle={t.finances.avgAttendanceN(dynamicFinances.avgAttendance)}
+                />
+                <FinanceItem
+                  icon={Building2}
+                  label={t.finances.sponsorship}
+                  value={dynamicFinances.income.sponsorship}
+                  total={dynamicFinances.income.total}
+                  color="text-yellow-400"
+                  isIncome
+                />
+                <FinanceItem
+                  icon={Trophy}
+                  label={t.finances.estimatedPrizes}
+                  value={dynamicFinances.income.estimatedPrize}
+                  total={dynamicFinances.income.total}
+                  color="text-purple-400"
+                  isIncome
+                  subtitle={t.finances.yourPosition(userPosition)}
+                />
+              </div>
+            </div>
+
+            {/* Expense Breakdown */}
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
+                <TrendingDown className="h-4 w-4 text-red-400" />
+                <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.expenses.toUpperCase()}</h2>
+              </div>
+              <div className="p-4 space-y-4">
+                <FinanceItem
+                  icon={Users}
+                  label={t.finances.playerSalaries}
+                  value={dynamicFinances.expenses.wages}
+                  total={dynamicFinances.expenses.total}
+                  color="text-red-400"
+                  isIncome={false}
+                  subtitle={t.finances.playersN(gameEngine.squadPlayers.length)}
+                />
+                <FinanceItem
+                  icon={Target}
+                  label={t.finances.scoutSalaries}
+                  value={dynamicFinances.expenses.scoutWages}
+                  total={dynamicFinances.expenses.total}
+                  color="text-orange-400"
+                  isIncome={false}
+                  subtitle={t.finances.scoutsN(gameEngine.scouts.length)}
+                />
+                <FinanceItem
+                  icon={Building2}
+                  label={t.finances.infrastructure}
+                  value={dynamicFinances.expenses.infrastructure}
+                  total={dynamicFinances.expenses.total}
+                  color="text-blue-400"
+                  isIncome={false}
+                />
+                <FinanceItem
+                  icon={Shirt}
+                  label={t.finances.techStaff}
+                  value={dynamicFinances.expenses.staff}
+                  total={dynamicFinances.expenses.total}
+                  color="text-cyan-400"
+                  isIncome={false}
+                />
+                <FinanceItem
+                  icon={ShoppingCart}
+                  label={t.finances.other}
+                  value={dynamicFinances.expenses.other}
+                  total={dynamicFinances.expenses.total}
+                  color="text-white/50"
+                  isIncome={false}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Prize Money Section */}
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
+              <Award className="h-4 w-4 text-yellow-400" />
+              <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.prizesByCompetition}</h2>
+            </div>
+            <div className="p-4 grid gap-4 md:grid-cols-3">
+              {/* Brasileirao */}
+              <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                <div className="flex items-center gap-2 mb-3">
+                  <Trophy className="h-5 w-5 text-[var(--brand)]" />
+                  <span className="text-sm font-medium text-white">{leagueName}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">G4 (4o lugar)</span>
-                  <span className="text-white/70">{formatCurrency(PRIZE_MONEY.fourth)}</span>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{t.finances.champion}</span>
+                    <span className="text-[var(--brand)] font-medium">{formatCurrency(PRIZE_MONEY.champion)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">G4 (4o lugar)</span>
+                    <span className="text-white/70">{formatCurrency(PRIZE_MONEY.fourth)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{t.finances.yourPosition(userPosition)}</span>
+                    <span className="text-primary font-medium">
+                      {formatCurrency(Object.values(PRIZE_MONEY)[userPosition - 1] || 0)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">{t.finances.yourPosition(userPosition)}</span>
-                  <span className="text-primary font-medium">
-                    {formatCurrency(Object.values(PRIZE_MONEY)[userPosition - 1] || 0)}
+              </div>
+
+              {/* Copa do Brasil */}
+              <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                <div className="flex items-center gap-2 mb-3">
+                  <Trophy className="h-5 w-5 text-yellow-400" />
+                  <span className="text-sm font-medium text-white">{countryComps.domesticCup}</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{t.finances.champion}</span>
+                    <span className="text-yellow-400 font-medium">{formatCurrency(COPA_PRIZE.champion)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{t.finances.runnerUp}</span>
+                    <span className="text-white/70">{formatCurrency(COPA_PRIZE.runnerUp)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{t.competitions.roundOf16}</span>
+                    <span className="text-white/70">{formatCurrency(COPA_PRIZE.roundOf16)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Libertadores */}
+              <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                <div className="flex items-center gap-2 mb-3">
+                  <Trophy className="h-5 w-5 text-amber-400" />
+                  <span className="text-sm font-medium text-white">{countryComps.continental}</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{t.finances.champion}</span>
+                    <span className="text-amber-400 font-medium">{formatCurrency(LIBERTADORES_PRIZE.champion)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{t.finances.runnerUp}</span>
+                    <span className="text-white/70">{formatCurrency(LIBERTADORES_PRIZE.runnerUp)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{t.competitions.groupStage}</span>
+                    <span className="text-white/70">{formatCurrency(LIBERTADORES_PRIZE.groupStage)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Wage Budget & Recent Transactions */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* Wage Budget */}
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
+              <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider mb-4">
+                <Users className="h-4 w-4" />
+                {t.finances.wageBill}
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <div className="text-sm text-white/50">{t.finances.used}</div>
+                    <div className="text-2xl font-semibold text-white">{formatCurrency(dynamicFinances.wageUsed)}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-white/50">{t.finances.limit}</div>
+                    <div className="text-lg text-white/50">{formatCurrency(dynamicFinances.wageBudget)}</div>
+                  </div>
+                </div>
+                <Progress value={Math.min(100, wagePercentage)} className="h-2" />
+                <div className="flex items-center justify-between text-xs">
+                  <span className={wagePercentage > 90 ? "text-red-400" : "text-white/50"}>
+                    {t.finances.usedPercentage(wagePercentage.toFixed(0))}
+                  </span>
+                  <span className="text-[var(--brand)]">
+                    {formatCurrency(Math.max(0, dynamicFinances.wageBudget - dynamicFinances.wageUsed))} {t.finances.availableForHiring}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Copa do Brasil */}
-            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-              <div className="flex items-center gap-2 mb-3">
-                <Trophy className="h-5 w-5 text-yellow-400" />
-                <span className="text-sm font-medium text-white">{countryComps.domesticCup}</span>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-white/50">{t.finances.champion}</span>
-                  <span className="text-yellow-400 font-medium">{formatCurrency(COPA_PRIZE.champion)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">{t.finances.runnerUp}</span>
-                  <span className="text-white/70">{formatCurrency(COPA_PRIZE.runnerUp)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">{t.competitions.roundOf16}</span>
-                  <span className="text-white/70">{formatCurrency(COPA_PRIZE.roundOf16)}</span>
+            {/* Recent Transactions */}
+            <div className="lg:col-span-2 rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-yellow-400" />
+                  <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.recentTransactions}</h2>
                 </div>
               </div>
-            </div>
-
-            {/* Libertadores */}
-            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-              <div className="flex items-center gap-2 mb-3">
-                <Trophy className="h-5 w-5 text-amber-400" />
-                <span className="text-sm font-medium text-white">{countryComps.continental}</span>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-white/50">{t.finances.champion}</span>
-                  <span className="text-amber-400 font-medium">{formatCurrency(LIBERTADORES_PRIZE.champion)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">{t.finances.runnerUp}</span>
-                  <span className="text-white/70">{formatCurrency(LIBERTADORES_PRIZE.runnerUp)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">{t.competitions.groupStage}</span>
-                  <span className="text-white/70">{formatCurrency(LIBERTADORES_PRIZE.groupStage)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Wage Budget & Recent Transactions */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Wage Budget */}
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
-            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider mb-4">
-              <Users className="h-4 w-4" />
-              {t.finances.wageBill}
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="text-sm text-white/50">{t.finances.used}</div>
-                  <div className="text-2xl font-semibold text-white">{formatCurrency(dynamicFinances.wageUsed)}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-white/50">{t.finances.limit}</div>
-                  <div className="text-lg text-white/50">{formatCurrency(dynamicFinances.wageBudget)}</div>
-                </div>
-              </div>
-              <Progress value={Math.min(100, wagePercentage)} className="h-2" />
-              <div className="flex items-center justify-between text-xs">
-                <span className={wagePercentage > 90 ? "text-red-400" : "text-white/50"}>
-                  {t.finances.usedPercentage(wagePercentage.toFixed(0))}
-                </span>
-                <span className="text-[var(--brand)]">
-                  {formatCurrency(Math.max(0, dynamicFinances.wageBudget - dynamicFinances.wageUsed))} {t.finances.availableForHiring}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Transactions */}
-          <div className="lg:col-span-2 rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-yellow-400" />
-                <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.recentTransactions}</h2>
-              </div>
-            </div>
-            <div className="divide-y divide-white/5 max-h-64 overflow-y-auto scrollbar-thin">
-              {recentTransactions.length > 0 ? (
-                recentTransactions.map((tx, index) => (
-                  <div key={index} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                        tx.type === "income" ? "bg-[var(--brand)]/20" : "bg-red-400/20"
+              <div className="divide-y divide-white/5 max-h-64 overflow-y-auto scrollbar-thin">
+                {recentTransactions.length > 0 ? (
+                  recentTransactions.map((tx, index) => (
+                    <div key={index} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                          tx.type === "income" ? "bg-[var(--brand)]/20" : "bg-red-400/20"
+                        }`}>
+                          {tx.type === "income" ? (
+                            <ArrowUpRight className="h-4 w-4 text-[var(--brand)]" />
+                          ) : (
+                            <ArrowDownRight className="h-4 w-4 text-red-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-sm text-white">{tx.description}</div>
+                          <div className="text-xs text-white/40">{tx.date}</div>
+                        </div>
+                      </div>
+                      <span className={`text-sm font-medium ${
+                        tx.type === "income" ? "text-[var(--brand)]" : "text-red-400"
                       }`}>
-                        {tx.type === "income" ? (
-                          <ArrowUpRight className="h-4 w-4 text-[var(--brand)]" />
-                        ) : (
-                          <ArrowDownRight className="h-4 w-4 text-red-400" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="text-sm text-white">{tx.description}</div>
-                        <div className="text-xs text-white/40">{tx.date}</div>
-                      </div>
+                        {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.value)}
+                      </span>
                     </div>
-                    <span className={`text-sm font-medium ${
-                      tx.type === "income" ? "text-[var(--brand)]" : "text-red-400"
-                    }`}>
-                      {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.value)}
-                    </span>
+                  ))
+                ) : (
+                  <div className="px-5 py-8 text-center text-white/40 text-sm">
+                    {t.finances.noTransactions}
                   </div>
-                ))
-              ) : (
-                <div className="px-5 py-8 text-center text-white/40 text-sm">
-                  {t.finances.noTransactions}
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>

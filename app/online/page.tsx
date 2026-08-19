@@ -52,18 +52,26 @@ export default function OnlinePage() {
   }
 
   return (
-    <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
+    /* ⚠️ O FUNDO NEUTRO SAIU (pedido do usuário, com print).
+     *
+     * A tela era um `bg-[#06090d]` chapado com dois títulos por cima — parede
+     * preta com dez cartões. Agora ela ganha o gramado que o usuário mandou
+     * (Mercado.png convertido para WebP: 1,6 MB → 47 KB), FIXO e coberto por um
+     * véu escuro: sem o véu, texto branco sobre grama clara não se lê.
+     *
+     * E os TÍTULOS saíram junto ("remova os títulos e deixe somente os ícones e
+     * textos"). O cabeçalho "ULTRAFOOT ONLINE / Modos entre técnicos" repetia o
+     * que o próprio menu já disse para chegar aqui; o que informa é o cartão —
+     * ícone, nome do modo, estado e resumo. */
+    <main className="relative h-dvh overflow-y-auto text-white">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url(/images/pre-jogo/online-mercado.webp)" }}
+      />
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[#06090d]/82" />
       <GameHeader />
-      <div className="mx-auto max-w-[1100px] px-5 pb-14 pt-20">
-        <header className="mb-6">
-          <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">{t.online.ultrafoot_online}</p>
-          <h1 className="mt-1 text-3xl font-black">{t.online.modos_entre_tecnicos}</h1>
-          <p className="mt-1 max-w-2xl text-sm text-white/50">
-            Aqui ninguém controla jogador: você escala, monta a tática, mexe na pressão e faz as
-            substituições. O motor joga — vence quem gerencia melhor.
-          </p>
-        </header>
-
+      <div className="mx-auto max-w-[1100px] px-5 pb-14 pt-24">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {MODOS_ONLINE.map(modo => {
             const jogavel = modo.estado !== "planejado" && temDestino(modo)

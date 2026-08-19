@@ -307,7 +307,7 @@ export default function VestiarioPage() {
               Eventos Recentes
             </h2>
             
-            <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin">
+            <div className="space-y-3 max-h-[560px] overflow-y-auto scrollbar-thin">
               {events.length === 0 && (
                 <div className="rounded-lg border border-dashed border-white/10 p-6 text-center text-sm text-white/40">
                   Nenhum evento real registrado nesta carreira.
@@ -349,7 +349,7 @@ export default function VestiarioPage() {
               Estado do Elenco
             </h2>
             
-            <div className="space-y-4 max-h-[400px] overflow-y-auto scrollbar-thin">
+            <div className="space-y-4 max-h-[560px] overflow-y-auto scrollbar-thin">
               {Object.entries(playersByMorale).map(([moral, players]) => {
                 if (players.length === 0) return null
                 const Icon = getMoralIcon(moral)

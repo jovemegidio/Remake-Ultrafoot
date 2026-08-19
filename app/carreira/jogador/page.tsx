@@ -1,19 +1,30 @@
 "use client"
 
-// A TELA DA CARREIRA DE JOGADOR.
+// O ESCRITÓRIO DO ATLETA — a primeira das quatro telas do modo.
 //
-// Uma tela só, de propósito. O modo tem cinco coisas para dizer e todas cabem
-// numa leitura: onde eu jogo, se eu vou jogar, o que me cobram, como eu evoluo
-// e quem me quer. Espalhar isso por seis rotas (como o modo de técnico faz, e
-// ali faz sentido) transformaria um modo de partida-a-partida numa peregrinação
-// de menus entre uma rodada e outra.
+// ⚠️ ELA NÃO ROLA MAIS, e essa é a correção que o usuário pediu com print
+// ("remover o scroll do office do jogador"). A versão anterior era uma coluna
+// que crescia para baixo: as abas empilhavam painel sobre painel, o fim do
+// último cartão passava por baixo da barra de controle e da barra do FC Hub, e
+// o que sobrava era uma faixa preta no rodapé.
+//
+// A correção não é aumentar o `padding-bottom` (já se tentou duas vezes: pb-14
+// → pb-36). É a tela caber: `AtletaShell` fixa a altura em `h-dvh`, esta grade
+// divide o que sobra em colunas de altura inteira e QUEM ROLA É O PAINEL, por
+// dentro. Ver components/carreira-jogador/atleta-shell.
+//
+// ⚠️ E AS ABAS VIRARAM TELAS. Evolução, calendário e trajetória saíram daqui
+// para rotas próprias — era o que o menu do cabeçalho já prometia e não
+// entregava (ver o comentário do shell).
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
-  Award, BarChart3, BriefcaseBusiness, CalendarDays, ChevronRight, Flag, Newspaper, Play, Star, Target, TrendingUp, Users,
+  BarChart3, BriefcaseBusiness, CalendarDays, ChevronRight, Flag, Handshake, Newspaper,
+  Play, Star, Target, TrendingUp, Users,
 } from "lucide-react"
+
+import { AtletaShell, PainelDoAtleta, rotaDaAbaAntiga } from "@/components/carreira-jogador/atleta-shell"
 import { GameHeader } from "@/components/game-header"
-import { GameSidebar } from "@/components/game-sidebar"
 import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
 import { useGameState } from "@/lib/save-system"
@@ -26,23 +37,12 @@ import { cn } from "@/lib/utils"
 import { conversasDoMomento, responderConversa, rotuloDoInterlocutor } from "@/lib/conversas-do-atleta"
 import { formatCurrency } from "@/lib/currency"
 import {
-  aceitarProposta, arquetipo, confiancaMerecida, encerrarTemporada, fazerPedido,
-  hierarquiaDaPosicao, jogarProximaRodada, leituraDaPersonalidade, potencialVisivel,
-  reputacaoDeTreinador, resumoDaCarreira, trocarEmpresario, EMPRESARIOS,
-  entrevistaDaVez, responderEntrevista,
-  mediaDaTemporada, minutosEsperados, papelNoElenco, recusarPropostas,
-  definirIntensidadeDeTreino, type IntensidadeDeTreino,
-  type AtributosDoAtleta, type EstadoCarreiraDeJogador,
+  aceitarProposta, avancarSemanaSemClube, contrapropor, descartarProposta, encerrarTemporada,
+  entrevistaDaVez, fazerPedido, jogarProximaRodada, mediaDaTemporada, minutosEsperados,
+  papelNoElenco, potencialVisivel, recusarPropostas, reputacaoDeTreinador, responderEntrevista,
+  resumoDaCarreira, trocarEmpresario, EMPRESARIOS,
+  type EstadoCarreiraDeJogador, type PedidoDaNegociacao, type PropostaDeClube,
 } from "@/lib/carreira-de-jogador"
-
-const ATRIBUTOS: { chave: keyof AtributosDoAtleta; nome: string }[] = [
-  { chave: "ritmo", nome: "Ritmo" },
-  { chave: "finalizacao", nome: "Finalização" },
-  { chave: "passe", nome: "Passe" },
-  { chave: "drible", nome: "Drible" },
-  { chave: "defesa", nome: "Defesa" },
-  { chave: "fisico", nome: "Físico" },
-]
 
 /** Nota do treinador (0–100) nas cinco estrelas que o jogador reconhece. */
 function Estrelas({ nota }: { nota: number }) {
@@ -59,19 +59,99 @@ function Estrelas({ nota }: { nota: number }) {
   )
 }
 
-type AbaDoAtleta = "temporada" | "evolucao" | "tabela" | "historico"
-
-const ABAS_DO_ATLETA: AbaDoAtleta[] = ["temporada", "evolucao", "tabela", "historico"]
-
-/** A aba pedida na query, quando o jogador chega pelo menu. */
-function abaDaUrl(): AbaDoAtleta {
-  if (typeof window === "undefined") return "temporada"
-  const pedida = new URLSearchParams(window.location.search).get("aba")
-  return ABAS_DO_ATLETA.find(a => a === pedida) ?? "temporada"
-}
-
 function corDaNota(nota: number): string {
   return nota >= 8 ? "text-emerald-400" : nota >= 7 ? "text-[var(--brand)]" : nota >= 6 ? "text-amber-300" : "text-red-400"
+}
+
+/** Cartão da faixa de números do topo. Compacto: ele não pode roubar altura. */
+function Numero({ icone, rotulo, children, nota }: { icone: React.ReactNode; rotulo: string; children: React.ReactNode; nota?: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[.04] px-3.5 py-2.5">
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-white/45">
+        {icone}{rotulo}
+      </div>
+      <div className="mt-1 text-xl font-black leading-tight">{children}</div>
+      {nota && <p className="text-[10px] uppercase tracking-wide text-white/35">{nota}</p>}
+    </div>
+  )
+}
+
+/** Os quatro pedidos que o agente pode levar à mesa, com o rótulo da tela. */
+const PEDIDOS: { id: PedidoDaNegociacao; rotulo: string }[] = [
+  { id: "salario", rotulo: "+ salário" },
+  { id: "luvas", rotulo: "+ luvas" },
+  { id: "status", rotulo: "+ status" },
+  { id: "temporadas", rotulo: "+ tempo" },
+]
+
+/** Cartão de proposta. O mesmo em fim de temporada e no mercado de agente livre. */
+function CartaoDaProposta({
+  proposta, comMesa, onAceitar, onContrapor, onDescartar,
+}: {
+  proposta: PropostaDeClube
+  /** A mesa de negociação só existe para quem está sem clube. */
+  comMesa: boolean
+  onAceitar: () => void
+  onContrapor: (pedido: PedidoDaNegociacao) => void
+  onDescartar: () => void
+}) {
+  const retirada = Boolean(proposta.negociacao?.retirada)
+  return (
+    <div className={cn(
+      "rounded-2xl border p-4",
+      retirada ? "border-white/[.07] bg-black/30 opacity-60" : "border-[var(--brand)]/25 bg-[var(--brand)]/5",
+    )}>
+      <div className="flex items-center gap-3">
+        <TeamCrest fileKey={proposta.clubeFileKey} size="md" />
+        <div className="min-w-0">
+          <p className="truncate font-black">{proposta.clubeNome}</p>
+          <p className="text-[11px] text-white/45">
+            Prestígio {proposta.prestigio} · promete {proposta.statusPrometido}
+          </p>
+        </div>
+      </div>
+      <p className="mt-2.5 text-sm text-white/75">
+        {formatCurrency(proposta.salarioSemanal)}/semana · {proposta.temporadas} temporada(s)
+        {(proposta.luvas ?? 0) > 0 && <> · luvas {formatCurrency(proposta.luvas ?? 0)}</>}
+      </p>
+      <p className="mt-1 text-[11px] text-white/40">{proposta.motivo}</p>
+
+      {comMesa && proposta.negociacao?.ultimaResposta && (
+        <p className={cn(
+          "mt-2.5 rounded-lg border px-3 py-2 text-[11px]",
+          retirada ? "border-red-400/25 bg-red-400/[.07] text-red-200/85" : "border-white/10 bg-black/30 text-white/70",
+        )}>
+          {proposta.negociacao.ultimaResposta}
+        </p>
+      )}
+
+      {comMesa && !retirada && (
+        <>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {PEDIDOS.map(p => (
+              <button
+                key={p.id}
+                onClick={() => onContrapor(p.id)}
+                className="rounded-lg border border-white/12 bg-black/35 px-2.5 py-1 text-[11px] font-bold text-white/70 transition-colors hover:border-[var(--brand)]/40 hover:text-white"
+              >
+                {p.rotulo}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[10px] text-white/35">
+            Paciência do clube: {Math.max(0, proposta.negociacao?.paciencia ?? 0)} · cada pedido gasta uma.
+          </p>
+        </>
+      )}
+
+      <div className="mt-3 flex gap-2">
+        <Button className="flex-1" disabled={retirada} onClick={onAceitar}>Assinar</Button>
+        {comMesa && (
+          <Button variant="outline" size="sm" onClick={onDescartar}>Recusar</Button>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function CarreiraDeJogadorPage() {
@@ -80,24 +160,21 @@ export default function CarreiraDeJogadorPage() {
   const t = useTranslation()
   const { initializeNewGame } = useGameManager()
   const carreira = state.carreiraDeJogador
-  // ⚠️ A ABA VEM DA URL QUANDO VEM DE FORA. O menu do modo atleta linka para
-  // `?aba=tabela|evolucao|historico`; sem ler isso aqui o link abriria sempre
-  // "temporada" e o item do menu viraria promessa falsa — o mesmo defeito de
-  // `/?hub=1`, que era escrito num lugar e lido em nenhum.
-  const [aba, setAba] = useState<AbaDoAtleta>(() => abaDaUrl())
   const [respostaDaConversa, setRespostaDaConversa] = useState<string>("")
+
+  // ⚠️ COMPATIBILIDADE COM O `?aba=` (1.0.358). As abas viraram rotas, mas link
+  // antigo — de save, de recado ou de um menu que não recarregou — continua
+  // chegando aqui com a query. Em vez de abrir a tela errada em silêncio, ela
+  // leva para a tela nova.
+  useEffect(() => {
+    const destino = rotaDaAbaAntiga(new URLSearchParams(window.location.search).get("aba"))
+    if (destino) hardNavigate(destino, true)
+  }, [])
 
   const proxima = useMemo(
     () => carreira?.calendario.find(f => !f.played && f.isUserMatch),
     [carreira],
   )
-  /**
-   * A liga acabou mas o mata-mata nao (1.0.351).
-   *
-   * Sem esta distincao a tela dizia "Temporada concluida. Encerre para virar o
-   * ano" enquanto o botao de encerrar ainda nao funcionava — porque a temporada
-   * so fecha depois da final da copa. Ver `jogarProximaRodada`.
-   */
   const mataMataPendente = useMemo(
     () => !proxima && !carreira?.temporadaEncerrada
       && [carreira?.copa, carreira?.continental].some(b => b && !b.champion && b.userEliminatedAtRound === undefined),
@@ -118,114 +195,90 @@ export default function CarreiraDeJogadorPage() {
 
   const aplicar = (novo: EstadoCarreiraDeJogador) => setState({ carreiraDeJogador: novo })
   const { atleta } = carreira
+  const semClube = carreira.semClube
   const media = mediaDaTemporada(carreira)
   const papel = papelNoElenco(carreira.notaDoTreinador)
-  const posicaoNaTabela = Math.max(1, carreira.tabela.findIndex(l => l.curto === carreira.clubeCurto) + 1)
-  // Derivados do motor. `hierarquiaDaPosicao` lê o elenco do clube, então é o
-  // mesmo número que decide se o atleta joga — não uma segunda contabilidade.
-  const arq = arquetipo(atleta.arquetipo)
-  const especializacao = arq.especializacoes.find(e => e.id === atleta.especializacao)
-  const hierarquia = hierarquiaDaPosicao(carreira)
-  const merecida = confiancaMerecida(carreira)
   const jogosNaCarreira = carreira.historico.reduce((n, h) => n + h.jogos, 0) + carreira.temporadaAtual.jogos
   const faixaDePotencial = potencialVisivel(atleta, jogosNaCarreira)
   const resumo = resumoDaCarreira(carreira)
   const entrevista = entrevistaDaVez(carreira)
   const conversas = conversasDoMomento(carreira)
+  const temPropostas = carreira.propostas.length > 0
+
+  // ── Os botões do canto direito. Sem clube, o tempo passa por semana. ──
+  const acoes = carreira.aposentado ? null : semClube ? (
+    <Button
+      onClick={() => aplicar(avancarSemanaSemClube(carreira))}
+      className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[#00d9b0]"
+    >
+      <ChevronRight className="mr-2 h-4 w-4" /> Avançar semana
+    </Button>
+  ) : (
+    <>
+      {!carreira.temporadaEncerrada && (
+        <>
+          <Button
+            onClick={() => {
+              const comPartida = jogarProximaRodada(carreira, { viver: true })
+              setState({ carreiraDeJogador: comPartida })
+              if (comPartida.partidaEmCurso) hardNavigate("/carreira/jogador/partida")
+            }}
+            className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[#00d9b0]"
+          >
+            <Play className="mr-2 h-4 w-4" /> Viver a partida
+          </Button>
+          <Button variant="outline" onClick={() => aplicar(jogarProximaRodada(carreira))}>Simular rodada</Button>
+        </>
+      )}
+      {carreira.temporadaEncerrada && (
+        <Button onClick={() => aplicar(encerrarTemporada(carreira))}>
+          <ChevronRight className="mr-2 h-4 w-4" /> Encerrar temporada
+        </Button>
+      )}
+    </>
+  )
 
   return (
-    /* ⚠️ O FUNDO E O CORTE, na mesma correção (1.0.352).
-     *
-     * O usuário relatou duas vezes uma "borda preta" no escritório do atleta, e
-     * na segunda foi específico: ela estava CORTANDO OS DADOS. Não era enfeite —
-     * `pb-14` reserva 56 px, e no rodapé há a barra de controle MAIS a barra do
-     * FC Hub. O conteúdo passava por baixo delas e sumia no meio de uma frase.
-     * `pb-36` devolve o fim do cartão ao jogador.
-     *
-     * E o escritório ganha o fundo que o usuário mandou (02.png convertido para
-     * WebP: 1,39 MB → 65 KB). Ele fica FIXO e coberto por um véu escuro: sem o
-     * véu, texto branco sobre foto de estádio é ilegível — e a tela existe para
-     * ser lida, não para exibir a foto. */
-    <main className="relative h-dvh overflow-y-auto text-white">
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center"
-        style={{ backgroundImage: "url(/images/pre-jogo/in-game-02.webp)" }}
-      />
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[#06090d]/88" />
-      <GameHeader />
-      <GameSidebar />
-      <div className="mx-auto max-w-[1500px] px-5 pb-36 pt-20 lg:pl-24">
+    <AtletaShell carreira={carreira} ativa="escritorio" acoes={acoes}>
+      <div className="flex h-full min-h-0 flex-col gap-3">
 
-        {/* ── Cabeçalho: quem, onde e em que pé está ── */}
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <TeamCrest fileKey={carreira.clubeFileKey} size="xl" />
-            <div>
-              <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">
-                {atleta.posicao} · {atleta.idade} anos · {atleta.nacionalidade}
-              </p>
-              <h1 className="mt-1 text-3xl font-black">{atleta.nome}</h1>
-              <p className="mt-1 text-white/50">
-                {carreira.clubeNome} · {carreira.ligaNome} · Temporada {carreira.temporada}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {/* ── VIVER × SIMULAR (1.0.329) ────────────────────────────────
-                "Viver" para a partida nos momentos em que a bola passa por
-                você; "simular" resolve tudo no motor, como antes. Os dois
-                caminham pela MESMA contabilidade — ver
-                `concluirPartidaDoAtleta`. */}
-            {!carreira.aposentado && !carreira.temporadaEncerrada && (
-              <>
-                <Button
-                  onClick={() => {
-                    const comPartida = jogarProximaRodada(carreira, { viver: true })
-                    setState({ carreiraDeJogador: comPartida })
-                    if (comPartida.partidaEmCurso) hardNavigate("/carreira/jogador/partida")
-                  }}
-                  className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[#00d9b0]"
-                >
-                  <Play className="mr-2 h-4 w-4" /> Viver a partida
-                </Button>
-                <Button variant="outline" onClick={() => aplicar(jogarProximaRodada(carreira))}>
-                  Simular rodada
-                </Button>
-              </>
-            )}
-            {carreira.temporadaEncerrada && !carreira.aposentado && (
-              <Button onClick={() => aplicar(encerrarTemporada(carreira))}>
-                <ChevronRight className="mr-2 h-4 w-4" /> Encerrar temporada
-              </Button>
-            )}
-          </div>
-        </header>
+        {/* ── A faixa de números. Compacta de propósito: cada pixel dela sai da
+             altura dos painéis, e são eles que contam a temporada. ── */}
+        <section className="grid shrink-0 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+          <Numero icone={<Star className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Nota do treinador" nota={semClube ? "sem clube" : papel}>
+            <Estrelas nota={carreira.notaDoTreinador} />
+          </Numero>
+          <Numero icone={<BarChart3 className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Média na temporada">
+            <span className={corDaNota(media)}>{media > 0 ? media.toFixed(2) : "—"}</span>
+          </Numero>
+          <Numero icone={<Target className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Gols / assistências">
+            {carreira.temporadaAtual.gols} / {carreira.temporadaAtual.assistencias}
+          </Numero>
+          <Numero icone={<Users className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Jogos (titular)">
+            {carreira.temporadaAtual.jogos} <span className="text-sm text-white/40">({carreira.temporadaAtual.titularidades})</span>
+          </Numero>
+          <Numero icone={<TrendingUp className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Overall / teto projetado">
+            {atleta.overall} <span className="text-sm text-white/40">/ {faixaDePotencial.min}–{faixaDePotencial.max}</span>
+          </Numero>
+        </section>
 
-        {carreira.aposentado && (
-          <section className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
-            <h2 className="font-black">Carreira encerrada</h2>
-            <p className="mt-1 text-sm text-white/65">
+        {/* ── CARREIRA ENCERRADA. Ocupa a tela: não há mais temporada para ver. ── */}
+        {carreira.aposentado ? (
+          <PainelDoAtleta titulo="Carreira encerrada" icone={<Star className="h-5 w-5 text-amber-300" />} className="min-h-0 flex-1">
+            <p className="text-sm text-white/70">
               {resumo.jogos} jogos · {resumo.gols} gols · {resumo.assistencias} assistências ·{" "}
               {resumo.titulos.length} títulos · {resumo.premios.length} prêmios individuais ·{" "}
               {resumo.selecao.jogos} jogos pela seleção · auge em {resumo.overallMaximo} de overall.
             </p>
-            {/* ── E AGORA, TREINADOR ────────────────────────────────────────
-                A mecânica que o usuário chamou de mais forte: o MESMO save
-                continua, quinze ou vinte temporadas depois do começo, com o
-                atleta aposentado virando o técnico. O clube é o último em que
-                ele jogou, e a reputação com que ele senta no banco vem do que
-                fez em campo — quem ganhou Bola de Ouro não começa igual a quem
-                pendurou as chuteiras no banco de reservas. */}
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            {/* O MESMO save continua: o atleta aposentado vira o técnico do
+                último clube, com a reputação que construiu em campo. */}
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <Button
                 onClick={() => {
                   const time = getTeamByFileKey(resumo.ultimoClubeFileKey)
                   if (!time) return
                   initializeNewGame(time.curto, atleta.nome, {
                     modalidade: "profissional",
-                    // O legado do atleta viaja junto: o técnico novo não nasce
-                    // sem passado, que é o ponto da transição.
                     carreiraDeJogador: { ...carreira, aposentado: true },
                   }, time.file_key)
                   hardNavigate("/?career=1")
@@ -239,108 +292,143 @@ export default function CarreiraDeJogadorPage() {
                 Reputação de estreia: {reputacaoDeTreinador(resumo)} — construída pelo que você fez como atleta.
               </span>
             </div>
-          </section>
-        )}
+          </PainelDoAtleta>
+        ) : semClube ? (
 
-        {/* ── Os cinco números que o modo inteiro gira em torno ── */}
-        <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4">
-            <Star className="h-5 w-5 text-[var(--brand)]" />
-            <p className="mt-3 text-xs text-white/45">Nota do treinador</p>
-            <div className="mt-1 flex items-center gap-2">
-              <Estrelas nota={carreira.notaDoTreinador} />
-            </div>
-            <p className="mt-1 text-[11px] uppercase tracking-wide text-white/40">{papel}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4">
-            <BarChart3 className="h-5 w-5 text-[var(--brand)]" />
-            <p className="mt-3 text-xs text-white/45">Média na temporada</p>
-            <p className={cn("mt-1 text-2xl font-black", corDaNota(media))}>{media > 0 ? media.toFixed(2) : "—"}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4">
-            <Target className="h-5 w-5 text-[var(--brand)]" />
-            <p className="mt-3 text-xs text-white/45">Gols / assistências</p>
-            <p className="mt-1 text-2xl font-black">{carreira.temporadaAtual.gols} / {carreira.temporadaAtual.assistencias}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4">
-            <Users className="h-5 w-5 text-[var(--brand)]" />
-            <p className="mt-3 text-xs text-white/45">Jogos (titular)</p>
-            <p className="mt-1 text-2xl font-black">{carreira.temporadaAtual.jogos} <span className="text-base text-white/40">({carreira.temporadaAtual.titularidades})</span></p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4">
-            <TrendingUp className="h-5 w-5 text-[var(--brand)]" />
-            {/* ⚠️ FAIXA, não o número. Mostrar "potencial 87" transforma a
-                carreira numa barra de progresso: o jogador sabe no primeiro dia
-                onde vai terminar. A faixa estreita conforme ele joga. */}
-            <p className="mt-3 text-xs text-white/45">Overall / teto projetado</p>
-            <p className="mt-1 text-2xl font-black">
-              {atleta.overall} <span className="text-base text-white/40">/ {faixaDePotencial.min}–{faixaDePotencial.max}</span>
-            </p>
-          </div>
-        </section>
-
-        {/* ── PROPOSTAS. Aparecem no fim da temporada e param a tela: é a
-             decisão mais pesada do modo. ── */}
-        {carreira.propostas.length > 0 && (
-          <section className="mb-6">
-            <h2 className="mb-3 text-xl font-black">Propostas na mesa</h2>
-            <div className="grid gap-3 md:grid-cols-3">
-              {carreira.propostas.map(p => (
-                <div key={p.id} className="rounded-2xl border border-[var(--brand)]/25 bg-[var(--brand)]/5 p-5">
-                  <div className="flex items-center gap-3">
-                    <TeamCrest fileKey={p.clubeFileKey} size="md" />
-                    <div>
-                      <p className="font-black">{p.clubeNome}</p>
-                      <p className="text-xs text-white/45">Prestígio {p.prestigio}</p>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-sm text-white/70">
-                    {formatCurrency(p.salarioSemanal)}/semana · {p.temporadas} temporadas
-                  </p>
-                  <p className="mt-1 text-[11px] text-white/40">{p.motivo}</p>
-                  <Button className="mt-3 w-full" onClick={() => aplicar(aceitarProposta(carreira, p.id))}>Aceitar</Button>
-                </div>
-              ))}
-            </div>
-            <Button variant="outline" className="mt-3" onClick={() => aplicar(recusarPropostas(carreira))}>Ficar no clube</Button>
-          </section>
-        )}
-
-        {/* ── Abas ── */}
-        <nav className="mb-4 flex flex-wrap gap-2">
-          {([["temporada", "Temporada"], ["evolucao", "Evolução"], ["tabela", "Classificação"], ["historico", "Trajetória"]] as const).map(([id, rotulo]) => (
-            <button
-              key={id}
-              onClick={() => setAba(id)}
-              className={cn(
-                "rounded-xl border px-4 py-2 text-xs font-bold uppercase tracking-wide transition-colors",
-                aba === id ? "border-[var(--brand)]/50 bg-[var(--brand)]/10 text-white" : "border-white/10 bg-black/30 text-white/55 hover:text-white",
-              )}
+          /* ── SEM CLUBE (1.0.358) ────────────────────────────────────────
+             O escritório do atleta livre. Não há próxima partida nem meta de
+             temporada: o que existe é o cartaz, o telefone e a mesa. */
+          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-3">
+            <PainelDoAtleta
+              titulo="Sem clube"
+              icone={<Handshake className="h-5 w-5 text-amber-300" />}
+              acessorio={<span className="text-[11px] text-white/40">semana {semClube.semanas}</span>}
             >
-              {rotulo}
-            </button>
-          ))}
-        </nav>
+              <p className="text-sm text-white/70">{semClube.motivo} — saiu do {semClube.ultimoClubeNome}.</p>
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-white/45">
+                  <span>Cartaz no mercado</span><b className="text-white/75">{semClube.cartaz}</b>
+                </div>
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className={cn("h-full rounded-full", semClube.cartaz >= 62 ? "bg-emerald-400" : semClube.cartaz >= 38 ? "bg-[var(--brand)]" : "bg-amber-400")}
+                    style={{ width: `${semClube.cartaz}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[11px] leading-relaxed text-white/45">
+                  É o que o seu desempenho no {semClube.ultimoClubeNome} comprou. Ele decide o
+                  TAMANHO de quem liga — e cai a cada semana parado, porque quem não joga some do radar.
+                </p>
+              </div>
 
-        {aba === "temporada" && (
-          <div className="grid gap-5 lg:grid-cols-3">
-            {/* PRÓXIMA PARTIDA + previsão de minutos: o jogador precisa saber
-                ANTES se vai entrar — é o que dá sentido a pedir mais minutos. */}
-            <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-              <h2 className="flex items-center gap-2 text-xl font-black"><CalendarDays className="text-[var(--brand)]" />Próxima partida</h2>
+              <div className="mt-4 border-t border-white/10 pt-3 text-[11px] text-white/45">
+                <p>Empresário: <b className="text-white/70">{carreira.empresario.nome}</b> · negociação {carreira.empresario.negociacao} · influência {carreira.empresario.influencia} · exterior {carreira.empresario.redeInternacional}</p>
+                <p className="mt-1">Forma: <b className="text-white/70">{Math.round(carreira.forma)}</b> — sem treino de grupo ela cede.</p>
+              </div>
+
+              <div className="mt-4 border-t border-white/10 pt-3">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-white/40">Diário do mercado</p>
+                <div className="mt-2 space-y-1.5">
+                  {semClube.diario.map(linha => (
+                    <p key={`${linha.semana}-${linha.texto.slice(0, 24)}`} className="text-[12px] leading-relaxed text-white/60">
+                      <span className="mr-1.5 font-mono text-white/30">S{linha.semana}</span>{linha.texto}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </PainelDoAtleta>
+
+            <PainelDoAtleta
+              titulo="Propostas na mesa"
+              icone={<Handshake className="h-5 w-5 text-[var(--brand)]" />}
+              className="lg:col-span-2"
+              acessorio={<span className="text-[11px] text-white/40">{carreira.propostas.length} na mesa</span>}
+            >
+              {carreira.propostas.length === 0 ? (
+                <p className="py-10 text-center text-sm leading-relaxed text-white/40">
+                  Nenhuma proposta ainda. Avance a semana: o telefone toca conforme o seu cartaz —
+                  e não tocar também é uma resposta do mercado.
+                </p>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {carreira.propostas.map(p => (
+                    <CartaoDaProposta
+                      key={p.id}
+                      proposta={p}
+                      comMesa
+                      onAceitar={() => aplicar(aceitarProposta(carreira, p.id))}
+                      onContrapor={pedido => aplicar(contrapropor(carreira, p.id, pedido))}
+                      onDescartar={() => aplicar(descartarProposta(carreira, p.id))}
+                    />
+                  ))}
+                </div>
+              )}
+            </PainelDoAtleta>
+          </div>
+
+        ) : temPropostas ? (
+
+          /* ── PROPOSTAS DE FIM DE TEMPORADA. Elas param a tela: é a decisão
+               mais pesada do modo, e não divide espaço com o resto. ── */
+          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-3">
+            <PainelDoAtleta
+              titulo="Propostas na mesa"
+              icone={<Handshake className="h-5 w-5 text-[var(--brand)]" />}
+              className="lg:col-span-2"
+              acessorio={
+                <Button variant="outline" size="sm" onClick={() => aplicar(recusarPropostas(carreira))}>
+                  Ficar no clube
+                </Button>
+              }
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                {carreira.propostas.map(p => (
+                  <CartaoDaProposta
+                    key={p.id}
+                    proposta={p}
+                    comMesa={false}
+                    onAceitar={() => aplicar(aceitarProposta(carreira, p.id))}
+                    onContrapor={() => undefined}
+                    onDescartar={() => undefined}
+                  />
+                ))}
+              </div>
+            </PainelDoAtleta>
+
+            <PainelDoAtleta titulo="Repercussão" acessorio={<span className="text-[11px] text-white/40">reputação {carreira.reputacao ?? 30}</span>}>
+              {(carreira.repercussao?.length ?? 0) === 0 ? (
+                <p className="text-sm leading-relaxed text-white/45">{t.carreiraDeJogador.repercussao_vazia}</p>
+              ) : (
+                <div className="space-y-2">
+                  {(carreira.repercussao ?? []).map(post => (
+                    <div key={post.id} className="rounded-xl bg-black/30 p-3">
+                      <p className="text-[11px] font-bold text-sky-300">{post.autor}</p>
+                      <p className="mt-0.5 text-[13px] text-white/75">{post.texto}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </PainelDoAtleta>
+          </div>
+
+        ) : (
+
+          /* ── A TEMPORADA CORRENDO: três colunas de altura inteira. ── */
+          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-3">
+
+            {/* PRÓXIMA PARTIDA + contrato + empresário. */}
+            <PainelDoAtleta titulo="Próxima partida" icone={<CalendarDays className="h-5 w-5 text-[var(--brand)]" />}>
               {proxima ? (
                 <>
-                  <p className="mt-3 text-lg font-bold">
+                  <p className="text-lg font-bold">
                     {proxima.homeCurto === carreira.clubeCurto ? proxima.awayNome : proxima.homeNome}
                   </p>
                   <p className="text-xs text-white/45">
                     {proxima.homeCurto === carreira.clubeCurto ? t.carreiraDeJogador.em_casa : "Fora"} · rodada {proxima.round} · {proxima.competition}
                   </p>
-                  <p className="mt-4 text-xs text-white/45">Expectativa do treinador</p>
+                  <p className="mt-3 text-xs text-white/45">Expectativa do treinador</p>
                   <p className="text-sm font-bold text-[var(--brand)]">{minutosEsperados(carreira)}</p>
-                  {/* INDISPONIBILIDADE. A lesão só falava por recado, e a suspensão
-                      não existia (1.0.351). Quem vê "expectativa: titular" e não entra
-                      em campo acha que o jogo quebrou — a razão precisa estar aqui. */}
+
                   {(carreira.suspensao?.partidasRestantes ?? 0) > 0 && (
                     <p className="mt-3 rounded-lg border border-red-400/25 bg-red-400/[.08] px-3 py-2 text-xs text-red-200/85">
                       Suspenso por {carreira.suspensao!.motivo}: fica de fora de{" "}
@@ -359,16 +447,13 @@ export default function CarreiraDeJogadorPage() {
                   )}
                 </>
               ) : (
-                <p className="mt-3 text-white/45">
+                <p className="text-white/45">
                   {mataMataPendente
                     ? "Liga encerrada — falta a decisão do mata-mata. Simule para jogá-la."
                     : "Temporada concluída. Encerre para virar o ano."}
                 </p>
               )}
 
-              {/* COPA E CONTINENTAL (1.0.351). A temporada do atleta era só a liga;
-                  agora ela tem mata-mata, e o jogador precisa ver em que fase está —
-                  senão os jogos aparecem na súmula vindos do nada. */}
               {(carreira.copa || carreira.continental) && (
                 <div className="mt-4 space-y-1.5 border-t border-white/10 pt-3">
                   {[carreira.copa, carreira.continental].filter(Boolean).map(chave => {
@@ -393,19 +478,14 @@ export default function CarreiraDeJogadorPage() {
                 </div>
               )}
 
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={() => aplicar(fazerPedido(carreira, "mais_minutos"))}>Pedir minutos</Button>
                 <Button variant="outline" size="sm" onClick={() => aplicar(fazerPedido(carreira, "transferencia"))}>Pedir transferência</Button>
                 {carreira.pedido !== "nenhum" && (
                   <Button variant="ghost" size="sm" onClick={() => aplicar(fazerPedido(carreira, "nenhum"))}>Retirar pedido</Button>
                 )}
               </div>
-              {/* ── CONTRATO E EMPRESÁRIO (1.0.326) ──────────────────────────
-                  O contrato deixou de ser um número decorativo: luvas, bônus
-                  por gol e por título entram no bolso, e o STATUS PROMETIDO é o
-                  que o clube se comprometeu a te dar. O empresário é
-                  personagem: negociação vira salário, influência vira número de
-                  propostas e rede internacional abre o exterior. */}
+
               <div className="mt-4 space-y-1 border-t border-white/10 pt-3 text-[11px] text-white/45">
                 <p>
                   Contrato até <b className="text-white/70">{carreira.contrato.ateTemporada}</b> ·{" "}
@@ -418,9 +498,7 @@ export default function CarreiraDeJogadorPage() {
                     {formatCurrency((carreira.contrato.bonusPorTitulo ?? 0))} por título
                   </p>
                 )}
-                <p>
-                  Ganhos na temporada: <b className="text-emerald-300/80">{formatCurrency(carreira.ganhosDaTemporada)}</b>
-                </p>
+                <p>Ganhos na temporada: <b className="text-emerald-300/80">{formatCurrency(carreira.ganhosDaTemporada)}</b></p>
                 <p className="pt-1">
                   Empresário: <b className="text-white/70">{carreira.empresario.nome}</b> ·{" "}
                   negociação {carreira.empresario.negociacao} · influência {carreira.empresario.influencia} ·{" "}
@@ -439,89 +517,76 @@ export default function CarreiraDeJogadorPage() {
                   ))}
                 </select>
               </div>
-            </section>
+            </PainelDoAtleta>
 
-            {/* METAS */}
-            <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-              <h2 className="flex items-center gap-2 text-xl font-black"><Target className="text-[var(--brand)]" />Metas da temporada</h2>
-              <div className="mt-4 space-y-3">
-                {carreira.metas.map(meta => (
-                  <div key={meta.id}>
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <span className={meta.cumprida ? "text-emerald-400" : "text-white/70"}>{meta.descricao}</span>
-                      <b className="text-white/50">{meta.progresso}/{meta.alvo}</b>
+            {/* METAS + a conversa da vez (imprensa e vestiário). */}
+            <div className="flex min-h-0 flex-col gap-3">
+              <PainelDoAtleta titulo="Metas da temporada" icone={<Target className="h-5 w-5 text-[var(--brand)]" />} className="min-h-0 flex-1">
+                <div className="space-y-3">
+                  {carreira.metas.map(meta => (
+                    <div key={meta.id}>
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className={meta.cumprida ? "text-emerald-400" : "text-white/70"}>{meta.descricao}</span>
+                        <b className="text-white/50">{meta.progresso}/{meta.alvo}</b>
+                      </div>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className={cn("h-full rounded-full", meta.cumprida ? "bg-emerald-400" : "bg-[var(--brand)]")}
+                          style={{ width: `${Math.min(100, (meta.progresso / Math.max(0.01, meta.alvo)) * 100)}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className={cn("h-full rounded-full", meta.cumprida ? "bg-emerald-400" : "bg-[var(--brand)]")}
-                        style={{ width: `${Math.min(100, (meta.progresso / Math.max(0.01, meta.alvo)) * 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {carreira.selecao.convocada && (
-                <p className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-[11px] text-emerald-200/80">
-                  <Flag className="h-3.5 w-3.5" />
-                  Seleção {carreira.selecao.nivel === "sub20" ? "Sub-20" : "principal"} · {carreira.selecao.jogos} jogos, {carreira.selecao.gols} gols
-                </p>
-              )}
-            </section>
-
-            {/* ── IMPRENSA (1.0.328) ───────────────────────────────────────
-                A pergunta só aparece quando o save produziu assunto — quatro
-                jogos no banco, sequência de gols, proposta na mesa. Cada tom
-                mexe em coisas DIFERENTES e às vezes opostas, e a tela diz o que
-                muda antes do clique: entrevista que não muda nada é texto no
-                meio do caminho. */}
-            {entrevista && !carreira.aposentado && (
-              <section className="rounded-2xl border border-sky-400/25 bg-sky-400/[.05] p-5 lg:col-span-3">
-                <h2 className="flex items-center gap-2 text-xl font-black">
-                  <Newspaper className="text-sky-300" />Entrevista
-                </h2>
-                <p className="mt-1 text-[11px] text-white/40">{entrevista.contexto}</p>
-                <p className="mt-3 text-sm font-bold text-white/85">“{entrevista.pergunta}”</p>
-                <div className="mt-3 grid gap-2 md:grid-cols-3">
-                  {entrevista.respostas.map(r => (
-                    <button
-                      key={r.tom}
-                      onClick={() => aplicar(responderEntrevista(carreira, entrevista.id, r.tom))}
-                      className="rounded-xl border border-white/10 bg-black/30 p-3 text-left transition-colors hover:border-sky-400/40 hover:bg-sky-400/[.08]"
-                    >
-                      <p className="text-[13px] text-white/80">“{r.texto}”</p>
-                      <p className="mt-1.5 text-[10px] uppercase tracking-wide text-sky-200/60">{r.efeito}</p>
-                    </button>
                   ))}
                 </div>
-              </section>
-            )}
-
-            {/* ── AS CONVERSAS (1.0.340) ───────────────────────────────────
-                Família, empresário e diretoria. O modo já falava com a
-                imprensa e já tinha empresário como DADO; o que faltava era o
-                resto da vida do atleta. Cada resposta mexe em moral, forma,
-                confiança do treinador, reputação ou torcida — números que o
-                modo já lê. Diálogo que não altera nada é a mesma armadilha do
-                foco de treino que só valia uma vez por ano. */}
-            {conversas.length > 0 && !carreira.aposentado && (
-              <section className="rounded-2xl border border-violet-400/25 bg-violet-400/[.05] p-5 lg:col-span-3">
-                <h2 className="flex items-center gap-2 text-xl font-black">
-                  <Users className="text-violet-300" />Conversas
-                </h2>
-                {respostaDaConversa && (
-                  <p className="mt-3 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white/75">
-                    {respostaDaConversa}
+                {carreira.selecao.convocada && (
+                  <p className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-[11px] text-emerald-200/80">
+                    <Flag className="h-3.5 w-3.5" />
+                    Seleção {carreira.selecao.nivel === "sub20" ? "Sub-20" : "principal"} · {carreira.selecao.jogos} jogos, {carreira.selecao.gols} gols
                   </p>
                 )}
-                <div className="mt-3 space-y-3">
+              </PainelDoAtleta>
+
+              {(entrevista || conversas.length > 0) && (
+                <PainelDoAtleta
+                  titulo={entrevista ? "Entrevista" : "Conversas"}
+                  icone={entrevista
+                    ? <Newspaper className="h-5 w-5 text-sky-300" />
+                    : <Users className="h-5 w-5 text-violet-300" />}
+                  className="min-h-0 flex-1"
+                >
+                  {entrevista && (
+                    <>
+                      <p className="text-[11px] text-white/40">{entrevista.contexto}</p>
+                      <p className="mt-2 text-sm font-bold text-white/85">“{entrevista.pergunta}”</p>
+                      <div className="mt-3 space-y-2">
+                        {entrevista.respostas.map(r => (
+                          <button
+                            key={r.tom}
+                            onClick={() => aplicar(responderEntrevista(carreira, entrevista.id, r.tom))}
+                            className="w-full rounded-xl border border-white/10 bg-black/30 p-3 text-left transition-colors hover:border-sky-400/40 hover:bg-sky-400/[.08]"
+                          >
+                            <p className="text-[13px] text-white/80">“{r.texto}”</p>
+                            <p className="mt-1 text-[10px] uppercase tracking-wide text-sky-200/60">{r.efeito}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {respostaDaConversa && (
+                    <p className="mt-3 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white/75">
+                      {respostaDaConversa}
+                    </p>
+                  )}
+
                   {conversas.map(c => (
-                    <div key={c.id} className="rounded-xl border border-white/10 bg-black/25 p-4">
+                    <div key={c.id} className="mt-3 rounded-xl border border-white/10 bg-black/25 p-3">
                       <p className="text-[10px] font-black uppercase tracking-wider text-violet-200/70">
                         {rotuloDoInterlocutor(c.com)} · {c.quem}
                       </p>
                       <p className="mt-0.5 text-[11px] text-white/40">{c.assunto}</p>
-                      <p className="mt-2 text-sm text-white/85">“{c.fala}”</p>
-                      <div className="mt-3 grid gap-2 md:grid-cols-3">
+                      <p className="mt-1.5 text-sm text-white/85">“{c.fala}”</p>
+                      <div className="mt-2.5 space-y-1.5">
                         {c.escolhas.map(e => (
                           <button
                             key={e.id}
@@ -530,7 +595,7 @@ export default function CarreiraDeJogadorPage() {
                               setRespostaDaConversa(d.texto)
                               aplicar(d.estado)
                             }}
-                            className="rounded-lg border border-white/10 bg-black/40 p-3 text-left text-[13px] text-white/80 transition-colors hover:border-violet-400/40 hover:bg-violet-400/[.08]"
+                            className="w-full rounded-lg border border-white/10 bg-black/40 p-2.5 text-left text-[13px] text-white/80 transition-colors hover:border-violet-400/40 hover:bg-violet-400/[.08]"
                           >
                             {e.texto}
                           </button>
@@ -538,333 +603,56 @@ export default function CarreiraDeJogadorPage() {
                       </div>
                     </div>
                   ))}
-                </div>
-              </section>
-            )}
-
-            {/* REPERCUSSÃO — o eco do que o save produziu.
-                ⚠️ ELA APARECE SEMPRE (1.0.351). Antes só existia com conteúdo, e
-                numa carreira recém-criada não há nenhum: o bloco sumia e sobrava
-                uma FAIXA PRETA ocupando a metade de baixo da tela — foi o que o
-                usuário relatou com print. Espaço morto num modo novo dá a
-                impressão de tela inacabada, e a correção não é encolher a caixa:
-                é dizer o que vai acontecer ali. */}
-            <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-              <h2 className="text-xl font-black">Repercussão</h2>
-              <p className="mt-1 text-[11px] text-white/40">
-                Reputação {carreira.reputacao ?? 30} · torcida {carreira.torcida ?? 50}
-              </p>
-              {(carreira.repercussao?.length ?? 0) === 0 && (
-                <p className="mt-4 text-sm leading-relaxed text-white/45">
-                  {t.carreiraDeJogador.repercussao_vazia}
-                </p>
+                </PainelDoAtleta>
               )}
-              {(carreira.repercussao?.length ?? 0) > 0 && (
-                <div className="mt-3 max-h-[300px] space-y-2 overflow-auto">
-                  {(carreira.repercussao ?? []).map(post => (
-                    <div key={post.id} className="rounded-xl bg-black/30 p-3">
-                      <p className="text-[11px] font-bold text-sky-300">{post.autor}</p>
-                      <p className="mt-0.5 text-[13px] text-white/75">{post.texto}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
+            </div>
 
-            {/* ÚLTIMAS PARTIDAS */}
-            <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-              <h2 className="text-xl font-black">Últimas atuações</h2>
-              <div className="mt-4 max-h-[360px] space-y-2 overflow-auto">
-                {carreira.ultimasPartidas.length === 0 && <p className="py-8 text-center text-white/35">Ainda sem partidas nesta carreira.</p>}
-                {carreira.ultimasPartidas.map(p => (
-                  <div key={`${p.temporada}-${p.rodada}`} className="rounded-xl bg-black/30 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-bold">{p.casa ? "vs" : "@"} {p.adversario}</span>
-                      <span className="text-sm text-white/60">{p.golsPro}–{p.golsContra}</span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-white/45">
-                      {p.minutos > 0
-                        ? <>{p.titular ? t.carreiraDeJogador.titular : "Entrou"} · {p.minutos}′ · {p.gols}G {p.assistencias}A{p.cartao ? ` · cartão ${p.cartao}` : ""}</>
-                        : t.carreiraDeJogador.nao_saiu_do_banco}
-                      {p.minutos > 0 && <span className={cn("ml-2 font-black", corDaNota(p.nota))}>{p.nota.toFixed(1)}</span>}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-        )}
-
-        {aba === "evolucao" && (
-          <div className="grid gap-5 lg:grid-cols-2">
-            {/* ── ATRIBUTOS E EVOLUÇÃO ORGÂNICA (1.0.325) ──────────────────
-                Os botões "+" saíram. Não se compra mais atributo com ponto: o
-                atleta cresce pelo que FAZ em campo, e a tela agora explica de
-                onde veio cada ganho — sem isso a evolução vira ruído. O que o
-                jogador escolhe é o FOCO DE TREINO, que inclina a curva sem
-                decidi-la. */}
-            <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xl font-black">Atributos</h2>
-                <span className="rounded-full border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-3 py-1 text-xs font-bold text-[var(--brand)]">
-                  {arq.nome}{especializacao ? ` · ${especializacao.nome}` : ""}
-                </span>
-              </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-white/40">
-                {arq.descricao} Você evolui pelo que faz em campo — dribles puxam drible, desarmes puxam
-                defesa, minutos puxam físico. A comissão projeta seu teto entre{" "}
-                <b className="text-white/70">{faixaDePotencial.min} e {faixaDePotencial.max}</b>, e essa
-                leitura vai apertando conforme você joga.
-              </p>
-
-              <label className="mt-4 block text-[11px] text-white/55">
-                Foco do treino
-                <select
-                  value={carreira.focoDeTreino}
-                  onChange={e => aplicar({ ...carreira, focoDeTreino: e.target.value as typeof carreira.focoDeTreino })}
-                  className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
-                >
-                  <option value="equilibrado">Equilibrado</option>
-                  {ATRIBUTOS.map(a => <option key={a.chave} value={a.chave}>{a.nome}</option>)}
-                </select>
-              </label>
-
-              {/* ── INTENSIDADE DA SEMANA (1.0.339) ──────────────────────────
-                  O foco dizia ONDE treinar e nada dizia QUANTO — e o foco só
-                  produzia efeito na virada de temporada. A intensidade é o que
-                  torna o treino uma decisão semanal com preço: puxar rende mais
-                  e chega pior no jogo, porque a forma entra na nota da partida. */}
-              <label className="mt-4 block text-[11px] text-white/55">
-                Intensidade da semana
-                <select
-                  value={carreira.intensidadeDeTreino ?? "normal"}
-                  onChange={e => aplicar(definirIntensidadeDeTreino(carreira, e.target.value as IntensidadeDeTreino))}
-                  className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
-                >
-                  <option value="leve">Leve — preserva a forma, evolui devagar</option>
-                  <option value="normal">Normal — equilíbrio</option>
-                  <option value="puxada">Puxada — evolui mais, chega cansado</option>
-                </select>
-              </label>
-
-              {carreira.treinoDaSemana && (
-                <div className="mt-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-white/40">Última semana de treino</p>
-                  <p className="mt-1 text-sm text-white/80">{carreira.treinoDaSemana.texto}</p>
-                  <p className="mt-1 text-[11px] text-white/45">
-                    Forma {carreira.treinoDaSemana.deltaForma >= 0 ? "+" : ""}{carreira.treinoDaSemana.deltaForma}
-                    {" · "}forma atual {Math.round(carreira.forma)}
-                  </p>
-                </div>
-              )}
-
-              <div className="mt-4 space-y-3">
-                {ATRIBUTOS.map(({ chave, nome }) => {
-                  const ganho = carreira.ultimaEvolucao.find(g => g.atributo === chave)?.ganho ?? 0
-                  const doArquetipo = arq.principais.includes(chave)
-                  return (
-                    <div key={chave} className="flex items-center gap-3">
-                      <span className={cn("w-28 text-sm", doArquetipo ? "font-bold text-white/80" : "text-white/55")}>
-                        {nome}
-                      </span>
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-                        <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${atleta.atributos[chave]}%` }} />
+            {/* REPERCUSSÃO + ÚLTIMAS ATUAÇÕES. */}
+            <div className="flex min-h-0 flex-col gap-3">
+              <PainelDoAtleta
+                titulo="Repercussão"
+                className="min-h-0 flex-1"
+                acessorio={<span className="text-[11px] text-white/40">reputação {carreira.reputacao ?? 30} · torcida {carreira.torcida ?? 50}</span>}
+              >
+                {(carreira.repercussao?.length ?? 0) === 0 ? (
+                  <p className="text-sm leading-relaxed text-white/45">{t.carreiraDeJogador.repercussao_vazia}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {(carreira.repercussao ?? []).map(post => (
+                      <div key={post.id} className="rounded-xl bg-black/30 p-3">
+                        <p className="text-[11px] font-bold text-sky-300">{post.autor}</p>
+                        <p className="mt-0.5 text-[13px] text-white/75">{post.texto}</p>
                       </div>
-                      <b className="w-8 text-right">{atleta.atributos[chave]}</b>
-                      <span className={cn("w-9 text-right text-xs font-bold", ganho > 0 ? "text-emerald-400" : "text-transparent")}>
-                        +{ganho}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-              {carreira.ultimaEvolucao.length > 0 && (
-                <p className="mt-3 text-[11px] text-emerald-300/70">
-                  Ganho da última temporada — puxado pelo que você fez em campo.
-                </p>
-              )}
-            </section>
-
-            {/* ── A FILA DA POSIÇÃO ────────────────────────────────────────
-                O número que decide se você joga. Antes a tela só mostrava o
-                resultado ("fora dos planos") sem dizer contra quem. */}
-            <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-              <h2 className="flex items-center gap-2 text-xl font-black"><Users className="text-[var(--brand)]" />Disputa pela posição</h2>
-              <p className="mt-1 text-[11px] text-white/45">
-                Você é o <b className="text-white/80">{hierarquia.posto}º</b> de {hierarquia.concorrentes} em {atleta.posicao} neste elenco.
-                {hierarquia.posto > 1 && ` À sua frente: ${hierarquia.nomeDoMelhorRival} (${hierarquia.melhorRival}).`}
-              </p>
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/55">Confiança do treinador</span>
-                  <b>{Math.round(carreira.notaDoTreinador)}</b>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${carreira.notaDoTreinador}%` }} />
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-white/40">
-                  <span>Merecido pelo seu lugar na fila</span>
-                  <b className="text-white/60">{Math.round(merecida)}</b>
-                </div>
-              </div>
-              <div className="mt-4 border-t border-white/10 pt-3">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-white/45">Como a comissão te vê</p>
-                <ul className="mt-2 space-y-1">
-                  {leituraDaPersonalidade(atleta.personalidade).map(frase => (
-                    <li key={frase} className="text-[12px] text-white/65">· {frase}</li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-              <h2 className="text-xl font-black">Recados</h2>
-              <div className="mt-4 max-h-[420px] space-y-2 overflow-auto">
-                {carreira.recados.map(r => (
-                  <div key={r.id} className="rounded-xl bg-black/30 p-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--brand)]">{r.de}</p>
-                    <p className="mt-1 text-sm text-white/75">{r.texto}</p>
-                    <p className="mt-1 text-[10px] text-white/30">Temporada {r.temporada} · rodada {r.rodada}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-        )}
-
-        {aba === "tabela" && (
-          <>
-          {/* ── CALENDÁRIO (1.0.353, pedido do usuário) ──────────────────────
-              Ele pediu "uma cópia do calendário do profissional, adaptando para
-              a carreira de jogador". O calendário do técnico é uma grade de MÊS
-              com mil linhas — copiá-lo literalmente traria a moldura sem o
-              conteúdo, porque o atleta não gerencia semana: ele joga rodada.
-
-              O que se copia é a LINGUAGEM: cartão por partida, competição
-              marcada, mando visível, placar quando já aconteceu. O que se
-              acrescenta é o que só existe aqui — a SUA linha em cada jogo:
-              minutos, nota e participação. Um calendário de atleta que não diz
-              se ele jogou seria o calendário do clube, não o dele. */}
-          <section className="mb-5 rounded-2xl border border-white/10 bg-white/[.03] p-5">
-            <h2 className="flex items-center gap-2 text-xl font-black">
-              <CalendarDays className="text-[var(--brand)]" />{t.carreiraDeJogador.calendario}
-            </h2>
-            <p className="mt-1 text-xs text-white/45">
-              {carreira.calendario.filter(f => f.isUserMatch).length} jogos do {carreira.clubeNome} nesta temporada
-            </p>
-            <div className="mt-4 max-h-[520px] space-y-1.5 overflow-auto pr-1">
-              {carreira.calendario.filter(f => f.isUserMatch).map(f => {
-                const emCasa = f.homeCurto === carreira.clubeCurto
-                const adversario = emCasa ? f.awayNome : f.homeNome
-                const golsPro = emCasa ? f.homeGoals : f.awayGoals
-                const golsContra = emCasa ? f.awayGoals : f.homeGoals
-                const minha = carreira.ultimasPartidas.find(
-                  p => p.rodada === f.round && p.temporada === carreira.temporada,
-                )
-                const proximo = !f.played && f.id === proxima?.id
-                return (
-                  <div
-                    key={f.id}
-                    className={cn(
-                      "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border px-3 py-2.5 text-sm",
-                      proximo
-                        ? "border-[var(--brand)]/40 bg-[var(--brand)]/[.07]"
-                        : f.played ? "border-white/[.07] bg-black/25" : "border-white/[.06] bg-black/10",
-                    )}
-                  >
-                    <span className="w-10 shrink-0 font-mono text-[11px] text-white/35">R{f.round}</span>
-                    <span className="w-16 shrink-0 text-[10px] font-black uppercase tracking-wide text-white/35">
-                      {emCasa ? t.carreiraDeJogador.casa : t.carreiraDeJogador.fora}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate font-bold">{adversario}</span>
-                    {f.played ? (
-                      <span className={cn(
-                        "shrink-0 font-mono font-black",
-                        (golsPro ?? 0) > (golsContra ?? 0) ? "text-emerald-400"
-                          : (golsPro ?? 0) === (golsContra ?? 0) ? "text-white/60" : "text-red-400",
-                      )}>
-                        {golsPro}–{golsContra}
-                      </span>
-                    ) : (
-                      <span className="shrink-0 text-[11px] uppercase tracking-wide text-white/30">
-                        {proximo ? t.carreiraDeJogador.proxima : t.carreiraDeJogador.a_jogar}
-                      </span>
-                    )}
-                    {/* A SUA linha — o que separa este calendário do calendário do clube. */}
-                    {minha && (
-                      <span className="w-full pl-10 text-[11px] text-white/45">
-                        {minha.minutos > 0
-                          ? `você: ${minha.minutos}′ · nota ${minha.nota.toFixed(1)}`
-                            + (minha.gols > 0 ? ` · ${minha.gols}G` : "")
-                            + (minha.assistencias > 0 ? ` · ${minha.assistencias}A` : "")
-                          : t.carreiraDeJogador.nao_saiu_do_banco_min}
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-            <h2 className="text-xl font-black">{carreira.ligaNome} · {carreira.temporada}</h2>
-            <p className="mt-1 text-xs text-white/45">Seu clube está em {posicaoNaTabela}º.</p>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[560px] text-sm">
-                <thead className="text-[11px] uppercase tracking-wide text-white/40">
-                  <tr><th className="p-2 text-left">#</th><th className="p-2 text-left">Clube</th><th className="p-2">P</th><th className="p-2">J</th><th className="p-2">V</th><th className="p-2">E</th><th className="p-2">D</th><th className="p-2">SG</th></tr>
-                </thead>
-                <tbody>
-                  {carreira.tabela.map((l, i) => (
-                    <tr key={l.curto} className={cn("border-t border-white/5", l.curto === carreira.clubeCurto && "bg-[var(--brand)]/10")}>
-                      <td className="p-2 text-white/40">{i + 1}</td>
-                      <td className="p-2 font-medium">{l.nome}</td>
-                      <td className="p-2 text-center font-black">{l.points}</td>
-                      <td className="p-2 text-center text-white/60">{l.played}</td>
-                      <td className="p-2 text-center text-white/60">{l.won}</td>
-                      <td className="p-2 text-center text-white/60">{l.drawn}</td>
-                      <td className="p-2 text-center text-white/60">{l.lost}</td>
-                      <td className="p-2 text-center text-white/60">{l.goalDiff}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-          </>
-        )}
-
-        {aba === "historico" && (
-          <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-            <h2 className="flex items-center gap-2 text-xl font-black"><Award className="text-[var(--brand)]" />Trajetória</h2>
-            {carreira.historico.length === 0 ? (
-              <p className="py-10 text-center text-white/35">Encerre a primeira temporada para começar a escrever sua história.</p>
-            ) : (
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-[720px] text-sm">
-                  <thead className="text-[11px] uppercase tracking-wide text-white/40">
-                    <tr><th className="p-2 text-left">Temporada</th><th className="p-2 text-left">Clube</th><th className="p-2">J</th><th className="p-2">G</th><th className="p-2">A</th><th className="p-2">Média</th><th className="p-2">Pos.</th><th className="p-2 text-left">Conquistas</th></tr>
-                  </thead>
-                  <tbody>
-                    {carreira.historico.map(h => (
-                      <tr key={`${h.temporada}-${h.clubeNome}`} className="border-t border-white/5">
-                        <td className="p-2">{h.temporada}</td>
-                        <td className="p-2">{h.clubeNome}</td>
-                        <td className="p-2 text-center">{h.jogos}</td>
-                        <td className="p-2 text-center">{h.gols}</td>
-                        <td className="p-2 text-center">{h.assistencias}</td>
-                        <td className={cn("p-2 text-center font-bold", corDaNota(h.notaMedia))}>{h.notaMedia.toFixed(2)}</td>
-                        <td className="p-2 text-center">{h.posicaoNaLiga}º</td>
-                        <td className="p-2 text-white/60">{[...h.titulos, ...h.premios].join(" · ") || "—"}</td>
-                      </tr>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+                  </div>
+                )}
+              </PainelDoAtleta>
+
+              <PainelDoAtleta titulo="Últimas atuações" className="min-h-0 flex-1">
+                {carreira.ultimasPartidas.length === 0 && (
+                  <p className="py-6 text-center text-white/35">Ainda sem partidas nesta carreira.</p>
+                )}
+                <div className="space-y-2">
+                  {carreira.ultimasPartidas.map(p => (
+                    <div key={`${p.temporada}-${p.rodada}`} className="rounded-xl bg-black/30 p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-bold">{p.casa ? "vs" : "@"} {p.adversario}</span>
+                        <span className="text-sm text-white/60">{p.golsPro}–{p.golsContra}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-white/45">
+                        {p.minutos > 0
+                          ? <>{p.titular ? t.carreiraDeJogador.titular : "Entrou"} · {p.minutos}′ · {p.gols}G {p.assistencias}A{p.cartao ? ` · cartão ${p.cartao}` : ""}</>
+                          : t.carreiraDeJogador.nao_saiu_do_banco}
+                        {p.minutos > 0 && <span className={cn("ml-2 font-black", corDaNota(p.nota))}>{p.nota.toFixed(1)}</span>}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </PainelDoAtleta>
+            </div>
+          </div>
         )}
       </div>
-    </main>
+    </AtletaShell>
   )
 }

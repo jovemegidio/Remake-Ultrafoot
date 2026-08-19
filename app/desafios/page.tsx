@@ -86,7 +86,7 @@ export default function DesafiosPage() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
       <GameHeader team={team} />
-      <main className="flex-1 space-y-5 overflow-y-auto p-4">
+      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
         <header className="flex items-center gap-3">
           <Trophy className="h-7 w-7 text-[#ffd700]" />
           <div>

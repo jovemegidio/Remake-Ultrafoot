@@ -560,7 +560,7 @@ export default function TreinadorPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 scrollbar-game">
           {perfil26 && (
             <section className="mb-5 rounded-2xl border border-cyan-400/15 bg-cyan-400/[.045] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">

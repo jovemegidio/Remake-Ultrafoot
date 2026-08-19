@@ -279,7 +279,7 @@ export default function TaticasPage() {
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
-      <main className="flex-1 p-4 md:p-6 overflow-y-auto scrollbar-premium">
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3 md:p-4 scrollbar-premium">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>

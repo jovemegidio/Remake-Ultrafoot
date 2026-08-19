@@ -407,7 +407,7 @@ export default function ContratosPage() {
           </div>
 
           {/* Lista */}
-          <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
+          <div className="grid max-h-[640px] auto-rows-min grid-cols-1 content-start overflow-y-auto xl:grid-cols-2 [&>*]:border-b [&>*]:border-white/5">
             {filteredPlayers.map(player => {
               const status = player.contractStatus
               

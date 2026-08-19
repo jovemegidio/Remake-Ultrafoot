@@ -463,7 +463,7 @@ export default function DashboardPage() {
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <GameHeader team={userTeam} />
 
-      <main className="flex-1 p-4 overflow-y-auto space-y-4">
+      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
         {/* FIM DE TEMPORADA NO ESCRITORIO. Sem partida marcada, "Avancar" no
             cabecalho manda para /partida, que devolve para ca — o laco que o
             jogador relatou. Ver components/iniciar-temporada.tsx. */}
@@ -591,7 +591,7 @@ export default function DashboardPage() {
         )}
 
         {/* Central hub estilo EA FC */}
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr] items-start">
+        <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr] items-start">
           {/* Coluna esquerda: data, proximo jogo e tarefas */}
           <div>
             {(() => {
@@ -777,7 +777,7 @@ export default function DashboardPage() {
           <NewsFeed somenteTexto />
         </section>
 
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="grid items-start gap-3 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-5">
             {nextMatches.length > 0 && (
               <MatchCarousel

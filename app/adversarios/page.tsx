@@ -217,7 +217,7 @@ export default function AdversariosPage() {
               Adversários do calendário
             </h2>
             
-            <div className="space-y-2 max-h-[600px] overflow-y-auto scrollbar-thin pr-2">
+            <div className="grid max-h-[600px] auto-rows-min grid-cols-1 content-start gap-2 overflow-y-auto scrollbar-thin pr-2 xl:grid-cols-2">
               {availableTeams.map(teamShort => {
                 const team = getTeamByShort(teamShort)
                 const analysis = getAnalysis(teamShort)

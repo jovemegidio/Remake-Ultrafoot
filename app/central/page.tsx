@@ -353,7 +353,7 @@ export default function CentralPage() {
               {/* Player List */}
               <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <h3 className="text-sm font-semibold text-white mb-4">Moral Individual</h3>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
                   {playerMorale.length === 0 && (
                     <p className="text-xs text-white/40 py-6 text-center">Carregando elenco...</p>
                   )}

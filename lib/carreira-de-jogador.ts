@@ -341,6 +341,66 @@ export interface PropostaDeClube {
   statusPrometido: PapelNoElenco
   /** Só existe quando o clube quer o atleta por empréstimo. */
   emprestimo?: boolean
+  /**
+   * A MESA DE NEGOCIAÇÃO (1.0.358).
+   *
+   * Só existe em proposta feita a quem está SEM CLUBE. Ali a proposta deixa de
+   * ser "aceita ou não" e vira conversa: o agente pede mais, o clube responde,
+   * e cada pedido gasta a paciência de quem está do outro lado. Ver
+   * `contrapropor`.
+   */
+  negociacao?: NegociacaoDaProposta
+  /** Semana de `semClube` em que ela chegou — é por ela que a proposta vence. */
+  semanaDeChegada?: number
+  /** Semanas até o clube tirar a proposta da mesa se ninguém fechar. */
+  validadeEmSemanas?: number
+}
+
+/**
+ * O QUE JÁ FOI DITO NESTA MESA.
+ *
+ * `paciencia` começa cheia e cai a cada pedido: um agente que pede salário,
+ * luvas, status e temporadas na mesma conversa termina sem proposta nenhuma —
+ * que é exatamente o risco de negociar sem clube.
+ */
+export interface NegociacaoDaProposta {
+  paciencia: number
+  rodadas: number
+  /** A última resposta do clube, para a tela poder mostrar a conversa. */
+  ultimaResposta?: string
+  /** O clube saiu da mesa. A proposta fica visível, mas não se aceita mais. */
+  retirada?: boolean
+}
+
+/** O QUE O PEDIDO DO AGENTE PODE PEDIR. */
+export type PedidoDaNegociacao = "salario" | "luvas" | "status" | "temporadas"
+
+/**
+ * SEM CLUBE (1.0.358) — o estado que faltava ao modo de atleta.
+ *
+ * ⚠️ Até aqui "pedir demissão" no modo de atleta era o botão do TÉCNICO: ele
+ * limpava `selectedTeamShort` e mandava a pessoa para a Área do Treinador — a
+ * tela de quem dirige clube. Um atleta que rescinde não vira treinador
+ * desempregado: ele fica sem time, e é o que ele fez em campo no clube anterior
+ * que decide quem liga.
+ */
+export interface SemClube {
+  desdeTemporada: number
+  desdeRodada: number
+  /** Semanas de mercado já vividas. É o relógio deste estado. */
+  semanas: number
+  motivo: string
+  ultimoClubeNome: string
+  ultimoClubeCurto: string
+  ultimoClubeFileKey: string
+  /**
+   * O CARTAZ (0–100): o que o desempenho no clube anterior comprou no mercado.
+   * É ele que decide se ligam clubes MAIORES ou MENORES — e ele enferruja a
+   * cada semana parado, porque quem não joga some do radar.
+   */
+  cartaz: number
+  /** O diário do mercado, para a tela contar o que aconteceu em cada semana. */
+  diario: { semana: number; texto: string }[]
 }
 
 /**
@@ -675,6 +735,11 @@ export interface EstadoCarreiraDeJogador {
   aposentado: boolean
   /** Mensagens curtas do treinador/agente, a caixa de entrada do atleta. */
   recados: { id: string; de: string; texto: string; temporada: number; rodada: number }[]
+  /**
+   * SEM CLUBE (1.0.358). Ausente = tem clube, que é o caso de todo save antigo.
+   * Ver `rescindirContrato`, `avancarSemanaSemClube` e `contrapropor`.
+   */
+  semClube?: SemClube
 }
 
 // ─── Aleatoriedade semeada ──────────────────────────────────────────────────
@@ -1207,6 +1272,11 @@ export function jogarProximaRodada(
   opcoes?: { viver?: boolean },
 ): EstadoCarreiraDeJogador {
   if (estado.aposentado || estado.temporadaEncerrada) return estado
+  // ⚠️ SEM CLUBE NÃO SE JOGA RODADA (1.0.358). O calendário do clube antigo
+  // continua no estado (é o que a tela de mercado mostra correndo sem ele);
+  // avançar por aqui faria o atleta pontuar por um time que já não é o dele.
+  // Quem faz o tempo passar nesse estado é `avancarSemanaSemClube`.
+  if (estado.semClube) return estado
   const proxima = estado.calendario.find(f => !f.played)
   if (!proxima) {
     // ⚠️ A LIGA PODE ACABAR ANTES DA COPA. As rodadas-gatilho do mata-mata são
@@ -2093,6 +2163,9 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
 export function aceitarProposta(estado: EstadoCarreiraDeJogador, propostaId: string): EstadoCarreiraDeJogador {
   const proposta = estado.propostas.find(p => p.id === propostaId)
   if (!proposta) return estado
+  // Proposta retirada na mesa não se assina depois (1.0.358). Sem esta linha o
+  // clube "encerrava a conversa" e o botão continuava fechando contrato.
+  if (proposta.negociacao?.retirada) return estado
   const clube = getTeamByFileKey(proposta.clubeFileKey)
   if (!clube) return estado
 
@@ -2143,6 +2216,31 @@ export function aceitarProposta(estado: EstadoCarreiraDeJogador, propostaId: str
     texto: `Acertado com o ${clube.nome}. Contrato até ${novo.contrato.ateTemporada}.`,
     temporada: novo.temporada, rodada: 0,
   }, ...novo.recados].slice(0, 25)
+
+  // ── FIM DO MERCADO (1.0.358) ────────────────────────────────────────────
+  //
+  // Quem assinou estando SEM CLUBE volta a ter temporada: a rodada recomeça no
+  // zero (o calendário acima é novo) e a contagem da temporada também, porque
+  // os jogos que o antigo clube fez sem ele não são dele. As semanas paradas
+  // ficam no recado — foram parte da carreira.
+  if (novo.semClube) {
+    const semanas = novo.semClube.semanas
+    novo.rodada = 0
+    novo.temporadaAtual = { jogos: 0, titularidades: 0, minutos: 0, gols: 0, assistencias: 0, somaDasNotas: 0, cartoesAmarelos: 0, cartoesVermelhos: 0 }
+    novo.ultimasPartidas = []
+    novo.temporadaEncerrada = false
+    // Fora de ritmo: quem passou semanas sem treinar com grupo não estreia
+    // inteiro. A forma volta com as semanas de treino, como qualquer lesão.
+    novo.forma = Math.max(40, Math.min(novo.forma, 78 - semanas))
+    novo.recados = [{
+      id: `fim_do_mercado_${novo.temporada}_${clube.file_key}`, de: "Agente",
+      texto: semanas <= 1
+        ? `Mercado curto: você ficou livre e já assinou com o ${clube.nome}.`
+        : `Depois de ${semanas} semanas sem clube, está assinado com o ${clube.nome}. Agora é recuperar o ritmo.`,
+      temporada: novo.temporada, rodada: 0,
+    }, ...novo.recados].slice(0, 25)
+    novo.semClube = undefined
+  }
   return novo
 }
 
@@ -2442,4 +2540,355 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
 export function mediaDaTemporada(estado: EstadoCarreiraDeJogador): number {
   const t = estado.temporadaAtual
   return t.jogos > 0 ? Math.round((t.somaDasNotas / t.jogos) * 100) / 100 : 0
+}
+
+// ─── SEM CLUBE: RESCISÃO, MERCADO E CONTRAPROPOSTA (1.0.358) ────────────────
+//
+// ⚠️ O PEDIDO, NA LETRA: "a funcionalidade de pedir demissão no modo carreira
+// de jogador deve ser como na vida real: o jogador fica sem time até receber
+// propostas de times superiores ou inferiores — vai depender do desempenho dele
+// no clube anterior —, onde o jogador/agente farão contraproposta até fechar o
+// contrato ou não."
+//
+// São quatro coisas, e nenhuma existia:
+//   1. FICAR SEM TIME é um estado do save, não uma tela de saída. Antes o botão
+//      do cabeçalho limpava `selectedTeamShort` e mandava o atleta para a Área
+//      do Treinador — a tela de quem DIRIGE clube. Ver `rescindirContrato`.
+//   2. O TEMPO PASSA sem partida: semana a semana, e é o relógio que traz (e
+//      leva) proposta. Ver `avancarSemanaSemClube`.
+//   3. O NÍVEL DE QUEM LIGA sai do desempenho no clube anterior — o CARTAZ. Sem
+//      isso "superiores ou inferiores" seria sorteio. Ver `cartazDeMercado`.
+//   4. NEGOCIAR É CONVERSA, não um botão de aceitar: o agente pede mais e o
+//      clube responde, com paciência finita. Ver `contrapropor`.
+//
+// Nada aqui inventa um segundo mercado: as propostas são as mesmas
+// `PropostaDeClube` que o fim de temporada já produz, e quem assina passa pelo
+// MESMO `aceitarProposta`. Dois caminhos para assinar contrato discordariam na
+// primeira mudança de regra.
+
+/** Faixa de prestígio que o cartaz alcança. É o "superiores ou inferiores". */
+function alvoDePrestigio(cartaz: number): { min: number; max: number } {
+  const centro = 34 + cartaz * 0.58
+  return { min: Math.max(0, centro - 20), max: centro + 9 }
+}
+
+/**
+ * O CARTAZ (0–100): o que o desempenho no clube anterior comprou no mercado.
+ *
+ * Lê a temporada em curso quando ela teve jogos e cai no último ano fechado
+ * quando não teve — quem rescinde na pré-temporada é julgado pelo ano passado,
+ * que é o que um diretor faria.
+ */
+export function cartazDeMercado(estado: EstadoCarreiraDeJogador): number {
+  const t = estado.temporadaAtual
+  const ultima = estado.historico[estado.historico.length - 1]
+  const usaAtual = t.jogos >= 4 || !ultima
+  const jogos = usaAtual ? t.jogos : ultima.jogos
+  const nota = usaAtual ? mediaDaTemporada(estado) : ultima.notaMedia
+  const gols = usaAtual ? t.gols : ultima.gols
+  const assistencias = usaAtual ? t.assistencias : ultima.assistencias
+  const participacoes = gols + assistencias * 0.6
+
+  const bruto =
+    (estado.atleta.overall - 54) * 1.55
+    + (nota > 0 ? (nota - 6.2) * 9 : -6)
+    + Math.min(20, participacoes * 1.1)
+    + Math.min(8, jogos * 0.28)
+    + ((estado.reputacao ?? 30) - 30) * 0.35
+    + (estado.empresario.influencia - 10) * 1.1
+    + estado.titulos.length * 1.5
+    + (estado.capitao ? 3 : 0)
+    // Quem estava fora dos planos chega ao mercado com menos cartaz — é a
+    // mesma leitura que o resto do modo faz da nota do treinador.
+    + (papelNoElenco(estado.notaDoTreinador) === "fora dos planos" ? -8 : 0)
+    // A FERRUGEM: cada semana parado é uma semana fora do radar.
+    - Math.max(0, (estado.semClube?.semanas ?? 0) - 1) * 1.8
+
+  return Math.max(0, Math.min(100, Math.round(bruto)))
+}
+
+/**
+ * RESCINDIR. O atleta deixa o clube e vira agente livre.
+ *
+ * O calendário e a tabela do clube antigo FICAM no estado de propósito: são a
+ * temporada que o mundo continua jogando sem ele, e é o que a tela de mercado
+ * mostra enquanto ele espera. Quem assinar em outro lugar recebe calendário
+ * novo em `aceitarProposta`, como qualquer transferência.
+ */
+export function rescindirContrato(
+  estado: EstadoCarreiraDeJogador,
+  motivo = "Rescisão pedida pelo atleta",
+): EstadoCarreiraDeJogador {
+  if (estado.aposentado || estado.semClube) return estado
+  const novo = structuredClone(estado)
+
+  novo.semClube = {
+    desdeTemporada: novo.temporada,
+    desdeRodada: novo.rodada,
+    semanas: 0,
+    motivo,
+    ultimoClubeNome: novo.clubeNome,
+    ultimoClubeCurto: novo.clubeCurto,
+    ultimoClubeFileKey: novo.clubeFileKey,
+    cartaz: 0,
+    diario: [],
+  }
+  novo.semClube.cartaz = cartazDeMercado(novo)
+  novo.semClube.diario = [{
+    semana: 0,
+    texto: novo.semClube.cartaz >= 62
+      ? `Você rescindiu com o ${novo.clubeNome}. Seu agente diz que o telefone não vai demorar.`
+      : novo.semClube.cartaz >= 38
+        ? `Você rescindiu com o ${novo.clubeNome}. O mercado sabe quem você é, mas ninguém corre.`
+        : `Você rescindiu com o ${novo.clubeNome}. O agente foi honesto: vai ser um mercado difícil.`,
+  }]
+
+  // Sem clube não há salário, não há confiança de treinador e não há pedido em
+  // aberto. Propostas do fim de temporada morrem junto: aquelas eram para quem
+  // tinha contrato, e o mercado agora é outro.
+  novo.contrato = { ...novo.contrato, salarioSemanal: 0, ateTemporada: novo.temporada }
+  novo.notaDoTreinador = 0
+  novo.pedido = "nenhum"
+  novo.propostas = []
+  novo.partidaEmCurso = undefined
+  novo.capitao = false
+  novo.moral = limitar(novo.moral - 8)
+  novo.recados = [{
+    id: `rescisao_${novo.temporada}_${novo.rodada}`,
+    de: "Agente",
+    texto: `Rescisão assinada com o ${novo.clubeNome}. A partir de agora você está livre no mercado — e quem liga depende do que você fez lá dentro.`,
+    temporada: novo.temporada,
+    rodada: novo.rodada,
+  }, ...novo.recados].slice(0, 25)
+  return novo
+}
+
+/** Quantos clubes ligam nesta semana, dado o cartaz e o alcance do agente. */
+function quantasLigamNaSemana(cartaz: number, estado: EstadoCarreiraDeJogador, semana: number): number {
+  const base = cartaz >= 70 ? 2 : cartaz >= 45 ? 1 : 0
+  const sorte = roll(`${estado.atleta.id}:mercado:${semana}`)
+  const extra = sorte < (0.12 + (estado.empresario.influencia - 10) * 0.02 + cartaz / 500) ? 1 : 0
+  return Math.min(3, base + extra)
+}
+
+const ESCADA_DE_STATUS: PapelNoElenco[] = ["fora dos planos", "reserva", "rodízio", "titular", "titular absoluto"]
+
+/** Sobe um degrau na promessa do clube; no topo, devolve o topo. */
+function statusAcima(status: PapelNoElenco): PapelNoElenco {
+  const i = ESCADA_DE_STATUS.indexOf(status)
+  return ESCADA_DE_STATUS[Math.min(ESCADA_DE_STATUS.length - 1, i + 1)]
+}
+
+/** As propostas que chegam numa semana de mercado. */
+function propostasDaSemana(estado: EstadoCarreiraDeJogador, semana: number): PropostaDeClube[] {
+  const semClube = estado.semClube
+  if (!semClube) return []
+  const quantas = quantasLigamNaSemana(semClube.cartaz, estado, semana)
+  if (quantas === 0) return []
+
+  const faixa = alvoDePrestigio(semClube.cartaz)
+  const doExterior = estado.empresario.redeInternacional >= 12
+  const jaNaMesa = new Set(estado.propostas.map(p => p.clubeFileKey))
+
+  const candidatos = completarLigaComPool(estado.divisao)
+    .concat(doExterior ? ligasVizinhas(estado) : [])
+    // O clube que ele acabou de deixar não liga na semana seguinte.
+    .filter(c => c.file_key !== semClube.ultimoClubeFileKey && !jaNaMesa.has(c.file_key))
+    .filter(c => c.prestigio >= faixa.min && c.prestigio <= faixa.max)
+    // Ordem estável e semeada: o mesmo save oferece os mesmos clubes.
+    .sort((a, b) => roll(`${estado.atleta.id}:${semana}:${a.file_key}`) - roll(`${estado.atleta.id}:${semana}:${b.file_key}`))
+    .slice(0, quantas)
+
+  const agente = estado.empresario
+  const talento = 1 + (agente.negociacao - 10) * 0.035
+  // A base salarial é o que o atleta VALE, não o que ele ganhava: quem
+  // rescindiu está com salário zero e não pode partir de zero.
+  const referencia = Math.max(2_000, Math.round(estado.atleta.overall ** 2 * 1.6))
+
+  return candidatos.map((clube, i) => {
+    const acima = clube.prestigio > estado.atleta.overall
+    const salario = Math.round(referencia * (0.75 + clube.prestigio / 130 + i * 0.06) * talento)
+    const status: PapelNoElenco = acima ? "rodízio"
+      : clube.prestigio >= estado.atleta.overall - 6 ? "titular"
+        : "titular absoluto"
+    return {
+      id: `livre_${estado.temporada}_${semana}_${clube.file_key}`,
+      clubeCurto: clube.curto,
+      clubeNome: clube.nome,
+      clubeFileKey: clube.file_key,
+      divisao: String(clube.divisao),
+      ligaNome: String(clube.divisao),
+      prestigio: clube.prestigio,
+      salarioSemanal: salario,
+      temporadas: acima ? 3 : 2,
+      luvas: Math.round(salario * (acima ? 6 : 10) * talento),
+      bonusPorGol: Math.round(salario * 0.16),
+      bonusPorTitulo: Math.round(salario * 6),
+      statusPrometido: status,
+      motivo: acima
+        ? `Degrau acima: o ${clube.nome} te quer na disputa, sem vaga garantida.`
+        : status === "titular"
+          ? `O ${clube.nome} te vê no time titular desde a estreia.`
+          : `Projeto em volta de você: o ${clube.nome} promete a camisa.`,
+      negociacao: {
+        // Agente bom aguenta mais conversa antes de o clube cansar.
+        paciencia: 2 + Math.round(Math.max(0, agente.negociacao - 8) / 5),
+        rodadas: 0,
+      },
+      semanaDeChegada: semana,
+      validadeEmSemanas: acima ? 3 : 4,
+    }
+  })
+}
+
+/**
+ * UMA SEMANA DE MERCADO.
+ *
+ * O relógio deste estado. Traz proposta nova, vence a que ficou parada demais e
+ * desgasta o cartaz de quem não joga. Sem clube não há rodada: é este avanço
+ * que faz o tempo passar.
+ */
+export function avancarSemanaSemClube(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
+  if (!estado.semClube || estado.aposentado) return estado
+  const novo = structuredClone(estado)
+  const semClube = novo.semClube!
+  semClube.semanas += 1
+  const semana = semClube.semanas
+
+  // O cartaz é recalculado a cada semana porque a ferrugem entra nele.
+  semClube.cartaz = cartazDeMercado(novo)
+
+  // Fora de ritmo: quem não treina com grupo perde forma. Piso em 45 — ele
+  // continua se cuidando por conta, e um atleta sem clube não vira sedentário.
+  novo.forma = Math.max(45, novo.forma - 2.5)
+
+  // VENCIMENTO. Proposta parada sai da mesa — inclusive a que o agente estava
+  // esticando: é o preço de negociar demais.
+  const vencidas = novo.propostas.filter(p =>
+    semana - (p.semanaDeChegada ?? 0) >= (p.validadeEmSemanas ?? 4) || p.negociacao?.retirada,
+  )
+  novo.propostas = novo.propostas.filter(p => !vencidas.includes(p))
+
+  const novas = propostasDaSemana(novo, semana)
+  novo.propostas = [...novo.propostas, ...novas]
+
+  const linhas: string[] = []
+  for (const p of vencidas) {
+    linhas.push(p.negociacao?.retirada
+      ? `O ${p.clubeNome} saiu da mesa.`
+      : `O ${p.clubeNome} cansou de esperar e tirou a proposta.`)
+  }
+  for (const p of novas) {
+    linhas.push(`${p.clubeNome} (prestígio ${p.prestigio}) fez proposta: ${Math.round(p.salarioSemanal).toLocaleString("pt-BR")}/semana, ${p.temporadas} temporadas, promessa de ${p.statusPrometido}.`)
+  }
+  if (linhas.length === 0) {
+    linhas.push(semClube.cartaz >= 55
+      ? "Semana sem novidade. O agente diz que tem conversa em andamento."
+      : semana >= 8
+        ? "Mais uma semana em silêncio. Quanto mais tempo parado, menor o cartaz."
+        : "Nenhum clube ligou nesta semana.")
+  }
+  semClube.diario = [{ semana, texto: linhas.join(" ") }, ...semClube.diario].slice(0, 30)
+
+  if (novas.length > 0) {
+    novo.recados = [{
+      id: `mercado_${novo.temporada}_${semana}`,
+      de: "Agente",
+      texto: novas.length === 1
+        ? `Chegou proposta do ${novas[0].clubeNome}.`
+        : `Chegaram ${novas.length} propostas. Vamos escolher com calma.`,
+      temporada: novo.temporada,
+      rodada: novo.rodada,
+    }, ...novo.recados].slice(0, 25)
+  }
+  return novo
+}
+
+/** O que o agente diz na mesa, por tipo de pedido. */
+const FALA_DO_PEDIDO: Record<PedidoDaNegociacao, string> = {
+  salario: "Meu jogador vale mais por semana do que isso.",
+  luvas: "As luvas precisam melhorar para ele assinar hoje.",
+  status: "Ele não sai do clube dele para brigar por vaga. Queremos a camisa.",
+  temporadas: "Queremos contrato mais longo — ele quer construir algo aí.",
+}
+
+/**
+ * CONTRAPROPOR. O agente pede mais; o clube responde.
+ *
+ * ⚠️ A CONVERSA TEM PREÇO. Cada pedido gasta uma paciência que começa pequena
+ * (e cresce com a habilidade de negociação do agente). Pedir salário, luvas,
+ * status e temporadas na mesma mesa é o caminho mais curto para ficar sem
+ * proposta nenhuma — que é o "ou não" do pedido do usuário.
+ *
+ * O resultado é semeado por (atleta, proposta, rodada da conversa): reabrir o
+ * save não muda a resposta do clube.
+ */
+export function contrapropor(
+  estado: EstadoCarreiraDeJogador,
+  propostaId: string,
+  pedido: PedidoDaNegociacao,
+): EstadoCarreiraDeJogador {
+  const alvo = estado.propostas.find(p => p.id === propostaId)
+  if (!alvo || alvo.negociacao?.retirada) return estado
+
+  const novo = structuredClone(estado)
+  const proposta = novo.propostas.find(p => p.id === propostaId)!
+  const mesa: NegociacaoDaProposta = proposta.negociacao ?? { paciencia: 2, rodadas: 0 }
+  mesa.rodadas += 1
+  mesa.paciencia -= 1
+
+  const cartaz = novo.semClube?.cartaz ?? cartazDeMercado(novo)
+  const chance =
+    0.30
+    + (novo.empresario.negociacao - 10) * 0.030
+    + (cartaz - 50) * 0.004
+    - (mesa.rodadas - 1) * 0.14
+    // Pedir a camisa a um clube grande é mais difícil que pedir dinheiro.
+    - (pedido === "status" && proposta.prestigio > novo.atleta.overall ? 0.12 : 0)
+  const sorte = roll(`${novo.atleta.id}:mesa:${propostaId}:${mesa.rodadas}:${pedido}`)
+
+  if (sorte < Math.max(0.05, chance)) {
+    if (pedido === "salario") {
+      proposta.salarioSemanal = Math.round(proposta.salarioSemanal * 1.14)
+      mesa.ultimaResposta = `O ${proposta.clubeNome} aceitou: salário para ${Math.round(proposta.salarioSemanal).toLocaleString("pt-BR")}/semana.`
+    } else if (pedido === "luvas") {
+      proposta.luvas = Math.round((proposta.luvas || proposta.salarioSemanal * 4) * 1.3)
+      mesa.ultimaResposta = `O ${proposta.clubeNome} melhorou as luvas para ${Math.round(proposta.luvas).toLocaleString("pt-BR")}.`
+    } else if (pedido === "temporadas") {
+      proposta.temporadas += 1
+      mesa.ultimaResposta = `O ${proposta.clubeNome} estendeu para ${proposta.temporadas} temporadas.`
+    } else {
+      proposta.statusPrometido = statusAcima(proposta.statusPrometido)
+      mesa.ultimaResposta = `O ${proposta.clubeNome} prometeu: ${proposta.statusPrometido}.`
+    }
+  } else if (mesa.paciencia > 0) {
+    mesa.ultimaResposta = `O ${proposta.clubeNome} ouviu e manteve a proposta como está.`
+  } else {
+    mesa.retirada = true
+    mesa.ultimaResposta = `O ${proposta.clubeNome} encerrou a conversa e retirou a proposta.`
+  }
+
+  proposta.negociacao = mesa
+  if (novo.semClube) {
+    novo.semClube.diario = [{
+      semana: novo.semClube.semanas,
+      texto: `Agente ao ${proposta.clubeNome}: “${FALA_DO_PEDIDO[pedido]}” — ${mesa.ultimaResposta}`,
+    }, ...novo.semClube.diario].slice(0, 30)
+  }
+  return novo
+}
+
+/** Recusa UMA proposta. As outras seguem na mesa — e o relógio, correndo. */
+export function descartarProposta(estado: EstadoCarreiraDeJogador, propostaId: string): EstadoCarreiraDeJogador {
+  const alvo = estado.propostas.find(p => p.id === propostaId)
+  if (!alvo) return estado
+  const novo = structuredClone(estado)
+  novo.propostas = novo.propostas.filter(p => p.id !== propostaId)
+  if (novo.semClube) {
+    novo.semClube.diario = [{
+      semana: novo.semClube.semanas,
+      texto: `Você recusou o ${alvo.clubeNome}.`,
+    }, ...novo.semClube.diario].slice(0, 30)
+  }
+  return novo
 }

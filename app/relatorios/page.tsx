@@ -217,7 +217,7 @@ export default function RelatoriosPage() {
                   ))}
                 </div>
                 
-                <div className="space-y-2 max-h-[500px] overflow-y-auto scrollbar-thin">
+                <div className="grid max-h-[640px] auto-rows-min grid-cols-1 content-start gap-2 overflow-y-auto scrollbar-thin xl:grid-cols-2">
                   {sortedPlayers.map(player => {
                     const rating = (player.overall + player.form) / 20
                     return (
