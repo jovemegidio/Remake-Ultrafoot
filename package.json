@@ -33,6 +33,7 @@
     "qa:rivals": "node scripts/qa-rivals-servidor.mjs",
     "qa:carreira-jogador": "tsx scripts/qa-carreira-de-jogador.ts",
     "qa:sem-clube": "tsx scripts/qa-sem-clube.ts",
+    "qa:atleta-telas": "playwright test e2e/carreira-atleta.spec.ts e2e/criar-carreira-atleta.spec.ts --project=chromium",
     "qa:atleta-copa": "tsx scripts/qa-atleta-copa-suspensao.ts",
     "qa:economia-modelo": "tsx scripts/qa-economia-longa.ts",
     "qa:331": "tsx scripts/qa-save-isolation.ts && tsx scripts/test-identidade-clubes-331.ts",

@@ -73,7 +73,9 @@ import { Escudo3D } from "@/components/novo-jogo/escudo-3d"
 import { NumeroQueConta } from "@/components/novo-jogo/numero-que-conta"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
-import { hardNavigate } from "@/lib/hard-navigation"
+import { hardNavigate } from "@/lib/hard-navigation"
+import { useTranslation } from "@/lib/i18n"
+import { useRouter } from "next/navigation"
 import { carregarElencosDoPool } from "@/lib/pool-elencos"
 import { carregarElencosReaisTM } from "@/lib/elencos-reais-tm"
 import { carregarElencosFemininos, clubesComElencoFeminino } from "@/lib/elencos-femininos"
@@ -503,6 +505,7 @@ const COUNTRIES_FEMININOS: CountryTab[] = Object.values(
 const STADIUM_BG = "/images/pre-jogo/in-game-7.webp"
 
 export default function NovoJogoPage() {
+  const t = useTranslation()
   const { initializeNewGame } = useGameManager()
   const { registrado } = useJogoRegistrado()
   const versaoDoJogo = useVersaoDoJogo()
@@ -619,6 +622,65 @@ export default function NovoJogoPage() {
   // clube não significam a mesma coisa nos dois, e mantê-los abriria a tela num
   // clube que não é o que o carrossel está mostrando.
   useEffect(() => { setCountryIndex(0); setLeagueIndex(0); setTeamIndex(0) }, [modalidade])
+  /**
+   * O QUE A CRIAÇÃO ESTÁ FAZENDO AGORA — medido, não decorativo (1.0.358).
+   *
+   * ⚠️ Do clique em "Iniciar carreira" até o escritório abrir passam ~10 s na
+   * build (elencos do pool + TM + feminino são ~10 MB, e depois vem a montagem
+   * da temporada e a gravação). A tela ficava PARADA esse tempo inteiro, sem
+   * botão desabilitado e sem uma palavra — e dez segundos de nada é
+   * indistinguível de travado. Foi metade do relato "coloco os dados e
+   * simplesmente não termina": a outra metade era o guarda do nome, acima.
+   */
+  const [criando, setCriando] = useState<string | null>(null)
+
+  /**
+   * ⚠️ OS ELENCOS COMEÇAM A VIR ENQUANTO A PESSOA ESCOLHE — e isto vale mais que
+   * qualquer otimização de render nesta tela.
+   *
+   * Medido na build: abrir o escritório depois do clique baixava ~15 MB em 81
+   * requisições e levava 16 s aqui (30 s no relato do usuário, com o overlay
+   * parado em "Montando a sua temporada…"). A maior fatia são os três seeds de
+   * elenco — pool, Transfermarkt e feminino — que a criação PRECISA ter quentes
+   * antes de gravar (com eles frios, o save nasce com atleta gerado no lugar do
+   * licenciado, para sempre).
+   *
+   * Eles não dependem de nada que a pessoa escolhe: podem começar a carregar no
+   * instante em que a tela abre e chegar prontos no clique. O `await` lá embaixo
+   * continua — quem chegar antes da hora espera; quem chegar depois, não espera
+   * nada, porque a promessa é compartilhada (ver lib/pool-elencos).
+   *
+   * `requestIdleCallback` porque a tela ainda está montando carrossel e escudos:
+   * disputar CPU com a primeira pintura seria trocar um engasgo por outro.
+   */
+  useEffect(() => {
+    const puxar = () => {
+      void carregarElencosDoPool()
+      void carregarElencosReaisTM()
+      void carregarElencosFemininos()
+    }
+    const janela = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
+    if (janela.requestIdleCallback) janela.requestIdleCallback(puxar, { timeout: 2500 })
+    else window.setTimeout(puxar, 800)
+  }, [])
+
+  /**
+   * E A TELA DE DESTINO TAMBÉM VEM ANTES. No export estático o código de uma
+   * rota só é baixado na primeira visita: sem isto, o `hardNavigate` do fim da
+   * criação ainda esperava ~2 MB de JavaScript com o overlay na tela. É o mesmo
+   * aquecimento que o cabeçalho faz com as rotas mais visitadas — aqui a rota
+   * mais visitada a seguir é conhecida: a que esta carreira vai abrir.
+   */
+  const roteador = useRouter()
+  useEffect(() => {
+    const destino = modalidade === "sub20" ? "/base/carreira"
+      : modalidade === "jogador" ? "/carreira/jogador"
+        : "/"
+    const aquecer = () => roteador.prefetch(destino)
+    const janela = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
+    if (janela.requestIdleCallback) janela.requestIdleCallback(aquecer, { timeout: 3000 })
+    else window.setTimeout(aquecer, 1200)
+  }, [modalidade, roteador])
   const [debtPreset, setDebtPreset] = useState<DebtPreset>("none")
   const [modoDeMundo, setModoDeMundo] = useState<ModoDeMundo>("original")
   const [showInitialSettings, setShowInitialSettings] = useState(false)
@@ -938,7 +1000,18 @@ export default function NovoJogoPage() {
   const formatCompact = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 2 }).format(v)
 
+  /**
+   * O nome que batiza a carreira. No modo atleta é o do ATLETA (o rodapé edita
+   * o mesmo valor); nas três de técnico é o do treinador. Ver o guarda abaixo.
+   */
+  const nomeDaCarreira = modalidade === "jogador"
+    ? (atleta.nome.trim() || managerName.trim())
+    : managerName.trim()
+
   const handleStart = useCallback(async () => {
+    // Clique duplo não cria duas carreiras: enquanto a primeira corre, esta
+    // volta na hora. (O botão também fica desabilitado — cinto e suspensório.)
+    if (criando) return
     if (!selectedTeam) return
     // ⚠️ A trava vale para TODO caminho de "começar" (botão, Enter, gamepad),
     // por isso vive aqui e não em cada um deles.
@@ -949,7 +1022,17 @@ export default function NovoJogoPage() {
       setShowInitialSettings(true)
       return
     }
-    if (managerName.trim().length === 0) {
+    // ⚠️ NA CARREIRA DE ATLETA QUEM DÁ NOME É O ATLETA (1.0.358).
+    //
+    // Este guarda exigia `managerName` — o "Nome do técnico..." do rodapé — em
+    // TODA modalidade. Quem entrava pela porta do atleta preenchia o nome no
+    // painel de criação ("Nome", junto de posição, idade e camisa), clicava em
+    // "Iniciar carreira" e **nada acontecia**: a função voltava aqui, marcava um
+    // erro num campo que a pessoa nem estava olhando e a tela ficava parada para
+    // sempre. Foi o relato "coloco os dados e simplesmente não termina".
+    //
+    // Um atleta não tem nome de técnico: o nome dele É o nome da carreira.
+    if (nomeDaCarreira.length === 0) {
       setNameError(true)
       // foca o input para o usuario digitar o nome
       nameInputRef.current?.focus()
@@ -967,7 +1050,7 @@ export default function NovoJogoPage() {
     // sessionStorage seja descartado durante o reload do protocolo Tauri.
     safeLocalSet("ultrafoot:career-bootstrap", JSON.stringify({
       teamShort: selectedTeam.curto,
-      managerName: managerName.trim(),
+      managerName: nomeDaCarreira,
       createdAt: Date.now(),
     }))
     // ⚠️ ESPERA OBRIGATÓRIA. Os elencos do pool (7,91 MB) passaram a chegar sob
@@ -977,7 +1060,9 @@ export default function NovoJogoPage() {
     // O elenco FEMININO entra na mesma espera e pelo mesmo motivo: criar a
     // carreira com ele frio grava atleta gerado no lugar da atleta real, no
     // save, para sempre.
+    setCriando(t.novoJogo.carregando_elencos)
     await Promise.all([carregarElencosDoPool(), carregarElencosReaisTM(), carregarElencosFemininos()])
+    setCriando(modalidade === "jogador" ? t.novoJogo.montando_sua_temporada : t.novoJogo.montando_temporada)
     setTeamColors({ primary: selectedTeam.cor1, secondary: selectedTeam.cor2 })
     setTheme("team")
     // "user" trava o detector automático: a escolha do jogador manda a partir daqui.
@@ -995,13 +1080,13 @@ export default function NovoJogoPage() {
     const doAtleta = modalidade === "jogador"
       ? criarCarreiraDeJogador(
           selectedTeam,
-          criarAtletaDaCarreira({ ...atleta, nome: atleta.nome.trim() || managerName.trim() }),
+          criarAtletaDaCarreira({ ...atleta, nome: nomeDaCarreira }),
           activeLeague.label,
           2026,
         )
       : null
 
-    initializeNewGame(selectedTeam.curto, managerName, {
+    initializeNewGame(selectedTeam.curto, nomeDaCarreira, {
       modalidade,
       ...(daBase ? { youthCareer: daBase.career, youthPlayers: daBase.players, youthCareerStartSeason: 2026 } : {}),
       ...(doAtleta ? { carreiraDeJogador: doAtleta } : {}),
@@ -1023,6 +1108,7 @@ export default function NovoJogoPage() {
       activeSponsors: [],
     }, selectedTeam.file_key)
     window.sessionStorage.setItem("ultrafoot:session-active", "true")
+    setCriando(t.novoJogo.salvando_carreira)
     // Cutscene de início de carreira REMOVIDA (pedido): vai DIRETO ao escritório.
     // Ainda aguardamos o plugin-store persistir — sem isso, o reload da WebView
     // podia destruir o cache antes de o novo clube chegar ao disco e a home
@@ -1034,14 +1120,15 @@ export default function NovoJogoPage() {
     // CADA MODALIDADE ABRE ONDE ELA ACONTECE. Mandar as quatro para o escritório
     // do técnico era o caminho mais curto e o mais errado: quem escolheu ser
     // atleta cairia numa tela de mercado e de folha salarial que não é dele.
+    setCriando(modalidade === "jogador" ? t.novoJogo.abrindo_seu_escritorio : t.novoJogo.abrindo_escritorio)
     hardNavigate(
       modalidade === "sub20" ? "/base/carreira"
         : modalidade === "jogador" ? "/carreira/jogador"
           : "/?career=1",
     )
-  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme, modalidade, atleta, activeLeague.label, debtPreset, profile, modoDeMundo, configuracoes283, managerProfile26, convidados.length, tecnicosDaMesa, errosDosTecnicos.length, escolhendoConvidado, registrado])
+  }, [criando, selectedTeam, nomeDaCarreira, initializeNewGame, setTeamColors, setTheme, modalidade, atleta, activeLeague.label, debtPreset, profile, modoDeMundo, configuracoes283, managerProfile26, convidados.length, tecnicosDaMesa, errosDosTecnicos.length, escolhendoConvidado, registrado])
 
-  const isNameValid = managerName.trim().length > 0
+  const isNameValid = nomeDaCarreira.length > 0
 
   const nextTeam = useCallback(() => setTeamIndex(prev => (prev + 1) % teams.length), [teams.length])
   const prevTeam = useCallback(() => setTeamIndex(prev => (prev - 1 + teams.length) % teams.length), [teams.length])
@@ -1890,30 +1977,55 @@ export default function NovoJogoPage() {
                   na carreira de atleta: ali a escolha já foi feita na tela
                   anterior, os botões do alto somem, e sem esta faixa o rodapé
                   não diria que carreira está sendo criada. */}
+              {/* ── A ESPERA COM ROSTO (1.0.358) ────────────────────────────
+                  Ela cobre a tela porque a criação NÃO pode ser interrompida no
+                  meio: metade de uma carreira gravada é save quebrado. E diz em
+                  que passo está, porque "carregando" sozinho, por dez segundos,
+                  volta a parecer travado. */}
+              {criando && (
+                <div className="fixed inset-0 z-[120] grid place-items-center bg-black/85 backdrop-blur-sm">
+                  <div className="flex flex-col items-center gap-4 px-6 text-center">
+                    <span
+                      className="h-10 w-10 animate-spin rounded-full border-2 border-white/15"
+                      style={{ borderTopColor: cor1 }}
+                    />
+                    <p className="text-lg font-black text-white">{criando}</p>
+                    <p className="max-w-sm text-[12px] leading-relaxed text-white/45">
+                      {modalidade === "jogador" ? t.novoJogo.espera_do_atleta : t.novoJogo.espera_do_tecnico}
+                    </p>
+                  </div>
+                </div>
+              )}
               {modoTravado && (
                 <span className="inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/10 px-3 text-[10px] font-bold uppercase tracking-wide text-[var(--brand)]">
                   <User className="h-4 w-4" />
                   {MODALIDADE_DE_JOGADOR.titulo}
                 </span>
               )}
-              <select value={debtPreset} onChange={event => setDebtPreset(event.target.value as DebtPreset)} aria-label="Dívida inicial do clube" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
-                <option value="none">Sem dívida</option><option value="light">Dívida leve</option><option value="realistic">Dívida realista</option><option value="high">Dívida alta</option>
+              <select value={debtPreset} onChange={event => setDebtPreset(event.target.value as DebtPreset)} aria-label={t.novoJogo.divida_inicial} className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
+                <option value="none">{t.novoJogo.sem_divida}</option><option value="light">{t.novoJogo.divida_leve}</option><option value="realistic">{t.novoJogo.divida_realista}</option><option value="high">{t.novoJogo.divida_alta}</option>
               </select>
               <div className="relative">
                 {nameError && (
                   <p className="absolute -top-7 right-0 whitespace-nowrap text-[11px] font-medium text-red-400">
-                    Digite o nome do treinador para continuar
+                    {modalidade === "jogador" ? t.novoJogo.digite_nome_do_atleta : t.novoJogo.digite_nome_do_treinador}
                   </p>
                 )}
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: `${cor1}90` }} />
+                {/* ⚠️ UM CAMPO, UM NOME. No modo atleta este input edita o
+                    NOME DO ATLETA — o mesmo que aparece no painel de criação.
+                    Antes eram dois campos parecidos com donos diferentes: a
+                    pessoa preenchia o do painel, o do rodapé continuava vazio, e
+                    "Iniciar carreira" voltava em silêncio. */}
                 <input
                   ref={nameInputRef}
-                  value={managerName}
+                  value={modalidade === "jogador" ? atleta.nome : managerName}
                   onChange={e => {
-                    setManagerName(e.target.value)
+                    if (modalidade === "jogador") setAtleta(a => ({ ...a, nome: e.target.value }))
+                    else setManagerName(e.target.value)
                     if (nameError) setNameError(false)
                   }}
-                  placeholder="Nome do técnico..."
+                  placeholder={modalidade === "jogador" ? t.novoJogo.nome_do_atleta : t.novoJogo.nome_do_tecnico}
                   maxLength={32}
                   aria-invalid={nameError}
                   className="h-11 w-44 sm:w-56 rounded-xl pl-10 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none transition-all bg-black/55"
@@ -1931,7 +2043,8 @@ export default function NovoJogoPage() {
 
               <button
                 onClick={handleStart}
-                aria-disabled={!isNameValid}
+                disabled={Boolean(criando)}
+                aria-disabled={!isNameValid || Boolean(criando)}
                 className="relative h-11 px-6 rounded-xl font-black text-sm tracking-[0.15em] uppercase text-white transition-all active:scale-[0.97] inline-flex items-center gap-2"
                 style={{
                   background: `linear-gradient(135deg, ${cor1} 0%, ${cor2} 100%)`,
@@ -1941,7 +2054,7 @@ export default function NovoJogoPage() {
                 }}
               >
                 <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-                Iniciar carreira
+                {criando ? t.novoJogo.criando : t.novoJogo.iniciar_carreira}
               </button>
             </div>
             )}

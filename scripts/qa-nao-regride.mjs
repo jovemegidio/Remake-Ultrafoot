@@ -179,6 +179,8 @@ const INVENTARIO = [
   ["1.0.358", "Fundo do mercado nos modos online", "app/online/page.tsx", "online-mercado.webp"],
   ["1.0.358", "Gate do atleta sem clube", "scripts/qa-sem-clube.ts", "SEM CLUBE OK"],
   ["1.0.358", "Gate de tela do atleta (scroll e menu)", "e2e/carreira-atleta.spec.ts", "sobra faixa morta"],
+  ["1.0.358", "Nome da carreira de atleta e o do ATLETA", "app/novo-jogo/page.tsx", "nomeDaCarreira"],
+  ["1.0.358", "Gate de criacao da carreira de atleta", "e2e/criar-carreira-atleta.spec.ts", "cai no escritorio"],
   ["—", "Arbitragem / VAR", "lib/arbitragem.ts", ""],
   ["—", "Eventos para o 3D", "lib/eventos-para-3d.ts", ""],
   ["—", "Histórico de lesões", "lib/historico-de-lesoes.ts", ""],

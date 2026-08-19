@@ -277,7 +277,7 @@ export default function TreinamentoPage() {
 
   // 8 por pagina. Comecou em 12 e a medicao acusou 230px de conteudo CORTADO
   // (4 linhas a mais): com overflow-hidden o excedente nao vira barra, some.
-  const paginaDoElenco = usePaginacao(filteredPlayers, 8)
+  const paginaDoElenco = usePaginacao(filteredPlayers, 6)
 
   const router = useRouter()
   const [gpPlayerIdx, setGpPlayerIdx] = useState(0)
@@ -418,6 +418,245 @@ export default function TreinamentoPage() {
         {/* DUAS COLUNAS QUE ROLAM POR DENTRO — a página não rola.
             `flex-1 min-h-0` em vez de altura em `vh`: sob o zoom do jogo o
             `vh` mede a janela sem escala e sobra faixa morta no pé. */}
+        {/* LADO A LADO, e nao empilhadas na coluna estreita: numa faixa de
+            1/3 da tela estas duas secoes somavam 1.637px junto com o painel
+            do atleta. Com a largura inteira, em 2 colunas, cada uma cai para
+            ~250px e sobra altura para a lista do elenco embaixo. */}
+        <div className="grid shrink-0 items-start gap-4 xl:grid-cols-2">
+        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                <Users className="h-4 w-4 text-[var(--brand)]" />
+                TREINO COLETIVO DA SEMANA
+              </div>
+              <p className="mt-1 text-[11px] text-white/40">
+                Vale para o elenco inteiro e roda sozinho a cada semana que passa.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <PreviaTile rotulo="Carga" valor={`${previa.carga}`} nota={rotuloDaCarga(previa.carga)} />
+              <PreviaTile rotulo="Energia média" valor={`${previa.energiaMedia}%`} nota="depois da semana" />
+              <PreviaTile
+                rotulo="Fadiga"
+                valor={`${previa.fadigaMedia}`}
+                nota={previa.fadigaMedia >= 55 ? "elenco no limite" : previa.fadigaMedia >= 30 ? "acumulando" : "sob controle"}
+                alerta={previa.fadigaMedia >= 55}
+              />
+              <PreviaTile
+                rotulo="Risco de lesão"
+                valor={`${(previa.riscoMedio * 100).toFixed(1)}%`}
+                nota="por atleta / semana"
+                alerta={previa.riscoMedio > 0.045}
+              />
+            </div>
+          </div>
+
+          {/* ── A SEMANA ─────────────────────────────────────────────────────
+              O tecnico via so "intensidade" e "foco", como se treinasse todos os
+              dias. Aqui aparece a semana de verdade: onde caem os jogos, onde da
+              para trabalhar e onde e melhor poupar. A vespera de jogo nunca e
+              treino — no futebol ela e de ativacao. */}
+          <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-white/40">Semana de trabalho</div>
+                <p className="mt-0.5 text-xs text-white/60">{rotina.resumo}</p>
+              </div>
+              <div className="flex gap-1.5">
+                {([
+                  { id: "poupar", rotulo: "Poupar" },
+                  { id: "equilibrado", rotulo: "Equilibrado" },
+                  { id: "carga_total", rotulo: "Carga total" },
+                ] as const).map(op => (
+                  <button
+                    key={op.id}
+                    onClick={() => definirPosturaDaSemana(op.id)}
+                    title={op.id === "poupar"
+                      ? "Menos treino, mais energia para o jogo — e menos evolucao."
+                      : op.id === "carga_total"
+                        ? "Treina todos os dias livres: evolui mais, chega mais cansado."
+                        : "Um dia de folga, o resto de trabalho."}
+                    className={cn(
+                      "rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
+                      posturaDaSemana === op.id
+                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                        : "border border-white/10 text-white/60 hover:text-white",
+                    )}
+                  >
+                    {op.rotulo}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-1.5">
+              {rotina.dias.map(d => (
+                <div
+                  key={d.indice}
+                  className={cn(
+                    "rounded-lg border p-2 text-center",
+                    d.tipo === "jogo" ? "border-[var(--brand)]/50 bg-[var(--brand)]/12"
+                      : d.tipo === "descanso" ? "border-sky-400/30 bg-sky-400/[0.07]"
+                      : "border-white/10 bg-white/[0.03]",
+                  )}
+                >
+                  <div className="text-[9px] uppercase tracking-wide text-white/35">{d.rotulo.slice(0, 3)}</div>
+                  <div className={cn(
+                    "mt-0.5 text-[10px] font-bold",
+                    d.tipo === "jogo" ? "text-[var(--brand)]"
+                      : d.tipo === "descanso" ? "text-sky-300" : "text-white/70",
+                  )}>
+                    {ROTULO_DO_DIA[d.tipo]}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-[10px] leading-4 text-white/35">
+              Carga de treino da semana: {Math.round(rotina.fatorDeCarga * 100)}% do normal
+              {rotina.recuperacaoExtra > 0 && ` · +${rotina.recuperacaoExtra} de energia pelo descanso`}
+            </p>
+          </div>
+
+          {/* SEMANA DIA A DIA. Fica nesta mesma tela, logo acima da intensidade,
+              porque é o mesmo assunto — não é tela nova. A intensidade passou a
+              ser o VOLUME de cada sessão; os dias dizem o QUE se treina.
+              Sem semana escrita, o plano agregado antigo continua valendo. */}
+          <div className="mt-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-[10px] uppercase tracking-wider text-white/40">Semana de treino</div>
+              <button
+                onClick={() => definirPlanoDeTreino({ semana: planoDeTreino.semana ? undefined : [...SEMANA_PADRAO] })}
+                className="rounded-md border border-white/10 px-2 py-1 text-[10px] font-semibold text-white/60 hover:border-white/25 hover:text-white"
+              >
+                {planoDeTreino.semana ? "Voltar ao plano semanal" : "Programar dia a dia"}
+              </button>
+            </div>
+            {planoDeTreino.semana ? (
+              <div className="grid grid-cols-7 gap-1.5">
+                {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((rotulo, dia) => {
+                  const atual = planoDeTreino.semana?.[dia] ?? "descanso"
+                  return (
+                    <div key={rotulo} className="rounded-lg border border-white/[0.06] bg-black/20 p-1.5">
+                      <div className="mb-1 text-center text-[10px] font-bold uppercase tracking-wider text-white/40">{rotulo}</div>
+                      <select
+                        value={atual}
+                        onChange={(e) => {
+                          const nova = [...(planoDeTreino.semana ?? SEMANA_PADRAO)]
+                          nova[dia] = e.target.value as SessaoDoDia
+                          definirPlanoDeTreino({ semana: nova })
+                        }}
+                        aria-label={`Sessão de ${rotulo}`}
+                        className="w-full rounded border border-white/10 bg-black/40 px-1 py-1 text-[10px] text-white"
+                      >
+                        {(Object.keys(ROTULO_DA_SESSAO) as SessaoDoDia[]).map(op => (
+                          <option key={op} value={op}>{ROTULO_DA_SESSAO[op]}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-[11px] leading-relaxed text-white/40">
+                O elenco treina a semana inteira na mesma intensidade e no mesmo foco. Programe dia a dia para puxar no
+                começo da semana, afinar a bola parada na véspera e soltar depois do jogo.
+              </p>
+            )}
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Intensidade</div>
+              <div className="grid grid-cols-3 gap-2">
+                {INTENSIDADES.map(i => (
+                  <button
+                    key={i.id}
+                    onClick={() => definirPlanoDeTreino({ intensidade: i.id })}
+                    title={i.nota}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-left transition-colors",
+                      planoDeTreino.intensidade === i.id
+                        ? "border-[var(--brand)] bg-[var(--brand)]/10"
+                        : "border-white/[0.06] hover:border-white/15 hover:bg-white/5",
+                    )}
+                  >
+                    <div className={cn("text-sm font-semibold", planoDeTreino.intensidade === i.id ? "text-[var(--brand)]" : "text-white")}>{i.nome}</div>
+                    <div className="mt-0.5 text-[10px] leading-tight text-white/40">{i.nota}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Foco</div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {FOCOS.map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => definirPlanoDeTreino({ foco: f.id })}
+                    title={f.nota}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-left transition-colors",
+                      planoDeTreino.foco === f.id
+                        ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]"
+                        : "border-white/[0.06] text-white/70 hover:border-white/15 hover:bg-white/5",
+                    )}
+                  >
+                    <div className="text-xs font-semibold">{ROTULO_DO_FOCO[f.id]}</div>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] leading-tight text-white/35">
+                {FOCOS.find(f => f.id === planoDeTreino.foco)?.nota}
+                {" "}Treino individual no mesmo atributo do foco rende mais.
+              </p>
+            </div>
+          </div>
+
+          {ultimoTreino && (
+            <p className="mt-4 border-t border-white/[0.04] pt-3 text-[11px] text-white/45">
+              Última semana: carga {ultimoTreino.carga} ({rotuloDaCarga(ultimoTreino.carga)}), energia média{" "}
+              {ultimoTreino.energiaMedia}%, fadiga {ultimoTreino.fadigaMedia}.
+              {ultimoTreino.lesionados.length > 0 && (
+                <span className="text-red-400">
+                  {" "}Lesões no treino: {ultimoTreino.lesionados.join(", ")}.
+                </span>
+              )}
+            </p>
+          )}
+        </section>
+        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+              <Users className="h-4 w-4 text-[var(--brand)]" />
+              ENTROSAMENTO DO ONZE
+            </div>
+            <span className="text-sm font-bold text-white">
+              {squadCohesion}<span className="text-white/40">/100</span>
+              {squadCohesion > 60 && (
+                <span className="ml-2 text-xs font-semibold text-[var(--brand)]">
+                  +{Math.round((squadCohesion - 60) / 8)} em campo
+                </span>
+              )}
+            </span>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand)]/70 to-[var(--brand)]" style={{ width: `${squadCohesion}%` }} />
+          </div>
+
+          {duplasDoXI.length > 0 && (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <DuplasLista titulo="Já se acham de olhos fechados" duplas={duplasDoXI.slice(0, 4)} />
+              <DuplasLista titulo="Ainda não se conhecem" duplas={duplasDoXI.slice(-4).reverse()} />
+            </div>
+          )}
+          <p className="mt-3 text-[11px] leading-4 text-white/35">
+            Cada dupla de titulares acumula os minutos que passou em campo junta. Partida oficial, amistoso e
+            treino coletivo com foco em entrosamento alimentam a mesma conta — trocar meio time na janela
+            derruba o número sozinho.
+          </p>
+        </section>
+        </div>
         <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-3">
           {/* Lista de Jogadores */}
           <div className="flex min-h-0 flex-col lg:col-span-2 rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
@@ -501,7 +740,7 @@ export default function TreinamentoPage() {
                 ~2.100px: a linha aqui e larga (nome + 6 tipos de treino +
                 situacao) e nao aceita duas colunas — tentar isso foi o que
                 inchou a lista do vestiario. 12 por pagina cabem na caixa. */}
-            <div className="min-h-0 flex-1 divide-y divide-white/5 overflow-hidden">
+            <div className="min-h-0 flex-1 divide-y divide-white/5 overflow-y-auto scrollbar-thin">
               {paginaDoElenco.fatia.map(player => {
                 const isSelected = selectedPlayer?.id === player.id
                 // Atributo OU posicao: os dois ocupam o mesmo slot de treino
@@ -632,240 +871,7 @@ export default function TreinamentoPage() {
 
           {/* Painel de Treinamento */}
           <div className="flex min-h-0 flex-col gap-4 overflow-y-auto scrollbar-thin pr-1">
-          <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Users className="h-4 w-4 text-[var(--brand)]" />
-                  TREINO COLETIVO DA SEMANA
-                </div>
-                <p className="mt-1 text-[11px] text-white/40">
-                  Vale para o elenco inteiro e roda sozinho a cada semana que passa.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <PreviaTile rotulo="Carga" valor={`${previa.carga}`} nota={rotuloDaCarga(previa.carga)} />
-                <PreviaTile rotulo="Energia média" valor={`${previa.energiaMedia}%`} nota="depois da semana" />
-                <PreviaTile
-                  rotulo="Fadiga"
-                  valor={`${previa.fadigaMedia}`}
-                  nota={previa.fadigaMedia >= 55 ? "elenco no limite" : previa.fadigaMedia >= 30 ? "acumulando" : "sob controle"}
-                  alerta={previa.fadigaMedia >= 55}
-                />
-                <PreviaTile
-                  rotulo="Risco de lesão"
-                  valor={`${(previa.riscoMedio * 100).toFixed(1)}%`}
-                  nota="por atleta / semana"
-                  alerta={previa.riscoMedio > 0.045}
-                />
-              </div>
-            </div>
 
-            {/* ── A SEMANA ─────────────────────────────────────────────────────
-                O tecnico via so "intensidade" e "foco", como se treinasse todos os
-                dias. Aqui aparece a semana de verdade: onde caem os jogos, onde da
-                para trabalhar e onde e melhor poupar. A vespera de jogo nunca e
-                treino — no futebol ela e de ativacao. */}
-            <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-white/40">Semana de trabalho</div>
-                  <p className="mt-0.5 text-xs text-white/60">{rotina.resumo}</p>
-                </div>
-                <div className="flex gap-1.5">
-                  {([
-                    { id: "poupar", rotulo: "Poupar" },
-                    { id: "equilibrado", rotulo: "Equilibrado" },
-                    { id: "carga_total", rotulo: "Carga total" },
-                  ] as const).map(op => (
-                    <button
-                      key={op.id}
-                      onClick={() => definirPosturaDaSemana(op.id)}
-                      title={op.id === "poupar"
-                        ? "Menos treino, mais energia para o jogo — e menos evolucao."
-                        : op.id === "carga_total"
-                          ? "Treina todos os dias livres: evolui mais, chega mais cansado."
-                          : "Um dia de folga, o resto de trabalho."}
-                      className={cn(
-                        "rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
-                        posturaDaSemana === op.id
-                          ? "bg-[var(--brand)] text-[var(--brand-ink)]"
-                          : "border border-white/10 text-white/60 hover:text-white",
-                      )}
-                    >
-                      {op.rotulo}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="grid grid-cols-7 gap-1.5">
-                {rotina.dias.map(d => (
-                  <div
-                    key={d.indice}
-                    className={cn(
-                      "rounded-lg border p-2 text-center",
-                      d.tipo === "jogo" ? "border-[var(--brand)]/50 bg-[var(--brand)]/12"
-                        : d.tipo === "descanso" ? "border-sky-400/30 bg-sky-400/[0.07]"
-                        : "border-white/10 bg-white/[0.03]",
-                    )}
-                  >
-                    <div className="text-[9px] uppercase tracking-wide text-white/35">{d.rotulo.slice(0, 3)}</div>
-                    <div className={cn(
-                      "mt-0.5 text-[10px] font-bold",
-                      d.tipo === "jogo" ? "text-[var(--brand)]"
-                        : d.tipo === "descanso" ? "text-sky-300" : "text-white/70",
-                    )}>
-                      {ROTULO_DO_DIA[d.tipo]}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-2 text-[10px] leading-4 text-white/35">
-                Carga de treino da semana: {Math.round(rotina.fatorDeCarga * 100)}% do normal
-                {rotina.recuperacaoExtra > 0 && ` · +${rotina.recuperacaoExtra} de energia pelo descanso`}
-              </p>
-            </div>
-
-            {/* SEMANA DIA A DIA. Fica nesta mesma tela, logo acima da intensidade,
-                porque é o mesmo assunto — não é tela nova. A intensidade passou a
-                ser o VOLUME de cada sessão; os dias dizem o QUE se treina.
-                Sem semana escrita, o plano agregado antigo continua valendo. */}
-            <div className="mt-4">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="text-[10px] uppercase tracking-wider text-white/40">Semana de treino</div>
-                <button
-                  onClick={() => definirPlanoDeTreino({ semana: planoDeTreino.semana ? undefined : [...SEMANA_PADRAO] })}
-                  className="rounded-md border border-white/10 px-2 py-1 text-[10px] font-semibold text-white/60 hover:border-white/25 hover:text-white"
-                >
-                  {planoDeTreino.semana ? "Voltar ao plano semanal" : "Programar dia a dia"}
-                </button>
-              </div>
-              {planoDeTreino.semana ? (
-                <div className="grid grid-cols-7 gap-1.5">
-                  {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((rotulo, dia) => {
-                    const atual = planoDeTreino.semana?.[dia] ?? "descanso"
-                    return (
-                      <div key={rotulo} className="rounded-lg border border-white/[0.06] bg-black/20 p-1.5">
-                        <div className="mb-1 text-center text-[10px] font-bold uppercase tracking-wider text-white/40">{rotulo}</div>
-                        <select
-                          value={atual}
-                          onChange={(e) => {
-                            const nova = [...(planoDeTreino.semana ?? SEMANA_PADRAO)]
-                            nova[dia] = e.target.value as SessaoDoDia
-                            definirPlanoDeTreino({ semana: nova })
-                          }}
-                          aria-label={`Sessão de ${rotulo}`}
-                          className="w-full rounded border border-white/10 bg-black/40 px-1 py-1 text-[10px] text-white"
-                        >
-                          {(Object.keys(ROTULO_DA_SESSAO) as SessaoDoDia[]).map(op => (
-                            <option key={op} value={op}>{ROTULO_DA_SESSAO[op]}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <p className="text-[11px] leading-relaxed text-white/40">
-                  O elenco treina a semana inteira na mesma intensidade e no mesmo foco. Programe dia a dia para puxar no
-                  começo da semana, afinar a bola parada na véspera e soltar depois do jogo.
-                </p>
-              )}
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div>
-                <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Intensidade</div>
-                <div className="grid grid-cols-3 gap-2">
-                  {INTENSIDADES.map(i => (
-                    <button
-                      key={i.id}
-                      onClick={() => definirPlanoDeTreino({ intensidade: i.id })}
-                      title={i.nota}
-                      className={cn(
-                        "rounded-lg border px-3 py-2 text-left transition-colors",
-                        planoDeTreino.intensidade === i.id
-                          ? "border-[var(--brand)] bg-[var(--brand)]/10"
-                          : "border-white/[0.06] hover:border-white/15 hover:bg-white/5",
-                      )}
-                    >
-                      <div className={cn("text-sm font-semibold", planoDeTreino.intensidade === i.id ? "text-[var(--brand)]" : "text-white")}>{i.nome}</div>
-                      <div className="mt-0.5 text-[10px] leading-tight text-white/40">{i.nota}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Foco</div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {FOCOS.map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => definirPlanoDeTreino({ foco: f.id })}
-                      title={f.nota}
-                      className={cn(
-                        "rounded-lg border px-3 py-2 text-left transition-colors",
-                        planoDeTreino.foco === f.id
-                          ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]"
-                          : "border-white/[0.06] text-white/70 hover:border-white/15 hover:bg-white/5",
-                      )}
-                    >
-                      <div className="text-xs font-semibold">{ROTULO_DO_FOCO[f.id]}</div>
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-[10px] leading-tight text-white/35">
-                  {FOCOS.find(f => f.id === planoDeTreino.foco)?.nota}
-                  {" "}Treino individual no mesmo atributo do foco rende mais.
-                </p>
-              </div>
-            </div>
-
-            {ultimoTreino && (
-              <p className="mt-4 border-t border-white/[0.04] pt-3 text-[11px] text-white/45">
-                Última semana: carga {ultimoTreino.carga} ({rotuloDaCarga(ultimoTreino.carga)}), energia média{" "}
-                {ultimoTreino.energiaMedia}%, fadiga {ultimoTreino.fadigaMedia}.
-                {ultimoTreino.lesionados.length > 0 && (
-                  <span className="text-red-400">
-                    {" "}Lesões no treino: {ultimoTreino.lesionados.join(", ")}.
-                  </span>
-                )}
-              </p>
-            )}
-          </section>
-
-          <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                <Users className="h-4 w-4 text-[var(--brand)]" />
-                ENTROSAMENTO DO ONZE
-              </div>
-              <span className="text-sm font-bold text-white">
-                {squadCohesion}<span className="text-white/40">/100</span>
-                {squadCohesion > 60 && (
-                  <span className="ml-2 text-xs font-semibold text-[var(--brand)]">
-                    +{Math.round((squadCohesion - 60) / 8)} em campo
-                  </span>
-                )}
-              </span>
-            </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand)]/70 to-[var(--brand)]" style={{ width: `${squadCohesion}%` }} />
-            </div>
-
-            {duplasDoXI.length > 0 && (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <DuplasLista titulo="Já se acham de olhos fechados" duplas={duplasDoXI.slice(0, 4)} />
-                <DuplasLista titulo="Ainda não se conhecem" duplas={duplasDoXI.slice(-4).reverse()} />
-              </div>
-            )}
-            <p className="mt-3 text-[11px] leading-4 text-white/35">
-              Cada dupla de titulares acumula os minutos que passou em campo junta. Partida oficial, amistoso e
-              treino coletivo com foco em entrosamento alimentam a mesma conta — trocar meio time na janela
-              derruba o número sozinho.
-            </p>
-          </section>
 
             {/* Jogador Selecionado */}
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">

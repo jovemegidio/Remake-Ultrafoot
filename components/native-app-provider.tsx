@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ControllerButton, useGamepadConnected } from "@/components/controller-buttons"
@@ -20,6 +20,17 @@ const WHATS_NEW_KEY = "ultrafoot:last-seen-whats-new"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  /**
+   * A NAVEGAÇÃO EM CURSO — o sinal que substituiu o cronômetro (1.0.358).
+   *
+   * O `router.push` do App Router é uma TRANSIÇÃO: a URL só muda quando o React
+   * termina de buscar o payload da rota e montar a tela. Empacotando o push numa
+   * transição, `pendente` diz se ele está trabalhando — e é isso que o socorro
+   * lá embaixo precisa saber para não recarregar o jogo por impaciência.
+   */
+  const [pendente, iniciarNavegacao] = useTransition()
+  const pendenteRef = useRef(false)
+  pendenteRef.current = pendente
   // Confirmacao antes de fechar o app (Alt+F4, botao X, barra de tarefas).
   const [showQuitConfirm, setShowQuitConfirm] = useState(false)
   const [updateOffer, setUpdateOffer] = useState<InGameUpdateOffer | null>(null)
@@ -33,20 +44,51 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     const navigate = (href: string, replace = false) => {
       const clientHref = toClientRoute(href)
       const previousHref = `${window.location.pathname}${window.location.search}${window.location.hash}`
-      if (replace) router.replace(clientHref)
-      else router.push(clientHref)
+      if (replace) iniciarNavegacao(() => router.replace(clientHref))
+      else iniciarNavegacao(() => router.push(clientHref))
 
       // O App Router do Next 16 pode aceitar router.push sem trocar de pagina no
       // export estatico (principalmente partindo de `/`). Se isso acontecer, usa a
-      // URL de diretorio realmente gerada pelo export. O atraso evita recarregar uma
-      // navegacao SPA que esteja apenas aguardando o payload RSC.
-      window.setTimeout(() => {
+      // URL de diretorio realmente gerada pelo export.
+      //
+      // ⚠️ ESTE SOCORRO RECARREGAVA O JOGO INTEIRO NO MEIO DA CRIACAO DE CARREIRA
+      // (medido em 19/08/2026). O prazo era de 900 ms fixos.
+      //
+      // A rota de destino do export so e baixada na primeira visita: o
+      // `/carreira/jogador` sozinho puxa ~2 MB de JavaScript, e a montagem da
+      // tela vem depois. Medido no navegador, a URL mudava aos 2.500 ms — o push
+      // nao tinha falhado, estava TRABALHANDO. Aos 900 ms o `location.assign`
+      // jogava fora o documento e o app recomecava do zero: 15 MB de novo,
+      // incluindo os tres seeds de elenco que a tela anterior ja tinha
+      // carregado. Era isso — e nao o peso das telas — que deixava o usuario
+      // 30 segundos olhando "Montando a sua temporada...".
+      //
+      // A correcao troca o cronometro por um FATO: enquanto a transicao do React
+      // estiver pendente, a navegacao esta em curso e ninguem recarrega nada. O
+      // relogio so volta a contar quando ela termina sem trocar de URL — que e o
+      // caso real de push engolido pelo export estatico, e ai sim o
+      // recarregamento e a unica saida. O teto absoluto existe para o caso de a
+      // transicao nunca resolver.
+      const INTERVALO_MS = 250
+      // Piso generoso: recarregar custa ~15 MB e ~15 s; esperar custa segundos.
+      // Enquanto a transicao do React estiver pendente, espera-se mais ainda.
+      const PISO_MS = 10000
+      const TETO_MS = 25000
+      let esperado = 0
+      const conferir = () => {
         const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`
         if (currentHref !== previousHref) return
+        esperado += INTERVALO_MS
+        if (pendenteRef.current && esperado < TETO_MS) { window.setTimeout(conferir, INTERVALO_MS); return }
+        if (esperado < PISO_MS) { window.setTimeout(conferir, INTERVALO_MS); return }
+        // Migalha de diagnostico: o recarregamento apaga tudo o que estava na
+        // memoria, entao o registro de que ELE aconteceu precisa sobreviver.
+        try { window.sessionStorage.setItem("ultrafoot:nav-recarregou", String(esperado)) } catch {}
         const staticHref = normalizeAppHref(clientHref)
         if (replace) window.location.replace(staticHref)
         else window.location.assign(staticHref)
-      }, 900)
+      }
+      window.setTimeout(conferir, INTERVALO_MS)
     }
     const onNavigate = (event: Event) => {
       const detail = (event as CustomEvent<{ href: string; replace?: boolean }>).detail

@@ -1101,7 +1101,7 @@ export default function PartidaEscalacaoPage() {
               </div>
               
               {/* Container com altura maxima e scroll vertical */}
-              <div className="max-h-[280px] overflow-y-auto scrollbar-game pr-1">
+              <div className="max-h-[340px] overflow-y-auto scrollbar-game pr-1">
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-2">
                   {bench.map((player) => {
                     const posColors = positionColors[player.position] || positionColors.MEI

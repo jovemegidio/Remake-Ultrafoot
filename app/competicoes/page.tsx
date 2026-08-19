@@ -1123,7 +1123,7 @@ export default function CompeticoesPage() {
         </div>
 
         {/* Competition Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
           {competitions.map((comp) => {
             const Icon = comp.icon
             const isActive = activeTab === comp.id
@@ -1133,7 +1133,7 @@ export default function CompeticoesPage() {
                 key={comp.id}
                 onClick={() => setActiveTab(comp.id)}
                 className={cn(
-                  "rounded-xl bg-[#0c0c10] border p-5 text-left transition-all",
+                  "rounded-xl bg-[#0c0c10] border p-3 text-left transition-all",
                   isActive 
                     ? "border-[var(--brand)] ring-1 ring-[var(--brand)]" 
                     : "border-white/[0.04] hover:border-white/10"

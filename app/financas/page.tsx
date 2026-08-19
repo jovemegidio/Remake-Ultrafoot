@@ -560,7 +560,7 @@ export default function FinancasPage() {
         )}
 
         {/* Balance Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
           <div className="stat-card stat-card-teal">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <Wallet className="h-4 w-4 text-[var(--brand)]" />
