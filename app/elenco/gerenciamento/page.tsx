@@ -564,6 +564,21 @@ export default function ElencoPage() {
   // Banco de reservas fechado por padrao — ele so aparece quando o tecnico pede
   // (pedido). Com 23 reservas aberto de cara, o campo ficava espremido.
   const [bancoAberto, setBancoAberto] = useState(false)
+
+  /**
+   * PAINEL DO ATLETA FECHADO POR PADRAO (pedido).
+   *
+   * A 1.0.352 deu ao painel um botao de recolher com a escolha gravada no save
+   * (`painelDoAtletaRecolhido`). O pedido agora vai um passo alem: o painel
+   * NASCE fechado e so aparece quando o tecnico OLHA alguem — clicar numa carta
+   * ou comecar a arrastar. Fechado, os 288-320 px vao para o campo, que e onde
+   * o trabalho acontece; ao arrastar ele entra e o campo encolhe.
+   *
+   * Com isso a preferencia gravada perde a funcao: o painel ja esta fechado sem
+   * ninguem pedir, e reabri-lo e so clicar num jogador. O campo do save fica
+   * onde esta (saves antigos o carregam) e simplesmente nao e mais lido.
+   */
+  const [painelDoAtleta, setPainelDoAtleta] = useState(false)
   /**
    * MODO MOVIMENTAÇÃO: com ele ligado, arrastar um atleta desenha a SETA do
    * deslocamento dele (para onde vai com a bola) em vez de mudar a posição
@@ -876,11 +891,6 @@ export default function ElencoPage() {
    * como todo jogo de futebol desenha a prancheta deitada.
    */
   const campoHorizontal = Boolean(state.campoHorizontal)
-  // ⚠️ A ESCOLHA MORA NO SAVE. Recolher o painel a cada visita seria pior do que
-  // não ter o botão: o técnico que joga com o campo grande quer o campo grande
-  // sempre, e não uma preferência que esquece a cada tela.
-  const painelRecolhido = Boolean(state.painelDoAtletaRecolhido)
-  const setPainelRecolhido = (v: boolean) => setState({ painelDoAtletaRecolhido: v })
   const paraTela = useCallback(
     (p: { x: number; y: number }) => (campoHorizontal ? { left: 100 - p.y, top: p.x } : { left: p.x, top: p.y }),
     [campoHorizontal],
@@ -1116,12 +1126,12 @@ export default function ElencoPage() {
           break
         case "DPAD_UP": {
           const idx = allPlayers.findIndex(p => p.id === selectedPlayerId)
-          if (idx > 0) setSelectedPlayerId(allPlayers[idx - 1].id)
+          if (idx > 0) { setSelectedPlayerId(allPlayers[idx - 1].id); setPainelDoAtleta(true) }
           break
         }
         case "DPAD_DOWN": {
           const idx = allPlayers.findIndex(p => p.id === selectedPlayerId)
-          if (idx < allPlayers.length - 1) setSelectedPlayerId(allPlayers[idx + 1].id)
+          if (idx < allPlayers.length - 1) { setSelectedPlayerId(allPlayers[idx + 1].id); setPainelDoAtleta(true) }
           break
         }
         case "A":
@@ -1139,11 +1149,24 @@ export default function ElencoPage() {
   }, [router, activeTab, selectedPlayerId, allPlayers, showSubstitutionModal, showPlayerProfile])
 
   // Drag and drop handlers
+  /**
+   * Selecionar um atleta E abrir a ficha dele. As duas coisas andavam separadas:
+   * o clique trocava o selecionado e o painel — sempre montado — so mudava de
+   * conteudo. Com o painel fechado por padrao, quem seleciona quer VER.
+   */
+  const selecionarAtleta = useCallback((playerId: number) => {
+    setSelectedPlayerId(playerId)
+    setPainelDoAtleta(true)
+  }, [])
+
   const handleDragStart = useCallback((e: React.DragEvent, playerId: number) => {
     setDraggingPlayer(playerId)
+    // Arrastar tambem abre a ficha (pedido): o campo encolhe e o tecnico ve com
+    // quem esta mexendo enquanto move a carta.
+    selecionarAtleta(playerId)
     e.dataTransfer.setData("playerId", playerId.toString())
     e.dataTransfer.effectAllowed = "move"
-  }, [])
+  }, [selecionarAtleta])
   
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -1350,6 +1373,12 @@ export default function ElencoPage() {
     aoSoltarNaArea: soltarNoCampo,
   })
 
+  // Caminho do DEDO: o hook nao tem `onDragStart`, ele apenas anuncia quem
+  // grudou no dedo. Sem isto o painel abriria no mouse e ficaria mudo no
+  // celular — onde arrastar e justamente o gesto mais usado desta tela.
+  useEffect(() => {
+    if (toque.arrastando != null) selecionarAtleta(toque.arrastando)
+  }, [toque.arrastando, selecionarAtleta])
   const handleDragEnd = useCallback(() => {
     setDraggingPlayer(null)
     setDragOverTarget(null)
@@ -1648,8 +1677,8 @@ export default function ElencoPage() {
                     initial={false}
                     animate={{ left: `${player.x}%`, top: `${player.y}%` }}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    onClick={() => setSelectedPlayerId(player.id)}
-                    onDoubleClick={() => { setSelectedPlayerId(player.id); setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
+                    onClick={() => selecionarAtleta(player.id)}
+                    onDoubleClick={() => { selecionarAtleta(player.id); setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
                     className={cn(
                       "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group z-10",
                       selectedPlayerId === player.id && "z-20"
@@ -2118,8 +2147,8 @@ export default function ElencoPage() {
                   transition={temMovimento && draggingPlayer !== player.id
                     ? { duration: 5.2, times: [0, 0.5, 1], repeat: Infinity, repeatDelay: 0.6, ease: "easeInOut" }
                     : { type: "spring", stiffness: 400, damping: 30 }}
-                  onClick={() => setSelectedPlayerId(player.id)}
-                    onDoubleClick={() => { setSelectedPlayerId(player.id); setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
+                  onClick={() => selecionarAtleta(player.id)}
+                    onDoubleClick={() => { selecionarAtleta(player.id); setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
                   className={cn(
                     "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-grab active:cursor-grabbing group z-10",
                     selectedPlayerId === player.id && "z-20",
@@ -2361,8 +2390,8 @@ export default function ElencoPage() {
                           scale: draggingPlayer === player.id ? 1.05 : dragOverTarget === player.id ? 1.1 : 1,
                           opacity: draggingPlayer === player.id ? 0.7 : 1,
                         }}
-                        onClick={() => setSelectedPlayerId(player.id)}
-                    onDoubleClick={() => { setSelectedPlayerId(player.id); setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
+                        onClick={() => selecionarAtleta(player.id)}
+                    onDoubleClick={() => { selecionarAtleta(player.id); setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
                         className={cn(
                           "relative flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all",
                           selectedPlayerId === player.id
@@ -2829,32 +2858,28 @@ export default function ElencoPage() {
             )}
           </div>
 
-          {/* ── O PAINEL DO ATLETA RECOLHE (1.0.352, pedido do usuário) ──────
-              Ele ocupa 288–320 px fixos à direita em TODA a tela, inclusive
-              quando o técnico está só arrastando jogadores no campo. Recolhido,
-              esses pixels vão para o campo, que é onde o trabalho acontece.
-              A escolha fica no save (`painelDoAtletaRecolhido`) — recolher a
-              cada visita é pior do que não ter o botão. */}
-          {/* Recolhido, o painel vira uma faixa de 24 px — fica no fluxo, sem
-              depender de posicionamento absoluto num container que a tela não
-              tem. Clicar nela traz o painel de volta. */}
-          {painelRecolhido && (
-            <button
-              onClick={() => setPainelRecolhido(false)}
-              title={t.gerenciamento.mostrar_painel_do_atleta}
-              className="hidden w-6 flex-shrink-0 items-center justify-center border-l border-white/[0.04] bg-[#050508] text-white/40 transition-colors hover:text-white lg:flex"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-          )}
-          {/* Right panel - Player details (hidden on mobile, shown in drawer) */}
-          <aside className={cn(
-            "hidden flex-shrink-0 border-l border-white/[0.04] bg-[#050508] overflow-y-auto",
-            painelRecolhido ? "lg:hidden" : "lg:block w-72 xl:w-80",
-          )}>
+          {/* ── O PAINEL DO ATLETA SÓ APARECE QUANDO PEDIDO ──────────────────
+              A 1.0.352 já tirava os 288–320 px do painel do caminho, mas por um
+              botão de recolher com a escolha gravada no save. O pedido agora é
+              que ele NASÇA fechado e entre sozinho quando o técnico clica numa
+              carta ou começa a arrastar — o campo fica inteiro por padrão e
+              encolhe só enquanto a ficha está aberta.
+              A largura é animada em px (e o conteúdo mora num filho de largura
+              fixa) para o texto não se reencaixar quadro a quadro. */}
+          <AnimatePresence initial={false}>
+          {painelDoAtleta && selectedPlayer && (
+          <motion.aside
+            key="painel-do-atleta"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 304, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 320, damping: 34 }}
+            className="hidden lg:block flex-shrink-0 overflow-hidden border-l border-white/[0.04] bg-[#050508]"
+          >
+          <div className="h-full w-[304px] overflow-y-auto">
             <div className="flex justify-end px-2 pt-2">
               <button
-                onClick={() => setPainelRecolhido(true)}
+                onClick={() => setPainelDoAtleta(false)}
                 title={t.gerenciamento.ocultar_painel_aumentar_campo}
                 className="rounded-md p-1 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
               >
@@ -2997,7 +3022,10 @@ export default function ElencoPage() {
                 </Button>
               </div>
             </div>
-          </aside>
+          </div>
+          </motion.aside>
+          )}
+          </AnimatePresence>
         </div>
       </main>
       

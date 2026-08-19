@@ -1,9 +1,15 @@
 {
-  "version": "1.0.348",
-  "notes": "Cartas novas, jogo mais leve e cada carreira com o seu escritorio. A carta do atleta ganhou a arte definitiva. O jogo ficou 136 MB mais leve sem perder qualidade de imagem. Quem dirige o Sub-20 nao recebe mais tarefa de clube profissional, e quem joga como atleta tem escritorio proprio. A diretoria, a imprensa e o treino agora sabem que carreira voce esta jogando. Lesao tira rodadas de verdade, existe a bracadeira de capitao e a pre-temporada virou um periodo proprio. E o VAR ficou como na TV: o arbitro so vai ao monitor quando ha erro claro.",
-  "sizeMb": 463,
-  "sha256": "B4C8810CD8FD0319BCC52139E1B08875D7C11110126720FD0B68FDBD819D859C",
+  "version": "1.0.356",
+  "notes": "O jogo ficou mais leve para rodar. O mundo simulado era carregado inteiro a cada troca de tela — 158 MB de memoria, inclusive na abertura e no menu, onde ele nem e usado. Agora so entra quando voce esta jogando uma carreira, o que reduz muito o risco de travar em computador modesto. Junto vem o Manager Rush, um desafio diario jogavel: voce assume aos 60 minutos perdendo e tem ate o apito para virar. A partida tambem abre mais rapido, o co-op local foi corrigido, e quase 1 GB de backups antigos passou a ser reconhecido como descartavel. Suas carreiras continuam intactas.",
+  "sizeMb": 642,
+  "sha256": "E27C6C451B549F4AD0D1F277226D3C9D52850BDB034B6B300CF57152E01C7652",
   "anteriores": [
+    {
+      "version": "1.0.348",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.348/Ultrafoot.26_1.0.348_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.348",
+      "sizeMb": 463
+    },
     {
       "version": "1.0.346",
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.346/Ultrafoot.26_1.0.346_x64-setup.exe",
@@ -51,18 +57,12 @@
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.330/Ultrafoot.26_1.0.330_x64-setup.exe",
       "notes": "Ultrafoot 26 v1.0.330",
       "sizeMb": 732
-    },
-    {
-      "version": "1.0.322",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.322/Ultrafoot.26_1.0.322_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.322",
-      "sizeMb": 685
     }
   ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUZiR1FJLzB5cUdBOFRHYTByUEI0RWVOZ1YwUlNKTm52djlBbGJCeExSdlppcTVObE5FMHB1SlIvN28vVitRODVETkM3TktTRVdTZTRpTzhwT1F4bHdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3MDQ5NTAzCWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNDhfeDY0LXNldHVwLmV4ZQo3cXg3SFBUWXFSUi9BOW5UMStnRllwcXZQdnQvbjBIL0FhWEcvS3RkR0ZNM0NXTmRuUFJ3bzBjSFk3Z2FORFQ4WkFxdXVSMmtHa3VvOGsvdkhkamlDQT09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.348_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRVBNTzJWUitWOXpEVFVHbHo5R25pMTJoNnNtZHhSQUl6UFZ4YWFBU3pPejZoWHpGNTRLcXNPTGFJd0NvUnFDUWFCYWZZa1FPdmJheWVHNFdmU28rUkFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3MDg5OTQ0CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNTZfeDY0LXNldHVwLmV4ZQpVT1hraFQ4L0p3cHpTeEFscDNOWVNwTjdHemJEY0Q1UnBabHh2aTRiT09Bby85Z3N0UXh4NkFDMzR5VE1FcjA0Um9WSkRyNXZoL3pwc0ZlMUtQTUxDQT09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.356_x64-setup.exe"
     }
   }
 }

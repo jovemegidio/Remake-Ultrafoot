@@ -85,6 +85,24 @@ export interface SquadPlayer {
   seasonSigned?: number
   /** Venda de jovem acertada fora da janela: efetivada quando a janela abre. */
   vendaPendente?: { clube: string; valor: number }
+  /**
+   * Garoto ANUNCIADO para empréstimo: está à disposição do mercado e recebe
+   * sondagens semana a semana. Não é o empréstimo em si — ver
+   * lib/emprestimo-de-jovens.ts.
+   */
+  emprestimoDisponivel?: boolean
+  /** Empréstimo em andamento (clube, prazo, minutagem, salário coberto). */
+  emprestimoNaBase?: {
+    clube: string
+    curto: string
+    divisaoLabel: string
+    minutagem: "titular" | "rotacao" | "raro"
+    salarioCoberto: number
+    taxa: number
+    opcaoDeCompra: number | null
+    ateSemanaAbsoluta: number
+    desdeSemanaAbsoluta: number
+  }
 }
 
 export interface YouthAlumniRecord {

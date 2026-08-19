@@ -307,22 +307,66 @@ function deriveFormation(squad: MatchPlayer[]): string {
 // referência (FIFA26/16.png): os titulares dos dois times ladeando o campo, com
 // a barra de energia que drena ao longo do jogo (mesma fonte da aba Preparo).
 // À direita a linha é espelhada (barra | nome | número), como na referência.
-function SideLineup({ team, squad, side }: { team: Team; squad: MatchPlayer[]; side: "left" | "right" }) {
+function SideLineup({ team, squad, bench = [], side }: { team: Team; squad: MatchPlayer[]; bench?: MatchPlayer[]; side: "left" | "right" }) {
+  /**
+   * TITULARES ↔ RESERVAS (pedido).
+   *
+   * A coluna só sabia mostrar os onze. O banco existia no estado da partida
+   * (`homeBench`/`awayBench`, a mesma lista que alimenta o modal de
+   * substituição) e não aparecia em lugar nenhum durante o jogo: para saber
+   * quem estava aquecido — e com qual condição — era preciso ABRIR o modal de
+   * substituição, que é uma ação, não uma consulta.
+   *
+   * A troca é local a cada coluna de propósito: dá para olhar o banco do
+   * adversário sem perder de vista os seus onze.
+   */
+  const [aba, setAba] = useState<"titulares" | "reservas">("titulares")
   const xi = squad.slice(0, 11)
+  const lista = aba === "titulares" ? xi : bench
+  const alinhadoADireita = side === "right"
+
   return (
     <div className="flex w-full flex-col">
-      <div className={cn("mb-2 flex items-center gap-2 border-b border-white/[0.06] pb-2", side === "right" && "flex-row-reverse")}>
+      <div className={cn("mb-2 flex items-center gap-2 border-b border-white/[0.06] pb-2", alinhadoADireita && "flex-row-reverse")}>
         <TeamCrest team={team} size="xs" />
         <span className="truncate text-[11px] font-bold uppercase tracking-wider text-white/70">{siglaExibivel(team.curto, team.nome)}</span>
-        <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider text-white/30">Titulares</span>
       </div>
+
+      {/* Alternador. Duas metades de largura igual — o rótulo ativo é o título
+          da lista, então ele substitui o "Titulares" solto que ficava no topo. */}
+      <div className={cn("mb-2 flex rounded-md border border-white/[0.06] bg-white/[0.03] p-0.5", alinhadoADireita && "flex-row-reverse")}>
+        {(["titulares", "reservas"] as const).map(chave => (
+          <button
+            key={chave}
+            type="button"
+            onClick={() => setAba(chave)}
+            aria-pressed={aba === chave}
+            className={cn(
+              "flex-1 rounded-[3px] px-1 py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors",
+              aba === chave ? "bg-white/10 text-white" : "text-white/35 hover:text-white/70",
+            )}
+          >
+            {chave === "titulares" ? "Titulares" : `Reservas${bench.length ? ` (${bench.length})` : ""}`}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col">
-        {xi.map((p) => {
+        {lista.length === 0 && (
+          <span className="py-2 text-[10px] text-white/30">Banco não informado.</span>
+        )}
+        {lista.map((p) => {
           const cond = Math.round(p.stamina ?? 100)
           return (
-            <div key={p.id} className={cn("flex items-center gap-2 py-[3px]", side === "right" && "flex-row-reverse")}>
+            <div key={p.id} className={cn("flex items-center gap-2 py-[3px]", alinhadoADireita && "flex-row-reverse")}>
               <span className="w-4 shrink-0 text-center text-[10px] tabular-nums text-white/35">{p.number}</span>
-              <span className={cn("min-w-0 flex-1 truncate text-[11px] text-white", side === "right" && "text-right")}>{p.name}</span>
+              <span className={cn(
+                "min-w-0 flex-1 truncate text-[11px]",
+                // Reserva é quem AINDA não entrou: cinza para a leitura de
+                // relance não confundir as duas listas.
+                aba === "titulares" ? "text-white" : "text-white/60",
+                alinhadoADireita && "text-right",
+              )}>{p.name}</span>
               <div className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-white/10">
                 <div
                   className={cn("h-full rounded-full transition-all", cond > 70 ? "bg-emerald-500" : cond > 40 ? "bg-amber-500" : "bg-red-500")}
@@ -2351,7 +2395,7 @@ export default function PartidaAoVivoPage() {
   {/* Coluna Esquerda - Escalação da Casa (ref. 16.png). As estatísticas seguem
       na aba "Estatísticas" do card central. */}
   <div className="hidden lg:flex flex-col justify-center w-52">
-  <SideLineup team={homeTeam} squad={homeSquad} side="left" />
+  <SideLineup team={homeTeam} squad={homeSquad} bench={homeBench} side="left" />
   </div>
 
           {/* Coluna Central - Conteudo baseado na Tab ativa */}
@@ -2746,7 +2790,7 @@ export default function PartidaAoVivoPage() {
       <p className="mt-1 text-[10px] font-bold tabular-nums text-white/40">{sideFoul.minute}&apos;</p>
     </div>
   )}
-  <SideLineup team={awayTeam} squad={awaySquad} side="right" />
+  <SideLineup team={awayTeam} squad={awaySquad} bench={awayBench} side="right" />
   </div>
         </div>
 

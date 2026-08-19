@@ -826,6 +826,14 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         {/* Avancar — ou JOGAR, quando a partida da semana ainda e sua para disputar.
             Trocar o rotulo resolve o mal-entendido na raiz: o jogador clicava
             "avancar" achando que ia ATE o dia do jogo, e o jogo passava. */}
+        {/* MINIMALISTA (pedido). O `eafc-btn` era um retângulo de gradiente
+            ciano→azul→roxo com um brilho que varria o botão no hover: numa barra
+            que já é só ícones cinzas, ele gritava mais que o próprio conteúdo da
+            tela e destoava do resto do cabeçalho. Agora é um botão de superfície
+            discreta com contorno fino, e a cor da marca fica reservada para o
+            estado que MERECE atenção: quando há partida sua para disputar, o
+            botão vira "Jogar" e ganha o realce. A classe global segue intocada —
+            outras telas ainda a usam. */}
         <button
           onClick={handleAdvance}
           disabled={advancing}
@@ -837,8 +845,11 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 : "Avancar uma semana"
           }
           className={cn(
-            "eafc-btn flex items-center gap-2 px-4 py-2 text-[11px] font-bold tracking-wider uppercase",
-            advancing && "opacity-50 cursor-wait",
+            "group flex h-8 items-center gap-2 rounded-md border px-3.5 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+            partidaPendenteAgora
+              ? "border-[var(--brand)]/40 bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20"
+              : "border-white/[0.08] bg-white/[0.03] text-white/70 hover:border-white/15 hover:bg-white/[0.07] hover:text-white",
+            advancing && "cursor-wait opacity-50",
           )}
         >
           {advancing

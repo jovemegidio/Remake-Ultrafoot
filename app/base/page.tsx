@@ -1,8 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
-import { Sprout, Star, ArrowUp, AlertTriangle, RefreshCw, Send, ShoppingCart } from "lucide-react"
+import { Sprout, Star, ArrowUp, AlertTriangle, RefreshCw, Send, ShoppingCart, X, Undo2, Clock, Handshake } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { SystemMediaPlayer } from "@/components/system-media-player"
@@ -13,7 +13,7 @@ import { useUserTeam } from "@/lib/time-da-carreira"
 import { flushPersistentStore } from "@/lib/persistent-store"
 import { formatCurrency } from "@/lib/currency"
 import { generateYouthMarketProspects, generateYouthProspects } from "@/lib/youth-academy"
-import { advanceYouthMonth, loanYouth, runTryout } from "@/lib/youth-engine"
+import { advanceYouthMonth, runTryout } from "@/lib/youth-engine"
 import {
   capacidadeDaBase, vagasNaBase, evoluirSemana, propostaPorJovem,
   valorDeMercadoJovem, cobrancaDaDiretoria, type JovemBase, type EvolucaoSemanal,
@@ -21,8 +21,12 @@ import {
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useNotifications } from "@/components/notifications-system"
-import { avisar as avisarNoJogo, confirmar as confirmarNoJogo, pedirTexto as pedirTextoNoJogo } from "@/lib/dialogo-do-jogo"
-import { isTransferWindowOpen, useGameEngine } from "@/lib/game-engine"
+import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
+import { absoluteWeek, isTransferWindowOpen, useGameEngine } from "@/lib/game-engine"
+import {
+  IDADE_MINIMA_EMPRESTIMO, ROTULO_DA_MINUTAGEM, propostasDeEmprestimo, retornoDoEmprestimo,
+  type PropostaDeEmprestimo,
+} from "@/lib/emprestimo-de-jovens"
 import { estimarPotencial, faixaDeCpe, qualidadeDeAvaliacao, rotuloDaAvaliacao } from "@/lib/cpe"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { useRequireClub } from "@/lib/use-require-team"
@@ -176,6 +180,23 @@ export default function BasePage() {
   // absoluto fazia a janela abrir e fechar em datas que nao existem no
   // calendario que o jogador ve.
   const semanaDaTemporada = state.week ?? 0
+  /**
+   * SEMANA ABSOLUTA — a régua dos empréstimos da base.
+   *
+   * O prazo de um empréstimo atravessa a virada de temporada; medi-lo pela
+   * semana da temporada faria todo garoto cedido "voltar" quando o ano virasse
+   * e o contador zerasse. Mesma régua dos contratos do profissional.
+   */
+  const semanaAbsoluta = absoluteWeek(state.season ?? 2026, semanaDaTemporada)
+  /**
+   * As duas ações que MEXEM NO CALENDÁRIO travam enquanto correm: cada clique
+   * avança semanas de verdade (rodada simulada, mercado, finanças), e um duplo
+   * clique impaciente queimaria semanas que ninguém pediu.
+   */
+  const [avancandoCalendario, setAvancandoCalendario] = useState(false)
+  /** Jovem cuja mesa de empréstimo está aberta (null = modal fechado). */
+  const [emprestimoDe, setEmprestimoDe] = useState<SquadPlayer | null>(null)
+
   const capacidade = capacidadeDaBase(nivelAcademia)
   const vagas = vagasNaBase(youth.length, nivelAcademia)
   // BUSCA COM FILTROS, no modelo da central de transferencias.
@@ -563,15 +584,27 @@ export default function BasePage() {
   }
 
   const developMonth = async () => {
+    if (avancandoCalendario) return
+    setAvancandoCalendario(true)
+    try {
     // Evolucao tambem grava sobre o save relido: estas duas acoes SUBSTITUEM a
     // lista inteira, entao um fechamento velho apagaria contratacoes recentes.
     let evoluidos = 0
     aplicarNaBase(setState, s => {
+      // Quem está EMPRESTADO não treina aqui: ele evolui jogando, e esse ganho
+      // é creditado na volta (ver `encerrarEmprestimo`). Sem esta separação o
+      // garoto cedido crescia duas vezes — na base que ele não frequenta e no
+      // clube onde está.
+      const naBase = (s.youthPlayers ?? []).filter(x => !x.emprestimoNaBase)
       // O nível da academia entra AQUI: sem ele o mês voltaria a ser cego ao
       // investimento do clube, que era metade do defeito relatado.
-      const result = advanceYouthMonth(s, nivelAcademia)
+      const result = advanceYouthMonth({ ...s, youthPlayers: naBase }, nivelAcademia)
       evoluidos = result.report.highlights.length
-      return { youthPlayers: result.state.youthPlayers, updatedAt: result.state.updatedAt }
+      const evo = new Map((result.state.youthPlayers ?? []).map(x => [x.id, x]))
+      return {
+        youthPlayers: (s.youthPlayers ?? []).map(x => evo.get(x.id) ?? x),
+        updatedAt: result.state.updatedAt,
+      }
     })
 
     // ⚠️ O MES TAMBEM PASSA NO CALENDARIO (pedido: "evoluir um mes deve avancar
@@ -601,26 +634,67 @@ export default function BasePage() {
           : " O calendário não andou: você tem jogo a disputar nesta semana."),
       tom: "sucesso",
     })
+    } finally {
+      setAvancandoCalendario(false)
+    }
   }
 
-  /** Uma semana de trabalho na base — o acompanhamento semanal pedido. */
-  const acompanharSemana = () => {
+  /**
+   * Uma semana de trabalho na base — o acompanhamento semanal pedido.
+   *
+   * ⚠️ A SEMANA TAMBÉM PASSA NO CALENDÁRIO (pedido: "acompanhar uma semana e
+   * evoluir um mês deveriam mexer no calendário e consequentemente simular
+   * partidas e outros eventos"). Antes só os garotos evoluíam: o técnico via a
+   * notificação da base e a data do topo continuava no mesmo dia — uma semana
+   * de trabalho sem que um dia passasse, e sem rodada, sem mercado, sem nada do
+   * mundo andando.
+   *
+   * Mesma trava do "Evoluir um mês": se houver PARTIDA SUA pendente na semana,
+   * o relógio não anda. `advanceWeek` resolveria o jogo sozinho e o técnico
+   * perderia a partida sem nunca ver a tela dela.
+   */
+  const acompanharSemana = async () => {
+    if (avancandoCalendario) return
+    if (temPartidaPendenteNaSemana()) {
+      return void avisarNoJogo({
+        titulo: "Você tem jogo nesta semana",
+        mensagem: "Dispute a partida antes de acompanhar mais uma semana de base — senão o calendário resolveria o jogo sem você.",
+        tom: "alerta",
+      })
+    }
+    setAvancandoCalendario(true)
+    try {
+
     let r: EvolucaoSemanal = { jovens: [], destaques: [], prontosParaSubir: [] }
     aplicarNaBase(setState, s => {
-      r = evoluirSemana((s.youthPlayers ?? []) as unknown as JovemBase[], nivelAcademia)
-      return { youthPlayers: r.jovens as unknown as SquadPlayer[] }
+      // Emprestado não treina na base — ver a nota em `developMonth`.
+      const naBase = (s.youthPlayers ?? []).filter(x => !x.emprestimoNaBase)
+      r = evoluirSemana(naBase as unknown as JovemBase[], nivelAcademia)
+      const evo = new Map((r.jovens as unknown as SquadPlayer[]).map(x => [x.id, x]))
+      return { youthPlayers: (s.youthPlayers ?? []).map(x => evo.get(x.id) ?? x) }
     })
+
+    // O mundo anda junto: rodada simulada, mercado, lesões, finanças da semana.
+    await advanceWeek()
+    // A base grava direto no disco (`aplicarNaBase`) e o avanço de semana entra
+    // pelo caminho do React. Descarrega os dois antes de qualquer navegação.
+    try { await flushPersistentStore() } catch { /* o save em memória já está correto */ }
+
     if (r.destaques.length === 0) {
       addNotification({ type: "system", priority: "low", title: "Semana na base",
-        message: "Semana sem evolução relevante entre os garotos." })
-      return
+        message: "Semana sem evolução relevante entre os garotos. O calendário avançou uma semana." })
+    } else {
+      addNotification({
+        type: "system", priority: "medium",
+        title: `${r.destaques.length} garoto(s) evoluíram nesta semana`,
+        message: r.destaques.slice(0, 6).map(d => `${d.nome} +${d.ganho}`).join(", ")
+          + (r.prontosParaSubir.length ? ` — pronto(s) para o profissional: ${r.prontosParaSubir.join(", ")}.` : "")
+          + " O calendário avançou uma semana.",
+      })
     }
-    addNotification({
-      type: "system", priority: "medium",
-      title: `${r.destaques.length} garoto(s) evoluíram nesta semana`,
-      message: r.destaques.slice(0, 6).map(d => `${d.nome} +${d.ganho}`).join(", ")
-        + (r.prontosParaSubir.length ? ` — pronto(s) para o profissional: ${r.prontosParaSubir.join(", ")}.` : ""),
-    })
+    } finally {
+      setAvancandoCalendario(false)
+    }
   }
 
   /** Vende um garoto: proposta pelo valor de promessa. So se concretiza com a
@@ -683,21 +757,175 @@ export default function BasePage() {
     }
   }
 
-  const sendOnLoan = async (player: SquadPlayer) => {
-    const club = (await pedirTextoNoJogo({
-      titulo: `Emprestar ${player.name}`,
-      mensagem: "Para qual clube o jovem vai jogar nesta temporada?",
-      placeholder: "Clube de destino",
-    }))?.trim()
-    if (!club) return
-    // NAO entra em `youthDeparted`: no emprestimo o jovem volta de proposito.
-    // Mas grava como os outros — sair da tela desfazia o emprestimo e o garoto
-    // reaparecia na base, mais um caso de "eles voltam".
-    aplicarNaBase(setState, s => {
-      const result = loanYouth(s, player.id, club)
-      return { youthPlayers: result.youthPlayers ?? [], updatedAt: result.updatedAt }
+  // ─── EMPRÉSTIMO DE GAROTO DA BASE ───────────────────────────────────────────
+  //
+  // ⚠️ O QUE MUDOU E POR QUÊ (pedido: "colocar para empréstimo deveria ser
+  // colocá-lo à disposição de algum clube interessado, como na vida real").
+  //
+  // Antes: um campo de TEXTO LIVRE perguntava "para qual clube o jovem vai
+  // jogar?". Dava para digitar Real Madrid — ou qualquer coisa — e o
+  // `loanYouth` só reescrevia o rótulo `fromTeam` para "Emprestado ao <texto>".
+  // Sem prazo, sem salário, sem volta e sem efeito nenhum no desenvolvimento:
+  // o garoto ficava marcado para sempre e continuava treinando na base.
+  //
+  // Agora o técnico ANUNCIA o atleta e espera. Os clubes que se interessam
+  // aparecem semana a semana (ver lib/emprestimo-de-jovens.ts), cada um com o
+  // prazo, a minutagem prometida e quanto do salário assume — e é entre essas
+  // propostas que se escolhe. O garoto volta na semana combinada, melhor na
+  // medida do que jogou.
+
+  /** Põe o garoto na vitrine (ou o tira dela) e abre a mesa de propostas. */
+  const alternarVitrineDeEmprestimo = (player: SquadPlayer, disponivel: boolean) => {
+    aplicarNaBase(setState, s => ({
+      youthPlayers: (s.youthPlayers ?? []).map(x => x.id === player.id
+        ? ({ ...x, emprestimoDisponivel: disponivel }) : x),
+    }))
+    setEmprestimoDe(disponivel ? { ...player, emprestimoDisponivel: true } : null)
+    addNotification({
+      type: "transfer", priority: "low",
+      title: disponivel ? `${player.name} à disposição para empréstimo` : `${player.name} retirado da vitrine`,
+      message: disponivel
+        ? "Os clubes interessados vão sondar o atleta nas próximas semanas."
+        : "O garoto volta a treinar exclusivamente na base.",
     })
   }
+
+  /** Aceita a proposta de um clube: o garoto sai por empréstimo com prazo. */
+  const aceitarEmprestimo = async (player: SquadPlayer, p: PropostaDeEmprestimo) => {
+    const confirmado = await confirmarNoJogo({
+      titulo: `Ceder ${player.name} ao ${p.clube}?`,
+      mensagem: `${p.divisaoLabel} · ${ROTULO_DA_MINUTAGEM[p.minutagem]} · ${p.semanas} semanas`
+        + `\n\nO clube assume ${p.salarioCoberto}% do salário`
+        + (p.taxa > 0 ? ` e paga ${formatCurrency(p.taxa)} de taxa de empréstimo.` : ".")
+        + (p.opcaoDeCompra ? `\n\nCom opção de compra de ${formatCurrency(p.opcaoDeCompra)} ao fim do período.` : ""),
+      confirmar: "Ceder por empréstimo",
+    })
+    if (!confirmado) return
+
+    // NÃO entra em `youthDeparted`: no empréstimo o jovem volta de propósito.
+    // Mas grava por `aplicarNaBase` como os demais — sair da tela desfazia o
+    // acerto e o garoto reaparecia livre na base ("eles voltam" de novo).
+    aplicarNaBase(setState, s => ({
+      youthPlayers: (s.youthPlayers ?? []).map(x => x.id === player.id
+        ? ({
+            ...x,
+            emprestimoDisponivel: false,
+            emprestimoNaBase: {
+              clube: p.clube, curto: p.curto, divisaoLabel: p.divisaoLabel,
+              minutagem: p.minutagem, salarioCoberto: p.salarioCoberto,
+              taxa: p.taxa, opcaoDeCompra: p.opcaoDeCompra,
+              desdeSemanaAbsoluta: semanaAbsoluta,
+              ateSemanaAbsoluta: semanaAbsoluta + p.semanas,
+            },
+          }) : x),
+    }))
+    if (p.taxa > 0) receberPorJovem(p.taxa, `emprestimo:${player.id}:${semanaAbsoluta}`)
+    setEmprestimoDe(null)
+    addNotification({
+      type: "transfer", priority: "medium",
+      title: `${player.name} emprestado ao ${p.clube}`,
+      message: `${p.semanas} semanas na ${p.divisaoLabel}, ${ROTULO_DA_MINUTAGEM[p.minutagem].toLowerCase()}.`
+        + (p.taxa > 0 ? ` O clube pagou ${formatCurrency(p.taxa)} de taxa.` : ""),
+    })
+  }
+
+  /**
+   * Devolve o garoto ao fim do prazo — ou ANTES dele, se o técnico interromper.
+   *
+   * Interromper é possível de propósito: acontece na vida real (o clube de
+   * destino não dá jogo, ou o formador precisa dele). O preço é o ganho menor,
+   * porque o ganho é proporcional às semanas efetivamente jogadas.
+   */
+  const encerrarEmprestimo = useCallback((playerId: string, antecipado: boolean) => {
+    const aviso: { titulo: string; mensagem: string }[] = []
+    aplicarNaBase(setState, s => ({
+      youthPlayers: (s.youthPlayers ?? []).map(x => {
+        const emp = x.emprestimoNaBase
+        if (x.id !== playerId || !emp) return x
+        const r = retornoDoEmprestimo(x as unknown as JovemBase, emp, semanaAbsoluta)
+        aviso.push({
+          titulo: `${x.name} voltou do empréstimo`,
+          mensagem: r.resumo + (antecipado ? " O empréstimo foi interrompido pelo clube." : ""),
+        })
+        return {
+          ...x,
+          overall: Math.min(x.potential, x.overall + r.ganho),
+          trend: r.ganho > 0 ? ("up" as const) : x.trend,
+          emprestimoNaBase: undefined,
+          emprestimoDisponivel: false,
+        }
+      }),
+    }))
+    for (const a of aviso) {
+      addNotification({ type: "system", priority: "medium", title: a.titulo, message: a.mensagem })
+    }
+  }, [setState, semanaAbsoluta, addNotification])
+
+  /**
+   * A VOLTA ACONTECE SOZINHA quando o prazo vence.
+   *
+   * Sem isto o garoto ficaria emprestado para sempre: o save guarda a semana de
+   * retorno, mas nada no jogo a consultava. Roda na abertura da tela e a cada
+   * avanço de calendário — que é quando `semanaAbsoluta` muda.
+   */
+  useEffect(() => {
+    if (!hydrated) return
+    const voltando = (state.youthPlayers ?? []).filter(
+      x => x.emprestimoNaBase && x.emprestimoNaBase.ateSemanaAbsoluta <= semanaAbsoluta,
+    )
+    for (const x of voltando) encerrarEmprestimo(x.id, false)
+  }, [hydrated, state.youthPlayers, semanaAbsoluta, encerrarEmprestimo])
+
+  /**
+   * AVISA QUANDO ALGUÉM SONDA um garoto que está na vitrine.
+   *
+   * Sem isto o técnico teria de abrir a mesa de cada anunciado, semana a semana,
+   * para descobrir se apareceu alguém — a informação existiria e ninguém a veria.
+   * Um aviso por semana, com a contagem: quem quiser detalhes abre a mesa.
+   */
+  const semanaJaAvisada = useRef<number | null>(null)
+  useEffect(() => {
+    if (!hydrated) return
+    if (semanaJaAvisada.current === semanaAbsoluta) return
+    const anunciados = (state.youthPlayers ?? []).filter(x => x.emprestimoDisponivel && !x.emprestimoNaBase)
+    if (anunciados.length === 0) return
+    semanaJaAvisada.current = semanaAbsoluta
+    const sondados = anunciados
+      .map(x => ({
+        nome: x.name,
+        propostas: propostasDeEmprestimo(x as unknown as JovemBase, {
+          clubeDoTecnico: team.curto,
+          divisaoDoTecnico: String(team.divisao),
+          prestigioDoTecnico: team.prestigio,
+          semanaAbsoluta,
+        }).length,
+      }))
+      .filter(item => item.propostas > 0)
+    if (sondados.length === 0) return
+    addNotification({
+      type: "transfer", priority: "medium",
+      title: `Sondagens de empréstimo na base`,
+      message: sondados.map(item => `${item.nome}: ${item.propostas} clube(s)`).join(" · ")
+        + " — abra a Categoria de Base para ver as propostas.",
+    })
+  }, [hydrated, semanaAbsoluta, state.youthPlayers, team.curto, team.divisao, team.prestigio, addNotification])
+
+  /**
+   * A MESA DE PROPOSTAS da semana para o jovem em foco.
+   *
+   * Vem de um sorteio semeado por atleta + semana: sair e voltar da tela mostra
+   * a MESMA mesa (não dá para rerrolar até aparecer um clube bom), e a semana
+   * seguinte traz outra.
+   */
+  const propostasDaVitrine = useMemo(() => {
+    if (!emprestimoDe) return []
+    return propostasDeEmprestimo(emprestimoDe as unknown as JovemBase, {
+      clubeDoTecnico: team.curto,
+      divisaoDoTecnico: String(team.divisao),
+      prestigioDoTecnico: team.prestigio,
+      semanaAbsoluta,
+    })
+  }, [emprestimoDe, team.curto, team.divisao, team.prestigio, semanaAbsoluta])
 
   const buyYouth = async (player: SquadPlayer) => {
     if (vagas <= 0) {
@@ -783,11 +1011,26 @@ export default function BasePage() {
             </p>
           </div>
           <div className="ml-auto flex gap-2">
-            <Button variant="outline" onClick={acompanharSemana} className="border-white/15 text-white">
-              <RefreshCw className="mr-2 h-4 w-4" /> Acompanhar semana
+            {/* As duas ações avançam o CALENDÁRIO (pedido) — o título diz isso,
+                senão a pessoa clica achando que só os garotos treinam e o mundo
+                anda uma semana sem aviso. */}
+            <Button
+              variant="outline"
+              onClick={acompanharSemana}
+              disabled={avancandoCalendario}
+              title="Uma semana de trabalho na base — o calendário avança e a rodada é disputada"
+              className="border-white/15 text-white disabled:opacity-50"
+            >
+              <RefreshCw className={cn("mr-2 h-4 w-4", avancandoCalendario && "animate-spin")} /> Acompanhar semana
             </Button>
-            <Button variant="outline" onClick={developMonth} className="border-white/15 text-white">
-              <RefreshCw className="mr-2 h-4 w-4" /> Evoluir um mês
+            <Button
+              variant="outline"
+              onClick={developMonth}
+              disabled={avancandoCalendario}
+              title="Um mês de trabalho na base — o calendário avança até 4 semanas e para na véspera do seu jogo"
+              className="border-white/15 text-white disabled:opacity-50"
+            >
+              <RefreshCw className={cn("mr-2 h-4 w-4", avancandoCalendario && "animate-spin")} /> Evoluir um mês
             </Button>
             <Button
               onClick={holdTryout}
@@ -866,6 +1109,35 @@ export default function BasePage() {
                     <Stat label="FÍS" v={p.physical ?? 0} />
                   </div>
 
+                  {/* CEDIDO: enquanto está fora, o garoto não se promove, não se
+                      vende e não se dispensa — ele nem está no clube. O que cabe
+                      aqui é acompanhar o prazo e, se for o caso, chamar de volta. */}
+                  {p.emprestimoNaBase ? (
+                    <>
+                      <div className="mt-3 rounded-lg border border-sky-500/25 bg-sky-500/[0.07] px-3 py-2">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold text-sky-300">
+                          <Handshake className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">Emprestado ao {p.emprestimoNaBase.clube}</span>
+                        </div>
+                        <div className="mt-1 flex items-center gap-2 text-[10px] text-sky-200/60">
+                          <Clock className="h-3 w-3 shrink-0" />
+                          {p.emprestimoNaBase.divisaoLabel} · {ROTULO_DA_MINUTAGEM[p.emprestimoNaBase.minutagem]} ·
+                          {" "}volta em {Math.max(0, p.emprestimoNaBase.ateSemanaAbsoluta - semanaAbsoluta)} semana(s)
+                        </div>
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => encerrarEmprestimo(p.id, true)}
+                          className="flex-1 border-white/15 text-white/70 hover:bg-white/5 text-xs"
+                        >
+                          <Undo2 className="mr-1 h-3.5 w-3.5" />
+                          Chamar de volta
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
                   <div className="mt-4 flex gap-2">
                     <Button
                       size="sm"
@@ -876,12 +1148,23 @@ export default function BasePage() {
                       <ArrowUp className="mr-1 h-3.5 w-3.5" />
                       PROMOVER
                     </Button>
+                    {/* Empréstimo: ANUNCIAR e ver quem se interessa (ver a mesa
+                        de propostas abaixo). O botão fica aceso quando o garoto
+                        já está na vitrine — é o que diz que o clube está à
+                        espera de sondagem, não parado. */}
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => sendOnLoan(p)}
-                      title="Emprestar"
-                      className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10 text-xs"
+                      onClick={() => setEmprestimoDe(p)}
+                      title={p.age < IDADE_MINIMA_EMPRESTIMO
+                        ? `Só a partir dos ${IDADE_MINIMA_EMPRESTIMO} anos`
+                        : p.emprestimoDisponivel ? "À disposição para empréstimo — ver interessados" : "Disponibilizar para empréstimo"}
+                      className={cn(
+                        "text-xs",
+                        p.emprestimoDisponivel
+                          ? "border-sky-400/60 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
+                          : "border-blue-500/30 text-blue-300 hover:bg-blue-500/10",
+                      )}
                     >
                       <Send className="h-3.5 w-3.5" />
                     </Button>
@@ -904,6 +1187,7 @@ export default function BasePage() {
                       Dispensar
                     </Button>
                   </div>
+                  )}
                 </div>
               )
             })}
@@ -919,8 +1203,143 @@ export default function BasePage() {
           </div>
         </div>
       </main>
+
+      {/* ─── MESA DE EMPRÉSTIMO ─────────────────────────────────────────────
+          Substitui o antigo campo de texto "para qual clube o jovem vai jogar?".
+          O técnico não escolhe o destino: ele coloca o garoto à disposição e
+          escolhe entre quem apareceu. */}
+      {emprestimoDe && (() => {
+        const j = youth.find(x => x.id === emprestimoDe.id) ?? emprestimoDe
+        const naVitrine = Boolean(j.emprestimoDisponivel)
+        const jovemDemais = j.age < IDADE_MINIMA_EMPRESTIMO
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onClick={() => setEmprestimoDe(null)}
+          >
+            <div
+              className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-white/10 bg-[#101014] shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <header className="flex items-start gap-3 border-b border-white/[0.06] p-5">
+                <Handshake className="mt-0.5 h-5 w-5 shrink-0 text-sky-400" />
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-lg font-bold text-white">Empréstimo · {j.name}</h2>
+                  <p className="mt-0.5 text-xs text-white/50">
+                    {j.position} · {j.age} anos · overall {j.overall}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEmprestimoDe(null)}
+                  aria-label="Fechar"
+                  className="rounded-md p-1 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </header>
+
+              <div className="space-y-4 p-5">
+                {jovemDemais ? (
+                  <p className="rounded-lg border border-amber-400/25 bg-amber-400/[0.07] p-3 text-xs text-amber-200/85">
+                    {j.name} tem {j.age} anos. Nenhum clube pode registrá-lo em competição
+                    profissional antes dos {IDADE_MINIMA_EMPRESTIMO} — até lá ele se
+                    desenvolve na base.
+                  </p>
+                ) : !naVitrine ? (
+                  <>
+                    <p className="text-sm leading-relaxed text-white/60">
+                      Colocar {j.name} à disposição avisa o mercado de que o clube aceita
+                      cedê-lo. Os interessados aparecem por conta própria nas semanas
+                      seguintes — com o prazo, a minutagem que prometem e quanto do
+                      salário assumem. Você escolhe entre eles, ou não empresta.
+                    </p>
+                    <Button
+                      onClick={() => alternarVitrineDeEmprestimo(j, true)}
+                      className="w-full bg-sky-500 text-black hover:bg-sky-400"
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      Disponibilizar para empréstimo
+                    </Button>
+                  </>
+                ) : propostasDaVitrine.length === 0 ? (
+                  <>
+                    <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-4 text-center">
+                      <Clock className="mx-auto mb-2 h-5 w-5 text-white/25" />
+                      <p className="text-sm text-white/70">Nenhum clube sondou {j.name} nesta semana.</p>
+                      <p className="mt-1 text-xs text-white/40">
+                        Ele segue à disposição: avance o calendário e volte para ver quem apareceu.
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => alternarVitrineDeEmprestimo(j, false)}
+                      className="w-full border-white/15 text-white/70 hover:bg-white/5"
+                    >
+                      Retirar da vitrine
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs uppercase tracking-wider text-white/40">
+                      {propostasDaVitrine.length} clube(s) interessado(s) nesta semana
+                    </p>
+                    <div className="space-y-3">
+                      {propostasDaVitrine.map(p => (
+                        <div key={p.id} className="rounded-lg border border-white/[0.07] bg-white/[0.03] p-4">
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                            <span className="text-sm font-semibold text-white">{p.clube}</span>
+                            <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-white/60">
+                              {p.divisaoLabel}
+                            </span>
+                          </div>
+                          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            <ItemDaProposta rotulo="Minutagem" valor={ROTULO_DA_MINUTAGEM[p.minutagem]} destaque={p.minutagem === "titular"} />
+                            <ItemDaProposta rotulo="Prazo" valor={`${p.semanas} semanas`} />
+                            <ItemDaProposta rotulo="Salário coberto" valor={`${p.salarioCoberto}%`} />
+                            <ItemDaProposta rotulo="Taxa" valor={p.taxa > 0 ? formatCurrency(p.taxa) : "—"} />
+                          </div>
+                          {p.opcaoDeCompra != null && (
+                            <p className="mt-2 text-[11px] text-amber-300/80">
+                              Pede opção de compra de {formatCurrency(p.opcaoDeCompra)} ao fim do período.
+                            </p>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => aceitarEmprestimo(j, p)}
+                            className="mt-3 w-full bg-sky-500 text-black hover:bg-sky-400"
+                          >
+                            Aceitar proposta do {p.clube}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => alternarVitrineDeEmprestimo(j, false)}
+                      className="w-full border-white/15 text-white/70 hover:bg-white/5"
+                    >
+                      Retirar da vitrine
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       <SystemMediaPlayer />
       </div>
+    </div>
+  )
+}
+
+function ItemDaProposta({ rotulo, valor, destaque }: { rotulo: string; valor: string; destaque?: boolean }) {
+  return (
+    <div className="rounded bg-white/[0.04] px-2 py-1.5">
+      <div className="text-[9px] uppercase tracking-wider text-white/35">{rotulo}</div>
+      <div className={cn("text-xs font-semibold", destaque ? "text-[#1db954]" : "text-white/85")}>{valor}</div>
     </div>
   )
 }
