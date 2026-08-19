@@ -21,7 +21,7 @@
 // a MESMA função que o resto do jogo usa para transformar rodada em dia. Duas
 // contas diferentes para a mesma rodada dariam duas datas para o mesmo jogo.
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { CalendarDays, ChevronLeft, ChevronRight, Trophy } from "lucide-react"
 
 import { AtletaShell, PainelDoAtleta } from "@/components/carreira-jogador/atleta-shell"
@@ -33,14 +33,11 @@ import { getTeamByShort } from "@/lib/teams-data"
 import { getGameDate } from "@/lib/game-date"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import type { MatchFixture } from "@/lib/career-types"
 
 const DIAS_DA_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
-const MESES = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-]
 const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
 /** Cor da célula por competição — a mesma ideia do calendário do técnico. */
@@ -55,7 +52,9 @@ function coresDaCompeticao(nome: string): { fundo: string; borda: string } {
 export default function CalendarioDoAtletaPage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador") })
   const { state } = useGameState()
+  const t = useTranslation()
   const carreira = state.carreiraDeJogador
+  const MESES = t.carreiraDeJogador.meses
 
   /** Os jogos DELE, com a data derivada da rodada. */
   const jogos = useMemo(() => {
@@ -79,9 +78,21 @@ export default function CalendarioDoAtletaPage() {
 
   const [mes, setMes] = useState<number>(mesInicial)
 
+  // ⚠️ O SAVE CHEGA DEPOIS DO PRIMEIRO RENDER. `useState(mesInicial)` lia uma
+  // carreira ainda vazia e travava o calendário em JANEIRO — o print de teste
+  // abriu em janeiro com o próximo jogo em fevereiro. Este efeito puxa o mês uma
+  // vez, quando o dado chega, sem desfazer a navegação manual depois (é a mesma
+  // solução do calendário do técnico, com a mesma `ref` de controle).
+  const mesJaSincronizado = useRef<number | null>(null)
+  useEffect(() => {
+    if (mesJaSincronizado.current === mesInicial) return
+    mesJaSincronizado.current = mesInicial
+    setMes(mesInicial)
+  }, [mesInicial])
+
   if (!carreira) {
     return (
-      <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
+      <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
           <p className="text-white/70">Nenhuma carreira de jogador ativa neste save.</p>
@@ -120,7 +131,7 @@ export default function CalendarioDoAtletaPage() {
 
         {/* ── COLUNA DA ESQUERDA: o compromisso e o que ele significa ── */}
         <div className="hidden w-[19rem] shrink-0 flex-col gap-3 xl:flex">
-          <PainelDoAtleta titulo="Próximo compromisso" icone={<CalendarDays className="h-5 w-5 text-[var(--brand)]" />} className="shrink-0">
+          <PainelDoAtleta titulo={t.carreiraDeJogador.proximo_compromisso} icone={<CalendarDays className="h-5 w-5 text-[var(--brand)]" />} className="shrink-0">
             {proxima ? (
               <>
                 <div className="flex items-center gap-3">
@@ -135,7 +146,7 @@ export default function CalendarioDoAtletaPage() {
                       {proxima.fixture.homeCurto === carreira.clubeCurto ? proxima.fixture.awayNome : proxima.fixture.homeNome}
                     </p>
                     <p className="text-[11px] text-white/45">
-                      {proxima.fixture.homeCurto === carreira.clubeCurto ? "Em casa" : "Fora"} · rodada {proxima.fixture.round}
+                      {proxima.fixture.homeCurto === carreira.clubeCurto ? t.carreiraDeJogador.em_casa : t.carreiraDeJogador.fora} · rodada {proxima.fixture.round}
                     </p>
                   </div>
                 </div>
@@ -150,7 +161,7 @@ export default function CalendarioDoAtletaPage() {
           </PainelDoAtleta>
 
           {(carreira.copa || carreira.continental) && (
-            <PainelDoAtleta titulo="Mata-mata" icone={<Trophy className="h-5 w-5 text-amber-300" />} className="shrink-0">
+            <PainelDoAtleta titulo={t.carreiraDeJogador.mata_mata} icone={<Trophy className="h-5 w-5 text-amber-300" />} className="shrink-0">
               <div className="space-y-1.5">
                 {[carreira.copa, carreira.continental].filter(Boolean).map(chave => {
                   const bracket = chave!
@@ -208,7 +219,7 @@ export default function CalendarioDoAtletaPage() {
                 setMes(mesesComJogo[Math.max(0, i - 1)])
               }}
               className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-black/30 text-white/60 transition-colors hover:text-white"
-              aria-label="Mês anterior"
+              aria-label={t.carreiraDeJogador.mes_anterior}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -232,7 +243,7 @@ export default function CalendarioDoAtletaPage() {
                 setMes(mesesComJogo[Math.min(mesesComJogo.length - 1, i + 1)])
               }}
               className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-black/30 text-white/60 transition-colors hover:text-white"
-              aria-label="Próximo mês"
+              aria-label={t.carreiraDeJogador.proximo_mes}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -270,7 +281,7 @@ export default function CalendarioDoAtletaPage() {
                     </span>
                     {f && cores && (
                       <div
-                        title={`${emCasa ? "Em casa" : "Fora"} · ${emCasa ? f.awayNome : f.homeNome} · ${f.competition}${f.played ? ` · ${golsPro}–${golsContra}` : ""}`}
+                        title={`${emCasa ? t.carreiraDeJogador.em_casa : t.carreiraDeJogador.fora} · ${emCasa ? f.awayNome : f.homeNome} · ${f.competition}${f.played ? ` · ${golsPro}–${golsContra}` : ""}`}
                         className={cn(
                           "absolute inset-x-1 bottom-1 top-5 flex flex-col items-center justify-center gap-0.5 rounded-lg border",
                           eProxima && "ring-1 ring-[var(--brand)]",

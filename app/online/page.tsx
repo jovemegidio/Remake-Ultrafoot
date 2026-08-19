@@ -36,7 +36,7 @@ export default function OnlinePage() {
 
   if (!state.multiplayerEnabled) {
     return (
-      <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
+      <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="mx-auto max-w-xl px-5 pt-28 text-center">
           <Globe className="mx-auto h-10 w-10 text-white/25" />
@@ -63,15 +63,24 @@ export default function OnlinePage() {
      * textos"). O cabeçalho "ULTRAFOOT ONLINE / Modos entre técnicos" repetia o
      * que o próprio menu já disse para chegar aqui; o que informa é o cartão —
      * ícone, nome do modo, estado e resumo. */
-    <main className="relative h-dvh overflow-y-auto text-white">
+    <main className="relative h-screen overflow-y-auto text-white">
+      {/* ⚠️ `z-0`, NUNCA `-z-10`: o `html` tem fundo próprio, então o fundo do
+          `body` pinta como caixa normal (z=0) e cobre tudo o que estiver em z
+          negativo — foi assim que o fundo do escritório do atleta ficou invisível
+          por seis versões. Ver components/carreira-jogador/atleta-shell. */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center"
+        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center"
         style={{ backgroundImage: "url(/images/pre-jogo/online-mercado.webp)" }}
       />
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[#06090d]/82" />
-      <GameHeader />
-      <div className="mx-auto max-w-[1100px] px-5 pb-14 pt-24">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0 bg-gradient-to-b from-[#06090d]/92 via-[#06090d]/70 to-[#06090d]/94"
+      />
+      {/* z-30, não z-10: o menu da tecla W vive dentro do cabeçalho e precisa
+          abrir por cima dos cartões. Ver o mesmo cuidado no atleta-shell. */}
+      <div className="relative z-30"><GameHeader /></div>
+      <div className="relative z-10 mx-auto max-w-[1100px] px-5 pb-14 pt-10">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {MODOS_ONLINE.map(modo => {
             const jogavel = modo.estado !== "planejado" && temDestino(modo)
@@ -83,8 +92,8 @@ export default function OnlinePage() {
                 className={cn(
                   "rounded-2xl border p-4 text-left transition-colors",
                   jogavel
-                    ? "border-white/10 bg-white/[.04] hover:border-[var(--brand)]/40 hover:bg-[var(--brand)]/[.06]"
-                    : "cursor-not-allowed border-white/[.06] bg-black/25 opacity-70",
+                    ? "border-white/10 bg-black/55 backdrop-blur-sm hover:border-[var(--brand)]/40 hover:bg-[var(--brand)]/[.10]"
+                    : "cursor-not-allowed border-white/[.06] bg-black/45 opacity-70 backdrop-blur-sm",
                 )}
               >
                 <div className="flex items-start justify-between gap-2">

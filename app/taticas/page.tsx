@@ -465,7 +465,7 @@ export default function TaticasPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
+              className="grid items-start gap-3 xl:grid-cols-2"
             >
               {/* Mentalidade */}
               <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
@@ -1198,7 +1198,7 @@ export default function TaticasPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
+              className="grid items-start gap-3 xl:grid-cols-2"
             >
               <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
                 <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">

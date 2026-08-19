@@ -223,7 +223,7 @@ export default function SalvarPage() {
       </header>
 
       {/* Conteudo */}
-      <main className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-4">
+      <main className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-2">
         {saveFeedback && <div className="mx-auto mb-4 max-w-md rounded-lg border border-emerald-400/30 bg-emerald-400/10 p-3 text-center text-sm font-bold text-emerald-300">{saveFeedback}</div>}
 
         {/* VOLTAR AO SAVE DE ANTES DA ATUALIZACAO.

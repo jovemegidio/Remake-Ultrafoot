@@ -17,30 +17,29 @@ import { Button } from "@/components/ui/button"
 import { useGameState } from "@/lib/save-system"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import {
   arquetipo, confiancaMerecida, definirIntensidadeDeTreino, hierarquiaDaPosicao,
-  leituraDaPersonalidade, potencialVisivel,
+  leituraDaPersonalidade, potencialVisivel, NOME_DO_ATRIBUTO,
   type AtributosDoAtleta, type EstadoCarreiraDeJogador, type IntensidadeDeTreino,
 } from "@/lib/carreira-de-jogador"
 
-const ATRIBUTOS: { chave: keyof AtributosDoAtleta; nome: string }[] = [
-  { chave: "ritmo", nome: "Ritmo" },
-  { chave: "finalizacao", nome: "Finalização" },
-  { chave: "passe", nome: "Passe" },
-  { chave: "drible", nome: "Drible" },
-  { chave: "defesa", nome: "Defesa" },
-  { chave: "fisico", nome: "Físico" },
-]
+// ⚠️ O NOME DE CADA ATRIBUTO VEM DO MOTOR. Esta tela mantinha a própria lista, e
+// duas listas para os mesmos seis atributos discordam na primeira renomeação —
+// o motor já usa `NOME_DO_ATRIBUTO` nos recados do preparador.
+const ATRIBUTOS = (Object.keys(NOME_DO_ATRIBUTO) as (keyof AtributosDoAtleta)[])
+  .map(chave => ({ chave, nome: NOME_DO_ATRIBUTO[chave] }))
 
 export default function EvolucaoDoAtletaPage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador") })
   const { state, setState } = useGameState()
+  const t = useTranslation()
   const carreira = state.carreiraDeJogador
 
   if (!carreira) {
     return (
-      <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
+      <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
           <p className="text-white/70">Nenhuma carreira de jogador ativa neste save.</p>
@@ -64,7 +63,7 @@ export default function EvolucaoDoAtletaPage() {
       <div className="grid h-full min-h-0 gap-3 lg:grid-cols-3">
 
         <PainelDoAtleta
-          titulo="Atributos"
+          titulo={t.carreiraDeJogador.atributos}
           acessorio={
             <span className="rounded-full border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-3 py-1 text-[11px] font-bold text-[var(--brand)]">
               {arq.nome}{especializacao ? ` · ${especializacao.nome}` : ""}
@@ -103,7 +102,7 @@ export default function EvolucaoDoAtletaPage() {
           )}
         </PainelDoAtleta>
 
-        <PainelDoAtleta titulo="Treino da semana">
+        <PainelDoAtleta titulo={t.carreiraDeJogador.treino_da_semana}>
           <label className="block text-[11px] text-white/55">
             Foco do treino
             <select
@@ -171,7 +170,7 @@ export default function EvolucaoDoAtletaPage() {
           </div>
         </PainelDoAtleta>
 
-        <PainelDoAtleta titulo="Recados">
+        <PainelDoAtleta titulo={t.carreiraDeJogador.recados}>
           {carreira.recados.length === 0 && (
             <p className="py-8 text-center text-sm text-white/35">Nenhum recado ainda.</p>
           )}

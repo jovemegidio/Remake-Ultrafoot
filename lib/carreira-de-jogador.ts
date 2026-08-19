@@ -2683,10 +2683,19 @@ function statusAcima(status: PapelNoElenco): PapelNoElenco {
 function propostasDaSemana(estado: EstadoCarreiraDeJogador, semana: number): PropostaDeClube[] {
   const semClube = estado.semClube
   if (!semClube) return []
-  const quantas = quantasLigamNaSemana(semClube.cartaz, estado, semana)
+  // ⚠️ O PISO DO MERCADO. Sem ele, cartaz baixo dava ZERO proposta para sempre e
+  // a carreira virava beco sem saída — o mesmo defeito que o "fora dos planos"
+  // já teve neste modo. Na vida real sempre aparece um clube MENOR: depois de
+  // três semanas em silêncio e com a mesa vazia, um liga. É a metade
+  // "inferiores" do pedido do usuário.
+  const piso = semana >= 3 && estado.propostas.length === 0
+  const quantas = Math.max(quantasLigamNaSemana(semClube.cartaz, estado, semana), piso ? 1 : 0)
   if (quantas === 0) return []
 
-  const faixa = alvoDePrestigio(semClube.cartaz)
+  // Quem chega pelo piso não escolhe: a faixa desce ao chão do mercado.
+  const faixa = piso && semClube.cartaz < 30
+    ? { min: 0, max: Math.max(45, alvoDePrestigio(semClube.cartaz).max) }
+    : alvoDePrestigio(semClube.cartaz)
   const doExterior = estado.empresario.redeInternacional >= 12
   const jaNaMesa = new Set(estado.propostas.map(p => p.clubeFileKey))
 

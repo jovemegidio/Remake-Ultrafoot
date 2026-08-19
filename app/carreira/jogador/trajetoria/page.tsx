@@ -13,6 +13,7 @@ import { AtletaShell, PainelDoAtleta } from "@/components/carreira-jogador/atlet
 import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
 import { useGameState } from "@/lib/save-system"
+import { useTranslation } from "@/lib/i18n"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
@@ -25,11 +26,12 @@ function corDaNota(nota: number): string {
 export default function TrajetoriaDoAtletaPage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador") })
   const { state } = useGameState()
+  const tr = useTranslation()
   const carreira = state.carreiraDeJogador
 
   if (!carreira) {
     return (
-      <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
+      <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
           <p className="text-white/70">Nenhuma carreira de jogador ativa neste save.</p>
@@ -51,7 +53,7 @@ export default function TrajetoriaDoAtletaPage() {
     <AtletaShell carreira={carreira} ativa="trajetoria">
       <div className="grid h-full min-h-0 gap-3 lg:grid-cols-[1fr_22rem]">
 
-        <PainelDoAtleta titulo="Temporada a temporada" icone={<Award className="h-5 w-5 text-[var(--brand)]" />}>
+        <PainelDoAtleta titulo={tr.carreiraDeJogador.temporada_a_temporada} icone={<Award className="h-5 w-5 text-[var(--brand)]" />}>
           {carreira.historico.length === 0 ? (
             <p className="py-10 text-center text-white/35">
               Encerre a primeira temporada para começar a escrever sua história.
@@ -83,7 +85,7 @@ export default function TrajetoriaDoAtletaPage() {
                 {/* A linha da temporada em curso, marcada como tal. */}
                 <tr className="border-t border-[var(--brand)]/30 bg-[var(--brand)]/[.06]">
                   <td className="p-2 font-bold">{carreira.temporada}</td>
-                  <td className="p-2">{carreira.semClube ? "Sem clube" : carreira.clubeNome}</td>
+                  <td className="p-2">{carreira.semClube ? tr.carreiraDeJogador.sem_clube : carreira.clubeNome}</td>
                   <td className="p-2 text-center">{t.jogos}</td>
                   <td className="p-2 text-center">{t.gols}</td>
                   <td className="p-2 text-center">{t.assistencias}</td>
@@ -99,15 +101,15 @@ export default function TrajetoriaDoAtletaPage() {
         </PainelDoAtleta>
 
         <div className="flex min-h-0 flex-col gap-3">
-          <PainelDoAtleta titulo="A carreira em números" className="shrink-0">
+          <PainelDoAtleta titulo={tr.carreiraDeJogador.carreira_em_numeros} className="shrink-0">
             <div className="grid grid-cols-2 gap-2.5">
               {[
-                ["Jogos", jogos],
-                ["Gols", gols],
-                ["Assistências", assistencias],
-                ["Temporadas", carreira.historico.length + 1],
-                ["Auge de overall", resumo.overallMaximo],
-                ["Jogos pela seleção", resumo.selecao.jogos],
+                [tr.carreiraDeJogador.jogos, jogos],
+                [tr.carreiraDeJogador.gols, gols],
+                [tr.carreiraDeJogador.assistencias, assistencias],
+                [tr.carreiraDeJogador.temporadas, carreira.historico.length + 1],
+                [tr.carreiraDeJogador.auge_de_overall, resumo.overallMaximo],
+                [tr.carreiraDeJogador.jogos_pela_selecao, resumo.selecao.jogos],
               ].map(([rotulo, valor]) => (
                 <div key={String(rotulo)} className="rounded-xl border border-white/10 bg-white/[.04] px-3 py-2">
                   <p className="text-[10px] uppercase tracking-wide text-white/45">{rotulo}</p>
@@ -128,7 +130,7 @@ export default function TrajetoriaDoAtletaPage() {
             )}
           </PainelDoAtleta>
 
-          <PainelDoAtleta titulo="Estante" icone={<Trophy className="h-5 w-5 text-amber-300" />} className="min-h-0 flex-1">
+          <PainelDoAtleta titulo={tr.carreiraDeJogador.estante} icone={<Trophy className="h-5 w-5 text-amber-300" />} className="min-h-0 flex-1">
             {resumo.titulos.length === 0 && resumo.premios.length === 0 ? (
               <p className="py-8 text-center text-sm leading-relaxed text-white/40">
                 A estante está vazia. Títulos do clube e prêmios individuais entram aqui na virada da temporada.

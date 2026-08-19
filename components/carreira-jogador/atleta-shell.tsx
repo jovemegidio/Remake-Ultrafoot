@@ -20,9 +20,16 @@
 //
 // ⚠️ E NADA AQUI ROLA. A segunda queixa do print era o scroll do escritório: a
 // tela crescia para baixo e o fim do cartão passava por baixo da barra de
-// controle. Esta casca é `h-dvh` + `overflow-hidden`, e o conteúdo recebe uma
+// controle. Esta casca é `h-screen` + `overflow-hidden`, e o conteúdo recebe uma
 // área `min-h-0 flex-1` — quem rola, quando precisa, é o PAINEL, nunca a
 // página. Ver as telas em app/carreira/jogador.
+//
+// ⚠️ `h-screen`, NUNCA `h-dvh` — e a diferença foi medida em navegador. O jogo
+// roda dentro de `body { zoom: 0.8 }`, e `dvh`/`vh` medem a janela SEM a escala:
+// `h-dvh` vira 80% da tela de verdade e deixa uma FAIXA MORTA de ~150 px no
+// rodapé, que é exatamente o retângulo vazio que o usuário marcou de vermelho no
+// print. O `h-screen` do jogo é uma classe corrigida (`100vh / --game-view-scale`,
+// ver app/globals.css). Para qualquer outra altura: flex (`min-h-0 flex-1`).
 
 import type { ReactNode } from "react"
 import { BarChart3, CalendarDays, TrendingUp, User } from "lucide-react"
@@ -67,19 +74,36 @@ export function AtletaShell({
   const semClube = Boolean(carreira.semClube)
 
   return (
-    <main className="relative flex h-dvh flex-col overflow-hidden text-white">
+    <main className="relative flex h-screen flex-col overflow-hidden text-white">
       {/* O fundo que o usuário mandou (02.png → WebP, 1,39 MB → 65 KB). Fixo e
-          coberto por um véu: texto branco sobre foto de estádio não se lê. */}
+          coberto por um véu em gradiente: texto branco sobre foto de estádio não
+          se lê, mas um véu chapado de 88% apaga a foto inteira — o gradiente
+          deixa o gramado aparecer no meio da tela, que é onde não há texto.
+
+          ⚠️ `z-0`, NUNCA `-z-10`, e isto foi medido no navegador: o `html` deste
+          jogo tem fundo próprio (`bg-background`), então o fundo do `body` NÃO
+          é promovido para a tela — ele pinta como caixa normal, em z=0, e cobre
+          qualquer elemento em z NEGATIVO. Era por isso que o fundo colocado
+          nesta tela na 1.0.352 nunca apareceu: o print do usuário continuava
+          preto porque a imagem estava ATRÁS do fundo do body. */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center"
+        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center"
         style={{ backgroundImage: "url(/images/pre-jogo/in-game-02.webp)" }}
       />
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[#06090d]/88" />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0 bg-gradient-to-b from-[#06090d]/94 via-[#06090d]/72 to-[#06090d]/95"
+      />
 
-      <GameHeader />
+      {/* ⚠️ O CABEÇALHO PRECISA DE UM Z MAIOR QUE O DO CONTEÚDO. Envolvê-lo num
+          `z-10` igual ao da área de baixo criou um contexto de empilhamento em
+          volta dele: o `z-30` interno do menu (tecla W) passou a valer só DENTRO
+          dessa caixa, e a lista abria ATRÁS dos painéis — o teste de tela pegou
+          isso como "clique interceptado" pelo texto do escritório. */}
+      <div className="relative z-30"><GameHeader /></div>
 
-      <div className="mx-auto flex w-full min-h-0 max-w-[1500px] flex-1 flex-col px-5 pb-12 pt-4">
+      <div className="relative z-10 mx-auto flex w-full min-h-0 max-w-[1500px] flex-1 flex-col px-5 pb-12 pt-4">
 
         {/* ── Identidade: quem, onde e em que pé está ── */}
         <header className="mb-3 flex shrink-0 flex-wrap items-end justify-between gap-4">
@@ -147,7 +171,11 @@ export function PainelDoAtleta({
   children: ReactNode
 }) {
   return (
-    <section className={cn("flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[.03]", className)}>
+    /* ⚠️ O PAINEL PRECISA SER OPACO O BASTANTE. Ele era `bg-white/[.03]`, feito
+       para um fundo preto chapado; sobre a foto do fundo, o texto passava a
+       disputar com o gramado atrás. `bg-black/55` + desfoque mantém a foto
+       visível em volta e o dado legível dentro. */
+    <section className={cn("flex min-h-0 flex-col rounded-2xl border border-white/10 bg-black/55 backdrop-blur-sm", className)}>
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[.06] px-5 py-3">
         <h2 className="flex items-center gap-2 text-lg font-black">{icone}{titulo}</h2>
         {acessorio}

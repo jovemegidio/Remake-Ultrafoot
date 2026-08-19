@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { usePaginacao, Paginador } from "@/components/lista-paginada"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Users,
@@ -136,6 +137,8 @@ export default function VestiarioPage() {
   // aninhado, entao a defesa mora no ponto de leitura. Achado pela auditoria de
   // telas (qa:audit), que injeta justamente um save sem o campo.
   const events = squadMorale?.recentEvents ?? []
+  // 6 por pagina: caixa de ~560px dividida pelo item de ~95px desta lista.
+  const paginaDeEventos = usePaginacao(events, 6)
   const dynamics = useMemo(() => analyseSquadDynamics(squadPlayers), [squadPlayers])
   const dynamicsByPlayer = useMemo(
     () => new Map(dynamics.players.map(item => [item.playerId, item])),
@@ -307,13 +310,13 @@ export default function VestiarioPage() {
               Eventos Recentes
             </h2>
             
-            <div className="space-y-3 max-h-[560px] overflow-y-auto scrollbar-thin">
+            <div className="space-y-3 overflow-hidden">
               {events.length === 0 && (
                 <div className="rounded-lg border border-dashed border-white/10 p-6 text-center text-sm text-white/40">
                   Nenhum evento real registrado nesta carreira.
                 </div>
               )}
-              {events.map((event, i) => {
+              {paginaDeEventos.fatia.map((event, i) => {
                 const Icon = getEventIcon(event.type)
                 return (
                   <div key={i} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg">
@@ -340,6 +343,7 @@ export default function VestiarioPage() {
                 )
               })}
             </div>
+            <Paginador lista={paginaDeEventos} rotulo="eventos" />
           </div>
 
           {/* Jogadores por Moral */}

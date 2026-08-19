@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { usePaginacao, Paginador } from "@/components/lista-paginada"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   MessageSquare,
@@ -86,6 +87,9 @@ export default function ReunioesPage() {
     })
   }, [squadPlayers, searchTerm, filterPosition])
 
+  // 10 por pagina = 5 em cada uma das 2 colunas. Comecou em 12 e sobravam 77px.
+  const paginaDeReunioes = usePaginacao(filteredPlayers, 10)
+
   const selectedPlayer = selectedPlayerId ? squadPlayers.find(p => p.id === selectedPlayerId) : null
   const canMeet = selectedPlayerId && mounted ? canMeetPlayer(selectedPlayerId) : false
 
@@ -121,7 +125,7 @@ export default function ReunioesPage() {
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
-      <main className="flex-1 p-6 overflow-y-auto">
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
         <div className="max-w-7xl mx-auto space-y-6">
             
             {/* Header */}
@@ -182,8 +186,8 @@ export default function ReunioesPage() {
                   </div>
                 </div>
                 
-                <div className="grid max-h-[640px] auto-rows-min grid-cols-1 content-start gap-2 overflow-y-auto scrollbar-thin xl:grid-cols-2">
-                  {filteredPlayers.map(player => {
+                <div className="grid auto-rows-min grid-cols-1 content-start gap-2 overflow-hidden xl:grid-cols-2">
+                  {paginaDeReunioes.fatia.map(player => {
                     const canMeetThisPlayer = mounted ? canMeetPlayer(player.id) : true
                     const isSelected = selectedPlayerId === player.id
                     
@@ -229,6 +233,7 @@ export default function ReunioesPage() {
                     )
                   })}
                 </div>
+                <Paginador lista={paginaDeReunioes} rotulo="atletas" />
               </div>
 
               {/* Painel de Reuniao */}

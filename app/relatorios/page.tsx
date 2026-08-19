@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { usePaginacao, Paginador } from "@/components/lista-paginada"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   BarChart3,
@@ -123,6 +124,9 @@ export default function RelatoriosPage() {
     return [...squadPlayers].sort((a, b) => b.overall - a.overall)
   }, [squadPlayers])
 
+  // 16 por pagina = 8 itens em cada uma das 2 colunas (caixa ~640px, item ~78px).
+  const paginaDeRelatorios = usePaginacao(sortedPlayers, 16)
+
   // Calcular estatisticas comparativas
   const playerComparisons = useMemo(() => {
     const divisor = Math.max(squadPlayers.length, 1)
@@ -217,8 +221,8 @@ export default function RelatoriosPage() {
                   ))}
                 </div>
                 
-                <div className="grid max-h-[640px] auto-rows-min grid-cols-1 content-start gap-2 overflow-y-auto scrollbar-thin xl:grid-cols-2">
-                  {sortedPlayers.map(player => {
+                <div className="grid auto-rows-min grid-cols-1 content-start gap-2 overflow-hidden xl:grid-cols-2">
+                  {paginaDeRelatorios.fatia.map(player => {
                     const rating = (player.overall + player.form) / 20
                     return (
                       <button
@@ -245,6 +249,7 @@ export default function RelatoriosPage() {
                     )
                   })}
                 </div>
+                <Paginador lista={paginaDeRelatorios} rotulo="atletas" />
               </div>
 
               {/* Relatorio do Jogador */}

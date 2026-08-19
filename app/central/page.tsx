@@ -27,6 +27,7 @@ import {
   Gavel
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
+import { usePaginacao, Paginador } from "@/components/lista-paginada"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
@@ -85,6 +86,11 @@ export default function CentralPage() {
       })),
     [squadPlayers],
   )
+
+  // 12 por pagina = 6 linhas em cada uma das 2 colunas. Comecou em 20 e sobravam 317px:
+  // a aba do vestiario tem outros blocos acima da lista disputando a mesma altura.
+  // uma linha por atleta do elenco e sozinha pedia 2.000px de altura.
+  const paginaDeMoral = usePaginacao(playerMorale, 10)
 
   // Semana absoluta aproximada, para estimar quanto falta de contrato. Nao precisa
   // ser exata: o que importa e usar os jogadores e salarios REAIS do elenco.
@@ -357,7 +363,7 @@ export default function CentralPage() {
                   {playerMorale.length === 0 && (
                     <p className="text-xs text-white/40 py-6 text-center">Carregando elenco...</p>
                   )}
-                  {playerMorale.map((player, idx) => (
+                  {paginaDeMoral.fatia.map((player, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
                       <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} fileKey={userTeam.file_key} position={player.position} size="sm" />
                       <div className="flex-1">
@@ -383,6 +389,7 @@ export default function CentralPage() {
                     </div>
                   ))}
                 </div>
+                <Paginador lista={paginaDeMoral} rotulo="atletas" />
               </div>
             </motion.div>
           )}

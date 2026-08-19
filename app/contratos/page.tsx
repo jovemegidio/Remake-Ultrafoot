@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import { usePaginacao, Paginador } from "@/components/lista-paginada"
 import {
   FileText,
   AlertTriangle,
@@ -168,6 +169,10 @@ export default function ContratosPage() {
       })
   }, [squadPlayers, currentWeek, currentSeason, filter])
 
+  // 16 por pagina = 8 linhas em cada uma das 2 colunas. Comecou em 18 e sobravam 77px.
+  // medida da caixa (~640px) dividida pela linha real (~65px), nao de chute.
+  const paginaDeContratos = usePaginacao(filteredPlayers, 14)
+
   // Contagem por status
   const statusCounts = useMemo(() => {
     const counts = { expiring: 0, expired: 0, ok: 0 }
@@ -266,7 +271,7 @@ export default function ContratosPage() {
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
-      <main className="flex-1 p-4 overflow-y-auto space-y-4">
+      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -407,8 +412,11 @@ export default function ContratosPage() {
           </div>
 
           {/* Lista */}
-          <div className="grid max-h-[640px] auto-rows-min grid-cols-1 content-start overflow-y-auto xl:grid-cols-2 [&>*]:border-b [&>*]:border-white/5">
-            {filteredPlayers.map(player => {
+          {/* PAGINADA (pedido: sem rolagem). 39 contratos numa linha de ~65px
+              sao ~2.500px; a janela oferece ~850px. 18 por pagina = 9 linhas em
+              cada uma das 2 colunas, calibrado pela altura medida da caixa. */}
+          <div className="grid auto-rows-min grid-cols-1 content-start overflow-hidden xl:grid-cols-2 [&>*]:border-b [&>*]:border-white/5">
+            {paginaDeContratos.fatia.map(player => {
               const status = player.contractStatus
               
               return (
@@ -487,6 +495,7 @@ export default function ContratosPage() {
               )
             })}
           </div>
+          <Paginador lista={paginaDeContratos} rotulo="contratos" />
         </div>
       </main>
 

@@ -92,12 +92,18 @@ const INVENTARIO = [
   ["1.0.338", "Menu proprio da carreira de atleta", "components/game-header.tsx", "NAV_MENU_PLAYER_ITEMS"],
   ["1.0.338", "Identidade do atleta no cabecalho", "components/game-header.tsx", "ehCarreiraDeAtleta"],
   ["1.0.338", "Relogio do cabecalho segue a rodada do atleta", "components/game-header.tsx", "FICAVA PARADO EM 01 JAN"],
-  ["1.0.338", "Aba da carreira de atleta vem da URL", "app/carreira/jogador/page.tsx", "abaDaUrl"],
+  // ⚠️ ERA `abaDaUrl` NO ESCRITÓRIO. Na 1.0.358 as abas viraram TELAS (o menu
+  // apontava para `?aba=` e nada acontecia, porque a navegação é client-side e o
+  // componente não remontava). O que precisa continuar existindo é o caminho de
+  // volta do link antigo, que hoje é `rotaDaAbaAntiga`.
+  ["1.0.338", "Link antigo `?aba=` leva a tela nova do atleta", "app/carreira/jogador/page.tsx", "rotaDaAbaAntiga"],
   ["1.0.338", "Campo na partida vivida do atleta", "components/match/campo-do-atleta.tsx", "CampoDoAtleta"],
   ["1.0.338", "Partida do atleta desenha o campo", "app/carreira/jogador/partida/page.tsx", "CampoDoAtleta"],
   ["1.0.338", "Gate do campo do atleta", "scripts/test-campo-do-atleta.ts", "onze nomes reais"],
   ["1.0.339", "Treino por intensidade na carreira de atleta", "lib/carreira-de-jogador.ts", "treinarNaSemana"],
-  ["1.0.339", "Intensidade do treino na tela do atleta", "app/carreira/jogador/page.tsx", "definirIntensidadeDeTreino"],
+  // A intensidade mudou de tela junto com a reforma da 1.0.358: hoje ela mora em
+  // "Evolucao e atributos", que e a tela do treino.
+  ["1.0.339", "Intensidade do treino na tela do atleta", "app/carreira/jogador/evolucao/page.tsx", "definirIntensidadeDeTreino"],
   ["1.0.339", "Gate do treino do atleta", "scripts/test-treino-do-atleta.ts", "tem efeito medivel"],
   ["1.0.340", "Conversas com familia, empresario e diretoria", "lib/conversas-do-atleta.ts", "conversasDoMomento"],
   ["1.0.340", "Conversas na tela do atleta", "app/carreira/jogador/page.tsx", "responderConversa"],
@@ -138,7 +144,9 @@ const INVENTARIO = [
   ["1.0.347", "Hidratacao das escalacoes", "app/elenco/escalacoes/page.tsx", "NADA DO SAVE PODE ENTRAR"],
   ["1.0.347", "Gate das tres modalidades", "scripts/test-modalidades-ponta-a-ponta.ts", "a bracadeira"],
   ["1.0.352", "Painel do atleta recolhivel", "app/elenco/gerenciamento/page.tsx", "painelDoAtletaRecolhido"],
-  ["1.0.352", "Fundo do escritorio do atleta", "app/carreira/jogador/page.tsx", "in-game-02.webp"],
+  // O fundo passou para a casca comum das quatro telas do atleta (1.0.358) — e la
+  // ele finalmente APARECE: estava em `-z-10`, atras do fundo do body.
+  ["1.0.352", "Fundo do escritorio do atleta", "components/carreira-jogador/atleta-shell.tsx", "in-game-02.webp"],
   ["1.0.352", "Online nao marca escolha sem o jogador mexer", "app/configuracoes/page.tsx", "mexeuNoOnline"],
   ["1.0.352", "Gate do online que nao toca no save", "scripts/test-online-nao-toca-no-save.ts", "nao encosta no save"],
   ["1.0.353", "Narracao da partida do atleta", "lib/partida-do-atleta.ts", "montarNarracao"],
@@ -160,6 +168,17 @@ const INVENTARIO = [
   ["1.0.348", "Instalador do jogo conferido antes de executar", "Launcher/src-tauri/src/lib.rs", "CONFERIR ANTES DE EXECUTAR"],
   ["1.0.348", "latest.json publica sha256 e tamanho", "scripts/publish-release.mjs", "createHash"],
   ["1.0.348", "Deploy nao aborta por falta de changelog", "scripts/publicar-launcher-config.mjs", "ESCRITA SOZINHA"],
+  ["1.0.358", "Telas do atleta em rota propria", "components/carreira-jogador/atleta-shell.tsx", "AtletaShell"],
+  ["1.0.358", "Menu do atleta aponta para as telas", "components/game-header.tsx", "/carreira/jogador/calendario"],
+  ["1.0.358", "Calendario do atleta com tabela embutida", "app/carreira/jogador/calendario/page.tsx", "carreira.tabela"],
+  ["1.0.358", "Atleta sem clube: rescisao e mercado", "lib/carreira-de-jogador.ts", "rescindirContrato"],
+  ["1.0.358", "Contraproposta do agente", "lib/carreira-de-jogador.ts", "contrapropor"],
+  ["1.0.358", "Rescisao do atleta no cabecalho", "components/game-header.tsx", "ehCarreiraDeAtleta && carreiraDeAtleta"],
+  ["1.0.358", "Pre-jogo e ao vivo na partida do atleta", "app/carreira/jogador/partida/page.tsx", "ENTRAR EM CAMPO"],
+  ["1.0.358", "Placar do atleta nao entrega o fim", "app/carreira/jogador/partida/page.tsx", "placarAte"],
+  ["1.0.358", "Fundo do mercado nos modos online", "app/online/page.tsx", "online-mercado.webp"],
+  ["1.0.358", "Gate do atleta sem clube", "scripts/qa-sem-clube.ts", "SEM CLUBE OK"],
+  ["1.0.358", "Gate de tela do atleta (scroll e menu)", "e2e/carreira-atleta.spec.ts", "sobra faixa morta"],
   ["—", "Arbitragem / VAR", "lib/arbitragem.ts", ""],
   ["—", "Eventos para o 3D", "lib/eventos-para-3d.ts", ""],
   ["—", "Histórico de lesões", "lib/historico-de-lesoes.ts", ""],

@@ -9,7 +9,7 @@
 // o que sobrava era uma faixa preta no rodapé.
 //
 // A correção não é aumentar o `padding-bottom` (já se tentou duas vezes: pb-14
-// → pb-36). É a tela caber: `AtletaShell` fixa a altura em `h-dvh`, esta grade
+// → pb-36). É a tela caber: `AtletaShell` fixa a altura em `h-screen`, esta grade
 // divide o que sobra em colunas de altura inteira e QUEM ROLA É O PAINEL, por
 // dentro. Ver components/carreira-jogador/atleta-shell.
 //
@@ -66,7 +66,7 @@ function corDaNota(nota: number): string {
 /** Cartão da faixa de números do topo. Compacto: ele não pode roubar altura. */
 function Numero({ icone, rotulo, children, nota }: { icone: React.ReactNode; rotulo: string; children: React.ReactNode; nota?: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[.04] px-3.5 py-2.5">
+    <div className="rounded-xl border border-white/10 bg-black/55 px-3.5 py-2.5 backdrop-blur-sm">
       <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-white/45">
         {icone}{rotulo}
       </div>
@@ -183,7 +183,7 @@ export default function CarreiraDeJogadorPage() {
 
   if (!carreira) {
     return (
-      <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
+      <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
           <p className="text-white/70">Nenhuma carreira de jogador ativa neste save.</p>
@@ -245,26 +245,26 @@ export default function CarreiraDeJogadorPage() {
         {/* ── A faixa de números. Compacta de propósito: cada pixel dela sai da
              altura dos painéis, e são eles que contam a temporada. ── */}
         <section className="grid shrink-0 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-          <Numero icone={<Star className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Nota do treinador" nota={semClube ? "sem clube" : papel}>
+          <Numero icone={<Star className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo={t.carreiraDeJogador.nota_do_treinador} nota={semClube ? t.carreiraDeJogador.sem_clube_min : papel}>
             <Estrelas nota={carreira.notaDoTreinador} />
           </Numero>
-          <Numero icone={<BarChart3 className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Média na temporada">
+          <Numero icone={<BarChart3 className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo={t.carreiraDeJogador.media_na_temporada}>
             <span className={corDaNota(media)}>{media > 0 ? media.toFixed(2) : "—"}</span>
           </Numero>
-          <Numero icone={<Target className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Gols / assistências">
+          <Numero icone={<Target className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo={t.carreiraDeJogador.gols_assistencias}>
             {carreira.temporadaAtual.gols} / {carreira.temporadaAtual.assistencias}
           </Numero>
-          <Numero icone={<Users className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Jogos (titular)">
+          <Numero icone={<Users className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo={t.carreiraDeJogador.jogos_titular}>
             {carreira.temporadaAtual.jogos} <span className="text-sm text-white/40">({carreira.temporadaAtual.titularidades})</span>
           </Numero>
-          <Numero icone={<TrendingUp className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo="Overall / teto projetado">
+          <Numero icone={<TrendingUp className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo={t.carreiraDeJogador.overall_teto}>
             {atleta.overall} <span className="text-sm text-white/40">/ {faixaDePotencial.min}–{faixaDePotencial.max}</span>
           </Numero>
         </section>
 
         {/* ── CARREIRA ENCERRADA. Ocupa a tela: não há mais temporada para ver. ── */}
         {carreira.aposentado ? (
-          <PainelDoAtleta titulo="Carreira encerrada" icone={<Star className="h-5 w-5 text-amber-300" />} className="min-h-0 flex-1">
+          <PainelDoAtleta titulo={t.carreiraDeJogador.carreira_encerrada} icone={<Star className="h-5 w-5 text-amber-300" />} className="min-h-0 flex-1">
             <p className="text-sm text-white/70">
               {resumo.jogos} jogos · {resumo.gols} gols · {resumo.assistencias} assistências ·{" "}
               {resumo.titulos.length} títulos · {resumo.premios.length} prêmios individuais ·{" "}
@@ -300,7 +300,7 @@ export default function CarreiraDeJogadorPage() {
              temporada: o que existe é o cartaz, o telefone e a mesa. */
           <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-3">
             <PainelDoAtleta
-              titulo="Sem clube"
+              titulo={t.carreiraDeJogador.sem_clube}
               icone={<Handshake className="h-5 w-5 text-amber-300" />}
               acessorio={<span className="text-[11px] text-white/40">semana {semClube.semanas}</span>}
             >
@@ -339,7 +339,7 @@ export default function CarreiraDeJogadorPage() {
             </PainelDoAtleta>
 
             <PainelDoAtleta
-              titulo="Propostas na mesa"
+              titulo={t.carreiraDeJogador.propostas_na_mesa}
               icone={<Handshake className="h-5 w-5 text-[var(--brand)]" />}
               className="lg:col-span-2"
               acessorio={<span className="text-[11px] text-white/40">{carreira.propostas.length} na mesa</span>}
@@ -372,7 +372,7 @@ export default function CarreiraDeJogadorPage() {
                mais pesada do modo, e não divide espaço com o resto. ── */
           <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-3">
             <PainelDoAtleta
-              titulo="Propostas na mesa"
+              titulo={t.carreiraDeJogador.propostas_na_mesa}
               icone={<Handshake className="h-5 w-5 text-[var(--brand)]" />}
               className="lg:col-span-2"
               acessorio={
@@ -395,7 +395,7 @@ export default function CarreiraDeJogadorPage() {
               </div>
             </PainelDoAtleta>
 
-            <PainelDoAtleta titulo="Repercussão" acessorio={<span className="text-[11px] text-white/40">reputação {carreira.reputacao ?? 30}</span>}>
+            <PainelDoAtleta titulo={t.carreiraDeJogador.repercussao} acessorio={<span className="text-[11px] text-white/40">reputação {carreira.reputacao ?? 30}</span>}>
               {(carreira.repercussao?.length ?? 0) === 0 ? (
                 <p className="text-sm leading-relaxed text-white/45">{t.carreiraDeJogador.repercussao_vazia}</p>
               ) : (
@@ -417,14 +417,14 @@ export default function CarreiraDeJogadorPage() {
           <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-3">
 
             {/* PRÓXIMA PARTIDA + contrato + empresário. */}
-            <PainelDoAtleta titulo="Próxima partida" icone={<CalendarDays className="h-5 w-5 text-[var(--brand)]" />}>
+            <PainelDoAtleta titulo={t.carreiraDeJogador.proxima_partida} icone={<CalendarDays className="h-5 w-5 text-[var(--brand)]" />}>
               {proxima ? (
                 <>
                   <p className="text-lg font-bold">
                     {proxima.homeCurto === carreira.clubeCurto ? proxima.awayNome : proxima.homeNome}
                   </p>
                   <p className="text-xs text-white/45">
-                    {proxima.homeCurto === carreira.clubeCurto ? t.carreiraDeJogador.em_casa : "Fora"} · rodada {proxima.round} · {proxima.competition}
+                    {proxima.homeCurto === carreira.clubeCurto ? t.carreiraDeJogador.em_casa : t.carreiraDeJogador.fora} · rodada {proxima.round} · {proxima.competition}
                   </p>
                   <p className="mt-3 text-xs text-white/45">Expectativa do treinador</p>
                   <p className="text-sm font-bold text-[var(--brand)]">{minutosEsperados(carreira)}</p>
@@ -449,8 +449,8 @@ export default function CarreiraDeJogadorPage() {
               ) : (
                 <p className="text-white/45">
                   {mataMataPendente
-                    ? "Liga encerrada — falta a decisão do mata-mata. Simule para jogá-la."
-                    : "Temporada concluída. Encerre para virar o ano."}
+                    ? t.carreiraDeJogador.liga_encerrada_mata_mata
+                    : t.carreiraDeJogador.temporada_concluida}
                 </p>
               )}
 
@@ -507,7 +507,7 @@ export default function CarreiraDeJogadorPage() {
                 <select
                   value={carreira.empresario.nome}
                   onChange={e => aplicar(trocarEmpresario(carreira, e.target.value))}
-                  aria-label="Trocar de empresário"
+                  aria-label={t.carreiraDeJogador.trocar_de_empresario}
                   className="mt-1 h-9 w-full rounded-lg border border-white/15 bg-black/50 px-2 text-[11px] text-white"
                 >
                   {EMPRESARIOS.map(emp => (
@@ -521,7 +521,7 @@ export default function CarreiraDeJogadorPage() {
 
             {/* METAS + a conversa da vez (imprensa e vestiário). */}
             <div className="flex min-h-0 flex-col gap-3">
-              <PainelDoAtleta titulo="Metas da temporada" icone={<Target className="h-5 w-5 text-[var(--brand)]" />} className="min-h-0 flex-1">
+              <PainelDoAtleta titulo={t.carreiraDeJogador.metas_da_temporada} icone={<Target className="h-5 w-5 text-[var(--brand)]" />} className="min-h-0 flex-1">
                 <div className="space-y-3">
                   {carreira.metas.map(meta => (
                     <div key={meta.id}>
@@ -541,14 +541,14 @@ export default function CarreiraDeJogadorPage() {
                 {carreira.selecao.convocada && (
                   <p className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-[11px] text-emerald-200/80">
                     <Flag className="h-3.5 w-3.5" />
-                    Seleção {carreira.selecao.nivel === "sub20" ? "Sub-20" : "principal"} · {carreira.selecao.jogos} jogos, {carreira.selecao.gols} gols
+                    Seleção {carreira.selecao.nivel === "sub20" ? t.carreiraDeJogador.sub20 : "principal"} · {carreira.selecao.jogos} jogos, {carreira.selecao.gols} gols
                   </p>
                 )}
               </PainelDoAtleta>
 
               {(entrevista || conversas.length > 0) && (
                 <PainelDoAtleta
-                  titulo={entrevista ? "Entrevista" : "Conversas"}
+                  titulo={entrevista ? t.carreiraDeJogador.entrevista : t.carreiraDeJogador.conversas}
                   icone={entrevista
                     ? <Newspaper className="h-5 w-5 text-sky-300" />
                     : <Users className="h-5 w-5 text-violet-300" />}
@@ -610,7 +610,7 @@ export default function CarreiraDeJogadorPage() {
             {/* REPERCUSSÃO + ÚLTIMAS ATUAÇÕES. */}
             <div className="flex min-h-0 flex-col gap-3">
               <PainelDoAtleta
-                titulo="Repercussão"
+                titulo={t.carreiraDeJogador.repercussao}
                 className="min-h-0 flex-1"
                 acessorio={<span className="text-[11px] text-white/40">reputação {carreira.reputacao ?? 30} · torcida {carreira.torcida ?? 50}</span>}
               >
@@ -628,7 +628,7 @@ export default function CarreiraDeJogadorPage() {
                 )}
               </PainelDoAtleta>
 
-              <PainelDoAtleta titulo="Últimas atuações" className="min-h-0 flex-1">
+              <PainelDoAtleta titulo={t.carreiraDeJogador.ultimas_atuacoes} className="min-h-0 flex-1">
                 {carreira.ultimasPartidas.length === 0 && (
                   <p className="py-6 text-center text-white/35">Ainda sem partidas nesta carreira.</p>
                 )}
@@ -641,7 +641,7 @@ export default function CarreiraDeJogadorPage() {
                       </div>
                       <p className="mt-1 text-[11px] text-white/45">
                         {p.minutos > 0
-                          ? <>{p.titular ? t.carreiraDeJogador.titular : "Entrou"} · {p.minutos}′ · {p.gols}G {p.assistencias}A{p.cartao ? ` · cartão ${p.cartao}` : ""}</>
+                          ? <>{p.titular ? t.carreiraDeJogador.titular : t.carreiraDeJogador.entrou} · {p.minutos}′ · {p.gols}G {p.assistencias}A{p.cartao ? ` · cartão ${p.cartao}` : ""}</>
                           : t.carreiraDeJogador.nao_saiu_do_banco}
                         {p.minutos > 0 && <span className={cn("ml-2 font-black", corDaNota(p.nota))}>{p.nota.toFixed(1)}</span>}
                       </p>

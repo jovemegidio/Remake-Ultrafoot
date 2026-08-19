@@ -28,6 +28,7 @@ import {
   ehMultitecnico, faltamFechar, iniciarRodada, tecnicosDoSave, type TecnicoDoSave,
 } from "@/lib/tecnicos-do-save"
 import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
+import { rescindirContrato } from "@/lib/carreira-de-jogador"
 
 /**
  * ⚠️ NÃO IMPORTE `lib/carreira-de-jogador` AQUI (corrigido 1.0.346).
@@ -283,6 +284,19 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
    */
   const handleResign = () => {
     if (emModoSelecao) return
+    // ⚠️ NA CARREIRA DE ATLETA "PEDIR DEMISSAO" E OUTRA COISA (1.0.358).
+    //
+    // Este botao limpava `selectedTeamShort` e mandava a pessoa para a Area do
+    // Treinador — a tela de quem DIRIGE clube. Um atleta de 18 anos que rescinde
+    // nao vira tecnico desempregado: ele fica SEM CLUBE, e o que decide quem
+    // liga e o desempenho dele no clube anterior. Ver `rescindirContrato` em
+    // lib/carreira-de-jogador, e o escritorio do atleta, que vira a mesa do
+    // agente enquanto o estado durar.
+    if (ehCarreiraDeAtleta && carreiraDeAtleta) {
+      setState({ carreiraDeJogador: rescindirContrato(carreiraDeAtleta) })
+      hardNavigate("/carreira/jogador")
+      return
+    }
     clearJobOffers()
     setState({ selectedTeamShort: null })
     // Sem clube leva a Area do Treinador, onde as propostas por reputacao
@@ -1123,7 +1137,10 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 SOME no modo selecao: ali este botao demitia do CLUBE, e quem
                 clicava achando que largava a selecao perdia o emprego no time.
                 Largar a selecao tem tela propria, em /selecao. */}
-            {!emModoSelecao && (
+            {/* ⚠️ NA CARREIRA DE ATLETA ele muda de NOME e de SIGNIFICADO, e some
+                para quem ja esta sem clube — nao se rescinde duas vezes. Ver
+                `handleResign`. */}
+            {!emModoSelecao && !(ehCarreiraDeAtleta && carreiraDeAtleta?.semClube) && (
               <div className="border-t border-white/[0.06] p-3">
                 <button
                   type="button"
@@ -1131,7 +1148,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                   className="flex w-full items-center gap-3 border-l-2 border-l-red-400/60 bg-red-500/5 px-3 py-2.5 text-sm font-semibold text-red-300/90 transition-colors hover:bg-red-500/10 hover:text-red-200"
                 >
                   <LogOut className="h-4 w-4" />
-                  Pedir demissao
+                  {ehCarreiraDeAtleta ? "Rescindir contrato" : "Pedir demissao"}
                 </button>
               </div>
             )}
@@ -1142,7 +1159,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       {/* Confirmacao da demissao: irreversivel, exige confirmar (teclado Enter/Esc, controle A/B). */}
       {showResignConfirm && (
         <ResignConfirmDialog
-          teamName={userTeam.nome}
+          teamName={ehCarreiraDeAtleta && carreiraDeAtleta ? carreiraDeAtleta.clubeNome : userTeam.nome}
+          ehAtleta={ehCarreiraDeAtleta}
           onCancel={() => setShowResignConfirm(false)}
           onConfirm={handleResign}
         />
@@ -1170,7 +1188,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 }
 
 // Aviso de demissao. Esc/B cancela, Enter/A confirma (teclado + controle).
-function ResignConfirmDialog({ teamName, onCancel, onConfirm }: { teamName: string; onCancel: () => void; onConfirm: () => void }) {
+function ResignConfirmDialog({ teamName, ehAtleta = false, onCancel, onConfirm }: { teamName: string; ehAtleta?: boolean; onCancel: () => void; onConfirm: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); onCancel() }
@@ -1195,10 +1213,13 @@ function ResignConfirmDialog({ teamName, onCancel, onConfirm }: { teamName: stri
         className="w-[400px] max-w-[90vw] rounded-2xl border border-white/10 bg-[#0c0c14] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold text-white">Pedir demissao do {teamName}?</h2>
+        <h2 className="text-lg font-bold text-white">
+          {ehAtleta ? `Rescindir com o ${teamName}?` : `Pedir demissao do ${teamName}?`}
+        </h2>
         <p className="mt-2 text-sm text-white/60">
-          Voce encerra seu ciclo no clube e volta ao menu principal. O progresso e salvo
-          automaticamente. Esta acao nao pode ser desfeita.
+          {ehAtleta
+            ? "Voce fica SEM CLUBE. As propostas passam a chegar semana a semana, e o tamanho de quem liga depende do que voce fez neste clube. Cada semana parado derruba um pouco o seu cartaz. Esta acao nao pode ser desfeita."
+            : "Voce encerra seu ciclo no clube e volta ao menu principal. O progresso e salvo automaticamente. Esta acao nao pode ser desfeita."}
         </p>
         <div className="mt-6 flex justify-end gap-3">
           <button
@@ -1211,7 +1232,7 @@ function ResignConfirmDialog({ teamName, onCancel, onConfirm }: { teamName: stri
             onClick={onConfirm}
             className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-400"
           >
-            Confirmar demissao <span className="text-white/50">(Enter)</span>
+            {ehAtleta ? "Confirmar rescisao" : "Confirmar demissao"} <span className="text-white/50">(Enter)</span>
           </button>
         </div>
       </div>
@@ -1331,9 +1352,9 @@ const NAV_MENU_NATIONAL_ITEMS: NavMenuItem[] = [
  */
 const NAV_MENU_PLAYER_ITEMS: NavMenuItem[] = [
   { secao: "Carreira", label: "Meu escritorio", href: "/carreira/jogador", icon: User },
-  { secao: "Carreira", label: "Calendario e tabela", href: "/carreira/jogador?aba=tabela", icon: Calendar },
-  { secao: "Carreira", label: "Evolucao e atributos", href: "/carreira/jogador?aba=evolucao", icon: TrendingUp },
-  { secao: "Carreira", label: "Trajetoria", href: "/carreira/jogador?aba=historico", icon: BarChart3 },
+  { secao: "Carreira", label: "Calendario e tabela", href: "/carreira/jogador/calendario", icon: Calendar },
+  { secao: "Carreira", label: "Evolucao e atributos", href: "/carreira/jogador/evolucao", icon: TrendingUp },
+  { secao: "Carreira", label: "Trajetoria", href: "/carreira/jogador/trajetoria", icon: BarChart3 },
 ]
 
 /**

@@ -21,6 +21,7 @@ import {
   Award,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
+import { usePaginacao, Paginador } from "@/components/lista-paginada"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
@@ -274,6 +275,10 @@ export default function TreinamentoPage() {
     return players.sort(cmp[sortBy])
   }, [squadPlayers, filter, sortBy])
 
+  // 8 por pagina. Comecou em 12 e a medicao acusou 230px de conteudo CORTADO
+  // (4 linhas a mais): com overflow-hidden o excedente nao vira barra, some.
+  const paginaDoElenco = usePaginacao(filteredPlayers, 8)
+
   const router = useRouter()
   const [gpPlayerIdx, setGpPlayerIdx] = useState(0)
 
@@ -492,8 +497,12 @@ export default function TreinamentoPage() {
                 var(--game-view-scale)}), `vh` continua medindo a janela SEM
                 escala: 72vh viram ~57% da tela de verdade. A lista parava alta e
                 sobrava um vazio embaixo. Quem rola aqui é o <main>. */}
-            <div className="min-h-0 flex-1 divide-y divide-white/5 overflow-y-auto scrollbar-thin">
-              {filteredPlayers.map(player => {
+            {/* PAGINADA (pedido: sem rolagem). O elenco todo numa coluna sao
+                ~2.100px: a linha aqui e larga (nome + 6 tipos de treino +
+                situacao) e nao aceita duas colunas — tentar isso foi o que
+                inchou a lista do vestiario. 12 por pagina cabem na caixa. */}
+            <div className="min-h-0 flex-1 divide-y divide-white/5 overflow-hidden">
+              {paginaDoElenco.fatia.map(player => {
                 const isSelected = selectedPlayer?.id === player.id
                 // Atributo OU posicao: os dois ocupam o mesmo slot de treino
                 // individual, entao a lista tem de mostrar os dois.
@@ -618,6 +627,7 @@ export default function TreinamentoPage() {
                 )
               })}
             </div>
+            <Paginador lista={paginaDoElenco} rotulo="atletas" />
           </div>
 
           {/* Painel de Treinamento */}
