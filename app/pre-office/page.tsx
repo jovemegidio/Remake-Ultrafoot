@@ -500,11 +500,17 @@ export default function PreOfficePage() {
       <main className="relative z-10 flex-1 overflow-hidden flex flex-col">
         <GameHeader team={userTeam} />
 
-        <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr,420px] gap-8 max-w-7xl mx-auto">
+        {/* CADA COLUNA ROLA POR DENTRO — a pagina nao rola (pedido).
+            Antes as duas colunas rolavam JUNTAS: o feed de noticias e a coluna
+            de tarefas tem alturas bem diferentes, entao ler o fim do feed levava
+            a data e as tarefas para fora da vista.
+            `min-h-0` e nao altura em `vh`: sob o zoom do jogo o `vh` mede a
+            janela sem escala e deixa faixa morta no pe. */}
+        <div className="flex min-h-0 flex-1 overflow-hidden p-6 md:p-8">
+          <div className="mx-auto grid min-h-0 w-full max-w-7xl grid-cols-1 gap-8 lg:grid-cols-[1fr,420px]">
 
             {/* Coluna Esquerda */}
-            <div className="space-y-6">
+            <div className="min-h-0 space-y-6 overflow-y-auto pr-1 scrollbar-thin">
 
               {/* Data atual do jogo */}
               <AnimatePresence mode="wait">
@@ -689,7 +695,7 @@ export default function PreOfficePage() {
             </div>
 
             {/* Coluna Direita - Feed de Noticias */}
-            <div className="space-y-4">
+            <div className="min-h-0 space-y-4 overflow-y-auto pr-1 scrollbar-thin">
               <div className="flex items-center justify-between">
                 <h2 className="text-white/50 text-sm font-medium flex items-center gap-2">
                   <Newspaper className="w-4 h-4" />

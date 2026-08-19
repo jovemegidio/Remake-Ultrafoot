@@ -215,7 +215,7 @@ export default function CentralPage() {
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
-      <main className="flex-1 p-4 md:p-6 overflow-y-auto pb-20">
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <TeamCrest team={userTeam} size="lg" />
@@ -256,7 +256,14 @@ export default function CentralPage() {
           ))}
         </div>
 
-        {/* Content */}
+        {/* Content.
+            ROLA AQUI, NAO NA PAGINA (pedido). O titulo e as abas ficam parados:
+            a lista de moral individual tem uma linha por atleta do elenco e
+            sozinha empurrava a tela para 2,3x a altura da janela, levando as
+            abas para fora da vista a cada rolagem.
+            `min-h-0 flex-1` e nao altura em `vh`: sob o zoom do jogo o `vh`
+            mede a janela sem escala e deixa faixa morta no pe. */}
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-4 scrollbar-thin">
         <AnimatePresence mode="wait">
           {activeTab === "vestiario" && (
             <motion.div
@@ -663,6 +670,7 @@ export default function CentralPage() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </main>
 
       {/* Escolha da punição. As opções variam com a gravidade — punir de leve uma

@@ -251,7 +251,7 @@ export default function LeiloesPage() {
     // O padrao do jogo e h-screen + container interno rolavel.
     <div className="flex h-screen flex-col overflow-hidden bg-[#050508]">
       <GameHeader team={userTeam} />
-      <main className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto p-4 scrollbar-thin md:p-6">
+      <main className="mx-auto flex w-full min-h-0 max-w-5xl flex-1 flex-col overflow-hidden p-4 md:p-6">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--brand)]/15 ring-1 ring-[var(--brand)]/30">
@@ -298,6 +298,13 @@ export default function LeiloesPage() {
             </button>
           ))}
         </div>
+
+        {/* SÓ A LISTA ROLA (pedido). O título e as abas ficam parados: com um
+            card por leilão a página passava de 1.900px e, para trocar de aba,
+            era preciso rolar de volta ao topo.
+            `min-h-0 flex-1` e não altura em `vh`: sob o zoom do jogo o `vh`
+            mede a janela sem escala e deixa faixa morta no pé. */}
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin">
 
         {/* DESFECHO DOS SEUS ANÚNCIOS. Aparece nas duas abas: o dinheiro já entrou
             no caixa e esconder isso atrás de uma aba seria a mesma falha do
@@ -434,6 +441,7 @@ export default function LeiloesPage() {
         />
         </>
         )}
+        </div>
       </main>
     </div>
   )
