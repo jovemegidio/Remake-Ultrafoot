@@ -124,12 +124,17 @@ const FLAG_MAP: Record<string, string> = {
  * iguais na tela e não são a mesma coisa: a MLS não rebaixa ninguém na vida
  * real; a J-League rebaixa e o jogo é que não traz a J2.
  */
-const PYRAMID_SCOPE_291: Partial<Record<Divisao, string>> = {
-  mls: "Liga fechada: não há acesso ou rebaixamento, como no futebol norte-americano.",
-  liga_mx: "Acesso e rebaixamento suspensos; a divisão inferior não entra nesta carreira.",
-  j_league: "A segunda divisão ainda não está disponível como liga jogável nesta base.",
-  premyer_liqa_aze: "A divisão inferior ainda não está disponível como liga jogável nesta base.",
-  premier_liga_kaz: "A divisão inferior ainda não está disponível como liga jogável nesta base.",
+// ⚠️ O MAPA GUARDA A CHAVE, NÃO A FRASE (1.0.358): o texto vive no dicionário
+// (`t.novoJogo.piramide_*`) e a tela resolve na hora de mostrar. Frase escrita
+// aqui era frase intraduzível — ver a catraca do `qa:traducao`.
+type AvisoDePiramide = "piramide_liga_fechada" | "piramide_acesso_suspenso"
+  | "piramide_segunda_indisponivel" | "piramide_inferior_indisponivel"
+const PYRAMID_SCOPE_291: Partial<Record<Divisao, AvisoDePiramide>> = {
+  mls: "piramide_liga_fechada",
+  liga_mx: "piramide_acesso_suspenso",
+  j_league: "piramide_segunda_indisponivel",
+  premyer_liqa_aze: "piramide_inferior_indisponivel",
+  premier_liga_kaz: "piramide_inferior_indisponivel",
 }
 
 /**
@@ -605,7 +610,10 @@ export default function NovoJogoPage() {
     //
     // Quem decide o corpo primeiro e o clube depois é a ordem do próprio modo —
     // e é por isso que a carreira de atleta entra por outra porta.
-    setShowInitialSettings(true)
+    //
+    // ⚠️ E O QUE ABRE É O PAINEL DO ATLETA, não as configurações da carreira
+    // (1.0.358): as duas coisas deixaram de morar na mesma caixa.
+    setShowAtletaSetup(true)
   }, [])
   /**
    * O ATLETA da carreira de jogador. Só é usado quando a modalidade é
@@ -684,6 +692,16 @@ export default function NovoJogoPage() {
   const [debtPreset, setDebtPreset] = useState<DebtPreset>("none")
   const [modoDeMundo, setModoDeMundo] = useState<ModoDeMundo>("original")
   const [showInitialSettings, setShowInitialSettings] = useState(false)
+  /**
+   * O PAINEL DO ATLETA — separado das configurações iniciais (1.0.358).
+   *
+   * Quem entra pela porta do atleta decide um CORPO: posição, idade, pé,
+   * camisa, perfil de jogo e de onde ele vem. Isso não é configuração de
+   * carreira (modo de mundo, dívida, mesa de co-op) e não devia dividir caixa
+   * com ela — era o pedido, e é também o motivo de o painel abrir sozinho
+   * nessa porta: é a primeira decisão do modo.
+   */
+  const [showAtletaSetup, setShowAtletaSetup] = useState(false)
   const [configuracoes283, setConfiguracoes283] = useState<ConfiguracoesIniciais283>(CONFIGURACOES_INICIAIS_283)
   const [managerProfile26, setManagerProfile26] = useState(PERFIL_TREINADOR_26_PADRAO)
   const atualizarPerfil26 = useCallback((patch: Partial<Pick<typeof managerProfile26, "nivelComoJogador" | "areaAnterior" | "relevanciaAnterior" | "licenca" | "estilos" | "personalidades">>) => {
@@ -1121,10 +1139,14 @@ export default function NovoJogoPage() {
     // do técnico era o caminho mais curto e o mais errado: quem escolheu ser
     // atleta cairia numa tela de mercado e de folha salarial que não é dele.
     setCriando(modalidade === "jogador" ? t.novoJogo.abrindo_seu_escritorio : t.novoJogo.abrindo_escritorio)
+    // `recarregar`: a navegação client-side não pega logo depois de criar a
+    // carreira (medido), e o caminho direto poupa a espera do socorro.
     hardNavigate(
       modalidade === "sub20" ? "/base/carreira"
         : modalidade === "jogador" ? "/carreira/jogador"
           : "/?career=1",
+      false,
+      { recarregar: true },
     )
   }, [criando, selectedTeam, nomeDaCarreira, initializeNewGame, setTeamColors, setTheme, modalidade, atleta, activeLeague.label, debtPreset, profile, modoDeMundo, configuracoes283, managerProfile26, convidados.length, tecnicosDaMesa, errosDosTecnicos.length, escolhendoConvidado, registrado])
 
@@ -1477,7 +1499,10 @@ export default function NovoJogoPage() {
                   {qualidadeDaLiga.piramide !== "viva" && (
                     <p>
                       Pirâmide da liga:{" "}
-                      {PYRAMID_SCOPE_291[activeLeague.key] ?? (
+                      {(() => {
+                        const chave = PYRAMID_SCOPE_291[activeLeague.key]
+                        return chave ? t.novoJogo[chave] : null
+                      })() ?? (
                         qualidadeDaLiga.piramide === "isolada"
                           ? "sem acesso nem rebaixamento nesta base — os clubes desta liga não trocam de divisão."
                           : qualidadeDaLiga.desce > 0
@@ -1958,8 +1983,19 @@ export default function NovoJogoPage() {
                filhos — este filho é um só, e um só não quebra: passava direto da
                borda levando junto o campo do nome e o botão de começar. */
             <div className="flex flex-wrap items-center justify-center gap-3 md:flex-nowrap md:justify-end">
+              {/* ⚠️ DUAS PORTAS, DUAS COISAS (1.0.358). "Criar atleta" é o corpo
+                  de quem joga; "Configurações iniciais" são as regras da
+                  carreira. Antes o primeiro morava dentro do segundo. */}
+              {modalidade === "jogador" && (
+                <button
+                  onClick={() => setShowAtletaSetup(true)}
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/10 px-3 text-[10px] font-bold uppercase text-[var(--brand)] hover:bg-[var(--brand)]/20"
+                >
+                  <User className="h-4 w-4" /> {t.novoJogo.criar_atleta}
+                </button>
+              )}
               <button onClick={() => setShowInitialSettings(true)} className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/80 hover:bg-white/10 inline-flex items-center gap-2">
-                <Settings2 className="h-4 w-4" /> Configurações iniciais
+                <Settings2 className="h-4 w-4" /> {t.novoJogo.configuracoes_iniciais}
               </button>
               <select value={modoDeMundo} onChange={event => setModoDeMundo(event.target.value as ModoDeMundo)} aria-label="Modo do mundo" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
                 <option value="original">Original</option><option value="mundo_real">Mundo Real</option><option value="seu_mundo">Seu Mundo</option>
@@ -2063,6 +2099,161 @@ export default function NovoJogoPage() {
         </footer>
       </div>
 
+      {/* ── PAINEL DO ATLETA (1.0.358) ─────────────────────────────────────
+          Separado das configurações iniciais a pedido do usuário. Aqui só se
+          decide QUEM É VOCÊ EM CAMPO; as regras da carreira ficam no outro
+          painel, e as duas portas não se misturam mais. */}
+      {showAtletaSetup && modalidade === "jogador" && (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" onClick={() => setShowAtletaSetup(false)}>
+          <section
+            className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/10 bg-[#091624] p-5 shadow-2xl sm:p-7"
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="criar-atleta-titulo"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--brand)]">
+                  {MODALIDADE_DE_JOGADOR.titulo}
+                </p>
+                <h3 id="criar-atleta-titulo" className="mt-1 text-2xl font-black text-white">{t.novoJogo.criar_atleta}</h3>
+                <p className="mt-1 text-[12px] text-white/45">
+                  {t.novoJogo.corpo_da_carreira}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAtletaSetup(false)}
+                aria-label={t.novoJogo.fechar_criacao_do_atleta}
+                className="rounded-xl border border-white/10 p-2 text-white/60 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+              <div className="mt-4 border-t border-white/10 pt-4">
+                <h4 className="text-sm font-bold text-white">Quem é você em campo</h4>
+                <p className="mt-0.5 text-[11px] text-white/45">
+                  Começa como promessa: overall modesto e teto alto. Quem decide se você joga é o treinador —
+                  e ele decide pela sua nota.
+                </p>
+                {/* A lista de clubes encolheu de propósito, e a tela precisa
+                    dizer isso: sem esta linha, não achar o Flamengo no
+                    carrossel parece defeito, não regra. */}
+                <p className="mt-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[11px] leading-relaxed text-amber-100/70">
+                  Ninguém estreia num gigante: os clubes mais fortes de cada liga não aparecem no seletor.
+                  Chegar a um deles é o que a carreira conquista — por proposta, depois das suas temporadas.
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <label className="text-[11px] text-white/55">
+                    Nome
+                    <input
+                      value={atleta.nome}
+                      onChange={e => setAtleta(a => ({ ...a, nome: e.target.value }))}
+                      placeholder="Nome do atleta"
+                      maxLength={28}
+                      className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white placeholder:text-white/25"
+                    />
+                  </label>
+                  <label className="text-[11px] text-white/55">
+                    Posição
+                    <select
+                      value={atleta.posicao}
+                      onChange={e => setAtleta(a => ({ ...a, posicao: e.target.value as PosicaoDoAtleta }))}
+                      className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                    >
+                      {POSICOES_JOGAVEIS.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-[11px] text-white/55">
+                    Idade
+                    <input
+                      type="number" min={16} max={24} value={atleta.idade}
+                      onChange={e => setAtleta(a => ({ ...a, idade: Math.max(16, Math.min(24, Number(e.target.value) || 18)) }))}
+                      className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                    />
+                  </label>
+                  <label className="text-[11px] text-white/55">
+                    Nacionalidade
+                    <input
+                      value={atleta.nacionalidade}
+                      onChange={e => setAtleta(a => ({ ...a, nacionalidade: e.target.value }))}
+                      maxLength={24}
+                      className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                    />
+                  </label>
+                  <label className="text-[11px] text-white/55">
+                    Pé preferido
+                    <select
+                      value={atleta.pePreferido}
+                      onChange={e => setAtleta(a => ({ ...a, pePreferido: e.target.value as "direito" | "esquerdo" }))}
+                      className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                    >
+                      <option value="direito">Direito</option>
+                      <option value="esquerdo">Esquerdo</option>
+                    </select>
+                  </label>
+                  <label className="text-[11px] text-white/55">
+                    Camisa
+                    <input
+                      type="number" min={1} max={99} value={atleta.numero}
+                      onChange={e => setAtleta(a => ({ ...a, numero: Math.max(1, Math.min(99, Number(e.target.value) || 9)) }))}
+                      className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                    />
+                  </label>
+                  {/* ARQUÉTIPO — a identidade do atleta (1.0.325). Dois
+                      overalls 85 têm de jogar diferente: é ele que decide
+                      quais atributos crescem mais rápido e que caminho de
+                      especialização abre lá na frente. */}
+                  <label className="text-[11px] text-white/55">
+                    Perfil de jogo
+                    <select
+                      value={atleta.arquetipo}
+                      onChange={e => setAtleta(a => ({ ...a, arquetipo: e.target.value as ArquetipoId }))}
+                      className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                    >
+                      {arquetiposDaPosicao(atleta.posicao).map(a => (
+                        <option key={a.id} value={a.id}>{a.nome}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {/* ORIGEM — a história de partida. Não é enfeite: mexe no
+                      overall inicial, no teto e na personalidade. */}
+                  <label className="text-[11px] text-white/55">
+                    Como sua história começa
+                    <select
+                      value={atleta.origem}
+                      onChange={e => setAtleta(a => ({ ...a, origem: e.target.value as OrigemDoAtleta }))}
+                      className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
+                    >
+                      {ORIGENS.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <p className="mt-2 text-[11px] leading-relaxed text-white/40">
+                  {ORIGENS.find(o => o.id === atleta.origem)?.efeito}{" "}
+                  {arquetiposDaPosicao(atleta.posicao).find(a => a.id === atleta.arquetipo)?.descricao}{" "}
+                  O seu TETO fica escondido: a comissão só arrisca uma faixa, e ela aperta conforme você joga.
+                </p>
+                <div className="hidden">
+                </div>
+              </div>
+
+            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+              <span className="text-[11px] text-white/40">
+                {t.novoJogo.regras_ficam_nas_configuracoes} <b className="text-white/60">{t.novoJogo.configuracoes_iniciais}</b>.
+              </span>
+              <button
+                onClick={() => setShowAtletaSetup(false)}
+                className="rounded-xl bg-[var(--brand)] px-5 py-2 text-sm font-black text-[var(--brand-ink)] transition-colors hover:bg-[#00d9b0]"
+              >
+                {t.novoJogo.pronto}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {showInitialSettings && (
         <div className="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" onClick={() => setShowInitialSettings(false)}>
           <section className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#091624] p-5 sm:p-7 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="configuracoes-iniciais-titulo">
@@ -2122,115 +2313,17 @@ export default function NovoJogoPage() {
                 </p>
               )}
 
-              {modalidade === "jogador" && (
-                <div className="mt-4 border-t border-white/10 pt-4">
-                  <h4 className="text-sm font-bold text-white">Quem é você em campo</h4>
-                  <p className="mt-0.5 text-[11px] text-white/45">
-                    Começa como promessa: overall modesto e teto alto. Quem decide se você joga é o treinador —
-                    e ele decide pela sua nota.
-                  </p>
-                  {/* A lista de clubes encolheu de propósito, e a tela precisa
-                      dizer isso: sem esta linha, não achar o Flamengo no
-                      carrossel parece defeito, não regra. */}
-                  <p className="mt-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[11px] leading-relaxed text-amber-100/70">
-                    Ninguém estreia num gigante: os clubes mais fortes de cada liga não aparecem no seletor.
-                    Chegar a um deles é o que a carreira conquista — por proposta, depois das suas temporadas.
-                  </p>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <label className="text-[11px] text-white/55">
-                      Nome
-                      <input
-                        value={atleta.nome}
-                        onChange={e => setAtleta(a => ({ ...a, nome: e.target.value }))}
-                        placeholder="Nome do atleta"
-                        maxLength={28}
-                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white placeholder:text-white/25"
-                      />
-                    </label>
-                    <label className="text-[11px] text-white/55">
-                      Posição
-                      <select
-                        value={atleta.posicao}
-                        onChange={e => setAtleta(a => ({ ...a, posicao: e.target.value as PosicaoDoAtleta }))}
-                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
-                      >
-                        {POSICOES_JOGAVEIS.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                      </select>
-                    </label>
-                    <label className="text-[11px] text-white/55">
-                      Idade
-                      <input
-                        type="number" min={16} max={24} value={atleta.idade}
-                        onChange={e => setAtleta(a => ({ ...a, idade: Math.max(16, Math.min(24, Number(e.target.value) || 18)) }))}
-                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
-                      />
-                    </label>
-                    <label className="text-[11px] text-white/55">
-                      Nacionalidade
-                      <input
-                        value={atleta.nacionalidade}
-                        onChange={e => setAtleta(a => ({ ...a, nacionalidade: e.target.value }))}
-                        maxLength={24}
-                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
-                      />
-                    </label>
-                    <label className="text-[11px] text-white/55">
-                      Pé preferido
-                      <select
-                        value={atleta.pePreferido}
-                        onChange={e => setAtleta(a => ({ ...a, pePreferido: e.target.value as "direito" | "esquerdo" }))}
-                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
-                      >
-                        <option value="direito">Direito</option>
-                        <option value="esquerdo">Esquerdo</option>
-                      </select>
-                    </label>
-                    <label className="text-[11px] text-white/55">
-                      Camisa
-                      <input
-                        type="number" min={1} max={99} value={atleta.numero}
-                        onChange={e => setAtleta(a => ({ ...a, numero: Math.max(1, Math.min(99, Number(e.target.value) || 9)) }))}
-                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
-                      />
-                    </label>
-                    {/* ARQUÉTIPO — a identidade do atleta (1.0.325). Dois
-                        overalls 85 têm de jogar diferente: é ele que decide
-                        quais atributos crescem mais rápido e que caminho de
-                        especialização abre lá na frente. */}
-                    <label className="text-[11px] text-white/55">
-                      Perfil de jogo
-                      <select
-                        value={atleta.arquetipo}
-                        onChange={e => setAtleta(a => ({ ...a, arquetipo: e.target.value as ArquetipoId }))}
-                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
-                      >
-                        {arquetiposDaPosicao(atleta.posicao).map(a => (
-                          <option key={a.id} value={a.id}>{a.nome}</option>
-                        ))}
-                      </select>
-                    </label>
-                    {/* ORIGEM — a história de partida. Não é enfeite: mexe no
-                        overall inicial, no teto e na personalidade. */}
-                    <label className="text-[11px] text-white/55">
-                      Como sua história começa
-                      <select
-                        value={atleta.origem}
-                        onChange={e => setAtleta(a => ({ ...a, origem: e.target.value as OrigemDoAtleta }))}
-                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
-                      >
-                        {ORIGENS.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                      </select>
-                    </label>
-                  </div>
-                  <p className="mt-2 text-[11px] leading-relaxed text-white/40">
-                    {ORIGENS.find(o => o.id === atleta.origem)?.efeito}{" "}
-                    {arquetiposDaPosicao(atleta.posicao).find(a => a.id === atleta.arquetipo)?.descricao}{" "}
-                    O seu TETO fica escondido: a comissão só arrisca uma faixa, e ela aperta conforme você joga.
-                  </p>
-                  <div className="hidden">
-                  </div>
-                </div>
-              )}
+              {/* ⚠️ O ATLETA SAIU DAQUI (1.0.358, pedido: "separe os dados de
+                  criar jogador de configurações iniciais").
+
+                  Ele morava no meio das CONFIGURAÇÕES DA CARREIRA — perfil do
+                  técnico, modo de mundo, dívida inicial, mesa de co-op — que são
+                  regras do jogo, não o corpo de quem joga. Duas decisões de
+                  natureza diferente na mesma caixa, e a mais importante do modo
+                  atleta ficava abaixo da dobra de um painel de opções.
+
+                  Agora ele tem painel próprio (`showAtletaSetup`), que é o que
+                  abre ao entrar pela porta do atleta. Ver mais abaixo. */}
             </div>
 
                         {/* TÉCNICOS NA MESA. Fica aqui, junto das outras decisões de

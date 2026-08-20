@@ -86,8 +86,21 @@ export function toClientRoute(href: string): string {
  * @param href   Destination href.
  * @param replace When true, replaces the current history entry instead of pushing.
  */
-export function hardNavigate(href: string, replace = false): void {
+export function hardNavigate(href: string, replace = false, opcoes?: { recarregar?: boolean }): void {
   if (typeof window === "undefined") return
+  // ⚠️ QUANDO QUEM CHAMA JÁ SABE QUE O SPA NÃO VAI PEGAR (1.0.358).
+  //
+  // Medido: logo depois de criar uma carreira, o `router.push` não troca de
+  // página no export estático — a tela só anda pelo carregamento completo que o
+  // socorro do provider dispara. Tentar mesmo assim custa a espera do socorro e
+  // um download de rota abandonado no meio. Quem sabe disso pede o caminho
+  // direto e economiza os dois.
+  if (opcoes?.recarregar) {
+    const alvo = normalizeAppHref(href)
+    if (replace) window.location.replace(alvo)
+    else window.location.assign(alvo)
+    return
+  }
 
   const target = normalizeAppHref(href)
   // No aplicativo instalado, uma rota interna NAO e um arquivo do Windows.

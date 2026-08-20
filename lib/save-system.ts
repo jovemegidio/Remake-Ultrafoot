@@ -12,7 +12,7 @@ import { useEffect, useState } from "react"
 // `nationalTeamToTeam`)? Está em `lib/time-da-carreira`, que explica o porquê.
 import type { Team } from "@/lib/teams-data"
 import type { NationalCompetitionState } from "@/lib/national-competitions"
-import { storeGet, storeSet, storeRemove, storeKeys, initPersistentStore, flushPersistentStore } from "@/lib/persistent-store"
+import { storeGet, storeSet, storeRemove, storeKeys, esquecerDoCache, initPersistentStore, flushPersistentStore } from "@/lib/persistent-store"
 import { mirrorSaveToFolder, deleteSaveFromFolder, listMirroredCareerSuffixes } from "@/lib/save-folder"
 import type { TransferRecord, MatchFixture, StandingEntry, MatchResult, FinanceEntry, SeasonRecord, InjuryRecord, FatigueMap, CupBracket } from "@/lib/career-types"
 import type { ClubDebtState } from "@/lib/debt-engine"
@@ -1144,15 +1144,19 @@ let universoEmMemoria: { careerId: string; estado: UniversoPersistente286 } | nu
 let universoRawLido: { careerId: string; raw: string } | null = null
 
 function lerUniverso(careerId: string): UniversoPersistente286 | undefined {
+  // ⚠️ O OBJETO JÁ INTERPRETADO VEM PRIMEIRO (1.0.358). Antes a função lia o
+  // TEXTO do store a cada chamada só para comparar com o texto guardado — e por
+  // isso os 42 MB de string precisavam ficar na memória junto com os 74 MB do
+  // objeto. Quem tem o objeto não precisa do texto.
+  if (universoEmMemoria?.careerId === careerId) return universoEmMemoria.estado
   const raw = storeGet(universeKey(careerId))
   if (!raw) return undefined
-  if (universoEmMemoria?.careerId === careerId && universoRawLido?.careerId === careerId && universoRawLido.raw === raw) {
-    return universoEmMemoria.estado
-  }
   try {
     const estado = JSON.parse(raw) as UniversoPersistente286
     universoEmMemoria = { careerId, estado }
-    universoRawLido = { careerId, raw }
+    universoRawLido = null
+    // O texto cumpriu o papel: sai da memória e fica só no arquivo.
+    esquecerDoCache(universeKey(careerId))
     return estado
   } catch {
     // Universo ilegível não pode derrubar a carreira: ele é reconstruído do zero
@@ -1206,7 +1210,11 @@ function gravarUniverso(careerId: string, estado: UniversoPersistente286 | undef
   const raw = JSON.stringify(estado)
   storeSet(universeKey(careerId), raw)
   universoEmMemoria = { careerId, estado }
-  universoRawLido = { careerId, raw }
+  universoRawLido = null
+  // ⚠️ E O TEXTO NÃO FICA. `storeSet` já levou o valor para a fila de gravação
+  // (ela guarda a própria cópia até o commit), então manter os 42 MB no cache do
+  // store seria segurar uma terceira cópia do mesmo universo — a que ninguém lê.
+  esquecerDoCache(universeKey(careerId))
   limparUniversosDeOutrasCarreiras(careerId)
 }
 

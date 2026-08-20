@@ -309,6 +309,22 @@ export function storeGet(key: string): string | null {
   return cache.get(key) ?? null
 }
 
+/**
+ * ESQUECE UMA CHAVE DA MEMÓRIA — sem tocar no disco (1.0.358).
+ *
+ * ⚠️ Existe por causa do universo. Ele são ~42 MB de TEXTO que, depois do
+ * `JSON.parse`, viram ~74 MB de objeto — e o texto continuava no cache do store
+ * a sessão inteira, sem ninguém para lê-lo: `lerUniverso` guarda o objeto já
+ * interpretado e é por ele que todo mundo passa. Eram 42 MB parados numa
+ * máquina de 4 GB.
+ *
+ * Só a cópia em memória sai. O arquivo continua lá, e a próxima leitura o traz
+ * de volta se precisar.
+ */
+export function esquecerDoCache(key: string): void {
+  cache.delete(key)
+}
+
 export function storeSet(key: string, value: string): void {
   cache.set(key, value)
   // Espelha imediatamente: a UI e os exportadores enxergam a mesma versao antes

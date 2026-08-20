@@ -105,6 +105,12 @@ const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/analise-partida", meta: { parent: "Escritorio", parentHref: "/financas", title: "Analise da Partida" } },
   { prefix: "/performance", meta: { parent: "Escritorio", parentHref: "/financas", title: "Performance Center" } },
   { prefix: "/selecao/calendario", meta: { parent: "Selecao", parentHref: "/selecao", title: "Calendario da selecao" } },
+  // O ONLINE NAO E UMA TELA DO ESCRITORIO. Sem estas linhas a trilha dizia
+  // "Inicio > Escritorio" enquanto a pessoa estava nos modos entre tecnicos.
+  { prefix: "/online/amistoso", meta: { parent: "Online", parentHref: "/online", title: "Amistoso online" } },
+  { prefix: "/online/rivals", meta: { parent: "Online", parentHref: "/online", title: "Manager Rivals" } },
+  { prefix: "/online/rush", meta: { parent: "Online", parentHref: "/online", title: "Manager Rush" } },
+  { prefix: "/online", meta: { parent: "Online", parentHref: "/online", title: "Modos entre tecnicos" } },
   { prefix: "/configuracoes", meta: { parent: "Personalizar", parentHref: "/configuracoes", title: "Configuracoes" } },
   { prefix: "/salvar", meta: { parent: "Personalizar", parentHref: "/configuracoes", title: "Salvar" } },
 ]
@@ -153,6 +159,18 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const { team: careerTeam } = useUserTeam()
   const userTeam = team || careerTeam || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   const routeMeta = getRouteMeta(pathname)
+  /**
+   * ⚠️ NO ONLINE O CABEÇALHO NÃO É O DA CARREIRA (pedido, com print).
+   *
+   * Entrando nos modos entre técnicos a barra continuava mostrando "Temporada
+   * 2026 · 01 JAN", o botão AVANÇAR, o salvar e o escudo do clube da carreira —
+   * o relato foi "entro no modo online e ele puxa a carreira". E não é só
+   * enfeite fora de lugar: `AVANÇAR` ali roda uma semana do mundo da carreira a
+   * partir de uma tela que não é dela.
+   *
+   * Aqui ele fica com o que é do online: marca, trilha, menu e configurações.
+   */
+  const emModoOnline = pathname.startsWith("/online")
   // Dirigindo uma selecao o menu perde os itens de clube (mercado, financas,
   // juniores...) e recebe os da selecao. Ver buildNavMenuItems.
   const { isNational: emModoSelecao } = useManagingNational()
@@ -796,12 +814,15 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
       {/* Direita: acoes + widget do clube */}
       <div className="flex items-center gap-3 shrink-0">
-        <FM26CommandCenter />
+        {!emModoOnline && <FM26CommandCenter />}
         {/* Info temporada/calendario (data real, nao contador de rodada).
             O chip mostra "09 ABR" por falta de espaco; a data COMPLETA aparece ao
             passar o mouse (pedido) — junto com o dia da semana, que e o que diz
             se hoje e dia de jogo. */}
-        <div className="group relative hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
+        <div className={cn(
+          "group relative hidden items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1",
+          !emModoOnline && "xl:flex",
+        )}>
           <Calendar className="h-3.5 w-3.5 text-[var(--brand)]" />
           <span className="text-[10px] text-white/45 font-medium">Temporada {temporadaLabel}</span>
           <span className="text-white/15">|</span>
@@ -817,7 +838,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           </div>
         </div>
 
-        {/* Salvar */}
+        {/* Salvar — some no online: não há carreira para gravar ali. */}
+        {!emModoOnline && (
         <button
           onClick={handleSave}
           disabled={saving}
@@ -830,12 +852,13 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
         </button>
+        )}
 
         {/* A VEZ DA MESA (co-op local). Fica COLADO no "Avancar" de proposito: a
             rodada nao anda enquanto todos nao fecharem, e o lugar de descobrir
             isso e ao lado do botao que nao vai funcionar. Em carreira de um
             tecnico so, o componente nao desenha nada. */}
-        <TrocaDeVez />
+        {!emModoOnline && <TrocaDeVez />}
 
         {/* Avancar — ou JOGAR, quando a partida da semana ainda e sua para disputar.
             Trocar o rotulo resolve o mal-entendido na raiz: o jogador clicava
@@ -848,6 +871,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             estado que MERECE atenção: quando há partida sua para disputar, o
             botão vira "Jogar" e ganha o realce. A classe global segue intocada —
             outras telas ainda a usam. */}
+        {!emModoOnline && (
         <button
           onClick={handleAdvance}
           disabled={advancing}
@@ -880,6 +904,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             {partidaPendenteAgora ? "Jogar" : passarAVezEmVezDeAvancar ? "Passar a vez" : "Avancar"}
           </span>
         </button>
+        )}
 
         {/* O sino abria um drawer que sumia a cada navegação e passava
             despercebido — mensagens da diretoria e propostas ficavam sem
@@ -895,7 +920,9 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           <Settings className="h-4 w-4" />
         </Link>
 
-        {/* Widget do clube: escudo + forma + estrela (dropdown do tecnico) */}
+        {/* Widget do clube: escudo + forma + estrela (dropdown do tecnico).
+            Some no ONLINE: ali nao ha clube da carreira para exibir. */}
+        {!emModoOnline && (
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setShowCoachDropdown(!showCoachDropdown)}
@@ -1017,6 +1044,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Menu de navegacao (tecla W ou clique na secao pai). */}

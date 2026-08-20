@@ -86,7 +86,7 @@ test("cria a carreira de atleta e cai no escritorio", async ({ page }) => {
     throw new Error("nao consegui clicar em " + nome)
   }
 
-  await clicarComPaciencia(/Aplicar à carreira/i)
+  await clicarComPaciencia(/^Pronto$/)
   await page.waitForTimeout(800)
 
   await clicarComPaciencia(/Iniciar carreira/i)

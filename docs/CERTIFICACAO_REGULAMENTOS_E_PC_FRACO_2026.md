@@ -39,6 +39,36 @@ Todos passaram. As campanhas automatizadas cobriram 1, 3, 5, 10 e 20 temporadas.
 
 O jogo agora seleciona o perfil `economy` antes da hidratação da interface quando detecta até 4 GB de memória informada pelo navegador ou até quatro processadores lógicos. Isso elimina animações e transições, desativa desfoques e ativa a redução de movimento antes de carregar as telas.
 
+### Memória da INTERFACE, medida tela a tela (1.0.358)
+
+O benchmark abaixo mede o motor no Node. O que faltava era o outro lado: quanto a
+interface segura no navegador, que é onde o jogo roda de verdade. Medido em
+19/08/2026 numa carreira criada pela interface, com coleta de lixo forçada antes
+de cada leitura (`Runtime.getHeapUsage` via CDP):
+
+| tela | antes | depois |
+|---|---|---|
+| escritório (logo após criar) | 259 MB | **183 MB** |
+| /elenco | 191 MB | **130 MB** |
+| /calendario | 380 MB | **154 MB** |
+| /mercado | 116 MB | **116 MB** |
+| /elenco/gerenciamento | 114 MB | **134 MB** |
+
+O pico caiu de **380 MB para 183 MB**. A causa era o universo 286 ficar na
+memória DUAS vezes — os ~42 MB de texto no cache do armazenamento e os ~74 MB do
+objeto depois do `JSON.parse` —, e `lerUniverso` reler o texto a cada chamada só
+para comparar com o que já tinha. Hoje o texto é solto assim que vira objeto
+(`esquecerDoCache`, em lib/persistent-store) e quem tem o objeto não volta ao
+armazenamento.
+
+Isso é o que sustenta o requisito mínimo de **4 GB de RAM**: com Windows e a
+WebView ocupando o seu, 183 MB de heap de interface deixam folga; 380 MB, não.
+
+O número virou catraca: `npm run qa:memoria-telas` percorre escritório, elenco,
+calendário, mercado e gerenciamento numa carreira real e reprova acima de
+**300 MB** — folga para a variação da medida, apertado o bastante para pegar a
+volta dos 380 MB. Ele só desce.
+
 Resultado do benchmark de motor com heap limitado a 512 MB:
 
 ```text

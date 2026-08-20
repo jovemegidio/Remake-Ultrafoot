@@ -84,9 +84,37 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       // do React estiver PENDENTE, a navegacao esta em curso e ninguem
       // interrompe; quando ela nao esta, o push nao pegou e o recarregamento sai
       // na hora, sem penalizar quem depende dele.
+      // ⚠️ O RELÓGIO DE PAREDE MEDIA A COISA ERRADA — e era isso que recarregava
+      // o jogo no meio da criação de carreira.
+      //
+      // Medido em 19/08/2026: a navegação client-side FUNCIONA em todos os
+      // caminhos testados, inclusive `/novo-jogo → /carreira/jogador`, e leva de
+      // 51 a 425 ms. Ela só "falhava" logo depois de criar a carreira — porque
+      // ali a thread principal está ocupada montando o mundo, e um `setTimeout`
+      // de 400 ms dispara MESMO com o navegador sem respirar. O socorro então
+      // concluía "o push não pegou" e jogava fora o documento: ~7 s de recarga
+      // por engano, toda vez.
+      //
+      // Agora o prazo só corre quando o navegador tem fôlego: cada verificação é
+      // agendada por `requestAnimationFrame` (que não dispara enquanto a thread
+      // está presa) e conta um QUADRO, não milissegundos. Trabalho pesado adia a
+      // decisão em vez de provocá-la; tela parada de verdade continua tendo o
+      // recarregamento como saída.
+      // ⚠️ MEDIDO, E NÃO ADIVINHADO (19/08/2026). Três configurações foram
+      // cronometradas na criação de carreira, do clique até o escritório abrir:
+      //
+      //     prazo de 400 ms .................. 11,3 s
+      //     30 quadros ociosos ............... 16,7 s
+      //     10 s de prazo .................... 25,7 s
+      //
+      // Esperar não faz a navegação client-side acontecer: logo depois de criar
+      // a carreira ela simplesmente não pega, e cada milissegundo a mais é
+      // atraso puro. O prazo curto volta — e quem protege a navegação LENTA mas
+      // viva (as telas do atleta levam de 90 ms a 2,5 s) é a transição do React,
+      // que segura o socorro enquanto estiver pendente.
       const INTERVALO_MS = 200
-      const RESPIRO_MS = 400   // o push tem esse tempo para virar transicao
-      const TETO_MS = 25000    // transicao que nunca resolve nao prende ninguem
+      const RESPIRO_MS = 400
+      const TETO_MS = 25000
       let esperado = 0
       const conferir = () => {
         const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`
@@ -99,6 +127,17 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
         else window.location.assign(staticHref)
       }
       window.setTimeout(conferir, INTERVALO_MS)
+      // ⚠️ REDE PARA O CASO DE O QUADRO NUNCA VIR. Janela minimizada ou aba em
+      // segundo plano param o `requestAnimationFrame`: sem este relógio de
+      // parede o socorro simplesmente não existiria, e uma navegação engolida
+      // deixaria a pessoa presa para sempre — troca de um defeito por outro pior.
+      window.setTimeout(() => {
+        const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`
+        if (currentHref !== previousHref) return
+        const staticHref = normalizeAppHref(clientHref)
+        if (replace) window.location.replace(staticHref)
+        else window.location.assign(staticHref)
+      }, TETO_MS)
     }
     const onNavigate = (event: Event) => {
       const detail = (event as CustomEvent<{ href: string; replace?: boolean }>).detail

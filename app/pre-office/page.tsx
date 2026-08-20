@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Heart,
   MessageSquare,
-  PlayCircle,
   AlertTriangle,
   FileText,
   Dumbbell,
@@ -29,6 +28,7 @@ import { faseDaPartida } from "@/lib/competition-phase"
 import { useGameManager } from "@/lib/use-game-manager"
 import { useGameEngine, getContractStatus } from "@/lib/game-engine"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { useTranslation } from "@/lib/i18n"
 import { generateDynamicNews, NEWS_SOURCES, type NewsItem } from "@/components/news-feed"
 import { getGameDate } from "@/lib/game-date"
 import { useGameState } from "@/lib/save-system"
@@ -127,7 +127,6 @@ function adaptarTarefasAModalidade(
   return restantes
 }
 
-const WEEKDAYS = ["DOMINGO", "SEGUNDA-FEIRA", "TERCA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA", "SABADO"]
 const MONTHS = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
 
 
@@ -170,6 +169,7 @@ function formatNewsCount(num: number): string {
 }
 
 export default function PreOfficePage() {
+  const t = useTranslation()
   const {
     hydrated,
     userTeam,
@@ -251,7 +251,7 @@ export default function PreOfficePage() {
     [saveState.week, saveState.season],
   )
 
-  const dayOfWeek = WEEKDAYS[gameDate.getDay()]
+  const dayOfWeek = t.preOffice.dias_da_semana[gameDate.getDay()]
   const day = gameDate.getDate().toString().padStart(2, '0')
   const month = MONTHS[gameDate.getMonth()]
 
@@ -538,10 +538,10 @@ export default function PreOfficePage() {
               >
                 {daysUntilMatch !== null ? (
                   <span className="text-base">
-                    Proxima Partida em {daysUntilMatch} dia{daysUntilMatch !== 1 ? "s" : ""}
+                    {t.preOffice.proxima_partida_em} {daysUntilMatch} {daysUntilMatch !== 1 ? t.preOffice.dias : t.preOffice.dia}
                   </span>
                 ) : (
-                  <span className="text-base text-white/40">Sem partidas agendadas</span>
+                  <span className="text-base text-white/40">{t.preOffice.sem_partidas}</span>
                 )}
               </motion.div>
             </div>
@@ -552,7 +552,7 @@ export default function PreOfficePage() {
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col items-center gap-1">
                     <TeamCrest team={userTeam} size="lg" />
-                    <span className="text-xs text-white/50">Seu time</span>
+                    <span className="text-xs text-white/50">{t.preOffice.seu_time}</span>
                   </div>
                   <span className="text-2xl font-bold text-white">vs</span>
                   <div className="flex flex-col items-center gap-1">
@@ -582,7 +582,7 @@ export default function PreOfficePage() {
                   <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-white/10 bg-white/5">
                     <Calendar className="h-7 w-7 text-white/40" />
                   </div>
-                  <span className="text-sm text-white/40">Nenhuma partida proxima</span>
+                  <span className="text-sm text-white/40">{t.preOffice.nenhuma_partida_proxima}</span>
                 </div>
               )}
             </div>
@@ -622,7 +622,7 @@ export default function PreOfficePage() {
                   }}
                 />
 
-                <div className="relative flex min-h-0 flex-1 flex-col gap-2">
+                <div className="relative flex min-h-0 flex-1 flex-col justify-start gap-2">
                   {realTasks.map((task, index) => {
                     const Icon = task.icon
                     const isSelected = index === selectedTask
@@ -635,7 +635,9 @@ export default function PreOfficePage() {
                           void abrirTarefa(task.action)
                         }}
                         className={cn(
-                          "flex min-h-[52px] w-full flex-1 items-center gap-4 rounded-xl px-4 text-left transition-all",
+                          // `max-h` para o cartão não virar um painel vazio quando
+                          // há poucas tarefas: ele cresce até caber, não até sobrar.
+                          "flex min-h-[52px] max-h-[86px] w-full flex-1 items-center gap-4 rounded-xl px-4 text-left transition-all",
                           "bg-gradient-to-r from-white/[0.03] to-transparent",
                           "border border-white/[0.06]",
                           isSelected && "border-white/20 bg-white/[0.06]",
@@ -677,14 +679,14 @@ export default function PreOfficePage() {
                   className="flex-1 border-white/10 bg-white/5 text-white hover:bg-white/10"
                   onClick={() => hardNavigate("/")}
                 >
-                  Voltar ao Dashboard
+                  {t.preOffice.voltar_ao_dashboard}
                 </Button>
                 <Button
                   className="flex-1 bg-primary hover:bg-primary/90"
                   onClick={handleAdvance}
                   disabled={isAdvancing}
                 >
-                  {isAdvancing ? "Avancando..." : "Avancar"}
+                  {isAdvancing ? t.preOffice.avancando : t.preOffice.avancar}
                 </Button>
               </div>
             </div>
@@ -716,11 +718,11 @@ export default function PreOfficePage() {
                       value={commentDraft}
                       onChange={(e) => setCommentDraft(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") postComment() }}
-                      placeholder="Escreva um comentario..."
+                      placeholder={t.preOffice.escreva_um_comentario}
                       className="h-8 border-white/10 bg-white/5 text-sm text-white"
                     />
                     <Button size="sm" onClick={postComment} disabled={!commentDraft.trim()}>
-                      Enviar
+                      {t.preOffice.enviar}
                     </Button>
                   </div>
                 </div>
@@ -730,7 +732,7 @@ export default function PreOfficePage() {
                 <Newspaper className="h-4 w-4 shrink-0 text-white/40" />
                 <button
                   onClick={() => setCurrentNewsIndex(prev => (prev - 1 + news.length) % news.length)}
-                  aria-label="Noticia anterior"
+                  aria-label={t.preOffice.noticia_anterior}
                   className="shrink-0 rounded-lg p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -760,7 +762,7 @@ export default function PreOfficePage() {
 
                 <button
                   onClick={() => setCurrentNewsIndex(prev => (prev + 1) % news.length)}
-                  aria-label="Proxima noticia"
+                  aria-label={t.preOffice.proxima_noticia}
                   className="shrink-0 rounded-lg p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -825,8 +827,8 @@ export default function PreOfficePage() {
                 transition={{ duration: 1, ease: "linear", repeat: Infinity }}
                 className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full mx-auto mb-6"
               />
-              <h2 className="text-3xl font-bold text-white mb-2">Avancando...</h2>
-              <p className="text-white/60">Processando eventos do dia</p>
+              <h2 className="text-3xl font-bold text-white mb-2">{t.preOffice.avancando}</h2>
+              <p className="text-white/60">{t.preOffice.processando_eventos}</p>
             </motion.div>
           </motion.div>
         )}

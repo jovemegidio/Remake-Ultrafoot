@@ -2193,11 +2193,18 @@ export default function ElencoPage() {
                         unoptimized
                         className="object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]"
                       />
-                      {/* Número da camisa, centrado no peito. Sem número no save
-                          (elenco importado), cai na sigla da posição. */}
-                      <span className="absolute inset-0 flex items-center justify-center pt-[15%] text-[11px] font-black text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] md:text-[13px]">
-                        {numeroDaCamisa(player.id) ?? normalizePosition(player.position)}
-                      </span>
+                      {/* Número da camisa, centrado no peito.
+                          ⚠️ SEM NÚMERO, NÃO ENTRA NADA (pedido, com print). Antes
+                          caía na SIGLA DA POSIÇÃO, e o campo virava um mural de
+                          "ATA / ZAG / LD" estampado nas camisas — a mesma sigla
+                          que já está escrita logo abaixo, ao lado do overall. Ou
+                          seja: dizia duas vezes a mesma coisa, e a segunda por
+                          cima da arte do uniforme. */}
+                      {numeroDaCamisa(player.id) != null && (
+                        <span className="absolute inset-0 flex items-center justify-center pt-[15%] text-[11px] font-black text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] md:text-[13px]">
+                          {numeroDaCamisa(player.id)}
+                        </span>
+                      )}
                     </div>
 
                     <div

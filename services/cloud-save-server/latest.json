@@ -1,9 +1,15 @@
 {
-  "version": "1.0.356",
-  "notes": "O jogo ficou mais leve para rodar. O mundo simulado era carregado inteiro a cada troca de tela — 158 MB de memoria, inclusive na abertura e no menu, onde ele nem e usado. Agora so entra quando voce esta jogando uma carreira, o que reduz muito o risco de travar em computador modesto. Junto vem o Manager Rush, um desafio diario jogavel: voce assume aos 60 minutos perdendo e tem ate o apito para virar. A partida tambem abre mais rapido, o co-op local foi corrigido, e quase 1 GB de backups antigos passou a ser reconhecido como descartavel. Suas carreiras continuam intactas.",
-  "sizeMb": 642,
-  "sha256": "E27C6C451B549F4AD0D1F277226D3C9D52850BDB034B6B300CF57152E01C7652",
+  "version": "1.0.358",
+  "notes": "Ultrafoot 26 v1.0.358",
+  "sizeMb": 787,
+  "sha256": "63076E6C0A18F1E614A3448C43632684BB8125B5498A109F4289F724C8C5AEB8",
   "anteriores": [
+    {
+      "version": "1.0.356",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.356/Ultrafoot.26_1.0.356_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.356",
+      "sizeMb": 642
+    },
     {
       "version": "1.0.348",
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.348/Ultrafoot.26_1.0.348_x64-setup.exe",
@@ -51,18 +57,12 @@
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.331/Ultrafoot.26_1.0.331_x64-setup.exe",
       "notes": "Ultrafoot 26 v1.0.331",
       "sizeMb": 755
-    },
-    {
-      "version": "1.0.330",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.330/Ultrafoot.26_1.0.330_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.330",
-      "sizeMb": 732
     }
   ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRVBNTzJWUitWOXpEVFVHbHo5R25pMTJoNnNtZHhSQUl6UFZ4YWFBU3pPejZoWHpGNTRLcXNPTGFJd0NvUnFDUWFCYWZZa1FPdmJheWVHNFdmU28rUkFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3MDg5OTQ0CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNTZfeDY0LXNldHVwLmV4ZQpVT1hraFQ4L0p3cHpTeEFscDNOWVNwTjdHemJEY0Q1UnBabHh2aTRiT09Bby85Z3N0UXh4NkFDMzR5VE1FcjA0Um9WSkRyNXZoL3pwc0ZlMUtQTUxDQT09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.356_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRU52SncwRDFTK2VlWnlYa1Izd3oweEtOY0Z1UWhPNWtPM0t3MHlFRC9rSXltcnlSOEV1WEo0aUY3MHNTWGJwc2VWZ3ViTXZ4Mi9CN0FGbzhralVXU0FRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3MTg5NDUyCWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNThfeDY0LXNldHVwLmV4ZQpCb05xNFUrSlZQYnhnN3BuSlRRWWtibVViSDZXYkNINmwwM0E5RStRNGh5eWtKTDNDazIzTURoQ0U4dFlnZUpLYk5qMWNsR2c2U0pCZ2psZzBtbXBBdz09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.358_x64-setup.exe"
     }
   }
 }
