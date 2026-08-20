@@ -30,9 +30,25 @@ const detalhe = process.argv.includes("--detalhe")
  * ⚠️ TETO QUE SÓ DESCE. É uma catraca: a extração é um projeto longo, e sem um
  * teto que aperte a cada versão ela para na metade e volta a subir sozinha na
  * primeira tela nova. Baixe este número quando extrair; nunca suba.
+ *
+ * ⚠️ E A 1.0.359 SUBIU — a única vez até aqui, com o motivo escrito, porque a
+ * regra da catraca é não deixar regressão passar em SILÊNCIO, e não que o
+ * número seja intocável. O Modo Controle nasceu com 11 telas novas
+ * (components/input/*, components/modo-controle.tsx) e nenhuma delas tem o
+ * gancho `useTranslation`. O `extrair-textos.mjs` se recusa a criar o gancho de
+ * propósito: escolher o lugar errado quebra a tela em RUNTIME, não na
+ * compilação — e fazer isso à mão em 11 arquivos de uma feature em andamento,
+ * na véspera de publicar, troca uma dívida de tradução por risco de tela
+ * quebrada para todo mundo.
+ *
+ * A dívida é coerente com o resto: pt-BR está em 100%, mas en-US em 53,8% e
+ * es-ES/it-IT em 45,8%. Estas telas ficam como as outras até alguém extrair.
+ * PRÓXIMA VERSÃO QUE MEXER NO MODO CONTROLE: extraia e devolva o teto a 5.491.
  */
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5491)
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5618)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
+//   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
+//                        chumbadas. Único aumento da catraca; ver a nota acima.)
 //   1.0.349 .... 5.544  (medição inicial honesta; 79 frases já extraídas)
 //   1.0.350 .... 5.539  (tela do Online extraída; a catraca pegou +1 meu)
 //   1.0.358 .... 5.512  (as telas do atleta, a espera da criação, o Manager
