@@ -216,7 +216,11 @@ async function runControllerCareerFlow(browser, baseUrl, controllerId, label) {
   ).toContain(controllerId.split(" ")[0])
 
   await page.evaluate(() => window.__connectMockGamepad())
-  await expect(page.getByText("Controle Conectado")).toBeVisible({ timeout: 5000 })
+  // O aviso de conexao agora e `${label} detectado` (components/input/
+  // aviso-de-controle.tsx) — "Xbox Wireless Controller detectado". O texto
+  // fixo "Controle Conectado" e da implementacao anterior; procurar por ele
+  // deixava este gate vermelho contra a UI nova, que faz o que foi pedido.
+  await expect(page.getByText(/detectado/i).first()).toBeVisible({ timeout: 5000 })
   await expect(page.getByText(label).first()).toBeVisible({ timeout: 5000 })
 
   await page.getByPlaceholder(/Nome do t[eé]cnico/i).fill(`QA ${label}`)

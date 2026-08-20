@@ -58,7 +58,7 @@ const cards: HubCard[] = [
 
 export default function TransferenciasHubPage() {
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/"), contexto: "TRANSFER" })
 
   return (
     <HubScreen

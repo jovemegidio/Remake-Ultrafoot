@@ -100,7 +100,7 @@ function LineupsIcon({ className }: { className?: string }) {
 export default function ElencoHubPage() {
   useRequireClub()
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/"), contexto: "SQUAD" })
 
   const router = useRouter()
   const { state } = useGameState()

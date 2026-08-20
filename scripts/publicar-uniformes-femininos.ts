@@ -91,9 +91,13 @@ const semMarcador = (slug: string) =>
 /** Variante + slug do clube, a partir do nome do arquivo. */
 function partes(arquivo: string): { slug: string | null; variante: "home" | "away" | "third" | null } {
   const base = arquivo.replace(/\.[a-z0-9]+$/i, "")
+  // ⚠️ A ALTERNANCIA VAI DO MAIOR PARA O MENOR: "abcrn1feminino" (pasta
+  // "Brasil - Kits/Brasil Femininos - 2D") tem o marcador por extenso, e com
+  // `f` antes de `feminino` o backtracking resolve, mas a ordem explicita
+  // deixa claro o que a regra cobre.
   // "alhama1f" e "alhama_1": o dígito é o último token útil, com um marcador de
   // gênero opcional grudado depois dele.
-  const m = base.match(/^(.*?)[\s_-]*(\d)[\s_-]*(?:w|f|fem|women)?$/i)
+  const m = base.match(/^(.*?)[\s_-]*(\d)[\s_-]*(?:feminino|femenino|femminile|womens|women|frauen|fem|fut|w|f)?$/i)
   if (!m) return { slug: null, variante: null }
   const variante = VARIANTES.find(([re]) => re.test(m[2]))?.[1] ?? null
   if (!variante) return { slug: null, variante: null }

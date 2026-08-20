@@ -58,6 +58,8 @@ import { useGameState, type ManagerProfile } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
 import { cn } from "@/lib/utils"
 import { ControllerTypeContext, ControllerButton } from "@/components/controller-buttons"
+import { definirIntensidadeDaVibracao, intensidadeDaVibracao, type IntensidadeDaVibracao } from "@/lib/vibracao-do-controle"
+import { PainelDeControles } from "@/components/input/painel-de-controles"
 import { CONTROL_MAPPINGS, ACTION_LABELS, type GameContext, type GameAction } from "@/lib/gamepad-controls"
 import { useTranslation } from "@/lib/i18n"
 import { applyPerformanceProfile, PERFORMANCE_STORAGE_KEY, type PerformanceProfile } from "@/components/performance-profile"
@@ -218,6 +220,11 @@ export default function ConfiguracoesPage() {
   
   // Controller state
   const [controllerType, setControllerType] = useState<"auto" | "xbox" | "playstation">(state.controllerType || "auto")
+  // A vibracao NAO mora no save: e preferencia da MAQUINA (o controle esta
+  // ligado NESTE computador), e quem tem duas carreiras nao quer configurar
+  // duas vezes. Ver lib/vibracao-do-controle.
+  const [vibracao, setVibracao] = useState<IntensidadeDaVibracao>("media")
+  useEffect(() => { setVibracao(intensidadeDaVibracao()) }, [])
 
   useEffect(() => {
     if (state.selectedUniform) setSelectedUniform(state.selectedUniform)
@@ -1229,6 +1236,52 @@ export default function ConfiguracoesPage() {
                     <Gamepad2 className={cn("h-5 w-5", controllerType === opt.id ? "text-primary" : "text-white/50")} />
                     <span className="text-sm text-white">{opt.label}</span>
                     <span className="text-[10px] text-white/40">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* MODO CONTROLE — entrada, interface (TV/portátil), botão central,
+                combinação alternativa e sensibilidade.
+                Componente separado de propósito: ele assina o estado do input
+                direto, então detectar um controle novo redesenha só este bloco
+                em vez desta página inteira, que passa de 1.400 linhas.
+                Ver components/input/painel-de-controles. */}
+            <PainelDeControles />
+
+            {/* VIBRAÇÃO DO CONTROLE.
+                O jogo tinha o subsistema de gamepad inteiro e nenhuma vibração —
+                nem uma chamada a `vibrationActuator` no repositório. Além de ser
+                metade da sensação num jogo de futebol, é o único canal de gol,
+                apito e expulsão para quem joga sem som. Desligável porque
+                vibração incomoda parte das pessoas e gasta bateria de controle
+                sem fio. Ver lib/vibracao-do-controle. */}
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <Gamepad2 className="h-4 w-4 text-primary" />
+                Vibracao do controle
+              </h3>
+              <p className="text-xs text-white/40 -mt-2">
+                Gol, penalti, expulsao e apito final vibram o controle. Escolher uma
+                intensidade ja da uma amostra dela.
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {([
+                  { id: "desligada" as const, label: "Desligada" },
+                  { id: "suave" as const, label: "Suave" },
+                  { id: "media" as const, label: "Media" },
+                  { id: "forte" as const, label: "Forte" },
+                ]).map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => { setVibracao(opt.id); definirIntensidadeDaVibracao(opt.id) }}
+                    aria-pressed={vibracao === opt.id}
+                    className={cn(
+                      "flex flex-col items-center gap-1 rounded-lg border p-3 transition-all",
+                      vibracao === opt.id ? "border-primary bg-primary/10" : "border-white/10 bg-white/5 hover:border-white/20"
+                    )}
+                  >
+                    <span className="text-sm text-white">{opt.label}</span>
                   </button>
                 ))}
               </div>

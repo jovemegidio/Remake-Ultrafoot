@@ -174,5 +174,9 @@
  "_10_sufixo_do_arquivo_errado_17_08": "⚠️ O sufixo do arquivo diz AM e o clube e do AMAPA — confirmado pelo usuario em 17/08/2026, como ja tinha acontecido com Retro-MA e Serrano-MA (que sao de PE) e ABC-PE (que e do RN). Sem este par o arquivo saia como 'sem clube no seed', porque nenhum 'Cristal' do AM existe.",
  "cristal_ap": "Cristal AM - BRA.png",
 
+ "_12_lote_20_08": "Lote de 20/08. `Desportiva Ferroviaria` empata com a Ferroviaria de Araraquara na camada sem palavra de sociedade: a do arquivo e a de CARIACICA-ES (a Desportiva). `Itaquacetuba` perde o `que` do nome real, entao nao casa com Itaquaquecetuba-SP.",
+ "desportivaferroviaria_es": "Desportiva Ferroviaria - BRA.png",
+ "itaquaquecetuba_sp": "Itaquacetuba -BRA.png",
+
  "_11_atletico_piaui_nao_tem_par": "⚠️ NAO ESCREVA UM PAR PARA 'Atletico Piaui - BRA.png'. A pasta tem DOIS clubes do Piaui e o pool tem UMA chave: `piaui_pi` e o Piaui Esporte Clube (escudo em losango, 'PEC'), que ja esta publicado. O arquivo 'Atletico Piaui' e o Clube Atletico Piauiense, fundado em 2019, que NAO existe no pool. Decidido com o usuario em 17/08/2026: fica o PEC. Mapear os dois para a mesma chave trocaria o escudo certo pelo de outro clube — e o canal vence o embutido."
 }

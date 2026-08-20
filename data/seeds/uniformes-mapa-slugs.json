@@ -133,5 +133,11 @@
   "BRA:sousa_ec": "sousapb_bra",
 
   "_BRA_ACESSO_SAO_JOSE": "A pasta tem 'São Jose RS' E 'São Jose E.C', e o seed tem QUATRO São José (RS, SP, AP e o São Joseense do PR). O 'E.C' e o de São Jose dos Campos: a camisa traz Milclean e Pontz, patrocinadores de la, enquanto a do RS traz Banrisul, que e o banco gaucho. Sem par o arquivo sai como 'sem clube'; e um par chutado poria a camisa paulista no clube gaucho, que ja tem a dele nesta mesma pasta.",
-  "BRA:sao_jose_ec": "saojosesp_bra"
+  "BRA:sao_jose_ec": "saojosesp_bra",
+
+  "_BRA_ACESSO_20_08": "Lote de 20/08. `Caixias SC` e typo do arquivo para Caxias SC (o de JOINVILLE, `caxiasc_bra`); o `caxias` liso do pool e o de Caxias do Sul. `Itaquacetuba` perde o `que` do nome real (Itaquaquecetuba).",
+  "BRA:caixias_sc": "caxiasc_bra",
+  "BRA:itaquacetuba": "itaquaquecetuba_sp",
+
+  "_BRA_ACESSO_FORA": "NAO mapear: `GE Bage` (Gremio Esportivo Bage) nao esta no pool e NAO e o `guaranyrs_bra`, que e o Guarany de Bage — outro clube da mesma cidade. `Guarany de Sobral` (CE) tambem nao esta: os Guarany do pool sao o de Bage e o de Sergipe. `Uniao Frederiquense` nao existe no pool."
 }

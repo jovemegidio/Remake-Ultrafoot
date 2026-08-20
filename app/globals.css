@@ -1246,3 +1246,84 @@ input[type="number"]::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODO CONTROLE E PRESETS DE EXIBIÇÃO
+   Motor: lib/input, lib/focus, lib/display. Aqui só mora a aparência.
+
+   `data-input-mode="gamepad"` é escrito pelo InputManager, e a diferença em
+   relação à versão anterior importa: antes ele ligava quando um controle
+   CONECTAVA — o cursor sumia sozinho de quem estava usando o mouse com um
+   controle esquecido ligado na mesa. Agora só liga quando o jogador
+   demonstra intenção (botão central, combinação, ou movimento franco do
+   analógico), e volta ao mouse ao mover o mouse de verdade.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Valores do preset Desktop. Existem aqui para o primeiro quadro já ter
+     medida certa: o JS só escreve os presets depois de hidratar, e sem estes
+     padrões a barra de dicas nasceria com altura 0 e saltaria ao aparecer. */
+  --uf-ui-scale: 1;
+  --uf-font-scale: 1;
+  --uf-spacing-scale: 1;
+  --uf-target-scale: 1;
+  --uf-focus-ring: 2px;
+  --uf-hint-bar: 44px;
+}
+
+/* O cursor some, mas só quando o controle está no comando. */
+html[data-input-mode="gamepad"] body,
+html[data-input-mode="gamepad"] button,
+html[data-input-mode="gamepad"] a {
+  cursor: none !important;
+}
+
+/* Anel de foco de emergência.
+   O anel bonito é um elemento flutuante (components/input/anel-de-foco.tsx),
+   que desliza entre os itens. Esta regra é a REDE: se um elemento receber foco
+   sem estar registrado no gerente — um `autoFocus` de biblioteca, um campo
+   dentro de um modal de terceiro —, ele ainda assim fica visível. Sem ela, o
+   foco existiria e ninguém veria onde. */
+html[data-input-mode="gamepad"] :is(button, a, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: var(--uf-focus-ring, 3px) solid var(--brand, #00ffc8) !important;
+  outline-offset: 3px !important;
+}
+
+/* A barra de dicas RESERVA altura em vez de flutuar por cima.
+   Flutuando, ela tapa a última linha de toda tabela do jogo — e a última linha
+   é exatamente onde o D-pad chega ao fim de uma lista. O jogador desceria até
+   o fim e o item selecionado ficaria escondido atrás da legenda que deveria
+   estar ajudando. */
+html[data-input-mode="gamepad"] body {
+  padding-bottom: var(--uf-hint-bar, 44px);
+}
+
+/* Alvos maiores no controle. `min-height` e não `height`: crescer o mínimo não
+   quebra quem já é maior, enquanto forçar altura achataria botões altos. */
+html[data-input-mode="gamepad"] :is(button, a[href], [role="button"]) {
+  min-height: calc(2rem * var(--uf-target-scale, 1));
+}
+
+/* Tipografia dos presets. Multiplica a raiz e deixa o resto do jogo, que é
+   todo em `rem`, acompanhar sozinho — nenhuma tela precisa saber que TV existe. */
+html[data-display-mode="tv"],
+html[data-display-mode="handheld"] {
+  font-size: calc(100% * var(--uf-font-scale, 1));
+}
+
+/* Na TV, o brilho fraco não sobrevive à distância nem ao processamento de
+   imagem do aparelho (a maioria dos televisores ainda entrega o quadro com
+   contraste alterado). O anel ganha contorno externo escuro para se destacar
+   também sobre fundo claro. */
+html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="button"]):focus-visible {
+  outline-offset: 4px !important;
+  box-shadow: 0 0 0 calc(var(--uf-focus-ring, 4px) + 4px) rgb(0 0 0 / 0.55) !important;
+}
+
+/* Quem pediu menos animação continua com menos: o anel deslizante já respeita
+   `motion-safe`, e aqui a barra de dicas segue a mesma regra. */
+@media (prefers-reduced-motion: reduce) {
+  html[data-input-mode="gamepad"] * {
+    scroll-behavior: auto !important;
+  }
+}

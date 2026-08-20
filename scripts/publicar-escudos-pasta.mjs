@@ -248,19 +248,32 @@ function clubes() {
 //
 // O pool NAO e inutil: clube que so existe la e desenhado por essa chave mesmo
 // (`completarLigaComPool`). Por isso a saida leva as DUAS chaves.
-const fonteCurada = readFileSync(path.join(RAIZ, "lib/teams-data.ts"), "utf-8")
-  + "\n" + readFileSync(path.join(RAIZ, "lib/international-teams.ts"), "utf-8")
+// ⚠️ OS DOIS CATALOGOS SAO LIDOS SEPARADAMENTE, e nao concatenados, porque
+// a ORIGEM do clube curado e a unica prova de pais que existe para metade
+// deles: `lib/teams-data.ts` e o catalogo BRASILEIRO e seus clubes nao tem
+// campo `pais` nenhum (o Guarani de Campinas se chama so "Guarani" e nada no
+// objeto diz Brasil), enquanto `lib/international-teams.ts` traz `pais`.
+// Sem essa distincao o escudo do Guarani do PARAGUAI era publicado tambem na
+// chave do Guarani de Campinas — e como o canal vence o embutido, apagava da
+// tela o escudo certo, que viaja dentro da build.
+const CATALOGOS = [
+  { arquivo: "lib/teams-data.ts", brasileiro: true },
+  { arquivo: "lib/international-teams.ts", brasileiro: false },
+]
 const curadoPorNome = new Map()
 const chavesCuradas = new Set()
 // Cada clube curado e um objeto sem chaves aninhadas — `{...}` sem `{` dentro basta.
-for (const m of fonteCurada.matchAll(/\{[^{}]*\}/g)) {
+for (const catalogo of CATALOGOS) {
+  const fonte = readFileSync(path.join(RAIZ, catalogo.arquivo), "utf-8")
+  for (const m of fonte.matchAll(/\{[^{}]*\}/g)) {
   const fk = m[0].match(/file_key:\s*"([^"]+)"/)
   const nm = m[0].match(/(?:^|[\s,{])nome:\s*"([^"]+)"/) // `estadio_nome` tambem casa "nome:"
   if (!fk || !nm) continue
   chavesCuradas.add(fk[1])
   const k = norm(nm[1])
   const pais = m[0].match(/(?:^|[\s,{])pais:\s*"([^"]+)"/)
-  if (!curadoPorNome.has(k)) curadoPorNome.set(k, { fileKey: fk[1], pais: pais?.[1] ?? "" })
+  if (!curadoPorNome.has(k)) curadoPorNome.set(k, { fileKey: fk[1], pais: pais?.[1] ?? "", brasileiro: catalogo.brasileiro })
+  }
 }
 
 /** A chave curada equivalente a este clube do pool, se houver e for outra. */
@@ -288,6 +301,31 @@ function mesmoPais(alvo, curado) {
     return sufixos.includes(alvo.sufixo)
   }
   return false
+}
+
+/**
+ * O pais do clube do pool CONTRADIZ o do curado?
+ *
+ * ⚠️ `mesmoPais` acima so era consultado quando DOIS clubes do pool disputavam
+ * a mesma chave curada. Com um candidato so, o gemeo era dado sem conferir
+ * nada — e foi assim que o escudo do Guarani do PARAGUAI foi publicado tambem
+ * em `guaranisp_bra`, que e o Guarani de Campinas (o curado se chama so
+ * "Guarani"). O clube brasileiro tem escudo embutido correto, e o canal vence
+ * o embutido: publicar ali APAGA o certo da tela.
+ *
+ * Diferente de `mesmoPais`, aqui a ausencia de prova NAO reprova: chave do
+ * pool com sufixo de UF (`santacruz_pe`) ou sem sufixo nenhum e o caso comum
+ * do gemeo legitimo. So reprova quando o sufixo e de OUTRO pais conhecido.
+ */
+function contradizPaisDoCurado(alvo, curado) {
+  const doAlvoQualquer = Object.entries(PAISES).find(([, v]) => v.sufixos.includes(alvo.sufixo))
+  // Curado do catalogo BRASILEIRO nao tem campo `pais`: a prova e a origem do
+  // arquivo. Chave do pool com sufixo de pais estrangeiro contradiz.
+  if (!curado.pais) return Boolean(curado.brasileiro && doAlvoQualquer && doAlvoQualquer[0] !== "BRA")
+  const doCurado = Object.entries(PAISES).find(([, v]) => v.pais.some(x => norm(x) === norm(curado.pais)))
+  if (!doCurado) return false
+  if (doCurado[1].sufixos.includes(alvo.sufixo)) return false
+  return Boolean(doAlvoQualquer && doAlvoQualquer[0] !== doCurado[0])
 }
 
 /** O sufixo do arquivo CONTRADIZ a origem deste clube? */
@@ -500,7 +538,15 @@ for (const e of escolhidos) {
 }
 const gemeoDe = new Map() // fileKey do pool -> chave curada aprovada
 for (const [chave, { curado, candidatos }] of reivindicacoes) {
-  if (candidatos.length === 1) { gemeoDe.set(candidatos[0].alvo.fileKey, chave); continue }
+  if (candidatos.length === 1) {
+    const unico = candidatos[0]
+    if (contradizPaisDoCurado(unico.alvo, curado)) {
+      disputados.push(`⚠️ ${chave}: NAO recebeu o escudo de ${unico.alvo.fileKey} — o curado e de "${curado.pais}" e a chave do pool e de outro pais`)
+      continue
+    }
+    gemeoDe.set(unico.alvo.fileKey, chave)
+    continue
+  }
   const doPais = candidatos.filter(c => mesmoPais(c.alvo, curado))
   if (doPais.length === 1) {
     gemeoDe.set(doPais[0].alvo.fileKey, chave)

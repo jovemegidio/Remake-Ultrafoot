@@ -52,6 +52,14 @@ const comEscudo = new Set(Object.entries(manifesto.times || {}).filter(([, t]) =
 // publicador diz "pasta sem imagem" e a liga inteira some da auditoria — foi
 // como 29 das 37 pastas sumiram na primeira rodada.
 const LIGAS = {
+  // A pasta "Brasil - Kits" NAO segue o padrao "Pais_-_Liga" e por isso ficou
+  // fora da primeira auditoria — 293 arquivos invisiveis para o relatorio, que
+  // ainda assim dizia "0 faltando". Auditar so o que tem o nome no formato
+  // esperado e como conferir o caixa contando so as notas de 50.
+  "Brasil - Kits/Brasil Masculinos- 2D": { pais: "BRA", recursivo: true },
+  // ⚠️ A subpasta "Brasil Femininos - 2D" NAO entra aqui: o universo dela e o
+  // dos clubes femininos e quem a publica e o publicar-uniformes-femininos.ts.
+  // Rodar o publicador masculino nela poria a camisa feminina no clube-mae.
   "Argentina_-_Primera_Division": { pais: "ARG", recursivo: true },
   "Belgium_-_Jupiler_Pro_League": { pais: "BEL", recursivo: true },
   "Brazil_-_Serie_A": { pais: "BRA", recursivo: true },

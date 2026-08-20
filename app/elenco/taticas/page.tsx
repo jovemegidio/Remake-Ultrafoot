@@ -85,7 +85,7 @@ const TACTICAL_PRESETS = [
 
 export default function TaticasPage() {
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/elenco") })
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/elenco"), contexto: "TACTICS" })
 
   const router = useRouter()
   const { state } = useGameState()

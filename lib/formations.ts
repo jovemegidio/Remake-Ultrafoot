@@ -248,7 +248,12 @@ export const COMPATIBLE_POSITIONS: Record<string, string[]> = {
   ZAG: ["LD", "LE", "VOL"],         // lateral ou volante fecham a zaga
   LD: ["LE", "ZAG", "PD", "MEI"],
   LE: ["LD", "ZAG", "PE", "MEI"],
-  VOL: ["MEI", "ZAG"],
+  // LD/LE no fim de proposito: MEI e ZAG continuam ganhando o slot quando
+  // existem. Os laterais entram como ultima opcao porque a formacao pode
+  // simplesmente NAO TER slot de lateral — e o 2-3-5 e o caso: os "3" sao os
+  // half-backs, papel que na epoca era dos proprios laterais. Sem isto o
+  // encaixe jogava o lateral no MEIA, mais longe ainda da funcao.
+  VOL: ["MEI", "ZAG", "LD", "LE"],
   MEI: ["VOL", "PD", "PE", "ATA"],
   PD: ["PE", "MEI", "ATA", "LD"],
   PE: ["PD", "MEI", "ATA", "LE"],
@@ -284,29 +289,52 @@ export function assignPlayersToFormation<T extends { id: number; position: strin
 ): (T & { x: number; y: number; slotPos: string })[] {
   const slots = getFormationSlots(formation)
   const pool = [...players]
-  const out: (T & { x: number; y: number; slotPos: string })[] = []
+  const escolhido: (T | undefined)[] = new Array(slots.length).fill(undefined)
 
-  for (const slot of slots) {
-    // 1) alguem que joga EXATAMENTE nessa posicao
-    let idx = pool.findIndex((p) => normalizePosition(p.position) === slot.pos)
-    // 2) senao, alguem de posicao compativel
-    if (idx === -1) {
-      // Respeita a ORDEM de compatibilidade. `findIndex(includes)` escolhia o primeiro
-      // atleta por overall; um MEI forte era lateral antes de um ZAG, embora ZAG viesse
-      // antes na lista de alternativas.
-      for (const compatible of COMPATIBLE_POSITIONS[slot.pos] ?? []) {
-        idx = pool.findIndex((p) => normalizePosition(p.position) === compatible)
-        if (idx !== -1) break
-      }
+  // ⚠️ DUAS PASSADAS, E A ORDEM E O PONTO.
+  //
+  // A versao anterior resolvia slot a slot, gulosa: para cada slot pegava o
+  // exato e, faltando, o primeiro compativel. Ela GASTAVA UM ESPECIALISTA num
+  // slot que so o aceitava por compatibilidade, mesmo havendo mais adiante um
+  // slot que pedia aquela posicao EXATA.
+  //
+  // Flagrado no 2-3-5 pelo scripts/qa-formation.ts: os slots sao
+  // (…, PD, MEI, ATA, MEI, PE). No primeiro MEI nao havia meia livre, e a lista
+  // de compativeis do MEI e ["VOL","PD","PE","ATA"] — entao ele levou o
+  // PONTA-ESQUERDA. Quando o slot PE apareceu, o ponta ja tinha ido, e a sobra
+  // empurrou o LATERAL-DIREITO para o outro slot de meia.
+  //
+  // ⚠️ NAO ERA SO O 2-3-5: no 3-4-3 o slot PD ficava com um MEI e o slot PE com
+  // um LATERAL-ESQUERDO, enquanto os pontas de verdade jogavam fora da ponta —
+  // "compativel, mas errado", que o gate nao reprovava.
+  //
+  // Passada 1 serve todo slot que tem dono exato; passada 2 distribui o resto.
+  for (let i = 0; i < slots.length; i++) {
+    const idx = pool.findIndex((p) => normalizePosition(p.position) === slots[i].pos)
+    if (idx !== -1) escolhido[i] = pool.splice(idx, 1)[0]
+  }
+
+  for (let i = 0; i < slots.length; i++) {
+    if (escolhido[i]) continue
+    let idx = -1
+    // Respeita a ORDEM de compatibilidade. `findIndex(includes)` escolhia o
+    // primeiro atleta por overall; um MEI forte era lateral antes de um ZAG,
+    // embora ZAG viesse antes na lista de alternativas.
+    for (const compatible of COMPATIBLE_POSITIONS[slots[i].pos] ?? []) {
+      idx = pool.findIndex((p) => normalizePosition(p.position) === compatible)
+      if (idx !== -1) break
     }
-    // 3) por ultimo, quem sobrou (elenco incompleto para essa formacao)
+    // por ultimo, quem sobrou (elenco incompleto para essa formacao)
     if (idx === -1) idx = 0
+    if (pool.length) escolhido[i] = pool.splice(idx, 1)[0]
+  }
 
-    const player = pool.splice(idx, 1)[0]
+  const out: (T & { x: number; y: number; slotPos: string })[] = []
+  for (let i = 0; i < slots.length; i++) {
+    const player = escolhido[i]
     if (!player) continue
-
     const custom = customPositions[player.id]
-    out.push({ ...player, x: custom?.x ?? slot.x, y: custom?.y ?? slot.y, slotPos: slot.pos })
+    out.push({ ...player, x: custom?.x ?? slots[i].x, y: custom?.y ?? slots[i].y, slotPos: slots[i].pos })
   }
   return out
 }

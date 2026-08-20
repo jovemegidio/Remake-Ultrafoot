@@ -7,6 +7,7 @@ use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use std::sync::Mutex;
 use tauri::Manager;
 
+mod input;
 mod licenca;
 mod native_engine;
 mod online_server;
@@ -621,6 +622,12 @@ pub fn run() {
             ,online_server::online_room_snapshot
             ,online_server::online_set_ready
             ,online_server::online_submit_action
+            // Modo Controle: o backend nativo existe para UMA coisa que o
+            // webview nao consegue ver — o botao central. Ver src/input.
+            ,input::input_native_start
+            ,input::input_native_stop
+            ,input::input_native_snapshot
+            ,input::input_native_wake
         ]);
 
     // MOBILE: o mesmo jogo, sem os comandos que dependem do Discord. Os que tem
@@ -647,6 +654,12 @@ pub fn run() {
             ,online_server::online_room_snapshot
             ,online_server::online_set_ready
             ,online_server::online_submit_action
+            // Modo Controle: o backend nativo existe para UMA coisa que o
+            // webview nao consegue ver — o botao central. Ver src/input.
+            ,input::input_native_start
+            ,input::input_native_stop
+            ,input::input_native_snapshot
+            ,input::input_native_wake
         ]);
 
     #[cfg(target_os = "windows")]

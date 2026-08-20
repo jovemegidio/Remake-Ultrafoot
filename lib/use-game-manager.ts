@@ -1071,7 +1071,17 @@ export function generateUserCupMatches(
     const janela = porForca.slice(inicio, inicio + Math.max(fatia, quantos * 3))
     const candidatos = (janela.length >= quantos ? janela : porForca)
       .filter(t => !usedOpponents.has(t.curto))
-    const base = candidatos.length >= quantos ? candidatos : porForca
+    // ⚠️ FALTAVA UM DEGRAU AQUI. A faixa de forca e escolhida ANTES de filtrar
+    // quem ja foi usado; quando a faixa nao tinha ninguem livre, o fallback ia
+    // direto para `porForca` — o pool INTEIRO, com os rivais de liga junto.
+    //
+    // Medido na Copa da Albania: pool de 13 clubes, 9 da propria liga, 4 livres
+    // (Teuta, Kukesi, Laci, Burreli). Era preciso 1 rival e o sorteio devolvia um
+    // adversario de liga com os 4 livres parados. Em pais pequeno isso e a regra.
+    const livresNoPool = porForca.filter(t => !usedOpponents.has(t.curto))
+    const base = candidatos.length >= quantos
+      ? candidatos
+      : (livresNoPool.length >= quantos ? livresNoPool : porForca)
     const saida: Team[] = []
     const vistos = new Set<string>()
     while (saida.length < quantos && vistos.size < base.length) {
@@ -1881,7 +1891,19 @@ export function generateBrasileirao(
   if (isBrazilianDivision(division)) {
     const fixtures: Fixture[] = []
     let fixtureId = 1
-    const halfSeason = teams.length - 1
+    // ⚠️ COM NUMERO IMPAR DE CLUBES SAO N RODADAS POR TURNO, NAO N-1.
+    //
+    // `generateRoundMatchups` completa o par com um time FANTASMA quando a
+    // divisao e impar (27 clubes -> 28 posicoes), e o metodo do circulo precisa
+    // de posicoes-1 = 27 rodadas. Fixado em `teams.length - 1` = 26, faltava
+    // UMA RODADA INTEIRA por turno.
+    //
+    // Medido na Serie D (27 clubes): 676 partidas em vez de 702, com 26 clubes
+    // jogando 50 e um jogando 52 — porque o time FIXO do circulo e o primeiro do
+    // array e o fantasma so cai sobre ele na 27a rodada, a que nao era gerada.
+    // Um clube fazia a temporada inteira SEM FOLGA e com dois jogos a mais, numa
+    // tabela que decide acesso.
+    const halfSeason = teams.length % 2 === 0 ? teams.length - 1 : teams.length
     const totalRounds = halfSeason * 2
     const calCfg = leagueCalendarConfig(division)
     for (let round = 1; round <= halfSeason; round++) {

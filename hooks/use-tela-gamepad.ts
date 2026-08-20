@@ -20,6 +20,41 @@
 import { useEffect, useRef } from "react"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { dialogoAberto } from "@/components/gamepad-modal-bridge"
+import { modalidadeDoSave } from "@/lib/modalidade-de-carreira"
+import { loadGameState } from "@/lib/save-system"
+import { gerenteDeFoco } from "@/lib/focus/manager"
+import type { InputContext } from "@/lib/input/contexts"
+import type { DicaDeControle } from "@/lib/input/hints"
+import { useContextoDeInput, useDicasDeControle } from "@/hooks/use-input"
+
+/** Para onde o B volta quando a tela nao diz. Depende da modalidade do save. */
+function escritorioDaModalidade(): string {
+  try {
+    const modalidade = modalidadeDoSave(loadGameState())
+    if (modalidade === "sub20") return "/base/carreira"
+    if (modalidade === "jogador") return "/carreira/jogador"
+  } catch { /* save ilegivel: o escritorio padrao serve */ }
+  return "/"
+}
+
+/**
+ * Navegacao da tela — gerente de foco primeiro, nada depois.
+ *
+ * ⚠️ Aqui NAO ha varredura de DOM de proposito, e a diferenca importa: quem
+ * varre o DOM nesta arvore e a camada global
+ * (components/gamepad-navegacao-global.tsx), e ela so age quando NENHUMA tela
+ * assumiu o gamepad (`telaAssumiuOGamepad()`). Como este hook incrementa
+ * `telasAtivas`, as duas sao mutuamente exclusivas por construcao — duplicar a
+ * varredura aqui faria o foco andar DUAS casas por aperto nas telas que usam o
+ * hook, que e exatamente o conflito que desligou o piloto automatico do provider.
+ */
+function navegar(direcao: "up" | "down" | "left" | "right"): boolean {
+  return gerenteDeFoco.mover(direcao, true)
+}
+
+function confirmar(): boolean {
+  return gerenteDeFoco.activate()
+}
 
 export interface OpcoesTelaGamepad {
   /** O que "voltar" (B) faz nesta tela. Padrao: volta ao escritorio. */
@@ -40,6 +75,31 @@ export interface OpcoesTelaGamepad {
   aoRolar?: (direcao: "up" | "down") => void
   /** Desliga o hook (ex.: modal aberto cuida do proprio input). */
   quando?: boolean
+  /**
+   * Contexto de input desta tela. Padrao: "MENU".
+   *
+   * Declarar o contexto certo muda o mapeamento (a partida usa um conjunto
+   * proprio de acoes) e a barra de dicas. Ver lib/input/contexts.ts.
+   */
+  contexto?: InputContext
+  /** Dicas da barra inferior. Sem isto sao DERIVADAS do que a tela declarou. */
+  dicas?: readonly DicaDeControle[]
+}
+
+/**
+ * Dicas a partir do que a tela ja disse que faz.
+ *
+ * E o motivo de as telas que usam este hook terem ganhado barra de dicas sem que
+ * nenhuma fosse editada: quem passa `aoConfirmar` e `aoDetalhes` ja declarou,
+ * implicitamente, que tem "selecionar" e "ver ficha". Pedir que repita isso numa
+ * lista de dicas seria duplicar a informacao, e a copia e que envelheceria.
+ */
+function dicasDerivadas(o: OpcoesTelaGamepad): DicaDeControle[] {
+  const dicas: DicaDeControle[] = [{ acao: "UI_CONFIRM" }, { acao: "UI_BACK" }]
+  if (o.aoDetalhes) dicas.push({ acao: "OPEN_DETAILS" })
+  if (o.aoAbaAnterior || o.aoAbaProxima) dicas.push({ acao: "TAB_NEXT" })
+  if (o.aoRolar) dicas.push({ acao: "PAGE_NEXT", rotulo: "Rolar" })
+  return dicas
 }
 
 /**
@@ -59,6 +119,10 @@ export function useTelaGamepad(opcoes: OpcoesTelaGamepad = {}): void {
   const ref = useRef(opcoes)
   ref.current = opcoes
 
+  // Contexto e dicas vem de graca para as telas que ja usavam este hook.
+  useContextoDeInput(opcoes.contexto ?? "MENU", opcoes.quando !== false)
+  useDicasDeControle(opcoes.dicas ?? dicasDerivadas(opcoes), opcoes.quando !== false)
+
   useEffect(() => {
     const onBotao = (e: Event) => {
       const o = ref.current
@@ -73,11 +137,16 @@ export function useTelaGamepad(opcoes: OpcoesTelaGamepad = {}): void {
         case "B":
           // Convencao unica: B SEMPRE volta. Sem destino informado, volta ao
           // escritorio (a tela inicial da carreira).
+          // Sem destino informado, volta ao escritorio DA MODALIDADE — nao a
+          // "/". Numa carreira de atleta ou de base, "/" mandava para o
+          // escritorio do tecnico e a GuardaDeModalidade devolvia em seguida:
+          // dois saltos de tela para uma tecla de "voltar", com o piscar no meio.
           if (o.aoVoltar) o.aoVoltar()
-          else hardNavigate("/")
+          else hardNavigate(escritorioDaModalidade())
           break
         case "A":
-          o.aoConfirmar?.()
+          if (o.aoConfirmar) o.aoConfirmar()
+          else confirmar()
           break
         case "LB":
           o.aoAbaAnterior?.()
@@ -98,10 +167,18 @@ export function useTelaGamepad(opcoes: OpcoesTelaGamepad = {}): void {
           if (o.aoRolar) o.aoRolar("down")
           else o.aoNavegar?.("down")
           break
-        case "DPAD_UP": o.aoNavegar?.("up"); break
-        case "DPAD_DOWN": o.aoNavegar?.("down"); break
-        case "DPAD_LEFT": o.aoNavegar?.("left"); break
-        case "DPAD_RIGHT": o.aoNavegar?.("right"); break
+        case "DPAD_UP":
+          if (o.aoNavegar) o.aoNavegar("up"); else navegar("up")
+          break
+        case "DPAD_DOWN":
+          if (o.aoNavegar) o.aoNavegar("down"); else navegar("down")
+          break
+        case "DPAD_LEFT":
+          if (o.aoNavegar) o.aoNavegar("left"); else navegar("left")
+          break
+        case "DPAD_RIGHT":
+          if (o.aoNavegar) o.aoNavegar("right"); else navegar("right")
+          break
         // Y/START abrem o menu [W] — tratado globalmente pelo game-header.
       }
     }

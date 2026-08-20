@@ -95,6 +95,8 @@ import { RivaisAoVivoPainel } from "@/components/match/rivais-ao-vivo-painel"
 import { jogosQueImportam } from "@/lib/rivais-ao-vivo"
 import { ShootoutModal } from "@/components/match/shootout-modal"
 import { MatchRadar } from "@/components/match/match-radar"
+import { padraoDoEventoDaPartida, vibrar } from "@/lib/vibracao-do-controle"
+import { useContextoDeInput, useDicasDeControle } from "@/hooks/use-input"
 import { AvisoQuedaPara2D, Campo3D } from "@/components/match/campo-3d"
 import { selecionarEventoDoRadar } from "@/lib/radar-evento"
 import { useCorDoUniforme } from "@/lib/cor-do-uniforme"
@@ -1497,6 +1499,15 @@ export default function PartidaAoVivoPage() {
     // ele nunca era pedido: o arquivo existia no disco e não tinha um único
     // chamador. Mesma história do `contusao`, que também nunca tocava.
     const doUsuario = last.side === userSide
+
+    // VIBRAÇÃO. O jogo tinha o subsistema de controle inteiro e nenhuma chamada
+    // a `vibrationActuator` — o gol chegava pelos olhos e pelo som, nunca pelas
+    // mãos. Quem joga sem som (surdez, lugar silencioso, volume desligado)
+    // perdia apito, gol e expulsão por completo; agora eles têm um canal que não
+    // depende de ouvir. Desligável em Configurações. Ver lib/vibracao-do-controle.
+    const toque = padraoDoEventoDaPartida(last.type, !doUsuario)
+    if (toque) vibrar(toque)
+
     switch (last.type) {
       case "goal":    playSound("gol"); enqueueEvent(doUsuario ? "gol1" : "goladv"); break
       case "foul":    playSound("apito_falta"); break
@@ -1531,6 +1542,30 @@ export default function PartidaAoVivoPage() {
   // Modal substituicao
   const [showSubModal, setShowSubModal] = useState(false)
   const [subsRemaining, setSubsRemaining] = useState(5)
+
+  // CONJUNTO DE AÇÕES DA PARTIDA (Action Set separado).
+  //
+  // Enquanto a bola rola, o losango do controle NÃO pode significar
+  // "confirmar/voltar": apertar o botão de baixo tem de acelerar a simulação, e
+  // não confirmar um item de menu invisível. Declarar o contexto "MATCH" troca
+  // o mapeamento inteiro num lugar só — ver POR_CONTEXTO em lib/input/bindings.
+  //
+  // O handler de `gamepad:button` mais abaixo (que lê CONTROL_MAPPINGS pelo
+  // `gameContext`) continua intacto: é ele que já sabia pausar, acelerar e
+  // substituir, e reescrevê-lo seria trocar código testado por código novo sem
+  // ganho nenhum.
+  useContextoDeInput("MATCH", state.phase !== "pre" && state.phase !== "fulltime")
+  useDicasDeControle(
+    state.phase === "pre"
+      ? [{ acao: "UI_CONFIRM", rotulo: "Começar" }, { acao: "UI_BACK" }]
+      : [
+          { acao: "MATCH_PAUSE", rotulo: isRunning ? "Pausar" : "Continuar" },
+          { acao: "MATCH_SPEED_UP" },
+          { acao: "MATCH_SUBSTITUTE", inativa: subsRemaining <= 0 },
+          { acao: "MATCH_SKIP" },
+        ],
+    state.phase !== "fulltime",
+  )
 
   // Tab ativa
   const [activeTab, setActiveTab] = useState<"pitch" | "stats" | "gameplan" | "narration">("narration")
