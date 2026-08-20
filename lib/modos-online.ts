@@ -83,11 +83,15 @@ export const MODOS_ONLINE: ModoOnline[] = [
     nome: "Manager Draft",
     resumo: "Monte um elenco escolhendo atleta por atleta e dispute o mata-mata.",
     // O draft vive DENTRO da sala de internet do Hub (components/hub-draft), e
-    // só depois de o anfitrião abrir "draft x draft nesta sala". Por isso o
-    // destino é o Hub, e por isso o estado continua "em obras": o caminho até
-    // ele existe inteiro, mas passa por três passos que a tela não explica.
-    acao: "abrir-hub",
-    estado: "em obras",
+    // até a 1.0.357 só depois de o anfitrião achar o botão "draft x draft nesta
+    // sala". O caminho existia inteiro; o que faltava era a PORTA — e um modo
+    // que exige três passos não explicados é um modo em obras, por mais pronto
+    // que esteja o código do outro lado.
+    //
+    // A 1.0.358 abriu a porta: /online/draft cria (ou entra n)a sala com as
+    // MESMAS funções do Hub e chega lá com o draft já aberto.
+    href: "/online/draft",
+    estado: "pronto",
     fase: 3,
   },
   {
@@ -96,15 +100,27 @@ export const MODOS_ONLINE: ModoOnline[] = [
     nome: "Manager Rivals",
     resumo: "Divisões e ranking por habilidade. O motor joga; quem gerencia melhor vence.",
     href: "/online/rivals",
-    estado: "em obras",
+    // ⚠️ SAIU DE "EM OBRAS" NA 1.0.358, e o que faltava era do SERVIDOR: as rotas
+    // `/v1/competitivo/*` existiam no repositório e NÃO estavam publicadas na VPS
+    // (o `server.mjs` de lá era uma versão anterior), e o pareamento avisava só
+    // quem chegava por último — o primeiro da fila ficava em "Procurando
+    // adversário…" para sempre. Com o relay atualizado, o caminho inteiro foi
+    // percorrido contra o servidor de verdade: fila → pareamento → sala →
+    // "Entrar na partida". Ver e2e/rivals-ao-vivo.spec.ts.
+    estado: "pronto",
     fase: 2,
   },
   {
     id: "champions",
     icone: "/online/05_manager_champions.webp",
     nome: "Manager Champions",
-    resumo: "O competitivo do fim de semana, com classificação por desempenho.",
-    estado: "planejado",
+    resumo: "O competitivo da semana: vitória vale 3, e a tabela zera toda segunda.",
+    href: "/online/champions",
+    // A MESMA fila, o MESMO Elo e o MESMO anti-cheat do Rivals (`modo:
+    // "champions"`), com uma tabela semanal por cima — ver `classificacaoSemanal`
+    // no relay. Não há um segundo matchmaking: haveria duas verdades sobre quem
+    // joga contra quem.
+    estado: "pronto",
     fase: 2,
   },
   {
@@ -112,7 +128,15 @@ export const MODOS_ONLINE: ModoOnline[] = [
     icone: "/online/06_carreira_online.webp",
     nome: "Carreira Online",
     resumo: "Um mundo, vários técnicos humanos: o mercado e as vagas são compartilhados.",
-    estado: "planejado",
+    href: "/online/carreira",
+    // ⚠️ SAIU DE "PLANEJADO" NA 1.0.358, e o que destravou foi a SEMENTE. O
+    // relay não simula partida; sem semente, os dois lados de um confronto
+    // simulariam por conta e chegariam a placares diferentes — a tabela
+    // dependeria de quem clicou primeiro. Com a semente e as forças vindas do
+    // servidor (`semearMotorDePartida`), as duas máquinas jogam o MESMO jogo, e
+    // o segundo envio vira conferência. Vaga de clube e mercado são do
+    // servidor: é o que "compartilhado" quer dizer.
+    estado: "pronto",
     fase: 4,
   },
   {
@@ -120,7 +144,14 @@ export const MODOS_ONLINE: ModoOnline[] = [
     icone: "/online/07_carreira_cooperativa.webp",
     nome: "Carreira cooperativa",
     resumo: "Duas pessoas no mesmo clube — uma no banco, outra na diretoria.",
-    estado: "planejado",
+    href: "/online/carreira",
+    // ⚠️ NÃO É OUTRO MUNDO — É O MESMO. Na 1.0.358 o clube da Carreira Online
+    // deixou de ser "o time de um técnico" e virou uma entidade com até quatro
+    // cadeiras. Cooperativa é entrar no clube de outra pessoa como DIRETOR: a
+    // tabela é do clube, o caixa é o mesmo, e cada um faz o que o outro não
+    // faz (só o técnico joga a partida; só o diretor negocia). Um segundo
+    // sistema para isso seria dois mundos que discordam do mesmo placar.
+    estado: "pronto",
     fase: 5,
   },
   {
@@ -128,7 +159,14 @@ export const MODOS_ONLINE: ModoOnline[] = [
     icone: "/online/08_diretoria_online.webp",
     nome: "Diretoria online",
     resumo: "Presidente, treinador, diretor e olheiro: cada função com uma pessoa.",
-    estado: "planejado",
+    href: "/online/carreira",
+    // A cooperativa com as QUATRO cadeiras ocupadas. Cada papel tem uma mão
+    // que os outros não têm — presidente abre a rodada e define o teto de
+    // gastos; olheiro vê a força real do próximo adversário —, e o servidor é
+    // quem cobra isso (`permissoes` em carreira-online.mjs). Papel que só
+    // muda o rótulo na tela é papel que a segunda pessoa abandona no dia
+    // seguinte.
+    estado: "pronto",
     fase: 5,
   },
   {
@@ -149,7 +187,14 @@ export const MODOS_ONLINE: ModoOnline[] = [
     icone: "/online/10_eventos_da_semana.webp",
     nome: "Eventos da semana",
     resumo: "Regras diferentes a cada semana: só sub-23, teto salarial, só clubes pequenos.",
-    estado: "planejado",
+    href: "/online/eventos",
+    // ⚠️ SAIU DE "PLANEJADO" NA 1.0.358. A regra da semana é DERIVADA da string
+    // da semana que o relay devolve (`regraDaSemana` em lib/eventos-da-semana),
+    // e não guardada nos dois lados: uma lista de regras no servidor seria uma
+    // segunda verdade, e bastaria esquecer de publicá-la para dois jogadores
+    // verem restrições diferentes na mesma quinta-feira. O que o servidor
+    // guarda é a MELHOR tentativa da semana de cada técnico.
+    estado: "pronto",
     fase: 3,
   },
 ]

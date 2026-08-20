@@ -282,9 +282,24 @@
   ],
   "changelog": [
     {
+      "version": "1.0.358",
+      "data": "2026-08-19",
+      "latest": true,
+      "titulo": "A carreira de jogador ganhou telas proprias e o online ficou inteiro",
+      "itens": [
+        "CARREIRA DE JOGADOR COM AS TELAS QUE FALTAVAM: escritorio, calendario (o mesmo do tecnico, com a tabela do campeonato ao lado), evolucao e trajetoria — cada uma com endereco proprio, porque antes o menu do atleta abria e nao acontecia nada.",
+        "A PARTIDA DO ATLETA EM DUAS FASES: pre-jogo com o ambiente do confronto e, depois do apito, a transmissao ao vivo com a sua nota subindo lance a lance. O placar so aparece ate o minuto em que voce esta — nada de entregar o final antes da hora.",
+        "PEDIR DEMISSAO AGORA TEM CONSEQUENCIA: voce fica sem clube e o mercado reage ao que voce fez em campo. Clube maior se o seu ano foi bom, menor se nao foi; o agente contrapropoe salario, luvas, status e tempo de contrato — e insistir demais faz a proposta ser retirada.",
+        "OS DEZ MODOS ONLINE ESTAO JOGAVEIS. Manager Champions (tabela que zera toda segunda-feira), Eventos da semana (uma regra nova a cada semana: so clubes pequenos, teto de forca, elenco sub-23, sempre visitante), Manager Draft com porta propria — antes era preciso adivinhar tres passos dentro do FC Hub — e a Carreira Online: um mundo so, em que cada clube tem um dono e o mercado e disputado atleta por atleta.",
+        "CLUBE COMPARTILHADO POR ATE QUATRO PESSOAS na Carreira Online, que e a carreira cooperativa e a diretoria online: tecnico joga a partida, diretor negocia, presidente abre a rodada e define o teto de gastos, olheiro espia o proximo adversario. Cada funcao faz algo que as outras nao fazem.",
+        "CRIAR CARREIRA FICOU RAPIDO OUTRA VEZ: a tela podia ficar meio minuto parada sem dizer nada, e em carreira de jogador o botao simplesmente nao respondia. Agora ha uma espera com aviso do que esta sendo montado, e os dados do atleta ficam num painel proprio, separado das configuracoes iniciais.",
+        "O ESCRITORIO NAO ROLA MAIS: as tarefas do dia cabem todas na tela e as noticias viraram uma barra embaixo, com comentarios que abrem quando voce quer. A sigla da posicao saiu de cima da camisa no elenco.",
+        "MENOS MEMORIA: 4 GB de RAM bastam para o jogo rodar liso, e as telas foram medidas uma a uma para nao passar do teto."
+      ]
+    },
+    {
       "version": "1.0.356",
       "data": "2026-08-18",
-      "latest": true,
       "titulo": "Menos memoria, menos disco e um modo online novo",
       "itens": [
         "O JOGO PESA MUITO MENOS NA MEMORIA: o mundo simulado (42 MB) era carregado a cada troca de tela, inclusive na abertura e no menu, onde ninguem o usa. Medido: 158 MB de memoria por tela, gastos a toa. Agora ele so entra quando ha carreira aberta — e isso e o que mais reduz risco de travar em computador modesto.",

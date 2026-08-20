@@ -29,6 +29,7 @@ import { useUserTeam } from "@/lib/time-da-carreira"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "@/lib/i18n"
 import {
   joinOnlineServer,
   leaveOnlineSession,
@@ -51,6 +52,7 @@ export default function AmistosoOnlinePage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/online") })
 
   const { state } = useGameState()
+  const t = useTranslation()
   const { team: userTeam } = useUserTeam()
 
   const [sessao, setSessao] = useState<OnlineSession | null>(null)
@@ -60,7 +62,7 @@ export default function AmistosoOnlinePage() {
   const [enderecoDigitado, setEnderecoDigitado] = useState("")
   const [copiado, setCopiado] = useState(false)
 
-  const nomeDoTecnico = state.managerName?.trim() || "Técnico"
+  const nomeDoTecnico = state.managerName?.trim() || t.amistoso.tecnico
   const meuTime = userTeam?.curto ?? ""
 
   // Sessão sobrevive à navegação: quem sai para escalar o time e volta continua
@@ -85,9 +87,9 @@ export default function AmistosoOnlinePage() {
 
   const comErro = useCallback(async (acao: () => Promise<void>) => {
     setOcupado(true); setErro(null)
-    try { await acao() } catch (e) { setErro(e instanceof Error ? e.message : "Não deu certo.") }
+    try { await acao() } catch (e) { setErro(e instanceof Error ? e.message : t.amistoso.nao_deu_certo) }
     finally { setOcupado(false) }
-  }, [])
+  }, [t.amistoso.nao_deu_certo])
 
   const abrirSala = useCallback(() => comErro(async () => {
     setSessao(await startOnlineServer({ managerName: nomeDoTecnico, teamShort: meuTime, maxPlayers: TECNICOS_NO_AMISTOSO }))
@@ -195,7 +197,7 @@ export default function AmistosoOnlinePage() {
                 <input
                   value={codigoDigitado}
                   onChange={e => setCodigoDigitado(e.target.value.toUpperCase())}
-                  placeholder="ABC123"
+                  placeholder={t.amistoso.exemplo_codigo}
                   maxLength={12}
                   className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 font-mono text-sm tracking-[.3em] text-white placeholder:tracking-normal placeholder:text-white/25"
                 />
@@ -222,7 +224,7 @@ export default function AmistosoOnlinePage() {
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 px-3 text-xs font-bold uppercase text-white/70 hover:bg-white/10"
               >
                 {copiado ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
-                {copiado ? "Copiado" : "Copiar"}
+                {copiado ? t.amistoso.copiado : t.amistoso.copiar}
               </button>
             </div>
 
@@ -236,7 +238,7 @@ export default function AmistosoOnlinePage() {
                   )}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">
-                    {i === 0 ? "Você" : "Adversário"}
+                    {i === 0 ? t.amistoso.voce : t.amistoso.adversario}
                   </p>
                   {p ? (
                     <>
@@ -259,13 +261,13 @@ export default function AmistosoOnlinePage() {
                 disabled={ocupado || !salaCheia}
                 className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-black/50 px-4 text-sm font-black uppercase tracking-wide text-white/85 disabled:opacity-40"
               >
-                {eu?.ready ? "Desfazer confirmação" : "Estou pronto"}
+                {eu?.ready ? t.amistoso.desfazer_confirmacao : t.amistoso.estou_pronto}
               </button>
               <button
                 onClick={comecar}
                 disabled={ocupado || !ambosProntos}
                 className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-4 text-sm font-black uppercase tracking-wide text-[var(--brand-ink)] disabled:opacity-40"
-                title={ambosProntos ? "" : "Os dois técnicos precisam confirmar"}
+                title={ambosProntos ? "" : t.amistoso.os_dois_confirmam}
               >
                 <Swords className="h-4 w-4" /> Começar a partida
               </button>

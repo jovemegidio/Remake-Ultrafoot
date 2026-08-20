@@ -118,6 +118,16 @@ export function FcHub() {
   // porque o catálogo do draft vem do banco de atletas — carregá-lo sempre que o
   // FC Hub abre traria o seed de elencos para dentro do painel social.
   const [draftLigado, setDraftLigado] = useState(false)
+  // Quem chega pela tela do Manager Draft (/online/draft) ja pediu o draft: a
+  // bandeira poupa o passo que mantinha o modo "em obras" — descobrir sozinho
+  // que existe um botao "Abrir draft x draft nesta sala" visivel so ao host.
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("ultrafoot:abrir-draft") !== "1") return
+      sessionStorage.removeItem("ultrafoot:abrir-draft")
+      setDraftLigado(true)
+    } catch { /* sem sessionStorage o host liga o draft no botao de sempre */ }
+  }, [])
   const [elencoParaDraft, setElencoParaDraft] = useState<AtletaDoDraft[]>([])
   useEffect(() => {
     if (!draftLigado || elencoParaDraft.length > 0) return
@@ -407,13 +417,13 @@ export function FcHub() {
   // "Mensagens", "Solicitacoes" e "Buscar pessoas" levavam ao botao de abrir o
   // Discord — ou seja, quem nao usa Discord clicava e nao acontecia nada util.
   const hubTabs: { id: string; label: string; icon: typeof Users; target: string; secao?: SecaoDoHub }[] = [
-    { id: "friends", label: "Amigos", icon: Users, target: "hub-friends", secao: "amigos" },
-    { id: "messages", label: "Mensagens", icon: MessagesSquare, target: "hub-friends", secao: "amigos" },
-    { id: "requests", label: "Solicitações", icon: Inbox, target: "hub-friends", secao: "pedidos" },
-    { id: "search", label: "Buscar pessoas", icon: Search, target: "hub-friends", secao: "buscar" },
-    { id: "activity", label: "Atividade", icon: Clock3, target: "hub-friends", secao: "mural" },
-    { id: "groups", label: "Liga online", icon: Wifi, target: "hub-groups" },
-    { id: "club", label: "Meu clube", icon: ShieldCheck, target: "hub-club" },
+    { id: "friends", label: t.fcHub.aba_amigos, icon: Users, target: "hub-friends", secao: "amigos" },
+    { id: "messages", label: t.fcHub.aba_mensagens, icon: MessagesSquare, target: "hub-friends", secao: "amigos" },
+    { id: "requests", label: t.fcHub.aba_solicitacoes, icon: Inbox, target: "hub-friends", secao: "pedidos" },
+    { id: "search", label: t.fcHub.aba_buscar, icon: Search, target: "hub-friends", secao: "buscar" },
+    { id: "activity", label: t.fcHub.aba_atividade, icon: Clock3, target: "hub-friends", secao: "mural" },
+    { id: "groups", label: t.fcHub.aba_liga_online, icon: Wifi, target: "hub-groups" },
+    { id: "club", label: t.fcHub.aba_meu_clube, icon: ShieldCheck, target: "hub-club" },
   ]
   const secaoDeAmigos: SecaoDoHub = hubTabs.find(tab => tab.id === hubTab)?.secao ?? "amigos"
   const goToSection = (id: string, target: string) => {
@@ -507,7 +517,7 @@ export function FcHub() {
                 if (await checkForUpdates({ silent: true }) === "available") throw new Error("Instale a atualização do jogo/elencos antes de criar o campeonato.")
                 const competicao = competicoesOnline.find(item => item.id === onlineLeague)
                 return createInternetRoom({ managerName: state.managerName || "Técnico", teamShort: team.curto || state.selectedTeamShort || "", maxPlayers: 32, mode: "tournament", leagueSettings: { leagueId: onlineLeague, leagueName: competicao?.nome ?? "Liga FC Hub", modalidade: onlineModalidade, dificuldade: onlineDifficulty, matchSpeed: onlineSpeed, roundDeadlineHours: roundDeadline, allowSpectators } })
-              })} className="flex items-center justify-center gap-2 rounded-lg bg-violet-300 py-2.5 text-xs font-black text-black disabled:opacity-35">{internetBusy ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <Power className="h-4 w-4"/>}Criar campeonato</button>
+              })} className="flex items-center justify-center gap-2 rounded-lg bg-violet-300 py-2.5 text-xs font-black text-black disabled:opacity-35">{internetBusy ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <Power className="h-4 w-4"/>}{t.fcHub.criar_campeonato}</button>
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <input
@@ -528,7 +538,7 @@ export function FcHub() {
                     }))}
                     className="rounded-lg border border-violet-300/35 px-4 py-2 text-xs font-bold text-violet-200 disabled:opacity-35"
                   >
-                    {entrarComoEspectador ? "Assistir" : "Entrar"}
+                    {entrarComoEspectador ? t.fcHub.assistir : t.fcHub.entrar_na_sala}
                   </button>
                 </div>
                 {/* ASSISTIR: entra sem ocupar vaga e sem escolher clube — e pode
@@ -548,11 +558,11 @@ export function FcHub() {
           </div> : <div className="mt-4 space-y-3">
             <div className="grid gap-2 sm:grid-cols-4">
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">{t.fcHub.codigo}</p><button onClick={() => void navigator.clipboard.writeText(internet.room.code)} className="mt-1 flex items-center gap-2 text-base font-black tracking-[.18em] text-violet-200">{internet.room.code}<Copy className="h-3 w-3 text-white/40"/></button></div>
-              <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Participantes</p><p className="mt-1 text-base font-black text-white">{internet.room.participants.length}/{internet.room.maxPlayers}</p><p className="text-[9px] text-white/35">{t.fcHub.minimo_2_para_iniciar}</p></div>
-              <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">{t.fcHub.conexao}</p><p className={`mt-1 text-xs font-black ${internetState === "connected" ? "text-emerald-300" : "text-amber-200"}`}>{internetState === "connected" ? "CONECTADO" : internetState.toUpperCase()}</p></div>
+              <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">{t.fcHub.participantes}</p><p className="mt-1 text-base font-black text-white">{internet.room.participants.length}/{internet.room.maxPlayers}</p><p className="text-[9px] text-white/35">{t.fcHub.minimo_2_para_iniciar}</p></div>
+              <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">{t.fcHub.conexao}</p><p className={`mt-1 text-xs font-black ${internetState === "connected" ? "text-emerald-300" : "text-amber-200"}`}>{internetState === "connected" ? t.fcHub.conectado : internetState.toUpperCase()}</p></div>
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">{t.fcHub.regra_da_sala}</p><p className="mt-1 text-xs font-black text-violet-200">{internet.room.leagueSettings.modalidade ?? "profissional"}</p><p className="text-[9px] text-white/35">{internet.room.leagueSettings.dificuldade ?? "normal"}</p></div>
             </div>
-            <div className="grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">{internet.room.participants.map(participant => <div key={participant.id} className="flex items-center gap-2 rounded-lg bg-black/20 p-2"><span className={`h-2 w-2 rounded-full ${participant.connected ? "bg-emerald-400" : "bg-white/20"}`}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-white">{participant.managerName}{participant.id === internet.room.hostId ? " · host" : ""}</p><p className="text-[9px] text-white/40">{participant.teamShort}</p></div><span className={`text-[9px] font-black ${participant.ready ? "text-emerald-300" : "text-white/30"}`}>{participant.ready ? "PRONTO" : "AGUARDANDO"}</span></div>)}</div>
+            <div className="grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">{internet.room.participants.map(participant => <div key={participant.id} className="flex items-center gap-2 rounded-lg bg-black/20 p-2"><span className={`h-2 w-2 rounded-full ${participant.connected ? "bg-emerald-400" : "bg-white/20"}`}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-white">{participant.managerName}{participant.id === internet.room.hostId ? " · host" : ""}</p><p className="text-[9px] text-white/40">{participant.teamShort}</p></div><span className={`text-[9px] font-black ${participant.ready ? "text-emerald-300" : "text-white/30"}`}>{participant.ready ? t.fcHub.pronto_maiusculo : t.fcHub.aguardando_maiusculo}</span></div>)}</div>
             {/* DRAFT X DRAFT. Vale ANTES de existir tabela: primeiro cada técnico
                 monta o elenco escolhendo na vez dele, depois a sala vira
                 campeonato. Fora do draft a sala segue como sempre foi. */}
@@ -569,7 +579,7 @@ export function FcHub() {
                 onClick={() => setDraftLigado(v => !v)}
                 className="w-full rounded-lg border border-violet-300/30 px-3 py-2 text-xs font-bold text-violet-200"
               >
-                {draftLigado ? "Fechar o draft desta sala" : "Abrir draft x draft nesta sala"}
+                {draftLigado ? t.fcHub.fechar_draft_da_sala : t.fcHub.abrir_draft_na_sala}
               </button>
             )}
             {internet.room.competition && (
@@ -612,7 +622,7 @@ export function FcHub() {
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">{t.fcHub.codigo_da_sala}</p><p className="mt-1 text-base font-black tracking-[.2em] text-cyan-200">{online.room.roomCode}</p></div>
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">{t.fcHub.rodada_compartilhada}</p><p className="mt-1 text-base font-black text-white">{online.room.currentRound}</p></div>
             </div>
-            <div className="space-y-2">{online.room.participants.map(participant => <div key={participant.id} className="flex items-center gap-3 rounded-lg bg-black/20 p-2.5"><span className={`h-2 w-2 rounded-full ${participant.connected ? "bg-emerald-400" : "bg-white/20"}`}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-white">{participant.managerName}{participant.id === "host" ? " · host" : ""}</p><p className="text-[10px] text-white/40">{participant.teamShort}</p></div><span className={`rounded px-2 py-1 text-[9px] font-black ${participant.ready ? "bg-emerald-400/15 text-emerald-300" : "bg-white/5 text-white/35"}`}>{participant.ready ? "PRONTO" : "DECIDINDO"}</span></div>)}</div>
+            <div className="space-y-2">{online.room.participants.map(participant => <div key={participant.id} className="flex items-center gap-3 rounded-lg bg-black/20 p-2.5"><span className={`h-2 w-2 rounded-full ${participant.connected ? "bg-emerald-400" : "bg-white/20"}`}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-white">{participant.managerName}{participant.id === "host" ? " · host" : ""}</p><p className="text-[10px] text-white/40">{participant.teamShort}</p></div><span className={`rounded px-2 py-1 text-[9px] font-black ${participant.ready ? "bg-emerald-400/15 text-emerald-300" : "bg-white/5 text-white/35"}`}>{participant.ready ? t.fcHub.pronto_maiusculo : t.fcHub.decidindo_maiusculo}</span></div>)}</div>
             <div className="flex flex-wrap gap-2">
               <button disabled={onlineBusy} onClick={() => void runOnline(() => setOnlineReady(online, !online.room.participants.find(item => item.id === online.participantId)?.ready))} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-400 px-3 py-2.5 text-xs font-black text-black disabled:opacity-40"><ShieldCheck className="h-4 w-4"/>{t.fcHub.confirmar_decisoes_2}</button>
               {online.isHost && <button disabled={onlineBusy || !online.room.participants.every(item => item.ready)} onClick={() => void runOnline(() => submitOnlineAction(online, "advance_round", { season: state.season, week: state.week }))} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 py-2.5 text-xs font-black text-black disabled:opacity-35"><Play className="h-4 w-4"/>{t.fcHub.avancar_rodada}</button>}

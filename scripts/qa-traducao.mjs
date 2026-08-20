@@ -31,14 +31,19 @@ const detalhe = process.argv.includes("--detalhe")
  * teto que aperte a cada versão ela para na metade e volta a subir sozinha na
  * primeira tela nova. Baixe este número quando extrair; nunca suba.
  */
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5526)
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5491)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.349 .... 5.544  (medição inicial honesta; 79 frases já extraídas)
 //   1.0.350 .... 5.539  (tela do Online extraída; a catraca pegou +1 meu)
-//   1.0.358 .... 5.526  (as quatro telas do atleta e a espera da criação nasceram
+//   1.0.358 .... 5.512  (as telas do atleta, a espera da criação, o Manager
+//                        Champions e o Rivals extraídos; o painel
+//                        "Criar atleta" e o
+//                        pré-office reformado nasceram
 //                        extraídas: a reforma
 //                        do modo somou +56 frases e a catraca pegou — extrair as
-//                        telas novas devolveu 66)
+//                        telas novas devolveu 66; os Eventos da semana
+//                        entraram extraidos e levaram junto o Rush e o
+//                        amistoso 1v1)
 
 const PASTAS = ["app", "components"]
 

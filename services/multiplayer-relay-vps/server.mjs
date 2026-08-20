@@ -4,6 +4,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { WebSocketServer, WebSocket } from "ws"
 import { Competitivo, divisaoDoRating } from "./rivals.mjs"
+import { CarreiraOnline } from "./carreira-online.mjs"
 
 const PORT = Number(process.env.PORT || 8790)
 const DATA_DIR = process.env.DATA_DIR || "/var/lib/ultrafoot/relay"
@@ -110,6 +111,7 @@ function standings(ids, fixtures) {
 
 // Estado do competitivo (fila, rating, anti-cheat). Vive em disco próprio.
 const competitivo = new Competitivo(DATA_DIR)
+const carreiraOnline = new CarreiraOnline(DATA_DIR)
 
 /**
  * Sala criada pelo SERVIDOR quando o matchmaking parou de pé um confronto.
@@ -159,6 +161,22 @@ const server = http.createServer(async (req, res) => {
     const id = String(input.managerId || "").slice(0, 64)
     if (!id) return json(res, 400, { ok: false, error: "manager_id_required" })
 
+    // ⚠️ JÁ TEM PARTIDA ABERTA? RESPONDE ELA. Sem isto, quem foi pareado
+    // enquanto esperava (o PRIMEIRO da fila) nunca recebia o adversário: a
+    // consulta seguinte não achava ninguém, o servidor o punha de volta na fila
+    // e devolvia "na_fila" — para sempre. Ver `partidaAbertaDe`.
+    const aberta = competitivo.partidaAbertaDe(id)
+    if (aberta) {
+      const souCasa = aberta.casa === id
+      const outroId = souCasa ? aberta.fora : aberta.casa
+      const outro = competitivo.perfil(outroId, souCasa ? aberta.nomeFora : aberta.nomeCasa)
+      return json(res, 200, {
+        ok: true, estado: "pareado", matchId: aberta.matchId, roomCode: aberta.sala,
+        adversario: { nome: outro.nome, rating: outro.rating, divisao: divisaoDoRating(outro.rating) },
+        voceEhMandante: souCasa,
+      })
+    }
+
     const { pareado } = competitivo.entrarNaFila(modo, {
       id, nome: input.managerName, forcaDoClube: Number(input.forcaDoClube) || 70,
     })
@@ -190,6 +208,110 @@ const server = http.createServer(async (req, res) => {
     })
     return json(res, r.erro ? 400 : 200, { ok: !r.erro, ...r })
   }
+  // ── MANAGER CHAMPIONS: a classificação da semana (1.0.358) ───────────────
+  // Mesma fila e mesmo Elo do Rivals (`modo: "champions"`); o que muda é a
+  // contagem semanal, que zera na segunda-feira. Ver `classificacaoSemanal`.
+  if (req.method === "GET" && url.pathname === "/v1/champions/classificacao") {
+    const limite = Math.max(1, Math.min(100, Number(url.searchParams.get("limite")) || 50))
+    return json(res, 200, { ok: true, ...competitivo.classificacaoSemanal(limite) })
+  }
+  // ── EVENTOS DA SEMANA: o desafio de regra, com tabela propria (1.0.358) ──
+  // Não passa pela fila: o jogador joga as três partidas contra a máquina, com
+  // a restrição da semana, e manda o total. O servidor guarda a MELHOR
+  // tentativa — ver `registrarEvento`, que também trava os limites do modo.
+  if (req.method === "POST" && url.pathname === "/v1/eventos/resultado") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    const managerId = String(input.managerId || "").slice(0, 64)
+    if (!managerId) return json(res, 400, { ok: false, error: "sem_manager" })
+    const linha = competitivo.registrarEvento(
+      managerId, input.managerName, input.pontos, input.saldo, input.golsPro,
+    )
+    competitivo.persistir()
+    return json(res, 200, { ok: true, linha })
+  }
+  if (req.method === "GET" && url.pathname === "/v1/eventos/classificacao") {
+    const limite = Math.max(1, Math.min(100, Number(url.searchParams.get("limite")) || 50))
+    return json(res, 200, { ok: true, ...competitivo.classificacaoDoEvento(limite) })
+  }
+  // ── CARREIRA ONLINE: um mundo, vários técnicos (1.0.358) ─────────────────
+  // O servidor guarda as vagas (dois técnicos não pegam o mesmo clube), a
+  // tabela, o mercado e — o ponto do modo — a SEMENTE de cada confronto: é ela
+  // que faz as duas máquinas jogarem a mesma partida sem o motor rodar aqui.
+  if (req.method === "POST" && url.pathname === "/v1/carreira/entrar") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    const r = carreiraOnline.entrar({
+      id: String(input.managerId || "").slice(0, 64),
+      nome: input.managerName,
+      clube: input.clube,
+      forca: input.forca,
+      papel: input.papel,
+    })
+    if (!r.erro) carreiraOnline.persistir()
+    return json(res, r.erro ? 400 : 200, { ok: !r.erro, ...r })
+  }
+  if (req.method === "POST" && url.pathname === "/v1/carreira/sair") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    carreiraOnline.sair(String(input.managerId || ""))
+    carreiraOnline.persistir()
+    return json(res, 200, { ok: true })
+  }
+  if (req.method === "POST" && url.pathname === "/v1/carreira/rodada") {
+    const input = await body(req).catch(() => null)
+    const r = carreiraOnline.avancarRodada(String(input?.managerId || ""))
+    if (!r.erro) carreiraOnline.persistir()
+    return json(res, r.erro ? 409 : 200, { ok: !r.erro, ...r })
+  }
+  if (req.method === "POST" && url.pathname === "/v1/carreira/resultado") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    const r = carreiraOnline.registrarResultado(
+      String(input.matchId || ""), String(input.managerId || ""), input.golsCasa, input.golsFora,
+    )
+    if (!r.erro) carreiraOnline.persistir()
+    return json(res, r.erro ? 400 : 200, { ok: !r.erro, ...r })
+  }
+  if (req.method === "POST" && url.pathname === "/v1/carreira/anunciar") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    const r = carreiraOnline.anunciar({
+      managerId: String(input.managerId || ""), atleta: input.atleta, preco: input.preco,
+    })
+    if (!r.erro) carreiraOnline.persistir()
+    return json(res, r.erro ? 400 : 200, { ok: !r.erro, ...r })
+  }
+  if (req.method === "POST" && url.pathname === "/v1/carreira/comprar") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    const r = carreiraOnline.comprar({
+      managerId: String(input.managerId || ""), anuncioId: String(input.anuncioId || ""),
+    })
+    if (!r.erro) carreiraOnline.persistir()
+    return json(res, r.erro ? 409 : 200, { ok: !r.erro, ...r })
+  }
+  // Mão do presidente: o teto de gastos do diretor. Conferido no servidor —
+  // teto que mora na tela some quando alguém abre o console.
+  if (req.method === "POST" && url.pathname === "/v1/carreira/teto") {
+    const input = await body(req).catch(() => null)
+    if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
+    const r = carreiraOnline.definirTeto({ managerId: String(input.managerId || ""), teto: input.teto })
+    if (!r.erro) carreiraOnline.persistir()
+    return json(res, r.erro ? 400 : 200, { ok: !r.erro, ...r })
+  }
+  // Mão do olheiro: a força real e os reforços do próximo adversário.
+  if (req.method === "GET" && url.pathname === "/v1/carreira/espiar") {
+    const r = carreiraOnline.espiar(String(url.searchParams.get("managerId") || ""))
+    return json(res, r.erro ? 400 : 200, { ok: !r.erro, ...r })
+  }
+  if (req.method === "GET" && url.pathname === "/v1/carreira/papeis") {
+    const fileKey = String(url.searchParams.get("fileKey") || "")
+    return json(res, 200, { ok: true, livres: carreiraOnline.papeisLivresDe(fileKey) })
+  }
+  if (req.method === "GET" && url.pathname === "/v1/carreira/estado") {
+    return json(res, 200, { ok: true, ...carreiraOnline.estado(String(url.searchParams.get("managerId") || "")) })
+  }
   if (req.method === "GET" && url.pathname === "/v1/competitivo/ranking") {
     return json(res, 200, { ok: true, ranking: competitivo.ranking(Number(url.searchParams.get("limite")) || 50) })
   }
@@ -208,6 +330,13 @@ const server = http.createServer(async (req, res) => {
       matchSpeed: input.leagueSettings?.matchSpeed === "rapida" ? "rapida" : "normal",
       roundDeadlineHours: deadlines.includes(requested) ? requested : 72,
       allowSpectators: Boolean(input.leagueSettings?.allowSpectators),
+      // ⚠️ ESTAS DUAS LINHAS VIERAM DA VPS, NAO DO REPOSITORIO (19/08/2026).
+      // O servidor publicado ja aceitava modalidade e dificuldade da liga; o
+      // arquivo daqui nao tinha. Publicar o daqui por cima teria apagado o
+      // recurso em silencio — por isso a atualizacao do relay e MERGE, nunca
+      // copia.
+      modalidade: ["profissional", "feminino", "sub20", "selecao"].includes(input.leagueSettings?.modalidade) ? input.leagueSettings.modalidade : "profissional",
+      dificuldade: ["amador", "justo", "normal", "dificil", "lendario"].includes(input.leagueSettings?.dificuldade) ? input.leagueSettings.dificuldade : "normal",
     }
     const room = {
       code: roomCode, mode: input.mode || "tournament", hostId: id, gameVersion: GAME_VERSION,
@@ -294,7 +423,7 @@ wss.on("connection", ws => {
       if (tecnicos.length < 2) return error("minimum_2_players")
       if (room.competition) return error("competition_exists")
       const schedule = roundRobin(tecnicos.map(item => item.id)), settings = room.leagueSettings
-      room.competition = { id: crypto.randomUUID(), name: settings.leagueName, format: "league", createdAt: now, currentRound: 1, totalRounds: schedule.totalRounds, fixtures: schedule.fixtures, standings: standings(tecnicos.map(item => item.id), []), finished: false, leagueId: settings.leagueId, officialRulesLocked: true, matchSpeed: settings.matchSpeed, roundDeadlineHours: settings.roundDeadlineHours, allowSpectators: settings.allowSpectators }
+      room.competition = { id: crypto.randomUUID(), name: settings.leagueName, format: "league", createdAt: now, currentRound: 1, totalRounds: schedule.totalRounds, fixtures: schedule.fixtures, standings: standings(tecnicos.map(item => item.id), []), finished: false, leagueId: settings.leagueId, officialRulesLocked: true, matchSpeed: settings.matchSpeed, roundDeadlineHours: settings.roundDeadlineHours, allowSpectators: settings.allowSpectators, modalidade: settings.modalidade, dificuldade: settings.dificuldade }
     } else if (input.type === "start_round") {
       if (!host || !room.competition) return error("host_only_or_no_competition")
       const fixtures = room.competition.fixtures.filter(item => item.round === room.competition.currentRound)

@@ -91,6 +91,46 @@ export async function entrarNaFila(input: {
   }
 }
 
+/** Uma linha da tabela semanal do Manager Champions. */
+export interface LinhaDaSemana {
+  posicao: number
+  nome: string
+  pontos: number
+  j: number
+  v: number
+  e: number
+  d: number
+  gp: number
+  gc: number
+  saldo: number
+}
+
+export interface ClassificacaoSemanal {
+  /** Segunda-feira em que a semana começou (AAAA-MM-DD). */
+  semana: string
+  /** Quando ela zera, em ms desde a época — a tela mostra a contagem. */
+  terminaEm: number
+  linhas: LinhaDaSemana[]
+}
+
+/**
+ * A CLASSIFICAÇÃO DA SEMANA (Manager Champions).
+ *
+ * Ela é do SERVIDOR, como o rating: pontos calculados no cliente seriam pontos
+ * editáveis no save. Sem rede, devolve uma semana vazia — o modo simplesmente
+ * não abre, e o resto do jogo não depende disto.
+ */
+export async function classificacaoDaSemana(limite = 30): Promise<ClassificacaoSemanal> {
+  try {
+    const resposta = await fetch(`${servidor()}/v1/champions/classificacao?limite=${limite}`)
+    const dados = await resposta.json()
+    if (!resposta.ok || dados?.ok === false) return { semana: "", terminaEm: 0, linhas: [] }
+    return { semana: String(dados.semana ?? ""), terminaEm: Number(dados.terminaEm ?? 0), linhas: dados.linhas ?? [] }
+  } catch {
+    return { semana: "", terminaEm: 0, linhas: [] }
+  }
+}
+
 export async function sairDaFila(modo: string, managerId: string): Promise<void> {
   await pedir("/v1/competitivo/sair", { modo, managerId })
 }
@@ -132,4 +172,50 @@ export async function ranking(limite = 50): Promise<LinhaDoRanking[]> {
   } catch {
     return []
   }
+}
+// ── EVENTOS DA SEMANA ──────────────────────────────────────────────────────
+// O desafio semanal não passa pela fila: o jogador joga as três partidas
+// sozinho e manda o total. O que o servidor guarda é a MELHOR tentativa da
+// semana — e é ele quem diz qual é a semana corrente, porque a REGRA é
+// derivada dessa string (ver lib/eventos-da-semana.ts). Se cada máquina
+// escolhesse a própria semana, dois jogadores veriam regras diferentes.
+
+export interface LinhaDoEvento {
+  posicao: number
+  id: string
+  nome: string
+  pontos: number
+  saldo: number
+  gp: number
+  tentativas: number
+}
+
+export interface ClassificacaoDoEvento {
+  semana: string
+  terminaEm: number
+  linhas: LinhaDoEvento[]
+}
+
+export async function classificacaoDoEvento(limite = 30): Promise<ClassificacaoDoEvento> {
+  try {
+    const resposta = await fetch(`${servidor()}/v1/eventos/classificacao?limite=${limite}`)
+    const dados = await resposta.json()
+    if (!resposta.ok || dados?.ok === false) return { semana: "", terminaEm: 0, linhas: [] }
+    return { semana: String(dados.semana ?? ""), terminaEm: Number(dados.terminaEm ?? 0), linhas: dados.linhas ?? [] }
+  } catch {
+    // Sem relay a tela cai na semana local e a partida vira treino: não há
+    // tabela para entrar, e a tela diz isso em vez de fingir que enviou.
+    return { semana: "", terminaEm: 0, linhas: [] }
+  }
+}
+
+export async function enviarResultadoDoEvento(input: {
+  managerId: string
+  managerName: string
+  pontos: number
+  saldo: number
+  golsPro: number
+}): Promise<{ enviado: boolean }> {
+  const r = await pedir<{ ok: boolean }>("/v1/eventos/resultado", input)
+  return { enviado: !("erro" in r) }
 }

@@ -64,6 +64,22 @@ if (segundo.corpo.estado !== "pareado") erro(`o segundo devia parear, veio ${seg
 else ok(`pareado com ${segundo.corpo.adversario?.nome} — sala ${segundo.corpo.roomCode} criada PELO SERVIDOR`)
 const matchId = segundo.corpo.matchId
 
+// ⚠️ O PRIMEIRO TAMBEM PRECISA SABER (19/08/2026). Ele sai da fila em silencio
+// quando alguem pareia com ele: a consulta seguinte dele tem de devolver a MESMA
+// partida, e nao "na_fila". Sem isto o tecnico A ficava em "Procurando
+// adversario..." para sempre enquanto o B ja estava na sala — medido contra a
+// VPS, com o modo anunciado como "em obras" por causa disso.
+const primeiroDeNovo = await chamar("/v1/competitivo/fila", isaac)
+if (primeiroDeNovo.corpo.estado !== "pareado") {
+  erro(`o primeiro nao soube do pareamento, veio ${primeiroDeNovo.corpo.estado}`)
+} else if (primeiroDeNovo.corpo.matchId !== matchId) {
+  erro("o primeiro recebeu OUTRA partida — foi pareado duas vezes")
+} else if (primeiroDeNovo.corpo.voceEhMandante !== true) {
+  erro("quem esperava na fila devia ser o mandante")
+} else {
+  ok(`o primeiro tambem recebeu a partida (mandante, sala ${primeiroDeNovo.corpo.roomCode})`)
+}
+
 // ── 2. Anti-cheat: quem não é da partida não pontua ─────────────────────────
 const intruso = await chamar("/v1/competitivo/resultado", { matchId, managerId: "mgr_intruso", golsCasa: 9, golsFora: 0 })
 if (intruso.corpo.ok) erro("um terceiro conseguiu mandar resultado")
@@ -104,6 +120,34 @@ const depois = (await chamar("/v1/competitivo/ranking", null, "GET")).corpo.rank
 if (JSON.stringify(antes.map(x => x.rating)) !== JSON.stringify(depois.map(x => x.rating))) {
   erro("a divergencia mexeu no rating de alguem")
 } else ok("divergencia nao pontuou ninguem")
+
+// ── 7b. MANAGER CHAMPIONS: a semana conta (1.0.358) ─────────────────────────
+//
+// O Champions usa a MESMA fila e o MESMO Elo; o que ele acrescenta é uma tabela
+// que zera toda segunda. Este trecho prova que uma partida do modo pontua nela —
+// e que uma partida do Rivals NÃO pontua, senão os dois modos viram um só.
+const antesDaSemana = (await chamar("/v1/champions/classificacao", null, "GET")).corpo
+if (!antesDaSemana?.ok) erro("a classificacao semanal do champions nao respondeu")
+else ok(`semana ${antesDaSemana.semana} aberta (${antesDaSemana.linhas.length} linha(s))`)
+
+const champA = { ...base, modo: "champions", managerId: "mgr_champ_a", managerName: "ChampA", forcaDoClube: 70 }
+const champB = { ...base, modo: "champions", managerId: "mgr_champ_b", managerName: "ChampB", forcaDoClube: 70 }
+await chamar("/v1/competitivo/fila", champA)
+const parChamp = await chamar("/v1/competitivo/fila", champB)
+if (parChamp.corpo.estado !== "pareado") erro(`champions devia parear, veio ${parChamp.corpo.estado}`)
+const mChamp = parChamp.corpo.matchId
+await chamar("/v1/competitivo/resultado", { matchId: mChamp, managerId: "mgr_champ_a", golsCasa: 2, golsFora: 1 })
+await chamar("/v1/competitivo/resultado", { matchId: mChamp, managerId: "mgr_champ_b", golsCasa: 2, golsFora: 1 })
+
+const semana = (await chamar("/v1/champions/classificacao", null, "GET")).corpo
+const lider = semana.linhas?.[0]
+if (!lider || lider.pontos !== 3 || lider.saldo !== 1) {
+  erro(`a vitoria no champions devia dar 3 pontos e saldo 1, veio ${JSON.stringify(lider)}`)
+} else ok(`champions pontuou a semana (${lider.nome}: ${lider.pontos} pts, saldo ${lider.saldo})`)
+
+if (semana.linhas.some(l => l.nome === "Isaac" || l.nome === "Lucas")) {
+  erro("partida do RIVALS entrou na tabela semanal do champions")
+} else ok("partida do rivals nao contaminou a semana do champions")
 
 // ── 8. O rating sobrevive ao reinicio ───────────────────────────────────────
 const ratingAntes = depois[0]?.rating

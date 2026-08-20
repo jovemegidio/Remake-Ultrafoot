@@ -84,11 +84,11 @@ export default function ManagerRushPage() {
       }
       estado = tickMinute(estado, config)
       if (estado.home.goals !== anteriorPro) {
-        lances.push({ minuto: estado.minute, texto: `GOL do ${desafio.clube.nome}!`, pro: true })
+        lances.push({ minuto: estado.minute, texto: `${t.rush.gol_do} ${desafio.clube.nome}!`, pro: true })
         anteriorPro = estado.home.goals
       }
       if (estado.away.goals !== anteriorContra) {
-        lances.push({ minuto: estado.minute, texto: `Gol do ${desafio.adversario.nome}.`, pro: false })
+        lances.push({ minuto: estado.minute, texto: `${t.rush.gol_contra_do} ${desafio.adversario.nome}.`, pro: false })
         anteriorContra = estado.away.goals
       }
     }
@@ -107,14 +107,14 @@ export default function ManagerRushPage() {
       <div className="mx-auto max-w-2xl px-5 pb-36 pt-20">
         <header className="mb-6">
           <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">
-            Ultrafoot online · desafio de {hoje.split("-").reverse().join("/")}
+            {t.rush.desafio_de} {hoje.split("-").reverse().join("/")}
           </p>
           <h1 className="mt-1 flex items-center gap-2 text-3xl font-black">
-            <Zap className="text-[var(--brand)]" />Manager Rush
+            <Zap className="text-[var(--brand)]" />{t.rush.titulo}
           </h1>
           <p className="mt-1 text-sm text-white/50">
-            A bola volta a rolar aos {MINUTO_INICIAL}′ e você está atrás no placar.
-            {desafio.objetivo === "virar" ? " Só a vitória conta." : " Empatar já salva."}
+            {t.rush.a_bola_volta_1} {MINUTO_INICIAL}′ {t.rush.a_bola_volta_2}{" "}
+            {desafio.objetivo === "virar" ? t.rush.so_a_vitoria : t.rush.empatar_salva}
           </p>
         </header>
 
@@ -136,7 +136,7 @@ export default function ManagerRushPage() {
           </div>
           <p className="mt-3 flex items-center justify-center gap-2 text-xs text-white/40">
             <Timer className="h-3.5 w-3.5" />
-            {resultado ? t.rush.apito_final : `${90 - MINUTO_INICIAL} minutos para resolver.`}
+            {resultado ? t.rush.apito_final : `${90 - MINUTO_INICIAL} ${t.rush.minutos_para_resolver}`}
           </p>
         </section>
 
@@ -171,7 +171,7 @@ export default function ManagerRushPage() {
               onClick={jogar}
               className="w-full bg-[var(--brand)] py-6 text-base font-black text-[var(--brand-ink)] hover:bg-[#00d9b0]"
             >
-              Entrar em campo aos {MINUTO_INICIAL}′
+              {t.rush.entrar_em_campo_aos} {MINUTO_INICIAL}′
             </Button>
           </>
         ) : (
