@@ -1,9 +1,15 @@
 {
-  "version": "1.0.358",
-  "notes": "Ultrafoot 26 v1.0.358",
-  "sizeMb": 787,
-  "sha256": "63076E6C0A18F1E614A3448C43632684BB8125B5498A109F4289F724C8C5AEB8",
+  "version": "1.0.359",
+  "notes": "Ultrafoot 26 v1.0.359",
+  "sizeMb": 714,
+  "sha256": "8C22CAA7BBD0546C60D33DCD67A7CFD40DAE6AD6FEB29FFD385A5132EBC1B39D",
   "anteriores": [
+    {
+      "version": "1.0.358",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.358/Ultrafoot.26_1.0.358_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.358",
+      "sizeMb": 787
+    },
     {
       "version": "1.0.356",
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.356/Ultrafoot.26_1.0.356_x64-setup.exe",
@@ -51,18 +57,12 @@
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.333/Ultrafoot.26_1.0.333_x64-setup.exe",
       "notes": "Ultrafoot 26 v1.0.333",
       "sizeMb": 732
-    },
-    {
-      "version": "1.0.331",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.331/Ultrafoot.26_1.0.331_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.331",
-      "sizeMb": 755
     }
   ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRU52SncwRDFTK2VlWnlYa1Izd3oweEtOY0Z1UWhPNWtPM0t3MHlFRC9rSXltcnlSOEV1WEo0aUY3MHNTWGJwc2VWZ3ViTXZ4Mi9CN0FGbzhralVXU0FRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3MTg5NDUyCWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNThfeDY0LXNldHVwLmV4ZQpCb05xNFUrSlZQYnhnN3BuSlRRWWtibVViSDZXYkNINmwwM0E5RStRNGh5eWtKTDNDazIzTURoQ0U4dFlnZUpLYk5qMWNsR2c2U0pCZ2psZzBtbXBBdz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.358_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUdqYVF0TjRRdTBDZVp5bW8yZmo3cDdERFR2U2pSWlNCTWNUaTlwdHI1VEtBblNkZ0lqUytOaXpyRUtTYmZaOGtabC9qM3J1Yzh5anoyWU4wUnY1bHc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3MjUzNzQ1CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNTlfeDY0LXNldHVwLmV4ZQp0R0xrK1M5S01MOEFWWWh2VmZaZFVNNWlZemN0eUZPbFlkNFhTaXNFTDI4UFBUV1dJYkFxbnUyV0FybitIVnk4OERLd21lemFTYzNLOTVqTWdJNEtBUT09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.359_x64-setup.exe"
     }
   }
 }
