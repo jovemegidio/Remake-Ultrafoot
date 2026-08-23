@@ -16,6 +16,43 @@ import { timeDoMod } from "@/lib/mods"
 
 const KEY = (fileKey: string) => `ultrafoot:team-override:${fileKey}`
 
+// ─── CACHE DE RESOLUÇÃO ──────────────────────────────────────────────────────
+//
+// MEDIDO, não suposto. Perfil de CPU de uma campanha (scripts/qa-low-spec.ts sob
+// `--cpu-prof`, lido por scripts/perf-analisar-perfil.mjs): `storeGet` e
+// `timeDoMod` juntos passavam de 45% do tempo — duas funções que são O(1), um
+// `Map.get` e um acesso de objeto. Custo unitário não explica isso; explica
+// VOLUME. Toda resolução refazia três consultas de camada, um `JSON.parse` do
+// override local e dois merges com spread, para dados que quase nunca mudam.
+//
+// ⚠️ A ORDEM DAS CAMADAS NÃO MUDA. O cache guarda o RESULTADO de
+// `resolverTeamOverride`; a precedência (embutido < canal < mod < edição local)
+// continua decidida lá, num lugar só.
+//
+// ⚠️ COMPARTILHAR A REFERÊNCIA É SEGURO, e foi conferido: nenhum chamador muta
+// o objeto — todos leem campo (`?.logoUrl`, `?.kits?.[v]`) ou espalham para um
+// objeto novo. Se algum dia alguém mutar, o sintoma é override "vazando" de um
+// clube para outro; a correção é espalhar no chamador, nunca remover o cache.
+const _cacheDeOverride = new Map<string, TeamOverride | null>()
+
+export function invalidarCacheDeOverrides(fileKey?: string): void {
+  if (fileKey) _cacheDeOverride.delete(fileKey)
+  else _cacheDeOverride.clear()
+}
+
+// Reusa o canal que `teams-data` já criou para `invalidarIndicesDeBusca`. Um
+// segundo mecanismo só para este cache seria mais uma coisa para alguém
+// esquecer de disparar — e o sintoma de esquecer é escudo velho na tela.
+if (typeof window !== "undefined") {
+  window.addEventListener("ultrafoot:team:changed", () => invalidarCacheDeOverrides())
+  window.addEventListener("ultrafoot:store:changed", (evento) => {
+    const chave = (evento as CustomEvent<{ key?: string }>).detail?.key
+    if (chave?.startsWith("ultrafoot:team-override:")) {
+      invalidarCacheDeOverrides(chave.slice("ultrafoot:team-override:".length))
+    }
+  })
+}
+
 // `as unknown as`: o seed embutido guarda kits que as vezes so tem imageUrl (sem
 // primary/secondary/pattern), entao nao casa 1:1 com KitData no compilador — mas em runtime
 // so lemos imageUrl (getCamisaUrl). O cast e seguro.
@@ -90,6 +127,17 @@ function comImagensResolvidas(ov: TeamOverride): TeamOverride {
 }
 
 export function getTeamOverride(fileKey: string): TeamOverride | null {
+  // `undefined` = nunca resolvido. `null` = resolvido e não há override — e esse
+  // caso PRECISA ser guardado: a maioria dos clubes não tem override nenhum, e
+  // era por eles que todo o trabalho se repetia à toa.
+  const emCache = _cacheDeOverride.get(fileKey)
+  if (emCache !== undefined) return emCache
+  const resolvido = resolverTeamOverride(fileKey)
+  _cacheDeOverride.set(fileKey, resolvido)
+  return resolvido
+}
+
+function resolverTeamOverride(fileKey: string): TeamOverride | null {
   // BASE = embutido no build + atualizacao do servidor por cima. E o que faz uma
   // correcao de escudo/uniforme chegar sem reinstalar o jogo (ver
   // lib/atualizacao-elencos). O que o JOGADOR editou continua vencendo os dois.
@@ -142,6 +190,7 @@ export function setTeamOverride(fileKey: string, override: TeamOverride): void {
   // `setCustomLogoUrl`: o disco é assíncrono e a edição não pode depender dele
   // para existir. Um uniforme em resolução nativa passa de 0,5 MB, e era isso
   // que fazia cada clube editado somar meio mega ao JSON reescrito a cada save.
+  invalidarCacheDeOverrides(fileKey)
   storeSet(KEY(fileKey), JSON.stringify(override))
   if (typeof window !== "undefined")
     window.dispatchEvent(new CustomEvent("ultrafoot:team:changed", { detail: { key: fileKey } }))
@@ -175,6 +224,7 @@ async function promoverImagensDoOverride(fileKey: string, override: TeamOverride
 }
 
 export function clearTeamOverride(fileKey: string): void {
+  invalidarCacheDeOverrides(fileKey)
   storeRemove(KEY(fileKey))
   if (typeof window !== "undefined")
     window.dispatchEvent(new CustomEvent("ultrafoot:team:changed", { detail: { key: fileKey } }))

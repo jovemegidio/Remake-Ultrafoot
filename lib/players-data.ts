@@ -90,13 +90,35 @@ function elencoImportado(time: { id?: string } | undefined): PoolPlayerRaw[] {
   return elencoDoPool(time?.id) ?? []
 }
 
+// MEMOIZACAO DE NORMALIZACAO DE NOME.
+//
+// MEDIDO no perfil de CPU da campanha: esta funcao sozinha passava de 7% do
+// tempo total. Ela e PURA — NFD + duas regex + toLowerCase — e e chamada com o
+// MESMO punhado de nomes milhoes de vezes, porque todo casamento de atleta com
+// clube passa por aqui.
+//
+// Funcao pura de string: o cache nao tem como divergir da fonte, porque nao ha
+// fonte alem do argumento.
+//
+// ⚠️ TETO OBRIGATORIO. Sem limite seria vazamento silencioso numa sessao longa.
+// O espaco de chaves e fechado na pratica (nomes de clube e de atleta), entao
+// estourar o teto significa entrada inesperada — e ai limpar tudo e mais barato
+// e mais previsivel que uma politica LRU.
+const TETO_NomeDeClube = 50_000
+const _cacheNomeDeClube = new Map<string, string>()
+
 function normalizeTeamName(value: string): string {
   if (!value) return ""
-  return value
+  const emCache = _cacheNomeDeClube.get(value)
+  if (emCache !== undefined) return emCache
+  const normalizado = value
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "")
+  if (_cacheNomeDeClube.size >= TETO_NomeDeClube) _cacheNomeDeClube.clear()
+  _cacheNomeDeClube.set(value, normalizado)
+  return normalizado
 }
 
 function toPlayerPosition(posicao: string): Posicao {
@@ -1312,7 +1334,49 @@ function getRealSquad(team: Team): Player[] | null {
   }))
 }
 
+// CACHE DE ELENCO RESOLVIDO POR CLUBE.
+//
+// `getPlayersForTeam` monta o elenco por CAMADAS (overlay dos CSVs > elenco do
+// Transfermarkt > curado > pool > gerador) e aplica overrides de atleta por
+// cima. E caro, e o resultado e o mesmo enquanto ninguem editar nada — mas era
+// refeito a cada consulta, para cada clube, em cada semana simulada.
+//
+// ⚠️ DEVOLVE COPIA RASA, sempre. O elenco sai como `Player[]` e vai parar em
+// `sortByPosition` e afins; se algum caminho ordenar no lugar, a ordem vazaria
+// para o proximo consumidor do cache. A copia custa ~30 referencias e elimina a
+// classe inteira de bug.
+//
+// ⚠️ NAO GUARDA O ELENCO DA CARREIRA. Isto e o elenco de DADO (semente); o vivo
+// mora no motor (`squadPlayers`). Cachear aqui nao congela transferencia nem
+// lesao.
+const _cacheDeElenco = new Map<string, Player[]>()
+
+export function invalidarCacheDeElenco(): void {
+  _cacheDeElenco.clear()
+}
+
+// Mesmo canal que `teams-data` usa para os indices de busca.
+if (typeof window !== "undefined") {
+  window.addEventListener("ultrafoot:team:changed", invalidarCacheDeElenco)
+  window.addEventListener("ultrafoot:store:changed", (evento) => {
+    const chave = (evento as CustomEvent<{ key?: string }>).detail?.key ?? ""
+    if (chave.startsWith("ultrafoot:player-override")
+      || chave.startsWith("ultrafoot:roster-override")
+      || chave.startsWith("ultrafoot:team-override")
+      || chave.startsWith("ultrafoot:elenco")) invalidarCacheDeElenco()
+  })
+}
+
 export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[] {
+  const chaveDoCache = `${team.file_key ?? team.nome}|${opts?.raw ? "raw" : "n"}`
+  const emCache = _cacheDeElenco.get(chaveDoCache)
+  if (emCache) return [...emCache]
+  const resolvido = _resolverElencoDoTime(team, opts)
+  _cacheDeElenco.set(chaveDoCache, resolvido)
+  return [...resolvido]
+}
+
+function _resolverElencoDoTime(team: Team, opts?: { raw?: boolean }): Player[] {
   // ⚠️ AS TRÊS FONTES MASCULINAS FICAM FECHADAS PARA CLUBE FEMININO (1.0.335).
   //
   // O índice curado (`getPlayersByTeam`), o overlay de elenco real dos CSVs

@@ -25,11 +25,33 @@ const KEY = () => getCareerScopedKey("ultrafoot:departed-players")
 // filtro falharia justamente quando os dois lados escrevem o clube diferente.
 const SIGLA_CLUBE = new Set(["fc", "cf", "sc", "ec", "ca", "cr", "ac", "se", "afc", "ud", "cd", "clube", "club"])
 
+// MEMOIZACAO DE NORMALIZACAO DE NOME.
+//
+// MEDIDO no perfil de CPU da campanha: esta funcao sozinha passava de 4% do
+// tempo total. Ela e PURA — NFD + duas regex + toLowerCase — e e chamada com o
+// MESMO punhado de nomes milhoes de vezes, porque todo casamento de atleta com
+// clube passa por aqui.
+//
+// Funcao pura de string: o cache nao tem como divergir da fonte, porque nao ha
+// fonte alem do argumento.
+//
+// ⚠️ TETO OBRIGATORIO. Sem limite seria vazamento silencioso numa sessao longa.
+// O espaco de chaves e fechado na pratica (nomes de clube e de atleta), entao
+// estourar o teto significa entrada inesperada — e ai limpar tudo e mais barato
+// e mais previsivel que uma politica LRU.
+const TETO_Norm = 50_000
+const _cacheNorm = new Map<string, string>()
+
 function norm(s: string): string {
+  const emCache = _cacheNorm.get(s)
+  if (emCache !== undefined) return emCache
   const base = (s || "")
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
-  return base.split(" ").filter(w => w && !SIGLA_CLUBE.has(w)).join(" ")
+  const resultado = base.split(" ").filter(w => w && !SIGLA_CLUBE.has(w)).join(" ")
+  if (_cacheNorm.size >= TETO_Norm) _cacheNorm.clear()
+  _cacheNorm.set(s, resultado)
+  return resultado
 }
 
 /** Chave de um atleta: clube de origem + nome, ambos normalizados. */
