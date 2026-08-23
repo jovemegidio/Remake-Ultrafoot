@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.359",
+  "version": "1.0.366",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "qa:smoke": "tsx scripts/qa-smoke.ts",
+    "qa:controle": "tsx scripts/test-modo-controle.ts",
     "qa:nao-regride": "node scripts/qa-nao-regride.mjs",
     "qa:destinos-online": "tsx scripts/test-destinos-online.ts",
     "qa:campo-atleta": "tsx scripts/test-campo-do-atleta.ts",
