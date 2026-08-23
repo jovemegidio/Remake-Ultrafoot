@@ -64,7 +64,19 @@ const report = {
   priorityFiles: [...new Set(activeThrows.map(item => item.file))],
   findings,
 }
-await writeFile("feature-audit.json", JSON.stringify(report, null, 2))
+// ⚠️ Mesmo carimbo que barrava a CI de Linux/macOS nos manifestos de foto:
+// reescrever o arquivo só para trocar `generatedAt` deixa a árvore suja
+// depois de toda auditoria, e a CI de desktop recusa árvore suja.
+const novoTexto = JSON.stringify(report, null, 2)
+const anterior = await readFile("feature-audit.json", "utf8").catch(() => null)
+const semCarimbo = texto => texto
+  .replace(/\r\n/g, "\n")
+  .replace(/"generatedAt": "[^"]*",\n/, "")
+if (anterior !== null && semCarimbo(anterior) === semCarimbo(novoTexto)) {
+  console.log("auditoria inalterada — carimbo preservado")
+} else {
+  await writeFile("feature-audit.json", novoTexto)
+}
 console.log(JSON.stringify({ scannedFiles: report.scannedFiles, ...report.totals, activeNotImplementedFunctions: activeThrows.length, actionableMarkers: report.actionableMarkers, documentationMarkers: report.documentationMarkers, priorityFiles: report.priorityFiles.length }))
 
 // GATE DE VERDADE: antes isto so imprimia um resumo e saia 0 sempre — dava para
