@@ -108,7 +108,13 @@ const INVENTARIO = [
   ["1.0.340", "Conversas com familia, empresario e diretoria", "lib/conversas-do-atleta.ts", "conversasDoMomento"],
   ["1.0.340", "Conversas na tela do atleta", "app/carreira/jogador/page.tsx", "responderConversa"],
   ["1.0.340", "Gate das conversas do atleta", "scripts/test-conversas-do-atleta.ts", "e enfeite"],
-  ["1.0.341", "Partida disputada sobrevive a calendario regenerado", "lib/use-game-manager.ts", "concluidasPorConfronto"],
+  // A marca era "concluidasPorConfronto" — o NOME de uma variavel de
+  // contagem, que a 1.0.366 reescreveu ao corrigir a partida do estadual que
+  // sumia. A rede continua inteira; quem mudou foi o nome. Trocada por
+  // `identidadeFrouxa`, que nasceu no proprio commit da 1.0.341 e E o
+  // mecanismo: casar a partida pela identidade do confronto quando a chave do
+  // calendario regenerado nao casa mais.
+  ["1.0.341", "Partida disputada sobrevive a calendario regenerado", "lib/use-game-manager.ts", "identidadeFrouxa"],
   ["1.0.341", "Gate da partida simulada que persiste", "scripts/test-simular-persiste.ts", "como se nao tivesse sido simulada"],
   ["1.0.342", "Elencos do pool compactados para o bundle", "scripts/compactar-elencos-do-pool.mjs", "NOMES DOS CAMPOS"],
   ["1.0.342", "Runtime expande o elenco compacto", "lib/pool-elencos.ts", "expandirElencosCompactos"],
@@ -220,6 +226,10 @@ const INVENTARIO = [
   ["1.0.358", "Cliente do mundo compartilhado", "lib/carreira-online.ts", "enviarPlacarDoMundo"],
   ["1.0.358", "Tela da Carreira Online joga com a semente", "app/online/carreira/page.tsx", "semearMotorDePartida"],
   ["1.0.358", "Gate do mundo online", "scripts/qa-mundo-online.mjs", "a vaga é compartilhada"],
+
+  ["1.0.366", "Partida do estadual nao some ao reconstruir o save", "lib/use-game-manager.ts", "chavesDoCalendario"],
+  ["1.0.366", "Resultado aberto na partida do atleta", "lib/partida-ao-vivo-do-atleta.ts", "avancarAteOLance"],
+  ["1.0.366", "A carreira do atleta VIVE a partida", "lib/partida-do-atleta.ts", "montarPartidaAoVivo"],
   ["—", "Arbitragem / VAR", "lib/arbitragem.ts", ""],
   ["—", "Eventos para o 3D", "lib/eventos-para-3d.ts", ""],
   ["—", "Histórico de lesões", "lib/historico-de-lesoes.ts", ""],
