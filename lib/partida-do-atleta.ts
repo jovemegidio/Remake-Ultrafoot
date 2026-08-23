@@ -23,6 +23,16 @@
 
 import type { EstadoCarreiraDeJogador, PosicaoDoAtleta } from "@/lib/carreira-de-jogador"
 
+import {
+  avancarAteOLance,
+  iniciarPartidaAoVivo,
+  partidaAcabou,
+  resolverLance,
+  type LanceDoAtleta,
+  type PartidaAoVivo,
+} from "@/lib/partida-ao-vivo-do-atleta"
+import type { MatchConfig } from "@/lib/match-engine"
+
 export type TipoDeMomento =
   | "entrada"      // o treinador te chama do banco
   | "ataque"       // bola no seu pé, no último terço
@@ -102,6 +112,18 @@ export interface PartidaEmCurso {
    * em saves antigos não têm, e a tela trata a ausência sem quebrar.
    */
   narracaoDaPartida?: LanceNarrado[]
+  /**
+   * ⚠️ A PARTIDA DE VERDADE, quando o resultado é ABERTO.
+   *
+   * Presente, ela manda: o placar sai do `MatchState` vivo e os momentos são
+   * gerados um a um, conforme o atleta se envolve. Ausente, vale o caminho
+   * antigo — que é o que os saves já em andamento têm, e por isso ele continua
+   * inteiro aqui em vez de ser apagado.
+   *
+   * A tela não precisa saber a diferença: `momentos[atual]`, `golsPro` e
+   * `decidirMomento` continuam significando a mesma coisa nos dois casos.
+   */
+  aoVivo?: PartidaAoVivo
 }
 
 // ─── Sorteio semeado (mesmo padrão do resto da carreira) ────────────────────
@@ -302,6 +324,20 @@ export function decidirMomento(
   partida: PartidaEmCurso,
   escolhaId: string,
 ): { partida: PartidaEmCurso; resultado: ResultadoDoMomento } {
+  // MODO AO VIVO: quem resolve é o módulo da partida real, e o resultado entra
+  // no placar. Depois a simulação segue até o próximo envolvimento.
+  if (partida.aoVivo) {
+    const r = resolverLance(partida.aoVivo, escolhaId)
+    const seguiu = avancarAteOLance(r.partida)
+    return {
+      partida: comEstadoVivo(partida, seguiu),
+      resultado: {
+        sucesso: r.desfecho.sucesso, narracao: r.desfecho.narracao,
+        deltaNota: r.desfecho.deltaNota, gol: r.desfecho.gol, assistencia: r.desfecho.assistencia,
+      },
+    }
+  }
+
   const momento = partida.momentos[partida.atual]
   const escolha = momento?.escolhas.find(e => e.id === escolhaId)
   if (!momento || !escolha) return { partida, resultado: { sucesso: false, narracao: "", deltaNota: 0, gol: false, assistencia: false } }
@@ -349,6 +385,110 @@ export function decidirMomento(
 }
 
 /** Acabaram os momentos? */
+
+// ─── MODO AO VIVO ────────────────────────────────────────────────────────────
+//
+// Converte um lance do módulo ao vivo para o formato que a tela já desenha, e
+// vice-versa. A ponte existe para NÃO reescrever a tela de partida (417 linhas)
+// numa mudança que já é delicada por natureza: trocar quem decide o placar.
+
+const TIPO_DO_LANCE: Record<string, TipoDeMomento> = {
+  finalizacao: "ataque",
+  drible: "ataque",
+  cabeceio: "ataque",
+  passe_decisivo: "criacao",
+  cruzamento: "criacao",
+  desarme: "defesa",
+  defesa: "defesa",
+}
+
+function lanceComoMomento(lance: LanceDoAtleta): MomentoDaPartida {
+  return {
+    id: lance.id,
+    minuto: lance.minuto,
+    // O vocabulário ao vivo é mais fino (finalização, drible, cruzamento…) que o
+    // desta tela, que agrupa em ataque/criação/defesa. Mapear é melhor que
+    // inventar um tipo novo: o ícone e a cor que a tela escolhe por `tipo`
+    // continuam certos, e nada mais no jogo precisa aprender um valor inédito.
+    tipo: TIPO_DO_LANCE[lance.tipo] ?? "criacao",
+    narracao: lance.narracao,
+    escolhas: lance.opcoes.map(o => ({
+      id: o.id,
+      texto: o.texto,
+      // O vocabulário de atributo é o mesmo dos dois lados.
+      atributo: o.atributo as EscolhaDoMomento["atributo"],
+      risco: o.risco,
+      recompensa: (o.efeito === "gol" ? "gol"
+        : o.efeito === "assistencia" ? "assistencia"
+          : o.efeito === "desarme" ? "desarme"
+            : o.efeito === "chance" ? "chance" : "posse") as EscolhaDoMomento["recompensa"],
+    })),
+  }
+}
+
+/** Sincroniza o que a tela lê a partir do estado vivo. */
+function comEstadoVivo(partida: PartidaEmCurso, vivo: PartidaAoVivo): PartidaEmCurso {
+  const pro = vivo.emCasa ? vivo.estado.home.goals : vivo.estado.away.goals
+  const contra = vivo.emCasa ? vivo.estado.away.goals : vivo.estado.home.goals
+  const momentos = vivo.lancePendente ? [lanceComoMomento(vivo.lancePendente)] : []
+  return {
+    ...partida,
+    aoVivo: vivo,
+    golsPro: pro,
+    golsContra: contra,
+    gols: vivo.gols,
+    assistencias: vivo.assistencias,
+    nota: vivo.nota,
+    historico: vivo.historico,
+    momentos,
+    // Sempre 0: a lista tem no máximo o lance atual. `partidaTerminou` não olha
+    // mais para este índice no modo ao vivo.
+    atual: 0,
+  }
+}
+
+/**
+ * Monta a partida do atleta COM O RESULTADO EM ABERTO.
+ *
+ * Diferente de `montarPartidaDoAtleta`, aqui não existe placar de entrada: a
+ * partida ainda não foi jogada. Ela corre em `avancarAteOLance` e para quando o
+ * atleta se envolve.
+ */
+export function montarPartidaAoVivo(
+  dados: {
+    fixtureId: string; adversario: string; emCasa: boolean; competicao: string; rodada: number
+    minutos: number; titular: boolean
+    config: MatchConfig
+    semente: string
+    posicao: string
+    atributos: Record<string, number>
+  },
+): PartidaEmCurso {
+  const entrada = dados.titular ? 0 : Math.max(0, 90 - dados.minutos)
+  const saida = dados.titular && dados.minutos < 90 ? dados.minutos : null
+  let vivo = iniciarPartidaAoVivo({
+    config: dados.config,
+    emCasa: dados.emCasa,
+    minutoDeEntrada: entrada,
+    minutoDeSaida: saida,
+    semente: dados.semente,
+    posicao: dados.posicao,
+    atributos: dados.atributos,
+  })
+  vivo = avancarAteOLance(vivo)
+
+  const base: PartidaEmCurso = {
+    fixtureId: dados.fixtureId, adversario: dados.adversario, emCasa: dados.emCasa,
+    competicao: dados.competicao, rodada: dados.rodada,
+    golsPro: 0, golsContra: 0,
+    minutos: dados.minutos, titular: dados.titular,
+    momentos: [], atual: 0, nota: 6, gols: 0, assistencias: 0, historico: [],
+  }
+  return comEstadoVivo(base, vivo)
+}
+
 export function partidaTerminou(partida: PartidaEmCurso): boolean {
+  // Ao vivo, "acabou" é o apito final — não o fim de uma lista montada antes.
+  if (partida.aoVivo) return partidaAcabou(partida.aoVivo) && !partida.aoVivo.lancePendente
   return partida.atual >= partida.momentos.length
 }

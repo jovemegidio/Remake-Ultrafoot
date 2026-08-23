@@ -32,7 +32,7 @@ import { completarLigaComPool, getTeamByFileKey, type Team } from "@/lib/teams-d
 // `hierarquiaDaPosicao`). Sem isto a disputa seria contra um número inventado.
 import { getPlayersForTeam } from "@/lib/players-data"
 import { suspensaoPorCartoes } from "@/lib/player-realism"
-import { montarPartidaDoAtleta, partidaTerminou, type PartidaEmCurso } from "@/lib/partida-do-atleta"
+import { montarPartidaAoVivo, montarPartidaDoAtleta, partidaTerminou, type PartidaEmCurso } from "@/lib/partida-do-atleta"
 
 // ─── ONDE UMA PROMESSA PODE ESTREAR ─────────────────────────────────────────
 //
@@ -1311,6 +1311,39 @@ export function jogarProximaRodada(
   for (const fixture of daRodada) {
     const mandante = clubes.get(fixture.homeCurto) ?? clubeDeReserva(novo, fixture.homeCurto)
     const visitante = clubes.get(fixture.awayCurto) ?? clubeDeReserva(novo, fixture.awayCurto)
+
+    // ⚠️ A SUA PARTIDA NÃO É PRÉ-SIMULADA quando você vai vivê-la.
+    //
+    // Este era o defeito inteiro: `simulateFullMatch` fechava o placar aqui, a
+    // tabela era atualizada logo abaixo, e só então os seus momentos eram
+    // montados — racionados contra um resultado que já existia. Agora a partida
+    // corre em `partida-ao-vivo-do-atleta` e o placar nasce do que você faz.
+    // O fixture e a tabela esperam o apito, em `concluirPartidaDoAtleta`.
+    if (fixture.isUserMatch && opcoes?.viver && (novo.lesao?.semanasRestantes ?? 0) <= 0) {
+      const emCasaAqui = fixture.homeCurto === novo.clubeCurto
+      const d0 = desempenhoDaPartida(
+        novo, 0, 0, forcaDoTime(emCasaAqui ? visitante : mandante),
+        `${novo.atleta.id}:${novo.temporada}:${rodada}`,
+      )
+      if (d0.minutos > 0) {
+        novo.partidaEmCurso = montarPartidaAoVivo({
+          fixtureId: fixture.id,
+          adversario: emCasaAqui ? fixture.awayNome : fixture.homeNome,
+          emCasa: emCasaAqui, competicao: fixture.competition, rodada,
+          minutos: d0.minutos, titular: d0.titular,
+          config: {
+            homeTeam: mandante, awayTeam: visitante,
+            homeRating: forcaDoTime(mandante), awayRating: forcaDoTime(visitante),
+            durationMinutes: 90,
+          },
+          semente: `${novo.atleta.id}:${novo.temporada}:${rodada}`,
+          posicao: String(novo.atleta.posicao),
+          atributos: novo.atleta.atributos as unknown as Record<string, number>,
+        })
+        continue
+      }
+    }
+
     const partida = simulateFullMatch({
       homeTeam: mandante,
       awayTeam: visitante,
@@ -2484,6 +2517,23 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
   if (!p || !partidaTerminou(p)) return estado
   const novo = structuredClone(estado)
   delete novo.partidaEmCurso
+
+  // ⚠️ NO MODO AO VIVO, o apito fecha o fixture e a tabela — não o início da
+  // rodada. A partida não foi pré-simulada justamente para o placar poder nascer
+  // do que o atleta fez; se a tabela não fosse atualizada aqui, o jogo dele
+  // sumiria da classificação e a temporada nunca fecharia (`temporadaEncerrada`
+  // olha para `!played`).
+  if (p.aoVivo) {
+    const fixture = novo.calendario.find(f => f.id === p.fixtureId)
+    if (fixture && !fixture.played) {
+      const casa = p.emCasa ? p.golsPro : p.golsContra
+      const fora = p.emCasa ? p.golsContra : p.golsPro
+      fixture.played = true
+      fixture.homeGoals = casa
+      fixture.awayGoals = fora
+      novo.tabela = updateStandings(novo.tabela, fixture.homeCurto, fixture.awayCurto, casa, fora)
+    }
+  }
 
   const registro: PartidaDoAtleta = {
     temporada: novo.temporada, rodada: p.rodada, competicao: p.competicao,
