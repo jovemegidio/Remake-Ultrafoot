@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, writeFile } from "node:fs/promises"
+import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 
 const root = process.cwd()
@@ -26,5 +26,16 @@ for (const team of await readdir(source, { withFileTypes: true })) {
   }
 }
 
-await writeFile(manifestFile, `${JSON.stringify({ version: 1, generatedAt: new Date().toISOString(), entries }, null, 2)}\n`)
+// ⚠️ Mesmo motivo do build-faces-manifest: reescrever só o carimbo deixava a
+// árvore suja depois de toda build, e a CI de Linux/macOS recusa árvore suja.
+const novoTexto = `${JSON.stringify({ version: 1, generatedAt: new Date().toISOString(), entries }, null, 2)}\n`
+const anterior = await readFile(manifestFile, "utf8").catch(() => null)
+const semCarimbo = texto => texto
+  .replace(/\r\n/g, "\n")
+  .replace(/"generatedAt": "[^"]*",\n/, "")
+if (anterior !== null && semCarimbo(anterior) === semCarimbo(novoTexto)) {
+  console.log("manifesto de fotos por time inalterado — carimbo preservado")
+} else {
+  await writeFile(manifestFile, novoTexto)
+}
 console.log(`fotos por time=${Object.keys(entries).length}`)

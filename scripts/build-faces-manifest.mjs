@@ -45,5 +45,28 @@ const manifest = {
   missing,
   entries,
 }
-await writeFile(outputFile, `${JSON.stringify(manifest, null, 2)}\n`)
+
+/**
+ * ⚠️ CARIMBO DE HORA NÃO PODE SUJAR A ÁRVORE.
+ *
+ * `generatedAt` mudava a cada execução, mesmo quando NENHUM rosto tinha
+ * mudado. Este arquivo é versionado e a build o regera, então a árvore ficava
+ * suja depois de TODA build — para sempre. E a CI de Linux/macOS se recusa a
+ * compilar árvore suja: as duas plataformas ficaram para trás por causa de um
+ * carimbo de hora, não por falta de código.
+ *
+ * O conserto é não reescrever quando só o carimbo mudaria. De quebra o
+ * `generatedAt` passa a significar algo útil — quando os rostos mudaram — em
+ * vez de quando a build rodou.
+ */
+const novoTexto = `${JSON.stringify(manifest, null, 2)}\n`
+const anterior = await readFile(outputFile, "utf8").catch(() => null)
+const semCarimbo = texto => texto
+  .replace(/\r\n/g, "\n")
+  .replace(/"generatedAt": "[^"]*",\n/, "")
+if (anterior !== null && semCarimbo(anterior) === semCarimbo(novoTexto)) {
+  console.log("manifesto de faces inalterado — carimbo preservado")
+} else {
+  await writeFile(outputFile, novoTexto)
+}
 console.log(`faces disponíveis=${manifest.available} referências sem arquivo=${manifest.missing}`)
