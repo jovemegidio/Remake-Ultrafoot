@@ -13,11 +13,13 @@ import {
   type Fixture,
 } from "../lib/use-game-manager"
 import type { MatchResult } from "../lib/game-engine"
+import { competitionsByLeague } from "../lib/international-competitions"
 
 const fail = (message: string): never => { throw new Error(message) }
 const divisions = [...new Set(allTeams.map(team => String(team.divisao)))].filter(Boolean)
 let auditedLeagues = 0
 let auditedCupPlans = 0
+const descompassos: string[] = []
 let auditedStateClubs = 0
 
 for (const division of divisions) {
@@ -33,8 +35,56 @@ for (const division of divisions) {
     data.directions.add(`${fixture.homeTeam.curto}>${fixture.awayTeam.curto}`)
     pairs.set(pair, data)
   }
-  for (const [pair, data] of pairs) {
-    if (data.count !== 2 || data.directions.size !== 2) fail(`${division}: confronto duplicado/incompleto ${pair}`)
+  // ⚠️ ESTE PORTÃO AFIRMAVA UMA REGRA QUE NÃO EXISTE.
+  //
+  // Ele exigia que TODO confronto de TODA divisão aparecesse exatamente 2x, em
+  // dois mandos. Isso é falso por FORMATO, não por defeito, e reprovava geração
+  // correta em pelo menos três casos reais:
+  //
+  //   uefa_rou_2  turno único (roundRobinCycles: 1) e play-off depois;
+  //   uefa_sui_2  quatro encontros por dupla — 4x, mas em 2 mandos;
+  //   mls         conferências: clubes de conferências diferentes não se
+  //               enfrentam duas vezes.
+  //
+  // O que o portão existe para proteger é outra coisa, e essa sim é universal: a
+  // temporada não pode acabar antes da hora. O defeito original era o calendário
+  // encerrar no meio e rebaixar o clube depois de ~15 jogos.
+  //
+  // A invariante certa é POR CLUBE: todo mundo joga o número de partidas que a
+  // competição declara, e todos jogam a MESMA quantidade — clube com jogo a mais
+  // que os outros já apareceu aqui (ver a memória do calendário de divisão
+  // ímpar).
+  const declarada = Object.values(competitionsByLeague).flat().find(c => c.id === division)
+  const jogosPorClube = new Map<string, number>()
+  for (const fixture of fixtures) {
+    jogosPorClube.set(fixture.homeTeam.curto, (jogosPorClube.get(fixture.homeTeam.curto) ?? 0) + 1)
+    jogosPorClube.set(fixture.awayTeam.curto, (jogosPorClube.get(fixture.awayTeam.curto) ?? 0) + 1)
+  }
+  const contagens = [...new Set(jogosPorClube.values())]
+  if (contagens.length !== 1) {
+    fail(`${division}: clubes com números de jogos diferentes (${contagens.sort((a, b) => a - b).join("/")})`)
+  }
+  // Coerência INTERNA: o calendário tem de fechar com os clubes que existem.
+  const ciclos = declarada?.roundRobinCycles ?? 2
+  const esperadoPelaBase = (teams.length - 1) * ciclos
+  // Formatos por conferência (MLS) não seguem esta conta; só cobramos onde a
+  // competição é pontos corridos puros.
+  if (declarada?.format === "points" && contagens[0] !== esperadoPelaBase) {
+    fail(`${division}: cada clube joga ${contagens[0]}, mas ${teams.length} clubes em ${ciclos} ciclo(s) dão ${esperadoPelaBase}`)
+  }
+
+  // ⚠️ DESCOMPASSO ENTRE CATÁLOGO E BASE — relatado, não reprovado.
+  //
+  // `j_league` declara 20 clubes e a base tem 18; `mls` declara 30 e tem 24. O
+  // calendário gerado está CERTO para os clubes que existem — o que falta é
+  // clube na base, que é trabalho de dado (nome, escudo, cidade reais), não de
+  // calendário. Reprovar aqui bloquearia toda publicação por uma lacuna de
+  // conteúdo; ficar calado a esconderia. Então ela aparece no relatório.
+  if (declarada?.teams && declarada.teams !== teams.length) {
+    descompassos.push(`${division}: catálogo diz ${declarada.teams} clubes, a base tem ${teams.length}`)
+  }
+  if (jogosPorClube.size !== teams.length) {
+    fail(`${division}: ${jogosPorClube.size} clubes no calendário para ${teams.length} na divisão`)
   }
   auditedLeagues++
 }
@@ -195,4 +245,11 @@ if (!migratedCalendar[0].played || migratedCalendar[1].played) {
   fail("resultado de calendário estadual antigo não migrou em relação 1:1")
 }
 
+if (descompassos.length > 0) {
+  console.log(`
+⚠️ ${descompassos.length} liga(s) com menos clubes na base do que o catálogo declara —`)
+  console.log("   o calendário fecha certo para quem existe; falta clube cadastrado:")
+  for (const d of descompassos) console.log("   - " + d)
+  console.log("")
+}
 console.log(`OK calendário: ${auditedLeagues} ligas, ${auditedStateClubs} clubes em estaduais, ${auditedCupPlans} planos de copa e conclusão 1:1`)

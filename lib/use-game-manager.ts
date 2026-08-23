@@ -1831,13 +1831,35 @@ export function reconcilePlayedFixtures(
    */
   const identidadeFrouxa = (competitionType: string, competition: string, casa: string, fora: string) =>
     [competitionType, competition, casa, fora].join("::")
-  const concluidasPorConfronto = new Set<string>()
+  //
+  // ⚠️ CONTA, NAO MARCA PRESENCA. Isto era um `Set`, e o defeito aparecia no
+  // ESTADUAL: la o mesmo confronto ocorre legitimamente em duas fases (a
+  // classificatoria e o mata-mata), e a identidade frouxa nao carrega a fase.
+  // Concluir Flamengo x Vasco na classificatoria marcava TAMBEM o Flamengo x
+  // Vasco das quartas — uma partida que o jogador nunca disputou sumia do
+  // calendario, com placar inventado. Depois de 4 jogos concluidos o calendario
+  // ja dizia 5.
+  //
+  // Contando quantas conclusoes existem para cada confronto, no maximo esse
+  // tanto de partidas e marcado. A rede da 1.0.341 continua inteira: calendario
+  // regenerado ainda casa pela identidade frouxa.
+  //
+  // ⚠️ A REDE FROUXA SO VALE PARA CHAVE ORFA. Foi criada para o calendario
+  // REGENERADO, onde a chave salva nao casa com fixture nenhuma. Se a chave
+  // ainda casa com uma partida que existe, usa-la de forma frouxa noutra e
+  // duplicar: foi assim que a semifinal FLA x VAS era marcada junto com a
+  // classificatoria FLA x VAS, e uma partida sumia do estadual.
+  const chavesDoCalendario = new Set(fixtures.map(f => getCalendarFixtureKey(f, season)))
+  const restantesPorConfronto = new Map<string, number>()
   for (const chave of completedFixtureKeys) {
     const partes = chave.split("::")
     if (partes.length < 7) continue
     const [temporadaDaChave, tipo, competicao] = partes
     if (Number(temporadaDaChave) !== season) continue
-    concluidasPorConfronto.add(identidadeFrouxa(tipo, competicao, partes[5], partes[6]))
+    // Chave que ainda encontra a propria partida nao precisa da rede.
+    if (chavesDoCalendario.has(chave)) continue
+    const id = identidadeFrouxa(tipo, competicao, partes[5], partes[6])
+    restantesPorConfronto.set(id, (restantesPorConfronto.get(id) ?? 0) + 1)
   }
 
   return fixtures.map(fixture => {
@@ -1853,6 +1875,10 @@ export function reconcilePlayedFixtures(
     if (resultIndex < 0) {
       const compatible = (result: MatchResult, index: number) =>
         !consumedResults.has(index) &&
+        // Resultado cuja chave ainda aponta para uma partida existente pertence
+        // AQUELA partida — nao a esta. Sem esta linha, a semifinal roubava o
+        // resultado da classificatoria do mesmo confronto.
+        (!result.fixtureKey || !chavesDoCalendario.has(result.fixtureKey)) &&
         result.homeTeam === fixture.homeTeam.curto &&
         result.awayTeam === fixture.awayTeam.curto &&
         result.competition === fixture.competition
@@ -1862,9 +1888,18 @@ export function reconcilePlayedFixtures(
 
     if (resultIndex >= 0) consumedResults.add(resultIndex)
     const result = resultIndex >= 0 ? seasonResults[resultIndex] : undefined
-    const concluidaPorConfronto = concluidasPorConfronto.has(identidadeFrouxa(
+    // A chave exata nao consome cota: ela ja identifica UMA partida.
+    const idDoConfronto = identidadeFrouxa(
       fixture.competitionType, fixture.competition, fixture.homeTeam.curto, fixture.awayTeam.curto,
-    ))
+    )
+    let concluidaPorConfronto = false
+    if (!completed.has(key) && !result) {
+      const restantes = restantesPorConfronto.get(idDoConfronto) ?? 0
+      if (restantes > 0) {
+        concluidaPorConfronto = true
+        restantesPorConfronto.set(idDoConfronto, restantes - 1)
+      }
+    }
     if (!completed.has(key) && !concluidaPorConfronto && !result) return fixture
     return {
       ...fixture,

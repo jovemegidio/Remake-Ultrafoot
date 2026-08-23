@@ -54,7 +54,17 @@ espera("serie_d", 3, 20, "serie_c", "promoted")
 console.log("\nO TOPO NÃO SOBE E A BASE NÃO CAI\n")
 
 espera("serie_a", 1, 20, "serie_a", "stay")
-espera("serie_d", 20, 20, "serie_d", "stay")
+// ⚠️ A BASE MUDOU DE LUGAR. Este teste afirmava que o 20º da Série D fica —
+// verdade até a Divisão de Acesso existir. Ela é o novo fundo da pirâmide
+// brasileira (`divisionBelow("divisao_acesso_br")` é null), então a Série D
+// PASSOU a rebaixar, e é isso que faz a promessa da Divisão de Acesso valer:
+// sem queda vinda de cima, ninguém no fundo tem contra quem disputar a vaga.
+//
+// A invariante "a base não cai" continua de pé — só se aplica a quem é a base
+// agora.
+espera("serie_d", 20, 20, "divisao_acesso_br", "relegated")
+espera("divisao_acesso_br", 20, 20, "divisao_acesso_br", "stay")
+espera("divisao_acesso_br", 1, 20, "serie_d", "promoted")
 
 console.log("\n⚠️ O QUE O PORTÃO ANTIGO ERRAVA: liga estrangeira TAMBÉM rebaixa\n")
 
