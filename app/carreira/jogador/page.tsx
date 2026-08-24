@@ -41,6 +41,8 @@ import {
   entrevistaDaVez, fazerPedido, jogarProximaRodada, mediaDaTemporada, minutosEsperados,
   papelNoElenco, potencialVisivel, recusarPropostas, reputacaoDeTreinador, responderEntrevista,
   resumoDaCarreira, trocarEmpresario, fazerAposta, interagirComParceira, EMPRESARIOS,
+  assinarPatrocinioPessoal, comprarBemDoAtleta, interagirComElenco, jogarPartidaDaSelecao,
+  proximaPartidaDaSelecao, relacoesDoAtleta, BENS_DO_ATLETA, PATROCINIOS_PESSOAIS,
   type EstadoCarreiraDeJogador, type PedidoDaNegociacao, type PropostaDeClube,
 } from "@/lib/carreira-de-jogador"
 
@@ -205,6 +207,8 @@ export default function CarreiraDeJogadorPage() {
   const conversas = conversasDoMomento(carreira)
   const temPropostas = carreira.propostas.length > 0
   const economia = economiaDoAtleta(carreira)
+  const relacoes = relacoesDoAtleta(carreira)
+  const selecaoPendente = proximaPartidaDaSelecao(carreira)
 
   // ── Os botões do canto direito. Sem clube, o tempo passa por semana. ──
   const acoes = carreira.aposentado ? null : semClube ? (
@@ -216,6 +220,18 @@ export default function CarreiraDeJogadorPage() {
     </Button>
   ) : (
     <>
+      {selecaoPendente && (
+        <Button
+          variant="outline"
+          onClick={() => {
+            const comPartida = jogarPartidaDaSelecao(carreira, { viver: true })
+            setState({ carreiraDeJogador: comPartida })
+            if (comPartida.partidaEmCurso) hardNavigate("/carreira/jogador/partida")
+          }}
+        >
+          <Flag className="mr-2 h-4 w-4" /> Seleção: {selecaoPendente.adversario}
+        </Button>
+      )}
       {!carreira.temporadaEncerrada && (
         <>
           <Button
@@ -567,10 +583,18 @@ export default function CarreiraDeJogadorPage() {
                   ))}
                 </div>
                 {carreira.selecao.convocada && (
-                  <p className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-[11px] text-emerald-200/80">
-                    <Flag className="h-3.5 w-3.5" />
-                    Seleção {carreira.selecao.nivel === "sub20" ? t.carreiraDeJogador.sub20 : "principal"} · {carreira.selecao.jogos} jogos, {carreira.selecao.gols} gols
-                  </p>
+                  <div className="mt-4 rounded-lg border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-[11px] text-emerald-200/80">
+                    <p className="flex items-center gap-2">
+                      <Flag className="h-3.5 w-3.5" />
+                      Seleção {carreira.selecao.nivel === "sub20" ? t.carreiraDeJogador.sub20 : "principal"} · {carreira.selecao.jogos} jogos, {carreira.selecao.gols} gols
+                    </p>
+                    {selecaoPendente && (
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <span>{t.carreiraDeJogador.proximo}: {selecaoPendente.adversario}</span>
+                        <button onClick={() => aplicar(jogarPartidaDaSelecao(carreira))} className="rounded-md border border-emerald-200/20 px-2 py-1 font-bold">Simular</button>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 <div className="mt-4 border-t border-white/10 pt-3">
@@ -588,6 +612,15 @@ export default function CarreiraDeJogadorPage() {
                   ) : (
                     <button onClick={() => aplicar(interagirComParceira(carreira, "conhecer"))} className="mt-2 rounded-lg border border-pink-300/25 bg-pink-300/[.06] px-3 py-1.5 text-xs text-pink-100/80">{t.carreiraDeJogador.conhecer_alguem}</button>
                   )}
+                  <div className="mt-3 border-t border-white/10 pt-2">
+                    <p className="flex items-center justify-between text-[10px] text-white/50"><span>{t.carreiraDeJogador.relacao_com_o_elenco}</span><b>{relacoes.elenco}/100</b></p>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-violet-400" style={{ width: `${relacoes.elenco}%` }} /></div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <button onClick={() => aplicar(interagirComElenco(carreira, "treinar_junto"))} className="rounded-lg border border-white/10 px-2 py-1 text-[10px]">{t.carreiraDeJogador.treinar_junto}</button>
+                      <button onClick={() => aplicar(interagirComElenco(carreira, "jantar"))} className="rounded-lg border border-white/10 px-2 py-1 text-[10px]">{t.carreiraDeJogador.jantar_do_elenco}</button>
+                      <button onClick={() => aplicar(interagirComElenco(carreira, "liderar"))} className="rounded-lg border border-white/10 px-2 py-1 text-[10px]">{t.carreiraDeJogador.liderar_conversa}</button>
+                    </div>
+                  </div>
                 </div>
               </PainelDoAtleta>
 
@@ -659,6 +692,36 @@ export default function CarreiraDeJogadorPage() {
                 className="min-h-0 flex-1"
                 acessorio={<span className="text-[11px] text-white/40">reputação {carreira.reputacao ?? 30} · torcida {carreira.torcida ?? 50}</span>}
               >
+                <div className="mb-3 rounded-xl border border-cyan-300/15 bg-cyan-300/[.04] p-3">
+                  <p className="flex items-center justify-between text-[10px] font-black uppercase tracking-wide text-cyan-100/70">
+                    <span>{t.carreiraDeJogador.marca_pessoal}</span><span>relação {relacoes.marcas}/100</span>
+                  </p>
+                  {carreira.patrocinioPessoal ? (
+                    <div className="mt-1 text-[11px] text-white/65">
+                      <b className="text-white/85">{carreira.patrocinioPessoal.marca}</b> · {formatCurrency(carreira.patrocinioPessoal.valorSemanal)}/semana
+                      <p>{carreira.patrocinioPessoal.golsNoContrato}/{carreira.patrocinioPessoal.metaGols} gols · {carreira.patrocinioPessoal.semanasRestantes} semanas</p>
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {PATROCINIOS_PESSOAIS.filter(p => (carreira.reputacao ?? 0) >= p.reputacaoMinima).map(p => (
+                        <button key={p.id} onClick={() => aplicar(assinarPatrocinioPessoal(carreira, p.id))} className="rounded-lg border border-cyan-200/15 px-2 py-1 text-[10px] text-cyan-100/75">
+                          {p.marca} · {formatCurrency(p.valorSemanal)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="mb-3 rounded-xl border border-amber-300/15 bg-amber-300/[.04] p-3">
+                  <p className="text-[10px] font-black uppercase tracking-wide text-amber-100/70">{t.carreiraDeJogador.patrimonio} · estilo {carreira.patrimonio?.estilo ?? 0}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {BENS_DO_ATLETA.filter(b => !(carreira.patrimonio?.itens ?? []).includes(b.id)).slice(0, 4).map(b => (
+                      <button key={b.id} disabled={economia.dinheiro < b.preco} onClick={() => aplicar(comprarBemDoAtleta(carreira, b.id))} className="rounded-lg border border-amber-200/15 px-2 py-1 text-[10px] text-amber-100/70 disabled:opacity-30">
+                        {b.nome} · {formatCurrency(b.preco)}
+                      </button>
+                    ))}
+                  </div>
+                  {(carreira.patrimonio?.itens.length ?? 0) > 0 && <p className="mt-2 text-[10px] text-white/40">{carreira.patrimonio!.itens.length} bens · manutenção acumulada {formatCurrency(carreira.patrimonio!.totalManutencao)}</p>}
+                </div>
                 {(carreira.repercussao?.length ?? 0) === 0 ? (
                   <p className="text-sm leading-relaxed text-white/45">{t.carreiraDeJogador.repercussao_vazia}</p>
                 ) : (
@@ -678,8 +741,8 @@ export default function CarreiraDeJogadorPage() {
                   <p className="py-6 text-center text-white/35">{t.carreiraDeJogador.ainda_sem_partidas_nesta_carreira}</p>
                 )}
                 <div className="space-y-2">
-                  {carreira.ultimasPartidas.map(p => (
-                    <div key={`${p.temporada}-${p.rodada}`} className="rounded-xl bg-black/30 p-3">
+                  {carreira.ultimasPartidas.map((p, indice) => (
+                    <div key={`${p.temporada}-${p.rodada}-${p.adversario}-${indice}`} className="rounded-xl bg-black/30 p-3">
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-sm font-bold">{p.casa ? "vs" : "@"} {p.adversario}</span>
                         <span className="text-sm text-white/60">{p.golsPro}–{p.golsContra}</span>

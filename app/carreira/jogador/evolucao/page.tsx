@@ -9,11 +9,13 @@
 // atleta cresce pelo que FAZ em campo. O que ele escolhe é o FOCO e a
 // INTENSIDADE do treino — os dois inclinam a curva, nenhum dos dois a decide.
 
+import { useState } from "react"
 import { Battery, Dumbbell, ShoppingBag, Users } from "lucide-react"
 
 import { AtletaShell, PainelDoAtleta } from "@/components/carreira-jogador/atleta-shell"
 import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
+import { MinijogoDeTreino } from "@/components/carreira-jogador/minijogo-de-treino"
 import { useGameState } from "@/lib/save-system"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
@@ -23,7 +25,8 @@ import { formatCurrency } from "@/lib/currency"
 import {
   arquetipo, atributosEfetivosDoAtleta, comprarEquipamento, confiancaMerecida, definirIntensidadeDeTreino,
   economiaDoAtleta, equiparItem, hierarquiaDaPosicao, leituraDaPersonalidade, potencialVisivel,
-  treinarAtributoIndividual, EQUIPAMENTOS_DO_ATLETA, NOME_DO_ATRIBUTO,
+  contratarTreinadorPessoal, realizarMinijogoDeTreino, treinarAtributoIndividual,
+  EQUIPAMENTOS_DO_ATLETA, NOME_DO_ATRIBUTO, TREINADORES_PESSOAIS,
   type AtributosDoAtleta, type EstadoCarreiraDeJogador, type IntensidadeDeTreino,
 } from "@/lib/carreira-de-jogador"
 
@@ -38,6 +41,7 @@ export default function EvolucaoDoAtletaPage() {
   const { state, setState } = useGameState()
   const t = useTranslation()
   const carreira = state.carreiraDeJogador
+  const [atributoMinijogo, setAtributoMinijogo] = useState<keyof AtributosDoAtleta>("ritmo")
 
   if (!carreira) {
     return (
@@ -94,10 +98,10 @@ export default function EvolucaoDoAtletaPage() {
                   <b className="w-12 text-right">{atleta.atributos[chave]}{bonus > 0 && <span className="text-[10px] text-cyan-300">+{bonus}</span>}</b>
                   <button
                     onClick={() => aplicar(treinarAtributoIndividual(carreira, chave))}
-                    disabled={economia.energia < 12 || atleta.atributos[chave] >= atleta.potencial}
+                    disabled={economia.energia < (carreira.treinadorPessoal ? 9 : 12) || atleta.atributos[chave] >= atleta.potencial}
                     className="rounded-lg border border-[var(--brand)]/25 px-2 py-1 text-[10px] font-bold text-[var(--brand)] disabled:cursor-not-allowed disabled:opacity-30"
                   >
-                    +1 · 12⚡
+                    +1 · {carreira.treinadorPessoal ? 9 : 12}⚡
                   </button>
                 </div>
               )
@@ -136,6 +140,37 @@ export default function EvolucaoDoAtletaPage() {
               <option value="puxada">{t.carreiraDeJogador.puxada_evolui_mais_chega_cansado}</option>
             </select>
           </label>
+
+          <div className="mt-4 border-t border-white/10 pt-3">
+            <p className="text-[11px] font-black uppercase tracking-wide text-white/45">{t.carreiraDeJogador.treinador_pessoal}</p>
+            {carreira.treinadorPessoal ? (
+              <p className="mt-1 text-xs text-emerald-200/75">
+                {carreira.treinadorPessoal.nome} · {carreira.treinadorPessoal.semanasRestantes} semanas · {formatCurrency(carreira.treinadorPessoal.custoSemanal)}/semana
+              </p>
+            ) : (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {TREINADORES_PESSOAIS.map(plano => (
+                  <button key={plano.id} disabled={economia.dinheiro < plano.custoContratacao} onClick={() => aplicar(contratarTreinadorPessoal(carreira, plano.id))} className="rounded-lg border border-white/10 px-2 py-1 text-[10px] text-white/65 disabled:opacity-30">
+                    {plano.nome} · {formatCurrency(plano.custoContratacao)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 border-t border-white/10 pt-3">
+            <label className="text-[11px] text-white/55">
+              {t.carreiraDeJogador.minijogo_de_treino}
+              <select value={atributoMinijogo} onChange={e => setAtributoMinijogo(e.target.value as keyof AtributosDoAtleta)} className="mt-1 h-9 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-xs text-white">
+                {ATRIBUTOS.map(a => <option key={a.chave} value={a.chave}>{a.nome}</option>)}
+              </select>
+            </label>
+            <MinijogoDeTreino
+              desabilitado={economia.energia < (carreira.treinadorPessoal ? 6 : 9)
+                || (carreira.minijogoDeTreino?.temporada === carreira.temporada && carreira.minijogoDeTreino.rodada === carreira.rodada)}
+              aoConcluir={precisao => aplicar(realizarMinijogoDeTreino(carreira, atributoMinijogo, precisao))}
+            />
+          </div>
 
           {carreira.treinoDaSemana && (
             <div className="mt-4 rounded-xl border border-white/10 bg-black/30 px-4 py-3">

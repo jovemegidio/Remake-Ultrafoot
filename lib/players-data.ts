@@ -15,7 +15,7 @@ import { allTeams, type Team } from "@/lib/teams-data"
 // `lib/elencos-reais-tm.ts`.
 import { elencosReaisTM, elencosTMProntos } from "@/lib/elencos-reais-tm"
 import { getPlayerOverride, bonusDasCaracteristicas } from "@/lib/player-overrides"
-import { aplicarPatchDeElenco } from "@/lib/roster-overrides"
+import { aplicarPatchDeElenco, revisaoDosElencosEditados } from "@/lib/roster-overrides"
 import { hasDeparted } from "@/lib/departed-players"
 import { getArrivals, hasAnyArrival } from "@/lib/world-market"
 import { saiuDoClube, chegouAoClube, temTransferencias } from "@/lib/atualizacao-elencos"
@@ -1350,9 +1350,11 @@ function getRealSquad(team: Team): Player[] | null {
 // mora no motor (`squadPlayers`). Cachear aqui nao congela transferencia nem
 // lesao.
 const _cacheDeElenco = new Map<string, Player[]>()
+let _revisaoDoEditorNoCache = revisaoDosElencosEditados()
 
 export function invalidarCacheDeElenco(): void {
   _cacheDeElenco.clear()
+  _revisaoDoEditorNoCache = revisaoDosElencosEditados()
 }
 
 // Mesmo canal que `teams-data` usa para os indices de busca.
@@ -1368,6 +1370,7 @@ if (typeof window !== "undefined") {
 }
 
 export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[] {
+  if (_revisaoDoEditorNoCache !== revisaoDosElencosEditados()) invalidarCacheDeElenco()
   const chaveDoCache = `${team.file_key ?? team.nome}|${opts?.raw ? "raw" : "n"}`
   const emCache = _cacheDeElenco.get(chaveDoCache)
   if (emCache) return [...emCache]

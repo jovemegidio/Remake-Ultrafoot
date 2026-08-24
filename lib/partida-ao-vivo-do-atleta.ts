@@ -57,6 +57,9 @@ export type TipoDeLance =
   | "desarme"
   | "cabeceio"
   | "defesa"
+  | "saida_do_gol"
+  | "penalti_defensivo"
+  | "reposicao"
 
 export interface OpcaoDoLance {
   id: string
@@ -66,7 +69,7 @@ export interface OpcaoDoLance {
   /** 0–1. Quanto mais alto, mais raro o sucesso e maior o prêmio. */
   risco: number
   /** O que o sucesso produz no jogo. */
-  efeito: "gol" | "assistencia" | "chance" | "posse" | "desarme"
+  efeito: "gol" | "assistencia" | "chance" | "posse" | "desarme" | "defesa"
 }
 
 export interface LanceDoAtleta {
@@ -148,13 +151,30 @@ const ENVOLVIMENTO_POR_POSICAO: Record<string, number> = {
   ATA: 0.058, MEI: 0.054, VOL: 0.038, LD: 0.034, LE: 0.034, ZAG: 0.030, GOL: 0.022,
 }
 
+/**
+ * O ritmo continua entre 8 e 16 lances, mas a FUNCAO em campo decide a faixa.
+ * Antes todos recebiam o mesmo alvo aleatorio e a correcao de fim de jogo
+ * (`faltam / minutosRestantes`) engolia a pequena diferenca de envolvimento:
+ * em 40 partidas o teste media ATA 299 x ZAG 299. A posicao agora participa do
+ * alvo, nao apenas de uma chance que seria sobrescrita depois.
+ */
+const RITMO_POR_POSICAO: Record<string, { minimo: number; maximo: number }> = {
+  ATA: { minimo: 12, maximo: 16 },
+  MEI: { minimo: 11, maximo: 15 },
+  VOL: { minimo: 9, maximo: 13 },
+  LD: { minimo: 9, maximo: 12 },
+  LE: { minimo: 9, maximo: 12 },
+  ZAG: { minimo: 8, maximo: 10 },
+  GOL: { minimo: 8, maximo: 11 },
+}
+
 // ⚠️ VENCER O LANCE NÃO É MARCAR. Um chute bem executado ainda encontra goleiro,
 // trave e zagueiro na linha. Sem este fator, "acertei a finalização" virava gol
 // em ~87% das vezes para um atleta de 95 — e o artilheiro da liga fazia 150 gols
 // na temporada. O passe decisivo converte um pouco mais: quem recebe já está em
 // situação melhor do que quem chutou de fora.
 const CONVERSAO_POR_EFEITO: Record<string, number> = {
-  gol: 0.42, assistencia: 0.5, chance: 1, posse: 1, desarme: 1,
+  gol: 0.42, assistencia: 0.5, chance: 1, posse: 1, desarme: 1, defesa: 0.86,
 }
 
 /**
@@ -187,7 +207,9 @@ export function iniciarPartidaAoVivo(dados: {
 }): PartidaAoVivo {
   semearMotorDePartida(sementeNumerica(dados.semente))
   const minutosEmCampo = Math.max(1, (dados.minutoDeSaida ?? 90) - dados.minutoDeEntrada)
-  const alvoCheio = 8 + Math.floor(roll(`${dados.semente}:ritmo-nss`) * 9)
+  const faixa = RITMO_POR_POSICAO[dados.posicao] ?? { minimo: 8, maximo: 14 }
+  const alvoCheio = faixa.minimo
+    + Math.floor(roll(`${dados.semente}:ritmo-nss:${dados.posicao}`) * (faixa.maximo - faixa.minimo + 1))
   return {
     estado: startMatch(createInitialState()),
     config: dados.config,
@@ -301,14 +323,37 @@ function montarLance(p: PartidaAoVivo, minuto: number, pro: number, contra: numb
 
   const sorteio = roll(`${p.semente}:tipo:${minuto}`)
   const indice = p.lancesOferecidos
-  const tipo: TipoDeLance = p.posicao !== "GOL" && indice === 2 ? "falta"
+  const tipoDoGoleiro: TipoDeLance = sorteio < 0.42 ? "defesa"
+    : sorteio < 0.64 ? "saida_do_gol"
+      : sorteio < 0.77 ? "penalti_defensivo" : "reposicao"
+  const tipo: TipoDeLance = p.posicao === "GOL" ? tipoDoGoleiro
+    : p.posicao !== "GOL" && indice === 2 ? "falta"
     : p.posicao !== "GOL" && (p.metaDeLances ?? 0) >= 10 && indice === 6 ? "penalti"
       : sorteio < 0.34 ? "finalizacao"
     : sorteio < 0.6 ? "passe_decisivo"
       : sorteio < 0.78 ? "drible"
         : sorteio < 0.9 ? "cruzamento" : "desarme"
 
-  const opcoes: OpcaoDoLance[] = tipo === "falta"
+  const opcoes: OpcaoDoLance[] = tipo === "defesa"
+    ? [
+        { id: "mergulhar", texto: "Mergulhar no canto", atributo: "defesa", risco: 0.42, efeito: "defesa" },
+        { id: "fechar_angulo", texto: "Fechar o angulo e reagir", atributo: "posicionamento", risco: 0.25, efeito: "defesa" },
+      ]
+    : tipo === "saida_do_gol"
+      ? [
+          { id: "abafar", texto: "Sair e abafar", atributo: "fisico", risco: 0.46, efeito: "defesa" },
+          { id: "esperar", texto: "Esperar sobre a linha", atributo: "defesa", risco: 0.32, efeito: "defesa" },
+        ]
+      : tipo === "penalti_defensivo"
+        ? [
+            { id: "defender_penalti", texto: "Escolher o canto e saltar", atributo: "defesa", risco: 0.52, efeito: "defesa" },
+          ]
+        : tipo === "reposicao"
+          ? [
+              { id: "lancar_reposicao", texto: "Lancar o contra-ataque", atributo: "passe", risco: 0.48, efeito: "assistencia" },
+              { id: "repor_curto", texto: "Repor curto com seguranca", atributo: "passe", risco: 0.14, efeito: "posse" },
+            ]
+    : tipo === "falta"
     ? [
         { id: "bater_falta", texto: "Cobrar a falta com mira", atributo: "finalizacao", risco: 0.58, efeito: "gol" },
         { id: "rolar_falta", texto: "Rolar para a jogada ensaiada", atributo: "passe", risco: 0.24, efeito: "assistencia" },
@@ -344,7 +389,11 @@ function montarLance(p: PartidaAoVivo, minuto: number, pro: number, contra: numb
               { id: "conter", texto: "Conter sem se expor", atributo: "posicionamento", risco: 0.18, efeito: "posse" },
             ]
 
-  const narracao = tipo === "falta" ? `${minuto}': falta na entrada da area. A cobranca e sua.`
+  const narracao = tipo === "defesa" ? `${minuto}': finalizacao no canto. O gol depende da sua defesa.`
+    : tipo === "saida_do_gol" ? `${minuto}': o atacante invade a area. Saia ou espere.`
+      : tipo === "penalti_defensivo" ? `${minuto}': penalti contra. Leia o cobrador e escolha o canto.`
+        : tipo === "reposicao" ? `${minuto}': bola dominada. Voce inicia a jogada.`
+    : tipo === "falta" ? `${minuto}': falta na entrada da area. A cobranca e sua.`
     : tipo === "penalti" ? `${minuto}': PENALTI. Goleiro e bola — voce decide o canto.`
       : aperto
     ? `${minuto}': ${pro}-${contra} e o tempo correndo. A bola chega em você.`
@@ -407,6 +456,9 @@ export function resolverLance(p: PartidaAoVivo, opcaoId: string, precisaoMira = 
     } else if (opcao.efeito === "chance") {
       delta = 0.45
       narracao = "Jogada vencida — o time chega com perigo."
+    } else if (opcao.efeito === "defesa") {
+      delta = lance.tipo === "penalti_defensivo" ? 1 : 0.55
+      narracao = lance.tipo === "penalti_defensivo" ? "DEFENDEU! Voce vence o cobrador." : "Defesa feita — o gol esta protegido."
     } else if (opcao.efeito === "desarme") {
       delta = 0.4
       narracao = "Bola recuperada."
@@ -416,9 +468,15 @@ export function resolverLance(p: PartidaAoVivo, opcaoId: string, precisaoMira = 
     }
   } else {
     delta = opcao.risco >= 0.5 ? -0.4 : -0.2
-    narracao = opcao.risco >= 0.5
-      ? "Não deu. A jogada morre nos pés do adversário."
-      : "Escolha segura, mas o lance se perde."
+    if (["defesa", "saida_do_gol", "penalti_defensivo"].includes(lance.tipo)) {
+      delta = lance.tipo === "penalti_defensivo" ? -0.8 : -0.55
+      narracao = "Gol adversario. A bola passa pela tentativa de defesa."
+      estado = marcarGol(estado, !p.emCasa, lance.minuto, "Gol sofrido pelo seu goleiro")
+    } else {
+      narracao = opcao.risco >= 0.5
+        ? "Não deu. A jogada morre nos pés do adversário."
+        : "Escolha segura, mas o lance se perde."
+    }
   }
 
   return {

@@ -490,6 +490,72 @@ export interface ParceiraDoAtleta {
   momentos: number
 }
 
+export interface TreinadorPessoalDoAtleta {
+  id: string
+  nome: string
+  especialidade: keyof AtributosDoAtleta | "equilibrado"
+  custoSemanal: number
+  bonusTreino: number
+  semanasRestantes: number
+}
+
+export interface RelacoesDoAtleta {
+  elenco: number
+  marcas: number
+  ultimaInteracaoElenco?: number
+  rupturas: string[]
+}
+
+export interface PatrocinioPessoalDoAtleta {
+  id: string
+  marca: string
+  valorSemanal: number
+  bonusPorGol: number
+  semanasRestantes: number
+  metaGols: number
+  golsNoContrato: number
+}
+
+export interface BemDoAtleta {
+  id: string
+  nome: string
+  categoria: "imovel" | "carro" | "luxo"
+  preco: number
+  manutencaoSemanal: number
+  estilo: number
+}
+
+export interface PartidaDaSelecao {
+  id: string
+  adversario: string
+  competicao: string
+  jogada: boolean
+  golsPro?: number
+  golsContra?: number
+  nota?: number
+}
+
+export const TREINADORES_PESSOAIS: (Omit<TreinadorPessoalDoAtleta, "semanasRestantes"> & { custoContratacao: number })[] = [
+  { id: "caio", nome: "Caio Nascimento", especialidade: "fisico", custoContratacao: 18_000, custoSemanal: 2_200, bonusTreino: 0.14 },
+  { id: "bia", nome: "Beatriz Leme", especialidade: "equilibrado", custoContratacao: 32_000, custoSemanal: 3_800, bonusTreino: 0.2 },
+  { id: "ramon", nome: "Ramon Vieira", especialidade: "finalizacao", custoContratacao: 45_000, custoSemanal: 5_500, bonusTreino: 0.28 },
+]
+
+export const PATROCINIOS_PESSOAIS = [
+  { id: "vertice", marca: "Vertice Sports", reputacaoMinima: 30, valorSemanal: 3_000, bonusPorGol: 1_200, semanas: 16, metaGols: 5 },
+  { id: "pulso", marca: "Pulso Performance", reputacaoMinima: 48, valorSemanal: 7_500, bonusPorGol: 2_800, semanas: 20, metaGols: 9 },
+  { id: "aurora", marca: "Aurora Eleven", reputacaoMinima: 68, valorSemanal: 16_000, bonusPorGol: 6_000, semanas: 24, metaGols: 14 },
+] as const
+
+export const BENS_DO_ATLETA: BemDoAtleta[] = [
+  { id: "apto", nome: "Apartamento compacto", categoria: "imovel", preco: 90_000, manutencaoSemanal: 450, estilo: 8 },
+  { id: "casa", nome: "Casa contemporanea", categoria: "imovel", preco: 420_000, manutencaoSemanal: 2_100, estilo: 22 },
+  { id: "carro_esportivo", nome: "Coupe esportivo", categoria: "carro", preco: 180_000, manutencaoSemanal: 1_400, estilo: 14 },
+  { id: "carro_eletrico", nome: "Sedan eletrico", categoria: "carro", preco: 125_000, manutencaoSemanal: 650, estilo: 10 },
+  { id: "relogio", nome: "Relogio de autor", categoria: "luxo", preco: 38_000, manutencaoSemanal: 80, estilo: 5 },
+  { id: "iate", nome: "Lancha de lazer", categoria: "luxo", preco: 650_000, manutencaoSemanal: 6_500, estilo: 28 },
+]
+
 export const EQUIPAMENTOS_DO_ATLETA: EquipamentoDoAtleta[] = [
   { id: "chuteira_agilidade", nome: "Chuteira Veloz", categoria: "chuteira", descricao: "+3 ritmo e +1 drible", preco: 18_000, bonus: { ritmo: 3, drible: 1 } },
   { id: "chuteira_precisao", nome: "Chuteira Precisao", categoria: "chuteira", descricao: "+3 finalizacao e +1 passe", preco: 24_000, bonus: { finalizacao: 3, passe: 1 } },
@@ -785,7 +851,13 @@ export interface EstadoCarreiraDeJogador {
   acoes: AcoesDaTemporada
   /** Ganho de atributo da última virada de temporada, para a tela mostrar. */
   ultimaEvolucao: { atributo: keyof AtributosDoAtleta; ganho: number }[]
-  selecao: { convocada: boolean; nivel: "sub20" | "principal" | null; jogos: number; gols: number }
+  selecao: {
+    convocada: boolean
+    nivel: "sub20" | "principal" | null
+    jogos: number
+    gols: number
+    partidas?: PartidaDaSelecao[]
+  }
   historico: TemporadaDoAtleta[]
   propostas: PropostaDeClube[]
   /** Pedido feito ao clube; some quando respondido no fim da temporada. */
@@ -805,6 +877,11 @@ export interface EstadoCarreiraDeJogador {
   economia?: EconomiaDoAtleta
   apostaAtiva?: ApostaDoAtleta | null
   parceira?: ParceiraDoAtleta | null
+  treinadorPessoal?: TreinadorPessoalDoAtleta | null
+  relacoes?: RelacoesDoAtleta
+  patrocinioPessoal?: PatrocinioPessoalDoAtleta | null
+  patrimonio?: { itens: string[]; estilo: number; totalManutencao: number }
+  minijogoDeTreino?: { temporada: number; rodada: number; atributo: keyof AtributosDoAtleta; precisao: number }
 }
 
 // ─── Aleatoriedade semeada ──────────────────────────────────────────────────
@@ -871,6 +948,16 @@ export function atributosEfetivosDoAtleta(estado: EstadoCarreiraDeJogador): Atri
       atributos[chave] = Math.min(99, atributos[chave] + bonus)
     }
   }
+  // Energia agora chega ao campo. Abaixo de 55% o atleta perde execucao de
+  // forma progressiva; zerado custa ate 13 pontos em cada fundamento. O
+  // equipamento continua contando, mas nao transforma exaustao em detalhe.
+  const proporcao = economia.energia / Math.max(1, economia.energiaMaxima)
+  const penalidade = proporcao < 0.55 ? Math.round((0.55 - proporcao) * 24) : 0
+  if (penalidade > 0) {
+    for (const chave of Object.keys(atributos) as (keyof AtributosDoAtleta)[]) {
+      atributos[chave] = Math.max(20, atributos[chave] - penalidade)
+    }
+  }
   return atributos
 }
 
@@ -894,17 +981,21 @@ export function treinarAtributoIndividual(
 ): EstadoCarreiraDeJogador {
   const novo = comEconomia(estado)
   const economia = novo.economia!
-  const custo = 12
+  const treinador = novo.treinadorPessoal
+  const custo = treinador ? 9 : 12
   if (economia.energia < custo || novo.atleta.atributos[atributo] >= novo.atleta.potencial) return estado
   economia.energia -= custo
   economia.totalGastoEmTreino += custo
   economia.ultimoTreinoIndividual = `${novo.temporada}:${novo.rodada}:${atributo}`
-  novo.atleta.atributos[atributo] = Math.min(novo.atleta.potencial, novo.atleta.atributos[atributo] + 1)
+  const ganho = treinador && (treinador.especialidade === "equilibrado" || treinador.especialidade === atributo)
+    && roll(`${novo.atleta.id}:treinador:${novo.temporada}:${novo.rodada}:${atributo}`) < treinador.bonusTreino
+    ? 2 : 1
+  novo.atleta.atributos[atributo] = Math.min(novo.atleta.potencial, novo.atleta.atributos[atributo] + ganho)
   novo.atleta.overall = overallDoAtleta(novo.atleta.posicao, novo.atleta.atributos)
   novo.moral = limitar(novo.moral + 1)
   novo.treinoDaSemana = {
     intensidade: novo.intensidadeDeTreino ?? "normal", xp: 0, deltaForma: -1,
-    ganho: { atributo, ganho: 1 }, texto: `Treino individual: ${NOME_DO_ATRIBUTO[atributo]} +1 por 12 de energia.`,
+    ganho: { atributo, ganho }, texto: `Treino individual: ${NOME_DO_ATRIBUTO[atributo]} +${ganho} por ${custo} de energia.`,
   }
   return novo
 }
@@ -993,6 +1084,175 @@ export function interagirComParceira(
   novo.parceira.fase = novo.parceira.afinidade >= 70 ? "relacao_seria" : novo.parceira.afinidade >= 35 ? "namoro" : "conhecendo"
   novo.moral = limitar(novo.moral + 3)
   return novo
+}
+
+export function relacoesDoAtleta(estado: EstadoCarreiraDeJogador): RelacoesDoAtleta {
+  return estado.relacoes ?? { elenco: 50, marcas: 35, rupturas: [] }
+}
+
+export function contratarTreinadorPessoal(
+  estado: EstadoCarreiraDeJogador,
+  treinadorId: string,
+): EstadoCarreiraDeJogador {
+  const plano = TREINADORES_PESSOAIS.find(t => t.id === treinadorId)
+  if (!plano) return estado
+  const novo = comEconomia(estado)
+  if (novo.economia!.dinheiro < plano.custoContratacao) return estado
+  novo.economia!.dinheiro -= plano.custoContratacao
+  novo.treinadorPessoal = {
+    id: plano.id, nome: plano.nome, especialidade: plano.especialidade,
+    custoSemanal: plano.custoSemanal, bonusTreino: plano.bonusTreino, semanasRestantes: 12,
+  }
+  novo.recados = [{
+    id: `treinador_pessoal_${novo.temporada}_${novo.rodada}`, de: "Equipe pessoal",
+    texto: `${plano.nome} assinou por 12 semanas e vai acompanhar cada sessao individual.`,
+    temporada: novo.temporada, rodada: novo.rodada,
+  }, ...novo.recados].slice(0, 25)
+  return novo
+}
+
+export function realizarMinijogoDeTreino(
+  estado: EstadoCarreiraDeJogador,
+  atributo: keyof AtributosDoAtleta,
+  precisao: number,
+): EstadoCarreiraDeJogador {
+  if (estado.minijogoDeTreino?.temporada === estado.temporada && estado.minijogoDeTreino.rodada === estado.rodada) return estado
+  const novo = comEconomia(estado)
+  const qualidade = Math.max(0, Math.min(1, precisao))
+  const treinador = novo.treinadorPessoal
+  const custo = treinador ? 6 : 9
+  if (novo.economia!.energia < custo) return estado
+  novo.economia!.energia -= custo
+  novo.economia!.totalGastoEmTreino += custo
+  novo.minijogoDeTreino = { temporada: novo.temporada, rodada: novo.rodada, atributo, precisao: qualidade }
+
+  const bonusEspecialidade = treinador && (treinador.especialidade === "equilibrado" || treinador.especialidade === atributo)
+    ? treinador.bonusTreino : 0
+  const desempenho = Math.min(1, qualidade + bonusEspecialidade)
+  aplicarXP(novo, Math.round(6 + desempenho * 18))
+  if (desempenho >= 0.82 && novo.atleta.atributos[atributo] < novo.atleta.potencial) {
+    novo.atleta.atributos[atributo]++
+    novo.atleta.overall = overallDoAtleta(novo.atleta.posicao, novo.atleta.atributos)
+  }
+  novo.forma = limitar(novo.forma - (desempenho < 0.45 ? 2 : 1))
+  novo.treinoDaSemana = {
+    intensidade: novo.intensidadeDeTreino ?? "normal", xp: Math.round(6 + desempenho * 18), deltaForma: -1,
+    ganho: desempenho >= 0.82 ? { atributo, ganho: 1 } : null,
+    texto: desempenho >= 0.82
+      ? `Minijogo perfeito: ${NOME_DO_ATRIBUTO[atributo]} +1.`
+      : `Minijogo concluido com ${Math.round(desempenho * 100)}% de precisao.`,
+  }
+  return novo
+}
+
+export function interagirComElenco(
+  estado: EstadoCarreiraDeJogador,
+  acao: "treinar_junto" | "jantar" | "liderar",
+): EstadoCarreiraDeJogador {
+  const relacaoAtual = relacoesDoAtleta(estado)
+  if (relacaoAtual.ultimaInteracaoElenco === estado.rodada) return estado
+  const novo = comEconomia(estado)
+  novo.relacoes = structuredClone(relacaoAtual)
+  const energia = acao === "treinar_junto" ? 5 : 0
+  const dinheiro = acao === "jantar" ? 2_500 : 0
+  if (novo.economia!.energia < energia || novo.economia!.dinheiro < dinheiro) return estado
+  novo.economia!.energia -= energia
+  novo.economia!.dinheiro -= dinheiro
+  const ganho = acao === "jantar" ? 10 : acao === "liderar" ? (novo.capitao ? 9 : 5) : 7
+  novo.relacoes.elenco = limitar(novo.relacoes.elenco + ganho)
+  novo.relacoes.ultimaInteracaoElenco = novo.rodada
+  novo.moral = limitar(novo.moral + 2)
+  return novo
+}
+
+export function assinarPatrocinioPessoal(
+  estado: EstadoCarreiraDeJogador,
+  patrocinioId: string,
+): EstadoCarreiraDeJogador {
+  const plano = PATROCINIOS_PESSOAIS.find(p => p.id === patrocinioId)
+  if (!plano || estado.patrocinioPessoal || (estado.reputacao ?? 0) < plano.reputacaoMinima) return estado
+  const novo = comEconomia(estado)
+  novo.relacoes = structuredClone(relacoesDoAtleta(novo))
+  novo.patrocinioPessoal = {
+    id: plano.id, marca: plano.marca, valorSemanal: plano.valorSemanal,
+    bonusPorGol: plano.bonusPorGol, semanasRestantes: plano.semanas,
+    metaGols: plano.metaGols, golsNoContrato: 0,
+  }
+  novo.relacoes.marcas = limitar(novo.relacoes.marcas + 5)
+  novo.economia!.dinheiro += plano.valorSemanal
+  return novo
+}
+
+export function comprarBemDoAtleta(
+  estado: EstadoCarreiraDeJogador,
+  bemId: string,
+): EstadoCarreiraDeJogador {
+  const bem = BENS_DO_ATLETA.find(b => b.id === bemId)
+  const atual = estado.patrimonio ?? { itens: [], estilo: 0, totalManutencao: 0 }
+  if (!bem || atual.itens.includes(bem.id)) return estado
+  const novo = comEconomia(estado)
+  if (novo.economia!.dinheiro < bem.preco) return estado
+  novo.economia!.dinheiro -= bem.preco
+  novo.patrimonio = structuredClone(atual)
+  novo.patrimonio.itens.push(bem.id)
+  novo.patrimonio.estilo += bem.estilo
+  novo.reputacao = limitar((novo.reputacao ?? 30) + Math.min(3, Math.floor(bem.estilo / 8)))
+  return novo
+}
+
+function aplicarVidaPessoalNaSemana(estado: EstadoCarreiraDeJogador): void {
+  const economia = economiaDoAtleta(estado)
+  estado.economia = economia
+  estado.relacoes = structuredClone(relacoesDoAtleta(estado))
+
+  if (estado.treinadorPessoal) {
+    if (economia.dinheiro >= estado.treinadorPessoal.custoSemanal) {
+      economia.dinheiro -= estado.treinadorPessoal.custoSemanal
+      estado.treinadorPessoal.semanasRestantes--
+      if (estado.treinadorPessoal.semanasRestantes <= 0) estado.treinadorPessoal = null
+    } else {
+      estado.recados = [{
+        id: `fim_treinador_${estado.temporada}_${estado.rodada}`, de: "Equipe pessoal",
+        texto: "O treinador pessoal encerrou o trabalho por falta de pagamento.",
+        temporada: estado.temporada, rodada: estado.rodada,
+      }, ...estado.recados].slice(0, 25)
+      estado.treinadorPessoal = null
+    }
+  }
+
+  if (estado.patrocinioPessoal) {
+    const contrato = estado.patrocinioPessoal
+    economia.dinheiro += contrato.valorSemanal
+    contrato.semanasRestantes--
+    if (contrato.semanasRestantes <= 0) {
+      const cumpriu = contrato.golsNoContrato >= contrato.metaGols
+      estado.relacoes.marcas = limitar(estado.relacoes.marcas + (cumpriu ? 12 : -14))
+      if (!cumpriu) estado.relacoes.rupturas.push(`${contrato.marca}: meta nao cumprida`)
+      estado.patrocinioPessoal = null
+    }
+  }
+
+  const patrimonio = estado.patrimonio ?? { itens: [], estilo: 0, totalManutencao: 0 }
+  estado.patrimonio = patrimonio
+  const manutencao = patrimonio.itens.reduce((total, id) => total + (BENS_DO_ATLETA.find(b => b.id === id)?.manutencaoSemanal ?? 0), 0)
+  if (manutencao > 0) {
+    const pago = Math.min(economia.dinheiro, manutencao)
+    economia.dinheiro -= pago
+    patrimonio.totalManutencao += pago
+    if (pago < manutencao) estado.moral = limitar(estado.moral - 4)
+  }
+
+  if ((estado.relacoes.ultimaInteracaoElenco ?? -10) < estado.rodada - 1) {
+    estado.relacoes.elenco = limitar(estado.relacoes.elenco - 2)
+  }
+  if (estado.parceira && estado.parceira.ultimaInteracaoRodada < estado.rodada - 2) {
+    estado.parceira.afinidade = limitar(estado.parceira.afinidade - 5)
+    if (estado.parceira.afinidade <= 5) {
+      estado.relacoes.rupturas.push(`Fim da relacao com ${estado.parceira.nome}`)
+      estado.parceira = null
+      estado.moral = limitar(estado.moral - 12)
+    }
+  }
 }
 
 export interface EscolhasDoAtleta {
@@ -1528,6 +1788,7 @@ export function jogarProximaRodada(
   const liquido = Math.round(novo.contrato.salarioSemanal * (1 - novo.empresario.comissao / 100))
   novo.economia.dinheiro += liquido
   novo.economia.energia = Math.min(novo.economia.energiaMaxima, novo.economia.energia + 18)
+  aplicarVidaPessoalNaSemana(novo)
   // ⚠️ A SEMANA DE TREINO VEM ANTES DA PARTIDA, e não é detalhe de ordem: é o
   // custo em forma da semana puxada que precisa chegar ao jogo. Treinar depois
   // faria a intensidade não ter preço nenhum no dia em que ela importa.
@@ -2103,6 +2364,68 @@ function clubeDeReserva(estado: EstadoCarreiraDeJogador, curto: string): Team {
   } as Team
 }
 
+const ADVERSARIOS_DA_SELECAO = ["Argentina", "Franca", "Espanha", "Alemanha", "Uruguai", "Italia", "Inglaterra", "Japao"]
+
+function calendarioDaSelecao(estado: EstadoCarreiraDeJogador): PartidaDaSelecao[] {
+  if (estado.selecao.partidas) return estado.selecao.partidas
+  const inicio = hash(`${estado.atleta.id}:calendario-selecao:${estado.temporada}`) % ADVERSARIOS_DA_SELECAO.length
+  return [0, 1, 2].map(i => ({
+    id: `selecao_${estado.temporada}_${i + 1}`,
+    adversario: ADVERSARIOS_DA_SELECAO[(inicio + i * 3) % ADVERSARIOS_DA_SELECAO.length],
+    competicao: estado.selecao.nivel === "sub20" ? "Janela internacional Sub-20" : "Janela internacional",
+    jogada: false,
+  }))
+}
+
+export function proximaPartidaDaSelecao(estado: EstadoCarreiraDeJogador): PartidaDaSelecao | null {
+  if (!estado.selecao.convocada) return null
+  return calendarioDaSelecao(estado).find(p => !p.jogada) ?? null
+}
+
+export function jogarPartidaDaSelecao(
+  estado: EstadoCarreiraDeJogador,
+  opcoes?: { viver?: boolean },
+): EstadoCarreiraDeJogador {
+  if (!estado.selecao.convocada || estado.partidaEmCurso || estado.aposentado) return estado
+  const novo = comEconomia(estado)
+  novo.selecao.partidas = structuredClone(calendarioDaSelecao(novo))
+  const compromisso = novo.selecao.partidas.find(p => !p.jogada)
+  if (!compromisso) return estado
+
+  const minhaSelecao = clubeDeReserva(novo, "SEL")
+  minhaSelecao.nome = `Selecao de ${novo.atleta.nacionalidade}`
+  minhaSelecao.prestigio = Math.max(62, Math.min(92, novo.atleta.overall + 8))
+  const adversaria = clubeDeReserva(novo, `INT${hash(compromisso.adversario) % 999}`)
+  adversaria.nome = compromisso.adversario
+  adversaria.prestigio = 70 + (hash(compromisso.adversario) % 20)
+  const config = {
+    homeTeam: minhaSelecao, awayTeam: adversaria,
+    homeRating: forcaDoTime(minhaSelecao), awayRating: forcaDoTime(adversaria), durationMinutes: 90,
+  }
+  const semente = `${novo.atleta.id}:selecao:${novo.temporada}:${compromisso.id}`
+
+  if (opcoes?.viver) {
+    novo.partidaEmCurso = montarPartidaAoVivo({
+      fixtureId: compromisso.id, origem: "selecao", adversario: compromisso.adversario,
+      emCasa: true, competicao: compromisso.competicao, rodada: novo.rodada,
+      minutos: 90, titular: true, config, semente,
+      posicao: String(novo.atleta.posicao),
+      atributos: atributosEfetivosDoAtleta(novo) as unknown as Record<string, number>,
+    })
+    return novo
+  }
+
+  const partida = simulateFullMatch(config)
+  compromisso.jogada = true
+  compromisso.golsPro = partida.home.goals
+  compromisso.golsContra = partida.away.goals
+  compromisso.nota = Math.round((6 + (partida.home.goals - partida.away.goals) * 0.25) * 10) / 10
+  novo.selecao.jogos++
+  if (["ATA", "MEI"].includes(novo.atleta.posicao) && roll(`${semente}:gol`) < 0.28) novo.selecao.gols++
+  novo.economia!.energia = Math.max(0, novo.economia!.energia - 14)
+  return novo
+}
+
 function atualizarMetas(estado: EstadoCarreiraDeJogador): void {
   const media = estado.temporadaAtual.jogos > 0 ? estado.temporadaAtual.somaDasNotas / estado.temporadaAtual.jogos : 0
   for (const meta of estado.metas) {
@@ -2308,12 +2631,13 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
   novo.selecao.convocada = chamado
   novo.selecao.nivel = chamado ? (novo.atleta.idade <= 20 ? "sub20" : "principal") : null
   if (chamado) {
-    novo.selecao.jogos += 4 + Math.floor(roll(`${novo.atleta.id}:selecao:${novo.temporada}`) * 6)
-    novo.selecao.gols += novo.atleta.posicao === "ATA" || novo.atleta.posicao === "MEI"
-      ? Math.floor(roll(`${novo.atleta.id}:selgols:${novo.temporada}`) * 4) : 0
+    // A selecao nao injeta mais 4–9 jogos simulados no historico. A convocacao
+    // abre tres compromissos reais, que podem ser vividos com o mesmo motor da
+    // carreira ou simulados individualmente pelo jogador.
+    novo.selecao.partidas = undefined
     novo.recados = [{
       id: `selecao_${novo.temporada}`, de: "Seleção",
-      texto: `Você foi convocado para a seleção ${novo.selecao.nivel === "sub20" ? "Sub-20" : "principal"} de ${novo.atleta.nacionalidade}.`,
+      texto: `Você foi convocado para a seleção ${novo.selecao.nivel === "sub20" ? "Sub-20" : "principal"} de ${novo.atleta.nacionalidade}. Tres partidas foram adicionadas a janela internacional.`,
       temporada: novo.temporada, rodada: novo.rodada,
     }, ...novo.recados].slice(0, 25)
   }
@@ -2757,6 +3081,32 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
   const lances = p.aoVivo?.lancesOferecidos ?? p.historico.length
   novo.economia.energia = Math.max(0, novo.economia.energia - Math.max(2, lances * 2))
 
+  if (p.origem === "selecao") {
+    novo.selecao.partidas = structuredClone(calendarioDaSelecao(novo))
+    const compromisso = novo.selecao.partidas.find(j => j.id === p.fixtureId)
+    if (compromisso) {
+      compromisso.jogada = true
+      compromisso.golsPro = p.golsPro
+      compromisso.golsContra = p.golsContra
+      compromisso.nota = p.nota
+    }
+    novo.selecao.jogos++
+    novo.selecao.gols += p.gols
+    novo.moral = limitar(novo.moral + (p.nota >= 7 ? 4 : p.nota < 6 ? -3 : 1))
+    novo.reputacao = limitar((novo.reputacao ?? 30) + (p.gols > 0 || p.nota >= 8 ? 2 : 0))
+    if (p.gols > 0 && novo.patrocinioPessoal) {
+      const bonus = p.gols * novo.patrocinioPessoal.bonusPorGol
+      novo.economia.dinheiro += bonus
+      novo.patrocinioPessoal.golsNoContrato += p.gols
+    }
+    novo.recados = [{
+      id: `resultado_selecao_${novo.temporada}_${p.fixtureId}`, de: "Selecao",
+      texto: `${novo.atleta.nacionalidade} ${p.golsPro} x ${p.golsContra} ${p.adversario}. Sua nota: ${p.nota.toFixed(1)}.`,
+      temporada: novo.temporada, rodada: novo.rodada,
+    }, ...novo.recados].slice(0, 25)
+    return novo
+  }
+
   // ⚠️ NO MODO AO VIVO, o apito fecha o fixture e a tabela — não o início da
   // rodada. A partida não foi pré-simulada justamente para o placar poder nascer
   // do que o atleta fez; se a tabela não fosse atualizada aqui, o jogo dele
@@ -2791,6 +3141,14 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
   t.somaDasNotas += p.nota
 
   if (p.gols > 0) novo.ganhosDaTemporada += p.gols * (novo.contrato.bonusPorGol ?? 0)
+  if (p.gols > 0 && novo.patrocinioPessoal) {
+    const bonusDaMarca = p.gols * novo.patrocinioPessoal.bonusPorGol
+    novo.economia.dinheiro += bonusDaMarca
+    novo.patrocinioPessoal.golsNoContrato += p.gols
+    novo.ganhosDaTemporada += bonusDaMarca
+    novo.relacoes = structuredClone(relacoesDoAtleta(novo))
+    novo.relacoes.marcas = limitar(novo.relacoes.marcas + Math.min(3, p.gols))
+  }
   registrarAcoes(novo, {
     titular: p.titular, minutos: p.minutos, gols: p.gols,
     assistencias: p.assistencias, nota: p.nota, cartao: null, xp: 0,

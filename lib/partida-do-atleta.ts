@@ -89,6 +89,8 @@ export interface LanceNarrado {
 
 export interface PartidaEmCurso {
   fixtureId: string
+  /** Clube ou selecao; ausente em saves antigos significa clube. */
+  origem?: "clube" | "selecao"
   adversario: string
   emCasa: boolean
   competicao: string
@@ -204,6 +206,7 @@ export function montarPartidaDoAtleta(
   estado: EstadoCarreiraDeJogador,
   dados: {
     fixtureId: string; adversario: string; emCasa: boolean; competicao: string; rodada: number
+    origem?: "clube" | "selecao"
     golsPro: number; golsContra: number; minutos: number; titular: boolean
   },
 ): PartidaEmCurso {
@@ -429,6 +432,51 @@ function lanceComoMomento(lance: LanceDoAtleta): MomentoDaPartida {
   }
 }
 
+/** Narração acumulada pelo próprio motor da partida ao vivo. */
+function narracaoDoEstadoVivo(partida: PartidaEmCurso, vivo: PartidaAoVivo): LanceNarrado[] {
+  const eventos = [...vivo.estado.events].reverse()
+  const anulados = new Map<string, number>()
+  for (const evento of eventos) {
+    if (evento.type !== "var" || evento.varReview?.incident !== "goal" || evento.varReview.decision !== "overturned") continue
+    const chave = `${evento.minute}:${evento.side}`
+    anulados.set(chave, (anulados.get(chave) ?? 0) + 1)
+  }
+
+  const limitePro = vivo.emCasa ? vivo.estado.home.goals : vivo.estado.away.goals
+  const limiteContra = vivo.emCasa ? vivo.estado.away.goals : vivo.estado.home.goals
+  let golsPro = 0
+  let golsContra = 0
+  const lances: LanceNarrado[] = []
+
+  for (const evento of eventos) {
+    if (evento.type === "goal") {
+      const chave = `${evento.minute}:${evento.side}`
+      const anuladosNesseLance = anulados.get(chave) ?? 0
+      if (anuladosNesseLance > 0) {
+        anulados.set(chave, anuladosNesseLance - 1)
+        continue
+      }
+      const pro = evento.side === (vivo.emCasa ? "home" : "away")
+      if (pro && golsPro++ < limitePro) {
+        lances.push({ minuto: evento.minute, tipo: "gol-pro", texto: evento.text })
+      } else if (!pro && golsContra++ < limiteContra) {
+        lances.push({ minuto: evento.minute, tipo: "gol-contra", texto: evento.text })
+      }
+      continue
+    }
+    if (evento.type === "kickoff") lances.push({ minuto: evento.minute, tipo: "apito", texto: evento.text })
+    else if (evento.type === "halftime") lances.push({ minuto: evento.minute, tipo: "intervalo", texto: evento.text })
+    else if (evento.type === "fulltime") lances.push({ minuto: evento.minute, tipo: "apito", texto: evento.text })
+  }
+
+  if (!partida.titular && partida.minutos > 0) {
+    const entrada = 90 - partida.minutos
+    if (vivo.estado.minute >= entrada) lances.push({ minuto: entrada, tipo: "voce", texto: "Você entra em campo." })
+  }
+  if (lances.length === 0) lances.push({ minuto: 0, tipo: "apito", texto: "Bola rolando." })
+  return lances.sort((a, b) => a.minuto - b.minuto)
+}
+
 /** Sincroniza o que a tela lê a partir do estado vivo. */
 function comEstadoVivo(partida: PartidaEmCurso, vivo: PartidaAoVivo): PartidaEmCurso {
   const pro = vivo.emCasa ? vivo.estado.home.goals : vivo.estado.away.goals
@@ -443,6 +491,7 @@ function comEstadoVivo(partida: PartidaEmCurso, vivo: PartidaAoVivo): PartidaEmC
     assistencias: vivo.assistencias,
     nota: vivo.nota,
     historico: vivo.historico,
+    narracaoDaPartida: narracaoDoEstadoVivo(partida, vivo),
     momentos,
     // Sempre 0: a lista tem no máximo o lance atual. `partidaTerminou` não olha
     // mais para este índice no modo ao vivo.
@@ -460,6 +509,7 @@ function comEstadoVivo(partida: PartidaEmCurso, vivo: PartidaAoVivo): PartidaEmC
 export function montarPartidaAoVivo(
   dados: {
     fixtureId: string; adversario: string; emCasa: boolean; competicao: string; rodada: number
+    origem?: "clube" | "selecao"
     minutos: number; titular: boolean
     config: MatchConfig
     semente: string
@@ -481,7 +531,7 @@ export function montarPartidaAoVivo(
   vivo = avancarAteOLance(vivo)
 
   const base: PartidaEmCurso = {
-    fixtureId: dados.fixtureId, adversario: dados.adversario, emCasa: dados.emCasa,
+    fixtureId: dados.fixtureId, origem: dados.origem ?? "clube", adversario: dados.adversario, emCasa: dados.emCasa,
     competicao: dados.competicao, rodada: dados.rodada,
     golsPro: 0, golsContra: 0,
     minutos: dados.minutos, titular: dados.titular,

@@ -91,8 +91,16 @@ function juntar(base: RosterPatch | undefined, local: RosterPatch | undefined): 
  * `null` = comportamento normal do jogo. NENHUM caminho de producao chama.
  */
 let patchesDeTeste: Record<string, RosterPatch> | null = null
+// Revisao monotona consumida pelo cache de `players-data`. Eventos do browser
+// nao existem em SSR/testes, portanto a invalidacao precisa acompanhar a fonte
+// do dado e funcionar em qualquer runtime.
+let revisaoDosElencos = 0
+export function revisaoDosElencosEditados(): number {
+  return revisaoDosElencos
+}
 export function semearElencosEditados(patches: Record<string, RosterPatch> | null): void {
   patchesDeTeste = patches
+  revisaoDosElencos++
 }
 
 export function getRosterPatch(fileKey: string): RosterPatch | null {
@@ -125,6 +133,7 @@ function getLocalPatch(fileKey: string): RosterPatch {
 function gravar(fileKey: string, patch: RosterPatch): void {
   if (vazio(patch)) storeRemove(KEY(fileKey))
   else storeSet(KEY(fileKey), JSON.stringify(patch))
+  revisaoDosElencos++
   if (typeof window !== "undefined")
     window.dispatchEvent(new CustomEvent("ultrafoot:elenco:changed", { detail: { fileKey } }))
 }
@@ -201,6 +210,7 @@ export function transferirAtleta(
 /** Devolve o clube ao cadastro original. */
 export function limparRosterPatch(fileKey: string): void {
   storeRemove(KEY(fileKey))
+  revisaoDosElencos++
   if (typeof window !== "undefined")
     window.dispatchEvent(new CustomEvent("ultrafoot:elenco:changed", { detail: { fileKey } }))
 }

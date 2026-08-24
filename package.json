@@ -1,9 +1,9 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.372",
+  "version": "1.0.373",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build --webpack && node scripts/fix-next-export-rsc.mjs",
     "build:tauri": "node scripts/build-tauri.mjs",
     "start": "next start",
@@ -16,7 +16,7 @@
     "qa:destinos-online": "tsx scripts/test-destinos-online.ts",
     "qa:campo-atleta": "tsx scripts/test-campo-do-atleta.ts",
     "qa:treino-atleta": "tsx scripts/test-treino-do-atleta.ts",
-    "qa:nss": "tsx scripts/qa-nss-372.ts",
+    "qa:nss": "tsx scripts/qa-nss-372.ts && tsx scripts/qa-nss-373.ts",
     "qa:conversas-atleta": "tsx scripts/test-conversas-do-atleta.ts",
     "qa:simular-persiste": "tsx scripts/test-simular-persiste.ts",
     "qa:elencos-compactos": "tsx scripts/test-elencos-compactos.ts",
@@ -158,7 +158,7 @@
     "framer-motion": "^12.38.0",
     "input-otp": "1.4.2",
     "lucide-react": "^0.564.0",
-    "next": "^16.2.6",
+    "next": "^16.2.11",
     "next-themes": "^0.4.6",
     "react": "^19",
     "react-day-picker": "9.13.2",
@@ -170,7 +170,7 @@
     "tailwind-merge": "^3.3.1",
     "three": "^0.170.0",
     "vaul": "^1.1.2",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^3.24.1",
     "zustand": "^5.0.13"
   },
@@ -187,8 +187,8 @@
     "eslint": "^10.4.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.6.0",
-    "postcss": "^8.5",
-    "sharp": "^0.34.5",
+    "postcss": "^8.5.23",
+    "sharp": "^0.35.0",
     "tailwindcss": "^4.2.0",
     "tsx": "^4.22.3",
     "tw-animate-css": "1.3.3",
@@ -196,8 +196,9 @@
     "typescript-eslint": "^8.59.4"
   },
   "overrides": {
-    "next": {
-      "postcss": "8.5.15"
-    }
+    "brace-expansion": "5.0.9",
+    "lodash": "4.18.1",
+    "nanoid@<3.3.18": "3.3.18",
+    "postcss@<8.5.23": "8.5.23"
   }
 }

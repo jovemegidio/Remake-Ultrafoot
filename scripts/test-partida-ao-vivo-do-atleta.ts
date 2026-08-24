@@ -42,7 +42,7 @@ const criar = (semente: string, atributos: Record<string, number> = {}, posicao 
   iniciarPartidaAoVivo({
     config, emCasa: true, minutoDeEntrada: 0, minutoDeSaida: null,
     semente, posicao,
-    atributos: { finalizacao: 70, passe: 70, drible: 70, visao: 70, fisico: 70, desarme: 70, posicionamento: 70, ...atributos },
+    atributos: { finalizacao: 70, passe: 70, drible: 70, visao: 70, fisico: 70, defesa: 70, desarme: 70, posicionamento: 70, ...atributos },
   })
 
 /** Joga a partida inteira escolhendo sempre a primeira opção. */
@@ -160,7 +160,31 @@ console.log("\n── 5. Atributos decidem a execução ────────
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-console.log("\n── 6. Determinismo ───────────────────────────────────────────")
+console.log("\n── 6. Goleiro tem partida propria ────────────────────────────")
+
+{
+  const tipos = new Set<string>()
+  let erroVirouGol = false
+  for (let i = 0; i < 18; i++) {
+    let p = criar(`goleiro-${i}`, { defesa: 25, fisico: 25 }, "GOL")
+    let guarda = 0
+    while (!partidaAcabou(p) && guarda++ < 100) {
+      p = avancarAteOLance(p)
+      if (!p.lancePendente) break
+      tipos.add(p.lancePendente.tipo)
+      const antes = p.estado.away.goals
+      const r = resolverLance(p, p.lancePendente.opcoes[0].id, 0.2)
+      if (!r.desfecho.sucesso && r.partida.estado.away.goals === antes + 1) erroVirouGol = true
+      p = r.partida
+    }
+  }
+  const proprios = ["defesa", "saida_do_gol", "penalti_defensivo", "reposicao"]
+  ok("goleiro recebe defesas, saidas, penaltis e reposicoes", proprios.every(t => tipos.has(t)), `(${[...tipos].join(", ")})`)
+  ok("erro defensivo pode alterar o placar adversario", erroVirouGol)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+console.log("\n── 7. Determinismo ───────────────────────────────────────────")
 
 {
   const a = jogar(criar("igual"))

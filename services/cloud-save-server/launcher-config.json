@@ -9,6 +9,13 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "1.0.373: a carreira ganhou jogo e vida proprios",
+      "category": "Atualizacao",
+      "body": "A posicao agora muda de verdade quantos lances o atleta recebe. A mira ganhou forca, curva, trajetoria, teclado e controle; goleiros defendem, saem, enfrentam penaltis e fazem reposicoes. Selecao virou partida jogavel. Treinador pessoal, minijogo, elenco, marcas, patrocinios e patrimonio completam a vida fora de campo. As dependencias de producao foram atualizadas e a auditoria caiu para zero vulnerabilidades conhecidas.",
+      "date": "2026-08-24",
+      "pinned": true
+    },
+    {
       "title": "1.0.372: a carreira de jogador chegou ao ritmo NSS",
       "category": "Atualizacao",
       "body": "Energia agora e moeda para jogar e treinar, com carteira pessoal, compra de recarga e treino de atributo individual. Equipamentos mudam atributos, apostas usam o resultado real e a parceira ganhou relacao propria. Dentro de campo, a partida passou a oferecer muitos lances curtos; faltas e penaltis sao momentos proprios, com mira por arrasto, bola voando e goleiro mergulhando.",
@@ -289,6 +296,21 @@
   ],
   "changelog": [
     {
+      "version": "1.0.373",
+      "data": "2026-08-24",
+      "titulo": "Partida por posicao, goleiro, selecao e vida pessoal",
+      "itens": [
+        "POSICAO AGORA MUDA O RITMO. Atacantes recebem mais jogadas ofensivas que zagueiros, dentro da faixa de 8 a 16 lances, e o teste que encontrava igualdade passou a proteger essa diferenca.",
+        "MIRA COMPLETA. Chutes, faltas e penaltis ganharam forca, curva, trajetoria calculada, barreira e comandos por mouse, toque, teclado e controle.",
+        "GOLEIRO JOGAVEL. Defesas, saidas do gol, penaltis defensivos e reposicoes sao decisoes proprias; acertos e erros alteram o placar real.",
+        "SELECAO JOGAVEL. A convocacao abre tres compromissos internacionais reais, que podem ser vividos no motor ao vivo ou simulados um a um. Jogos ficticios deixaram de ser injetados no historico.",
+        "VIDA FORA DO CAMPO. Treinador pessoal, minijogo de treino, relacao com elenco, desgaste e rupturas, contratos com marcas, bonus pessoais e patrimonio com manutencao entraram na economia.",
+        "ENERGIA TEM EFEITO NO CAMPO. Cansaco abaixo de 55% reduz a execucao dos atributos; preparacao e recuperacao passaram a ter consequencia direta na partida.",
+        "SEGURANCA DE DEPENDENCIAS. Next.js, Sharp, PostCSS, SheetJS e transitivos vulneraveis foram atualizados; a auditoria passou de 15 altas e 9 moderadas para zero alertas conhecidos."
+      ],
+      "latest": true
+    },
+    {
       "version": "1.0.372",
       "data": "2026-08-24",
       "titulo": "Carreira de jogador no ritmo NSS",
@@ -300,7 +322,7 @@
         "FALTA E PENALTI SAO LANCES PROPRIOS. Finalizacoes e bolas paradas ganharam mira por arrasto, trajetoria da bola e mergulho do goleiro.",
         "SAVES ANTIGOS CONTINUAM VALIDOS. A nova economia nasce sob demanda sem apagar a carreira existente."
       ],
-      "latest": true
+      "latest": false
     },
     {
       "version": "1.0.366",

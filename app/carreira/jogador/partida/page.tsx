@@ -32,13 +32,13 @@
 // sorteados; esta tela ENCENA, como o motor 3D do modo de técnico.
 
 import { useEffect, useMemo, useState } from "react"
-import { ArrowRight, Play, Trophy } from "lucide-react"
+import { ArrowRight, Flag, Play, Trophy } from "lucide-react"
 
 import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
 import { CampoDoAtleta } from "@/components/match/campo-do-atleta"
-import { MiraDoAtleta } from "@/components/carreira-jogador/mira-do-atleta"
+import { MiraDoAtleta, type TipoDaMiraDoAtleta } from "@/components/carreira-jogador/mira-do-atleta"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByFileKey, getTeamByShort } from "@/lib/teams-data"
 import { getCompetitionLogo } from "@/lib/competition-logo"
@@ -72,7 +72,6 @@ function placarAte(
 }
 
 export default function PartidaDoAtletaPage() {
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador") })
   const { state, setState } = useGameState()
   const t = useTranslation()
   const carreira = state.carreiraDeJogador
@@ -80,6 +79,7 @@ export default function PartidaDoAtletaPage() {
   const [ultimo, setUltimo] = useState<string | null>(null)
   /** A tela começa no pré-jogo, como a do técnico. */
   const [fase, setFase] = useState<"pre" | "vivo">("pre")
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador"), quando: fase === "pre" })
 
   // Enter / A começam a partida, igual ao overlay de pré-jogo do modo técnico.
   useEffect(() => {
@@ -122,14 +122,17 @@ export default function PartidaDoAtletaPage() {
   // ⚠️ A SIGLA DO ADVERSARIO NAO ESTA NA PARTIDA EM CURSO — ela guarda so o
   // NOME. Em vez de acrescentar o campo (o que exigiria migrar as partidas ja
   // em andamento nos saves), ela sai do proprio fixture que originou a partida.
+  const eSelecao = partida.origem === "selecao"
   const adversarioCurto = fixture
     ? (partida.emCasa ? fixture.awayCurto : fixture.homeCurto)
-    : ""
+    : eSelecao ? carreira.clubeCurto : ""
 
   const meuClube = getTeamByFileKey(carreira.clubeFileKey)
   const adversario = adversarioCurto ? getTeamByShort(adversarioCurto) : undefined
   const casa = partida.emCasa ? meuClube : adversario
   const fora = partida.emCasa ? adversario : meuClube
+  const nomeCasa = eSelecao ? `Seleção de ${carreira.atleta.nacionalidade}` : casa?.nome ?? (partida.emCasa ? carreira.clubeNome : partida.adversario)
+  const nomeFora = eSelecao ? partida.adversario : fora?.nome ?? (partida.emCasa ? partida.adversario : carreira.clubeNome)
   const logoDaCompeticao = getCompetitionLogo(partida.competicao)
 
   const corrido = placarAte(
@@ -185,8 +188,8 @@ export default function PartidaDoAtletaPage() {
         {/* Os dois clubes frente a frente, e VOCÊ no meio. */}
         <div className="relative z-10 flex flex-1 items-center justify-center gap-6 px-6 xl:gap-14">
           <div className="flex w-56 flex-col items-center gap-3 text-center">
-            <TeamCrest team={casa} size="3xl" />
-            <p className="text-lg font-black leading-tight">{casa?.nome ?? (partida.emCasa ? carreira.clubeNome : partida.adversario)}</p>
+            {eSelecao ? <Flag className="h-24 w-24 text-emerald-300" /> : <TeamCrest team={casa} size="3xl" />}
+            <p className="text-lg font-black leading-tight">{nomeCasa}</p>
             <p className="text-[11px] uppercase tracking-wider text-white/40">Mandante</p>
           </div>
 
@@ -230,8 +233,8 @@ export default function PartidaDoAtletaPage() {
           </div>
 
           <div className="flex w-56 flex-col items-center gap-3 text-center">
-            <TeamCrest team={fora} size="3xl" />
-            <p className="text-lg font-black leading-tight">{fora?.nome ?? (partida.emCasa ? partida.adversario : carreira.clubeNome)}</p>
+            {eSelecao ? <Flag className="h-24 w-24 text-sky-300" /> : <TeamCrest team={fora} size="3xl" />}
+            <p className="text-lg font-black leading-tight">{nomeFora}</p>
             <p className="text-[11px] uppercase tracking-wider text-white/40">Visitante</p>
           </div>
         </div>
@@ -262,8 +265,8 @@ export default function PartidaDoAtletaPage() {
           <div className="flex items-stretch overflow-hidden rounded-lg border border-white/[0.08] bg-[#0b0e14]/90 shadow-[0_8px_28px_rgba(0,0,0,0.45)] backdrop-blur-sm">
             <div className="flex items-center gap-2.5 py-2 pl-3 pr-4 sm:gap-3 sm:pl-4 sm:pr-5">
               <span className="h-7 w-[3px] rounded-full sm:h-8" style={{ backgroundColor: casa?.cor1 ?? "#00ffc8" }} />
-              <TeamCrest team={casa} size="sm" />
-              <span className="text-lg font-bold tracking-wide sm:text-2xl">{casa?.curto ?? t.carreiraDeJogador.casa_sigla}</span>
+              {eSelecao ? <Flag className="h-7 w-7 text-emerald-300" /> : <TeamCrest team={casa} size="sm" />}
+              <span className="text-lg font-bold tracking-wide sm:text-2xl">{eSelecao ? carreira.atleta.nacionalidade.slice(0, 3).toUpperCase() : casa?.curto ?? t.carreiraDeJogador.casa_sigla}</span>
             </div>
 
             <div className="flex items-center gap-2.5 border-x border-white/[0.08] bg-white/[0.03] px-4 py-2 sm:gap-3 sm:px-6">
@@ -273,8 +276,8 @@ export default function PartidaDoAtletaPage() {
             </div>
 
             <div className="flex items-center gap-2.5 py-2 pl-4 pr-3 sm:gap-3 sm:pl-5 sm:pr-4">
-              <span className="text-lg font-bold tracking-wide sm:text-2xl">{fora?.curto ?? t.carreiraDeJogador.fora_sigla}</span>
-              <TeamCrest team={fora} size="sm" />
+              <span className="text-lg font-bold tracking-wide sm:text-2xl">{eSelecao ? partida.adversario.slice(0, 3).toUpperCase() : fora?.curto ?? t.carreiraDeJogador.fora_sigla}</span>
+              {eSelecao ? <Flag className="h-7 w-7 text-sky-300" /> : <TeamCrest team={fora} size="sm" />}
               <span className="h-7 w-[3px] rounded-full sm:h-8" style={{ backgroundColor: fora?.cor1 ?? "#ffffff" }} />
             </div>
 
@@ -334,13 +337,16 @@ export default function PartidaDoAtletaPage() {
           {!acabou && momento ? (
             <section className="shrink-0 rounded-2xl border border-[var(--brand)]/25 bg-[var(--brand)]/[.05] p-4">
               <p className="text-sm font-bold text-white/85">{momento.narracao}</p>
-              {partida.aoVivo?.lancePendente && ["finalizacao", "falta", "penalti"].includes(partida.aoVivo.lancePendente.tipo) && (
+              {partida.aoVivo?.lancePendente && ["finalizacao", "falta", "penalti", "defesa", "saida_do_gol", "penalti_defensivo"].includes(partida.aoVivo.lancePendente.tipo) && (
                 <MiraDoAtleta
-                  tipo={partida.aoVivo.lancePendente.tipo as "finalizacao" | "falta" | "penalti"}
+                  tipo={partida.aoVivo.lancePendente.tipo as TipoDaMiraDoAtleta}
                   lanceId={partida.aoVivo.lancePendente.id}
                   aoFinalizar={precisao => decidir(
                     partida.aoVivo?.lancePendente?.tipo === "falta" ? "bater_falta"
                       : partida.aoVivo?.lancePendente?.tipo === "penalti" ? "bater_penalti"
+                        : partida.aoVivo?.lancePendente?.tipo === "defesa" ? "mergulhar"
+                          : partida.aoVivo?.lancePendente?.tipo === "saida_do_gol" ? "abafar"
+                            : partida.aoVivo?.lancePendente?.tipo === "penalti_defensivo" ? "defender_penalti"
                         : "chutar",
                     precisao,
                   )}
@@ -349,8 +355,8 @@ export default function PartidaDoAtletaPage() {
               <div className="mt-3 grid gap-2 md:grid-cols-3">
                 {momento.escolhas.filter(e => {
                   const tipo = partida.aoVivo?.lancePendente?.tipo
-                  if (!["finalizacao", "falta", "penalti"].includes(tipo ?? "")) return true
-                  return !["chutar", "ajeitar", "bater_falta", "bater_penalti"].includes(e.id)
+                  if (!["finalizacao", "falta", "penalti", "defesa", "saida_do_gol", "penalti_defensivo"].includes(tipo ?? "")) return true
+                  return !["chutar", "ajeitar", "bater_falta", "bater_penalti", "mergulhar", "abafar", "defender_penalti"].includes(e.id)
                 }).map(e => (
                   <button
                     key={e.id}
