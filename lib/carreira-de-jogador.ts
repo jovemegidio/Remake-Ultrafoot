@@ -450,6 +450,55 @@ export interface RelatorioDoTreino {
   texto: string
 }
 
+export type CategoriaDeEquipamento = "chuteira" | "acessorio" | "recuperacao"
+
+export interface EquipamentoDoAtleta {
+  id: string
+  nome: string
+  categoria: CategoriaDeEquipamento
+  descricao: string
+  preco: number
+  bonus: Partial<AtributosDoAtleta>
+  bonusEnergia?: number
+}
+
+export interface EconomiaDoAtleta {
+  dinheiro: number
+  energia: number
+  energiaMaxima: number
+  equipamentosComprados: string[]
+  equipamentosEmUso: Partial<Record<CategoriaDeEquipamento, string>>
+  totalGastoEmTreino: number
+  totalGastoEmEnergia: number
+  ultimoTreinoIndividual?: string
+}
+
+export interface ApostaDoAtleta {
+  id: string
+  rodada: number
+  palpite: "vitoria" | "empate" | "derrota"
+  valor: number
+  multiplicador: number
+  adversario: string
+}
+
+export interface ParceiraDoAtleta {
+  nome: string
+  afinidade: number
+  fase: "conhecendo" | "namoro" | "relacao_seria"
+  ultimaInteracaoRodada: number
+  momentos: number
+}
+
+export const EQUIPAMENTOS_DO_ATLETA: EquipamentoDoAtleta[] = [
+  { id: "chuteira_agilidade", nome: "Chuteira Veloz", categoria: "chuteira", descricao: "+3 ritmo e +1 drible", preco: 18_000, bonus: { ritmo: 3, drible: 1 } },
+  { id: "chuteira_precisao", nome: "Chuteira Precisao", categoria: "chuteira", descricao: "+3 finalizacao e +1 passe", preco: 24_000, bonus: { finalizacao: 3, passe: 1 } },
+  { id: "caneleira_pro", nome: "Caneleira Pro", categoria: "acessorio", descricao: "+3 defesa e +2 fisico", preco: 20_000, bonus: { defesa: 3, fisico: 2 } },
+  { id: "munhequeira", nome: "Munhequeira Tecnica", categoria: "acessorio", descricao: "+2 passe e +2 drible", preco: 22_000, bonus: { passe: 2, drible: 2 } },
+  { id: "kit_recuperacao", nome: "Kit de Recuperacao", categoria: "recuperacao", descricao: "+15 de energia maxima", preco: 28_000, bonus: {}, bonusEnergia: 15 },
+  { id: "academia_pessoal", nome: "Academia Pessoal", categoria: "recuperacao", descricao: "+3 fisico e +10 de energia maxima", preco: 45_000, bonus: { fisico: 3 }, bonusEnergia: 10 },
+]
+
 /**
  * O QUE CADA INTENSIDADE CUSTA E RENDE.
  *
@@ -491,6 +540,18 @@ function treinarNaSemana(estado: EstadoCarreiraDeJogador): void {
   const intensidade = estado.intensidadeDeTreino ?? "normal"
   const plano = TREINO[intensidade]
   const p = estado.atleta.personalidade
+  const economia = economiaDoAtleta(estado)
+  estado.economia = economia
+  const custoDeEnergia = intensidade === "leve" ? 4 : intensidade === "normal" ? 8 : 14
+  if (economia.energia < custoDeEnergia) {
+    estado.treinoDaSemana = {
+      intensidade, xp: 0, deltaForma: 0, ganho: null,
+      texto: `Treino cancelado: faltam ${custoDeEnergia} de energia.`,
+    }
+    return
+  }
+  economia.energia -= custoDeEnergia
+  economia.totalGastoEmTreino += custoDeEnergia
 
   // Dedicação: 0,45 (relaxado) a ~1,55 (profissional obsessivo).
   const dedicacao = 0.45 + (p.profissionalismo + p.determinacao) / 40
@@ -564,7 +625,7 @@ export interface TemporadaDoAtleta {
 }
 
 export interface EstadoCarreiraDeJogador {
-  versao: 1
+  versao: 1 | 2 | 3
   atleta: AtletaDaCarreira
   clubeCurto: string
   clubeNome: string
@@ -740,6 +801,10 @@ export interface EstadoCarreiraDeJogador {
    * Ver `rescindirContrato`, `avancarSemanaSemClube` e `contrapropor`.
    */
   semClube?: SemClube
+  /** Economia pessoal da carreira NSS. Opcional para saves anteriores. */
+  economia?: EconomiaDoAtleta
+  apostaAtiva?: ApostaDoAtleta | null
+  parceira?: ParceiraDoAtleta | null
 }
 
 // ─── Aleatoriedade semeada ──────────────────────────────────────────────────
@@ -774,6 +839,160 @@ export function overallDoAtleta(posicao: PosicaoDoAtleta, atributos: AtributosDo
   const soma = (Object.keys(pesos) as (keyof AtributosDoAtleta)[])
     .reduce((total, chave) => total + atributos[chave] * pesos[chave], 0)
   return Math.max(30, Math.min(99, Math.round(soma)))
+}
+
+/** Estado economico seguro para saves criados antes da 1.0.370. */
+export function economiaDoAtleta(estado: EstadoCarreiraDeJogador): EconomiaDoAtleta {
+  return estado.economia ?? {
+    dinheiro: Math.max(25_000, estado.ganhosDaTemporada ?? 0),
+    energia: 100,
+    energiaMaxima: 100,
+    equipamentosComprados: [],
+    equipamentosEmUso: {},
+    totalGastoEmTreino: 0,
+    totalGastoEmEnergia: 0,
+  }
+}
+
+function comEconomia(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
+  const novo = structuredClone(estado)
+  novo.versao = 3
+  novo.economia = structuredClone(economiaDoAtleta(novo))
+  return novo
+}
+
+export function atributosEfetivosDoAtleta(estado: EstadoCarreiraDeJogador): AtributosDoAtleta {
+  const atributos = { ...estado.atleta.atributos }
+  const economia = economiaDoAtleta(estado)
+  for (const id of Object.values(economia.equipamentosEmUso)) {
+    const item = EQUIPAMENTOS_DO_ATLETA.find(e => e.id === id)
+    if (!item) continue
+    for (const [chave, bonus] of Object.entries(item.bonus) as [keyof AtributosDoAtleta, number][]) {
+      atributos[chave] = Math.min(99, atributos[chave] + bonus)
+    }
+  }
+  return atributos
+}
+
+export function comprarEnergia(
+  estado: EstadoCarreiraDeJogador,
+  quantidade: 25 | 60,
+): EstadoCarreiraDeJogador {
+  const novo = comEconomia(estado)
+  const economia = novo.economia!
+  const preco = quantidade === 25 ? 4_000 : 8_500
+  if (economia.dinheiro < preco || economia.energia >= economia.energiaMaxima) return estado
+  economia.dinheiro -= preco
+  economia.energia = Math.min(economia.energiaMaxima, economia.energia + quantidade)
+  economia.totalGastoEmEnergia += preco
+  return novo
+}
+
+export function treinarAtributoIndividual(
+  estado: EstadoCarreiraDeJogador,
+  atributo: keyof AtributosDoAtleta,
+): EstadoCarreiraDeJogador {
+  const novo = comEconomia(estado)
+  const economia = novo.economia!
+  const custo = 12
+  if (economia.energia < custo || novo.atleta.atributos[atributo] >= novo.atleta.potencial) return estado
+  economia.energia -= custo
+  economia.totalGastoEmTreino += custo
+  economia.ultimoTreinoIndividual = `${novo.temporada}:${novo.rodada}:${atributo}`
+  novo.atleta.atributos[atributo] = Math.min(novo.atleta.potencial, novo.atleta.atributos[atributo] + 1)
+  novo.atleta.overall = overallDoAtleta(novo.atleta.posicao, novo.atleta.atributos)
+  novo.moral = limitar(novo.moral + 1)
+  novo.treinoDaSemana = {
+    intensidade: novo.intensidadeDeTreino ?? "normal", xp: 0, deltaForma: -1,
+    ganho: { atributo, ganho: 1 }, texto: `Treino individual: ${NOME_DO_ATRIBUTO[atributo]} +1 por 12 de energia.`,
+  }
+  return novo
+}
+
+export function comprarEquipamento(estado: EstadoCarreiraDeJogador, itemId: string): EstadoCarreiraDeJogador {
+  const item = EQUIPAMENTOS_DO_ATLETA.find(e => e.id === itemId)
+  if (!item) return estado
+  const novo = comEconomia(estado)
+  const economia = novo.economia!
+  if (economia.equipamentosComprados.includes(item.id) || economia.dinheiro < item.preco) return estado
+  economia.dinheiro -= item.preco
+  economia.equipamentosComprados.push(item.id)
+  economia.equipamentosEmUso[item.categoria] = item.id
+  if (item.bonusEnergia) {
+    economia.energiaMaxima += item.bonusEnergia
+    economia.energia = Math.min(economia.energiaMaxima, economia.energia + item.bonusEnergia)
+  }
+  return novo
+}
+
+export function equiparItem(estado: EstadoCarreiraDeJogador, itemId: string): EstadoCarreiraDeJogador {
+  const item = EQUIPAMENTOS_DO_ATLETA.find(e => e.id === itemId)
+  const atual = economiaDoAtleta(estado)
+  if (!item || !atual.equipamentosComprados.includes(item.id)) return estado
+  const novo = comEconomia(estado)
+  novo.economia!.equipamentosEmUso[item.categoria] = item.id
+  return novo
+}
+
+export function fazerAposta(
+  estado: EstadoCarreiraDeJogador,
+  palpite: ApostaDoAtleta["palpite"],
+  valor: number,
+): EstadoCarreiraDeJogador {
+  const proxima = estado.calendario.find(f => !f.played && f.isUserMatch)
+  const novo = comEconomia(estado)
+  const economia = novo.economia!
+  const limite = Math.floor(economia.dinheiro * 0.25)
+  const aposta = Math.floor(valor)
+  if (!proxima || novo.apostaAtiva || aposta < 100 || aposta > limite) return estado
+  economia.dinheiro -= aposta
+  novo.apostaAtiva = {
+    id: `aposta_${novo.temporada}_${proxima.round}`, rodada: proxima.round, palpite,
+    valor: aposta, multiplicador: palpite === "vitoria" ? 1.8 : palpite === "empate" ? 3.1 : 2.5,
+    adversario: proxima.homeCurto === novo.clubeCurto ? proxima.awayNome : proxima.homeNome,
+  }
+  return novo
+}
+
+function liquidarAposta(estado: EstadoCarreiraDeJogador, golsPro: number, golsContra: number): void {
+  const aposta = estado.apostaAtiva
+  if (!aposta) return
+  const resultado: ApostaDoAtleta["palpite"] = golsPro > golsContra ? "vitoria" : golsPro === golsContra ? "empate" : "derrota"
+  const economia = economiaDoAtleta(estado)
+  estado.economia = economia
+  if (resultado === aposta.palpite) economia.dinheiro += Math.round(aposta.valor * aposta.multiplicador)
+  estado.recados = [{
+    id: `aposta_resultado_${estado.temporada}_${estado.rodada}`, de: "Carteira",
+    texto: resultado === aposta.palpite
+      ? `Aposta certa contra ${aposta.adversario}: retorno de ${Math.round(aposta.valor * aposta.multiplicador).toLocaleString("pt-BR")}.`
+      : `Aposta perdida contra ${aposta.adversario}.`,
+    temporada: estado.temporada, rodada: estado.rodada,
+  }, ...estado.recados].slice(0, 25)
+  estado.apostaAtiva = null
+}
+
+export function interagirComParceira(
+  estado: EstadoCarreiraDeJogador,
+  acao: "conhecer" | "encontro" | "presente" | "conversar",
+): EstadoCarreiraDeJogador {
+  const novo = comEconomia(estado)
+  const economia = novo.economia!
+  if (!novo.parceira) {
+    if (acao !== "conhecer") return estado
+    novo.parceira = { nome: "Marina", afinidade: 18, fase: "conhecendo", ultimaInteracaoRodada: novo.rodada, momentos: 1 }
+    novo.moral = limitar(novo.moral + 4)
+    return novo
+  }
+  if (novo.parceira.ultimaInteracaoRodada === novo.rodada) return estado
+  const custo = acao === "presente" ? 3_500 : acao === "encontro" ? 1_200 : 0
+  if (economia.dinheiro < custo) return estado
+  economia.dinheiro -= custo
+  novo.parceira.afinidade = Math.min(100, novo.parceira.afinidade + (acao === "presente" ? 14 : acao === "encontro" ? 10 : 6))
+  novo.parceira.momentos++
+  novo.parceira.ultimaInteracaoRodada = novo.rodada
+  novo.parceira.fase = novo.parceira.afinidade >= 70 ? "relacao_seria" : novo.parceira.afinidade >= 35 ? "namoro" : "conhecendo"
+  novo.moral = limitar(novo.moral + 3)
+  return novo
 }
 
 export interface EscolhasDoAtleta {
@@ -960,6 +1179,12 @@ export function criarCarreiraDeJogador(
     // sem alcance. Trocar por um bom é uma decisão da carreira, com custo.
     empresario: EMPRESARIOS[2],
     ganhosDaTemporada: 0,
+    economia: {
+      dinheiro: Math.max(25_000, salario * 3), energia: 100, energiaMaxima: 100,
+      equipamentosComprados: [], equipamentosEmUso: {}, totalGastoEmTreino: 0, totalGastoEmEnergia: 0,
+    },
+    apostaAtiva: null,
+    parceira: null,
     reputacao: 30,
     torcida: 50,
     entrevistasRespondidas: [],
@@ -1297,6 +1522,12 @@ export function jogarProximaRodada(
   }
 
   const novo: EstadoCarreiraDeJogador = structuredClone(estado)
+  novo.versao = 3
+  novo.economia = structuredClone(economiaDoAtleta(novo))
+  // Salario e recuperacao acontecem uma vez por semana, antes das decisoes.
+  const liquido = Math.round(novo.contrato.salarioSemanal * (1 - novo.empresario.comissao / 100))
+  novo.economia.dinheiro += liquido
+  novo.economia.energia = Math.min(novo.economia.energiaMaxima, novo.economia.energia + 18)
   // ⚠️ A SEMANA DE TREINO VEM ANTES DA PARTIDA, e não é detalhe de ordem: é o
   // custo em forma da semana puxada que precisa chegar ao jogo. Treinar depois
   // faria a intensidade não ter preço nenhum no dia em que ela importa.
@@ -1338,7 +1569,7 @@ export function jogarProximaRodada(
           },
           semente: `${novo.atleta.id}:${novo.temporada}:${rodada}`,
           posicao: String(novo.atleta.posicao),
-          atributos: novo.atleta.atributos as unknown as Record<string, number>,
+          atributos: atributosEfetivosDoAtleta(novo) as unknown as Record<string, number>,
         })
         continue
       }
@@ -1478,6 +1709,9 @@ function aplicarPartidaNaCarreira(
   novo.ultimasPartidas = [registro, ...novo.ultimasPartidas].slice(0, 12)
 
   if (d.minutos > 0) {
+    const economia = economiaDoAtleta(novo)
+    novo.economia = economia
+    economia.energia = Math.max(0, economia.energia - Math.max(2, Math.round((d.minutos / 90) * 12)))
     novo.temporadaAtual.jogos++
     if (d.titular) novo.temporadaAtual.titularidades++
     novo.temporadaAtual.minutos += d.minutos
@@ -1568,6 +1802,7 @@ function aplicarPartidaNaCarreira(
   ))
   aplicarXP(novo, d.xp)
   atualizarMetas(novo)
+  liquidarAposta(novo, ctx.golsPro, ctx.golsContra)
 }
 
 
@@ -2517,6 +2752,10 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
   if (!p || !partidaTerminou(p)) return estado
   const novo = structuredClone(estado)
   delete novo.partidaEmCurso
+  novo.versao = 3
+  novo.economia = structuredClone(economiaDoAtleta(novo))
+  const lances = p.aoVivo?.lancesOferecidos ?? p.historico.length
+  novo.economia.energia = Math.max(0, novo.economia.energia - Math.max(2, lances * 2))
 
   // ⚠️ NO MODO AO VIVO, o apito fecha o fixture e a tabela — não o início da
   // rodada. A partida não foi pré-simulada justamente para o placar poder nascer
@@ -2569,6 +2808,7 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
     Math.min(merecida + 22, novo.notaDoTreinador + (merecida - novo.notaDoTreinador) * 0.12),
   ))
   atualizarMetas(novo)
+  liquidarAposta(novo, p.golsPro, p.golsContra)
 
   if (p.gols >= 2 || p.nota >= 8.5) {
     novo.reputacao = Math.min(100, (novo.reputacao ?? 30) + (p.gols >= 2 ? 3 : 2))

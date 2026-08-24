@@ -49,6 +49,8 @@ import {
 /** O que o atleta pode ser chamado a resolver. */
 export type TipoDeLance =
   | "finalizacao"
+  | "falta"
+  | "penalti"
   | "passe_decisivo"
   | "drible"
   | "cruzamento"
@@ -97,6 +99,8 @@ export interface PartidaAoVivo {
   semente: string
   /** Quantos lances já foram oferecidos — evita inundar o jogador. */
   lancesOferecidos: number
+  /** Ritmo NSS: alvo de lances curtos para esta participacao. */
+  metaDeLances?: number
   /**
    * Atributos do atleta, injetados pela carreira.
    *
@@ -182,6 +186,8 @@ export function iniciarPartidaAoVivo(dados: {
   posicao: string
 }): PartidaAoVivo {
   semearMotorDePartida(sementeNumerica(dados.semente))
+  const minutosEmCampo = Math.max(1, (dados.minutoDeSaida ?? 90) - dados.minutoDeEntrada)
+  const alvoCheio = 8 + Math.floor(roll(`${dados.semente}:ritmo-nss`) * 9)
   return {
     estado: startMatch(createInitialState()),
     config: dados.config,
@@ -197,6 +203,7 @@ export function iniciarPartidaAoVivo(dados: {
     historico: [],
     semente: dados.semente,
     lancesOferecidos: 0,
+    metaDeLances: Math.max(3, Math.round(alvoCheio * minutosEmCampo / 90)),
     atributos: dados.atributos,
     posicao: dados.posicao,
   }
@@ -256,7 +263,13 @@ export function avancarAteOLance(p: PartidaAoVivo): PartidaAoVivo {
     // partida para virar questionário.
     if (minuto === antes.minute) continue
 
-    const base = ENVOLVIMENTO_POR_POSICAO[p.posicao] ?? 0.12
+    const meta = p.metaDeLances ?? 8
+    const faltam = Math.max(0, meta - oferecidos)
+    if (faltam <= 0) continue
+    const minutosRestantes = Math.max(1, (p.minutoDeSaida ?? 90) - minuto)
+    // A chance sobe conforme o relogio aperta, para entregar 8–16 lances curtos
+    // numa partida inteira sem transformar cada minuto numa pergunta.
+    const base = Math.max(ENVOLVIMENTO_POR_POSICAO[p.posicao] ?? 0.08, Math.min(0.72, faltam / minutosRestantes * 1.25))
     const sorteio = roll(`${p.semente}:envolvimento:${minuto}`)
     if (sorteio >= base) continue
 
@@ -287,12 +300,24 @@ function montarLance(p: PartidaAoVivo, minuto: number, pro: number, contra: numb
   const aperto = perdendo && fimDeJogo
 
   const sorteio = roll(`${p.semente}:tipo:${minuto}`)
-  const tipo: TipoDeLance = sorteio < 0.34 ? "finalizacao"
+  const indice = p.lancesOferecidos
+  const tipo: TipoDeLance = p.posicao !== "GOL" && indice === 2 ? "falta"
+    : p.posicao !== "GOL" && (p.metaDeLances ?? 0) >= 10 && indice === 6 ? "penalti"
+      : sorteio < 0.34 ? "finalizacao"
     : sorteio < 0.6 ? "passe_decisivo"
       : sorteio < 0.78 ? "drible"
         : sorteio < 0.9 ? "cruzamento" : "desarme"
 
-  const opcoes: OpcaoDoLance[] = tipo === "finalizacao"
+  const opcoes: OpcaoDoLance[] = tipo === "falta"
+    ? [
+        { id: "bater_falta", texto: "Cobrar a falta com mira", atributo: "finalizacao", risco: 0.58, efeito: "gol" },
+        { id: "rolar_falta", texto: "Rolar para a jogada ensaiada", atributo: "passe", risco: 0.24, efeito: "assistencia" },
+      ]
+    : tipo === "penalti"
+      ? [
+          { id: "bater_penalti", texto: "Cobrar o penalti com mira", atributo: "finalizacao", risco: 0.36, efeito: "gol" },
+        ]
+      : tipo === "finalizacao"
     ? [
         { id: "chutar", texto: "Chutar de primeira", atributo: "finalizacao", risco: aperto ? 0.5 : 0.55, efeito: "gol" },
         { id: "ajeitar", texto: "Ajeitar e bater colocado", atributo: "finalizacao", risco: 0.42, efeito: "gol" },
@@ -319,7 +344,9 @@ function montarLance(p: PartidaAoVivo, minuto: number, pro: number, contra: numb
               { id: "conter", texto: "Conter sem se expor", atributo: "posicionamento", risco: 0.18, efeito: "posse" },
             ]
 
-  const narracao = aperto
+  const narracao = tipo === "falta" ? `${minuto}': falta na entrada da area. A cobranca e sua.`
+    : tipo === "penalti" ? `${minuto}': PENALTI. Goleiro e bola — voce decide o canto.`
+      : aperto
     ? `${minuto}': ${pro}-${contra} e o tempo correndo. A bola chega em você.`
     : `${minuto}': ${pro}-${contra}. A jogada passa por você.`
 
@@ -345,7 +372,7 @@ export interface DesfechoDoLance {
  * A execução continua decidida pelos ATRIBUTOS do atleta. Habilidade de leitura
  * do jogador escolhe a opção; o atleta é quem executa.
  */
-export function resolverLance(p: PartidaAoVivo, opcaoId: string): { partida: PartidaAoVivo; desfecho: DesfechoDoLance } {
+export function resolverLance(p: PartidaAoVivo, opcaoId: string, precisaoMira = 1): { partida: PartidaAoVivo; desfecho: DesfechoDoLance } {
   const lance = p.lancePendente
   const opcao = lance?.opcoes.find(o => o.id === opcaoId)
   if (!lance || !opcao) {
@@ -356,7 +383,8 @@ export function resolverLance(p: PartidaAoVivo, opcaoId: string): { partida: Par
   // para o módulo continuar utilizável em teste isolado.
   const valor = atributoDoAtleta(p, opcao.atributo)
   const execucao = Math.max(0.08, Math.min(0.94, (valor / 100) * 1.35 - opcao.risco * 0.75))
-  const chance = execucao * (CONVERSAO_POR_EFEITO[opcao.efeito] ?? 1)
+  const qualidadeDaMira = Math.max(0.2, Math.min(1, precisaoMira))
+  const chance = execucao * (CONVERSAO_POR_EFEITO[opcao.efeito] ?? 1) * (0.45 + qualidadeDaMira * 0.55)
   const sucesso = roll(`${p.semente}:${lance.id}:${opcaoId}`) < chance
 
   let gol = false

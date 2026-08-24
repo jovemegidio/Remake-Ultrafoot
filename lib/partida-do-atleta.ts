@@ -323,11 +323,12 @@ export function decidirMomento(
   estado: EstadoCarreiraDeJogador,
   partida: PartidaEmCurso,
   escolhaId: string,
+  precisaoMira = 1,
 ): { partida: PartidaEmCurso; resultado: ResultadoDoMomento } {
   // MODO AO VIVO: quem resolve é o módulo da partida real, e o resultado entra
   // no placar. Depois a simulação segue até o próximo envolvimento.
   if (partida.aoVivo) {
-    const r = resolverLance(partida.aoVivo, escolhaId)
+    const r = resolverLance(partida.aoVivo, escolhaId, precisaoMira)
     const seguiu = avancarAteOLance(r.partida)
     return {
       partida: comEstadoVivo(partida, seguiu),
@@ -394,6 +395,8 @@ export function decidirMomento(
 
 const TIPO_DO_LANCE: Record<string, TipoDeMomento> = {
   finalizacao: "ataque",
+  falta: "bola_parada",
+  penalti: "bola_parada",
   drible: "ataque",
   cabeceio: "ataque",
   passe_decisivo: "criacao",

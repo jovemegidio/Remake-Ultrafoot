@@ -19,8 +19,8 @@
 
 import { useEffect, useMemo, useState } from "react"
 import {
-  BarChart3, BriefcaseBusiness, CalendarDays, ChevronRight, Flag, Handshake, Newspaper,
-  Play, Star, Target, TrendingUp, Users,
+  BarChart3, Battery, BriefcaseBusiness, CalendarDays, ChevronRight, Flag, Handshake, Heart, Newspaper,
+  Play, Star, Target, TrendingUp, Users, Wallet,
 } from "lucide-react"
 
 import { AtletaShell, PainelDoAtleta, rotaDaAbaAntiga } from "@/components/carreira-jogador/atleta-shell"
@@ -37,10 +37,10 @@ import { cn } from "@/lib/utils"
 import { conversasDoMomento, responderConversa, rotuloDoInterlocutor } from "@/lib/conversas-do-atleta"
 import { formatCurrency } from "@/lib/currency"
 import {
-  aceitarProposta, avancarSemanaSemClube, contrapropor, descartarProposta, encerrarTemporada,
+  aceitarProposta, avancarSemanaSemClube, comprarEnergia, contrapropor, descartarProposta, economiaDoAtleta, encerrarTemporada,
   entrevistaDaVez, fazerPedido, jogarProximaRodada, mediaDaTemporada, minutosEsperados,
   papelNoElenco, potencialVisivel, recusarPropostas, reputacaoDeTreinador, responderEntrevista,
-  resumoDaCarreira, trocarEmpresario, EMPRESARIOS,
+  resumoDaCarreira, trocarEmpresario, fazerAposta, interagirComParceira, EMPRESARIOS,
   type EstadoCarreiraDeJogador, type PedidoDaNegociacao, type PropostaDeClube,
 } from "@/lib/carreira-de-jogador"
 
@@ -204,6 +204,7 @@ export default function CarreiraDeJogadorPage() {
   const entrevista = entrevistaDaVez(carreira)
   const conversas = conversasDoMomento(carreira)
   const temPropostas = carreira.propostas.length > 0
+  const economia = economiaDoAtleta(carreira)
 
   // ── Os botões do canto direito. Sem clube, o tempo passa por semana. ──
   const acoes = carreira.aposentado ? null : semClube ? (
@@ -244,7 +245,7 @@ export default function CarreiraDeJogadorPage() {
 
         {/* ── A faixa de números. Compacta de propósito: cada pixel dela sai da
              altura dos painéis, e são eles que contam a temporada. ── */}
-        <section className="grid shrink-0 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+        <section className="grid shrink-0 gap-2.5 sm:grid-cols-3 lg:grid-cols-7">
           <Numero icone={<Star className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo={t.carreiraDeJogador.nota_do_treinador} nota={semClube ? t.carreiraDeJogador.sem_clube_min : papel}>
             <Estrelas nota={carreira.notaDoTreinador} />
           </Numero>
@@ -259,6 +260,12 @@ export default function CarreiraDeJogadorPage() {
           </Numero>
           <Numero icone={<TrendingUp className="h-3.5 w-3.5 text-[var(--brand)]" />} rotulo={t.carreiraDeJogador.overall_teto}>
             {atleta.overall} <span className="text-sm text-white/40">/ {faixaDePotencial.min}–{faixaDePotencial.max}</span>
+          </Numero>
+          <Numero icone={<Battery className="h-3.5 w-3.5 text-amber-300" />} rotulo="Energia">
+            {economia.energia}<span className="text-sm text-white/40">/{economia.energiaMaxima}</span>
+          </Numero>
+          <Numero icone={<Wallet className="h-3.5 w-3.5 text-emerald-300" />} rotulo="Carteira">
+            <span className="text-base">{formatCurrency(economia.dinheiro)}</span>
           </Numero>
         </section>
 
@@ -429,6 +436,23 @@ export default function CarreiraDeJogadorPage() {
                   <p className="mt-3 text-xs text-white/45">Expectativa do treinador</p>
                   <p className="text-sm font-bold text-[var(--brand)]">{minutosEsperados(carreira)}</p>
 
+                  <div className="mt-3 rounded-xl border border-white/10 bg-black/25 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-wide text-white/40">Aposta da rodada</p>
+                    {carreira.apostaAtiva ? (
+                      <p className="mt-1 text-xs text-amber-200/80">
+                        {carreira.apostaAtiva.palpite} · {formatCurrency(carreira.apostaAtiva.valor)} · x{carreira.apostaAtiva.multiplicador}
+                      </p>
+                    ) : (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {(["vitoria", "empate", "derrota"] as const).map(palpite => (
+                          <button key={palpite} onClick={() => aplicar(fazerAposta(carreira, palpite, Math.max(100, Math.floor(economia.dinheiro * 0.1))))} className="rounded-lg border border-white/10 bg-white/[.04] px-2 py-1 text-[10px] font-bold capitalize text-white/65 hover:border-amber-300/40">
+                            {palpite}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {(carreira.suspensao?.partidasRestantes ?? 0) > 0 && (
                     <p className="mt-3 rounded-lg border border-red-400/25 bg-red-400/[.08] px-3 py-2 text-xs text-red-200/85">
                       Suspenso por {carreira.suspensao!.motivo}: fica de fora de{" "}
@@ -499,6 +523,10 @@ export default function CarreiraDeJogadorPage() {
                   </p>
                 )}
                 <p>Ganhos na temporada: <b className="text-emerald-300/80">{formatCurrency(carreira.ganhosDaTemporada)}</b></p>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <Button variant="outline" size="sm" onClick={() => aplicar(comprarEnergia(carreira, 25))}>+25 energia · {formatCurrency(4_000)}</Button>
+                  <Button variant="outline" size="sm" onClick={() => aplicar(comprarEnergia(carreira, 60))}>+60 · {formatCurrency(8_500)}</Button>
+                </div>
                 <p className="pt-1">
                   Empresário: <b className="text-white/70">{carreira.empresario.nome}</b> ·{" "}
                   negociação {carreira.empresario.negociacao} · influência {carreira.empresario.influencia} ·{" "}
@@ -544,6 +572,23 @@ export default function CarreiraDeJogadorPage() {
                     Seleção {carreira.selecao.nivel === "sub20" ? t.carreiraDeJogador.sub20 : "principal"} · {carreira.selecao.jogos} jogos, {carreira.selecao.gols} gols
                   </p>
                 )}
+
+                <div className="mt-4 border-t border-white/10 pt-3">
+                  <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide text-pink-200/75"><Heart className="h-4 w-4" />Relacionamento</p>
+                  {carreira.parceira ? (
+                    <>
+                      <p className="mt-1 text-sm font-bold">{carreira.parceira.nome} · {carreira.parceira.fase.replace("_", " ")}</p>
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-pink-400" style={{ width: `${carreira.parceira.afinidade}%` }} /></div>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <button onClick={() => aplicar(interagirComParceira(carreira, "conversar"))} className="rounded-lg border border-white/10 px-2 py-1 text-[10px]">Conversar</button>
+                        <button onClick={() => aplicar(interagirComParceira(carreira, "encontro"))} className="rounded-lg border border-white/10 px-2 py-1 text-[10px]">Encontro</button>
+                        <button onClick={() => aplicar(interagirComParceira(carreira, "presente"))} className="rounded-lg border border-white/10 px-2 py-1 text-[10px]">Presente</button>
+                      </div>
+                    </>
+                  ) : (
+                    <button onClick={() => aplicar(interagirComParceira(carreira, "conhecer"))} className="mt-2 rounded-lg border border-pink-300/25 bg-pink-300/[.06] px-3 py-1.5 text-xs text-pink-100/80">Conhecer alguem</button>
+                  )}
+                </div>
               </PainelDoAtleta>
 
               {(entrevista || conversas.length > 0) && (

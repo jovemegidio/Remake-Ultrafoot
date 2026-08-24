@@ -9,7 +9,7 @@
 // atleta cresce pelo que FAZ em campo. O que ele escolhe é o FOCO e a
 // INTENSIDADE do treino — os dois inclinam a curva, nenhum dos dois a decide.
 
-import { Users } from "lucide-react"
+import { Battery, Dumbbell, ShoppingBag, Users } from "lucide-react"
 
 import { AtletaShell, PainelDoAtleta } from "@/components/carreira-jogador/atleta-shell"
 import { GameHeader } from "@/components/game-header"
@@ -19,9 +19,11 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+import { formatCurrency } from "@/lib/currency"
 import {
-  arquetipo, confiancaMerecida, definirIntensidadeDeTreino, hierarquiaDaPosicao,
-  leituraDaPersonalidade, potencialVisivel, NOME_DO_ATRIBUTO,
+  arquetipo, atributosEfetivosDoAtleta, comprarEquipamento, confiancaMerecida, definirIntensidadeDeTreino,
+  economiaDoAtleta, equiparItem, hierarquiaDaPosicao, leituraDaPersonalidade, potencialVisivel,
+  treinarAtributoIndividual, EQUIPAMENTOS_DO_ATLETA, NOME_DO_ATRIBUTO,
   type AtributosDoAtleta, type EstadoCarreiraDeJogador, type IntensidadeDeTreino,
 } from "@/lib/carreira-de-jogador"
 
@@ -57,6 +59,8 @@ export default function EvolucaoDoAtletaPage() {
   const merecida = confiancaMerecida(carreira)
   const jogosNaCarreira = carreira.historico.reduce((n, h) => n + h.jogos, 0) + carreira.temporadaAtual.jogos
   const faixa = potencialVisivel(atleta, jogosNaCarreira)
+  const economia = economiaDoAtleta(carreira)
+  const efetivos = atributosEfetivosDoAtleta(carreira)
 
   return (
     <AtletaShell carreira={carreira} ativa="evolucao">
@@ -79,22 +83,27 @@ export default function EvolucaoDoAtletaPage() {
 
           <div className="mt-4 space-y-3">
             {ATRIBUTOS.map(({ chave, nome }) => {
-              const ganho = carreira.ultimaEvolucao.find(g => g.atributo === chave)?.ganho ?? 0
               const doArquetipo = arq.principais.includes(chave)
+              const bonus = efetivos[chave] - atleta.atributos[chave]
               return (
                 <div key={chave} className="flex items-center gap-3">
                   <span className={cn("w-24 text-sm", doArquetipo ? "font-bold text-white/80" : "text-white/55")}>{nome}</span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
                     <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${atleta.atributos[chave]}%` }} />
                   </div>
-                  <b className="w-8 text-right">{atleta.atributos[chave]}</b>
-                  <span className={cn("w-9 text-right text-xs font-bold", ganho > 0 ? "text-emerald-400" : "text-transparent")}>
-                    +{ganho}
-                  </span>
+                  <b className="w-12 text-right">{atleta.atributos[chave]}{bonus > 0 && <span className="text-[10px] text-cyan-300">+{bonus}</span>}</b>
+                  <button
+                    onClick={() => aplicar(treinarAtributoIndividual(carreira, chave))}
+                    disabled={economia.energia < 12 || atleta.atributos[chave] >= atleta.potencial}
+                    className="rounded-lg border border-[var(--brand)]/25 px-2 py-1 text-[10px] font-bold text-[var(--brand)] disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    +1 · 12⚡
+                  </button>
                 </div>
               )
             })}
           </div>
+          <p className="mt-3 flex items-center gap-2 text-[11px] text-amber-200/70"><Battery className="h-3.5 w-3.5" />Energia {economia.energia}/{economia.energiaMaxima}. Treino individual evolui o atributo escolhido na hora.</p>
           {carreira.ultimaEvolucao.length > 0 && (
             <p className="mt-3 text-[11px] text-emerald-300/70">
               Ganho da última temporada — puxado pelo que você fez em campo.
@@ -170,7 +179,28 @@ export default function EvolucaoDoAtletaPage() {
           </div>
         </PainelDoAtleta>
 
-        <PainelDoAtleta titulo={t.carreiraDeJogador.recados}>
+        <PainelDoAtleta titulo="Equipamento e recados" icone={<ShoppingBag className="h-5 w-5 text-cyan-300" />}>
+          <div className="space-y-2 border-b border-white/10 pb-4">
+            {EQUIPAMENTOS_DO_ATLETA.map(item => {
+              const comprado = economia.equipamentosComprados.includes(item.id)
+              const equipado = economia.equipamentosEmUso[item.categoria] === item.id
+              return (
+                <div key={item.id} className="rounded-xl border border-white/10 bg-black/25 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div><p className="text-sm font-bold">{item.nome}</p><p className="text-[10px] text-cyan-200/60">{item.descricao}</p></div>
+                    <button
+                      disabled={equipado || (!comprado && economia.dinheiro < item.preco)}
+                      onClick={() => aplicar(comprado ? equiparItem(carreira, item.id) : comprarEquipamento(carreira, item.id))}
+                      className="rounded-lg border border-white/12 px-2 py-1 text-[10px] font-bold disabled:opacity-35"
+                    >
+                      {equipado ? "Em uso" : comprado ? "Equipar" : formatCurrency(item.preco)}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <h3 className="mt-4 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-white/45"><Dumbbell className="h-4 w-4" />{t.carreiraDeJogador.recados}</h3>
           {carreira.recados.length === 0 && (
             <p className="py-8 text-center text-sm text-white/35">Nenhum recado ainda.</p>
           )}

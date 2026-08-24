@@ -38,6 +38,7 @@ import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
 import { CampoDoAtleta } from "@/components/match/campo-do-atleta"
+import { MiraDoAtleta } from "@/components/carreira-jogador/mira-do-atleta"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByFileKey, getTeamByShort } from "@/lib/teams-data"
 import { getCompetitionLogo } from "@/lib/competition-logo"
@@ -45,7 +46,7 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
-import { concluirPartidaDoAtleta, minutosEsperados } from "@/lib/carreira-de-jogador"
+import { concluirPartidaDoAtleta, economiaDoAtleta, minutosEsperados } from "@/lib/carreira-de-jogador"
 import { decidirMomento, partidaTerminou, type LanceNarrado } from "@/lib/partida-do-atleta"
 
 /**
@@ -140,8 +141,8 @@ export default function PartidaDoAtletaPage() {
   const golsCasa = partida.emCasa ? corrido.pro : corrido.contra
   const golsFora = partida.emCasa ? corrido.contra : corrido.pro
 
-  const decidir = (escolhaId: string) => {
-    const r = decidirMomento(carreira, partida, escolhaId)
+  const decidir = (escolhaId: string, precisaoMira = 1) => {
+    const r = decidirMomento(carreira, partida, escolhaId, precisaoMira)
     setUltimo(r.resultado.narracao)
     setState({ carreiraDeJogador: { ...carreira, partidaEmCurso: r.partida } })
   }
@@ -210,7 +211,10 @@ export default function PartidaDoAtletaPage() {
                 <span className="text-white/50">Confiança do treinador</span><b>{Math.round(carreira.notaDoTreinador)}</b>
               </p>
               <p className="flex items-center justify-between">
-                <span className="text-white/50">Momentos previstos</span><b>{partida.momentos.length}</b>
+                <span className="text-white/50">Lances curtos previstos</span><b>{partida.aoVivo?.metaDeLances ?? partida.momentos.length}</b>
+              </p>
+              <p className="flex items-center justify-between">
+                <span className="text-white/50">Energia</span><b>{economiaDoAtleta(carreira).energia}/{economiaDoAtleta(carreira).energiaMaxima}</b>
               </p>
             </div>
 
@@ -330,8 +334,24 @@ export default function PartidaDoAtletaPage() {
           {!acabou && momento ? (
             <section className="shrink-0 rounded-2xl border border-[var(--brand)]/25 bg-[var(--brand)]/[.05] p-4">
               <p className="text-sm font-bold text-white/85">{momento.narracao}</p>
+              {partida.aoVivo?.lancePendente && ["finalizacao", "falta", "penalti"].includes(partida.aoVivo.lancePendente.tipo) && (
+                <MiraDoAtleta
+                  tipo={partida.aoVivo.lancePendente.tipo as "finalizacao" | "falta" | "penalti"}
+                  lanceId={partida.aoVivo.lancePendente.id}
+                  aoFinalizar={precisao => decidir(
+                    partida.aoVivo?.lancePendente?.tipo === "falta" ? "bater_falta"
+                      : partida.aoVivo?.lancePendente?.tipo === "penalti" ? "bater_penalti"
+                        : "chutar",
+                    precisao,
+                  )}
+                />
+              )}
               <div className="mt-3 grid gap-2 md:grid-cols-3">
-                {momento.escolhas.map(e => (
+                {momento.escolhas.filter(e => {
+                  const tipo = partida.aoVivo?.lancePendente?.tipo
+                  if (!["finalizacao", "falta", "penalti"].includes(tipo ?? "")) return true
+                  return !["chutar", "ajeitar", "bater_falta", "bater_penalti"].includes(e.id)
+                }).map(e => (
                   <button
                     key={e.id}
                     onClick={() => decidir(e.id)}

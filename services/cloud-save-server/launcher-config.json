@@ -9,6 +9,13 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "1.0.372: a carreira de jogador chegou ao ritmo NSS",
+      "category": "Atualizacao",
+      "body": "Energia agora e moeda para jogar e treinar, com carteira pessoal, compra de recarga e treino de atributo individual. Equipamentos mudam atributos, apostas usam o resultado real e a parceira ganhou relacao propria. Dentro de campo, a partida passou a oferecer muitos lances curtos; faltas e penaltis sao momentos proprios, com mira por arrasto, bola voando e goleiro mergulhando.",
+      "date": "2026-08-24",
+      "pinned": true
+    },
+    {
       "title": "1.0.356: o jogo ficou mais leve para rodar",
       "category": "Atualizacao",
       "body": "O mundo simulado era carregado inteiro a cada troca de tela — 158 MB de memoria, inclusive na abertura e no menu, onde ele nao e usado. Agora so entra quando voce esta jogando uma carreira. Junto vem o Manager Rush, um desafio diario jogavel, a partida abrindo mais rapido e quase 1 GB de backups antigos que o jogo passou a reconhecer como descartaveis. Suas carreiras continuam intactas.",
@@ -282,6 +289,20 @@
   ],
   "changelog": [
     {
+      "version": "1.0.372",
+      "data": "2026-08-24",
+      "titulo": "Carreira de jogador no ritmo NSS",
+      "itens": [
+        "ENERGIA VIROU MOEDA. Partidas e treinos gastam energia; a semana recupera uma parte e o atleta pode comprar recargas com o proprio dinheiro.",
+        "TREINO INDIVIDUAL. Agora voce escolhe qual atributo evoluir, paga 12 de energia e ve o ganho imediatamente, sempre respeitando o potencial.",
+        "VIDA FORA DO CAMPO. Salario entra na carteira pessoal; equipamentos mudam atributos, apostas sao liquidadas pelo resultado real e a parceira tem afinidade, fases e interacoes proprias.",
+        "RITMO NSS. Uma partida inteira passou de cerca de cinco momentos para 8 a 16 lances curtos, proporcionais aos minutos em campo.",
+        "FALTA E PENALTI SAO LANCES PROPRIOS. Finalizacoes e bolas paradas ganharam mira por arrasto, trajetoria da bola e mergulho do goleiro.",
+        "SAVES ANTIGOS CONTINUAM VALIDOS. A nova economia nasce sob demanda sem apagar a carreira existente."
+      ],
+      "latest": true
+    },
+    {
       "version": "1.0.366",
       "data": "2026-08-23",
       "titulo": "Carreira de jogador com resultado aberto, e uma partida que sumia do estadual",
@@ -292,7 +313,7 @@
         "SEUS ATRIBUTOS DECIDEM A EXECUÇÃO. A escolha é sua; quem executa é o atleta. Finalização, passe, drible e desarme mudam a chance de o lance dar certo — e acertar a finalização ainda não é gol: existe goleiro do outro lado.",
         "PARTIDA DO ESTADUAL DEIXOU DE SUMIR. Ao reabrir o save, o jogo podia marcar como disputada uma partida que você nunca jogou — com placar que ninguém produziu. Acontecia quando o mesmo confronto aparecia em duas fases do estadual (classificatória e mata-mata): concluir uma marcava as duas, e a segunda desaparecia do calendário."
       ],
-      "latest": true
+      "latest": false
     },
     {
       "version": "1.0.364",

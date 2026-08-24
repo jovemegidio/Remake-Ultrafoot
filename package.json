@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.366",
+  "version": "1.0.372",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -16,6 +16,7 @@
     "qa:destinos-online": "tsx scripts/test-destinos-online.ts",
     "qa:campo-atleta": "tsx scripts/test-campo-do-atleta.ts",
     "qa:treino-atleta": "tsx scripts/test-treino-do-atleta.ts",
+    "qa:nss": "tsx scripts/qa-nss-372.ts",
     "qa:conversas-atleta": "tsx scripts/test-conversas-do-atleta.ts",
     "qa:simular-persiste": "tsx scripts/test-simular-persiste.ts",
     "qa:elencos-compactos": "tsx scripts/test-elencos-compactos.ts",
