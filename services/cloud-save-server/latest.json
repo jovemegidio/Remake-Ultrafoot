@@ -1,9 +1,15 @@
 {
-  "version": "1.0.372",
-  "notes": "Carreira de jogador no ritmo NSS: energia e carteira, treino individual, equipamentos, apostas, relacionamento, 8-16 lances curtos, faltas e penaltis proprios e mira por arrasto.",
-  "sizeMb": 680,
-  "sha256": "8500351DE8A6C5B0A12A85616BAFCAFDBF95B3057975E0811435F643911F3356",
+  "version": "1.0.373",
+  "notes": "Carreira de jogador com partida por posicao, mira completa, goleiro e selecao jogaveis, vida fora do campo e dependencias sem vulnerabilidades conhecidas.",
+  "sizeMb": 663,
+  "sha256": "67E70A7AD049ED555A4CBFFD5A05AA7E3E63415DF53D29EF2872E8F7746002C4",
   "anteriores": [
+    {
+      "version": "1.0.372",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.372/Ultrafoot.26_1.0.372_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.372",
+      "sizeMb": 680
+    },
     {
       "version": "1.0.368",
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.368/Ultrafoot.26_1.0.368_x64-setup.exe",
@@ -51,18 +57,12 @@
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.359/Ultrafoot.26_1.0.359_x64-setup.exe",
       "notes": "Ultrafoot 26 v1.0.359",
       "sizeMb": 714
-    },
-    {
-      "version": "1.0.358",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.358/Ultrafoot.26_1.0.358_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.358",
-      "sizeMb": 787
     }
   ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUw2UENuVk1MNXpLNmpRZTZDTFNCUmpnbmppT2hJQWE4UVphNGpyT0xib2FwTlUxdk5tNDBoLzJmQmNObkVLWGZxdEtWZDR2cldQRjFIQlZVOHduRUE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3NTkxNzg2CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNzJfeDY0LXNldHVwLmV4ZQpJT2thY1Bid3ZmTTFMZEVJaWVBWWEvSU1BS2tjV1dJUFNmc29Id1A4ZzRkSUF5MmNKNW1Cc2pOUEpqWGRBaG5OS0pZRmU3V0ZzNVdzM3gvVm1pTS9Bdz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.372_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUgvR1J4elUwcFFHWkRBYmR1NlREWjdpbXQzbC9UR3RBakduUWRBQURmNUM2UWF2Z3Q1VkE2VHFpWU5uVkxKTjJkbFdSN1J2VmNRZXBSRGFISHZ5MFE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3NjAxMjY5CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNzNfeDY0LXNldHVwLmV4ZQpVaEZvNzZtcTVmVUdnOFY3N1BNeVIwckNnTGVWZzNqZEMvSjZoYWtJY3BzZXZkNXd0L09TWXViRFhURUpkalFEVFFhLzE0VDRxa2padlgwM2V4NElDQT09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.373_x64-setup.exe"
     }
   }
 }
