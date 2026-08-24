@@ -3,6 +3,7 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
 import { Crosshair } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "@/lib/i18n"
 
 interface Ponto { x: number; y: number }
 
@@ -13,6 +14,7 @@ export function MiraDoAtleta({
   lanceId: string
   aoFinalizar: (precisao: number) => void
 }) {
+  const t = useTranslation()
   const areaRef = useRef<HTMLDivElement>(null)
   const [mira, setMira] = useState<Ponto>({ x: 50, y: 34 })
   const [bola, setBola] = useState<Ponto>({ x: 50, y: 86 })
@@ -77,7 +79,7 @@ export function MiraDoAtleta({
         )}
         <button
           type="button"
-          aria-label="Arraste a bola para mirar e solte para finalizar"
+          aria-label={t.carreiraDeJogador.arraste_a_bola_para_mirar_e}
           onPointerDown={evento => {
             if (animando) return
             evento.currentTarget.setPointerCapture(evento.pointerId)

@@ -108,8 +108,8 @@ export default function PartidaDoAtletaPage() {
       <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
-          <p className="text-white/70">Nenhuma partida em andamento.</p>
-          <Button className="mt-4" onClick={() => hardNavigate("/carreira/jogador")}>Voltar à carreira</Button>
+          <p className="text-white/70">{t.carreiraDeJogador.nenhuma_partida_em_andamento}</p>
+          <Button className="mt-4" onClick={() => hardNavigate("/carreira/jogador")}>{t.carreiraDeJogador.voltar_a_carreira}</Button>
         </div>
       </main>
     )
@@ -208,10 +208,10 @@ export default function PartidaDoAtletaPage() {
                 <span className="text-white/50">Forma</span><b>{Math.round(carreira.forma)}</b>
               </p>
               <p className="flex items-center justify-between">
-                <span className="text-white/50">Confiança do treinador</span><b>{Math.round(carreira.notaDoTreinador)}</b>
+                <span className="text-white/50">{t.carreiraDeJogador.confianca_do_treinador}</span><b>{Math.round(carreira.notaDoTreinador)}</b>
               </p>
               <p className="flex items-center justify-between">
-                <span className="text-white/50">Lances curtos previstos</span><b>{partida.aoVivo?.metaDeLances ?? partida.momentos.length}</b>
+                <span className="text-white/50">{t.carreiraDeJogador.lances_curtos_previstos}</span><b>{partida.aoVivo?.metaDeLances ?? partida.momentos.length}</b>
               </p>
               <p className="flex items-center justify-between">
                 <span className="text-white/50">Energia</span><b>{economiaDoAtleta(carreira).energia}/{economiaDoAtleta(carreira).energiaMaxima}</b>
@@ -408,7 +408,7 @@ export default function PartidaDoAtletaPage() {
                   </div>
                 ))}
               {(partida.narracaoDaPartida?.length ?? 0) === 0 && (
-                <p className="py-8 text-center text-sm text-white/30">O jogo vai começar…</p>
+                <p className="py-8 text-center text-sm text-white/30">{t.carreiraDeJogador.o_jogo_vai_comecar}</p>
               )}
             </div>
           </section>

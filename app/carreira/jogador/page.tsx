@@ -186,8 +186,8 @@ export default function CarreiraDeJogadorPage() {
       <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
-          <p className="text-white/70">Nenhuma carreira de jogador ativa neste save.</p>
-          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>Criar carreira</Button>
+          <p className="text-white/70">{t.carreiraDeJogador.nenhuma_carreira_de_jogador_ativa_neste}</p>
+          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>{t.carreiraDeJogador.criar_carreira}</Button>
         </div>
       </main>
     )
@@ -228,7 +228,7 @@ export default function CarreiraDeJogadorPage() {
           >
             <Play className="mr-2 h-4 w-4" /> Viver a partida
           </Button>
-          <Button variant="outline" onClick={() => aplicar(jogarProximaRodada(carreira))}>Simular rodada</Button>
+          <Button variant="outline" onClick={() => aplicar(jogarProximaRodada(carreira))}>{t.carreiraDeJogador.simular_rodada}</Button>
         </>
       )}
       {carreira.temporadaEncerrada && (
@@ -314,7 +314,7 @@ export default function CarreiraDeJogadorPage() {
               <p className="text-sm text-white/70">{semClube.motivo} — saiu do {semClube.ultimoClubeNome}.</p>
               <div className="mt-4">
                 <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-white/45">
-                  <span>Cartaz no mercado</span><b className="text-white/75">{semClube.cartaz}</b>
+                  <span>{t.carreiraDeJogador.cartaz_no_mercado}</span><b className="text-white/75">{semClube.cartaz}</b>
                 </div>
                 <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
                   <div
@@ -330,11 +330,11 @@ export default function CarreiraDeJogadorPage() {
 
               <div className="mt-4 border-t border-white/10 pt-3 text-[11px] text-white/45">
                 <p>Empresário: <b className="text-white/70">{carreira.empresario.nome}</b> · negociação {carreira.empresario.negociacao} · influência {carreira.empresario.influencia} · exterior {carreira.empresario.redeInternacional}</p>
-                <p className="mt-1">Forma: <b className="text-white/70">{Math.round(carreira.forma)}</b> — sem treino de grupo ela cede.</p>
+                <p className="mt-1">Forma: <b className="text-white/70">{Math.round(carreira.forma)}</b> {t.carreiraDeJogador.sem_treino_de_grupo_ela_cede}</p>
               </div>
 
               <div className="mt-4 border-t border-white/10 pt-3">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-white/40">Diário do mercado</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-white/40">{t.carreiraDeJogador.diario_do_mercado}</p>
                 <div className="mt-2 space-y-1.5">
                   {semClube.diario.map(linha => (
                     <p key={`${linha.semana}-${linha.texto.slice(0, 24)}`} className="text-[12px] leading-relaxed text-white/60">
@@ -433,11 +433,11 @@ export default function CarreiraDeJogadorPage() {
                   <p className="text-xs text-white/45">
                     {proxima.homeCurto === carreira.clubeCurto ? t.carreiraDeJogador.em_casa : t.carreiraDeJogador.fora} · rodada {proxima.round} · {proxima.competition}
                   </p>
-                  <p className="mt-3 text-xs text-white/45">Expectativa do treinador</p>
+                  <p className="mt-3 text-xs text-white/45">{t.carreiraDeJogador.expectativa_do_treinador}</p>
                   <p className="text-sm font-bold text-[var(--brand)]">{minutosEsperados(carreira)}</p>
 
                   <div className="mt-3 rounded-xl border border-white/10 bg-black/25 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-wide text-white/40">Aposta da rodada</p>
+                    <p className="text-[10px] font-black uppercase tracking-wide text-white/40">{t.carreiraDeJogador.aposta_da_rodada}</p>
                     {carreira.apostaAtiva ? (
                       <p className="mt-1 text-xs text-amber-200/80">
                         {carreira.apostaAtiva.palpite} · {formatCurrency(carreira.apostaAtiva.valor)} · x{carreira.apostaAtiva.multiplicador}
@@ -503,10 +503,10 @@ export default function CarreiraDeJogadorPage() {
               )}
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => aplicar(fazerPedido(carreira, "mais_minutos"))}>Pedir minutos</Button>
-                <Button variant="outline" size="sm" onClick={() => aplicar(fazerPedido(carreira, "transferencia"))}>Pedir transferência</Button>
+                <Button variant="outline" size="sm" onClick={() => aplicar(fazerPedido(carreira, "mais_minutos"))}>{t.carreiraDeJogador.pedir_minutos}</Button>
+                <Button variant="outline" size="sm" onClick={() => aplicar(fazerPedido(carreira, "transferencia"))}>{t.carreiraDeJogador.pedir_transferencia}</Button>
                 {carreira.pedido !== "nenhum" && (
-                  <Button variant="ghost" size="sm" onClick={() => aplicar(fazerPedido(carreira, "nenhum"))}>Retirar pedido</Button>
+                  <Button variant="ghost" size="sm" onClick={() => aplicar(fazerPedido(carreira, "nenhum"))}>{t.carreiraDeJogador.retirar_pedido}</Button>
                 )}
               </div>
 
@@ -586,7 +586,7 @@ export default function CarreiraDeJogadorPage() {
                       </div>
                     </>
                   ) : (
-                    <button onClick={() => aplicar(interagirComParceira(carreira, "conhecer"))} className="mt-2 rounded-lg border border-pink-300/25 bg-pink-300/[.06] px-3 py-1.5 text-xs text-pink-100/80">Conhecer alguem</button>
+                    <button onClick={() => aplicar(interagirComParceira(carreira, "conhecer"))} className="mt-2 rounded-lg border border-pink-300/25 bg-pink-300/[.06] px-3 py-1.5 text-xs text-pink-100/80">{t.carreiraDeJogador.conhecer_alguem}</button>
                   )}
                 </div>
               </PainelDoAtleta>
@@ -675,7 +675,7 @@ export default function CarreiraDeJogadorPage() {
 
               <PainelDoAtleta titulo={t.carreiraDeJogador.ultimas_atuacoes} className="min-h-0 flex-1">
                 {carreira.ultimasPartidas.length === 0 && (
-                  <p className="py-6 text-center text-white/35">Ainda sem partidas nesta carreira.</p>
+                  <p className="py-6 text-center text-white/35">{t.carreiraDeJogador.ainda_sem_partidas_nesta_carreira}</p>
                 )}
                 <div className="space-y-2">
                   {carreira.ultimasPartidas.map(p => (

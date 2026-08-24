@@ -44,8 +44,8 @@ export default function EvolucaoDoAtletaPage() {
       <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
-          <p className="text-white/70">Nenhuma carreira de jogador ativa neste save.</p>
-          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>Criar carreira</Button>
+          <p className="text-white/70">{t.carreiraDeJogador.nenhuma_carreira_de_jogador_ativa_neste}</p>
+          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>{t.carreiraDeJogador.criar_carreira}</Button>
         </div>
       </main>
     )
@@ -131,15 +131,15 @@ export default function EvolucaoDoAtletaPage() {
               onChange={e => aplicar(definirIntensidadeDeTreino(carreira, e.target.value as IntensidadeDeTreino))}
               className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
             >
-              <option value="leve">Leve — preserva a forma, evolui devagar</option>
-              <option value="normal">Normal — equilíbrio</option>
-              <option value="puxada">Puxada — evolui mais, chega cansado</option>
+              <option value="leve">{t.carreiraDeJogador.leve_preserva_a_forma_evolui_devagar}</option>
+              <option value="normal">{t.carreiraDeJogador.normal_equilibrio}</option>
+              <option value="puxada">{t.carreiraDeJogador.puxada_evolui_mais_chega_cansado}</option>
             </select>
           </label>
 
           {carreira.treinoDaSemana && (
             <div className="mt-4 rounded-xl border border-white/10 bg-black/30 px-4 py-3">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-white/40">Última semana de treino</p>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-white/40">{t.carreiraDeJogador.ultima_semana_de_treino}</p>
               <p className="mt-1 text-sm text-white/80">{carreira.treinoDaSemana.texto}</p>
               <p className="mt-1 text-[11px] text-white/45">
                 Forma {carreira.treinoDaSemana.deltaForma >= 0 ? "+" : ""}{carreira.treinoDaSemana.deltaForma}
@@ -149,28 +149,28 @@ export default function EvolucaoDoAtletaPage() {
           )}
 
           <div className="mt-4 border-t border-white/10 pt-3">
-            <h3 className="flex items-center gap-2 text-sm font-black"><Users className="h-4 w-4 text-[var(--brand)]" />Disputa pela posição</h3>
+            <h3 className="flex items-center gap-2 text-sm font-black"><Users className="h-4 w-4 text-[var(--brand)]" />{t.carreiraDeJogador.disputa_pela_posicao}</h3>
             <p className="mt-1 text-[11px] text-white/45">
               Você é o <b className="text-white/80">{hierarquia.posto}º</b> de {hierarquia.concorrentes} em {atleta.posicao} neste elenco.
               {hierarquia.posto > 1 && ` À sua frente: ${hierarquia.nomeDoMelhorRival} (${hierarquia.melhorRival}).`}
             </p>
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-white/55">Confiança do treinador</span>
+                <span className="text-white/55">{t.carreiraDeJogador.confianca_do_treinador}</span>
                 <b>{Math.round(carreira.notaDoTreinador)}</b>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-white/10">
                 <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${carreira.notaDoTreinador}%` }} />
               </div>
               <div className="flex items-center justify-between text-[11px] text-white/40">
-                <span>Merecido pelo seu lugar na fila</span>
+                <span>{t.carreiraDeJogador.merecido_pelo_seu_lugar_na_fila}</span>
                 <b className="text-white/60">{Math.round(merecida)}</b>
               </div>
             </div>
           </div>
 
           <div className="mt-4 border-t border-white/10 pt-3">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-white/45">Como a comissão te vê</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-white/45">{t.carreiraDeJogador.como_a_comissao_te_ve}</p>
             <ul className="mt-2 space-y-1">
               {leituraDaPersonalidade(atleta.personalidade).map(frase => (
                 <li key={frase} className="text-[12px] text-white/65">· {frase}</li>
@@ -202,7 +202,7 @@ export default function EvolucaoDoAtletaPage() {
           </div>
           <h3 className="mt-4 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-white/45"><Dumbbell className="h-4 w-4" />{t.carreiraDeJogador.recados}</h3>
           {carreira.recados.length === 0 && (
-            <p className="py-8 text-center text-sm text-white/35">Nenhum recado ainda.</p>
+            <p className="py-8 text-center text-sm text-white/35">{t.carreiraDeJogador.nenhum_recado_ainda}</p>
           )}
           <div className="space-y-2">
             {carreira.recados.map(r => (
