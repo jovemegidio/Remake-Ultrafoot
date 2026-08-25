@@ -18,9 +18,11 @@ jobs:
           - platform: ubuntu-22.04
             name: linux-x64
             args: --config src-tauri/tauri.linux.conf.json
+            node: 24
           - platform: macos-14
             name: macos-universal
             args: --target universal-apple-darwin --config src-tauri/tauri.macos.conf.json
+            node: 22
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +33,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: ${{ matrix.node }}
           cache: pnpm
 
       - name: Read game version
