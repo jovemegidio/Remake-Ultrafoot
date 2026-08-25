@@ -23,6 +23,7 @@ jobs:
             name: macos-universal
             args: --target universal-apple-darwin --config src-tauri/tauri.macos.conf.json
             node: 22
+            heap: 5120
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -86,6 +87,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ULTRAFOOT_HEAP_MB: ${{ matrix.heap }}
           # Sem variáveis APPLE_*: o macOS builda SEM assinatura (grátis). Com elas
           # vazias, o tauri-action tentava importar um certificado inexistente e
           # falhava ("failed to import keychain certificate"). O usuário abre o app

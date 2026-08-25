@@ -55,7 +55,9 @@ reservar("guardar")
 try {
   rodar("npx", [
     "cross-env", "TAURI_BUILD=1",
-    "node", "--max-old-space-size=8192",
+    // Heap do type-check. O runner macos-14 tem ~7 GB e estourava pedindo 8:
+    // longe do limite o V8 adia coletas e incha. Teto menor = coleta de verdade.
+    "node", `--max-old-space-size=${process.env.ULTRAFOOT_HEAP_MB || 8192}`,
     "node_modules/next/dist/bin/next", "build", "--webpack",
   ])
   rodar("node", ["scripts/fix-next-export-rsc.mjs"])
