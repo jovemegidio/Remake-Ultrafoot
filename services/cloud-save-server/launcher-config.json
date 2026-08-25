@@ -9,11 +9,18 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "1.0.374: a bola voa, e a carreira tem um placar final",
+      "category": "Atualizacao",
+      "body": "A finalizacao deixou de ser sorteio: voce aponta, a bola sai e onde ela termina e geometria — o efeito curva, a gravidade puxa e o goleiro alcanca ou nao alcanca. O goleiro tambem ganhou jogo proprio: o adversario chuta e voce escolhe onde se jogar antes de saber onde a bola vai. Altura e pe preferido finalmente decidem alguma coisa: bater com o pe ruim manda a bola torta e mole, e a altura conta no jogo aereo. O vestiario tem quatro companheiros com nome — o craque decide se a bola chega em voce e o concorrente disputa a sua vaga. Fora de campo entraram cassino, haras e convites da semana, todos com preco de verdade. E a carreira termina com uma pontuacao de 0 a 1000, 16 conquistas e um ranking. O controle navega todas as telas do atleta.",
+      "date": "2026-08-24",
+      "pinned": true
+    },
+    {
       "title": "1.0.373: a carreira ganhou jogo e vida proprios",
       "category": "Atualizacao",
       "body": "A posicao agora muda de verdade quantos lances o atleta recebe. A mira ganhou forca, curva, trajetoria, teclado e controle; goleiros defendem, saem, enfrentam penaltis e fazem reposicoes. Selecao virou partida jogavel. Treinador pessoal, minijogo, elenco, marcas, patrocinios e patrimonio completam a vida fora de campo. As dependencias de producao foram atualizadas e a auditoria caiu para zero vulnerabilidades conhecidas.",
       "date": "2026-08-24",
-      "pinned": true
+      "pinned": false
     },
     {
       "title": "1.0.372: a carreira de jogador chegou ao ritmo NSS",
