@@ -303,6 +303,22 @@
   ],
   "changelog": [
     {
+      "version": "1.0.374",
+      "data": "2026-08-25",
+      "titulo": "A bola voa, o goleiro joga e a carreira tem placar final",
+      "itens": [
+        "FINALIZACAO SEM SORTEIO. O desfecho do chute deixou de sair de uma roleta: a bola sai e onde ela termina e geometria, com efeito, gravidade e alcance do goleiro. Calibrado contra o futebol real - penalti 66%, cara a cara 40%, dentro da area 16%, de fora 9%.",
+        "O GOL DA TELA VIROU O GOL DA FISICA. O desenho ocupava 24-76% da largura e o codigo aceitava 12-88% como dentro: mirar fora das traves contava como chute a gol.",
+        "GOLEIRO COM JOGO PROPRIO. O adversario chuta, voce escolhe onde se jogar antes de saber onde a bola vai e decide a distancia ate a bola.",
+        "ALTURA E PE PREFERIDO DECIDEM. Estavam na ficha desde a 1.0.322 sem ninguem ler. Pe errado manda a bola torta e mole; a altura conta no jogo aereo.",
+        "COMPANHEIROS COM NOME. Quatro papeis semeados pelo clube: o craque muda quantos lances chegam ate voce e o concorrente e o unico laco em que ser amigo custa a vaga.",
+        "CASSINO, HARAS E CONVITES. A vida fora de campo ganhou tela propria, com preco de verdade em dinheiro e energia.",
+        "A CARREIRA TERMINA COM PLACAR. Pontuacao de 0 a 1000, 16 conquistas e um ranking; o controle navega todas as telas do atleta.",
+        "CARREIRA PRESA AO CRIAR (CORRECAO). Em liga com menos de 16 clubes - a escocesa e boa parte da expansao UEFA - a tela ficava para sempre em \"Montando a sua temporada\": a copa era montada pareando 1 contra 16 e os quatro ultimos nao existiam. Atingia 426 dos 1350 clubes, na carreira de atleta e na de base."
+      ],
+      "latest": true
+    },
+    {
       "version": "1.0.373",
       "data": "2026-08-24",
       "titulo": "Partida por posicao, goleiro, selecao e vida pessoal",
@@ -315,7 +331,7 @@
         "ENERGIA TEM EFEITO NO CAMPO. Cansaco abaixo de 55% reduz a execucao dos atributos; preparacao e recuperacao passaram a ter consequencia direta na partida.",
         "SEGURANCA DE DEPENDENCIAS. Next.js, Sharp, PostCSS, SheetJS e transitivos vulneraveis foram atualizados; a auditoria passou de 15 altas e 9 moderadas para zero alertas conhecidos."
       ],
-      "latest": true
+      "latest": false
     },
     {
       "version": "1.0.372",
