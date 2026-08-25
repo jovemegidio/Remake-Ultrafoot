@@ -2,7 +2,7 @@
 // Single-leg knockout: 16 → 8 → 4 → 2 → 1 (4 rodadas eliminatórias).
 // Pareamento 1: top 8 vs bottom 8 por prestígio para chaveamento mais real.
 
-import type { Team } from "@/lib/teams-data"
+import { allTeams, type Team } from "@/lib/teams-data"
 import { simulateFullMatch } from "@/lib/match-engine"
 import type { CupMatch, CupBracket } from "@/lib/career-types"
 import { getPlayersForTeam } from "@/lib/players-data"
@@ -164,6 +164,38 @@ function shuffleSeeded<T>(arr: T[], seed: number): T[] {
  * Usa os 16 times de maior prestígio dentre `leagueTeams`,
  * complementando com mais times se houver disponíveis.
  */
+/**
+ * Completa o pool ate 16 quando a liga tem menos clubes do que isso.
+ *
+ * A copa sempre teve 16 participantes e 4 fases, e as rodadas-gatilho no
+ * calendario da liga sao fixas por causa disso: encolher a chave desalinharia
+ * o calendario inteiro. Ligas de 12 (a escocesa e boa parte da expansao UEFA)
+ * faziam o pareamento 1v16 ler `undefined` e derrubavam a criacao da carreira
+ * de atleta e a da base, que usam este mesmo gerador.
+ *
+ * Completar tambem e o que a copa de verdade faz: ela nao e so a primeira
+ * divisao. Preferimos clubes do MESMO PAIS (as divisoes de baixo), por
+ * prestigio, e so recorremos a clubes de fora se o pais inteiro nao tiver 16.
+ */
+function completarPoolDaCopa(pool: Team[], leagueTeams: Team[]): Team[] {
+  if (pool.length >= CUP_TEAM_COUNT) return pool
+  const jaEstao = new Set(pool.map(t => t.curto))
+  const pais = pool[0]?.pais ?? leagueTeams[0]?.pais
+  const completo = [...pool]
+  const candidatos = allTeams
+    .filter(t => t && !jaEstao.has(t.curto))
+    .sort((a, b) => {
+      const doPais = (t: Team) => (pais && t.pais === pais ? 0 : 1)
+      return doPais(a) - doPais(b) || b.prestigio - a.prestigio
+    })
+  for (const t of candidatos) {
+    if (completo.length >= CUP_TEAM_COUNT) break
+    completo.push(t)
+    jaEstao.add(t.curto)
+  }
+  return completo
+}
+
 export function generateCupBracket(
   leagueTeams: Team[],
   userTeamCurto: string,
@@ -179,6 +211,7 @@ export function generateCupBracket(
       pool = [user, ...pool.slice(0, CUP_TEAM_COUNT - 1)]
     }
   }
+  pool = completarPoolDaCopa(pool, leagueTeams)
 
   // Embaralha e cria 8 confrontos das oitavas (1v16, 2v15, ...) — após shuffle não é seed real, é amistoso
   const shuffled = shuffleSeeded(pool, season * 7919 + 17)
@@ -186,6 +219,7 @@ export function generateCupBracket(
   for (let i = 0; i < 8; i++) {
     const home = shuffled[i]
     const away = shuffled[15 - i]
+    if (!home || !away) continue // ultimo recurso: chave menor e melhor que carreira que nao nasce
     matches.push({
       id: `cup_${season}_r1_${i}`,
       cupRound: 1,
