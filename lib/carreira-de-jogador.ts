@@ -33,6 +33,23 @@ import { completarLigaComPool, getTeamByFileKey, type Team } from "@/lib/teams-d
 import { getPlayersForTeam } from "@/lib/players-data"
 import { suspensaoPorCartoes } from "@/lib/player-realism"
 import { montarPartidaAoVivo, montarPartidaDoAtleta, partidaTerminou, type PartidaEmCurso } from "@/lib/partida-do-atleta"
+import {
+  ajusteDaNotaPeloVestiario, amplificacaoDaImprensa, companheirosDoClube,
+  esfriarCompanheiros, esfriarUmaRodada, frequenciaDeLancesPeloCraque,
+  ganhoDaNegociacao, lerCompanheiros, lerRelacoes, moverCompanheiro,
+  multiplicadorDePropostas, multiplicadorDeTreinoPeloVeterano, pisoDaNotaDoTreinador,
+  pressaoDoRival, puxaoDoCapitao, recuperacaoPelaFamilia, relacoesIniciais,
+  type Companheiro, type Relacoes,
+} from "@/lib/relacoes-do-atleta"
+import {
+  CAVALOS_DO_ATLETA, CONVITES_DE_EVENTO, MESAS_DE_CASSINO,
+  convitesDaSemana, correrNaSemana, jogarNoCassino, relacoesDepoisDoEvento,
+  type ConviteDeEvento, type JogoDeCassino,
+} from "@/lib/vida-noturna-do-atleta"
+import {
+  bonusDasConquistas, conquistasAtingidas, pontuacaoDaCarreira, pontuacaoFinal,
+  type Conquista, type EntradaDoRanking, type FolhaDaCarreira, type PontuacaoDaCarreira,
+} from "@/lib/legado-do-atleta"
 
 // ─── ONDE UMA PROMESSA PODE ESTREAR ─────────────────────────────────────────
 //
@@ -217,6 +234,20 @@ export interface AtletaDaCarreira {
   idade: number
   nacionalidade: string
   pePreferido: "direito" | "esquerdo"
+  /**
+   * QUÃO BOM É O PÉ RUIM — 1 a 5 estrelas (1.0.374).
+   *
+   * ⚠️ ELE EXISTE PORQUE AGORA É LIDO. Até a 1.0.373 a ficha guardava altura,
+   * peso e pé preferido sem que nada os consultasse: dado de enfeite, que é
+   * pior que dado nenhum porque o jogador escolhe achando que decide algo.
+   * A física (`lib/fisica-do-chute`) lê os três — o pé errado faz a bola sair
+   * torta e mole, e 5 estrelas anulam a penalidade.
+   *
+   * Opcional: save anterior a esta versão não tem, e ausência vale 3 (o meio
+   * da escala), nunca 1 — rebaixar atleta já criado seria mudar a carreira do
+   * jogador pelas costas dele.
+   */
+  peFraco?: number
   alturaCm: number
   pesoKg: number
   numero: number
@@ -504,6 +535,22 @@ export interface RelacoesDoAtleta {
   marcas: number
   ultimaInteracaoElenco?: number
   rupturas: string[]
+  /**
+   * AS QUATRO PESSOAS QUE FALTAVAM (1.0.374).
+   *
+   * ⚠️ ESTENDEM `elenco`, NÃO O SUBSTITUEM. A 1.0.373 já tratava o grupo e as
+   * marcas; o que não existia era relação INDIVIDUAL com quem decide a sua
+   * carreira — o técnico que te escala, o empresário que traz proposta, a
+   * família que te recupera e a imprensa que te constrói ou te derruba.
+   *
+   * Todas opcionais: save anterior não as tem, e `lerRelacoes`
+   * (`lib/relacoes-do-atleta`) devolve o padrão nesse caso. Cada uma muda um
+   * número que o jogo JÁ lia — nenhuma é medidor de enfeite.
+   */
+  treinador?: number
+  empresario?: number
+  familia?: number
+  imprensa?: number
 }
 
 export interface PatrocinioPessoalDoAtleta {
@@ -621,7 +668,14 @@ function treinarNaSemana(estado: EstadoCarreiraDeJogador): void {
 
   // Dedicação: 0,45 (relaxado) a ~1,55 (profissional obsessivo).
   const dedicacao = 0.45 + (p.profissionalismo + p.determinacao) / 40
-  const xp = Math.round(plano.xp * dedicacao)
+  // ⚠️ O VETERANO ENTRA AQUI E EM MAIS LUGAR NENHUM (1.0.374). O laço com ele
+  // multiplica o que a semana rende — é o efeito dele, e é o que faz "treinar
+  // junto com o cara mais velho" ser uma decisão de carreira em vez de uma
+  // frase bonita numa tela de relacionamento.
+  const comOVeterano = multiplicadorDeTreinoPeloVeterano(
+    lerCompanheiros(estado.companheiros, estado.clubeCurto, String(estado.atleta.posicao)),
+  )
+  const xp = Math.round(plano.xp * dedicacao * comOVeterano)
 
   // ⚠️ QUEM SE PUXA SEM BASE SE QUEBRA MENOS QUE QUEM SE PUXA CANSADO. Treinar
   // puxado com a forma no chão cobra o dobro — é o que faz a escolha ter uma
@@ -807,6 +861,15 @@ export interface EstadoCarreiraDeJogador {
    * coisa que faz o modo perder a graça na terceira temporada.
    */
   notaDoTreinador: number
+  /**
+   * OS COMPANHEIROS DE TIME, com nome (1.0.374).
+   *
+   * O `vestiario` acima é uma MÉDIA e responde "o grupo está com você?". Ele
+   * não responde quem é o capitão, quem é o craque que decide se a bola chega
+   * em você, nem quem disputa a sua vaga — e sem nome não há história. São
+   * quatro papéis, cada um com um efeito que nenhum outro tem.
+   */
+  companheiros?: Companheiro[]
   /** Forma recente (0–100): média móvel das últimas atuações. */
   forma: number
   moral: number
@@ -866,6 +929,9 @@ export interface EstadoCarreiraDeJogador {
   premios: string[]
   temporadaEncerrada: boolean
   aposentado: boolean
+  /** A pontuação final, congelada no dia da aposentadoria (1.0.374). */
+  pontuacaoFinal?: number
+  patamarFinal?: string
   /** Mensagens curtas do treinador/agente, a caixa de entrada do atleta. */
   recados: { id: string; de: string; texto: string; temporada: number; rodada: number }[]
   /**
@@ -876,6 +942,41 @@ export interface EstadoCarreiraDeJogador {
   /** Economia pessoal da carreira NSS. Opcional para saves anteriores. */
   economia?: EconomiaDoAtleta
   apostaAtiva?: ApostaDoAtleta | null
+  /**
+   * O CAVALO NO HARAS (1.0.374) — id de `CAVALOS_DO_ATLETA`, ou nada.
+   *
+   * ⚠️ UM SÓ, e não uma lista. Dois cavalos seriam a mesma decisão duas vezes;
+   * o que faz a compra ser interessante é ter de escolher QUAL se aguenta
+   * manter, e uma lista apagaria a escolha em troca de uma planilha.
+   */
+  cavalo?: string | null
+  /**
+   * O QUE O CASSINO JÁ LEVOU (ou deu) NA CARREIRA INTEIRA.
+   *
+   * Guardado porque a pontuação final o lê: uma carreira financiada no cassino
+   * não pode terminar com o mesmo legado de uma construída em campo.
+   */
+  saldoNoCassino?: number
+  /** Quantas noites ele foi. Entra na pontuação final pelo mesmo motivo. */
+  noitesNoCassino?: number
+  /** Eventos a que já compareceu nesta temporada — evita repetir o mesmo. */
+  eventosDaTemporada?: string[]
+  /**
+   * O MAIOR PRESTÍGIO DE CLUBE EM QUE ELE JÁ JOGOU (1.0.374).
+   *
+   * ⚠️ GUARDADO, E NÃO RECALCULADO. Um atleta que passou três anos no
+   * Barcelona e terminou na Série C tem esse patamar na biografia para sempre;
+   * ler só o clube atual apagaria a melhor fase da carreira dele no exato
+   * momento em que ela é resumida.
+   */
+  prestigioMaximo?: number
+  /**
+   * AS CONQUISTAS QUE JÁ FORAM ANUNCIADAS.
+   *
+   * Sem isto, cada rodada reanunciaria as mesmas — e o aviso que deveria ser
+   * um momento viraria ruído semanal.
+   */
+  conquistasVistas?: string[]
   parceira?: ParceiraDoAtleta | null
   treinadorPessoal?: TreinadorPessoalDoAtleta | null
   relacoes?: RelacoesDoAtleta
@@ -1086,8 +1187,204 @@ export function interagirComParceira(
   return novo
 }
 
+/**
+ * MOVE A REPUTAÇÃO PASSANDO PELA IMPRENSA (1.0.374).
+ *
+ * ⚠️ TODA VARIAÇÃO DE REPUTAÇÃO PASSA POR AQUI, e é por isso que ela existe.
+ * A reputação se move em seis pontos diferentes do arquivo (gol, entrevista,
+ * bem de luxo, repercussão, seleção...). Multiplicar em cada um daria seis
+ * lugares para esquecer um, e o laço com a imprensa ficaria pela metade sem
+ * que nada acusasse.
+ *
+ * AMPLIFICA A QUEDA TAMBÉM. Imprensa amiga sobe mais rápido e AFUNDA mais
+ * rápido — senão "agradar a imprensa" seria escolha sem risco, e escolha sem
+ * risco não é escolha.
+ */
+export function moverReputacao(estado: EstadoCarreiraDeJogador, delta: number): number {
+  const fator = amplificacaoDaImprensa(lerRelacoes(relacoesDoAtleta(estado)))
+  const base = estado.reputacao ?? 30
+  return Math.max(0, Math.min(100, base + delta * fator))
+}
+
+/**
+ * UMA NOITE NO CASSINO.
+ *
+ * ⚠️ O DINHEIRO SAI ANTES DE O RESULTADO SER CONHECIDO, e a ordem importa: se
+ * a aposta fosse debitada só na derrota, apostar acima do que se tem seria
+ * possível e o risco viraria teatro. Aqui quem não tem, não joga.
+ */
+export function jogarNoCassinoDoAtleta(
+  estado: EstadoCarreiraDeJogador,
+  mesaId: JogoDeCassino,
+  aposta: number,
+): EstadoCarreiraDeJogador {
+  const mesa = MESAS_DE_CASSINO.find(m => m.id === mesaId)
+  if (!mesa) return estado
+  const valor = Math.max(mesa.minimo, Math.min(mesa.maximo, Math.round(aposta)))
+  const economia = economiaDoAtleta(estado)
+  if (economia.dinheiro < valor) return estado
+
+  const novo = comEconomia(estado)
+  novo.relacoes = structuredClone(relacoesDoAtleta(novo))
+  const r = jogarNoCassino(
+    mesa, valor,
+    `${novo.atleta.id}:cassino:${novo.temporada}:${novo.rodada}:${novo.noitesNoCassino ?? 0}`,
+  )
+
+  novo.economia!.dinheiro += r.saldo
+  novo.saldoNoCassino = (novo.saldoNoCassino ?? 0) + r.saldo
+  novo.noitesNoCassino = (novo.noitesNoCassino ?? 0) + 1
+  novo.forma = limitar(novo.forma + r.forma)
+  if (r.reputacao) novo.reputacao = moverReputacao(novo, r.reputacao)
+  novo.relacoes.familia = limitar((novo.relacoes.familia ?? 72) + r.familia)
+  novo.recados = [{
+    id: `cassino_${novo.temporada}_${novo.rodada}_${novo.noitesNoCassino}`,
+    de: "Noite", texto: r.texto, temporada: novo.temporada, rodada: novo.rodada,
+  }, ...novo.recados].slice(0, 25)
+  return novo
+}
+
+/** Compra o cavalo. O haras é do atleta; o custo semanal também. */
+export function comprarCavalo(estado: EstadoCarreiraDeJogador, cavaloId: string): EstadoCarreiraDeJogador {
+  const cavalo = CAVALOS_DO_ATLETA.find(c => c.id === cavaloId)
+  if (!cavalo || estado.cavalo) return estado
+  const economia = economiaDoAtleta(estado)
+  if (economia.dinheiro < cavalo.preco) return estado
+  const novo = comEconomia(estado)
+  novo.economia!.dinheiro -= cavalo.preco
+  novo.cavalo = cavalo.id
+  const patrimonio = novo.patrimonio ?? { itens: [], estilo: 0, totalManutencao: 0 }
+  novo.patrimonio = { ...patrimonio, estilo: patrimonio.estilo + cavalo.estilo }
+  novo.reputacao = moverReputacao(novo, 2)
+  return novo
+}
+
+/** Vende o cavalo por 70% — cavalo usado não vale o que custou. */
+export function venderCavalo(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
+  const cavalo = CAVALOS_DO_ATLETA.find(c => c.id === estado.cavalo)
+  if (!cavalo) return estado
+  const novo = comEconomia(estado)
+  novo.economia!.dinheiro += Math.round(cavalo.preco * 0.7)
+  novo.cavalo = null
+  const patrimonio = novo.patrimonio ?? { itens: [], estilo: 0, totalManutencao: 0 }
+  novo.patrimonio = { ...patrimonio, estilo: Math.max(0, patrimonio.estilo - cavalo.estilo) }
+  return novo
+}
+
+/** Os convites que chegaram nesta semana. */
+export function eventosDoMomento(estado: EstadoCarreiraDeJogador): ConviteDeEvento[] {
+  const jaFoi = estado.eventosDaTemporada ?? []
+  return convitesDaSemana(
+    estado.reputacao ?? 30,
+    `${estado.atleta.id}:evento:${estado.temporada}:${estado.rodada}`,
+  ).filter(c => !jaFoi.includes(`${c.id}:${estado.rodada}`))
+}
+
+/**
+ * COMPARECER A UM EVENTO.
+ *
+ * ⚠️ A ENERGIA É COBRADA ANTES DE QUALQUER EFEITO BOM. Um evento que só dá
+ * reputação seria botão de graça, e o jogador iria a todos toda semana — o que
+ * transformaria a agenda social numa segunda fonte de progresso sem custo. O
+ * custo é a semana de treino que ele não fez.
+ */
+export function comparecerAoEvento(
+  estado: EstadoCarreiraDeJogador,
+  eventoId: string,
+): EstadoCarreiraDeJogador {
+  const evento = CONVITES_DE_EVENTO.find(e => e.id === eventoId)
+  if (!evento) return estado
+  const economia = economiaDoAtleta(estado)
+  if (economia.energia < evento.energia) return estado
+  if (evento.custo > 0 && economia.dinheiro < evento.custo) return estado
+
+  const novo = comEconomia(estado)
+  novo.economia!.energia = Math.max(0, novo.economia!.energia - evento.energia)
+  novo.economia!.dinheiro -= evento.custo
+
+  const base = { ...relacoesDoAtleta(novo), ...lerRelacoes(relacoesDoAtleta(novo)) }
+  novo.relacoes = {
+    ...relacoesDepoisDoEvento(lerRelacoes(base), evento),
+    marcas: limitar(base.marcas + (evento.efeitos.marcas ?? 0)),
+    rupturas: base.rupturas,
+    ultimaInteracaoElenco: evento.efeitos.elenco ? novo.rodada : base.ultimaInteracaoElenco,
+  }
+  if (evento.efeitos.reputacao) novo.reputacao = moverReputacao(novo, evento.efeitos.reputacao)
+  if (evento.efeitos.moral) novo.moral = limitar(novo.moral + evento.efeitos.moral)
+  if (evento.efeitos.forma) novo.forma = limitar(novo.forma + evento.efeitos.forma)
+  novo.eventosDaTemporada = [...(novo.eventosDaTemporada ?? []), `${evento.id}:${novo.rodada}`]
+  return novo
+}
+
+/**
+ * O RESUMO DA CARREIRA — a matéria-prima da pontuação final (1.0.374).
+ *
+ * ⚠️ ELE LÊ O `historico`, NÃO A TEMPORADA ATUAL. A temporada em curso ainda
+ * não fechou; incluí-la faria o número dançar toda rodada e a comparação com
+ * carreiras encerradas seria entre coisas diferentes. O que está em curso
+ * aparece na tela como "em andamento", nunca somado.
+ */
+export function folhaDaCarreira(estado: EstadoCarreiraDeJogador): FolhaDaCarreira {
+  const h = estado.historico ?? []
+  const jogos = h.reduce((n, t) => n + t.jogos, 0)
+  const somaNotas = h.reduce((n, t) => n + t.notaMedia * t.jogos, 0)
+  return {
+    nome: estado.atleta.nome,
+    posicao: String(estado.atleta.posicao),
+    temporadas: h.length,
+    jogos,
+    gols: h.reduce((n, t) => n + t.gols, 0),
+    assistencias: h.reduce((n, t) => n + t.assistencias, 0),
+    // Média PONDERADA por jogos: a média das médias daria a uma temporada de
+    // 3 jogos o mesmo peso de uma de 60, e um ano bom e curto valeria mais que
+    // uma década regular.
+    notaMedia: jogos > 0 ? somaNotas / jogos : 0,
+    titulos: estado.titulos?.length ?? 0,
+    premios: estado.premios?.length ?? 0,
+    overallMaximo: Math.max(estado.atleta.overall, ...h.map(t => t.overallFinal), 0),
+    prestigioMaximo: Math.max(estado.prestigioMaximo ?? 0, prestigioDoClubeAtual(estado)),
+    selecaoJogos: estado.selecao?.jogos ?? 0,
+    selecaoGols: estado.selecao?.gols ?? 0,
+    saldoNoCassino: estado.saldoNoCassino ?? 0,
+    noitesNoCassino: estado.noitesNoCassino ?? 0,
+    reputacaoFinal: estado.reputacao ?? 30,
+  }
+}
+
+/** O prestígio do clube em que ele está agora — para o eixo "patamar". */
+function prestigioDoClubeAtual(estado: EstadoCarreiraDeJogador): number {
+  return clubesDaLiga(estado).find(c => c.curto === estado.clubeCurto)?.prestigio ?? 0
+}
+
+/** A pontuação em andamento: eixos e desconto, sem o bônus das conquistas. */
+export function pontuacaoAtual(estado: EstadoCarreiraDeJogador): PontuacaoDaCarreira {
+  return pontuacaoDaCarreira(folhaDaCarreira(estado))
+}
+
+/** A pontuação fechada, com conquistas. Só faz sentido na aposentadoria. */
+export function pontuacaoDeAposentadoria(estado: EstadoCarreiraDeJogador) {
+  return pontuacaoFinal(folhaDaCarreira(estado))
+}
+
+export function conquistasDaCarreira(estado: EstadoCarreiraDeJogador): Conquista[] {
+  return conquistasAtingidas(folhaDaCarreira(estado))
+}
+
+/** A carreira, no formato que o ranking consome. */
+export function entradaNoRanking(estado: EstadoCarreiraDeJogador): EntradaDoRanking {
+  const r = folhaDaCarreira(estado)
+  return {
+    nome: r.nome, posicao: r.posicao,
+    pontos: pontuacaoFinal(r).total,
+    jogos: r.jogos, gols: r.gols, titulos: r.titulos, minha: true,
+  }
+}
+
 export function relacoesDoAtleta(estado: EstadoCarreiraDeJogador): RelacoesDoAtleta {
-  return estado.relacoes ?? { elenco: 50, marcas: 35, rupturas: [] }
+  // ⚠️ `relacoesIniciais()` VEM PRIMEIRO e `elenco: 50` depois, de propósito:
+  // as duas fontes declaram `elenco`, e a que manda tem de ser a da 1.0.373,
+  // que é a que o resto do arquivo já lia.
+  return estado.relacoes ?? { ...relacoesIniciais(), elenco: 50, marcas: 35, rupturas: [] }
 }
 
 export function contratarTreinadorPessoal(
@@ -1196,7 +1493,7 @@ export function comprarBemDoAtleta(
   novo.patrimonio = structuredClone(atual)
   novo.patrimonio.itens.push(bem.id)
   novo.patrimonio.estilo += bem.estilo
-  novo.reputacao = limitar((novo.reputacao ?? 30) + Math.min(3, Math.floor(bem.estilo / 8)))
+  novo.reputacao = moverReputacao(novo, Math.min(3, Math.floor(bem.estilo / 8)))
   return novo
 }
 
@@ -1242,8 +1539,61 @@ function aplicarVidaPessoalNaSemana(estado: EstadoCarreiraDeJogador): void {
     if (pago < manutencao) estado.moral = limitar(estado.moral - 4)
   }
 
+  // ── O HARAS (1.0.374) ────────────────────────────────────────────────────
+  // Come toda semana e corre toda semana. O custo sai mesmo quando o prêmio
+  // não vem — que é a diferença entre um cavalo e um bônus.
+  if (estado.cavalo) {
+    const cavalo = CAVALOS_DO_ATLETA.find(c => c.id === estado.cavalo)
+    if (cavalo) {
+      const pago = Math.min(economia.dinheiro, cavalo.manutencaoSemanal)
+      economia.dinheiro -= pago
+      // ⚠️ NÃO PAGAR NÃO É DE GRAÇA: o haras entrega o animal de volta. Sem
+      // esta saída, um atleta quebrado carregaria uma dívida infinita e o
+      // sistema viraria uma armadilha sem porta, que é injusto, não difícil.
+      if (pago < cavalo.manutencaoSemanal) {
+        estado.cavalo = null
+        estado.moral = limitar(estado.moral - 6)
+        estado.recados = [{
+          id: `haras_${estado.temporada}_${estado.rodada}`, de: "Haras",
+          texto: `${cavalo.nome} foi devolvido: a manutenção não foi paga.`,
+          temporada: estado.temporada, rodada: estado.rodada,
+        }, ...estado.recados].slice(0, 25)
+      } else {
+        const corrida = correrNaSemana(cavalo.id, `${estado.atleta.id}:${estado.temporada}:${estado.rodada}`)
+        if (corrida?.venceu) {
+          economia.dinheiro += corrida.premio
+          estado.reputacao = Math.min(100, (estado.reputacao ?? 30) + 1)
+          estado.recados = [{
+            id: `corrida_${estado.temporada}_${estado.rodada}`, de: "Haras",
+            texto: `${corrida.nome} venceu: +${corrida.premio.toLocaleString("pt-BR")}.`,
+            temporada: estado.temporada, rodada: estado.rodada,
+          }, ...estado.recados].slice(0, 25)
+        }
+      }
+    }
+  }
+
+  // ⚠️ A INDIFERENÇA TEM FUNDO (1.0.374). A queda de 2 por rodada sem interação
+  // vinha da 1.0.373 e não tinha piso: medido em três temporadas de um atleta
+  // que só joga futebol e nunca janta com o grupo, `elenco` terminava em 2,4 de
+  // 100 — o vestiário inteiro tratando-o como inimigo por ele não ter clicado
+  // num botão.
+  //
+  // Isso ficou visível agora porque a 1.0.374 ligou o `elenco` à NOTA DA
+  // PARTIDA: antes ele afundava sem consequência, e um medidor no fundo era só
+  // um medidor feio. Ligado, virou uma punição permanente de −0,5 na nota de
+  // quem simula a carreira.
+  //
+  // 30 é o piso porque "o grupo não te conhece" não é "o grupo te odeia".
+  // Abaixo disso só se chega FAZENDO alguma coisa — brigar, bater de frente,
+  // uma temporada inteira de atuações ruins —, que é quando a queda significa
+  // algo. A recuperação continua exigindo interação: o piso não sobe ninguém.
+  const PISO_DA_INDIFERENCA = 30
   if ((estado.relacoes.ultimaInteracaoElenco ?? -10) < estado.rodada - 1) {
-    estado.relacoes.elenco = limitar(estado.relacoes.elenco - 2)
+    estado.relacoes.elenco = limitar(Math.max(
+      Math.min(estado.relacoes.elenco, PISO_DA_INDIFERENCA),
+      estado.relacoes.elenco - 2,
+    ))
   }
   if (estado.parceira && estado.parceira.ultimaInteracaoRodada < estado.rodada - 2) {
     estado.parceira.afinidade = limitar(estado.parceira.afinidade - 5)
@@ -1352,6 +1702,11 @@ export function criarAtletaDaCarreira(escolhas: EscolhasDoAtleta, semente = "atl
     idade: escolhas.idade,
     nacionalidade: escolhas.nacionalidade,
     pePreferido: escolhas.pePreferido,
+    // ⚠️ SEMEADO PELO NOME, NÃO SORTEADO NA HORA: recriar o mesmo atleta dá o
+    // mesmo pé ruim. A escala pende para baixo (2 e 3 são o comum) porque
+    // ambidestro de verdade é raro — se a média fosse 4, o pé fraco não seria
+    // uma característica, seria um detalhe.
+    peFraco: 1 + Math.floor(r(11) * 4.4),
     alturaCm: escolhas.alturaCm,
     pesoKg: escolhas.pesoKg,
     numero: escolhas.numero,
@@ -1452,6 +1807,8 @@ export function criarCarreiraDeJogador(
     // Provisória: logo abaixo é substituída pela confiança MERECIDA, que depende
     // do elenco do clube e por isso precisa do estado já montado.
     notaDoTreinador: 40,
+    relacoes: { ...relacoesIniciais(), elenco: 50, marcas: 35, rupturas: [] },
+    companheiros: companheirosDoClube(clube.curto, String(atleta.posicao)),
     forma: 50,
     moral: 70,
     temporadaAtual: { jogos: 0, titularidades: 0, minutos: 0, gols: 0, assistencias: 0, somaDasNotas: 0, cartoesAmarelos: 0, cartoesVermelhos: 0 },
@@ -1787,8 +2144,24 @@ export function jogarProximaRodada(
   // Salario e recuperacao acontecem uma vez por semana, antes das decisoes.
   const liquido = Math.round(novo.contrato.salarioSemanal * (1 - novo.empresario.comissao / 100))
   novo.economia.dinheiro += liquido
-  novo.economia.energia = Math.min(novo.economia.energiaMaxima, novo.economia.energia + 18)
+  // ⚠️ A FAMÍLIA ENTRA AQUI, no único lugar em que recuperação acontece
+  // (1.0.374). Espalhar o multiplicador por vários pontos faria o mesmo bônus
+  // ser aplicado duas vezes — que é como um efeito justo vira um exploit.
+  novo.relacoes = { ...relacoesDoAtleta(novo), ...lerRelacoes(relacoesDoAtleta(novo)) }
+  novo.companheiros = lerCompanheiros(novo.companheiros, novo.clubeCurto, String(novo.atleta.posicao))
+  const recuperacao = Math.round(18 * recuperacaoPelaFamilia(lerRelacoes(novo.relacoes)))
+  novo.economia.energia = Math.min(novo.economia.energiaMaxima, novo.economia.energia + recuperacao)
   aplicarVidaPessoalNaSemana(novo)
+
+  // AS RELAÇÕES ENVELHECEM UMA VEZ POR RODADA, aqui e em nenhum outro lugar.
+  // O capitão puxa o grupo antes do esfriamento: é ele que dá ao vestiário um
+  // movimento próprio, em vez de o coletivo só reagir ao que você faz em campo.
+  novo.relacoes = {
+    ...novo.relacoes,
+    elenco: limitar(novo.relacoes.elenco + puxaoDoCapitao(novo.companheiros) * 0.25),
+  }
+  novo.relacoes = { ...novo.relacoes, ...esfriarUmaRodada(lerRelacoes(novo.relacoes)) }
+  novo.companheiros = esfriarCompanheiros(novo.companheiros)
   // ⚠️ A SEMANA DE TREINO VEM ANTES DA PARTIDA, e não é detalhe de ordem: é o
   // custo em forma da semana puxada que precisa chegar ao jogo. Treinar depois
   // faria a intensidade não ter preço nenhum no dia em que ela importa.
@@ -1831,6 +2204,19 @@ export function jogarProximaRodada(
           semente: `${novo.atleta.id}:${novo.temporada}:${rodada}`,
           posicao: String(novo.atleta.posicao),
           atributos: atributosEfetivosDoAtleta(novo) as unknown as Record<string, number>,
+          // O CORPO E O CANSAÇO ENTRAM NA PARTIDA (1.0.374). Sem estas duas
+          // linhas a física continuaria rodando com um atleta genérico de
+          // 180 cm, destro e inteiro — e altura, pé e energia voltariam a ser
+          // números que a ficha mostra e o jogo ignora.
+          energia: novo.economia?.energia,
+          corpo: {
+            altura: novo.atleta.alturaCm,
+            pePreferido: novo.atleta.pePreferido,
+            peFraco: novo.atleta.peFraco,
+          },
+          fatorDeLances: frequenciaDeLancesPeloCraque(
+            lerCompanheiros(novo.companheiros, novo.clubeCurto, String(novo.atleta.posicao)),
+          ),
         })
         continue
       }
@@ -1959,8 +2345,24 @@ interface ContextoDaPartidaDoAtleta {
 function aplicarPartidaNaCarreira(
   novo: EstadoCarreiraDeJogador,
   ctx: ContextoDaPartidaDoAtleta,
-  d: DesempenhoIndividual,
+  desempenho: DesempenhoIndividual,
 ): void {
+  // ⚠️ O VESTIÁRIO MEXE NA NOTA ANTES DE QUALQUER COISA LER A NOTA (1.0.374).
+  // Ela alimenta súmula, média da temporada, confiança do treinador, forma e
+  // moral — ajustar depois de um desses faria os cinco discordarem entre si
+  // sobre quanto o atleta foi bem no mesmo jogo.
+  //
+  // ±0,5 é de propósito pequeno: o grupo TEMPERA a atuação, não a substitui.
+  // Um vestiário rachado não transforma uma atuação 8 em 6, mas decide empates.
+  const d: DesempenhoIndividual = desempenho.minutos > 0
+    ? {
+      ...desempenho,
+      nota: Math.max(3, Math.min(10, Math.round(
+        (desempenho.nota + ajusteDaNotaPeloVestiario(lerRelacoes(relacoesDoAtleta(novo)))) * 10,
+      ) / 10)),
+    }
+    : desempenho
+
   const registro: PartidaDoAtleta = {
     temporada: novo.temporada, rodada: ctx.rodada, competicao: ctx.competicao,
     adversario: ctx.adversario, casa: ctx.emCasa, golsPro: ctx.golsPro, golsContra: ctx.golsContra,
@@ -2006,6 +2408,13 @@ function aplicarPartidaNaCarreira(
         }, ...novo.recados].slice(0, 25)
       }
     }
+    // ⚠️ A MANCHETE SAI DEPOIS DA NOTA JÁ AJUSTADA PELO VESTIÁRIO. A imprensa
+    // comenta o que o jogo registrou — se ela lesse a nota crua, o jornal e a
+    // súmula dariam números diferentes para a mesma partida.
+    novo.repercussao = [
+      ...manchetesDaRodada(novo, d, ctx.adversario),
+      ...(novo.repercussao ?? []),
+    ].slice(0, 20)
     registrarAcoes(novo, d, `${ctx.semente}:acoes`)
     // BÔNUS POR GOL vira dinheiro na hora — é o que faz o contrato ser uma
     // decisão e não um enfeite na tela de proposta.
@@ -2014,7 +2423,7 @@ function aplicarPartidaNaCarreira(
     // uma nota alta viram post; reputação sobe junto, e é ela que faz clube
     // grande acordar (ver `gerarPropostas`).
     if (d.gols >= 2 || d.nota >= 8.5) {
-      novo.reputacao = Math.min(100, (novo.reputacao ?? 30) + (d.gols >= 2 ? 3 : 2))
+      novo.reputacao = moverReputacao(novo, d.gols >= 2 ? 3 : 2)
       novo.torcida = Math.min(100, (novo.torcida ?? 50) + 2)
       novo.repercussao = [{
         id: `post_${novo.temporada}_${ctx.rodada}`,
@@ -2029,6 +2438,19 @@ function aplicarPartidaNaCarreira(
     // titular, e uma boa não faz o reserva virar camisa 10 na semana seguinte.
     novo.notaDoTreinador = limitar(novo.notaDoTreinador + (d.nota - 6.6) * 2.4 + d.gols * 1.5)
     novo.forma = limitar(novo.forma * 0.72 + d.nota * 8.4)
+    // ⚠️ O VESTIÁRIO MOVE-SE PELO QUE VOCÊ FAZ, e não só pelo que você diz.
+    // Sem esta linha o grupo só responderia a conversas, e jogar bem — que é a
+    // maneira mais óbvia de ganhar um vestiário — não valeria nada.
+    novo.relacoes = {
+      ...relacoesDoAtleta(novo),
+      ...lerRelacoes(relacoesDoAtleta(novo)),
+      elenco: limitar(relacoesDoAtleta(novo).elenco + (d.nota >= 7.2 ? 1.8 : d.nota >= 6 ? 0.4 : -1.4)),
+    }
+    // O rival reage ao seu jogo pelo avesso: você indo bem, ele esfria.
+    novo.companheiros = moverCompanheiro(
+      lerCompanheiros(novo.companheiros, novo.clubeCurto, String(novo.atleta.posicao)),
+      "rival", d.nota >= 7.2 ? -1.2 : d.nota < 6 ? 1 : 0,
+    )
     sortearLesao(novo, d.minutos, ctx.rodada)
     novo.moral = limitar(novo.moral + (d.nota >= 7 ? 3 : d.nota >= 6 ? 0 : -3) + (ctx.golsPro > ctx.golsContra ? 2 : ctx.golsPro === ctx.golsContra ? 0 : -2))
   } else {
@@ -2056,11 +2478,52 @@ function aplicarPartidaNaCarreira(
   // faixa, atuação boa ainda promove (dá para sair de "fora dos planos" a
   // "rodízio" jogando bem), mas ninguém passa por cima da fila inteira sem
   // antes ficar melhor que ela de verdade. Quem muda o teto é a EVOLUÇÃO.
-  const merecida = confiancaMerecida(novo)
+  // ⚠️ O CONCORRENTE DESLOCA O ALVO, NÃO SANGRA A NOTA (corrigido na 1.0.374).
+  //
+  // A primeira versão fazia `notaDoTreinador + pressaoDoRival(time)` DEPOIS da
+  // convergência — ou seja, tirava até 7 pontos A CADA PARTIDA, enquanto o
+  // mérito só recupera 12% da distância por rodada. O saldo era negativo toda
+  // semana e a nota afundava sozinha: medido, um meia de 24 anos saiu de 22,4
+  // no fim da primeira temporada para 5,7 na segunda, jogando 95 minutos no ano
+  // inteiro. Nada acusava — nem tipo, nem lint, nem os testes das relações, que
+  // conferiam o SINAL do efeito e não o acúmulo dele.
+  //
+  // Quem pegou foi o gate de lesões (`test-modalidades-ponta-a-ponta`), e por
+  // um caminho indireto: um atleta que não entra em campo não se machuca, e
+  // "seis temporadas sem uma única lesão" era o sintoma de um problema que não
+  // tinha nada a ver com lesão.
+  //
+  // Aqui a pressão entra no ALVO. A confiança passa a convergir para um patamar
+  // um pouco mais baixo — que é o que "ter um concorrente em forma" significa —
+  // em vez de cair sem fundo.
+  const merecida = confiancaMerecida(novo) + pressaoDoRival(
+    lerCompanheiros(novo.companheiros, novo.clubeCurto, String(novo.atleta.posicao)),
+  )
   novo.notaDoTreinador = limitar(Math.max(
     merecida - 22,
     Math.min(merecida + 22, novo.notaDoTreinador + (merecida - novo.notaDoTreinador) * 0.12),
   ))
+
+  // ── O PISO DO TREINADOR, DEPOIS DO MÉRITO (1.0.374) ──────────────────────
+  //
+  // ⚠️ PISO, E SÓ PISO. Ele levanta por baixo do resultado e nunca soma por
+  // cima: quem tem o técnico do lado não despenca para "fora dos planos" por
+  // duas partidas ruins, mas também não vira titular sem jogar. Aplicar a
+  // relação ANTES do mérito faria dela um atalho, e o sistema de confiança que
+  // a 1.0.373 calibrou perderia o sentido.
+  //
+  // O concorrente NÃO entra aqui — ele desloca o alvo lá em cima, junto com o
+  // mérito. Ver a nota daquele bloco: aplicá-lo neste ponto foi o defeito que
+  // afundou a confiança em duas temporadas.
+  {
+    const relacoesAgora = lerRelacoes(relacoesDoAtleta(novo))
+    novo.relacoes = { ...relacoesDoAtleta(novo), ...relacoesAgora }
+    novo.companheiros = lerCompanheiros(novo.companheiros, novo.clubeCurto, String(novo.atleta.posicao))
+    novo.notaDoTreinador = limitar(Math.max(
+      pisoDaNotaDoTreinador(relacoesAgora),
+      novo.notaDoTreinador,
+    ))
+  }
   aplicarXP(novo, d.xp)
   atualizarMetas(novo)
   liquidarAposta(novo, ctx.golsPro, ctx.golsContra)
@@ -2411,6 +2874,15 @@ export function jogarPartidaDaSelecao(
       minutos: 90, titular: true, config, semente,
       posicao: String(novo.atleta.posicao),
       atributos: atributosEfetivosDoAtleta(novo) as unknown as Record<string, number>,
+      energia: novo.economia?.energia,
+      corpo: {
+        altura: novo.atleta.alturaCm,
+        pePreferido: novo.atleta.pePreferido,
+        peFraco: novo.atleta.peFraco,
+      },
+      fatorDeLances: frequenciaDeLancesPeloCraque(
+        lerCompanheiros(novo.companheiros, novo.clubeCurto, String(novo.atleta.posicao)),
+      ),
     })
     return novo
   }
@@ -2513,7 +2985,13 @@ function gerarPropostas(estado: EstadoCarreiraDeJogador, media: number): Propost
 
   if (interesse < 74 && !semEspaco) return []
 
-  const quantas = Math.max(1, Math.min(4, Math.round(1 + (agente.influencia - 8) / 4)))
+  // ⚠️ A RELAÇÃO COM O EMPRESÁRIO MULTIPLICA, A INFLUÊNCIA DELE SOMA (1.0.374).
+  // São coisas diferentes de propósito: `influencia` é o quanto ele PODE fazer,
+  // e a relação é o quanto ele QUER fazer por você. Um agente poderoso que você
+  // ignora há três temporadas trabalha menos — e é isso que dá consequência a
+  // tratá-lo mal na mesa de negociação.
+  const comOAgente = multiplicadorDePropostas(lerRelacoes(relacoesDoAtleta(estado)))
+  const quantas = Math.max(1, Math.min(4, Math.round((1 + (agente.influencia - 8) / 4) * comOAgente)))
   const doExterior = agente.redeInternacional >= 12
 
   const candidatos = completarLigaComPool(estado.divisao)
@@ -2667,7 +3145,7 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
       novo.capitao = true
       novo.temporadaEmQueVirouCapitao = novo.temporada
       novo.moral = limitar(novo.moral + 10)
-      novo.reputacao = Math.min(100, (novo.reputacao ?? 30) + 5)
+      novo.reputacao = moverReputacao(novo, 5)
       titulos.push(`Capitao do ${novo.clubeNome}`)
       novo.recados = [{
         id: `capitao_${novo.temporada}`, de: "Treinador",
@@ -2718,9 +3196,21 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
   // Aposentadoria: idade + queda de rendimento + ninguém mais chamando.
   if (idade >= 38 || (idade >= 34 && novo.notaDoTreinador < 20 && novo.propostas.length === 0)) {
     novo.aposentado = true
+    // ⚠️ A PONTUAÇÃO É CALCULADA AQUI E GRAVADA, não recalculada pela tela.
+    // Depois da aposentadoria o estado não muda mais, mas as REGRAS podem
+    // mudar numa versão futura — e uma carreira encerrada não pode receber uma
+    // nota diferente da que o jogador viu no dia em que a encerrou.
+    const fecho = pontuacaoFinal(folhaDaCarreira(novo))
+    novo.pontuacaoFinal = fecho.total
+    novo.patamarFinal = fecho.patamar
     novo.recados = [{
       id: `aposentadoria_${novo.temporada}`, de: "Agente",
       texto: `Fim de linha: ${novo.historico.reduce((n, h) => n + h.jogos, 0)} jogos, ${novo.historico.reduce((n, h) => n + h.gols, 0)} gols e ${novo.titulos.length} títulos. Obrigado por tudo.`,
+      temporada: novo.temporada, rodada: novo.rodada,
+    }, ...novo.recados].slice(0, 25)
+    novo.recados = [{
+      id: `legado_${novo.temporada}`, de: "Legado",
+      texto: `${fecho.total} pontos: ${fecho.patamar}. ${conquistasAtingidas(folhaDaCarreira(novo)).length} conquistas desbloqueadas.`,
       temporada: novo.temporada, rodada: novo.rodada,
     }, ...novo.recados].slice(0, 25)
     novo.recados = [{
@@ -3021,7 +3511,7 @@ export function responderEntrevista(
   const e = efeitos[tom]
   novo.notaDoTreinador = limitar(novo.notaDoTreinador + e.treinador)
   novo.moral = limitar(novo.moral + e.moral)
-  novo.reputacao = Math.max(0, Math.min(100, (novo.reputacao ?? 30) + e.reputacao))
+  novo.reputacao = moverReputacao(novo, e.reputacao)
   novo.torcida = Math.max(0, Math.min(100, (novo.torcida ?? 50) + e.torcida))
   novo.entrevistasRespondidas = [...(novo.entrevistasRespondidas ?? []), entrevistaId]
 
@@ -3050,6 +3540,71 @@ export interface PostDeRepercussao {
   temporada: number
 }
 
+/**
+ * A IMPRENSA ESCREVE SOBRE VOCÊ (1.0.374) — e o que ela escreve depende de
+ * como você a tratou.
+ *
+ * ─── POR QUE A IMPRENSA ERA RASA ────────────────────────────────────────────
+ *
+ * Até a 1.0.373 "imprensa" no modo de jogador era uma coisa só: um post gerado
+ * quando você respondia a uma entrevista. Não havia jornal, não havia manchete
+ * na semana em que nada foi perguntado, e — o que importa — o TOM nunca mudava.
+ * O mesmo jogo com o mesmo placar rendia a mesma frase para quem cultivou a
+ * imprensa por dez temporadas e para quem a hostilizou desde a estreia.
+ *
+ * ⚠️ E ISSO ESVAZIAVA A PRÓPRIA RELAÇÃO. `amplificacaoDaImprensa` já muda a
+ * velocidade da reputação, mas isso é um número invisível: o jogador nunca via
+ * a imprensa do lado dele nem contra ele. Um laço que só age num multiplicador
+ * escondido é indistinguível de laço nenhum.
+ *
+ * Agora a MESMA atuação vira três manchetes diferentes conforme o nível:
+ *
+ *     imprensa ≥ 65   generosa — a boa é exaltada, a ruim é perdoada
+ *     imprensa 35–64   neutra  — o placar, sem adjetivo
+ *     imprensa < 35    hostil  — a boa é minimizada, a ruim é execução
+ *
+ * É a mesma regra dos outros laços: o efeito tem de aparecer onde o jogador
+ * olha, senão é enfeite.
+ */
+export function manchetesDaRodada(
+  estado: EstadoCarreiraDeJogador,
+  d: { nota: number; gols: number; assistencias: number },
+  adversario: string,
+): PostDeRepercussao[] {
+  const nivel = lerRelacoes(relacoesDoAtleta(estado)).imprensa
+  const nome = estado.atleta.nome
+  const bem = d.nota >= 7.2 || d.gols > 0
+  const mal = d.nota < 5.8
+
+  // Nada de manchete para uma atuação morna: jornal que noticia tudo não
+  // noticia nada, e o feed viraria ruído semanal em vez de acontecimento.
+  if (!bem && !mal) return []
+
+  const generosa = nivel >= 65
+  const hostil = nivel < 35
+
+  const autor = generosa ? "Jornal do Esporte" : hostil ? "Tribuna Crítica" : "Boletim FC"
+
+  const texto = bem
+    ? generosa
+      ? `${nome} decide de novo: nota ${d.nota.toFixed(1)} contra o ${adversario}. O nome do momento.`
+      : hostil
+        ? `${nome} vai bem contra o ${adversario}, mas o adversário facilitou. Falta provar em jogo grande.`
+        : `${nome} fecha em ${d.nota.toFixed(1)} diante do ${adversario}.`
+    : generosa
+      ? `Dia difícil para ${nome} contra o ${adversario}. Acontece com quem sempre joga.`
+      : hostil
+        ? `${nome} some em campo contra o ${adversario}. Até quando a torcida vai pagar por isso?`
+        : `${nome} não repete o rendimento contra o ${adversario}: nota ${d.nota.toFixed(1)}.`
+
+  return [{
+    id: `manchete_${estado.temporada}_${estado.rodada}`,
+    autor,
+    texto,
+    temporada: estado.temporada,
+  }]
+}
+
 function gerarRepercussao(estado: EstadoCarreiraDeJogador, tom: TomDaResposta): PostDeRepercussao {
   const nome = estado.atleta.nome
   const autor = tom === "polemica" ? "@torcedor_raiz" : tom === "ambiciosa" ? "@mercadoFC" : "@FutNews"
@@ -3072,7 +3627,7 @@ function gerarRepercussao(estado: EstadoCarreiraDeJogador, tom: TomDaResposta): 
  * o que quebrou o modo.
  */
 export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): EstadoCarreiraDeJogador {
-  const p = estado.partidaEmCurso
+  let p = estado.partidaEmCurso
   if (!p || !partidaTerminou(p)) return estado
   const novo = structuredClone(estado)
   delete novo.partidaEmCurso
@@ -3080,6 +3635,15 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
   novo.economia = structuredClone(economiaDoAtleta(novo))
   const lances = p.aoVivo?.lancesOferecidos ?? p.historico.length
   novo.economia.energia = Math.max(0, novo.economia.energia - Math.max(2, lances * 2))
+
+  // O VESTIÁRIO TEMPERA A NOTA — o mesmo ajuste, no mesmo lugar lógico que o
+  // caminho da partida simulada faz. Ver `aplicarPartidaNaCarreira`.
+  p = {
+    ...p,
+    nota: Math.max(3, Math.min(10, Math.round(
+      (p.nota + ajusteDaNotaPeloVestiario(lerRelacoes(relacoesDoAtleta(novo)))) * 10,
+    ) / 10)),
+  }
 
   if (p.origem === "selecao") {
     novo.selecao.partidas = structuredClone(calendarioDaSelecao(novo))
@@ -3093,7 +3657,7 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
     novo.selecao.jogos++
     novo.selecao.gols += p.gols
     novo.moral = limitar(novo.moral + (p.nota >= 7 ? 4 : p.nota < 6 ? -3 : 1))
-    novo.reputacao = limitar((novo.reputacao ?? 30) + (p.gols > 0 || p.nota >= 8 ? 2 : 0))
+    novo.reputacao = moverReputacao(novo, p.gols > 0 || p.nota >= 8 ? 2 : 0)
     if (p.gols > 0 && novo.patrocinioPessoal) {
       const bonus = p.gols * novo.patrocinioPessoal.bonusPorGol
       novo.economia.dinheiro += bonus
@@ -3158,18 +3722,72 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
   novo.forma = limitar(novo.forma * 0.72 + p.nota * 8.4)
   novo.moral = limitar(novo.moral + (p.nota >= 7 ? 3 : p.nota >= 6 ? 0 : -3)
     + (p.golsPro > p.golsContra ? 2 : p.golsPro === p.golsContra ? 0 : -2))
+  // O VESTIÁRIO E O RIVAL RESPONDEM À ATUAÇÃO — o mesmo que o caminho da
+  // partida simulada faz. Deixar de fora daqui criaria uma carreira em que
+  // jogar ao vivo move o grupo e jogar simulado não, sem que nada explique
+  // a diferença ao jogador.
+  novo.relacoes = {
+    ...relacoesDoAtleta(novo),
+    ...lerRelacoes(relacoesDoAtleta(novo)),
+    elenco: limitar(relacoesDoAtleta(novo).elenco + (p.nota >= 7.2 ? 1.8 : p.nota >= 6 ? 0.4 : -1.4)),
+  }
+  novo.companheiros = moverCompanheiro(
+    lerCompanheiros(novo.companheiros, novo.clubeCurto, String(novo.atleta.posicao)),
+    "rival", p.nota >= 7.2 ? -1.2 : p.nota < 6 ? 1 : 0,
+  )
   aplicarXP(novo, Math.round(p.minutos * 0.55 + p.gols * 45 + p.assistencias * 25 + Math.max(0, p.nota - 6.5) * 30))
 
-  const merecida = confiancaMerecida(novo)
+  // ⚠️ O CONCORRENTE DESLOCA O ALVO, NÃO SANGRA A NOTA (corrigido na 1.0.374).
+  //
+  // A primeira versão fazia `notaDoTreinador + pressaoDoRival(time)` DEPOIS da
+  // convergência — ou seja, tirava até 7 pontos A CADA PARTIDA, enquanto o
+  // mérito só recupera 12% da distância por rodada. O saldo era negativo toda
+  // semana e a nota afundava sozinha: medido, um meia de 24 anos saiu de 22,4
+  // no fim da primeira temporada para 5,7 na segunda, jogando 95 minutos no ano
+  // inteiro. Nada acusava — nem tipo, nem lint, nem os testes das relações, que
+  // conferiam o SINAL do efeito e não o acúmulo dele.
+  //
+  // Quem pegou foi o gate de lesões (`test-modalidades-ponta-a-ponta`), e por
+  // um caminho indireto: um atleta que não entra em campo não se machuca, e
+  // "seis temporadas sem uma única lesão" era o sintoma de um problema que não
+  // tinha nada a ver com lesão.
+  //
+  // Aqui a pressão entra no ALVO. A confiança passa a convergir para um patamar
+  // um pouco mais baixo — que é o que "ter um concorrente em forma" significa —
+  // em vez de cair sem fundo.
+  const merecida = confiancaMerecida(novo) + pressaoDoRival(
+    lerCompanheiros(novo.companheiros, novo.clubeCurto, String(novo.atleta.posicao)),
+  )
   novo.notaDoTreinador = limitar(Math.max(
     merecida - 22,
     Math.min(merecida + 22, novo.notaDoTreinador + (merecida - novo.notaDoTreinador) * 0.12),
   ))
+
+  // ── O PISO DO TREINADOR, DEPOIS DO MÉRITO (1.0.374) ──────────────────────
+  //
+  // ⚠️ PISO, E SÓ PISO. Ele levanta por baixo do resultado e nunca soma por
+  // cima: quem tem o técnico do lado não despenca para "fora dos planos" por
+  // duas partidas ruins, mas também não vira titular sem jogar. Aplicar a
+  // relação ANTES do mérito faria dela um atalho, e o sistema de confiança que
+  // a 1.0.373 calibrou perderia o sentido.
+  //
+  // O concorrente NÃO entra aqui — ele desloca o alvo lá em cima, junto com o
+  // mérito. Ver a nota daquele bloco: aplicá-lo neste ponto foi o defeito que
+  // afundou a confiança em duas temporadas.
+  {
+    const relacoesAgora = lerRelacoes(relacoesDoAtleta(novo))
+    novo.relacoes = { ...relacoesDoAtleta(novo), ...relacoesAgora }
+    novo.companheiros = lerCompanheiros(novo.companheiros, novo.clubeCurto, String(novo.atleta.posicao))
+    novo.notaDoTreinador = limitar(Math.max(
+      pisoDaNotaDoTreinador(relacoesAgora),
+      novo.notaDoTreinador,
+    ))
+  }
   atualizarMetas(novo)
   liquidarAposta(novo, p.golsPro, p.golsContra)
 
   if (p.gols >= 2 || p.nota >= 8.5) {
-    novo.reputacao = Math.min(100, (novo.reputacao ?? 30) + (p.gols >= 2 ? 3 : 2))
+    novo.reputacao = moverReputacao(novo, p.gols >= 2 ? 3 : 2)
     novo.repercussao = [{
       id: `post_${novo.temporada}_${p.rodada}`,
       autor: "@FutNews",

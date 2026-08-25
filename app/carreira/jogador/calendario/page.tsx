@@ -32,7 +32,7 @@ import { useGameState } from "@/lib/save-system"
 import { getTeamByShort } from "@/lib/teams-data"
 import { getGameDate } from "@/lib/game-date"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useControleDoAtleta } from "@/hooks/use-controle-do-atleta"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import type { MatchFixture } from "@/lib/career-types"
@@ -50,7 +50,7 @@ function coresDaCompeticao(nome: string): { fundo: string; borda: string } {
 }
 
 export default function CalendarioDoAtletaPage() {
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador") })
+  useControleDoAtleta({ rota: "/carreira/jogador/calendario" })
   const { state } = useGameState()
   const t = useTranslation()
   const carreira = state.carreiraDeJogador

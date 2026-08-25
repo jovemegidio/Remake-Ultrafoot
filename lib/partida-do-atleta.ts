@@ -28,9 +28,11 @@ import {
   iniciarPartidaAoVivo,
   partidaAcabou,
   resolverLance,
+  type DesfechoDoLance,
   type LanceDoAtleta,
   type PartidaAoVivo,
 } from "@/lib/partida-ao-vivo-do-atleta"
+import type { ChuteDoJogador } from "@/lib/fisica-do-chute"
 import type { MatchConfig } from "@/lib/match-engine"
 
 export type TipoDeMomento =
@@ -66,6 +68,13 @@ export interface ResultadoDoMomento {
   deltaNota: number
   gol: boolean
   assistencia: boolean
+  /**
+   * A BOLA (1.0.374) — trajetória e desfecho, quando o lance passou pela
+   * física. É com ela que a tela anima o voo em vez de só escrever o texto.
+   */
+  chute?: DesfechoDoLance["chute"]
+  /** Em lance de goleiro: para onde ele se jogou. */
+  ladoDefendido?: number
 }
 
 /** O estado de uma partida em curso, guardado no save enquanto ela não acaba. */
@@ -327,17 +336,26 @@ export function decidirMomento(
   partida: PartidaEmCurso,
   escolhaId: string,
   precisaoMira = 1,
+  /**
+   * O CHUTE APONTADO (1.0.374) — alvo, força e efeito.
+   *
+   * Quando vem, o lance é resolvido pela FÍSICA e não há sorteio no desfecho.
+   * Quando não vem (save antigo, lance que não é finalização), segue o caminho
+   * probabilístico de antes.
+   */
+  chute?: ChuteDoJogador,
 ): { partida: PartidaEmCurso; resultado: ResultadoDoMomento } {
   // MODO AO VIVO: quem resolve é o módulo da partida real, e o resultado entra
   // no placar. Depois a simulação segue até o próximo envolvimento.
   if (partida.aoVivo) {
-    const r = resolverLance(partida.aoVivo, escolhaId, precisaoMira)
+    const r = resolverLance(partida.aoVivo, escolhaId, precisaoMira, chute)
     const seguiu = avancarAteOLance(r.partida)
     return {
       partida: comEstadoVivo(partida, seguiu),
       resultado: {
         sucesso: r.desfecho.sucesso, narracao: r.desfecho.narracao,
         deltaNota: r.desfecho.deltaNota, gol: r.desfecho.gol, assistencia: r.desfecho.assistencia,
+        chute: r.desfecho.chute, ladoDefendido: r.desfecho.ladoDefendido,
       },
     }
   }
@@ -515,6 +533,16 @@ export function montarPartidaAoVivo(
     semente: string
     posicao: string
     atributos: Record<string, number>
+    /** Energia do atleta no apito inicial. Entra na física como pressão. */
+    energia?: number
+    /** Quanto o craque do elenco olha para você: muda a meta de lances. */
+    fatorDeLances?: number
+    /** Corpo do atleta: altura, pé bom e estrelas do pé ruim (1.0.374). */
+    corpo?: {
+      altura?: number
+      pePreferido?: "direito" | "esquerdo" | "ambos"
+      peFraco?: number
+    }
   },
 ): PartidaEmCurso {
   const entrada = dados.titular ? 0 : Math.max(0, 90 - dados.minutos)
@@ -527,6 +555,9 @@ export function montarPartidaAoVivo(
     semente: dados.semente,
     posicao: dados.posicao,
     atributos: dados.atributos,
+    energia: dados.energia,
+    corpo: dados.corpo,
+    fatorDeLances: dados.fatorDeLances,
   })
   vivo = avancarAteOLance(vivo)
 

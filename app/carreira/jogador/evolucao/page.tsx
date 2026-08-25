@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { MinijogoDeTreino } from "@/components/carreira-jogador/minijogo-de-treino"
 import { useGameState } from "@/lib/save-system"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useControleDoAtleta } from "@/hooks/use-controle-do-atleta"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/currency"
@@ -37,7 +37,7 @@ const ATRIBUTOS = (Object.keys(NOME_DO_ATRIBUTO) as (keyof AtributosDoAtleta)[])
   .map(chave => ({ chave, nome: NOME_DO_ATRIBUTO[chave] }))
 
 export default function EvolucaoDoAtletaPage() {
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador") })
+  useControleDoAtleta({ rota: "/carreira/jogador/evolucao" })
   const { state, setState } = useGameState()
   const t = useTranslation()
   const carreira = state.carreiraDeJogador

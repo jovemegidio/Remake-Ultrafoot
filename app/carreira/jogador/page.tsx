@@ -31,7 +31,7 @@ import { useGameState } from "@/lib/save-system"
 import { useGameManager } from "@/lib/use-game-manager"
 import { getTeamByFileKey } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useControleDoAtleta } from "@/hooks/use-controle-do-atleta"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { conversasDoMomento, responderConversa, rotuloDoInterlocutor } from "@/lib/conversas-do-atleta"
@@ -157,7 +157,7 @@ function CartaoDaProposta({
 }
 
 export default function CarreiraDeJogadorPage() {
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+  useControleDoAtleta({ rota: "/carreira/jogador", aoVoltar: () => hardNavigate("/") })
   const { state, setState } = useGameState()
   const t = useTranslation()
   const { initializeNewGame } = useGameManager()

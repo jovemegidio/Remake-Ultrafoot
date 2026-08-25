@@ -39,11 +39,12 @@ import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
 import { CampoDoAtleta } from "@/components/match/campo-do-atleta"
 import { MiraDoAtleta, type TipoDaMiraDoAtleta } from "@/components/carreira-jogador/mira-do-atleta"
+import type { ChuteDoJogador } from "@/lib/fisica-do-chute"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByFileKey, getTeamByShort } from "@/lib/teams-data"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useControleDoAtleta } from "@/hooks/use-controle-do-atleta"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { concluirPartidaDoAtleta, economiaDoAtleta, minutosEsperados } from "@/lib/carreira-de-jogador"
@@ -79,7 +80,12 @@ export default function PartidaDoAtletaPage() {
   const [ultimo, setUltimo] = useState<string | null>(null)
   /** A tela começa no pré-jogo, como a do técnico. */
   const [fase, setFase] = useState<"pre" | "vivo">("pre")
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador"), quando: fase === "pre" })
+  useControleDoAtleta({
+    rota: "/carreira/jogador/partida",
+    aoVoltar: () => hardNavigate("/carreira/jogador"),
+    quando: fase === "pre",
+    trocarDeTela: false,
+  })
 
   // Enter / A começam a partida, igual ao overlay de pré-jogo do modo técnico.
   useEffect(() => {
@@ -144,10 +150,19 @@ export default function PartidaDoAtletaPage() {
   const golsCasa = partida.emCasa ? corrido.pro : corrido.contra
   const golsFora = partida.emCasa ? corrido.contra : corrido.pro
 
-  const decidir = (escolhaId: string, precisaoMira = 1) => {
-    const r = decidirMomento(carreira, partida, escolhaId, precisaoMira)
+  /**
+   * A DECISÃO — e, quando há chute apontado, a BOLA (1.0.374).
+   *
+   * ⚠️ ELE DEVOLVE O DESFECHO DA FÍSICA de propósito. A mira só consegue animar
+   * o voo REAL se souber por onde a bola passou; sem este retorno ela desenharia
+   * uma curva estimada e o jogador veria uma bola que não é a que decidiu o
+   * lance — que é pior que não animar nada.
+   */
+  const decidir = (escolhaId: string, precisaoMira = 1, chute?: ChuteDoJogador) => {
+    const r = decidirMomento(carreira, partida, escolhaId, precisaoMira, chute)
     setUltimo(r.resultado.narracao)
     setState({ carreiraDeJogador: { ...carreira, partidaEmCurso: r.partida } })
+    return r.resultado.chute
   }
 
   const encerrar = () => {
@@ -341,7 +356,8 @@ export default function PartidaDoAtletaPage() {
                 <MiraDoAtleta
                   tipo={partida.aoVivo.lancePendente.tipo as TipoDaMiraDoAtleta}
                   lanceId={partida.aoVivo.lancePendente.id}
-                  aoFinalizar={precisao => decidir(
+                  contexto={partida.aoVivo.lancePendente.contexto}
+                  aoFinalizar={(precisao, chute) => decidir(
                     partida.aoVivo?.lancePendente?.tipo === "falta" ? "bater_falta"
                       : partida.aoVivo?.lancePendente?.tipo === "penalti" ? "bater_penalti"
                         : partida.aoVivo?.lancePendente?.tipo === "defesa" ? "mergulhar"
@@ -349,6 +365,7 @@ export default function PartidaDoAtletaPage() {
                             : partida.aoVivo?.lancePendente?.tipo === "penalti_defensivo" ? "defender_penalti"
                         : "chutar",
                     precisao,
+                    chute,
                   )}
                 />
               )}

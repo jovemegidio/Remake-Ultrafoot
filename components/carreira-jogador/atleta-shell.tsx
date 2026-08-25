@@ -32,22 +32,35 @@
 // ver app/globals.css). Para qualquer outra altura: flex (`min-h-0 flex-1`).
 
 import type { ReactNode } from "react"
-import { BarChart3, CalendarDays, TrendingUp, User } from "lucide-react"
+import { BarChart3, CalendarDays, HeartHandshake, TrendingUp, User } from "lucide-react"
 
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { cn } from "@/lib/utils"
+import { useTranslation, type Translations } from "@/lib/i18n"
 import type { EstadoCarreiraDeJogador } from "@/lib/carreira-de-jogador"
 
-export type TelaDoAtleta = "escritorio" | "calendario" | "evolucao" | "trajetoria"
+export type TelaDoAtleta = "escritorio" | "calendario" | "evolucao" | "vida" | "trajetoria"
 
 /** As quatro telas, na MESMA ordem do menu do cabeçalho (NAV_MENU_PLAYER_ITEMS). */
-const TELAS: { id: TelaDoAtleta; rotulo: string; href: string; icone: typeof User }[] = [
-  { id: "escritorio", rotulo: "Meu escritório", href: "/carreira/jogador", icone: User },
-  { id: "calendario", rotulo: "Calendário e tabela", href: "/carreira/jogador/calendario", icone: CalendarDays },
-  { id: "evolucao", rotulo: "Evolução e atributos", href: "/carreira/jogador/evolucao", icone: TrendingUp },
-  { id: "trajetoria", rotulo: "Trajetória", href: "/carreira/jogador/trajetoria", icone: BarChart3 },
+/**
+ * ⚠️ O RÓTULO É UMA CHAVE, NÃO UM TEXTO (1.0.374). Esta lista é uma constante de
+ * módulo — fora do componente, sem acesso a hook — e por isso os cinco nomes do
+ * menu ficaram chumbados em português desde que o modo nasceu. Guardar a chave
+ * e resolvê-la no render custa uma linha e tira as cinco da catraca.
+ */
+const TELAS: { id: TelaDoAtleta; rotulo: keyof Translations["carreiraDeJogador"]; href: string; icone: typeof User }[] = [
+  { id: "escritorio", rotulo: "menu_escritorio", href: "/carreira/jogador", icone: User },
+  { id: "calendario", rotulo: "menu_calendario", href: "/carreira/jogador/calendario", icone: CalendarDays },
+  { id: "evolucao", rotulo: "menu_evolucao", href: "/carreira/jogador/evolucao", icone: TrendingUp },
+  // ⚠️ A VIDA VEM ANTES DA TRAJETÓRIA, na ordem da pergunta que o jogador faz:
+  // como estou (escritório), o que vem (calendário), como melhoro (evolução),
+  // como está a vida fora (vida) e só então o que já fiz (trajetória). É a
+  // mesma ordem que LB/RB percorrem no controle (`TELAS_DO_ATLETA`), e as duas
+  // discordando seria o tipo de detalhe que faz o controle parecer quebrado.
+  { id: "vida", rotulo: "vida_fora_de_campo", href: "/carreira/jogador/vida", icone: HeartHandshake },
+  { id: "trajetoria", rotulo: "menu_trajetoria", href: "/carreira/jogador/trajetoria", icone: BarChart3 },
 ]
 
 /** A rota da tela do atleta que corresponde à antiga aba `?aba=`. */
@@ -70,6 +83,7 @@ export function AtletaShell({
   acoes?: ReactNode
   children: ReactNode
 }) {
+  const t = useTranslation()
   const { atleta } = carreira
   const semClube = Boolean(carreira.semClube)
 
@@ -140,7 +154,7 @@ export function AtletaShell({
               )}
             >
               <Icone className={cn("h-3.5 w-3.5", id === ativa ? "text-[var(--brand)]" : "text-white/40")} />
-              {rotulo}
+              {t.carreiraDeJogador[rotulo]}
             </button>
           ))}
         </nav>

@@ -19,87 +19,27 @@
 import { useEffect, useRef } from "react"
 import { telaAssumiuOGamepad } from "@/hooks/use-tela-gamepad"
 import { dialogoAberto } from "@/components/gamepad-modal-bridge"
+import {
+  ATRIBUTO_FOCADO as ATRIBUTO, focaveis, rolavel, vizinho,
+  type Caixa, type Direcao,
+} from "@/lib/focus/varredura"
 
-const SELETOR = [
-  "button:not([disabled])",
-  "a[href]",
-  '[role="tab"]',
-  '[role="button"]',
-  "input:not([disabled]):not([type=hidden])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
-].join(",")
+// Reexportados: `escolherVizinho` e os tipos tinham consumidores neste
+// caminho antes da extração, e quebrar o import deles seria cobrar de
+// outras telas um refactor que não é delas.
+export { escolherVizinho } from "@/lib/focus/varredura"
+export type { Caixa, Direcao }
 
-const ATRIBUTO = "data-gamepad-focused"
-
-/** Focaveis visiveis na tela, em ordem de leitura (cima->baixo, esquerda->direita). */
-function focaveis(): HTMLElement[] {
-  const todos = Array.from(document.querySelectorAll<HTMLElement>(SELETOR))
-  return todos
-    .filter(el => {
-      if (el.hasAttribute("disabled") || el.getAttribute("aria-hidden") === "true") return false
-      const r = el.getBoundingClientRect()
-      if (r.width < 4 || r.height < 4) return false
-      // Fora da janela nao conta: a lista longa so entra no alcance depois de rolar.
-      if (r.bottom < 0 || r.top > window.innerHeight) return false
-      const s = getComputedStyle(el)
-      return s.visibility !== "hidden" && s.display !== "none" && s.pointerEvents !== "none"
-    })
-    .sort((a, b) => {
-      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect()
-      // Mesma "linha" (tolerancia de 12px) ordena pela horizontal.
-      if (Math.abs(ra.top - rb.top) > 12) return ra.top - rb.top
-      return ra.left - rb.left
-    })
-}
-
-export type Direcao = "up" | "down" | "left" | "right"
-/** So o que a geometria precisa saber — deixa a escolha testavel sem DOM. */
-export interface Caixa { left: number; top: number; width: number; height: number }
-
-/**
- * Qual caixa recebe o foco ao empurrar o direcional. Devolve o INDICE em
- * `candidatos`, ou -1 quando nao ha ninguem naquela direcao.
- *
- * O desvio lateral pesa 2,5x o avanco de proposito: sem isso o "para baixo" num
- * formulario de duas colunas pula para a outra coluna em vez de descer na sua.
- */
-export function escolherVizinho(atual: Caixa, candidatos: Caixa[], direcao: Direcao): number {
-  const cx = atual.left + atual.width / 2, cy = atual.top + atual.height / 2
-  let melhor = -1, melhorCusto = Infinity
-  candidatos.forEach((r, i) => {
-    const dx = r.left + r.width / 2 - cx
-    const dy = r.top + r.height / 2 - cy
-    const naDirecao =
-      direcao === "up" ? dy < -4 :
-      direcao === "down" ? dy > 4 :
-      direcao === "left" ? dx < -4 : dx > 4
-    if (!naDirecao) return
-    const vertical = direcao === "up" || direcao === "down"
-    const custo = (vertical ? Math.abs(dy) : Math.abs(dx)) + (vertical ? Math.abs(dx) : Math.abs(dy)) * 2.5
-    if (custo < melhorCusto) { melhorCusto = custo; melhor = i }
-  })
-  return melhor
-}
-
-/** O vizinho na direcao pedida, por distancia com peso no eixo do movimento. */
-function vizinho(atual: HTMLElement, direcao: Direcao): HTMLElement | null {
-  const lista = focaveis().filter(el => el !== atual)
-  const i = escolherVizinho(atual.getBoundingClientRect(), lista.map(el => el.getBoundingClientRect()), direcao)
-  return i < 0 ? null : lista[i]
-}
-
-/** O contenedor que realmente rola sob este elemento (o corpo, quando nenhum). */
-function rolavel(de: HTMLElement | null): HTMLElement {
-  let no: HTMLElement | null = de
-  while (no && no !== document.body) {
-    const s = getComputedStyle(no)
-    if ((s.overflowY === "auto" || s.overflowY === "scroll") && no.scrollHeight > no.clientHeight + 8) return no
-    no = no.parentElement
-  }
-  return (document.scrollingElement as HTMLElement) ?? document.documentElement
-}
+// ⚠️ A GEOMETRIA MORA EM `lib/focus/varredura` DESDE A 1.0.374, e não aqui.
+// Ela nasceu neste arquivo e funcionava — o problema é que só funcionava neste
+// arquivo. As telas da carreira de jogador chamavam `useTelaGamepad` só para
+// declarar o "voltar", o que marca a tela como dona do gamepad e DESLIGA esta
+// camada: elas ficavam com um controle que só voltava, e nenhum dos dois
+// arquivos, lido sozinho, mostrava o problema.
+//
+// Duplicar a varredura lá teria sido pior: dois cálculos de vizinho envelhecem
+// separados, e este projeto já teve duas escalas para a mesma grandeza mais de
+// uma vez. Agora existe uma só, e quem quiser navegação a importa.
 
 export function GamepadNavegacaoGlobal() {
   const focadoRef = useRef<HTMLElement | null>(null)

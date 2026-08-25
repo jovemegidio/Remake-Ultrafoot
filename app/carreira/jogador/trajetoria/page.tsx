@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
 import { useGameState } from "@/lib/save-system"
 import { useTranslation } from "@/lib/i18n"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useControleDoAtleta } from "@/hooks/use-controle-do-atleta"
 import { cn } from "@/lib/utils"
 import { mediaDaTemporada, resumoDaCarreira } from "@/lib/carreira-de-jogador"
 
@@ -24,7 +24,7 @@ function corDaNota(nota: number): string {
 }
 
 export default function TrajetoriaDoAtletaPage() {
-  useTelaGamepad({ aoVoltar: () => hardNavigate("/carreira/jogador") })
+  useControleDoAtleta({ rota: "/carreira/jogador/trajetoria" })
   const { state } = useGameState()
   const tr = useTranslation()
   const carreira = state.carreiraDeJogador

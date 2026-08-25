@@ -45,7 +45,9 @@ const detalhe = process.argv.includes("--detalhe")
  * es-ES/it-IT em 45,8%. Estas telas ficam como as outras até alguém extrair.
  * PRÓXIMA VERSÃO QUE MEXER NO MODO CONTROLE: extraia e devolva o teto a 5.491.
  */
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5618)
+// 1.0.374: 5618 -> 5612. A tela `vida/` nasceu extraida e os cinco rotulos do
+// menu do atleta, que estavam chumbados desde que o modo existe, viraram chave.
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5612)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
 //                        chumbadas. Único aumento da catraca; ver a nota acima.)
