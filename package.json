@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.374",
+  "version": "1.0.375",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -45,6 +45,7 @@
     "qa:memoria-telas": "playwright test e2e/memoria-das-telas.spec.ts --project=chromium",
     "qa:atleta-copa": "tsx scripts/qa-atleta-copa-suspensao.ts",
     "qa:copa-pequena": "tsx scripts/qa-copa-de-liga-pequena.ts",
+      "qa:atleta-pesa": "tsx scripts/qa-atleta-pesa-no-time.ts",
     "qa:economia-modelo": "tsx scripts/qa-economia-longa.ts",
     "qa:331": "tsx scripts/qa-save-isolation.ts && tsx scripts/test-identidade-clubes-331.ts",
     "qa:var": "tsx scripts/test-var-realista-333.ts && tsx scripts/test-var.ts",
@@ -103,7 +104,7 @@
     "preqa:regras": "tsx scripts/test-real-clubs-stage1-lower-europe.ts && tsx scripts/test-real-clubs-stage3-czech.ts && tsx scripts/test-official-european-participants-2026.ts && tsx scripts/test-uefa-expansion.ts && tsx scripts/test-performance-center.ts && tsx scripts/test-squad-dynamics.ts && tsx scripts/test-ai-club-social.ts && tsx scripts/test-copas-mundiais.ts && tsx scripts/test-reserve-promotion.ts",
     "qa:regras": "tsx scripts/test-country-competitions.ts && tsx scripts/test-real-clubs-stage1.ts && tsx scripts/test-fixture-catchup.ts && tsx scripts/test-amistoso-calendario.ts && tsx scripts/test-treino-entrosamento.ts && tsx scripts/test-entrosamento.ts && tsx scripts/test-mercado-realista.ts && tsx scripts/test-radar-evento.ts && tsx scripts/test-posicao-por-coordenada.ts && tsx scripts/test-escalacao-salva.ts && tsx scripts/test-liga-curta.ts && tsx scripts/test-posicoes-do-elenco.ts && tsx scripts/test-escudo-clube-formador.ts && tsx scripts/test-contrato-base-de-tempo.ts && tsx scripts/test-piso-de-elenco.ts && tsx scripts/test-diretoria.ts && tsx scripts/test-mundo-vivo.ts && tsx scripts/test-dificuldade-e-diretoria.ts && tsx scripts/test-trofeus.ts && tsx scripts/test-rotina-da-semana.ts && tsx scripts/test-conversa-atleta.ts && tsx scripts/test-coletiva.ts",
     "prebuild": "node scripts/precomputar-pool.mjs && node scripts/preparar-env-licenca.mjs && node scripts/embutir-edicoes.mjs && node scripts/build-team-player-photos.mjs && node scripts/compactar-elencos-do-pool.mjs && node scripts/compactar-elencos-tm.mjs && node scripts/compactar-manifesto-de-fotos.mjs",
-    "qa:gates": "npm run qa:nao-regride && npm run qa:331 && npm run qa:var && npx tsc --noEmit -p tsconfig.json && npx eslint app components lib hooks && npx tsx scripts/test-modo-controle.ts && node scripts/audit-feature-gaps.mjs && npx tsx scripts/qa-competition-regulations.ts && npm run qa:pool-elencos && npm run qa:ligas && npm run qa:piramide-br && npm run qa:clube-proprio && npm run qa:modelo-jogador && npm run qa:editor-elenco && npm run qa:busca && npm run qa:treino-diario && npm run qa:elencos-compactos && npm run qa:manifesto-fotos && npm run qa:busca-clube && npm run qa:simular-persiste && npm run qa:smoke && npm run qa:online && npm run qa:mercado-modalidade && npm run qa:regras && npm run qa:modalidades-ponta && npm run qa:traducao && npm run qa:idiomas && npm run qa:universo && npm run qa:atleta-copa && npm run qa:copa-pequena && npm run qa:sem-clube && npm run qa:economia-modelo && npm run qa:online-save && npm run qa:narracao-atleta && npm run qa:rush && npm run qa:saves-disco && npm run qa:memoria && npm run qa:coop && npm run qa:youth-career && npm run qa:gameplay && npm run qa:destinos-online && npm run qa:mundo && npm run qa:374",
+    "qa:gates": "npm run qa:nao-regride && npm run qa:331 && npm run qa:var && npx tsc --noEmit -p tsconfig.json && npx eslint app components lib hooks && npx tsx scripts/test-modo-controle.ts && node scripts/audit-feature-gaps.mjs && npx tsx scripts/qa-competition-regulations.ts && npm run qa:pool-elencos && npm run qa:ligas && npm run qa:piramide-br && npm run qa:clube-proprio && npm run qa:modelo-jogador && npm run qa:editor-elenco && npm run qa:busca && npm run qa:treino-diario && npm run qa:elencos-compactos && npm run qa:manifesto-fotos && npm run qa:busca-clube && npm run qa:simular-persiste && npm run qa:smoke && npm run qa:online && npm run qa:mercado-modalidade && npm run qa:regras && npm run qa:modalidades-ponta && npm run qa:traducao && npm run qa:idiomas && npm run qa:universo && npm run qa:atleta-copa && npm run qa:copa-pequena && npm run qa:atleta-pesa && npm run qa:sem-clube && npm run qa:economia-modelo && npm run qa:online-save && npm run qa:narracao-atleta && npm run qa:rush && npm run qa:saves-disco && npm run qa:memoria && npm run qa:coop && npm run qa:youth-career && npm run qa:gameplay && npm run qa:destinos-online && npm run qa:mundo && npm run qa:374",
     "qa:carreiras": "tsx scripts/qa-carreiras-longas.ts",
     "qa:save-protegido": "tsx scripts/test-save-protegido.ts",
     "build:loja": "node scripts/build-loja.mjs",

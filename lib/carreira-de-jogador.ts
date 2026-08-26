@@ -1961,6 +1961,46 @@ export function minutosEsperados(estado: EstadoCarreiraDeJogador): string {
 
 function forcaDoTime(t: Team | undefined): number { return t?.prestigio ?? 55 }
 
+/**
+ * QUANTO O SEU ATLETA MUDA A FORCA DO CLUBE NA PARTIDA SIMULADA (1.0.375).
+ *
+ * ⚠️ ATE AQUI ELE NAO MUDAVA NADA. O placar saia de `simulateFullMatch` com
+ * prestigio contra prestigio, e `desempenhoDaPartida` so ATRIBUIA ao atleta uma
+ * fatia dos gols que o clube ja havia feito. Medido em 10 temporadas: um
+ * atacante de 92 fazia 30,3 gols por temporada contra 6,0 de um de 48, e o
+ * clube terminava 1,8 ponto na frente — ruido. A carreira inteira nao movia a
+ * tabela.
+ *
+ * E o mesmo defeito que a partida VIVIDA ja corrigiu ("o placar nasce do que
+ * voce faz"); aqui ele seguia de pe, no caminho que o jogador mais usa, porque
+ * ninguem vive 38 rodadas.
+ *
+ * A fatia e pequena de proposito: um jogador entre onze. Ela nasce da distancia
+ * entre o atleta e o nivel do proprio clube, pesada pelo papel no elenco — quem
+ * esta fora dos planos quase nao entra na conta — e limitada a ±5, que e o
+ * tamanho de "um craque a mais" e nao o de um time inteiro. Sem o limite, um 99
+ * num clube fraco seria campeao sozinho e ACHATARIA a liga, que e o preco
+ * conhecido de confundir a escala do elenco com a do prestigio.
+ */
+function pesoDoAtletaNoTime(estado: EstadoCarreiraDeJogador, forcaBase: number): number {
+  // Fora de campo nao se influencia partida. As duas checagens acontecem depois
+  // da simulacao, entao aqui a consulta precisa ser propria.
+  if ((estado.lesao?.semanasRestantes ?? 0) > 0) return 0
+  if ((estado.suspensao?.partidasRestantes ?? 0) > 0) return 0
+  const papel = papelNoElenco(estado.notaDoTreinador)
+  const participacao = papel === "titular absoluto" ? 1
+    : papel === "titular" ? 0.85
+      : papel === "rodízio" ? 0.5
+        : papel === "reserva" ? 0.2
+          : 0.05
+  // A FORMA entra porque ela ja decide a atuacao individual: um craque em ma
+  // fase que continuasse valendo o maximo para o time contradiria a nota que
+  // ele mesmo leva na sumula.
+  const forma = 0.75 + (estado.forma ?? 50) / 200
+  const bruto = (estado.atleta.overall - forcaBase) * 0.42 * participacao * forma
+  return Math.max(-5, Math.min(5, bruto))
+}
+
 interface DesempenhoIndividual {
   titular: boolean
   minutos: number
@@ -2222,11 +2262,16 @@ export function jogarProximaRodada(
       }
     }
 
+    // O SEU ATLETA PESA NO LADO DELE — e so no dele (ver `pesoDoAtletaNoTime`).
+    const usuarioEmCasa = fixture.isUserMatch && fixture.homeCurto === novo.clubeCurto
+    const usuarioFora = fixture.isUserMatch && fixture.awayCurto === novo.clubeCurto
+    const forcaMandante = forcaDoTime(mandante)
+    const forcaVisitante = forcaDoTime(visitante)
     const partida = simulateFullMatch({
       homeTeam: mandante,
       awayTeam: visitante,
-      homeRating: forcaDoTime(mandante),
-      awayRating: forcaDoTime(visitante),
+      homeRating: forcaMandante + (usuarioEmCasa ? pesoDoAtletaNoTime(novo, forcaMandante) : 0),
+      awayRating: forcaVisitante + (usuarioFora ? pesoDoAtletaNoTime(novo, forcaVisitante) : 0),
       durationMinutes: 90,
     })
     fixture.played = true

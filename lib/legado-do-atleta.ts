@@ -237,7 +237,13 @@ export function bonusDasConquistas(r: FolhaDaCarreira): number {
 export function pontuacaoFinal(r: FolhaDaCarreira): PontuacaoDaCarreira & { bonus: number } {
   const base = pontuacaoDaCarreira(r)
   const bonus = bonusDasConquistas(r)
-  const total = Math.max(0, base.total + bonus)
+  // ⚠️ O TETO E 1000 E ELE PRECISA ESTAR AQUI (1.0.375). Os seis eixos somam
+  // exatamente 1000 (200+220+220+190+90+80) — a escala anunciada ao jogador —,
+  // mas o bonus das conquistas era somado POR FORA, sem limite: 16 conquistas
+  // valem +410, e uma carreira longa fechava em 1128 numa regua de 0 a 1000.
+  // O bonus continua valendo para todo mundo que ainda nao chegou ao teto, que
+  // e a carreira inteira menos o caso perfeito.
+  const total = Math.min(1000, Math.max(0, base.total + bonus))
   return { ...base, bonus, total, patamar: patamarDaPontuacao(total) }
 }
 

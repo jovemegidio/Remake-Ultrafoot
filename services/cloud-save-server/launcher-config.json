@@ -303,6 +303,17 @@
   ],
   "changelog": [
     {
+      "version": "1.0.375",
+      "data": "2026-08-25",
+      "titulo": "O que voce faz em campo chega a tabela do clube",
+      "itens": [
+        "O SEU ATLETA PESA NO RESULTADO. Ate aqui a partida simulada saia de prestigio contra prestigio e o atleta apenas recebia o credito por gols que o clube ja tinha feito: um atacante de 92 marcava 30 gols por temporada contra 6 de um de 48, e o clube terminava 1,8 ponto na frente - ruido. Agora um craque rende cerca de 11 pontos por temporada a mais que um jogador fraco no mesmo clube, e um reserva ou um atleta em ma fase pesam pouco, como deve ser.",
+        "PLACAR FINAL DENTRO DA REGUA. Os seis eixos da pontuacao somam exatamente 1000, mas o bonus das 16 conquistas era somado por fora, sem limite: uma carreira de 20 temporadas fechava em 1128 numa escala anunciada como 0 a 1000, e a carreira maxima chegava a 1410.",
+        "CARREIRA PRESA AO CRIAR (CORRECAO). Em liga com menos de 16 clubes - a escocesa e boa parte da expansao UEFA - a tela ficava para sempre em \"Montando a sua temporada\": a copa era montada pareando 1 contra 16 e os quatro ultimos nao existiam. Atingia 426 dos 1350 clubes, na carreira de atleta e na de base."
+      ],
+      "latest": true
+    },
+    {
       "version": "1.0.374",
       "data": "2026-08-25",
       "titulo": "A bola voa, o goleiro joga e a carreira tem placar final",
@@ -316,7 +327,7 @@
         "A CARREIRA TERMINA COM PLACAR. Pontuacao de 0 a 1000, 16 conquistas e um ranking; o controle navega todas as telas do atleta.",
         "CARREIRA PRESA AO CRIAR (CORRECAO). Em liga com menos de 16 clubes - a escocesa e boa parte da expansao UEFA - a tela ficava para sempre em \"Montando a sua temporada\": a copa era montada pareando 1 contra 16 e os quatro ultimos nao existiam. Atingia 426 dos 1350 clubes, na carreira de atleta e na de base."
       ],
-      "latest": true
+      "latest": false
     },
     {
       "version": "1.0.373",

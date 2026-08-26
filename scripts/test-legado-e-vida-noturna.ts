@@ -165,7 +165,25 @@ console.log("\n── 7. AS CONQUISTAS E O RANKING ─────────�
   ok("e chega ao topo dos patamares", pontuacaoFinal(lenda).patamar === "Lenda do futebol",
     `${pontuacaoFinal(lenda).total}`)
 
-  ok("o bônus das conquistas soma", pontuacaoFinal(lenda).total > pontuacaoDaCarreira(lenda).total)
+  // ⚠️ O BONUS SE MEDE NUMA CARREIRA QUE AINDA NAO SATUROU (1.0.375). A `lenda`
+  // acima ja fecha os seis eixos em 1000, que agora e o teto do placar; medir o
+  // bonus nela testaria o teto, nao o bonus. Numa carreira media ele aparece.
+  const media: FolhaDaCarreira = {
+    ...VAZIA, temporadas: 8, jogos: 210, gols: 48, assistencias: 30, notaMedia: 6.9,
+    titulos: 2, premios: 1, overallMaximo: 74, prestigioMaximo: 68,
+  }
+  ok("o bônus das conquistas soma", pontuacaoFinal(media).total > pontuacaoDaCarreira(media).total,
+    `${pontuacaoDaCarreira(media).total} -> ${pontuacaoFinal(media).total}`)
+
+  // ── 1.0.375: o placar final respeita a regua de 0 a 1000 ──
+  // Os seis eixos somam exatamente 1000 (200+220+220+190+90+80), que e a escala
+  // anunciada ao jogador. O bonus das 16 conquistas (+410) era somado POR FORA,
+  // sem limite: a `lenda` fechava em 1410, e uma carreira de 20 temporadas
+  // simulada terminou em 1128 — numa regua de 0 a 1000.
+  ok("o placar final nao passa de 1000", pontuacaoFinal(lenda).total <= 1000,
+    `${pontuacaoFinal(lenda).total}`)
+  ok("e a carreira maxima encosta no teto", pontuacaoFinal(lenda).total === 1000,
+    `${pontuacaoFinal(lenda).total}`)
   ok("carreira vazia não ganha bônus", bonusDasConquistas(VAZIA) === 0)
 
   // ⚠️ SEM RÉGUA, A PRIMEIRA CARREIRA DO JOGADOR SERIA A MELHOR E A PIOR DE
