@@ -32,7 +32,7 @@
 // ver app/globals.css). Para qualquer outra altura: flex (`min-h-0 flex-1`).
 
 import type { ReactNode } from "react"
-import { BarChart3, CalendarDays, HeartHandshake, TrendingUp, User } from "lucide-react"
+import { BarChart3, CalendarDays, HeartHandshake, ShoppingBag, TrendingUp, User } from "lucide-react"
 
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils"
 import { useTranslation, type Translations } from "@/lib/i18n"
 import type { EstadoCarreiraDeJogador } from "@/lib/carreira-de-jogador"
 
-export type TelaDoAtleta = "escritorio" | "calendario" | "evolucao" | "vida" | "trajetoria"
+export type TelaDoAtleta = "escritorio" | "calendario" | "evolucao" | "loja" | "vida" | "trajetoria"
 
 /** As quatro telas, na MESMA ordem do menu do cabeçalho (NAV_MENU_PLAYER_ITEMS). */
 /**
@@ -59,6 +59,11 @@ const TELAS: { id: TelaDoAtleta; rotulo: keyof Translations["carreiraDeJogador"]
   // como está a vida fora (vida) e só então o que já fiz (trajetória). É a
   // mesma ordem que LB/RB percorrem no controle (`TELAS_DO_ATLETA`), e as duas
   // discordando seria o tipo de detalhe que faz o controle parecer quebrado.
+  // ⚠️ A LOJA ENTRA ENTRE EVOLUÇÃO E VIDA (1.0.377), e a ordem segue a mesma
+  // regra das outras: como melhoro (evolução), com o que melhoro (loja), como
+  // está a vida fora (vida). Pô-la no fim, depois da trajetória, a esconderia
+  // atrás da tela que só se abre quando a carreira acaba.
+  { id: "loja", rotulo: "menu_loja", href: "/carreira/jogador/loja", icone: ShoppingBag },
   { id: "vida", rotulo: "vida_fora_de_campo", href: "/carreira/jogador/vida", icone: HeartHandshake },
   { id: "trajetoria", rotulo: "menu_trajetoria", href: "/carreira/jogador/trajetoria", icone: BarChart3 },
 ]

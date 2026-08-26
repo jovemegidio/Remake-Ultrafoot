@@ -48,9 +48,26 @@
  * Aqui o nome antigo manda. Este módulo ESTENDE as relações que já existiam
  * (`elenco` e `marcas`) com as quatro que faltavam, em vez de competir com elas.
  */
-export type Pessoa = "treinador" | "elenco" | "empresario" | "familia" | "imprensa"
+/**
+ * ⚠️ `marcas` ENTROU AQUI NA 1.0.377, E NÃO É CAMPO NOVO. Ele já existia dentro
+ * de `RelacoesDoAtleta` desde a 1.0.373 — e existia SOZINHO: fora da lista de
+ * pessoas, portanto sem rótulo, sem efeito declarado, sem decaimento e sem
+ * aparecer na tela de relações. Era exatamente o "medidor de enfeite" que o
+ * cabeçalho deste arquivo existe para proibir, escondido dentro do arquivo que
+ * o proíbe.
+ *
+ * Promovê-lo é o oposto de criar um segundo medidor: o campo do save é o mesmo,
+ * o valor guardado é o mesmo, e o que muda é que agora ele esfria como os
+ * outros e alimenta um efeito nomeado (`forcaDaMarcaPessoal`).
+ *
+ * ⚠️ E A TORCIDA NÃO ENTROU, de propósito — ver a seção A TORCIDA no fim do
+ * arquivo. Ela já tem fonte própria (`estado.torcida`); duplicá-la aqui daria
+ * dois números discordando sobre a mesma pergunta, que é o erro do
+ * `vestiario` x `elenco` descrito acima.
+ */
+export type Pessoa = "treinador" | "elenco" | "empresario" | "familia" | "imprensa" | "marcas"
 
-export const PESSOAS: Pessoa[] = ["treinador", "elenco", "empresario", "familia", "imprensa"]
+export const PESSOAS: Pessoa[] = ["treinador", "elenco", "empresario", "familia", "imprensa", "marcas"]
 
 export type Relacoes = Record<Pessoa, number>
 
@@ -60,6 +77,7 @@ const ROTULO: Record<Pessoa, string> = {
   empresario: "Empresário",
   familia: "Família",
   imprensa: "Imprensa",
+  marcas: "Marcas e patrocinadores",
 }
 
 const EFEITO: Record<Pessoa, string> = {
@@ -68,6 +86,7 @@ const EFEITO: Record<Pessoa, string> = {
   empresario: "Traz mais propostas e melhores",
   familia: "Recupera forma e fadiga mais rápido",
   imprensa: "Acelera (ou afunda) a sua reputação",
+  marcas: "Decide quantos e quais patrocínios chegam",
 }
 
 export function rotuloDaPessoa(p: Pessoa): string { return ROTULO[p] }
@@ -84,7 +103,11 @@ const limitar = (v: number) => Math.max(0, Math.min(100, Math.round(v * 10) / 10
  * queda quando o jogador a negligencia depois.
  */
 export function relacoesIniciais(): Relacoes {
-  return { treinador: 50, elenco: 50, empresario: 55, familia: 72, imprensa: 50 }
+  // ⚠️ `marcas: 35` E NÃO 50 — é o valor que a carreira já nascia usando desde
+  // a 1.0.373 (`criarCarreiraDeJogador`), e mudá-lo aqui alteraria em silêncio
+  // o começo de toda carreira nova só porque o campo mudou de lugar. Ninguém
+  // começa uma carreira com patrocinador: começa devendo prova a eles.
+  return { treinador: 50, elenco: 50, empresario: 55, familia: 72, imprensa: 50, marcas: 35 }
 }
 
 /** Lê as relações de um estado que pode ser anterior a esta versão. */
@@ -106,10 +129,26 @@ export function mover(r: Relacoes, p: Pessoa, delta: number): Relacoes {
  * está em 10 é perdoado aos poucos. Os dois sentidos importam: sem o segundo,
  * uma briga no vestiário seria uma sentença perpétua.
  */
+/**
+ * ⚠️ O PONTO NEUTRO NÃO É 50 PARA TODO MUNDO (1.0.377).
+ *
+ * Enquanto `marcas` estava fora da lista de pessoas, ele não esfriava. Ao
+ * entrar, o decaimento genérico o puxaria de 35 (onde toda carreira começa)
+ * para 50 em ~25 rodadas — ou seja, um atleta que nunca falou com marca
+ * nenhuma ficaria mais interessante para o mercado publicitário por deixar o
+ * tempo passar. É o inverso do que acontece.
+ *
+ * Cada relação volta para o seu próprio repouso: as pessoas, para a
+ * indiferença (50); as marcas, para o anonimato (35).
+ */
+const REPOUSO: Record<Pessoa, number> = {
+  treinador: 50, elenco: 50, empresario: 50, familia: 50, imprensa: 50, marcas: 35,
+}
+
 export function esfriarUmaRodada(r: Relacoes): Relacoes {
   const saida = { ...r }
   for (const p of PESSOAS) {
-    const d = saida[p] - 50
+    const d = saida[p] - REPOUSO[p]
     saida[p] = limitar(saida[p] - Math.sign(d) * Math.min(Math.abs(d), 0.6))
   }
   return saida
@@ -156,6 +195,75 @@ export function recuperacaoPelaFamilia(r: Relacoes): number {
  */
 export function amplificacaoDaImprensa(r: Relacoes): number {
   return 0.6 + (r.imprensa / 100) * 0.8
+}
+
+/**
+ * A FORÇA DA MARCA PESSOAL: 0,55 (ninguém liga) a 1,6 (garoto-propaganda).
+ *
+ * ⚠️ ESTE É O EFEITO QUE FALTAVA A `marcas` DESDE QUE ELE EXISTE. Até a
+ * 1.0.376 o campo subia +5 ao assinar patrocínio, +12 ao cumprir a meta e −14
+ * ao furá-la — e nada no jogo LIA o número depois. Quem cumpria todas as metas
+ * e quem estourava todas terminava com a mesma oferta na mesa.
+ *
+ * Agora ele multiplica o valor e a quantidade de propostas de patrocínio
+ * pessoal (`lib/patrocinio-pessoal`). É o mesmo papel que `empresario` faz para
+ * propostas de clube, e a simetria é proposital: o empresário abre portas no
+ * futebol, a relação com as marcas abre portas fora dele.
+ */
+export function forcaDaMarcaPessoal(r: Relacoes): number {
+  return 0.55 + (r.marcas / 100) * 1.05
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// A TORCIDA (1.0.377)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ⚠️ ELA NÃO É UMA `Pessoa`, E ISSO É UMA DECISÃO, NÃO UM ESQUECIMENTO.
+//
+// O apoio da torcida já existe desde a 1.0.373 em `estado.torcida` (0–100),
+// movido pelas entrevistas (`responderEntrevista`) e pelas atuações. Criar
+// `relacoes.torcida` daria ao save DOIS campos respondendo "a arquibancada está
+// com você?", que envelheceriam por regras diferentes e discordariam — o erro
+// exato do `vestiario` x `elenco` narrado no topo deste arquivo, cometido de
+// novo três versões depois.
+//
+// Então a torcida entra pela porta contrária: a fonte continua sendo o campo
+// que já existe, e o que este módulo acrescenta são os EFEITOS que ele nunca
+// teve. Até a 1.0.376 nada no jogo lia `estado.torcida` — era um número que
+// subia e descia na tela e não mudava uma única partida.
+
+/**
+ * O EMPURRÃO EM CASA: −0,35 a +0,45 na nota, e SÓ jogando em casa.
+ *
+ * ⚠️ O `ondeJoga` NÃO É DECORAÇÃO. Uma torcida que ajudasse igual dentro e fora
+ * seria só mais um bônus plano de atributo. O que a arquibancada faz é
+ * transformar o mando de campo em vantagem para quem ela apoia — e, quando ela
+ * está contra, o mando vira o pior lugar para jogar mal.
+ */
+export function empurraoDaTorcida(torcida: number, ondeJoga: "casa" | "fora"): number {
+  if (ondeJoga === "fora") return 0
+  const d = (Math.max(0, Math.min(100, torcida)) - 50) / 50
+  return Math.round((d > 0 ? d * 0.45 : d * 0.35) * 100) / 100
+}
+
+/**
+ * QUANTO A TORCIDA PESA NA RENOVAÇÃO: 0,85 a 1,2 no que o clube oferece.
+ *
+ * Ídolo de arquibancada custa caro para o clube dispensar, e o clube sabe
+ * disso. É o contrapeso econômico de `empurraoDaTorcida`: a mesma popularidade
+ * que ajuda em campo também é argumento na mesa.
+ */
+export function pesoDaTorcidaNaRenovacao(torcida: number): number {
+  return 0.85 + (Math.max(0, Math.min(100, torcida)) / 100) * 0.35
+}
+
+/** Como o apoio da arquibancada aparece na tela. */
+export function rotuloDaTorcida(v: number): { texto: string; tom: "bom" | "neutro" | "ruim" } {
+  if (v >= 82) return { texto: "Ídolo da torcida", tom: "bom" }
+  if (v >= 64) return { texto: "Querido", tom: "bom" }
+  if (v >= 42) return { texto: "Mais um do elenco", tom: "neutro" }
+  if (v >= 24) return { texto: "Cobrado", tom: "ruim" }
+  return { texto: "Vaiado", tom: "ruim" }
 }
 
 /** Como o nível aparece na tela. Número cru não diz nada ao jogador. */

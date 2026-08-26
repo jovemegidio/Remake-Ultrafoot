@@ -3,12 +3,46 @@ import { GAME_DATA_HASH, GAME_DATA_VERSION, ONLINE_PROTOCOL_VERSION } from "@/li
 
 export type InternetConnectionState = "connecting" | "connected" | "reconnecting" | "closed" | "error"
 
-/** Escopo público da 3.0: liga assíncrona confiável, ainda não carreira online. */
+/**
+ * O ESCOPO PÚBLICO — e por que ele continua dizendo "Beta".
+ *
+ * ⚠️ ESTA CONSTANTE É UMA PROMESSA AO JOGADOR, NÃO UM ENUM INTERNO. Ela é lida
+ * pela tela (`components/hub-campeonato.tsx`) para dizer, em letras, o que o
+ * modo faz e o que ele NÃO faz. Subir uma flag aqui sem o código atrás é
+ * publicidade enganosa dentro do próprio jogo — por isso cada uma abaixo aponta
+ * para onde está implementada.
+ *
+ * O que mudou na 1.0.377:
+ *
+ *   `authoritativeResult` passou a TRUE. Até a 1.0.376 a carreira online
+ *   aceitava o placar de quem enviasse PRIMEIRO e somava os pontos na hora; o
+ *   segundo lado só conseguia registrar uma divergência com o resultado já
+ *   valendo. Agora o servidor exige os dois envios batendo e recusa placar fora
+ *   do envelope de plausibilidade (`envelopeDoPlacar`, em
+ *   `services/multiplayer-relay-vps/carreira-online.mjs`).
+ *
+ *   `authoritativeBudget` e `authoritativeMarket` já eram verdade e não estavam
+ *   declaradas: caixa, teto de compra e exclusividade do anúncio são conferidos
+ *   NO SERVIDOR desde a 1.0.358 (`comprar`, no mesmo arquivo). A tela avisava
+ *   que não havia validação de mercado quando havia.
+ *
+ * ⚠️ `authoritativeSimulation` CONTINUA FALSE, e essa é a linha honesta: o
+ * relay não roda o motor. Ele sorteia a semente e as forças — as duas máquinas
+ * produzem a mesma partida — e confere o resultado. É forte contra fraude
+ * grosseira e não é simulação autoritativa. Só vira `true` no dia em que o
+ * motor rodar no servidor.
+ */
 export const ONLINE_PRODUCT_NAME = "Liga Online Beta"
 export const ONLINE_BETA_CAPABILITIES = {
   format: "league_only",
   sharedCareer: false,
   authoritativeSimulation: false,
+  /** Placar só vale com os dois lados batendo, e dentro do envelope. */
+  authoritativeResult: true,
+  /** Caixa e teto de compra conferidos no servidor. */
+  authoritativeBudget: true,
+  /** O anúncio some para todo mundo no instante da compra. */
+  authoritativeMarket: true,
   resultDoubleConfirmation: true,
   reconnect: true,
   spectators: true,

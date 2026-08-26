@@ -299,6 +299,17 @@ export interface ConfidenceInput {
   recentForm: ("V" | "E" | "D")[]
   /** Fracao da temporada ja disputada (0..1). No inicio a diretoria e paciente. */
   seasonProgress: number
+  /**
+   * CONDUTA DO TREINADOR, 0-100 (1.0.377). Opcional: sem ela nada muda.
+   *
+   * ⚠️ ELA NAO E MAIS UM TERMO DE DESEMPENHO — E UM MULTIPLICADOR DA PACIENCIA,
+   * e a diferenca importa. Somada, a conduta viraria pontos de confianca e um
+   * tecnico exemplar sobreviveria a um rebaixamento por bom comportamento.
+   * Multiplicando a DISTANCIA ATE A META, ela faz o que faz no futebol de
+   * verdade: quem tem ficha limpa ganha mais tempo para consertar a campanha,
+   * e quem briga com todo mundo tem menos. Nenhuma das duas salva quem perde.
+   */
+  conduta?: number
 }
 
 /** Confianca da diretoria, 0-100. Abaixo de 25 o cargo esta em risco real. */
@@ -309,12 +320,17 @@ export function computeBoardConfidence(input: ConfidenceInput): number {
 
   // Distancia da meta — pesa mais conforme a temporada avanca: na 3a rodada da
   // para recuperar; na 35a, nao.
+  // 1,2x de tolerancia com ficha limpa, 0,8x com ficha suja. Ver `conduta`.
+  const tolerancia = input.conduta === undefined
+    ? 1
+    : 0.8 + (Math.max(0, Math.min(100, input.conduta)) / 100) * 0.4
+
   const gap = currentPosition - objective.targetPosition
   if (gap > 0) {
-    confidence -= gap * 2.6 * (0.35 + seasonProgress)
+    confidence -= (gap * 2.6 * (0.35 + seasonProgress)) / tolerancia
     // Abaixo do minimo aceitavel a diretoria endurece de vez.
     if (currentPosition > objective.minPosition) {
-      confidence -= (currentPosition - objective.minPosition) * 3.5 * (0.4 + seasonProgress)
+      confidence -= ((currentPosition - objective.minPosition) * 3.5 * (0.4 + seasonProgress)) / tolerancia
     }
   } else {
     confidence += Math.min(25, -gap * 2.5)

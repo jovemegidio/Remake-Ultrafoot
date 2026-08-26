@@ -47,6 +47,7 @@ export const TELAS_DO_ATLETA = [
   "/carreira/jogador",
   "/carreira/jogador/calendario",
   "/carreira/jogador/evolucao",
+  "/carreira/jogador/loja",
   "/carreira/jogador/vida",
   "/carreira/jogador/trajetoria",
 ] as const

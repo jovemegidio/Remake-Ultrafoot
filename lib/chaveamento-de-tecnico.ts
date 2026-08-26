@@ -231,6 +231,11 @@ export const CAMPOS_DE_SAVE_DO_TECNICO = [
   // guarda do teste pegou o campo novo sem dono — que é exatamente para o que
   // ela existe.
   "managerGrowth26",
+  // Conduta do treinador (1.0.377). Pela MESMA razão do `managerGrowth26`: numa
+  // mesa de co-op, a expulsão do banco e a coletiva agressiva sao de quem
+  // falou. Se fossem do mundo, o tecnico seguinte a sentar herdaria a ficha
+  // suja do anterior e seria demitido pelo que o colega fez.
+  "incidentesDoTreinador",
   // Diretoria e vestiário
   "pedidosADiretoria", "boardConfidence", "boardConfidenceBonus", "metaDaDiretoria",
   "promessasAoAtleta", "promessasQuebradas", "resolvedDressingRoomEvents", "teamMorale",

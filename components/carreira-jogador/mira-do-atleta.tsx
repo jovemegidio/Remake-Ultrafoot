@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
-import { Crosshair, Gauge, RotateCcw, Ruler, ShieldAlert, Footprints } from "lucide-react"
+import { Crosshair, Gauge, Repeat, RotateCcw, Ruler, ShieldAlert, Footprints } from "lucide-react"
+import { BarraArcade, CarimboDoLance } from "@/components/carreira-jogador/barra-arcade"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "@/lib/i18n"
 import type { ChuteDoJogador, ContextoDoChute, DesfechoDoChute } from "@/lib/fisica-do-chute"
@@ -69,7 +70,17 @@ export function MiraDoAtleta({ tipo, lanceId, contexto, aoFinalizar }: {
   const [voo, setVoo] = useState<DesfechoDoChute | null>(null)
   const [forca, setForca] = useState(tipo.includes("penalti") ? 82 : 72)
   const [curva, setCurva] = useState(0)
+  /**
+   * O REPLAY (1.0.377). `0` = sem replay; cada incremento reinicia a animação.
+   *
+   * ⚠️ ELE É UM CONTADOR E NÃO UM BOOLEANO, e a razão é técnica: `animateMotion`
+   * do SVG só recomeça quando o nó é RECRIADO. Um booleano ligado/desligado
+   * remontaria o círculo uma vez e o segundo replay não sairia do lugar — o
+   * contador vira `key`, e cada valor novo é um nó novo.
+   */
+  const [replay, setReplay] = useState(0)
   const semente = useMemo(() => numeroDaSemente(lanceId), [lanceId])
+  useEffect(() => { setReplay(0); setVoo(null) }, [lanceId])
   const ladoDoGoleiro = (semente % 3) - 1
 
   const ponto = useCallback((evento: ReactPointerEvent): Ponto => {
@@ -105,6 +116,11 @@ export function MiraDoAtleta({ tipo, lanceId, contexto, aoFinalizar }: {
     const desfecho = aoFinalizar(precisao, chute)
     if (desfecho) setVoo(desfecho)
     window.setTimeout(() => setAnimando(false), 900)
+    // ⚠️ O REPLAY COMEÇA DEPOIS QUE O LANCE ACABA, não junto. Sobrepor os dois
+    // deixaria duas bolas na tela e nenhuma das duas legível — e o replay
+    // existe justamente para o jogador VER o que acabou de acontecer rápido
+    // demais para ele acompanhar (1.0.377).
+    if (desfecho) window.setTimeout(() => setReplay(n => n + 1), 1000)
   }, [animando, aoFinalizar, curva, forca, mira])
 
   useEffect(() => {
@@ -240,13 +256,48 @@ export function MiraDoAtleta({ tipo, lanceId, contexto, aoFinalizar }: {
           <div className="h-2 w-14 rounded-full bg-amber-300" />
         </div>
         <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          {/* ⚠️ DOIS TRAÇOS PARA A MESMA CURVA (1.0.377): um largo e translúcido
+              por baixo, o traço fino por cima. É o rastro — sozinho, o traço de
+              1,1 px lia como linha técnica de mira; com o halo por trás, lê
+              como caminho de bola. Custo zero: é o mesmo `path`. */}
+          {voo && (
+            <path d={trajetoria} fill="none" stroke={corDoVoo} strokeWidth="3.2" strokeLinecap="round" opacity={replay > 0 ? 0.35 : 0.18} />
+          )}
           <path d={trajetoria} fill="none" stroke={corDoVoo} strokeDasharray={voo ? undefined : "2 2"} strokeWidth={voo ? 1.1 : 0.7} />
           {animando && (
             <circle r="2.7" fill="white" stroke="#111" strokeWidth="0.5">
               <animateMotion dur="0.75s" fill="freeze" path={trajetoria} />
             </circle>
           )}
+          {/* O replay: a MESMA trajetória, em 2,2 s em vez de 0,75 s. Não é uma
+              animação nova nem uma curva estimada — é o voo que a física
+              calculou, devagar o bastante para o olho seguir. */}
+          {replay > 0 && !animando && (
+            <circle key={replay} r="3.1" fill="white" stroke="#111" strokeWidth="0.5" opacity="0.95">
+              <animateMotion dur="2.2s" fill="freeze" path={trajetoria} />
+            </circle>
+          )}
         </svg>
+        {replay > 0 && !animando && (
+          <button
+            type="button"
+            onClick={() => setReplay(n => n + 1)}
+            className="absolute right-2 top-2 z-30 flex items-center gap-1.5 rounded-full border border-white/25 bg-black/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white/85 hover:border-cyan-300/60"
+          >
+            <Repeat className="h-3 w-3 text-cyan-300" /> {t.carreiraDeJogador.replay}
+          </button>
+        )}
+        {voo && !animando && (
+          <CarimboDoLance
+            texto={
+              voo.tipo === "gol" ? t.carreiraDeJogador.lance_gol
+              : voo.tipo === "defesa" ? t.carreiraDeJogador.lance_defesa
+              : voo.tipo === "trave" ? t.carreiraDeJogador.lance_trave
+              : t.carreiraDeJogador.lance_fora
+            }
+            tom={voo.tipo === "gol" ? "gol" : voo.tipo === "defesa" ? "defesa" : voo.tipo === "trave" ? "trave" : "fora"}
+          />
+        )}
         {!animando && <Crosshair className="pointer-events-none absolute h-10 w-10 -translate-x-1/2 -translate-y-1/2 text-cyan-200 drop-shadow" style={{ left: `${mira.x}%`, top: `${mira.y}%` }} />}
         <button
           type="button"
@@ -292,17 +343,46 @@ export function MiraDoAtleta({ tipo, lanceId, contexto, aoFinalizar }: {
           <span className="hidden sm:inline">{t.carreiraDeJogador.controles_da_mira}</span>
         </div>
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/30 p-2 text-[10px] text-white/60">
-        <label className="flex items-center gap-2">
-          <Gauge className="h-3.5 w-3.5 text-amber-300" />
-          <span className="w-12">{t.carreiraDeJogador.forca} {forca}</span>
-          <input aria-label={t.carreiraDeJogador.forca} type="range" min={20} max={100} value={forca} onChange={e => setForca(Number(e.target.value))} className="min-w-0 flex-1 accent-amber-300" />
-        </label>
-        <label className={cn("flex items-center gap-2", (defensiva || contexto?.deCabeca) && "opacity-35")}>
-          <RotateCcw className="h-3.5 w-3.5 text-cyan-300" />
-          <span className="w-12">{t.carreiraDeJogador.curva} {curva}</span>
-          <input aria-label={t.carreiraDeJogador.curva} disabled={defensiva || contexto?.deCabeca} type="range" min={-100} max={100} value={curva} onChange={e => setCurva(Number(e.target.value))} className="min-w-0 flex-1 accent-cyan-300" />
-        </label>
+      {/* ── FORÇA E EFEITO (1.0.377) ──────────────────────────────────────
+           Eram dois `<input type="range">`. Ver o cabeçalho de
+           `barra-arcade.tsx`: um slider deixa o jogador ACERTAR o número, e um
+           chute em que a força é escolhida com calma não tem execução nenhuma.
+
+           ⚠️ A ZONA VERDE DA FORÇA É 60–85 PORQUE A FÍSICA DIZ ISSO, não porque
+           ficou bonito: `potenciaReal` perde precisão nas pontas — força baixa
+           não chega e força máxima estoura o alvo. A do efeito é −30 a +30 pelo
+           mesmo motivo, em `efeitoReal`.
+
+           ⚠️ E O AJUSTE FINO NÃO MORREU: W/S e LT/RT continuam movendo a força,
+           A/D e LB/RB o efeito (ver o `useEffect` de teclado acima). Quem joga
+           no controle e quem usa leitor de tela precisam do valor exato; a
+           barra em movimento é o caminho principal, não o único. */}
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <BarraArcade
+          rotulo={t.carreiraDeJogador.forca}
+          icone={<Gauge className="h-3 w-3 text-amber-300" />}
+          valor={forca}
+          aoMudar={setForca}
+          min={20}
+          max={100}
+          zonaBoa={[60, 85]}
+          modo="carga"
+          velocidade={2.6}
+          cor="amber"
+        />
+        <BarraArcade
+          rotulo={t.carreiraDeJogador.curva}
+          icone={<RotateCcw className="h-3 w-3 text-cyan-300" />}
+          valor={curva}
+          aoMudar={setCurva}
+          min={-100}
+          max={100}
+          zonaBoa={[-30, 30]}
+          modo="varredura"
+          velocidade={4.4}
+          cor="cyan"
+          desabilitado={defensiva || contexto?.deCabeca}
+        />
       </div>
     </div>
   )

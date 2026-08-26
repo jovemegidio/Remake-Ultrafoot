@@ -58,6 +58,33 @@ export const PAPEIS = ["tecnico", "diretor", "presidente", "olheiro"]
 
 function agora() { return Date.now() }
 
+/** Prazo até uma partida sem os dois envios poder ser encerrada por W.O. */
+export const PRAZO_DA_RODADA_MS = 48 * 60 * 60 * 1000
+
+/**
+ * O ENVELOPE DE UM PLACAR — o que a semente e as forças tornam possível.
+ *
+ * ⚠️ ISTO NÃO É SIMULAR A PARTIDA AQUI, e a diferença é deliberada. Portar o
+ * motor para o relay significa mantê-lo em duas linguagens e vê-lo divergir na
+ * primeira calibração — é a nota que abre este arquivo. O envelope resolve o
+ * problema PRÁTICO por uma fração do custo: ele não diz qual foi o placar, diz
+ * quais placares são IMPOSSÍVEIS naquele confronto.
+ *
+ * O time mais forte pode golear; o mais fraco também pode vencer, mas não faz
+ * 9x0 num rival de força 88. O teto sai da diferença de forças, com folga
+ * generosa dos dois lados — o objetivo é barrar a fraude grosseira (o 15x0
+ * digitado), nunca recusar a zebra.
+ */
+export function envelopeDoPlacar(partida) {
+  const fc = Math.max(FORCA_MINIMA, Math.min(FORCA_MAXIMA, Number(partida.forcaCasa) || 60))
+  const ff = Math.max(FORCA_MINIMA, Math.min(FORCA_MAXIMA, Number(partida.forcaFora) || 60))
+  // Base 5 para qualquer um; +1 gol de teto a cada 8 pontos de vantagem, e o
+  // mando vale meio ponto de folga. Piso 3: nenhum jogo é impossível de 3x0.
+  const tetoCasa = Math.round(5 + Math.max(0, fc - ff) / 8 + 0.5)
+  const tetoFora = Math.round(5 + Math.max(0, ff - fc) / 8)
+  return { maxCasa: Math.max(3, Math.min(20, tetoCasa)), maxFora: Math.max(3, Math.min(20, tetoFora)) }
+}
+
 export class CarreiraOnline {
   constructor(dataDir) {
     this.arquivo = path.join(dataDir, "carreira-online.json")
@@ -188,6 +215,12 @@ export class CarreiraOnline {
     // Só entram no sorteio os clubes que têm quem jogue.
     const jogaveis = [...this.clubes.keys()].filter(k => this.papeisDe(k).tecnico)
     if (jogaveis.length < 2) return { erro: "poucos_tecnicos" }
+    // ⚠️ A VARREDURA DE PRAZO VEM ANTES DA CHECAGEM DE PENDÊNCIA (1.0.377), e
+    // a ordem é o ponto: a confirmação dupla, sozinha, deixa o mundo travado
+    // para sempre se um técnico sumir. Aqui as partidas vencidas são encerradas
+    // por W.O. na hora em que alguém tenta abrir a rodada seguinte — sem cron,
+    // sem endpoint novo, sem o cliente precisar saber que isso existe.
+    for (const p of this.pendentes(this.rodada)) this.encerrarPorPrazo(p.matchId)
     if (this.rodada > 0 && this.pendentes(this.rodada).length > 0) {
       return { erro: "rodada_em_andamento", faltam: this.pendentes(this.rodada).length }
     }
@@ -225,10 +258,24 @@ export class CarreiraOnline {
   /**
    * O placar de um confronto — e só o TÉCNICO do clube manda.
    *
-   * Vale o primeiro envio; o segundo serve de CONFERÊNCIA. Com a mesma semente e
-   * as mesmas forças, os dois lados chegam ao mesmo placar — divergir significa
-   * cliente adulterado ou versão diferente do motor, e os dois casos ficam
-   * registrados em vez de derrubar a tabela.
+   * ⚠️ ATÉ A 1.0.376 O PRIMEIRO ENVIO JÁ MOVIA A TABELA. O comentário antigo
+   * dizia "vale o primeiro envio; o segundo serve de conferência", e era
+   * exatamente esse o furo: quem mandasse primeiro DECIDIA o resultado, e o
+   * adversário só conseguia registrar uma divergência num arquivo de auditoria
+   * que ninguém lê — com os três pontos já somados na tabela. Um cliente
+   * adulterado, ou um jogador que simplesmente fechasse e reabrisse o jogo,
+   * ganhava a partida mandando 5x0 antes do outro.
+   *
+   * Agora nada entra na tabela antes de os DOIS lados concordarem. É a mesma
+   * regra que `rivals.mjs` já aplicava no competitivo desde a 1.0.358 — a
+   * carreira online tinha ficado para trás.
+   *
+   * As camadas, em ordem:
+   *   1. só o técnico de um dos dois clubes envia;
+   *   2. um envio por clube (reenviar não sobrescreve depois de ver o do outro);
+   *   3. o placar tem de caber no ENVELOPE que a semente e as forças permitem —
+   *      ver `envelopeDoPlacar`. É o que barra o 15x0 combinado entre os dois;
+   *   4. os dois têm de bater. Divergência não pontua ninguém e fica registrada.
    */
   registrarResultado(matchId, managerId, golsCasa, golsFora) {
     const partida = this.partidas.get(matchId)
@@ -238,35 +285,86 @@ export class CarreiraOnline {
       return { erro: "nao_e_sua_partida" }
     }
     if (membro.papel !== "tecnico") return { erro: "so_o_tecnico_joga" }
+    if (partida.placar) {
+      const igual = partida.placar.casa === Math.trunc(Number(golsCasa) || 0)
+        && partida.placar.fora === Math.trunc(Number(golsFora) || 0)
+      return { estado: igual ? "confirmada" : "divergente", placar: partida.placar }
+    }
 
     const gc = Math.max(0, Math.min(20, Math.trunc(Number(golsCasa) || 0)))
     const gf = Math.max(0, Math.min(20, Math.trunc(Number(golsFora) || 0)))
 
-    if (partida.placar) {
-      if (partida.placar.casa !== gc || partida.placar.fora !== gf) {
-        this.divergencias.push({ matchId, managerId, quando: agora(), recebido: [gc, gf], valendo: [partida.placar.casa, partida.placar.fora] })
-        return { estado: "divergente", placar: partida.placar }
-      }
-      return { estado: "confirmada", placar: partida.placar }
+    partida.envios = partida.envios ?? []
+    if (partida.envios.some(e => e.clube === membro.fileKey)) return { erro: "ja_enviou" }
+
+    // ── CAMADA 3: o envelope ───────────────────────────────────────────────
+    const envelope = envelopeDoPlacar(partida)
+    if (gc > envelope.maxCasa || gf > envelope.maxFora) {
+      this.divergencias.push({
+        matchId, managerId, quando: agora(), tipo: "fora_do_envelope",
+        recebido: [gc, gf], envelope: [envelope.maxCasa, envelope.maxFora],
+      })
+      return { erro: "placar_implausivel", envelope }
     }
 
-    partida.placar = { casa: gc, fora: gf }
+    partida.envios.push({ clube: membro.fileKey, de: managerId, casa: gc, fora: gf, em: agora() })
+    if (partida.envios.length < 2) return { estado: "aguardando_confirmacao", enviados: 1 }
+
+    const [a, b] = partida.envios
+    if (a.casa !== b.casa || a.fora !== b.fora) {
+      this.divergencias.push({ matchId, quando: agora(), tipo: "divergente", a, b })
+      // ⚠️ DIVERGÊNCIA NÃO PONTUA NINGUÉM E A PARTIDA CONTINUA ABERTA, para o
+      // caso de um dos dois estar numa versão velha do motor: reenviar depois
+      // de atualizar resolve. Encerrar aqui puniria o lado honesto.
+      partida.envios = []
+      return { estado: "divergente" }
+    }
+
+    partida.placar = { casa: a.casa, fora: a.fora }
     partida.enviadoPor = managerId
+    partida.confirmadaEm = agora()
     const casa = this.clubes.get(partida.casa)
     const fora = this.clubes.get(partida.fora)
     if (casa && fora) {
       casa.j++; fora.j++
-      casa.gp += gc; casa.gc += gf
-      fora.gp += gf; fora.gc += gc
-      if (gc > gf) { casa.pontos += 3; casa.v++; fora.d++ }
-      else if (gc < gf) { fora.pontos += 3; fora.v++; casa.d++ }
+      casa.gp += a.casa; casa.gc += a.fora
+      fora.gp += a.fora; fora.gc += a.casa
+      if (a.casa > a.fora) { casa.pontos += 3; casa.v++; fora.d++ }
+      else if (a.casa < a.fora) { fora.pontos += 3; fora.v++; casa.d++ }
       else { casa.pontos++; fora.pontos++; casa.e++; fora.e++ }
       // Bilheteria e cotas do mundo: um dinheirinho por rodada jogada, senão o
       // mercado trava depois da primeira janela e o modo vira só tabela.
       casa.caixa += 3
       fora.caixa += 2
     }
-    return { estado: "registrada", placar: partida.placar }
+    return { estado: "confirmada", placar: partida.placar }
+  }
+
+  /**
+   * DESTRAVA UMA PARTIDA ABANDONADA — W.O. por prazo.
+   *
+   * ⚠️ CONFIRMAÇÃO DUPLA CRIA UM JEITO NOVO DE TRAVAR O MUNDO: basta um técnico
+   * sumir e a rodada não fecha nunca, porque `avancarRodada` exige a anterior
+   * encerrada. Sem esta válvula, a correção do furo de placar viraria um
+   * congelamento — que é como uma proteção nova quebra um modo inteiro.
+   *
+   * Depois de `PRAZO_DA_RODADA_MS` com um único envio, o placar de quem enviou
+   * vale. Sem nenhum envio, ninguém pontua e a partida sai da pendência.
+   */
+  encerrarPorPrazo(matchId) {
+    const partida = this.partidas.get(matchId)
+    if (!partida || partida.placar) return { erro: "nada_a_fazer" }
+    if (agora() - partida.criadaEm < PRAZO_DA_RODADA_MS) return { erro: "prazo_nao_venceu" }
+
+    const envios = partida.envios ?? []
+    if (envios.length === 1) {
+      const e = envios[0]
+      partida.envios = [e, { ...e, clube: "__wo__", de: "__prazo__" }]
+      return this.registrarResultado(matchId, e.de, e.casa, e.fora)
+    }
+    partida.placar = { casa: 0, fora: 0 }
+    partida.wo = true
+    return { estado: "wo_sem_envio", placar: partida.placar }
   }
 
   /** Quem pode mexer no mercado: o diretor — ou o técnico, se não houver diretor. */

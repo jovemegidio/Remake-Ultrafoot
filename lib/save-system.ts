@@ -895,6 +895,21 @@ export interface GameState {
    * chegaram ao fim. Ver `encerrarPassagem` em lib/career-moves.
    */
   passagens?: import("@/lib/career-moves").PassagemPorClube[]
+  /**
+   * A CONDUTA DO TREINADOR (1.0.377) — os incidentes, não o índice.
+   *
+   * ⚠️ GUARDA O QUE ACONTECEU, NÃO A NOTA. O índice sai de
+   * `condutaDoTreinador(incidentes, temporada)` e ele PRESCREVE com o tempo:
+   * gravar o número congelaria a punição para sempre, e um técnico expulso na
+   * primeira temporada carregaria a mesma nota na décima segunda. Guardando os
+   * fatos, a regra de prescrição pode ser corrigida numa versão futura e
+   * alcançar quem já jogava.
+   *
+   * Opcional: save anterior à 1.0.377 não tem, e `condutaDoTreinador([])`
+   * devolve 100 — conduta limpa, que é a resposta certa para quem nunca
+   * apareceu na súmula.
+   */
+  incidentesDoTreinador?: import("@/lib/legado-do-treinador").IncidenteDoTreinador[]
   // Aviso a mostrar no office apos subir/cair (limpo depois de exibido).
   divisionMovement?: { movement: "promoted" | "relegated"; message: string; season: number }
   // Convocacao manual da selecao: jogadores CORTADOS e CONVOCADOS a dedo pelo tecnico

@@ -34,7 +34,8 @@ import { getPlayersForTeam } from "@/lib/players-data"
 import { suspensaoPorCartoes } from "@/lib/player-realism"
 import { montarPartidaAoVivo, montarPartidaDoAtleta, partidaTerminou, type PartidaEmCurso } from "@/lib/partida-do-atleta"
 import {
-  ajusteDaNotaPeloVestiario, amplificacaoDaImprensa, companheirosDoClube,
+  ajusteDaNotaPeloVestiario, amplificacaoDaImprensa, companheirosDoClube, empurraoDaTorcida,
+  pesoDaTorcidaNaRenovacao,
   esfriarCompanheiros, esfriarUmaRodada, frequenciaDeLancesPeloCraque,
   ganhoDaNegociacao, lerCompanheiros, lerRelacoes, moverCompanheiro,
   multiplicadorDePropostas, multiplicadorDeTreinoPeloVeterano, pisoDaNotaDoTreinador,
@@ -50,6 +51,16 @@ import {
   bonusDasConquistas, conquistasAtingidas, pontuacaoDaCarreira, pontuacaoFinal,
   type Conquista, type EntradaDoRanking, type FolhaDaCarreira, type PontuacaoDaCarreira,
 } from "@/lib/legado-do-atleta"
+import {
+  chaveDoDilema, dilemaDaRodada, resolverDilema,
+  type ContextoDoDilema, type Dilema, type EfeitoDoDilema,
+} from "@/lib/dilemas-do-atleta"
+import {
+  ENERGIA_POR_APARICAO, assinarProposta, contraproporPatrocinio, cumprirAparicao,
+  propostasDaRodada, rodarSemanaDePatrocinio,
+  type ContratoDePatrocinio, type PedidoNaNegociacao, type PerfilComercial,
+  type PropostaDePatrocinio,
+} from "@/lib/patrocinio-pessoal"
 
 // ─── ONDE UMA PROMESSA PODE ESTREAR ─────────────────────────────────────────
 //
@@ -983,6 +994,36 @@ export interface EstadoCarreiraDeJogador {
   patrocinioPessoal?: PatrocinioPessoalDoAtleta | null
   patrimonio?: { itens: string[]; estilo: number; totalManutencao: number }
   minijogoDeTreino?: { temporada: number; rodada: number; atributo: keyof AtributosDoAtleta; precisao: number }
+
+  // ─── 1.0.377 ──────────────────────────────────────────────────────────────
+  //
+  // ⚠️ TUDO OPCIONAL, e não por preguiça de migrar: `migrate` NÃO alcança o
+  // interior de `carreiraDeJogador` (é objeto aninhado do save), então um
+  // campo obrigatório aqui derruba a tela de QUEM JÁ ESTAVA JOGANDO — o
+  // defeito que já apareceu neste projeto com o nome do atleta no meio do erro.
+  // Cada leitura abaixo tem `??` do lado de quem lê.
+
+  /** O dilema aberto agora. Um por vez: dois na tela viram formulário. */
+  dilemaAberto?: { id: string; rodada: number } | null
+  /** `id@temporada` dos dilemas já decididos — impede repetição no mesmo ano. */
+  dilemasResolvidos?: string[]
+  /** O que aconteceu na última decisão, para a tela contar o desfecho. */
+  ultimoDesfechoDeDilema?: { titulo: string; texto: string; deuErrado: boolean; rodada: number } | null
+
+  /**
+   * A CARTEIRA DE PATROCÍNIOS (`lib/patrocinio-pessoal`).
+   *
+   * ⚠️ CONVIVE COM `patrocinioPessoal`, NÃO O SUBSTITUI. O campo antigo é o
+   * contrato único da 1.0.373 e continua sendo lido e pago; uma carreira em
+   * andamento não pode perder o patrocínio que já tem porque o modelo cresceu.
+   * `migrarPatrocinioAntigo` converte o antigo na primeira rodada em que a
+   * carteira nova é tocada, e o antigo é então zerado — em nenhum momento os
+   * dois pagam ao mesmo tempo.
+   */
+  patrociniosAtivos?: ContratoDePatrocinio[]
+  propostasDePatrocinio?: PropostaDePatrocinio[]
+  /** Histórico fechado, para a trajetória mostrar a carreira comercial. */
+  patrociniosEncerrados?: { marca: string; temporada: number; cumpriu: boolean; resumo: string }[]
 }
 
 // ─── Aleatoriedade semeada ──────────────────────────────────────────────────
@@ -1497,10 +1538,322 @@ export function comprarBemDoAtleta(
   return novo
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// DILEMAS FORA DE CAMPO (1.0.377) — ver `lib/dilemas-do-atleta`
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** O retrato que o catálogo de dilemas lê para decidir o que faz sentido agora. */
+function contextoDoDilema(estado: EstadoCarreiraDeJogador): ContextoDoDilema {
+  const economia = economiaDoAtleta(estado)
+  return {
+    rodada: estado.rodada,
+    temporada: estado.temporada,
+    idade: estado.atleta.idade,
+    reputacao: estado.reputacao ?? 30,
+    torcida: estado.torcida ?? 50,
+    dinheiro: economia.dinheiro,
+    moral: estado.moral,
+    relacoes: lerRelacoes(relacoesDoAtleta(estado)),
+    papel: papelNoElenco(estado.notaDoTreinador ?? 50),
+    temPatrocinio: Boolean(estado.patrocinioPessoal) || (estado.patrociniosAtivos?.length ?? 0) > 0,
+    temParceira: Boolean(estado.parceira),
+    temporadasDeContrato: Math.max(0, estado.contrato.ateTemporada - estado.temporada),
+    vermelhos: estado.temporadaAtual.cartoesVermelhos,
+    media: mediaDaTemporada(estado),
+    jaResolvidos: estado.dilemasResolvidos ?? [],
+  }
+}
+
+/**
+ * O DILEMA QUE ESTÁ NA MESA — e por que ele é RECALCULADO, não guardado inteiro.
+ *
+ * ⚠️ O SAVE GUARDA SÓ O `id` E A RODADA. Serializar o dilema completo (títulos,
+ * textos, efeitos) congelaria no save de cada jogador o texto da versão em que
+ * ele apareceu — corrigir uma redação ou um balanceamento não alcançaria mais
+ * ninguém, e o save cresceria por causa de texto que o código já tem. É a mesma
+ * razão pela qual o universo saiu do save na 1.0.301.
+ */
+export function dilemaDaVez(estado: EstadoCarreiraDeJogador): Dilema | null {
+  const ctx = contextoDoDilema(estado)
+  const aberto = estado.dilemaAberto
+  if (aberto) {
+    // ⚠️ RECONSTRUÍDO PELA RODADA EM QUE NASCEU, não pela rodada de hoje. O
+    // jogador que abre a tela três rodadas depois tem de encontrar o MESMO
+    // dilema — recalcular com a rodada atual trocaria a pergunta debaixo dele.
+    const naquela = dilemaDaRodada({ ...ctx, rodada: aberto.rodada })
+    if (naquela && naquela.id === aberto.id) return naquela
+    return null
+  }
+  return dilemaDaRodada(ctx)
+}
+
+/** Abre o dilema da rodada, se houver. Chamado pelo avanço de semana. */
+function abrirDilemaDaRodada(estado: EstadoCarreiraDeJogador): void {
+  if (estado.dilemaAberto) return
+  const d = dilemaDaRodada(contextoDoDilema(estado))
+  estado.dilemaAberto = d ? { id: d.id, rodada: estado.rodada } : null
+}
+
+/**
+ * APLICA UM EFEITO DE DILEMA. Um só lugar mexe no estado, e é este.
+ *
+ * ⚠️ `torcida` VAI PARA `estado.torcida`, NUNCA para `relacoes`. Ver a seção
+ * A TORCIDA em `lib/relacoes-do-atleta`: existe um único campo de arquibancada
+ * neste jogo e é aquele. Duplicá-lo aqui daria dois números discordando.
+ */
+function aplicarEfeitoDoDilema(estado: EstadoCarreiraDeJogador, efeito: EfeitoDoDilema): void {
+  estado.economia = economiaDoAtleta(estado)
+  estado.relacoes = { ...relacoesDoAtleta(estado), ...lerRelacoes(relacoesDoAtleta(estado)) }
+
+  for (const [pessoa, delta] of Object.entries(efeito.relacoes ?? {})) {
+    if (!delta) continue
+    const chave = pessoa as "treinador" | "elenco" | "empresario" | "familia" | "imprensa" | "marcas"
+    estado.relacoes[chave] = limitar((estado.relacoes[chave] ?? 50) + delta)
+  }
+
+  if (efeito.dinheiro) estado.economia.dinheiro = Math.max(0, estado.economia.dinheiro + efeito.dinheiro)
+  if (efeito.energia) estado.economia.energia = Math.max(0, Math.min(estado.economia.energiaMaxima, estado.economia.energia + efeito.energia))
+  if (efeito.reputacao) estado.reputacao = moverReputacao(estado, efeito.reputacao)
+  if (efeito.moral) estado.moral = limitar(estado.moral + efeito.moral)
+  if (efeito.forma) estado.forma = limitar(estado.forma + efeito.forma)
+  if (efeito.torcida) estado.torcida = limitar((estado.torcida ?? 50) + efeito.torcida)
+}
+
+/** Decide o dilema aberto. Fora dele nada acontece — a escolha é a única porta. */
+export function decidirDilema(
+  estado: EstadoCarreiraDeJogador,
+  escolhaId: string,
+): EstadoCarreiraDeJogador {
+  const dilema = dilemaDaVez(estado)
+  if (!dilema) return estado
+
+  const novo = comEconomia(estado)
+  const desfecho = resolverDilema(dilema, escolhaId, { temporada: novo.temporada, rodada: novo.rodada })
+  aplicarEfeitoDoDilema(novo, desfecho.efeito)
+
+  novo.dilemasResolvidos = [...(novo.dilemasResolvidos ?? []), chaveDoDilema(dilema, novo)]
+  novo.dilemaAberto = null
+  novo.ultimoDesfechoDeDilema = {
+    titulo: dilema.titulo,
+    texto: desfecho.texto,
+    deuErrado: desfecho.deuErrado,
+    rodada: novo.rodada,
+  }
+  return novo
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATROCÍNIO PESSOAL (1.0.377) — ver `lib/patrocinio-pessoal`
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** O retrato comercial do atleta — o que decide quem faz proposta e de quanto. */
+export function perfilComercial(estado: EstadoCarreiraDeJogador): PerfilComercial {
+  const ativos = estado.patrociniosAtivos ?? []
+  return {
+    reputacao: estado.reputacao ?? 30,
+    torcida: estado.torcida ?? 50,
+    idade: estado.atleta.idade,
+    gols: estado.temporadaAtual.gols,
+    jogos: estado.temporadaAtual.jogos,
+    media: mediaDaTemporada(estado),
+    estilo: estado.patrimonio?.estilo ?? 0,
+    relacoes: lerRelacoes(relacoesDoAtleta(estado)),
+    temporada: estado.temporada,
+    rodada: estado.rodada,
+    categoriasOcupadas: ativos.map(c => c.categoria),
+  }
+}
+
+/**
+ * MIGRA O CONTRATO ÚNICO DA 1.0.373 PARA A CARTEIRA.
+ *
+ * ⚠️ ELE NÃO É DESCARTADO NEM DUPLICADO. Quem tinha `patrocinioPessoal` ativo
+ * continua com o mesmo valor semanal, o mesmo bônus por gol e as mesmas semanas
+ * restantes — só que agora dentro do modelo que negocia e cobra cláusula. A
+ * meta de gols vira cláusula com o progresso já feito preservado, e o campo
+ * antigo é zerado na mesma passada: em nenhum instante os dois pagam.
+ */
+function migrarPatrocinioAntigo(estado: EstadoCarreiraDeJogador): void {
+  const antigo = estado.patrocinioPessoal
+  if (!antigo) return
+  const carteira = estado.patrociniosAtivos ?? []
+  if (carteira.some(c => c.marcaId === antigo.id)) { estado.patrocinioPessoal = null; return }
+
+  carteira.push({
+    id: `${antigo.id}@${estado.temporada}`,
+    marcaId: antigo.id,
+    marca: antigo.marca,
+    categoria: "material_esportivo",
+    valorSemanal: antigo.valorSemanal,
+    bonusPorGol: antigo.bonusPorGol,
+    luvas: 0,
+    semanasTotais: Math.max(antigo.semanasRestantes, 1),
+    semanasRestantes: antigo.semanasRestantes,
+    clausulas: [{
+      tipo: "gols",
+      alvo: antigo.metaGols,
+      cumprido: antigo.golsNoContrato,
+      bonus: antigo.bonusPorGol * antigo.metaGols * 0.6,
+      multa: antigo.valorSemanal * 5,
+    }],
+    aparicoesExigidas: 0,
+    aparicoesFeitas: 0,
+    assinadoNaTemporada: estado.temporada,
+  })
+  estado.patrociniosAtivos = carteira
+  estado.patrocinioPessoal = null
+}
+
+/** As propostas na mesa. Recalculadas quando a lista guardada está vazia. */
+export function propostasDePatrocinio(estado: EstadoCarreiraDeJogador): PropostaDePatrocinio[] {
+  const guardadas = (estado.propostasDePatrocinio ?? []).filter(p => p.estado === "aberta")
+  if (guardadas.length > 0) return guardadas
+  return propostasDaRodada(perfilComercial(estado))
+}
+
+export function negociarPatrocinio(
+  estado: EstadoCarreiraDeJogador,
+  propostaId: string,
+  pedido: PedidoNaNegociacao,
+): EstadoCarreiraDeJogador {
+  const abertas = propostasDePatrocinio(estado)
+  const alvo = abertas.find(p => p.id === propostaId)
+  if (!alvo) return estado
+  const novo = comEconomia(estado)
+  const depois = contraproporPatrocinio(alvo, pedido, perfilComercial(novo))
+  novo.propostasDePatrocinio = abertas.map(p => p.id === propostaId ? depois : p)
+  return novo
+}
+
+export function assinarPatrocinioDaProposta(
+  estado: EstadoCarreiraDeJogador,
+  propostaId: string,
+): EstadoCarreiraDeJogador {
+  const abertas = propostasDePatrocinio(estado)
+  const alvo = abertas.find(p => p.id === propostaId && p.estado === "aberta")
+  if (!alvo) return estado
+
+  const novo = comEconomia(estado)
+  migrarPatrocinioAntigo(novo)
+  novo.relacoes = { ...relacoesDoAtleta(novo), ...lerRelacoes(relacoesDoAtleta(novo)) }
+
+  const carteira = novo.patrociniosAtivos ?? []
+  // A exclusividade é conferida AQUI também, e não só na geração da proposta:
+  // uma proposta guardada no save pode ter nascido antes do contrato que hoje
+  // ocupa a categoria.
+  if (carteira.some(c => c.categoria === alvo.categoria)) return estado
+
+  carteira.push(assinarProposta(alvo, novo.temporada))
+  novo.patrociniosAtivos = carteira
+  novo.economia!.dinheiro += alvo.luvas
+  novo.relacoes.marcas = limitar(novo.relacoes.marcas + 6)
+  if (alvo.custoDeTorcida) novo.torcida = limitar((novo.torcida ?? 50) - alvo.custoDeTorcida)
+  novo.propostasDePatrocinio = abertas.map(p => p.id === propostaId ? { ...p, estado: "assinada" as const } : p)
+  return novo
+}
+
+export function recusarPropostaDePatrocinio(
+  estado: EstadoCarreiraDeJogador,
+  propostaId: string,
+): EstadoCarreiraDeJogador {
+  const abertas = propostasDePatrocinio(estado)
+  if (!abertas.some(p => p.id === propostaId)) return estado
+  const novo = comEconomia(estado)
+  novo.propostasDePatrocinio = abertas.map(p => p.id === propostaId ? { ...p, estado: "recusada" as const } : p)
+  return novo
+}
+
+/** Cumpre uma aparição contratual — paga em energia, como o contrato prevê. */
+export function fazerAparicaoDeMarca(
+  estado: EstadoCarreiraDeJogador,
+  contratoId: string,
+): EstadoCarreiraDeJogador {
+  const novo = comEconomia(estado)
+  const carteira = novo.patrociniosAtivos ?? []
+  const alvo = carteira.find(c => c.id === contratoId)
+  if (!alvo || alvo.aparicoesFeitas >= alvo.aparicoesExigidas) return estado
+  if (novo.economia!.energia < ENERGIA_POR_APARICAO) return estado
+
+  novo.economia!.energia -= ENERGIA_POR_APARICAO
+  novo.patrociniosAtivos = carteira.map(c => c.id === contratoId ? cumprirAparicao(c) : c)
+  novo.relacoes = { ...relacoesDoAtleta(novo), ...lerRelacoes(relacoesDoAtleta(novo)) }
+  novo.relacoes.marcas = limitar(novo.relacoes.marcas + 2)
+  return novo
+}
+
+/**
+ * O QUE UMA PARTIDA FAZ NOS CONTRATOS — bônus por gol e progresso de cláusula.
+ *
+ * ⚠️ SEPARADO DA SEMANA, E ESSA SEPARAÇÃO É O QUE IMPEDE PAGAMENTO DUPLO. A
+ * carreira tem DOIS caminhos até um resultado (a partida vivida e a simulada) e
+ * UM único avanço de semana. Se o pagamento semanal morasse aqui, quem joga a
+ * partida receberia o salário da marca duas vezes; se o bônus por gol morasse
+ * na semana, a partida da seleção — que não avança rodada — não pagaria nada.
+ * Cada um no seu lugar, chamado de onde o dado existe.
+ */
+function registrarPartidaNosPatrocinios(estado: EstadoCarreiraDeJogador, gols: number): void {
+  migrarPatrocinioAntigo(estado)
+  const carteira = estado.patrociniosAtivos ?? []
+  if (carteira.length === 0) return
+
+  let bonus = 0
+  estado.patrociniosAtivos = carteira.map(c => {
+    bonus += gols * c.bonusPorGol
+    return {
+      ...c,
+      clausulas: c.clausulas.map(cl =>
+        cl.tipo === "gols" ? { ...cl, cumprido: cl.cumprido + gols }
+        : cl.tipo === "jogos" ? { ...cl, cumprido: cl.cumprido + 1 }
+        : cl),
+    }
+  })
+
+  if (bonus > 0) {
+    estado.economia = economiaDoAtleta(estado)
+    estado.economia.dinheiro += bonus
+    estado.ganhosDaTemporada += bonus
+    estado.relacoes = { ...relacoesDoAtleta(estado), ...lerRelacoes(relacoesDoAtleta(estado)) }
+    estado.relacoes.marcas = limitar(estado.relacoes.marcas + Math.min(3, gols))
+  }
+}
+
+/** A passagem de uma rodada sobre a carteira — paga o semanal, cobra e encerra. */
+function aplicarPatrociniosNaSemana(estado: EstadoCarreiraDeJogador): void {
+  migrarPatrocinioAntigo(estado)
+  const carteira = estado.patrociniosAtivos ?? []
+  if (carteira.length === 0) return
+
+  // gols/jogos já foram contados por `registrarPartidaNosPatrocinios`; aqui a
+  // semana só paga, envelhece e fecha. As aparições são lidas do contrato.
+  const r = rodarSemanaDePatrocinio(carteira, { golsNaRodada: 0, jogou: false })
+  estado.patrociniosAtivos = r.contratos
+  estado.economia = economiaDoAtleta(estado)
+  estado.economia.dinheiro = Math.max(0, estado.economia.dinheiro + r.dinheiro)
+
+  estado.relacoes = { ...relacoesDoAtleta(estado), ...lerRelacoes(relacoesDoAtleta(estado)) }
+  if (r.ajusteDeMarcas !== 0) {
+    estado.relacoes.marcas = limitar(estado.relacoes.marcas + r.ajusteDeMarcas)
+  }
+
+  for (const e of r.encerrados) {
+    estado.patrociniosEncerrados = [
+      ...(estado.patrociniosEncerrados ?? []),
+      { marca: e.contrato.marca, temporada: estado.temporada, cumpriu: e.cumpriu, resumo: e.resumo },
+    ]
+    if (!e.cumpriu) estado.relacoes.rupturas.push(`${e.contrato.marca}: contrato encerrado sem cumprir`)
+  }
+}
+
 function aplicarVidaPessoalNaSemana(estado: EstadoCarreiraDeJogador): void {
   const economia = economiaDoAtleta(estado)
   estado.economia = economia
   estado.relacoes = structuredClone(relacoesDoAtleta(estado))
+
+  // ⚠️ A CARTEIRA DE PATROCÍNIOS PASSA AQUI, no MESMO ponto em que o salário e
+  // a manutenção do patrimônio passam — e por isso ela é paga exatamente uma
+  // vez por rodada. Chamá-la de dentro da partida pagaria duas vezes a quem
+  // vive o jogo e nenhuma a quem simula (1.0.377).
+  aplicarPatrociniosNaSemana(estado)
 
   if (estado.treinadorPessoal) {
     if (economia.dinheiro >= estado.treinadorPessoal.custoSemanal) {
@@ -2202,6 +2555,10 @@ export function jogarProximaRodada(
   }
   novo.relacoes = { ...novo.relacoes, ...esfriarUmaRodada(lerRelacoes(novo.relacoes)) }
   novo.companheiros = esfriarCompanheiros(novo.companheiros)
+  // ⚠️ O DILEMA ABRE DEPOIS DO ESFRIAMENTO, e não antes: o catálogo filtra pelo
+  // estado das relações, e abri-lo antes ofereceria dilemas calculados sobre
+  // números que a própria rodada ainda ia mudar (1.0.377).
+  abrirDilemaDaRodada(novo)
   // ⚠️ A SEMANA DE TREINO VEM ANTES DA PARTIDA, e não é detalhe de ordem: é o
   // custo em forma da semana puxada que precisa chegar ao jogo. Treinar depois
   // faria a intensidade não ter preço nenhum no dia em que ela importa.
@@ -2399,12 +2756,19 @@ function aplicarPartidaNaCarreira(
   //
   // ±0,5 é de propósito pequeno: o grupo TEMPERA a atuação, não a substitui.
   // Um vestiário rachado não transforma uma atuação 8 em 6, mas decide empates.
+  //
+  // ⚠️ A ARQUIBANCADA ENTRA JUNTO (1.0.377), e SÓ EM CASA. Até a 1.0.376
+  // `estado.torcida` era escrito por entrevista e por atuação e não era lido
+  // por ninguém — um medidor puro. Aqui ele finalmente decide alguma coisa, e
+  // decide no único lugar onde faz sentido: o jogo com a sua torcida presente.
+  const ajusteDoGrupo =
+    ajusteDaNotaPeloVestiario(lerRelacoes(relacoesDoAtleta(novo)))
+    + empurraoDaTorcida(novo.torcida ?? 50, ctx.emCasa ? "casa" : "fora")
+
   const d: DesempenhoIndividual = desempenho.minutos > 0
     ? {
       ...desempenho,
-      nota: Math.max(3, Math.min(10, Math.round(
-        (desempenho.nota + ajusteDaNotaPeloVestiario(lerRelacoes(relacoesDoAtleta(novo)))) * 10,
-      ) / 10)),
+      nota: Math.max(3, Math.min(10, Math.round((desempenho.nota + ajusteDoGrupo) * 10) / 10)),
     }
     : desempenho
 
@@ -3683,10 +4047,17 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
 
   // O VESTIÁRIO TEMPERA A NOTA — o mesmo ajuste, no mesmo lugar lógico que o
   // caminho da partida simulada faz. Ver `aplicarPartidaNaCarreira`.
+  //
+  // ⚠️ A TORCIDA SÓ VALE PARA O CLUBE. Na partida de seleção o mando é do país
+  // e a arquibancada é outra — somar aqui o apoio conquistado no clube daria
+  // ao atleta uma torcida que não está no estádio (1.0.377).
   p = {
     ...p,
     nota: Math.max(3, Math.min(10, Math.round(
-      (p.nota + ajusteDaNotaPeloVestiario(lerRelacoes(relacoesDoAtleta(novo)))) * 10,
+      (p.nota
+        + ajusteDaNotaPeloVestiario(lerRelacoes(relacoesDoAtleta(novo)))
+        + (p.origem === "selecao" ? 0 : empurraoDaTorcida(novo.torcida ?? 50, p.emCasa ? "casa" : "fora"))
+      ) * 10,
     ) / 10)),
   }
 
@@ -3708,6 +4079,9 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
       novo.economia.dinheiro += bonus
       novo.patrocinioPessoal.golsNoContrato += p.gols
     }
+    // A carteira nova (1.0.377). O contrato antigo acima é migrado na primeira
+    // chamada desta função, então os dois nunca pagam pelo mesmo gol.
+    registrarPartidaNosPatrocinios(novo, p.gols)
     novo.recados = [{
       id: `resultado_selecao_${novo.temporada}_${p.fixtureId}`, de: "Selecao",
       texto: `${novo.atleta.nacionalidade} ${p.golsPro} x ${p.golsContra} ${p.adversario}. Sua nota: ${p.nota.toFixed(1)}.`,
@@ -3758,6 +4132,7 @@ export function concluirPartidaDoAtleta(estado: EstadoCarreiraDeJogador): Estado
     novo.relacoes = structuredClone(relacoesDoAtleta(novo))
     novo.relacoes.marcas = limitar(novo.relacoes.marcas + Math.min(3, p.gols))
   }
+  registrarPartidaNosPatrocinios(novo, p.gols)
   registrarAcoes(novo, {
     titular: p.titular, minutos: p.minutos, gols: p.gols,
     assistencias: p.assistencias, nota: p.nota, cartao: null, xp: 0,
@@ -4169,7 +4544,13 @@ export function contrapropor(
 
   if (sorte < Math.max(0.05, chance)) {
     if (pedido === "salario") {
-      proposta.salarioSemanal = Math.round(proposta.salarioSemanal * 1.14)
+      // ⚠️ A TORCIDA ENTRA AQUI (1.0.377): 0,85 a 1,20 sobre o aumento. Um ídolo
+      // de arquibancada arranca mais na mesa porque o clube que o compra compra
+      // também a bilheteria dele — e o vaiado arranca menos pelo motivo oposto.
+      // É o segundo (e último) lugar do jogo que lê `estado.torcida`; ver a
+      // seção A TORCIDA em `lib/relacoes-do-atleta`.
+      const comAArquibancada = 1 + 0.14 * pesoDaTorcidaNaRenovacao(novo.torcida ?? 50)
+      proposta.salarioSemanal = Math.round(proposta.salarioSemanal * comAArquibancada)
       mesa.ultimaResposta = `O ${proposta.clubeNome} aceitou: salário para ${Math.round(proposta.salarioSemanal).toLocaleString("pt-BR")}/semana.`
     } else if (pedido === "luvas") {
       proposta.luvas = Math.round((proposta.luvas || proposta.salarioSemanal * 4) * 1.3)

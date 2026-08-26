@@ -106,17 +106,29 @@ export function HubCampeonato({
         placar confirmado pelos dois técnicos
       </p>
       {/* ESCOPO DECLARADO. A auditoria da 3.0 pediu que o online fosse
-          "funcional e confiável, OU explicitamente beta" — e ele é o segundo. O
-          que existe é liga de pontos corridos com placar confirmado pelos dois
-          lados; não há save compartilhado nem validação autoritativa do
-          servidor, então quem quiser trapacear consegue combinar um placar.
-          Dizer isso na tela é mais barato do que descobrir jogando. */}
+          "funcional e confiável, OU explicitamente beta" — e ele é o segundo.
+
+          ⚠️ O TEXTO ESTAVA DESATUALIZADO (corrigido na 1.0.377), e desatualizado
+          PARA MENOS: ele dizia que "carreira online completa (mercado, elenco e
+          temporada compartilhados)" não existia. Existe desde a 1.0.358, é
+          outro modo (`/online/carreira`, rotas `/v1/carreira/*` do relay), e o
+          mercado dela é conferido no servidor — caixa, teto e exclusividade do
+          anúncio. Um aviso que subestima o próprio jogo custa tanto quanto um
+          que o superestima: os dois mandam o jogador para o lugar errado.
+
+          O que continua verdade AQUI, nesta Liga: o servidor não arbitra a
+          partida. Ele guarda a tabela e exige que os dois técnicos confirmem o
+          mesmo placar — dois jogadores combinados ainda conseguem inventar um
+          resultado. Dizer isso na tela é mais barato do que descobrir jogando. */}
       <p className="rounded-lg border border-amber-300/25 bg-amber-300/[0.06] px-2.5 py-2 text-[9px] leading-relaxed text-amber-100/70">
         <b className="text-amber-200">LIGA ONLINE — BETA.</b> O que está pronto: liga de
         pontos corridos, tabela, prazo por rodada e confirmação de placar pelos dois técnicos.
-        O que ainda NÃO existe: carreira online completa (mercado, elenco e temporada
-        compartilhados) e validação do resultado pelo servidor — o placar vale porque os dois
-        confirmaram, não porque a partida foi arbitrada aqui.
+        O que ainda NÃO existe aqui: arbitragem da partida pelo servidor — o placar vale
+        porque os dois confirmaram, não porque o jogo foi simulado no servidor, então dois
+        jogadores combinados conseguem inventar um resultado. Para mundo compartilhado de
+        verdade (mercado, vagas e tabela no servidor), use a <b className="text-amber-200">Carreira
+        Online</b>: lá a compra sai da lista de todo mundo no mesmo instante e o placar só
+        conta depois dos dois lados baterem.
       </p>
 
       {/* CAMPEÃO — o fim do campeonato tinha de significar alguma coisa. */}

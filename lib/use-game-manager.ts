@@ -38,6 +38,7 @@ import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, resultadoDoConfronto, 
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
 import { generateJobOffers, computeBoardConfidence, calcSeasonObjective, shouldFireManager } from "@/lib/board-engine"
+import { condutaDoTreinador } from "@/lib/legado-do-treinador"
 import { DIVISOES_SEM_REGISTRO, jogoRegistrado } from "@/lib/beneficios"
 // As vagas de generateJobOffers vinham do nada: agora os outros clubes demitem.
 import { demissoesDaRodada, manchete, tecnicoDoClube } from "@/lib/mercado-de-tecnicos"
@@ -4547,6 +4548,11 @@ export function useGameManager() {
           objective: calcSeasonObjective(teamNow as unknown as Parameters<typeof calcSeasonObjective>[0]),
           recentForm,
           seasonProgress: Math.min(1, newWeek / Math.max(1, seasonEndWeek)),
+          // ⚠️ ESTE E O UNICO PONTO AUTORITATIVO (1.0.377). As outras quatro
+          // chamadas de `computeBoardConfidence` sao de TELA — elas mostram o
+          // numero, esta aqui e a que decide demissao. A conduta entra aqui
+          // porque e aqui que ela precisa mudar alguma coisa.
+          conduta: condutaDoTreinador(st.incidentesDoTreinador ?? [], st.season),
         })
         // Crise financeira também é crise de governança: atraso recorrente
         // desgasta a diretoria mesmo quando o resultado em campo ainda é bom.

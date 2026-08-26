@@ -3009,6 +3009,39 @@ export default function PartidaAoVivoPage() {
             boardConfidence: Math.max(0, Math.min(100, (atual.boardConfidence ?? 60) + efeito.diretoriaDelta)),
           })
         }
+
+        // ── CONDUTA DO TREINADOR (1.0.377) ────────────────────────────────
+        //
+        // ⚠️ A COLETIVA AGRESSIVA PRECISAVA CUSTAR ALGUMA COISA ALÉM DE HOJE.
+        // Ela já mexia em moral e confiança na hora (acima), e ali parava: no
+        // jogo seguinte a ficha estava limpa de novo. Bater na arbitragem ou
+        // atacar o clube em três coletivas seguidas não deixava rastro nenhum,
+        // e o técnico que faz isso toda semana terminava a temporada com a
+        // mesma reputação de quem nunca abriu a boca.
+        //
+        // Agora vira INCIDENTE, e o incidente entra no índice de conduta que a
+        // diretoria lê ao decidir demissão (`computeBoardConfidence`). Ele
+        // prescreve com o tempo — ver `condutaDoTreinador`.
+        const agressivas = (tons ?? []).filter(t => t === "agressivo").length
+        if (agressivas > 0) {
+          const atual = loadGameState()
+          const jaTem = atual.incidentesDoTreinador ?? []
+          const id = `coletiva_${atual.season}_${atual.currentRound ?? 0}`
+          if (!jaTem.some(i => i.id === id)) {
+            setSavedGame({
+              incidentesDoTreinador: [...jaTem, {
+                id,
+                temporada: atual.season,
+                // Duas respostas agressivas na MESMA coletiva já não é
+                // desabafo: é o tom da entrevista inteira, e pesa mais.
+                tipo: agressivas >= 2 ? "briga_com_arbitro" as const : "critica_publica" as const,
+                descricao: agressivas >= 2
+                  ? "Coletiva inteira em tom de confronto."
+                  : "Crítica pública depois da partida.",
+              }].slice(-60),
+            })
+          }
+        }
         // O jogador precisa VER a consequencia; senao o efeito existe e passa
         // despercebido, que na pratica e o mesmo que nao existir.
         if (efeito.recadoElenco) {

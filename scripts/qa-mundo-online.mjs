@@ -8,7 +8,13 @@
 //   1b. mas DUAS PESSOAS cabem no mesmo clube, em papéis diferentes — e cada
 //       papel faz o que os outros não fazem (cooperativa e diretoria online);
 //   2. a rodada só abre com dois inscritos, e vem com SEMENTE e as duas forças;
-//   3. o placar de um lado entra na tabela e o do outro CONFERE;
+//   3. ⚠️ O PLACAR SÓ ENTRA NA TABELA COM OS DOIS LADOS BATENDO (1.0.377).
+//      Este item dizia o contrário até a 1.0.376 — "o placar de um lado entra
+//      na tabela e o do outro CONFERE" — e o gate PASSAVA, porque o servidor
+//      fazia exatamente isso. O teste estava codificando a vulnerabilidade:
+//      quem enviasse primeiro decidia o resultado, e o adversário só podia
+//      registrar uma divergência com os três pontos já somados;
+//   3b. placar fora do envelope de plausibilidade é recusado antes de tudo;
 //   4. placar divergente é recusado e não repontua;
 //   5. o mercado é compartilhado: quem compra primeiro leva, o segundo recebe
 //      `ja_vendido`, e o dinheiro muda de dono;
@@ -91,15 +97,35 @@ else ok("não dá para pular rodada com partida pendente")
 // ── 3 e 4. Placar, conferência e divergência ────────────────────────────────
 const tecnicoDaCasa = partida.casa === "flamengo" ? "m_a" : "m_b"
 const tecnicoDeFora = partida.casa === "flamengo" ? "m_b" : "m_a"
+// ⚠️ ANTES DE QUALQUER COISA: placar impossível para aquele confronto é barrado
+// na porta, sem sequer virar um envio. É a camada que impede dois jogadores
+// combinados de digitar 15x0 e blindar a fraude com a confirmação dupla.
+const absurdo = await chamar("/v1/carreira/resultado", { matchId: partida.matchId, managerId: tecnicoDaCasa, golsCasa: 15, golsFora: 0 })
+if (absurdo.corpo.erro !== "placar_implausivel") erro(`15x0 devia sair do envelope, veio ${JSON.stringify(absurdo.corpo)}`)
+else ok("placar fora do envelope recusado pelo servidor")
+
 const envio = await chamar("/v1/carreira/resultado", { matchId: partida.matchId, managerId: tecnicoDaCasa, golsCasa: 2, golsFora: 1 })
-if (envio.corpo.estado !== "registrada") erro(`o primeiro envio devia registrar, veio ${JSON.stringify(envio.corpo)}`)
-else ok("placar do mandante registrado")
+if (envio.corpo.estado !== "aguardando_confirmacao") erro(`o primeiro envio devia AGUARDAR, veio ${JSON.stringify(envio.corpo)}`)
+else ok("o primeiro envio aguarda — sozinho ele não move a tabela")
+
+// ⚠️ A ASSERÇÃO QUE PROVA A CORREÇÃO. Com um envio só, a tabela tem de estar
+// intacta. Era aqui que o furo vivia: até a 1.0.376 já havia 3 pontos na conta
+// de quem mandou primeiro.
+const meioDoCaminho = (await chamar(`/v1/carreira/estado?managerId=m_a`, null, "GET")).corpo
+if (meioDoCaminho.tabela.some(l => l.pontos !== 0)) {
+  erro(`com um envio só a tabela devia estar zerada, veio ${JSON.stringify(meioDoCaminho.tabela.map(l => l.pontos))}`)
+} else ok("com um envio só, NINGUÉM pontuou")
+
+// Reenviar não vale: quem já mandou não muda o próprio placar depois de pensar.
+const reenvio = await chamar("/v1/carreira/resultado", { matchId: partida.matchId, managerId: tecnicoDaCasa, golsCasa: 4, golsFora: 0 })
+if (reenvio.corpo.erro !== "ja_enviou") erro(`reenvio devia ser recusado, veio ${JSON.stringify(reenvio.corpo)}`)
+else ok("um envio por clube — reenviar não sobrescreve")
 
 const confere = await chamar("/v1/carreira/resultado", { matchId: partida.matchId, managerId: tecnicoDeFora, golsCasa: 2, golsFora: 1 })
 if (confere.corpo.estado !== "confirmada") erro(`o segundo envio igual devia confirmar, veio ${JSON.stringify(confere.corpo)}`)
-else ok("o outro lado enviou o MESMO placar e confirmou")
+else ok("os dois bateram — agora sim a tabela anda")
 
-const divergente = await chamar("/v1/carreira/resultado", { matchId: partida.matchId, managerId: tecnicoDeFora, golsCasa: 9, golsFora: 0 })
+const divergente = await chamar("/v1/carreira/resultado", { matchId: partida.matchId, managerId: tecnicoDeFora, golsCasa: 5, golsFora: 0 })
 if (divergente.corpo.estado !== "divergente") erro(`placar diferente devia divergir, veio ${JSON.stringify(divergente.corpo)}`)
 else ok("placar divergente recusado (a tabela não muda)")
 

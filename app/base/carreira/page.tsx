@@ -23,14 +23,21 @@ import {
   simulateYouthRound, vagasNoProfissional,
 } from "@/lib/youth-career-engine"
 import { useGameManager } from "@/lib/use-game-manager"
+import { useGameEngine } from "@/lib/game-engine"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { saveMatchContext } from "@/lib/match-context"
 import { allTeams, getTeamByShort } from "@/lib/teams-data"
+import { academiasDaDivisao } from "@/lib/youth-career-engine"
+import { RankingDeAcademias } from "@/components/base/ranking-de-academias"
+import { useTranslation } from "@/lib/i18n"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/currency"
 
 export default function YouthCareerPage() {
+  // ⚠️ A CARREIRA DE BASE NASCEU CHUMBADA EM PORTUGUÊS. O gancho entra na
+  // 1.0.377 junto com o ranking de academias, e leva as 14 primeiras chaves.
+  const tb = useTranslation().baseSub20
   const { state, setState } = useGameState()
   const { initializeNewGame } = useGameManager()
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
@@ -47,14 +54,15 @@ export default function YouthCareerPage() {
   const [promovidos, setPromovidos] = useState<string[]>([])
   const career = state.youthCareer
   const players = state.youthPlayers ?? []
+  const nivelDaAcademia = useGameEngine(st => st.clubInfrastructure?.youth) ?? 1
 
   if (!career) {
     return (
       <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
-          <p>Nenhuma carreira Sub-20 ativa.</p>
-          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>Criar carreira</Button>
+          <p>{tb.sem_carreira_sub20}</p>
+          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>{tb.criar_carreira}</Button>
         </div>
       </main>
     )
@@ -124,7 +132,7 @@ export default function YouthCareerPage() {
           <div className="flex items-center gap-4">
             <TeamCrest teamShort={career.clubCurto} size="lg" />
             <div>
-              <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">Trajetória na base</p>
+              <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">{tb.trajetoria_na_base}</p>
               <h1 className="mt-1 text-3xl font-black">{career.clubNome}</h1>
               <p className="mt-1 text-white/50">
                 Temporada {career.currentSeason} · {career.ligaNome ?? career.currentCompetition}
@@ -148,11 +156,11 @@ export default function YouthCareerPage() {
 
         <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {([
-            ["Rodada", `${career.round}/${totalDeRodadas}`, Play],
-            ["Posição", posicao > 0 ? `${posicao}º` : "—", Trophy],
-            ["Campanha", `${career.wins}V ${career.draws}E ${career.losses}D`, Award],
-            ["Reputação", Math.round(career.coachReputation), BriefcaseBusiness],
-            ["Atletas", players.length, Users],
+            [tb.rodada, `${career.round}/${totalDeRodadas}`, Play],
+            [tb.posicao_na_tabela, posicao > 0 ? `${posicao}º` : "—", Trophy],
+            [tb.campanha, `${career.wins}V ${career.draws}E ${career.losses}D`, Award],
+            [tb.reputacao, Math.round(career.coachReputation), BriefcaseBusiness],
+            [tb.atletas, players.length, Users],
           ] as [string, string | number, LucideIcon][]).map(([label, value, Icon]) => (
             <div key={label} className="rounded-2xl border border-white/10 bg-white/[.04] p-4">
               <Icon className="h-5 w-5 text-[var(--brand)]" />
@@ -164,12 +172,12 @@ export default function YouthCareerPage() {
 
         {proxima && (
           <section className="mb-6 rounded-2xl border border-white/10 bg-white/[.03] p-5">
-            <h2 className="flex items-center gap-2 text-lg font-black"><CalendarDays className="h-5 w-5 text-[var(--brand)]" />Próxima partida</h2>
+            <h2 className="flex items-center gap-2 text-lg font-black"><CalendarDays className="h-5 w-5 text-[var(--brand)]" />{tb.proxima_partida}</h2>
             <p className="mt-2 text-lg font-bold">
               {proxima.homeCurto === career.clubCurto ? proxima.awayNome : proxima.homeNome}
             </p>
             <p className="text-xs text-white/45">
-              {proxima.homeCurto === career.clubCurto ? "Em casa" : "Fora"} · rodada {proxima.round} · {proxima.competition}
+              {proxima.homeCurto === career.clubCurto ? tb.em_casa : tb.fora} · rodada {proxima.round} · {proxima.competition}
             </p>
           </section>
         )}
@@ -178,15 +186,15 @@ export default function YouthCareerPage() {
           <section className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="font-black">Temporada concluída</h2>
+                <h2 className="font-black">{tb.temporada_concluida}</h2>
                 <p className="text-sm text-white/60">
                   {elegiveis.length > 0
                     ? `Escolha quem sobe ao profissional — o clube abriu ${vagas} vaga${vagas > 1 ? "s" : ""}.`
-                    : "Nenhum atleta em idade de subir nesta virada."}
+                    : tb.sem_atleta_para_subir}
                 </p>
               </div>
               <Button onClick={() => apply(finishYouthSeason(state, promovidos))}>
-                {promovidos.length > 0 ? `Promover ${promovidos.length} e encerrar` : "Encerrar temporada"}
+                {promovidos.length > 0 ? `Promover ${promovidos.length} e encerrar` : tb.encerrar_temporada}
               </Button>
             </div>
 
@@ -233,9 +241,36 @@ export default function YouthCareerPage() {
           </section>
         )}
 
+        {/* ── RANKING DE ACADEMIAS E CALENDARIO INTERNACIONAL (1.0.377) ────
+             ⚠️ VEM ANTES DAS PROPOSTAS DE PROPOSITO. A proposta para o
+             profissional e a saida da modalidade; o ranking e a razao de ficar.
+             Pondo o convite primeiro, a tela sugere que o objetivo da carreira
+             de base e sair dela. */}
+        <section className="mb-6">
+          <RankingDeAcademias
+            clubesDaDivisao={academiasDaDivisao(String(career.divisao ?? ""), career.clubCurto)}
+            minha={{
+              clubeCurto: career.clubCurto,
+              clubeNome: career.clubNome,
+              fileKey: getTeamByShort(career.clubCurto)?.file_key ?? career.clubCurto,
+              pais: career.pais ?? "Brasil",
+              // ⚠️ A FONTE E `clubInfrastructure.youth`, a MESMA que `/base`
+              // le (`app/base/page.tsx:151`). Ler outro campo aqui daria dois
+              // niveis de academia discordando na mesma partida.
+              nivelAcademia: nivelDaAcademia,
+              formados: career.alumni.length,
+              titulosDeBase: career.titles.length,
+              aproveitamento: career.matches > 0
+                ? Math.round(((career.wins * 3 + career.draws) / (career.matches * 3)) * 100)
+                : 0,
+              temporada: career.currentSeason,
+            }}
+          />
+        </section>
+
         {career.professionalOffers.length > 0 && (
           <section className="mb-6">
-            <h2 className="mb-3 text-xl font-black">Propostas para o profissional</h2>
+            <h2 className="mb-3 text-xl font-black">{tb.propostas_para_o_profissional}</h2>
             <div className="grid gap-3 md:grid-cols-2">
               {career.professionalOffers.map(o => (
                 <div key={o.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--brand)]/25 bg-[var(--brand)]/5 p-5">
@@ -246,7 +281,7 @@ export default function YouthCareerPage() {
                     </p>
                     <p className="mt-2 text-[11px] text-white/40">Metas: {o.objectives.join(" · ")}</p>
                   </div>
-                  <Button onClick={() => accept(o.id)}>Aceitar</Button>
+                  <Button onClick={() => accept(o.id)}>{tb.aceitar}</Button>
                 </div>
               ))}
             </div>
@@ -269,7 +304,7 @@ export default function YouthCareerPage() {
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[560px] text-sm">
                   <thead className="text-[11px] uppercase tracking-wide text-white/40">
-                    <tr><th className="p-2 text-left">#</th><th className="p-2 text-left">Academia</th><th className="p-2">P</th><th className="p-2">J</th><th className="p-2">V</th><th className="p-2">E</th><th className="p-2">D</th><th className="p-2">SG</th></tr>
+                    <tr><th className="p-2 text-left">#</th><th className="p-2 text-left">{tb.academia}</th><th className="p-2">P</th><th className="p-2">J</th><th className="p-2">V</th><th className="p-2">E</th><th className="p-2">D</th><th className="p-2">SG</th></tr>
                   </thead>
                   <tbody>
                     {tabela.map((l, i) => (
@@ -292,7 +327,7 @@ export default function YouthCareerPage() {
 
           <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 text-xl font-black"><GraduationCap className="text-[var(--brand)]" />Elenco Sub-20</h2>
+              <h2 className="flex items-center gap-2 text-xl font-black"><GraduationCap className="text-[var(--brand)]" />{tb.elenco_sub20}</h2>
               <select
                 value={career.formation ?? "4-3-3"}
                 onChange={e => setState({ youthCareer: { ...career, formation: e.target.value } })}
@@ -330,7 +365,7 @@ export default function YouthCareerPage() {
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-            <h2 className="text-xl font-black">Seu legado</h2>
+            <h2 className="text-xl font-black">{tb.seu_legado}</h2>
             <p className="mt-1 text-sm text-white/45">Atletas treinados por você continuam sendo acompanhados após sair da base.</p>
             <div className="mt-4 max-h-[430px] space-y-2 overflow-auto">
               {career.alumni.length === 0 ? (

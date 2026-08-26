@@ -95,8 +95,8 @@ export default function CalendarioDoAtletaPage() {
       <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
-          <p className="text-white/70">Nenhuma carreira de jogador ativa neste save.</p>
-          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>Criar carreira</Button>
+          <p className="text-white/70">{t.carreiraDeJogador.nenhuma_carreira_de_jogador_ativa_neste}</p>
+          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>{t.carreiraDeJogador.criar_carreira}</Button>
         </div>
       </main>
     )
@@ -156,7 +156,7 @@ export default function CalendarioDoAtletaPage() {
                 <p className="text-[11px] text-white/45">{proxima.fixture.competition}</p>
               </>
             ) : (
-              <p className="text-sm text-white/45">Sem jogos pela frente nesta temporada.</p>
+              <p className="text-sm text-white/45">{t.carreiraDeJogador.sem_jogos_pela_frente}</p>
             )}
           </PainelDoAtleta>
 
@@ -185,26 +185,26 @@ export default function CalendarioDoAtletaPage() {
 
           <PainelDoAtleta titulo={`${MESES[mes]} em números`} className="min-h-0 flex-1">
             <div className="space-y-2 text-sm">
-              <p className="flex items-center justify-between"><span className="text-white/50">Jogos no mês</span><b>{jogosDoMes.length}</b></p>
+              <p className="flex items-center justify-between"><span className="text-white/50">{t.carreiraDeJogador.jogos_no_mes}</span><b>{jogosDoMes.length}</b></p>
               <p className="flex items-center justify-between">
-                <span className="text-white/50">Você jogou</span>
+                <span className="text-white/50">{t.carreiraDeJogador.voce_jogou}</span>
                 <b>{jogosDoMes.filter(j => (minhaAtuacao(j.fixture)?.minutos ?? 0) > 0).length}</b>
               </p>
               <p className="flex items-center justify-between">
-                <span className="text-white/50">Gols no mês</span>
+                <span className="text-white/50">{t.carreiraDeJogador.gols_no_mes}</span>
                 <b>{jogosDoMes.reduce((n, j) => n + (minhaAtuacao(j.fixture)?.gols ?? 0), 0)}</b>
               </p>
               <p className="flex items-center justify-between">
-                <span className="text-white/50">Assistências</span>
+                <span className="text-white/50">{t.carreiraDeJogador.assistencias}</span>
                 <b>{jogosDoMes.reduce((n, j) => n + (minhaAtuacao(j.fixture)?.assistencias ?? 0), 0)}</b>
               </p>
             </div>
             <div className="mt-4 border-t border-white/10 pt-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-white/40">Legenda</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-white/40">{t.carreiraDeJogador.legenda}</p>
               <div className="mt-2 space-y-1.5 text-[11px] text-white/50">
-                <p><span className="mr-2 inline-block h-2.5 w-2.5 rounded-sm bg-[rgba(0,255,200,0.45)]" />Liga</p>
-                <p><span className="mr-2 inline-block h-2.5 w-2.5 rounded-sm bg-[rgba(244,114,182,0.5)]" />Copa nacional</p>
-                <p><span className="mr-2 inline-block h-2.5 w-2.5 rounded-sm bg-[rgba(56,189,248,0.55)]" />Continental</p>
+                <p><span className="mr-2 inline-block h-2.5 w-2.5 rounded-sm bg-[rgba(0,255,200,0.45)]" />{t.carreiraDeJogador.competicao_liga}</p>
+                <p><span className="mr-2 inline-block h-2.5 w-2.5 rounded-sm bg-[rgba(244,114,182,0.5)]" />{t.carreiraDeJogador.competicao_copa_nacional}</p>
+                <p><span className="mr-2 inline-block h-2.5 w-2.5 rounded-sm bg-[rgba(56,189,248,0.55)]" />{t.carreiraDeJogador.competicao_continental}</p>
               </div>
             </div>
           </PainelDoAtleta>
@@ -331,7 +331,7 @@ export default function CalendarioDoAtletaPage() {
               <thead className="text-[10px] uppercase tracking-wide text-white/40">
                 <tr>
                   <th className="p-1.5 text-left">#</th>
-                  <th className="p-1.5 text-left">Clube</th>
+                  <th className="p-1.5 text-left">{t.carreiraDeJogador.coluna_clube}</th>
                   <th className="p-1.5">P</th><th className="p-1.5">J</th>
                   <th className="p-1.5">V</th><th className="p-1.5">E</th>
                   <th className="p-1.5">D</th><th className="p-1.5">SG</th>

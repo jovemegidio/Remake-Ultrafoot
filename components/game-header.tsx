@@ -4,7 +4,7 @@ import { LinkLeve as Link } from "@/components/link-leve"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { Fragment, useState, useRef, useEffect, useMemo, useSyncExternalStore } from "react"
-import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Users, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout, Flag, Swords, Gavel, Heart, Building2, Target, BarChart3, ArrowLeftRight } from "lucide-react"
+import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Users, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout, Flag, Swords, Gavel, Heart, Building2, Target, BarChart3, ArrowLeftRight, ShoppingBag, HeartHandshake } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { ManagerAvatar } from "@/components/manager-avatar"
 import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
@@ -1382,6 +1382,13 @@ const NAV_MENU_PLAYER_ITEMS: NavMenuItem[] = [
   { secao: "Carreira", label: "Meu escritorio", href: "/carreira/jogador", icon: User },
   { secao: "Carreira", label: "Calendario e tabela", href: "/carreira/jogador/calendario", icon: Calendar },
   { secao: "Carreira", label: "Evolucao e atributos", href: "/carreira/jogador/evolucao", icon: TrendingUp },
+  // ⚠️ A LOJA E A VIDA FALTAVAM AQUI (1.0.377). As duas telas existem desde a
+  // 1.0.374, com rota propria e lugar nas abas do `AtletaShell` — mas o menu do
+  // cabecalho, que e por onde o jogador de teclado navega, nunca as listou.
+  // Uma tela alcancavel so pela aba e uma tela que metade dos jogadores nao
+  // descobre.
+  { secao: "Carreira", label: "Loja e marca", href: "/carreira/jogador/loja", icon: ShoppingBag },
+  { secao: "Carreira", label: "Vida fora de campo", href: "/carreira/jogador/vida", icon: HeartHandshake },
   { secao: "Carreira", label: "Trajetoria", href: "/carreira/jogador/trajetoria", icon: BarChart3 },
 ]
 

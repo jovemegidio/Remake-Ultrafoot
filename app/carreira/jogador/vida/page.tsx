@@ -13,7 +13,7 @@
  */
 
 import { useMemo } from "react"
-import { Dices, Trophy, Users, HeartHandshake, CalendarHeart, Medal } from "lucide-react"
+import { AlertTriangle, Dices, Trophy, Users, HeartHandshake, CalendarHeart, Medal, Scale } from "lucide-react"
 import { AtletaShell } from "@/components/carreira-jogador/atleta-shell"
 import { useGameState } from "@/lib/save-system"
 import { useTranslation } from "@/lib/i18n"
@@ -22,14 +22,15 @@ import { useControleDoAtleta } from "@/hooks/use-controle-do-atleta"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/currency"
 import {
-  comparecerAoEvento, comprarCavalo, conquistasDaCarreira, economiaDoAtleta,
-  eventosDoMomento, jogarNoCassinoDoAtleta, pontuacaoAtual, relacoesDoAtleta,
+  comparecerAoEvento, comprarCavalo, conquistasDaCarreira, decidirDilema, dilemaDaVez,
+  economiaDoAtleta, eventosDoMomento, jogarNoCassinoDoAtleta, pontuacaoAtual, relacoesDoAtleta,
   venderCavalo, folhaDaCarreira,
   type EstadoCarreiraDeJogador,
 } from "@/lib/carreira-de-jogador"
+import { rotuloDaCategoria } from "@/lib/dilemas-do-atleta"
 import {
   efeitoDaPessoa, efeitoDoPapel, lerCompanheiros, lerRelacoes, rotuloDaPessoa,
-  rotuloDoNivel, rotuloDoPapel, climaDoVestiario, PESSOAS,
+  rotuloDoNivel, rotuloDoPapel, rotuloDaTorcida, climaDoVestiario, PESSOAS,
 } from "@/lib/relacoes-do-atleta"
 import { CAVALOS_DO_ATLETA, MESAS_DE_CASSINO } from "@/lib/vida-noturna-do-atleta"
 import { CONQUISTAS, montarRanking, posicaoNoRanking } from "@/lib/legado-do-atleta"
@@ -68,6 +69,7 @@ export default function VidaDoAtletaPage() {
       conquistas: conquistasDaCarreira(carreira),
       folha: folhaDaCarreira(carreira),
       cavalo: CAVALOS_DO_ATLETA.find(c => c.id === carreira.cavalo) ?? null,
+      dilema: dilemaDaVez(carreira),
     }
   }, [carreira])
 
@@ -84,7 +86,8 @@ export default function VidaDoAtletaPage() {
     )
   }
 
-  const { relacoes, time, economia, eventos, pontuacao, conquistas, folha, cavalo } = dados
+  const { relacoes, time, economia, eventos, pontuacao, conquistas, folha, cavalo, dilema } = dados
+  const desfecho = carreira.ultimoDesfechoDeDilema
   const ranking = montarRanking(
     carreira.aposentado ? [{
       nome: folha.nome, posicao: folha.posicao, pontos: carreira.pontuacaoFinal ?? pontuacao.total,
@@ -100,6 +103,62 @@ export default function VidaDoAtletaPage() {
           ficou sem rolagem numa versão anterior, e a causa era a cadeia de flex,
           não a falta de altura. */}
       <div className="grid h-full min-h-0 gap-4 overflow-y-auto pr-1 lg:grid-cols-2">
+
+        {/* ── O DILEMA DA SEMANA (1.0.377) ───────────────────────────────
+             ⚠️ ELE ABRE A TELA, E OCUPA AS DUAS COLUNAS. Um dilema espremido
+             numa coluna, abaixo de quatro medidores, é lido como mais um
+             painel de status — e o jogador clica a primeira opção sem ler o
+             parágrafo que faz a decisão ser uma decisão. Aqui ele é a primeira
+             coisa da tela e só some depois de decidido. */}
+        {dilema ? (
+          <section className="rounded-2xl border border-amber-300/30 bg-gradient-to-br from-amber-400/[.10] via-black/40 to-black/50 p-5 lg:col-span-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Scale className="h-4 w-4 text-amber-300" />
+              <span className="text-[10px] font-black uppercase tracking-[.2em] text-amber-200/70">{t.dilema_titulo}</span>
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white/55">
+                {rotuloDaCategoria(dilema.categoria)}
+              </span>
+            </div>
+            <h2 className="mt-2 text-xl font-black leading-tight text-white">{dilema.titulo}</h2>
+            <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-white/65">{dilema.contexto}</p>
+
+            <div className="mt-4 grid gap-2 md:grid-cols-3">
+              {dilema.escolhas.map(escolha => (
+                <button
+                  key={escolha.id}
+                  onClick={() => aplicar(decidirDilema(carreira, escolha.id))}
+                  className="group flex flex-col rounded-xl border border-white/12 bg-black/45 p-3 text-left transition-all hover:-translate-y-0.5 hover:border-amber-300/50 hover:bg-amber-300/[.07]"
+                >
+                  <span className="text-[13px] font-bold leading-snug text-white/90">{escolha.texto}</span>
+                  <span className="mt-1.5 text-[11px] leading-snug text-white/45">{escolha.previa}</span>
+                  {escolha.risco ? (
+                    <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-rose-300/80">
+                      <AlertTriangle className="h-3 w-3" /> {t.dilema_pode_dar_errado} · {Math.round(escolha.risco * 100)}%
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : desfecho ? (
+          <section className={cn(
+            "rounded-2xl border p-4 lg:col-span-2",
+            desfecho.deuErrado ? "border-rose-400/30 bg-rose-500/[.07]" : "border-emerald-400/25 bg-emerald-500/[.06]",
+          )}>
+            <p className="text-[10px] font-black uppercase tracking-[.2em] text-white/45">{t.dilema_desfecho}</p>
+            <p className="mt-1 text-sm font-black text-white/90">{desfecho.titulo}</p>
+            <p className={cn("mt-1 text-[13px] leading-relaxed", desfecho.deuErrado ? "text-rose-100/75" : "text-emerald-100/75")}>
+              {desfecho.texto}
+            </p>
+            <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wide text-white/35">
+              {desfecho.deuErrado ? t.dilema_deu_errado : t.dilema_correu_bem}
+            </p>
+          </section>
+        ) : (
+          <p className="rounded-2xl border border-white/8 bg-black/30 px-4 py-3 text-[12px] text-white/35 lg:col-span-2">
+            {t.dilema_nenhum}
+          </p>
+        )}
 
         {/* ── AS CINCO RELAÇÕES ─────────────────────────────────────────── */}
         <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4">
@@ -124,6 +183,29 @@ export default function VidaDoAtletaPage() {
                 </div>
               )
             })}
+
+            {/* ⚠️ A TORCIDA APARECE AQUI E NÃO É UMA `Pessoa` (1.0.377). A fonte
+                dela é `carreira.torcida`, o campo que já existia — ver a seção
+                A TORCIDA em `lib/relacoes-do-atleta`. Ela é desenhada junto
+                porque, para quem joga, arquibancada É uma relação; o que não
+                pode existir é um segundo campo guardando o mesmo número. */}
+            {(() => {
+              const nivel = carreira.torcida ?? 50
+              const rotulo = rotuloDaTorcida(nivel)
+              return (
+                <div className="border-t border-white/[.06] pt-3">
+                  <div className="flex items-baseline justify-between text-xs">
+                    <span className="font-semibold text-white/85">{t.relacao_torcida}</span>
+                    <span className={cn("text-[11px]",
+                      rotulo.tom === "bom" ? "text-emerald-300" : rotulo.tom === "neutro" ? "text-amber-200" : "text-rose-300")}>
+                      {rotulo.texto}
+                    </span>
+                  </div>
+                  <div className="mt-1"><Medidor valor={nivel} tom={rotulo.tom} /></div>
+                  <p className="mt-1 text-[10px] text-white/40">{t.efeito_torcida}</p>
+                </div>
+              )
+            })()}
           </div>
         </section>
 

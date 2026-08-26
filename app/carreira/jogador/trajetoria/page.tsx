@@ -34,8 +34,8 @@ export default function TrajetoriaDoAtletaPage() {
       <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="p-10 text-center">
-          <p className="text-white/70">Nenhuma carreira de jogador ativa neste save.</p>
-          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>Criar carreira</Button>
+          <p className="text-white/70">{tr.carreiraDeJogador.nenhuma_carreira_de_jogador_ativa_neste}</p>
+          <Button className="mt-4" onClick={() => hardNavigate("/novo-jogo")}>{tr.carreiraDeJogador.criar_carreira}</Button>
         </div>
       </main>
     )
@@ -62,11 +62,11 @@ export default function TrajetoriaDoAtletaPage() {
             <table className="w-full min-w-[640px] text-sm">
               <thead className="text-[11px] uppercase tracking-wide text-white/40">
                 <tr>
-                  <th className="p-2 text-left">Temporada</th>
-                  <th className="p-2 text-left">Clube</th>
+                  <th className="p-2 text-left">{tr.carreiraDeJogador.coluna_temporada}</th>
+                  <th className="p-2 text-left">{tr.carreiraDeJogador.coluna_clube}</th>
                   <th className="p-2">J</th><th className="p-2">G</th><th className="p-2">A</th>
-                  <th className="p-2">Média</th><th className="p-2">Pos.</th>
-                  <th className="p-2 text-left">Conquistas</th>
+                  <th className="p-2">{tr.carreiraDeJogador.coluna_media}</th><th className="p-2">{tr.carreiraDeJogador.coluna_posicao}</th>
+                  <th className="p-2 text-left">{tr.carreiraDeJogador.coluna_conquistas}</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,7 +93,7 @@ export default function TrajetoriaDoAtletaPage() {
                     {mediaDaTemporada(carreira) > 0 ? mediaDaTemporada(carreira).toFixed(2) : "—"}
                   </td>
                   <td className="p-2 text-center text-white/40">—</td>
-                  <td className="p-2 text-[11px] uppercase tracking-wide text-[var(--brand)]">em curso</td>
+                  <td className="p-2 text-[11px] uppercase tracking-wide text-[var(--brand)]">{tr.carreiraDeJogador.em_curso}</td>
                 </tr>
               </tbody>
             </table>
@@ -139,7 +139,7 @@ export default function TrajetoriaDoAtletaPage() {
               <>
                 {resumo.titulos.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-white/40">Títulos</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-white/40">{tr.carreiraDeJogador.titulos}</p>
                     <div className="mt-2 space-y-1.5">
                       {resumo.titulos.map((titulo, i) => (
                         <p key={`${titulo}-${i}`} className="flex items-center gap-2 text-[13px] text-white/75">
@@ -151,7 +151,7 @@ export default function TrajetoriaDoAtletaPage() {
                 )}
                 {resumo.premios.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-white/40">Prêmios individuais</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-white/40">{tr.carreiraDeJogador.premios_individuais}</p>
                     <div className="mt-2 space-y-1.5">
                       {resumo.premios.map((premio, i) => (
                         <p key={`${premio}-${i}`} className="flex items-center gap-2 text-[13px] text-white/75">

@@ -9,6 +9,8 @@ import { useUserTeam } from "@/lib/time-da-carreira"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { buildCareerStats, rankInHistory } from "@/lib/hall-of-fame-engine"
+import { LegadoDoTreinador } from "@/components/treinador/legado-do-treinador"
+import { useTranslation } from "@/lib/i18n"
 import { listJobOffers, removeJobOffer, assumirClube, podeTrocarDeClube, type PendingJobOffer } from "@/lib/career-moves"
 import { calcSeasonObjective, computeBoardConfidence } from "@/lib/board-engine"
 import { ofertasParaDesempregado, coachStandingScore } from "@/lib/coach-market"
@@ -50,6 +52,11 @@ const MAX_AMISTOSOS = 3
  * clubes (career-moves, que só apareciam no escritório e sumiam da vista).
  */
 export default function TreinadorPage() {
+  // ⚠️ A TELA DO TÉCNICO NÃO TINHA TRADUÇÃO NENHUMA até a 1.0.377 — 69 frases
+  // chumbadas, a sexta pior do jogo pela conta de `qa-traducao.mjs`. O gancho
+  // entra aqui e as 15 primeiras chaves saem abaixo; o resto fica para a
+  // próxima versão que mexer nesta tela.
+  const tt = useTranslation().treinadorLegado
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
   const { state, setState } = useGameState()
@@ -549,7 +556,7 @@ export default function TreinadorPage() {
                   aproveitamento e acessos). `coachReputation` no save pertence
                   ao YouthCareerState — carreira de base —, não a esta. */}
               <div>
-                <p className="text-[10px] uppercase text-white/40">Reputação</p>
+                <p className="text-[10px] uppercase text-white/40">{tt.reputacao}</p>
                 <p className="text-sm font-semibold text-[#ffd700]">{carreira?.reputation ?? 0}</p>
               </div>
               <div>
@@ -565,7 +572,7 @@ export default function TreinadorPage() {
             <section className="mb-5 rounded-2xl border border-cyan-400/15 bg-cyan-400/[.045] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">Identidade do treinador</p>
+                  <p className="text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">{tt.identidade_do_treinador}</p>
                   <h2 className="mt-1 font-black capitalize">{perfil26.nivelComoJogador} · {perfil26.areaAnterior}</h2>
                   <p className="mt-1 text-xs text-white/45">{perfil26.tendencias.join(" · ")}</p>
                   {rotuloDaIdentidade && <p className="mt-1 text-xs font-bold text-emerald-300">{rotuloDaIdentidade}</p>}
@@ -588,7 +595,7 @@ export default function TreinadorPage() {
                   criacao — e a conta das semanas em que cada estilo foi usado. */}
               {identidade.length > 0 && (
                 <div className="mt-4 border-t border-white/10 pt-3">
-                  <p className="text-[10px] font-black uppercase tracking-[.2em] text-white/45">Como você joga</p>
+                  <p className="text-[10px] font-black uppercase tracking-[.2em] text-white/45">{tt.como_voce_joga}</p>
                   <div className="mt-2 grid gap-2">
                     {identidade.slice(0, 5).map(fatia => (
                       <div key={fatia.estilo} className="flex items-center gap-3">
@@ -674,13 +681,13 @@ export default function TreinadorPage() {
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
                 {[
-                  ["Tempo no cargo", vinculoAtual.semanas === 0 ? "Recém-chegado" : `${vinculoAtual.semanas} sem.`],
-                  ["Partidas", String(vinculoAtual.jogos)],
-                  ["Campanha", `${vinculoAtual.vitorias}V ${vinculoAtual.empates}E ${vinculoAtual.derrotas}D`],
-                  ["Aproveitamento", `${vinculoAtual.aproveitamento}%`],
-                  ["Gols", `${vinculoAtual.golsPro}–${vinculoAtual.golsContra}`],
-                  ["Posição atual", vinculoAtual.posicao ? `${vinculoAtual.posicao}º` : "Pré-temporada"],
-                  ["Temporada", String(state.season)],
+                  [tt.tempo_no_cargo, vinculoAtual.semanas === 0 ? tt.recem_chegado : `${vinculoAtual.semanas} sem.`],
+                  [tt.partidas, String(vinculoAtual.jogos)],
+                  [tt.campanha, `${vinculoAtual.vitorias}V ${vinculoAtual.empates}E ${vinculoAtual.derrotas}D`],
+                  [tt.aproveitamento, `${vinculoAtual.aproveitamento}%`],
+                  [tt.gols, `${vinculoAtual.golsPro}–${vinculoAtual.golsContra}`],
+                  [tt.posicao_atual, vinculoAtual.posicao ? `${vinculoAtual.posicao}º` : tt.pre_temporada],
+                  [tt.temporada, String(state.season)],
                 ].map(([rotulo, valor]) => (
                   <div key={rotulo} className="rounded-lg bg-white/[0.04] px-3 py-2.5">
                     <p className="text-[9px] uppercase tracking-wide text-white/35">{rotulo}</p>
@@ -690,6 +697,25 @@ export default function TreinadorPage() {
               </div>
             </section>
           )}
+          {/* ── O LEGADO (1.0.377) ────────────────────────────────────────
+               Linha do tempo, insignias, patamar na historia e conduta. Tudo
+               DERIVADO de `state.seasonHistory` — nenhum campo novo no save
+               alem dos incidentes, que sao fatos e nao nota. Ver
+               `lib/legado-do-treinador`. */}
+          <section className="mb-4">
+            <LegadoDoTreinador
+              historico={state.seasonHistory ?? []}
+              carreira={carreira}
+              passagens={(state.passagens ?? []).map(p => ({
+                teamCurto: p.teamCurto,
+                endReason: p.endReason === "fired" ? "fired" as const : "resigned" as const,
+                season: p.season,
+              }))}
+              incidentes={state.incidentesDoTreinador ?? []}
+              temporadaAtual={currentSeason}
+            />
+          </section>
+
           {(() => {
             // Sem clube: mostra as propostas por reputacao (sempre ha). Empregado:
             // mostra as propostas que chegaram enquanto trabalha.
@@ -961,7 +987,7 @@ export default function TreinadorPage() {
                     <BlocoRecolhivel
             className="mt-4"
             icone={<Trophy className="h-4 w-4" />}
-            titulo="Carreira"
+            titulo={tt.carreira}
           >
 
             {!carreira ? (
@@ -972,11 +998,11 @@ export default function TreinadorPage() {
               <>
                 <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-5">
                   {[
-                    ["Temporadas", String(carreira.totalSeasons), Star],
-                    ["Partidas", String(carreira.totalMatches), ClipboardList],
-                    ["Aproveitamento", `${carreira.winRate}%`, TrendingUp],
-                    ["Títulos", String(carreira.trophies.length), Trophy],
-                    ["Reputação", `${carreira.reputation}/100`, Award],
+                    [tt.temporadas, String(carreira.totalSeasons), Star],
+                    [tt.partidas, String(carreira.totalMatches), ClipboardList],
+                    [tt.aproveitamento, `${carreira.winRate}%`, TrendingUp],
+                    [tt.titulos, String(carreira.trophies.length), Trophy],
+                    [tt.reputacao, `${carreira.reputation}/100`, Award],
                   ].map(([rotulo, valor, Icone]) => {
                     const Ico = Icone as typeof Star
                     return (

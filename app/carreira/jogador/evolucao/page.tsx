@@ -123,7 +123,7 @@ export default function EvolucaoDoAtletaPage() {
               onChange={e => aplicar({ ...carreira, focoDeTreino: e.target.value as typeof carreira.focoDeTreino })}
               className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/50 px-3 text-sm text-white"
             >
-              <option value="equilibrado">Equilibrado</option>
+              <option value="equilibrado">{t.carreiraDeJogador.equilibrado}</option>
               {ATRIBUTOS.map(a => <option key={a.chave} value={a.chave}>{a.nome}</option>)}
             </select>
           </label>
@@ -214,26 +214,44 @@ export default function EvolucaoDoAtletaPage() {
           </div>
         </PainelDoAtleta>
 
-        <PainelDoAtleta titulo="Equipamento e recados" icone={<ShoppingBag className="h-5 w-5 text-cyan-300" />}>
+        <PainelDoAtleta titulo={t.carreiraDeJogador.equipamento_e_recados} icone={<ShoppingBag className="h-5 w-5 text-cyan-300" />}>
+          {/* ── O QUE ESTÁ EQUIPADO, E O CAMINHO PARA TROCAR (1.0.377) ──────
+               ⚠️ ESTA LISTA ERA A LOJA INTEIRA, e era o pior lugar possível
+               para ela: seis itens de três categorias, cada um numa linha com
+               um botão de 10 px, sem o saldo à vista e sem nenhuma forma de
+               comparar bônus. Agora a loja é uma tela (`/carreira/jogador/loja`)
+               e o que fica aqui é o que a tela de EVOLUÇÃO precisa responder —
+               "o que estou usando enquanto evoluo?" — mais a porta.
+
+               ⚠️ NÃO É DUPLICAÇÃO: aqui só se LÊ. Comprar e equipar acontecem
+               num lugar só, e é por isso que este bloco não tem botão de ação
+               por item. Duas telas que compram a mesma coisa é como o modo
+               acabaria com dois carrinhos discordando sobre o mesmo dinheiro. */}
           <div className="space-y-2 border-b border-white/10 pb-4">
-            {EQUIPAMENTOS_DO_ATLETA.map(item => {
-              const comprado = economia.equipamentosComprados.includes(item.id)
-              const equipado = economia.equipamentosEmUso[item.categoria] === item.id
+            {(["chuteira", "acessorio", "recuperacao"] as const).map(cat => {
+              const equipado = EQUIPAMENTOS_DO_ATLETA.find(e => e.id === economia.equipamentosEmUso[cat])
               return (
-                <div key={item.id} className="rounded-xl border border-white/10 bg-black/25 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div><p className="text-sm font-bold">{item.nome}</p><p className="text-[10px] text-cyan-200/60">{item.descricao}</p></div>
-                    <button
-                      disabled={equipado || (!comprado && economia.dinheiro < item.preco)}
-                      onClick={() => aplicar(comprado ? equiparItem(carreira, item.id) : comprarEquipamento(carreira, item.id))}
-                      className="rounded-lg border border-white/12 px-2 py-1 text-[10px] font-bold disabled:opacity-35"
-                    >
-                      {equipado ? "Em uso" : comprado ? "Equipar" : formatCurrency(item.preco)}
-                    </button>
+                <div key={cat} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/25 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-white/35">
+                      {cat === "chuteira" ? t.carreiraDeJogador.prateleira_chuteiras
+                        : cat === "acessorio" ? t.carreiraDeJogador.prateleira_acessorios
+                          : t.carreiraDeJogador.prateleira_recuperacao}
+                    </p>
+                    <p className={cn("truncate text-sm font-bold", equipado ? "text-white/90" : "text-white/30")}>
+                      {equipado?.nome ?? t.carreiraDeJogador.nada_equipado}
+                    </p>
                   </div>
+                  {equipado && <p className="shrink-0 text-[10px] text-cyan-200/60">{equipado.descricao}</p>}
                 </div>
               )
             })}
+            <button
+              onClick={() => hardNavigate("/carreira/jogador/loja")}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/[.07] px-3 py-2 text-[11px] font-black uppercase tracking-wide text-[var(--brand)] hover:bg-[var(--brand)]/15"
+            >
+              <ShoppingBag className="h-3.5 w-3.5" /> {t.carreiraDeJogador.ver_loja}
+            </button>
           </div>
           <h3 className="mt-4 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-white/45"><Dumbbell className="h-4 w-4" />{t.carreiraDeJogador.recados}</h3>
           {carreira.recados.length === 0 && (
