@@ -24,7 +24,11 @@ import {
 } from "@/lib/tom-da-modalidade"
 import { confiancaPorArea, areaMaisFragil } from "@/lib/confianca-da-diretoria"
 import { aberturaDaDiretoria } from "@/lib/conversa-diretoria"
-import { allTeams } from "@/lib/teams-data"
+import { allTeams, getTeamsByDivision } from "@/lib/teams-data"
+import { LIGAS_FEMININAS } from "@/lib/futebol-feminino"
+import { playerSalaryWeekly } from "@/lib/club-economy"
+import { generateOffers } from "@/lib/sponsor-engine"
+import { vitrineDaModalidade } from "@/lib/mercado-da-modalidade"
 import { semearMotorDePartida } from "@/lib/match-engine"
 import {
   criarAtletaDaCarreira, criarCarreiraDeJogador, jogarProximaRodada, encerrarTemporada,
@@ -274,6 +278,73 @@ const ok = (m: string) => console.log("ok   " + m)
     erro(`taxa de lesao alta demais: ${(porNoventa * 100).toFixed(1)}% por 90 minutos`)
   } else {
     ok(`taxa: ${(porNoventa * 100).toFixed(1)}% por 90 minutos (~${(porNoventa * 30).toFixed(1)} por temporada de titular)`)
+  }
+}
+
+// ── A ECONOMIA DE CADA MODALIDADE (1.0.378) ────────────────────────────────
+//
+// ⚠️ POR QUE ESTE BLOCO EXISTE. A escala financeira era declarada em
+// `tom-da-modalidade` desde a 1.0.347, este gate a testava — e NADA no jogo a
+// consumia. Um gate verde sobre uma funcao que ninguem chama nao protege nada:
+// media em 28/08/2026, o clube feminino nascia com 12% do caixa, comprava a
+// 100% do preco e pagava a folha pelo DEFAULT (0.5, metade da Serie A).
+// As asserçoes abaixo cobram o EFEITO no jogo, nunca a funcao isolada.
+{
+  const DESCONHECIDA = "__divisao_que_nao_existe__"
+  const padrao = playerSalaryWeekly(80, DESCONHECIDA)
+
+  const noPadrao = LIGAS_FEMININAS.filter(l => playerSalaryWeekly(80, l.id) === padrao)
+  if (noPadrao.length > 0) {
+    erro(`${noPadrao.length} liga(s) feminina(s) sem fator de salario proprio: ${noPadrao.map(l => l.id).join(", ")}`)
+  } else {
+    ok(`salario: as ${LIGAS_FEMININAS.length} ligas femininas tem folha propria`)
+  }
+
+  const a1 = playerSalaryWeekly(80, "brasileirao_fem_a1")
+  const serieA = playerSalaryWeekly(80, "serie_a")
+  if (!(a1 < serieA)) {
+    erro(`a folha da A1 feminina (${a1}) nao ficou abaixo da Serie A (${serieA})`)
+  } else {
+    ok(`salario: A1 feminina paga ${Math.round(a1 / serieA * 100)}% da Serie A`)
+  }
+
+  const a2 = playerSalaryWeekly(80, "brasileirao_fem_a2")
+  if (!(a2 < a1)) {
+    erro("a segunda divisao feminina nao paga menos que a primeira")
+  } else {
+    ok("salario: a A2 feminina paga menos que a A1")
+  }
+
+  // ⚠️ O CONTRATO DE PATROCINIO NAO PODE VOLTAR A SAIR DO RELOGIO REAL. Quem o
+  // faz vencer compara com `state.season`; se o carimbo vier de
+  // `new Date().getFullYear()`, toda oferta nasce vencida em carreira longa.
+  let temporadasQuebradas = 0
+  for (const season of [2026, 2029, 2035, 2044]) {
+    const ofertas = generateOffers(70, 1, season)
+    if (ofertas.some(o => o.sponsor.contractEnd <= season)) temporadasQuebradas++
+  }
+  if (temporadasQuebradas > 0) {
+    erro(`patrocinio: ${temporadasQuebradas} temporada(s) geraram contrato ja vencido`)
+  } else {
+    ok("patrocinio: o contrato acompanha a temporada do jogo, nao o relogio")
+  }
+
+  // O alvo mediano tem de caber no caixa da modalidade. Sem a escala, o alvo
+  // mediano feminino custava 92% de TODO o caixa do clube.
+  const mediana = (v: number[]) => { const s = [...v].sort((x, y) => x - y); return s[Math.floor(s.length / 2)] ?? 0 }
+  const femininos = getTeamsByDivision("brasileirao_fem_a1")
+  if (femininos.length === 0) {
+    erro("nenhum clube feminino veio de getTeamsByDivision")
+  } else {
+    const caixa = mediana(femininos.map(t => t.saldo ?? 0))
+    const alvos = vitrineDaModalidade({ modalidade: "feminino", clubeCurto: femininos[0].curto, clubeNome: femininos[0].nome })
+    const valores = alvos.map(a => a.value ?? 0).filter(n => n > 0)
+    const fatia = mediana(valores) / Math.max(1, caixa)
+    if (fatia > 0.35) {
+      erro(`mercado feminino fora de escala: o alvo mediano custa ${Math.round(fatia * 100)}% do caixa do clube`)
+    } else {
+      ok(`mercado: o alvo mediano feminino custa ${Math.round(fatia * 100)}% do caixa`)
+    }
   }
 }
 

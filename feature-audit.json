@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-08-24T18:26:16.922Z",
-  "scannedFiles": 521,
+  "generatedAt": "2026-08-28T16:54:57.468Z",
+  "scannedFiles": 536,
   "totals": {
     "notImplemented": 0,
-    "skeleton": 28,
+    "skeleton": 22,
     "todo": 2,
     "mock": 12
   },
   "activeNotImplementedFunctions": 0,
   "actionableMarkers": 3,
-  "documentationMarkers": 39,
+  "documentationMarkers": 33,
   "priorityFiles": [],
   "findings": [
     {
@@ -164,33 +164,15 @@
     },
     {
       "type": "skeleton",
-      "file": "lib/board-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — perfis paciente/exigente/gastadora/econômica/base/títulos/lucro/politizada."
-    },
-    {
-      "type": "skeleton",
       "file": "lib/challenge-engine.ts",
       "line": 5,
       "text": "// Um esqueleto que se declarava esqueleto (\"Status: skeleton — define a API\")."
     },
     {
-      "type": "skeleton",
-      "file": "lib/commentary-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — gera linhas de comentário a partir de eventos do match-engine."
-    },
-    {
       "type": "mock",
       "file": "lib/cup-engine.ts",
-      "line": 351,
+      "line": 385,
       "text": "* em vez do mock que usava simulateMatch(50, 50) e cara-ou-coroa."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib/hall-of-fame-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — clubes treinados, títulos, reputação, aproveitamento, ranking."
     },
     {
       "type": "skeleton",
@@ -206,12 +188,6 @@
     },
     {
       "type": "skeleton",
-      "file": "lib/infrastructure-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — estádio, CT, base, gramado, médico, marketing, centro análise."
-    },
-    {
-      "type": "skeleton",
       "file": "lib/match-decisions.ts",
       "line": 3,
       "text": "// ⚠️ O cabeçalho deste arquivo dizia \"Status: skeleton\" até a 1.0.292 e isso"
@@ -219,20 +195,14 @@
     {
       "type": "mock",
       "file": "lib/save-system.ts",
-      "line": 1505,
+      "line": 1520,
       "text": "// que era limpo ao atualizar e fazia o jogo \"sumir\" (calendario/partidas em mock)."
     },
     {
       "type": "mock",
       "file": "lib/save-system.ts",
-      "line": 1796,
+      "line": 1811,
       "text": "// primeiro render e as telas ficariam em mock/vazio."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib/sponsor-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — master, fornecedor, bônus, penalidade, renovação."
     },
     {
       "type": "mock",
@@ -257,12 +227,6 @@
       "file": "lib/use-user-roster.ts",
       "line": 86,
       "text": "// Sem time nao ha elenco. Antes devolvia um elenco MOCK aqui, que era o que congelava."
-    },
-    {
-      "type": "skeleton",
-      "file": "lib/youth-engine.ts",
-      "line": 2,
-      "text": "// Status: skeleton — sub-17, sub-20, peneiras, olheiros, potencial,"
     }
   ]
 }

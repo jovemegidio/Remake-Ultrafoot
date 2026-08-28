@@ -31,6 +31,7 @@ import {
 import { getAllTimesFemininos, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, type Player } from "@/lib/players-data"
 import type { ModalidadeDeCarreira } from "@/lib/modalidade-de-carreira"
+import { naEscalaDaModalidade } from "@/lib/tom-da-modalidade"
 
 /**
  * Idade máxima de quem disputa a base. É o mesmo corte do nome da competição
@@ -91,7 +92,15 @@ function atletaParaAlvo(
           : idade < 31 ? Math.floor(rng() * 2) - 1
             : Math.floor(rng() * 2) - 3
   const posicao = String(jogador.pos || "MEI")
-  const valor = calcMarketValueFromAttrs(overall, idade, clube.pais)
+  // ⚠️ A ESCALA DA MODALIDADE ENTRA AQUI, e nao depois: `releaseClause` e
+  // derivada de `valor` logo abaixo, e escalar so um dos dois deixaria a
+  // multa rescisoria na escala masculina.
+  //
+  // `naEscalaDaModalidade` existia desde a 1.0.347 e NAO TINHA UM SO
+  // CONSUMIDOR no jogo — so o gate a chamava. Media em 28/08/2026: o clube
+  // feminino nascia com 12% do caixa e comprava a 100% do preco, entao o alvo
+  // mediano custava 92% de todo o caixa dele (no masculino, 7%).
+  const valor = naEscalaDaModalidade(calcMarketValueFromAttrs(overall, idade, clube.pais), "feminino")
   const alturaCm = posicao === "GOL" ? 172 + Math.floor(rng() * 10) : 160 + Math.floor(rng() * 20)
 
   return {

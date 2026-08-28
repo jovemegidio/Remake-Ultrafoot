@@ -17,5 +17,5 @@ const youth=readFileSync("app/base/carreira/page.tsx","utf8"),live=readFileSync(
 const poor=configurePitch("natural","poor",2026),synthetic=configurePitch("synthetic","good",2026);assert(pitchInjuryFrequencyMultiplier(poor)>pitchInjuryFrequencyMultiplier(synthetic));assert(pitchInjuryDurationMultiplier(synthetic)>1);assert(synthetic.monthlyMaintenance<configurePitch("natural","good",2026).monthlyMaintenance);assert(pitchUpgradeCost(poor,"natural","good")>0) // ⚠️ As duas assercoes que existiam aqui chamavam `lib/injury-engine`, modulo
 // sem um unico importador no jogo (removido na 1.0.351). As lesoes de verdade
 // nascem em lib/game-engine, com PlayerInjury e o departamento medico.
-const sponsor=generateOffers(60,2)[0],sponsorCounter=counterSponsorOffer(sponsor,sponsor.sponsor.monthlyValue*1.05,2);assert(sponsorCounter.result==="accepted");const newGame=readFileSync("app/novo-jogo/page.tsx","utf8");assert(!newGame.includes('>Sub-20</button>'))
+const sponsor=generateOffers(60,2,2026)[0],sponsorCounter=counterSponsorOffer(sponsor,sponsor.sponsor.monthlyValue*1.05,2);assert(sponsorCounter.result==="accepted");const newGame=readFileSync("app/novo-jogo/page.tsx","utf8");assert(!newGame.includes('>Sub-20</button>'))
 console.log("QA 1.0.69 OK: mercado, gramado, lesões, patrocínios e Sub-20 oculto")

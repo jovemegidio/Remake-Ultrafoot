@@ -308,6 +308,17 @@
   ],
   "changelog": [
     {
+      "version": "1.0.378",
+      "data": "2026-08-28",
+      "titulo": "O futebol feminino passa a ter economia propria, e o patrocinio para de vencer sozinho",
+      "itens": [
+        "O PATROCINIO NAO VENCE MAIS SOZINHO. O contrato era carimbado com o ano do RELOGIO DO COMPUTADOR, enquanto quem o faz vencer compara com a temporada do jogo. As duas datas so batem na primeira temporada: da quarta em diante toda proposta nascia com o prazo no passado, o patrocinio morria na virada seguinte e o aviso de \"chegou ao fim\" voltava todo ano, para sempre. Agora o contrato acompanha a temporada da carreira.",
+        "O FUTEBOL FEMININO GANHA A PROPRIA ESCALA DE DINHEIRO. O clube feminino ja nascia com 12% do caixa do masculino, mas comprava a 100% do preco e pagava a folha pelo fator PADRAO — metade da Serie A, e o mesmo para a primeira e a segunda divisao. Na pratica o alvo mediano do mercado custava 92% de todo o caixa do clube. As 21 ligas femininas passam a ter folha propria, derivada da liga masculina equivalente, e o valor de mercado entra na escala da modalidade: o mesmo alvo agora custa 11% do caixa, contra 7% no masculino.",
+        "A SEGUNDA DIVISAO FEMININA PAGA MENOS QUE A PRIMEIRA. Antes as duas pagavam igual, porque nenhuma das duas estava na tabela de salarios.",
+        "SEIS MODULOS DEIXAM DE SE DECLARAR INCOMPLETOS. Diretoria, base, infraestrutura, patrocinio, hall da fama e narracao traziam no cabecalho um aviso de \"esqueleto\" escrito antes de eles ficarem prontos. Estao completos e em uso ha versoes; o rotulo velho so servia para fazer quem audita o codigo recriar do zero o que ja existe."
+      ]
+    },
+    {
       "version": "1.0.377",
       "data": "2026-08-26",
       "titulo": "A vida fora de campo ganha cara, e o online passa a arbitrar o placar",

@@ -1,6 +1,10 @@
 // PHASE 5 — Base e jovens
-// Status: skeleton — sub-17, sub-20, peneiras, olheiros, potencial,
+// Status: implementado — sub-17, sub-20, peneiras, olheiros, potencial,
 // personalidade, empréstimos, promoção, torneios base, joias raras, relatórios.
+// ⚠️ ESTE CABEÇALHO SE DECLARAVA INCOMPLETO E MENTIA. O módulo está completo
+//    e é lido por 3 arquivos do jogo. Um rótulo desatualizado PARA MENOS
+//    custa o mesmo que um para mais: leva quem audita a recriar do zero o
+//    que já está pronto.
 
 import type { GameState } from "@/lib/save-system"
 import type { SquadPlayer } from "@/lib/save-system"

@@ -1,6 +1,10 @@
 // PHASE 14 — Narração textual estilo rádio
-// Status: skeleton — gera linhas de comentário a partir de eventos do match-engine.
+// Status: implementado — gera linhas de comentário a partir de eventos do match-engine.
 // Compatível com múltiplos narradores via packs (ver pack-engine).
+// ⚠️ ESTE CABEÇALHO SE DECLARAVA INCOMPLETO E MENTIA. O módulo está completo
+//    e é lido por 1 arquivo do jogo. Um rótulo desatualizado PARA MENOS
+//    custa o mesmo que um para mais: leva quem audita a recriar do zero o
+//    que já está pronto.
 
 import type { MatchEvent } from "@/lib/match-engine"
 

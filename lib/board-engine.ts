@@ -1,6 +1,10 @@
 // PHASE 18 — Diretoria
-// Status: skeleton — perfis paciente/exigente/gastadora/econômica/base/títulos/lucro/politizada.
+// Status: implementado — perfis paciente/exigente/gastadora/econômica/base/títulos/lucro/politizada.
 // Define metas anuais e julga desempenho do técnico.
+// ⚠️ ESTE CABEÇALHO SE DECLARAVA INCOMPLETO E MENTIA. O módulo está completo
+//    e é lido por 6 arquivos do jogo. Um rótulo desatualizado PARA MENOS
+//    custa o mesmo que um para mais: leva quem audita a recriar do zero o
+//    que já está pronto.
 
 export type BoardProfile =
   | "paciente"

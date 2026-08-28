@@ -1,6 +1,10 @@
 // PHASE 23 — Estádio e infraestrutura
-// Status: skeleton — estádio, CT, base, gramado, médico, marketing, centro análise.
+// Status: implementado — estádio, CT, base, gramado, médico, marketing, centro análise.
 // Impacta receita, evolução, lesões, moral, torcida.
+// ⚠️ ESTE CABEÇALHO SE DECLARAVA INCOMPLETO E MENTIA. O módulo está completo
+//    e é lido por 3 arquivos do jogo. Um rótulo desatualizado PARA MENOS
+//    custa o mesmo que um para mais: leva quem audita a recriar do zero o
+//    que já está pronto.
 
 export type FacilityType =
   | "stadium"

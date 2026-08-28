@@ -1122,7 +1122,7 @@ export default function NovoJogoPage() {
       debt: createClubDebt(debtPreset, profile?.clubValue ?? 100_000_000),
       scoutingDepartment: createScoutingDepartment(),
       stadiumPitch: createStadiumPitch(selectedTeam.prestigio, 2026),
-      sponsorOffers: generateOffers(selectedTeam.prestigio, 1),
+      sponsorOffers: generateOffers(selectedTeam.prestigio, 1, 2026),
       activeSponsors: [],
     }, selectedTeam.file_key)
     window.sessionStorage.setItem("ultrafoot:session-active", "true")

@@ -47,7 +47,7 @@ export default function MensagensPage() {
 
   useEffect(() => {
     if (saveState.selectedTeamShort && saveState.sponsorOffers === undefined) {
-      setSaveState({ sponsorOffers: generateOffers(userTeam.prestigio, 1), activeSponsors: saveState.activeSponsors ?? [] })
+      setSaveState({ sponsorOffers: generateOffers(userTeam.prestigio, 1, saveState.season ?? 2026), activeSponsors: saveState.activeSponsors ?? [] })
     }
   }, [saveState.selectedTeamShort, saveState.sponsorOffers, saveState.activeSponsors, setSaveState, userTeam.prestigio])
 

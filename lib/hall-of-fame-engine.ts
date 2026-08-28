@@ -1,5 +1,9 @@
 // PHASE 32 — Hall da Fama (perspectiva do técnico)
-// Status: skeleton — clubes treinados, títulos, reputação, aproveitamento, ranking.
+// Status: implementado — clubes treinados, títulos, reputação, aproveitamento, ranking.
+// ⚠️ ESTE CABEÇALHO SE DECLARAVA INCOMPLETO E MENTIA. O módulo está completo
+//    e é lido por 4 arquivos do jogo. Um rótulo desatualizado PARA MENOS
+//    custa o mesmo que um para mais: leva quem audita a recriar do zero o
+//    que já está pronto.
 
 import type { SeasonRecord } from "@/lib/career-types"
 

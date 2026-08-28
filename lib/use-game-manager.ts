@@ -3362,7 +3362,7 @@ export function useGameManager() {
           const nivelMarketing = diretor ? Math.max(1, Math.min(5, Math.round(diretor.competence / 20))) : 1
 
           const prestigioAtual = getTeamByShort(currentState.selectedTeamShort ?? "")?.prestigio ?? 50
-          const novas = generateOffers(prestigioAtual, nivelMarketing)
+          const novas = generateOffers(prestigioAtual, nivelMarketing, currentState.season)
           setSaveState({ activeSponsors: seguem, sponsorOffers: novas })
 
           if (expirados.length > 0) {
@@ -3999,7 +3999,7 @@ export function useGameManager() {
           const diretor = useGameEngine.getState().staffMembers?.find(st => st.role === "diretor_marketing")
           const nivelMkt = diretor ? Math.max(1, Math.min(5, Math.round(diretor.competence / 20))) : 1
           const prestigioAtual = getTeamByShort(currentState.selectedTeamShort ?? "")?.prestigio ?? 50
-          const nova = generateOffers(prestigioAtual, nivelMkt).slice(0, 1)
+          const nova = generateOffers(prestigioAtual, nivelMkt, currentState.season).slice(0, 1)
           if (nova.length > 0) {
             setSaveState({ sponsorOffers: [...naMesa, ...nova] })
             addNotificationRef.current({

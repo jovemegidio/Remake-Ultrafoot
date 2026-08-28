@@ -56,6 +56,42 @@ const DIVISION_WAGE_FACTOR: Record<string, number> = {
   j_league: 0.9, j2_league: 0.28,
   k_league_1: 0.6, k_league_2: 0.18,
   chinese_super: 1.0, china_league_one: 0.25,
+  // ── FUTEBOL FEMININO ────────────────────────────────────────────────────
+  //
+  // ⚠️ ATE A 1.0.377 NENHUMA LIGA FEMININA ESTAVA AQUI, e todas caiam no
+  // `DEFAULT_WAGE_FACTOR` (0.5). Na pratica a A1 feminina pagava metade do
+  // salario da Serie A tendo 12% do caixa (`construirTimesFemininos` monta o
+  // clube com `saldo * 0.12`), e a A2 pagava o MESMO que a A1. Era essa a
+  // origem de "o feminino nao tem economia propria": a escala existia no
+  // cadastro do clube e nao existia na folha.
+  //
+  // Cada fator abaixo e o da liga masculina equivalente x 0,12 — a
+  // `escalaFinanceira` do feminino em `lib/tom-da-modalidade`. Nenhum numero
+  // foi inventado. Suecia e Australia nao tem liga masculina nesta tabela e
+  // partem do proprio DEFAULT (0.5 x 0,12).
+  //
+  // ⚠️ LIGA FEMININA NOVA PRECISA ENTRAR AQUI. O gate
+  // `scripts/test-modalidades-ponta-a-ponta.ts` reprova se alguma cair no
+  // DEFAULT — sem ele, a liga nova volta a pagar como clube masculino.
+  brasileirao_fem_a1: 0.12, brasileirao_fem_a2: 0.036,
+  wsl_ing: 0.288, wsl2_ing: 0.06,
+  liga_f_esp: 0.228,
+  premiere_ligue_fra: 0.162,
+  frauen_bundesliga: 0.204,
+  serie_a_fem_ita: 0.192,
+  campeonato_fem_por: 0.096,
+  eredivisie_fem: 0.102,
+  swpl_sco: 0.072,
+  damallsvenskan: 0.06,
+  toppserien_nor: 0.058,
+  kvindeligaen_den: 0.066,
+  nwsl_usa: 0.132,
+  liga_mx_femenil: 0.114,
+  liga_femenina_col: 0.042,
+  campeonato_fem_arg: 0.06,
+  campeonato_fem_chi: 0.036,
+  we_league_jpn: 0.108,
+  a_league_women_aus: 0.06,
 }
 const DEFAULT_WAGE_FACTOR = 0.5
 
