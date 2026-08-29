@@ -75,6 +75,24 @@ export const PRAZO_DA_RODADA_MS = 48 * 60 * 60 * 1000
 export const MINIMO_DE_CLUBES_PARA_TEMPORADA = 4
 
 /**
+ * Quantos clubes disputam o mata-mata no fim da temporada.
+ *
+ * Tem de ser potência de dois, senão a chave precisa de "bye" e o primeiro
+ * colocado passaria de fase sem jogar — prêmio que a liga já deu a ele. Usamos
+ * a maior potência de dois que cabe no mundo, limitada a 8: uma chave de 16 num
+ * mundo de 20 exigiria quatro rodadas extras por temporada, e cada rodada aqui
+ * custa dois jogadores marcarem de jogar.
+ */
+export const MAXIMO_NO_MATA_MATA = 8
+
+/** A maior potência de dois <= n, no teto do mata-mata. */
+function tamanhoDaChave(n) {
+  let k = 2
+  while (k * 2 <= Math.min(n, MAXIMO_NO_MATA_MATA)) k *= 2
+  return k
+}
+
+/**
  * O ENVELOPE DE UM PLACAR — o que a semente e as forças tornam possível.
  *
  * ⚠️ ISTO NÃO É SIMULAR A PARTIDA AQUI, e a diferença é deliberada. Portar o
@@ -113,6 +131,10 @@ export class CarreiraOnline {
     // nao e liga, e um placar acumulado.
     this.temporada = 1
     this.rodadasDaTemporada = 0
+    // "liga" enquanto corre o turno; "mata" durante o mata-mata do fim da
+    // temporada. A temporada só fecha quando a final é decidida.
+    this.fase = "liga"
+    this.mata = null
     this.historico = []
     this.divergencias = []
     try {
@@ -126,6 +148,8 @@ export class CarreiraOnline {
       // a tabela em curso vira a temporada corrente e fecha normalmente.
       this.temporada = salvo.temporada ?? 1
       this.rodadasDaTemporada = salvo.rodadasDaTemporada ?? 0
+      this.fase = salvo.fase ?? "liga"
+      this.mata = salvo.mata ?? null
       this.historico = salvo.historico ?? []
       this.divergencias = salvo.divergencias ?? []
     } catch { /* primeira execução */ }
@@ -143,6 +167,8 @@ export class CarreiraOnline {
       rodada: this.rodada,
       temporada: this.temporada,
       rodadasDaTemporada: this.rodadasDaTemporada,
+      fase: this.fase,
+      mata: this.mata,
       // O historico e o unico registro de que a temporada passada existiu — as
       // partidas dela ja sairam do arquivo (so as tres ultimas rodadas ficam).
       historico: this.historico.slice(-10),
@@ -234,6 +260,106 @@ export class CarreiraOnline {
   }
 
   /**
+   * Abre o mata-mata com os melhores do turno.
+   *
+   * ⚠️ ELE NÃO SIMULA NADA. As partidas da chave são as MESMAS da liga — mesma
+   * semente sorteada aqui, mesma confirmação dupla dos dois técnicos. A chave é
+   * só quem enfrenta quem; quem joga continua sendo o par de máquinas.
+   *
+   * O chaveamento é por campanha: 1º contra último classificado da chave, 2º
+   * contra penúltimo. Sorteio puro deixaria o primeiro colocado enfrentando o
+   * segundo na estreia, e a liga inteira teria valido nada.
+   */
+  abrirMataMata() {
+    const ordem = this.classificacao().filter(c => this.papeisDe(c.fileKey).tecnico)
+    const vagas = tamanhoDaChave(ordem.length)
+    if (ordem.length < MINIMO_DE_CLUBES_PARA_TEMPORADA || vagas < 2) return null
+    this.fase = "mata"
+    this.mata = {
+      // A ordem do turno vira a semeadura, e ela NÃO se perde: a tabela zera na
+      // virada, e sem guardar isto o desempate por campanha (abaixo) não teria
+      // como saber quem foi melhor.
+      semeadura: ordem.slice(0, vagas).map(c => c.fileKey),
+      vivos: ordem.slice(0, vagas).map(c => c.fileKey),
+      faseAtual: vagas,
+      partidasDaFase: [],
+      campeao: null,
+    }
+    return this.mata
+  }
+
+  /**
+   * Cria uma partida entre dois clubes. Liga e mata-mata usam ESTA função.
+   *
+   * ⚠️ A SEMENTE É O CORAÇÃO DO MODO — é ela que faz as duas máquinas jogarem a
+   * MESMA partida. Duplicar a criação para a chave abriria a porta para o
+   * mata-mata sortear de outro jeito, e um confronto em que as duas telas
+   * discordam é indistinguível de trapaça.
+   */
+  criarPartida(chaveCasa, chaveFora, doMataMata = false) {
+    const casa = this.clubes.get(chaveCasa)
+    const fora = this.clubes.get(chaveFora)
+    const partida = {
+      matchId: crypto.randomUUID(),
+      rodada: this.rodada,
+      casa: casa.fileKey,
+      fora: fora.fileKey,
+      semente: crypto.randomInt(1, 2 ** 31 - 1),
+      forcaCasa: this.forcaDe(casa),
+      forcaFora: this.forcaDe(fora),
+      placar: null,
+      enviadoPor: null,
+      criadaEm: agora(),
+      mata: doMataMata || undefined,
+    }
+    this.partidas.set(partida.matchId, partida)
+    return partida
+  }
+
+  /**
+   * Os confrontos da fase atual da chave: melhor contra pior dos que sobraram.
+   *
+   * Manda em casa quem fez melhor campanha — é o que a liga pagou a ele.
+   */
+  criarConfrontosDaChave() {
+    const vivos = [...this.mata.vivos].sort((a, b) => this.campanhaDe(a) - this.campanhaDe(b))
+    const criadas = []
+    for (let i = 0; i * 2 < vivos.length; i++) {
+      criadas.push(this.criarPartida(vivos[i], vivos[vivos.length - 1 - i], true))
+    }
+    this.mata.partidasDaFase = criadas.map(p => p.matchId)
+    this.mata.faseAtual = vivos.length
+    return criadas
+  }
+
+  /** A posição do clube na semeadura — 0 é o melhor. Serve de desempate. */
+  campanhaDe(fileKey) {
+    const i = this.mata?.semeadura?.indexOf(fileKey)
+    return i == null || i < 0 ? 999 : i
+  }
+
+  /**
+   * Quem passou na fase que acabou.
+   *
+   * ⚠️ EMPATE NÃO PODE FICAR SEM DESFECHO. O relay não simula, então não há
+   * pênaltis para cobrar: quem avança é quem fez melhor campanha no turno — a
+   * regra do "melhor colocado avança", que existe no futebol de verdade e não
+   * exige inventar um sorteio que o cliente não poderia reproduzir.
+   */
+  vencedoresDaFase() {
+    const vencedores = []
+    for (const matchId of this.mata.partidasDaFase) {
+      const p = this.partidas.get(matchId)
+      if (!p || !p.placar) return null // fase ainda em andamento
+      const { casa, fora } = p.placar
+      if (casa > fora) vencedores.push(p.casa)
+      else if (fora > casa) vencedores.push(p.fora)
+      else vencedores.push(this.campanhaDe(p.casa) <= this.campanhaDe(p.fora) ? p.casa : p.fora)
+    }
+    return vencedores
+  }
+
+  /**
    * Fecha a temporada: coroa o campeão, arquiva e ZERA a tabela.
    *
    * ⚠️ O CAIXA E OS REFORÇOS NÃO SÃO ZERADOS. O que termina é a competição, não
@@ -244,12 +370,18 @@ export class CarreiraOnline {
   encerrarTemporada() {
     const ordem = this.classificacao()
     const campeao = ordem[0]
+    // ⚠️ SÃO DOIS TÍTULOS, e o da liga não é o do mata-mata. Guardar só um
+    // apagaria metade da temporada — e é comum o campeão do turno cair na
+    // chave, que é justamente o que dá graça ao mata-mata.
+    const campeaoDaCopa = this.mata?.campeao ? this.clubes.get(this.mata.campeao) : null
     if (campeao) {
       this.historico.push({
         temporada: this.temporada,
         campeao: campeao.fileKey,
         nomeDoCampeao: campeao.nome,
         pontos: campeao.pontos,
+        campeaoDaCopa: campeaoDaCopa?.fileKey ?? null,
+        nomeDoCampeaoDaCopa: campeaoDaCopa?.nome ?? null,
         encerradaEm: agora(),
         podio: ordem.slice(0, 3).map(c => ({ fileKey: c.fileKey, nome: c.nome, pontos: c.pontos })),
       })
@@ -263,6 +395,8 @@ export class CarreiraOnline {
     this.temporada++
     this.rodada = 0
     this.rodadasDaTemporada = 0
+    this.fase = "liga"
+    this.mata = null
     return campeao ?? null
   }
 
@@ -305,7 +439,50 @@ export class CarreiraOnline {
     // logo acima: sem cron, sem endpoint novo, sem o cliente precisar saber que
     // isto existe. Quem abre a rodada seguinte é quem fecha a anterior.
     let campeaoAgora = null
-    if (this.rodadasDaTemporada > 0 && this.rodada >= this.rodadasDaTemporada) {
+    let campeaoDaCopaAgora = null
+
+    // ── O MATA-MATA EM CURSO ────────────────────────────────────────────────
+    //
+    // A temporada NÃO fecha no fim do turno: ela entra na chave e só termina
+    // quando a final sai. São dois títulos por temporada — o do turno, de quem
+    // foi mais regular, e o da chave, de quem ganhou as decisões.
+    if (this.fase === "mata") {
+      const vencedores = this.vencedoresDaFase()
+      if (!vencedores) return { erro: "rodada_em_andamento", faltam: this.pendentes(this.rodada).length }
+      this.mata.vivos = vencedores
+
+      if (vencedores.length > 1) {
+        this.rodada++
+        const criadas = this.criarConfrontosDaChave()
+        return {
+          rodada: this.rodada,
+          temporada: this.temporada,
+          fase: "mata",
+          faseDaChave: this.mata.faseAtual,
+          partidas: criadas,
+        }
+      }
+
+      // Sobrou um: é o campeão da chave, e agora sim a temporada fecha.
+      this.mata.campeao = vencedores[0]
+      campeaoDaCopaAgora = this.clubes.get(vencedores[0]) ?? null
+      campeaoAgora = this.encerrarTemporada()
+    } else if (this.rodadasDaTemporada > 0 && this.rodada >= this.rodadasDaTemporada) {
+      // Fim do turno: abre a chave. Se o mundo for pequeno demais para ter
+      // chave, a temporada fecha direto, como antes.
+      const chave = this.abrirMataMata()
+      if (chave) {
+        this.rodada++
+        const criadas = this.criarConfrontosDaChave()
+        return {
+          rodada: this.rodada,
+          temporada: this.temporada,
+          fase: "mata",
+          faseDaChave: this.mata.faseAtual,
+          campeaoDaLiga: { fileKey: this.classificacao()[0].fileKey, nome: this.classificacao()[0].nome },
+          partidas: criadas,
+        }
+      }
       campeaoAgora = this.encerrarTemporada()
     }
 
@@ -353,30 +530,17 @@ export class CarreiraOnline {
       const par = this.rodada % 2 === 0
         ? [rotacionados[foraIdx], rotacionados[casaIdx]]
         : [rotacionados[casaIdx], rotacionados[foraIdx]]
-      const casa = this.clubes.get(par[0])
-      const fora = this.clubes.get(par[1])
-      const partida = {
-        matchId: crypto.randomUUID(),
-        rodada: this.rodada,
-        casa: casa.fileKey,
-        fora: fora.fileKey,
-        // ⚠️ A SEMENTE É O CORAÇÃO DO MODO: é ela que faz as duas máquinas
-        // jogarem a MESMA partida. Sorteada aqui, nunca no cliente.
-        semente: crypto.randomInt(1, 2 ** 31 - 1),
-        forcaCasa: this.forcaDe(casa),
-        forcaFora: this.forcaDe(fora),
-        placar: null,
-        enviadoPor: null,
-        criadaEm: agora(),
-      }
-      this.partidas.set(partida.matchId, partida)
-      criadas.push(partida)
+      criadas.push(this.criarPartida(par[0], par[1]))
     }
     return {
       rodada: this.rodada,
       temporada: this.temporada,
       rodadasDaTemporada: this.rodadasDaTemporada,
+      fase: "liga",
       campeaoAnterior: campeaoAgora ? { fileKey: campeaoAgora.fileKey, nome: campeaoAgora.nome } : null,
+      campeaoDaCopaAnterior: campeaoDaCopaAgora
+        ? { fileKey: campeaoDaCopaAgora.fileKey, nome: campeaoDaCopaAgora.nome }
+        : null,
       partidas: criadas,
     }
   }
@@ -633,6 +797,14 @@ export class CarreiraOnline {
       rodada: this.rodada,
       temporada: this.temporada,
       rodadasDaTemporada: this.rodadasDaTemporada,
+      fase: this.fase,
+      mataMata: this.mata
+        ? {
+          faseAtual: this.mata.faseAtual,
+          vivos: this.mata.vivos.map(k => ({ fileKey: k, nome: this.clubes.get(k)?.nome ?? k })),
+          campeao: this.mata.campeao,
+        }
+        : null,
       historico: this.historico.slice(-10).reverse(),
       pendentes: this.pendentes(this.rodada).length,
       sou: membro,

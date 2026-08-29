@@ -77,6 +77,27 @@ function jogarComSemente(partida: PartidaDoMundo, casa: Team, fora: Team): { cas
   }
 }
 
+/**
+ * O nome da fase pelo numero de clubes vivos.
+ *
+ * ⚠️ OS ROTULOS VEM DA TRADUCAO, nao chumbados aqui. A primeira versao desta
+ * funcao devolvia "Final"/"Semifinal" em texto direto e a catraca de traducao
+ * reprovou o build na hora (5574 -> 5578). O portao estava certo: rotulo que o
+ * jogador le e frase do jogo, e este jogo se propoe a falar 126 idiomas.
+ *
+ * ⚠️ Chave maior que oito nao existe (`MAXIMO_NO_MATA_MATA` no relay), entao
+ * "oitavas" nunca aparece. Se o teto subir, este rotulo tem de subir junto —
+ * senao a tela diz "Mata-mata" generico numa fase que tem nome.
+ */
+function nomeDaFase(vivos: number, rotulos: {
+  final: string; semifinal: string; quartas: string; mata_mata: string
+}): string {
+  if (vivos <= 2) return rotulos.final
+  if (vivos <= 4) return rotulos.semifinal
+  if (vivos <= 8) return rotulos.quartas
+  return rotulos.mata_mata
+}
+
 export default function CarreiraOnlinePage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/online") })
   const t = useTranslation()
@@ -218,7 +239,9 @@ export default function CarreiraOnlinePage() {
             <span className="rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[11px] text-white/55">
               {mundo.ocupadas}/{mundo.vagas} {t.carreiraOnline.vagas}
               {" · "}{t.carreiraOnline.temporada} {mundo.temporada ?? 1}
-              {" · "}{t.carreiraOnline.rodada} {mundo.rodada}{mundo.rodadasDaTemporada ? `/${mundo.rodadasDaTemporada}` : ""}
+              {" · "}{mundo.fase === "mata" && mundo.mataMata
+                ? nomeDaFase(mundo.mataMata.faseAtual, t.carreiraOnline)
+                : `${t.carreiraOnline.rodada} ${mundo.rodada}${mundo.rodadasDaTemporada ? `/${mundo.rodadasDaTemporada}` : ""}`}
             </span>
           )}
         </header>
@@ -234,6 +257,11 @@ export default function CarreiraOnlinePage() {
             <span>
               {t.carreiraOnline.campeao_anterior}: <b>{mundo.historico[0].nomeDoCampeao}</b>
               {" ("}{mundo.historico[0].pontos}{")"}
+              {mundo.historico[0].nomeDoCampeaoDaCopa && (
+                <>
+                  {" · "}{t.carreiraOnline.campeao_da_copa}: <b>{mundo.historico[0].nomeDoCampeaoDaCopa}</b>
+                </>
+              )}
             </span>
           </p>
         )}

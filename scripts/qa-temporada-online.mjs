@@ -142,6 +142,101 @@ for (const n of [4, 5, 6, 8]) {
   else ok("n=2: a tabela do mundo pequeno preserva os pontos")
 }
 
+// ── O MATA-MATA DO FIM DA TEMPORADA (1.0.379) ──────────────────────────────
+//
+// ⚠️ A TEMPORADA NAO FECHA MAIS NO FIM DO TURNO: ela entra na chave, e so
+// termina quando a final sai. Sao dois titulos — o do turno, de quem foi mais
+// regular, e o da chave, de quem ganhou as decisoes.
+//
+// ⚠️ O RELAY NAO SIMULA NADA AQUI. As partidas da chave sao as mesmas da liga,
+// com a mesma semente e a mesma confirmacao dupla. O que a chave decide e so
+// quem enfrenta quem.
+{
+  // Placar deterministico: o clube de indice MENOR ganha em casa, empata fora.
+  // Assim a semeadura e previsivel e da para cobrar o desempate.
+  const jogarComVantagemDoMenor = (mundo, r) => {
+    for (const p of r.partidas) {
+      const iCasa = Number(p.casa.slice(5)), iFora = Number(p.fora.slice(5))
+      const [gc, gf] = iCasa < iFora ? [1, 0] : [0, 0]
+      const tc = [...mundo.membros.values()].find(x => x.fileKey === p.casa && x.papel === "tecnico")
+      const tf = [...mundo.membros.values()].find(x => x.fileKey === p.fora && x.papel === "tecnico")
+      mundo.registrarResultado(p.matchId, tc.id, gc, gf)
+      mundo.registrarResultado(p.matchId, tf.id, gc, gf)
+    }
+  }
+
+  for (const n of [4, 8]) {
+    const mundo = mundoCom(n)
+    const fases = []
+    let fechou = null
+    for (let i = 0; i < n * 3 + 8; i++) {
+      const r = mundo.avancarRodada("t0")
+      if (r.erro) { erro(`chave n=${n}: rodada recusada (${r.erro})`); break }
+      if (r.fase === "mata") fases.push(r.faseDaChave)
+      if (r.campeaoAnterior) { fechou = r; break }
+      jogarComVantagemDoMenor(mundo, r)
+    }
+
+    const esperadas = []
+    for (let k = n; k >= 2; k = k / 2) esperadas.push(k)
+    if (JSON.stringify(fases) !== JSON.stringify(esperadas)) {
+      erro(`chave n=${n}: fases ${JSON.stringify(fases)}, esperava ${JSON.stringify(esperadas)}`)
+    } else {
+      ok(`chave n=${n}: ${fases.length} fase(s) ate a final (${fases.join(" -> ")})`)
+    }
+
+    if (!fechou) {
+      erro(`chave n=${n}: a temporada nao fechou depois da final`)
+    } else if (!fechou.campeaoDaCopaAnterior) {
+      erro(`chave n=${n}: temporada fechou sem campeao da copa`)
+    } else {
+      ok(`chave n=${n}: temporada fechou com liga=${fechou.campeaoAnterior.nome} e copa=${fechou.campeaoDaCopaAnterior.nome}`)
+    }
+
+    const h = mundo.historico[0]
+    if (!h || !h.nomeDoCampeao || !h.nomeDoCampeaoDaCopa) {
+      erro(`chave n=${n}: o historico nao guardou os DOIS titulos`)
+    } else {
+      ok(`chave n=${n}: historico com os dois titulos`)
+    }
+  }
+
+  // ⚠️ EMPATE NA CHAVE PRECISA DE DESFECHO. O relay nao simula, entao nao ha
+  // penaltis: avanca quem fez melhor campanha no turno. Sem esta regra a fase
+  // ficaria pendurada para sempre e o mundo travaria — o mesmo tipo de travamento
+  // que a confirmacao dupla causou na 1.0.377 antes do W.O. de prazo.
+  {
+    const mundo = mundoCom(4)
+    let entrouNaChave = false
+    for (let i = 0; i < 20; i++) {
+      const r = mundo.avancarRodada("t0")
+      if (r.erro) { erro(`empate: rodada recusada (${r.erro})`); break }
+      const naChave = r.fase === "mata"
+      if (naChave) entrouNaChave = true
+      for (const p of r.partidas) {
+        const tc = [...mundo.membros.values()].find(x => x.fileKey === p.casa && x.papel === "tecnico")
+        const tf = [...mundo.membros.values()].find(x => x.fileKey === p.fora && x.papel === "tecnico")
+        // Na liga o menor indice ganha (define a campanha); na chave, TUDO empata.
+        const iCasa = Number(p.casa.slice(5)), iFora = Number(p.fora.slice(5))
+        const [gc, gf] = naChave ? [0, 0] : (iCasa < iFora ? [1, 0] : [0, 0])
+        mundo.registrarResultado(p.matchId, tc.id, gc, gf)
+        mundo.registrarResultado(p.matchId, tf.id, gc, gf)
+      }
+      if (r.campeaoAnterior) {
+        if (!entrouNaChave) { erro("empate: a temporada fechou sem passar pela chave"); break }
+        if (!r.campeaoDaCopaAnterior) {
+          erro("empate: chave so de empates nao produziu campeao — o mundo travaria")
+        } else if (r.campeaoDaCopaAnterior.fileKey !== "clube_0") {
+          erro(`empate: avancou ${r.campeaoDaCopaAnterior.nome}, esperava o de melhor campanha (Clube 0)`)
+        } else {
+          ok("chave: empate resolvido pela melhor campanha, sem travar o mundo")
+        }
+        break
+      }
+    }
+  }
+}
+
 for (const dir of temporarios) { try { rmSync(dir, { recursive: true, force: true }) } catch { /* limpeza best-effort */ } }
 
 console.log(falhas === 0

@@ -101,6 +101,9 @@ export interface TemporadaEncerrada {
   temporada: number
   campeao: string
   nomeDoCampeao: string
+  /** Campeao do mata-mata. Nulo em temporada anterior a chave existir. */
+  campeaoDaCopa?: string | null
+  nomeDoCampeaoDaCopa?: string | null
   pontos: number
   encerradaEm: number
   podio: { fileKey: string; nome: string; pontos: number }[]
@@ -114,6 +117,18 @@ export interface EstadoDoMundo {
   temporada?: number
   /** Quantas rodadas tem esta temporada. 0 = ainda nao comecou. */
   rodadasDaTemporada?: number
+  /**
+   * "liga" enquanto corre o turno, "mata" durante o mata-mata do fim da
+   * temporada. A temporada so fecha quando a final e decidida.
+   */
+  fase?: "liga" | "mata"
+  /** A chave em andamento, quando `fase` e "mata". */
+  mataMata?: {
+    /** Quantos clubes ainda estao vivos nesta fase (8 = quartas, 2 = final). */
+    faseAtual: number
+    vivos: { fileKey: string; nome: string }[]
+    campeao: string | null
+  } | null
   /** As dez ultimas temporadas encerradas, da mais recente para a mais antiga. */
   historico?: TemporadaEncerrada[]
   pendentes: number
