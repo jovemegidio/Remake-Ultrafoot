@@ -2461,7 +2461,7 @@ export default function PartidaAoVivoPage() {
   <StatBar label="Entradas na Área" homeValue={state.home?.entradasNaArea ?? 0} awayValue={state.away?.entradasNaArea ?? 0} />
   <StatBar label="Recuperações Altas" homeValue={state.home?.recuperacoesAltas ?? 0} awayValue={state.away?.recuperacoesAltas ?? 0} />
   <div className="rounded-lg border border-white/[0.06] bg-black/15 p-2.5">
-    <p className="mb-2 text-center text-[9px] font-bold uppercase tracking-wider text-white/35">Ataques por corredor · E / C / D</p>
+    <p className="mb-2 text-center text-[9px] font-bold uppercase tracking-wider text-white/35">{t.match.ataques_por_corredor_e_c_d}</p>
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[10px] font-bold">
       <span className="text-white/65">{state.home.ataquesPorCorredor?.esquerda ?? 0} / {state.home.ataquesPorCorredor?.centro ?? 0} / {state.home.ataquesPorCorredor?.direita ?? 0}</span>
       <span className="text-white/20">×</span>
@@ -2474,9 +2474,9 @@ export default function PartidaAoVivoPage() {
 
                 {activeTab === "narration" && (
                   <div className="space-y-3">
-                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2">Narração ao vivo</h3>
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2">{t.match.narracao_ao_vivo}</h3>
                     {state.events.length === 0 ? (
-                      <p className="text-white/30 text-sm py-8 text-center">O jogo vai começar...</p>
+                      <p className="text-white/30 text-sm py-8 text-center">{t.match.o_jogo_vai_comecar}</p>
                     ) : (
                       <ul className="space-y-1.5">
                         {state.events.map((e) => {
@@ -2615,8 +2615,8 @@ export default function PartidaAoVivoPage() {
                     <div className="rounded-xl border border-[var(--brand)]/20 bg-[#071817]/75 p-3">
                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <div>
-                          <p className="text-xs font-black uppercase tracking-wider text-white">Escalação em campo</p>
-                          <p className="mt-0.5 text-[11px] text-white/45">A formação é aplicada imediatamente ao radar e à partida.</p>
+                          <p className="text-xs font-black uppercase tracking-wider text-white">{t.match.escalacao_em_campo}</p>
+                          <p className="mt-0.5 text-[11px] text-white/45">{t.match.a_formacao_e_aplicada_imediatamente_ao}</p>
                         </div>
                         <span className="rounded-md bg-[var(--brand)]/15 px-2 py-1 text-sm font-black text-[var(--brand)]">{liveFormation}</span>
                       </div>
@@ -2661,7 +2661,7 @@ export default function PartidaAoVivoPage() {
                     <div className="mb-4 rounded-lg border border-[var(--brand)]/20 bg-[var(--brand)]/[0.04] p-3">
                       <div className="mb-2 flex items-center justify-between">
                         <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">Sua mentalidade</span>
-                        <span className="text-white/30 text-[10px]">muda em tempo real</span>
+                        <span className="text-white/30 text-[10px]">{t.match.muda_em_tempo_real}</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         {([
@@ -2690,9 +2690,9 @@ export default function PartidaAoVivoPage() {
                         pressao permanecem ativos ate o minuto exibido. */}
                     <div className="mb-4 rounded-lg border border-amber-400/20 bg-amber-400/[0.04] p-3">
                       <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-white/70">Decisões do técnico</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-white/70">{t.match.decisoes_do_tecnico}</span>
                         {sim.suggestedDecision && (
-                          <span className="text-[10px] text-amber-300">auxiliar sugere</span>
+                          <span className="text-[10px] text-amber-300">{t.match.auxiliar_sugere}</span>
                         )}
                       </div>
                       <div className="grid grid-cols-4 gap-1.5">
@@ -2748,8 +2748,8 @@ export default function PartidaAoVivoPage() {
                           <span className="text-white text-sm font-medium">{siglaExibivel(homeTeam.curto, homeTeam.nome)}</span>
                         </div>
                         <div className="text-[var(--brand)] text-lg font-bold">{userSide === "home" ? liveFormation : "4-4-2"}</div>
-                        <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
-                        <div className="text-white/40 text-xs">Mentalidade: Normal</div>
+                        <div className="text-white/40 text-xs mt-1">{t.match.posse_equilibrado}</div>
+                        <div className="text-white/40 text-xs">{t.match.mentalidade_normal}</div>
                       </div>
 
                       {/* Formacao Fora */}
@@ -2759,8 +2759,8 @@ export default function PartidaAoVivoPage() {
                           <span className="text-white text-sm font-medium">{siglaExibivel(awayTeam.curto, awayTeam.nome)}</span>
                         </div>
                         <div className="text-[var(--brand)] text-lg font-bold">{userSide === "away" ? liveFormation : "4-4-2"}</div>
-                        <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
-                        <div className="text-white/40 text-xs">Mentalidade: Normal</div>
+                        <div className="text-white/40 text-xs mt-1">{t.match.posse_equilibrado}</div>
+                        <div className="text-white/40 text-xs">{t.match.mentalidade_normal}</div>
                       </div>
                     </div>
 
@@ -2893,7 +2893,7 @@ export default function PartidaAoVivoPage() {
                   <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white/50">
                     <Triangle className="w-3 h-3 fill-current" />
                   </span>
-                  <span className="text-white/60 text-sm">Coletiva pos-jogo</span>
+                  <span className="text-white/60 text-sm">{t.match.coletiva_pos_jogo}</span>
                 </div>
               )}
             </div>

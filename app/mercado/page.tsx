@@ -1332,11 +1332,11 @@ export default function MercadoPage() {
               <FiltroCompacto rotulo="Clube" valor={filterTeam} opcoes={filterOptions.time} onChange={setFilterTeam} />
               <FiltroCompacto rotulo="Situação" valor={filterStatus} opcoes={STATUS_OPTIONS} onChange={setFilterStatus} />
               <label className="flex min-w-[92px] flex-col gap-1">
-                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">Idade mín.</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">{t.market.idade_min}</span>
                 <input type="number" min={15} max={maxAge} value={minAge} onChange={e => setMinAge(Math.max(15, Math.min(maxAge, Number(e.target.value))))} className="h-9 rounded-lg border border-white/10 bg-black/40 px-2 text-sm text-white outline-none focus:border-[var(--brand)]/50" />
               </label>
               <label className="flex min-w-[92px] flex-col gap-1">
-                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">Idade máx.</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">{t.market.idade_max}</span>
                 <input type="number" min={minAge} max={45} value={maxAge} onChange={e => setMaxAge(Math.max(minAge, Math.min(45, Number(e.target.value))))} className="h-9 rounded-lg border border-white/10 bg-black/40 px-2 text-sm text-white outline-none focus:border-[var(--brand)]/50" />
               </label>
               {/* VALOR DE MERCADO (pedido). Campos de TEXTO com separador de
@@ -1344,7 +1344,7 @@ export default function MercadoPage() {
                   nao dava para saber se eram 2 ou 22 milhoes — a mesma correcao
                   ja feita no campo de lance do leilao. Vazio = sem limite. */}
               <label className="flex min-w-[132px] flex-col gap-1">
-                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">Valor mín.</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">{t.market.valor_min}</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -1358,7 +1358,7 @@ export default function MercadoPage() {
                 />
               </label>
               <label className="flex min-w-[132px] flex-col gap-1">
-                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">Valor máx.</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">{t.market.valor_max}</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -1420,7 +1420,7 @@ export default function MercadoPage() {
                     )}>
                       {selectedPosition === "Tudo" ? t.market.any : selectedPosition}
                     </div>
-                    <span className="text-[10px] text-white/30">clique para alternar</span>
+                    <span className="text-[10px] text-white/30">{t.market.clique_para_alternar}</span>
                   </div>
                 }
               />
@@ -1517,7 +1517,7 @@ export default function MercadoPage() {
             {!buscaAtiva ? (
               <div className="mt-6 flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[#0c0c10]/70 p-8 text-center backdrop-blur-sm">
                 <Search className="h-12 w-12 text-white/10" />
-                <h3 className="mt-4 text-lg text-white/55">Procure um atleta</h3>
+                <h3 className="mt-4 text-lg text-white/55">{t.market.procure_um_atleta}</h3>
                 <p className="mt-2 max-w-md text-sm text-white/35">
                   Digite um nome acima ou use os filtros (posição, idade, país, liga, time…).
                   O catálogo tem {transferTargets.length.toLocaleString("pt-BR")} atletas — os
@@ -1575,7 +1575,7 @@ export default function MercadoPage() {
                 ))}
                 {filteredPlayers.length === 0 && (
                   <div className="rounded-xl border border-white/[0.06] bg-[#0c0c10]/75 p-8 text-center backdrop-blur-sm">
-                    <p className="text-white/50">Nenhum atleta com esses filtros.</p>
+                    <p className="text-white/50">{t.market.nenhum_atleta_com_esses_filtros}</p>
                     <button onClick={clearAllFilters} className="mt-3 text-sm text-[var(--brand)] hover:underline">
                       Limpar filtros
                     </button>
@@ -1609,7 +1609,7 @@ export default function MercadoPage() {
             <div className="mt-6 flex items-center gap-6 pb-4 text-xs text-white/50">
               <div className="flex items-center gap-2">
                 <span className="rounded border border-white/30 px-1.5 py-0.5">Enter</span>
-                <span>Abrir o atleta selecionado (ou dois cliques nele)</span>
+                <span>{t.market.abrir_o_atleta_selecionado_ou_dois}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="rounded border border-white/30 px-1.5 py-0.5">Esc</span>
@@ -1635,7 +1635,7 @@ export default function MercadoPage() {
             <div className="flex items-center gap-4 mb-6">
               <span className="text-white font-semibold">{t.market.scouts}</span>
               <span className="text-white/20">|</span>
-              <span className="text-white/40">Contrate, envie e acompanhe relatorios</span>
+              <span className="text-white/40">{t.market.contrate_envie_e_acompanhe_relatorios}</span>
             </div>
 
             <div className="grid min-h-0 flex-1 grid-cols-12 gap-4 overflow-hidden">
@@ -1658,8 +1658,8 @@ export default function MercadoPage() {
                 {hiredScouts.length === 0 ? (
                   <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-8 text-center">
                     <Briefcase className="mx-auto mb-3 h-10 w-10 text-white/25" />
-                    <p className="text-white font-semibold">Nenhum olheiro contratado</p>
-                    <p className="mt-1 text-sm text-white/45">Contrate um olheiro para liberar buscas por regiao.</p>
+                    <p className="text-white font-semibold">{t.market.nenhum_olheiro_contratado}</p>
+                    <p className="mt-1 text-sm text-white/45">{t.market.contrate_um_olheiro_para_liberar_buscas}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1736,7 +1736,7 @@ export default function MercadoPage() {
                         {expandedScoutId === scout.id && !scout.isSearching && (
                           <div className="mt-4 grid gap-3 border-t border-white/[0.04] pt-4 sm:grid-cols-3">
                             <label className="flex flex-col gap-1">
-                              <span className="text-[10px] uppercase tracking-wider text-white/40">Posição procurada</span>
+                              <span className="text-[10px] uppercase tracking-wider text-white/40">{t.market.posicao_procurada}</span>
                               <select
                                 value={scoutPos}
                                 onChange={e => setScoutPos(e.target.value)}
@@ -1747,7 +1747,7 @@ export default function MercadoPage() {
                               </select>
                             </label>
                             <label className="flex flex-col gap-1">
-                              <span className="text-[10px] uppercase tracking-wider text-white/40">Potencial mínimo</span>
+                              <span className="text-[10px] uppercase tracking-wider text-white/40">{t.market.potencial_minimo}</span>
                               <select
                                 value={scoutMinPot}
                                 onChange={e => setScoutMinPot(Number(e.target.value))}
@@ -1758,7 +1758,7 @@ export default function MercadoPage() {
                               </select>
                             </label>
                             <label className="flex flex-col gap-1">
-                              <span className="text-[10px] uppercase tracking-wider text-white/40">Idade máxima</span>
+                              <span className="text-[10px] uppercase tracking-wider text-white/40">{t.market.idade_maxima}</span>
                               <select
                                 value={scoutMaxAge}
                                 onChange={e => setScoutMaxAge(Number(e.target.value))}
@@ -1800,7 +1800,7 @@ export default function MercadoPage() {
                   </div>
 
                   {availableScouts.length === 0 ? (
-                    <p className="text-sm text-white/45">Todos os olheiros disponiveis ja foram contratados.</p>
+                    <p className="text-sm text-white/45">{t.market.todos_os_olheiros_disponiveis_ja_foram}</p>
                   ) : (
                     <div className="space-y-2">
                       {availableScouts.slice(0, 4).map((scout) => (
@@ -1832,7 +1832,7 @@ export default function MercadoPage() {
                   {scoutedLeads.length === 0 ? (
                     <div className="rounded-lg bg-white/[0.03] p-5 text-center">
                       <EyeOff className="mx-auto mb-2 h-8 w-8 text-white/20" />
-                      <p className="text-sm text-white/45">Nenhum jogador descoberto ainda.</p>
+                      <p className="text-sm text-white/45">{t.market.nenhum_jogador_descoberto_ainda}</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1920,9 +1920,9 @@ export default function MercadoPage() {
               a vaga na academia e o garoto entra na base, nao no profissional. */}
           <TabsContent value="juniores" className="mt-0 flex min-h-0 flex-1 flex-col">
             <div className="mb-4 flex shrink-0 items-center gap-4">
-              <span className="font-semibold text-white">Mercado de Juniores</span>
+              <span className="font-semibold text-white">{t.market.mercado_de_juniores}</span>
               <span className="text-white/20">|</span>
-              <span className="text-white/40">Promessas de outros clubes para a sua categoria de base</span>
+              <span className="text-white/40">{t.market.promessas_de_outros_clubes_para_a}</span>
             </div>
             <MercadoJunioresPanel
               prospectos={prospectosJuniores}
@@ -1940,7 +1940,7 @@ export default function MercadoPage() {
             <div className="flex items-center gap-4 mb-6">
               <span className="text-white font-semibold">Propostas Enviadas</span>
               <span className="text-white/20">|</span>
-              <span className="text-white/40">Negociacoes em andamento</span>
+              <span className="text-white/40">{t.market.negociacoes_em_andamento}</span>
             </div>
 
             <div className="grid min-h-0 flex-1 grid-cols-2 gap-6">
@@ -1994,7 +1994,7 @@ export default function MercadoPage() {
               {chegadasPendentes.length > 0 && (
                 <div className="mb-4 rounded-xl border border-[var(--brand)]/25 bg-[var(--brand)]/[0.06] overflow-hidden">
                   <div className="flex items-center justify-between border-b border-[var(--brand)]/15 px-5 py-3">
-                    <h3 className="text-sm font-semibold text-white">Acertados, aguardando a janela</h3>
+                    <h3 className="text-sm font-semibold text-white">{t.market.acertados_aguardando_a_janela}</h3>
                     <span className="text-xs text-[var(--brand)]">{chegadasPendentes.length}</span>
                   </div>
                   <div className="divide-y divide-white/[0.04]">
@@ -2052,8 +2052,8 @@ export default function MercadoPage() {
                 {sentProposals.length === 0 ? (
                   <div className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
                     <ArrowLeftRight className="mb-4 h-12 w-12 text-white/20" />
-                    <p className="text-white/60">Voce nao fez nenhuma proposta ainda.</p>
-                    <p className="mt-2 text-sm text-white/40">Escolha um jogador na Rede Mundial e negocie compra ou emprestimo.</p>
+                    <p className="text-white/60">{t.market.voce_nao_fez_nenhuma_proposta_ainda}</p>
+                    <p className="mt-2 text-sm text-white/40">{t.market.escolha_um_jogador_na_rede_mundial}</p>
                   </div>
                 ) : (
                   <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-white/[0.04] scrollbar-thin">
@@ -2117,7 +2117,7 @@ export default function MercadoPage() {
             <div className="flex items-center gap-4 mb-6">
               <span className="text-white font-semibold">Propostas Recebidas</span>
               <span className="text-white/20">|</span>
-              <span className="text-white/40">Ofertas de outros clubes</span>
+              <span className="text-white/40">{t.market.ofertas_de_outros_clubes}</span>
             </div>
 
             <div className="grid min-h-0 flex-1 grid-cols-2 gap-6">
@@ -2151,13 +2151,13 @@ export default function MercadoPage() {
                   No lugar, a tela EXPLICA o que de fato atrai proposta.
                 */}
                 <div className="mt-6 rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-white/40">O que atrai sondagem</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/40">{t.market.o_que_atrai_sondagem}</p>
                   <ul className="mt-2 space-y-1.5 text-sm text-white/55">
-                    <li>• Atleta na <span className="text-white/80">lista de transferíveis</span> — é o anúncio ao mercado</li>
-                    <li>• Bom momento: forma acima do overall</li>
-                    <li>• Jovem de potencial alto</li>
-                    <li>• <span className="text-white/80">Contrato perto do fim</span> — dá para levar barato</li>
-                    <li>• Atleta insatisfeito no clube</li>
+                    <li>• Atleta na <span className="text-white/80">{t.market.lista_de_transferiveis}</span> — é o anúncio ao mercado</li>
+                    <li>{t.market.bom_momento_forma_acima_do_overall}</li>
+                    <li>{t.market.jovem_de_potencial_alto}</li>
+                    <li>• <span className="text-white/80">{t.market.contrato_perto_do_fim}</span> — dá para levar barato</li>
+                    <li>{t.market.atleta_insatisfeito_no_clube}</li>
                   </ul>
                   <p className="mt-3 text-xs text-white/35">
                     As propostas chegam ao AVANÇAR a semana, e muito mais durante a janela.
@@ -2167,15 +2167,15 @@ export default function MercadoPage() {
 
               <div className="flex min-h-0 flex-col rounded-xl bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] overflow-hidden">
                 <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-5 py-4">
-                  <h3 className="text-sm font-semibold text-white">Caixa de ofertas</h3>
+                  <h3 className="text-sm font-semibold text-white">{t.market.caixa_de_ofertas}</h3>
                   <span className="text-xs text-white/35">{gameEngine.transferOffers.length} total</span>
                 </div>
 
                 {pendingReceivedOffers.length === 0 && pastReceivedOffers.length === 0 ? (
                   <div className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
                     <ArrowLeftRight className="mb-4 h-12 w-12 text-white/20" />
-                    <p className="text-white/60">Voce nao recebeu nenhuma proposta.</p>
-                    <p className="mt-2 text-sm text-white/40">Avance semanas ou use Atualizar interesse para simular movimentacao do mercado.</p>
+                    <p className="text-white/60">{t.market.voce_nao_recebeu_nenhuma_proposta}</p>
+                    <p className="mt-2 text-sm text-white/40">{t.market.avance_semanas_ou_use_atualizar_interesse}</p>
                   </div>
                 ) : (
                   <div className="min-h-0 flex-1 overflow-y-auto p-4 scrollbar-thin">
@@ -2894,7 +2894,7 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
               {/* Era so "Potencial" sobre dois numeros — ninguem sabia que o
                   primeiro e o overall de HOJE e o segundo o teto. */}
               <div>
-                <span className="text-white/50">Overall / potencial</span>
+                <span className="text-white/50">{t.market.overall_potencial}</span>
                 <div className="flex items-center gap-1">
                   <span className="text-primary font-bold">{ate99(player.overall)}</span>
                   <span className="text-white/30">-</span>
@@ -2906,7 +2906,7 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
                 <div className="text-white font-bold">{player.age}</div>
               </div>
               <div>
-                <span className="text-white/50">Altura e peso</span>
+                <span className="text-white/50">{t.market.altura_e_peso}</span>
                 <div className="text-white font-bold">{player.height}/{player.weight?.replace(" kg", "kg")}</div>
               </div>
               <div>
@@ -2984,7 +2984,7 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
               {/* Scout progress */}
               <div className="mt-4">
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-white/50">Estado do relatorio</span>
+                  <span className="text-white/50">{t.market.estado_do_relatorio}</span>
                   <span className="text-white">{player.scoutProgress || 0}%</span>
                 </div>
                 <div className="h-1 bg-white/10 rounded-full overflow-hidden">

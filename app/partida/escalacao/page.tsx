@@ -625,7 +625,7 @@ export default function PartidaEscalacaoPage() {
             </Button>
             <h1 className="text-lg md:text-xl font-bold text-white">{t.squad.tacticalView}</h1>
             <div className="hidden md:flex items-center gap-4 text-white/60">
-              <span>Gestao de Auxiliares Tec.</span>
+              <span>{t.squad.gestao_de_auxiliares_tec}</span>
               <span>Predefinicoes Taticas</span>
             </div>
           </div>
@@ -1454,7 +1454,7 @@ export default function PartidaEscalacaoPage() {
             className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
           >
             <RotateCcw className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
-            <span className="hidden md:inline">Editar tatica ativa</span>
+            <span className="hidden md:inline">{t.squad.editar_tatica_ativa}</span>
           </Button>
         </div>
         
@@ -1566,7 +1566,7 @@ export default function PartidaEscalacaoPage() {
               className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 max-w-md w-full"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white">Perfil do Jogador</h2>
+                <h2 className="text-lg font-bold text-white">{t.squad.perfil_do_jogador}</h2>
                 <button onClick={() => setShowPlayerProfile(false)} className="p-2 rounded-lg hover:bg-white/10">
                   <X className="h-5 w-5 text-white/60" />
                 </button>
@@ -1628,15 +1628,15 @@ export default function PartidaEscalacaoPage() {
               <div className="space-y-3">
                 <div className="p-3 rounded-lg bg-white/5">
                   <h3 className="text-sm font-medium text-white mb-1">Arrastar jogadores</h3>
-                  <p className="text-xs text-white/50">Arraste jogadores no campo para reposiciona-los ou troca-los com reservas.</p>
+                  <p className="text-xs text-white/50">{t.squad.arraste_jogadores_no_campo_para_reposiciona}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5">
                   <h3 className="text-sm font-medium text-white mb-1">Trocar formacao</h3>
-                  <p className="text-xs text-white/50">Use as setas ao lado da formacao para alterar entre diferentes esquemas taticos.</p>
+                  <p className="text-xs text-white/50">{t.squad.use_as_setas_ao_lado_da}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5">
                   <h3 className="text-sm font-medium text-white mb-1">Ver detalhes</h3>
-                  <p className="text-xs text-white/50">Clique em um jogador para ver seus atributos no painel lateral.</p>
+                  <p className="text-xs text-white/50">{t.squad.clique_em_um_jogador_para_ver}</p>
                 </div>
               </div>
             </motion.div>

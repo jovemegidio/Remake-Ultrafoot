@@ -1462,7 +1462,7 @@ export default function NovoJogoPage() {
               >
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
                 <span>
-                  Nao achou o seu time? <strong className="font-semibold text-cyan-100">Crie o seu proprio clube</strong> —
+                  Nao achou o seu time? <strong className="font-semibold text-cyan-100">{t.novoJogo.crie_o_seu_proprio_clube}</strong> —
                   nome, cores, escudo, uniformes e estadio, comecando da Divisao de Acesso.
                 </span>
               </button>
@@ -1719,7 +1719,7 @@ export default function NovoJogoPage() {
                 onMouseEnter={() => stadiumPhoto && setShowStadiumPhoto(true)}
                 className={cn(cardBase, "flex flex-col items-center px-5 py-4 gap-2", stadiumPhoto && "cursor-pointer hover:ring-1 hover:ring-[var(--brand)]/40")}
               >
-                <span className="text-xs text-white/50 tracking-wide">Nome do estádio</span>
+                <span className="text-xs text-white/50 tracking-wide">{t.novoJogo.nome_do_estadio}</span>
                 <span className="text-sm font-black uppercase tracking-wide text-white text-center text-balance leading-tight">{selectedTeam?.estadio_nome}</span>
                 <Building2 className="w-9 h-9 text-white/70 mt-1" strokeWidth={1.5} />
                 <span className="text-[11px] text-white/40 tabular-nums">{(selectedTeam?.estadio_cap || 0).toLocaleString("pt-BR")} lugares</span>
@@ -1800,7 +1800,7 @@ export default function NovoJogoPage() {
                     )} />
                   </motion.div>
                   {!profile.foundation && (
-                    <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-white/25">sem registro histórico</p>
+                    <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-white/25">{t.novoJogo.sem_registro_historico}</p>
                   )}
                 </div>
 
@@ -1848,11 +1848,11 @@ export default function NovoJogoPage() {
                 {/* Valores */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <span className="text-[12px] text-white/50">Valor do clube</span>
+                    <span className="text-[12px] text-white/50">{t.novoJogo.valor_do_clube}</span>
                     <div className="text-2xl font-black gradient-text-primary tabular-nums leading-tight">{formatCompact(profile.clubValue)}</div>
                   </div>
                   <div className="text-center">
-                    <span className="text-[12px] text-white/50">Verba de transf.</span>
+                    <span className="text-[12px] text-white/50">{t.novoJogo.verba_de_transf}</span>
                     <div className="text-2xl font-black text-white tabular-nums leading-tight">{formatCompact(profile.transferBudget)}</div>
                   </div>
                 </div>
@@ -1860,7 +1860,7 @@ export default function NovoJogoPage() {
 
               {/* Card Diretoria */}
               <div className={cn(cardBase, "px-6 py-4 text-center")}>
-                <span className="text-xs text-white/50 tracking-wide">Expectativa da Diretoria</span>
+                <span className="text-xs text-white/50 tracking-wide">{t.novoJogo.expectativa_da_diretoria}</span>
                 <p className="text-sm font-black uppercase tracking-wide text-white mt-1 text-balance leading-snug">{profile.board}</p>
               </div>
             </div>
@@ -2132,7 +2132,7 @@ export default function NovoJogoPage() {
             </div>
 
               <div className="mt-4 border-t border-white/10 pt-4">
-                <h4 className="text-sm font-bold text-white">Quem é você em campo</h4>
+                <h4 className="text-sm font-bold text-white">{t.novoJogo.quem_e_voce_em_campo}</h4>
                 <p className="mt-0.5 text-[11px] text-white/45">
                   Começa como promessa: overall modesto e teto alto. Quem decide se você joga é o treinador —
                   e ele decide pela sua nota.
@@ -2263,7 +2263,7 @@ export default function NovoJogoPage() {
                   quem criava carreira que o jogo era outro. É exatamente o que
                   o comentário de `lib/versao-do-jogo.ts` prevê que acontece com
                   número de versão repetido no código. */}
-              <div><p className="text-xs font-black uppercase tracking-[.25em] text-emerald-400">Ultrafoot {versaoDoJogo}</p><h2 id="configuracoes-iniciais-titulo" className="mt-1 text-2xl font-black text-white">Configurações iniciais</h2><p className="mt-1 text-sm text-white/55">Estas regras ficam vinculadas a esta carreira.</p></div>
+              <div><p className="text-xs font-black uppercase tracking-[.25em] text-emerald-400">Ultrafoot {versaoDoJogo}</p><h2 id="configuracoes-iniciais-titulo" className="mt-1 text-2xl font-black text-white">{t.novoJogo.configuracoes_iniciais}</h2><p className="mt-1 text-sm text-white/55">{t.novoJogo.estas_regras_ficam_vinculadas_a_esta}</p></div>
               <button onClick={() => setShowInitialSettings(false)} aria-label="Fechar configurações" className="rounded-xl border border-white/10 p-2 text-white/60 hover:text-white"><X className="h-5 w-5" /></button>
             </div>
 
@@ -2332,7 +2332,7 @@ export default function NovoJogoPage() {
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-white">Técnicos nesta carreira</h3>
+                  <h3 className="text-sm font-bold text-white">{t.novoJogo.tecnicos_nesta_carreira}</h3>
                   <p className="mt-0.5 text-xs text-white/45">
                     Até {MAXIMO_DE_TECNICOS} pessoas no mesmo mundo, cada uma com seu clube.
                     A rodada só avança quando todas fecham as decisões.
@@ -2417,18 +2417,18 @@ export default function NovoJogoPage() {
               </ConfigGroup>
               <ConfigGroup title="Desempenho do computador">
                 <select value={configuracoes283.perfilDesempenho} onChange={e => setConfiguracoes283(c => ({ ...c, perfilDesempenho: e.target.value as ConfiguracoesIniciais283["perfilDesempenho"] }))} className="w-full rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white">
-                  <option value="automatico">Automático (recomendado)</option><option value="economico">Econômico</option><option value="equilibrado">Equilibrado</option><option value="qualidade">Qualidade máxima</option>
+                  <option value="automatico">{t.novoJogo.automatico_recomendado}</option><option value="economico">Econômico</option><option value="equilibrado">Equilibrado</option><option value="qualidade">{t.novoJogo.qualidade_maxima}</option>
                 </select>
               </ConfigGroup>
-              <ConfigGroup title="Temporada de início"><div className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-white">2026 <span className="ml-2 text-white/45">base de dados atual</span></div></ConfigGroup>
+              <ConfigGroup title="Temporada de início"><div className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-white">2026 <span className="ml-2 text-white/45">{t.novoJogo.base_de_dados_atual}</span></div></ConfigGroup>
               <div className="md:col-span-2">
                 <ConfigGroup title="Perfil e histórico do treinador — FM26">
-                  <p className="mb-4 text-xs text-white/45">Seu passado altera reputação, atributos iniciais, confiança da diretoria e reação do elenco. Escolha até três estilos e duas características.</p>
+                  <p className="mb-4 text-xs text-white/45">{t.novoJogo.seu_passado_altera_reputacao_atributos_iniciai}</p>
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                     <label className="grid gap-1 text-xs text-white/55">Carreira como jogador<select value={managerProfile26.nivelComoJogador} onChange={e => atualizarPerfil26({ nivelComoJogador: e.target.value as NivelComoJogador26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="superastro">Superastro</option><option value="profissional">Profissional</option><option value="semiprofissional">Semiprofissional</option><option value="amador">Amador</option><option value="recreativo">Futebol recreativo</option></select></label>
-                    <label className="grid gap-1 text-xs text-white/55">Experiência anterior<select value={managerProfile26.areaAnterior} onChange={e => atualizarPerfil26({ areaAnterior: e.target.value as AreaAnterior26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="treinamento">Treinamento</option><option value="recrutamento">Operações e recrutamento</option><option value="medica">Departamento médico</option><option value="midia">Mídia e análise</option><option value="arbitragem">Arbitragem</option><option value="nenhuma">Nenhuma</option></select></label>
+                    <label className="grid gap-1 text-xs text-white/55">Experiência anterior<select value={managerProfile26.areaAnterior} onChange={e => atualizarPerfil26({ areaAnterior: e.target.value as AreaAnterior26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="treinamento">Treinamento</option><option value="recrutamento">{t.novoJogo.operacoes_e_recrutamento}</option><option value="medica">Departamento médico</option><option value="midia">{t.novoJogo.midia_e_analise}</option><option value="arbitragem">Arbitragem</option><option value="nenhuma">Nenhuma</option></select></label>
                     <label className="grid gap-1 text-xs text-white/55">Reconhecimento anterior<select value={managerProfile26.relevanciaAnterior} onChange={e => atualizarPerfil26({ relevanciaAnterior: e.target.value as RelevanciaAnterior26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="internacional">Internacional</option><option value="nacional">Nacional</option><option value="regional">Regional</option><option value="anonimo">Desconhecido</option></select></label>
-                    <label className="grid gap-1 text-xs text-white/55">Licença<select value={managerProfile26.licenca} onChange={e => atualizarPerfil26({ licenca: e.target.value as LicencaTreinador26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="pro">Licença Pro</option><option value="a">Licença A</option><option value="b">Licença B</option><option value="c">Licença C</option><option value="nenhuma">Sem licença</option></select></label>
+                    <label className="grid gap-1 text-xs text-white/55">Licença<select value={managerProfile26.licenca} onChange={e => atualizarPerfil26({ licenca: e.target.value as LicencaTreinador26 })} className="rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-white"><option value="pro">{t.novoJogo.licenca_pro}</option><option value="a">{t.novoJogo.licenca_a}</option><option value="b">{t.novoJogo.licenca_b}</option><option value="c">{t.novoJogo.licenca_c}</option><option value="nenhuma">{t.novoJogo.sem_licenca}</option></select></label>
                   </div>
                   <div className="mt-4">
                     <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/55">Estilos ({managerProfile26.estilos.length}/3)</p>
@@ -2442,7 +2442,7 @@ export default function NovoJogoPage() {
                 </ConfigGroup>
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-3"><button onClick={() => { setConfiguracoes283(CONFIGURACOES_INICIAIS_283); setManagerProfile26(PERFIL_TREINADOR_26_PADRAO) }} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white/70">Restaurar padrão</button><button onClick={() => setShowInitialSettings(false)} className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-black text-black">Aplicar à carreira</button></div>
+            <div className="mt-6 flex justify-end gap-3"><button onClick={() => { setConfiguracoes283(CONFIGURACOES_INICIAIS_283); setManagerProfile26(PERFIL_TREINADOR_26_PADRAO) }} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white/70">{t.novoJogo.restaurar_padrao}</button><button onClick={() => setShowInitialSettings(false)} className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-black text-black">{t.novoJogo.aplicar_a_carreira}</button></div>
           </section>
         </div>
       )}
