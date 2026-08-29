@@ -308,6 +308,15 @@
   ],
   "changelog": [
     {
+      "version": "1.0.380",
+      "data": "2026-08-29",
+      "titulo": "Versao de corte: tudo que travava o lancamento, fechado ou declarado",
+      "itens": [
+        "UM COMANDO RESPONDE SE A VERSAO ESTA PRONTA. Antes era preciso lembrar de rodar cada verificacao a mao, e foi exatamente assim que uma chave sensivel viajou dentro do jogo por varias versoes: o teste que a denunciava existia e ninguem o chamava. Agora `npm run qa:release` roda a bateria do jogo e a de loja juntas, e reprova se qualquer uma falhar.",
+        "LIMPEZA DE ASSINATURAS ORFAS. Tres arquivos de assinatura ficaram em disco sem o instalador correspondente, e o verificador de pacote poderia confundi-los com uma build valida."
+      ]
+    },
+    {
       "version": "1.0.379",
       "data": "2026-08-28",
       "titulo": "A base ganha dinheiro proprio, e a carreira online passa a ter temporada",
