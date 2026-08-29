@@ -60,6 +60,8 @@
     "qa:install-size": "node scripts/qa-install-size.mjs",
     "qa:licenca": "tsx scripts/qa-licenca-ed25519.ts",
     "qa:bundle-sem-segredo": "node scripts/verificar-bundle-sem-segredo.mjs",
+    "qa:loja": "npm run qa:bundle-sem-segredo && npm run qa:recursos-no-pacote && npm run qa:release-assets && npm run qa:install-size && npm run qa:low-spec",
+    "qa:loja:pacote": "npm run qa:instalador-assinado && npm run qa:authenticode && npm run qa:licenca",
     "assets:faces": "node scripts/build-faces-manifest.mjs",
     "assets:players-by-team": "node scripts/build-team-player-photos.mjs",
     "assets:player-team-folders": "node scripts/generate-team-photo-folders.mjs",

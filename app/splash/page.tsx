@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
-import { mensagemDeErro, normalizarCodigo, validarCodigo } from "@/lib/license"
+import { mensagemDeErro, normalizarCodigo } from "@/lib/license"
 import { ativarOnline, migrarSePreciso, pareceFormatoDeCodigo } from "@/lib/licenca-certificado"
 import { getDeviceId } from "@/lib/device-id"
 import { lerRegistro, gravarRegistro } from "@/lib/registration"
 import { BENEFICIOS } from "@/lib/beneficios"
-import licencasRevogadas from "@/data/seeds/licencas-revogadas.json"
+// ⚠️ A LISTA DE REVOGACAO SAIU DAQUI (1.0.379) e isso e melhorIA, nao perda:
+// ela so servia a conferencia offline por HMAC. Revogar um codigo exigia
+// PUBLICAR VERSAO NOVA do jogo com o arquivo atualizado — quem nao
+// atualizasse seguia com o codigo vazado funcionando. Agora a revogacao e
+// do servidor, no ato da ativacao, e vale na hora para todo mundo.
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Globe, Save, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, Download, Cloud, FolderOpen, Settings, PersonStanding, Loader2, Users } from "lucide-react"
@@ -173,14 +177,14 @@ export default function SplashPage() {
       if (!cru) return
       const { codigo } = JSON.parse(cru) as { codigo?: string }
       if (!codigo) return
-      const r = await validarCodigo(codigo, licencasRevogadas)
-      if (!r.valido) return
-      gravarRegistro({
-        registrado: true,
-        serie: r.serie !== undefined ? String(r.serie) : undefined,
-        device: getDeviceId(),
-        dev: !!r.dev,
-      })
+      // ⚠️ A CONFERENCIA E NO SERVIDOR, e nao mais aqui (1.0.379). Validar o
+      // codigo offline exigia o segredo HMAC dentro do jogo — e como HMAC e
+      // simetrico, quem o extraisse do pacote EMITIA licenca. O Ed25519 devolve
+      // um certificado assinado que o jogo guarda; a chave que assina nunca sai
+      // do servidor.
+      const r = await ativarOnline(normalizarCodigo(codigo))
+      if (!r.ok) return
+      gravarRegistro({ registrado: true, device: getDeviceId() })
       aplicar()
     } catch {
       // Sem Tauri, sem arquivo ou JSON quebrado: segue o fluxo normal de registro.
@@ -512,37 +516,26 @@ export default function SplashPage() {
       erroDoEsquemaNovo = novo.erro
     }
 
-    const r = await validarCodigo(serialKey, licencasRevogadas)
-    if (r.valido) {
-      // UM CODIGO POR MAQUINA (pedido). Se esta instalacao ja foi registrada com
-      // OUTRO codigo, recusa — sem isso a mesma maquina cadastraria varios
-      // codigos. O codigo MASTER (dev) e isento: o time testa em varias maquinas
-      // e alterna com codigos de venda para reproduzir o que o comprador ve.
-      const serieAtual = lerRegistro().serie
-      if (!r.dev && serieAtual && r.serie !== undefined && serieAtual !== String(r.serie)) {
-        setRegisterError("Esta máquina já foi registrada com outro código.")
-        setIsValidating(false)
-        return
-      }
-      // Grava no armazenamento DURAVEL (+ espelho no localStorage). E por isso
-      // que atualizar o jogo nao desregistra mais: a fonte de verdade e o mesmo
-      // arquivo que guarda os saves.
-      gravarRegistro({
-        registrado: true,
-        serie: r.serie !== undefined ? String(r.serie) : undefined,
-        device: getDeviceId(),
-        dev: !!r.dev,
-      })
-      setIsRegistered(true)
-      setIsValidating(false)
-      setTimeout(() => setShowRegisterModal(false), 600)
-    } else {
-      // Os DOIS esquemas recusaram. Quando o servidor deu um motivo concreto
-      // ("ja em uso em outro computador", "servidor indisponivel"), ele explica
-      // melhor do que o generico — quem pagou merece saber o que fazer.
-      setRegisterError(erroDoEsquemaNovo ?? mensagemDeErro(r.motivo))
-      setIsValidating(false)
-    }
+    // ⚠️ NAO HA MAIS CONFERENCIA OFFLINE — E DE PROPOSITO (1.0.379).
+    //
+    // A reserva antiga validava o codigo aqui, com um segredo HMAC que o build
+    // inlinava no pacote do cliente. HMAC e simetrico: a mesma chave que confere
+    // um codigo EMITE codigos. Quem abrisse o .js do splash fabricava licenca
+    // ilimitada — e o portao que denunciava isso nunca rodava.
+    //
+    // O QUE MUDA PARA QUEM COMPROU: chave antiga continua valendo, mas precisa
+    // de UMA ativacao com internet, que e quando o servidor a troca por um
+    // certificado. Dai em diante o jogo confere offline, para sempre, com a
+    // chave PUBLICA — que nao emite nada. A trava de "um codigo por maquina"
+    // tambem passou para o servidor, que e o unico lugar onde ela de fato
+    // segura: o cliente sempre pode ser adulterado.
+    setRegisterError(
+      erroDoEsquemaNovo
+        ?? (pareceFormatoDeCodigo(serialKey)
+          ? mensagemDeErro("sem-segredo")
+          : mensagemDeErro("formato")),
+    )
+    setIsValidating(false)
   }, [serialKey])
 
   // Handler para baixar save da nuvem

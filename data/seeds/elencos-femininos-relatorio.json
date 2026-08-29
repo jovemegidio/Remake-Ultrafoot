@@ -533,7 +533,12 @@
     "pagina": "AS Roma (women)"
   },
   "serie_a_fem_ita|Internazionale": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Internazionale W.F.C. (0)",
+      "Internazionale Women (0)",
+      "Internazionale (women) (0)"
+    ]
   },
   "serie_a_fem_ita|Milan": {
     "ok": 31,
@@ -560,7 +565,12 @@
     "pagina": "Como 1907 (women)"
   },
   "serie_a_fem_ita|Parma": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Parma W.F.C. (0)",
+      "Parma Women (0)",
+      "Parma (women) (0)"
+    ]
   },
   "campeonato_fem_por|Benfica": {
     "ok": 43,
@@ -583,8 +593,14 @@
     "pagina": "S.C.U. Torreense"
   },
   "campeonato_fem_por|Racing Power": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Racing Power FC"
+    "ok": 24,
+    "pagina": "Racing Power FC",
+    "tentadas": [
+      "Racing Power W.F.C. (0)",
+      "Racing Power Women (0)",
+      "Racing Power (women) (0)",
+      "Racing Power FC (24)"
+    ]
   },
   "campeonato_fem_por|Damaiense": {
     "ok": 23,
@@ -627,7 +643,13 @@
     "pagina": "Feyenoord (women)"
   },
   "eredivisie_fem|AZ": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "AZ W.F.C. (0)",
+      "AZ Women (0)",
+      "AZ (women) (0)",
+      "AZ Alkmaar (women) (0)"
+    ]
   },
   "eredivisie_fem|Utrecht": {
     "ok": 21,
@@ -654,8 +676,13 @@
     "pagina": "ADO Den Haag (women)"
   },
   "eredivisie_fem|Telstar": {
-    "motivo": "elenco curto (24)",
-    "pagina": "VVK Telstar"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Telstar W.F.C. (0)",
+      "Telstar Women (0)",
+      "Telstar (women) (0)",
+      "VVK Telstar (24)"
+    ]
   },
   "swpl_sco|Glasgow City": {
     "ok": 26,
@@ -670,10 +697,19 @@
     "pagina": "Celtic F.C. Women"
   },
   "swpl_sco|Hibernian": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "ok": 17,
+    "pagina": "Hibernian W.F.C.",
+    "tentadas": [
+      "Hibernian W.F.C. (17)"
+    ]
   },
   "swpl_sco|Heart of Midlothian": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Heart of Midlothian W.F.C. (0)",
+      "Heart of Midlothian Women (0)",
+      "Heart of Midlothian (women) (0)"
+    ]
   },
   "swpl_sco|Partick Thistle": {
     "ok": 34,
@@ -684,8 +720,13 @@
     "pagina": "Motherwell F.C. Women"
   },
   "swpl_sco|Aberdeen": {
-    "motivo": "elenco curto (10)",
-    "pagina": "Aberdeen F.C. Women"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Aberdeen W.F.C. (0)",
+      "Aberdeen Women (0)",
+      "Aberdeen (women) (0)",
+      "Aberdeen F.C. Women (10)"
+    ]
   },
   "swpl_sco|Dundee United": {
     "ok": 25,
@@ -700,7 +741,11 @@
     "pagina": "Queen's Park Women"
   },
   "swpl_sco|Spartans": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "ok": 20,
+    "pagina": "Spartans W.F.C.",
+    "tentadas": [
+      "Spartans W.F.C. (20)"
+    ]
   },
   "damallsvenskan|BK Häcken": {
     "ok": 26,
@@ -719,8 +764,13 @@
     "pagina": "Djurgårdens IF Fotboll (women)"
   },
   "damallsvenskan|Linköping": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Linköping"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Linköping W.F.C. (0)",
+      "Linköping Women (0)",
+      "Linköping (women) (0)",
+      "Linköping (0)"
+    ]
   },
   "damallsvenskan|Kristianstad": {
     "ok": 24,
@@ -731,7 +781,13 @@
     "pagina": "Piteå IF"
   },
   "damallsvenskan|Vittsjö": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Vittsjö W.F.C. (0)",
+      "Vittsjö Women (0)",
+      "Vittsjö (women) (0)",
+      "Vittsjö (0)"
+    ]
   },
   "damallsvenskan|IFK Norrköping": {
     "ok": 26,
@@ -750,8 +806,13 @@
     "pagina": "Malmö FF (women)"
   },
   "damallsvenskan|Alingsås": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Alingsås"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Alingsås W.F.C. (0)",
+      "Alingsås Women (0)",
+      "Alingsås (women) (0)",
+      "Alingsås (0)"
+    ]
   },
   "damallsvenskan|Trelleborg": {
     "ok": 25,
@@ -782,15 +843,27 @@
     "pagina": "Åsane Fotball"
   },
   "toppserien_nor|Arna-Bjørnar": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "ok": 20,
+    "pagina": "Arna-Bjørnar",
+    "tentadas": [
+      "Arna-Bjørnar W.F.C. (0)",
+      "Arna-Bjørnar Women (0)",
+      "Arna-Bjørnar (women) (0)",
+      "Arna-Bjørnar (20)"
+    ]
   },
   "toppserien_nor|Røa": {
     "ok": 27,
     "pagina": "Stabæk Fotball (women)"
   },
   "toppserien_nor|Kolbotn": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Kolbotn"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Kolbotn W.F.C. (0)",
+      "Kolbotn Women (0)",
+      "Kolbotn (women) (0)",
+      "Kolbotn (0)"
+    ]
   },
   "toppserien_nor|Avaldsnes": {
     "ok": 17,
@@ -837,57 +910,123 @@
     "pagina": "Vejle Boldklub"
   },
   "nwsl_usa|Portland Thorns": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Portland Thorns W.F.C. (0)",
+      "Portland Thorns Women (0)",
+      "Portland Thorns (women) (0)"
+    ]
   },
   "nwsl_usa|Seattle Reign": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Seattle Reign FC"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Seattle Reign W.F.C. (0)",
+      "Seattle Reign Women (0)",
+      "Seattle Reign (women) (0)",
+      "Seattle Reign FC (0)"
+    ]
   },
   "nwsl_usa|Gotham FC": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Gotham FC"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Gotham FC W.F.C. (0)",
+      "Gotham FC Women (0)",
+      "Gotham FC (women) (0)",
+      "Gotham FC (0)"
+    ]
   },
   "nwsl_usa|Washington Spirit": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Washington Spirit"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Washington Spirit W.F.C. (0)",
+      "Washington Spirit Women (0)",
+      "Washington Spirit (women) (0)",
+      "Washington Spirit (0)"
+    ]
   },
   "nwsl_usa|Orlando Pride": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Orlando Pride"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Orlando Pride W.F.C. (0)",
+      "Orlando Pride Women (0)",
+      "Orlando Pride (women) (0)",
+      "Orlando Pride (0)"
+    ]
   },
   "nwsl_usa|North Carolina Courage": {
-    "motivo": "elenco curto (0)",
-    "pagina": "North Carolina Courage"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "North Carolina Courage W.F.C. (0)",
+      "North Carolina Courage Women (0)",
+      "North Carolina Courage (women) (0)",
+      "North Carolina Courage (0)"
+    ]
   },
   "nwsl_usa|Kansas City Current": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Kansas City Current W.F.C. (0)",
+      "Kansas City Current Women (0)",
+      "Kansas City Current (women) (0)",
+      "Kansas City Current (0)"
+    ]
   },
   "nwsl_usa|Chicago Stars": {
     "ok": 29,
     "pagina": "Chicago Stars FC"
   },
   "nwsl_usa|Houston Dash": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Houston Dash"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Houston Dash W.F.C. (0)",
+      "Houston Dash Women (0)",
+      "Houston Dash (women) (0)"
+    ]
   },
   "nwsl_usa|Angel City": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Angel City FC"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Angel City W.F.C. (0)",
+      "Angel City Women (0)",
+      "Angel City (women) (0)",
+      "Angel City FC (0)"
+    ]
   },
   "nwsl_usa|San Diego Wave": {
-    "motivo": "elenco curto (0)",
-    "pagina": "San Diego Wave FC"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "San Diego Wave W.F.C. (0)",
+      "San Diego Wave Women (0)",
+      "San Diego Wave (women) (0)",
+      "San Diego Wave FC (0)"
+    ]
   },
   "nwsl_usa|Racing Louisville": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Racing Louisville FC"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Racing Louisville W.F.C. (0)",
+      "Racing Louisville Women (0)",
+      "Racing Louisville (women) (0)",
+      "Racing Louisville FC (0)"
+    ]
   },
   "nwsl_usa|Bay FC": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Bay FC W.F.C. (0)",
+      "Bay FC Women (0)",
+      "Bay FC (women) (0)",
+      "Bay FC (0)"
+    ]
   },
   "nwsl_usa|Utah Royals": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Utah Royals"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Utah Royals W.F.C. (0)",
+      "Utah Royals Women (0)",
+      "Utah Royals (women) (0)",
+      "Utah Royals (0)"
+    ]
   },
   "liga_mx_femenil|América": {
     "ok": 27,
@@ -954,11 +1093,22 @@
     "pagina": "FC Juárez (women)"
   },
   "liga_mx_femenil|Mazatlán": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Mazatlán F.C. (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Mazatlán W.F.C. (0)",
+      "Mazatlán Women (0)",
+      "Mazatlán (women) (0)",
+      "Mazatlán F.C. (women) (0)"
+    ]
   },
   "liga_mx_femenil|Atlético San Luis": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "ok": 25,
+    "pagina": "Atlético San Luis (women)",
+    "tentadas": [
+      "Atlético San Luis W.F.C. (0)",
+      "Atlético San Luis Women (0)",
+      "Atlético San Luis (women) (25)"
+    ]
   },
   "liga_femenina_col|Santa Fe": {
     "ok": 35,
@@ -981,46 +1131,97 @@
     "pagina": "Millonarios F.C. (women)"
   },
   "liga_femenina_col|Independiente Medellín": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Independiente Medellín (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Independiente Medellín W.F.C. (0)",
+      "Independiente Medellín Women (0)",
+      "Independiente Medellín (women) (0)"
+    ]
   },
   "liga_femenina_col|Junior": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Junior de Barranquilla Femenino"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Junior W.F.C. (0)",
+      "Junior Women (0)",
+      "Junior (women) (0)",
+      "Junior de Barranquilla Femenino (0)"
+    ]
   },
   "liga_femenina_col|Bucaramanga": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Atlético Bucaramanga Femenino"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Bucaramanga W.F.C. (0)",
+      "Bucaramanga Women (0)",
+      "Bucaramanga (women) (0)",
+      "Atlético Bucaramanga Femenino (0)"
+    ]
   },
   "liga_femenina_col|Deportivo Pereira": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Deportivo Pereira (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Deportivo Pereira W.F.C. (0)",
+      "Deportivo Pereira Women (0)",
+      "Deportivo Pereira (women) (0)",
+      "Deportivo Pereira Femenino (0)"
+    ]
   },
   "liga_femenina_col|Once Caldas": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Once Caldas W.F.C. (0)",
+      "Once Caldas Women (0)",
+      "Once Caldas (women) (0)",
+      "Once Caldas Femenino (0)"
+    ]
   },
   "liga_femenina_col|Deportes Tolima": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Deportes Tolima Femenino"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Deportes Tolima W.F.C. (0)",
+      "Deportes Tolima Women (0)",
+      "Deportes Tolima (women) (0)",
+      "Deportes Tolima Femenino (0)"
+    ]
   },
   "liga_femenina_col|Deportivo Pasto": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Deportivo Pasto W.F.C. (0)",
+      "Deportivo Pasto Women (0)",
+      "Deportivo Pasto (women) (0)",
+      "Deportivo Pasto Femenino (0)"
+    ]
   },
   "liga_femenina_col|Alianza": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Alianza Lima (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Alianza W.F.C. (0)",
+      "Alianza Women (0)",
+      "Alianza (women) (0)",
+      "Club Alianza Lima (women) (0)"
+    ]
   },
   "liga_femenina_col|Fortaleza CEIF": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Fortaleza Fútbol Club (femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Fortaleza CEIF W.F.C. (0)",
+      "Fortaleza CEIF Women (0)",
+      "Fortaleza CEIF (women) (0)",
+      "Fortaleza Fútbol Club (femenino) (0)"
+    ]
   },
   "liga_femenina_col|Real Santander": {
     "ok": 29,
     "pagina": "Real Santander"
   },
   "liga_femenina_col|Llaneros": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Llaneros Femenino"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Llaneros W.F.C. (0)",
+      "Llaneros Women (0)",
+      "Llaneros (women) (0)",
+      "Club Llaneros Femenino (0)"
+    ]
   },
   "campeonato_fem_arg|Boca Juniors": {
     "ok": 80,
@@ -1031,8 +1232,13 @@
     "pagina": "Club Atlético River Plate (women)"
   },
   "campeonato_fem_arg|UAI Urquiza": {
-    "motivo": "elenco curto (2)",
-    "pagina": "UAI Urquiza"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "UAI Urquiza W.F.C. (0)",
+      "UAI Urquiza Women (0)",
+      "UAI Urquiza (women) (0)",
+      "UAI Urquiza (0)"
+    ]
   },
   "campeonato_fem_arg|San Lorenzo": {
     "ok": 32,
@@ -1043,47 +1249,102 @@
     "pagina": "Racing Club de Avellaneda (women)"
   },
   "campeonato_fem_arg|Independiente": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Independiente femenino"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Independiente W.F.C. (0)",
+      "Independiente Women (0)",
+      "Independiente (women) (0)",
+      "SCD Independiente (women) (0)"
+    ]
   },
   "campeonato_fem_arg|Belgrano": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Atlético Belgrano (women's football)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Belgrano W.F.C. (0)",
+      "Belgrano Women (0)",
+      "Belgrano (women) (0)",
+      "Club Atlético Belgrano (women's football) (0)"
+    ]
   },
   "campeonato_fem_arg|Estudiantes": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Estudiantes de La Plata (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Estudiantes W.F.C. (0)",
+      "Estudiantes Women (0)",
+      "Estudiantes (women) (0)",
+      "Club Estudiantes de Baloncesto (femenino) (0)"
+    ]
   },
   "campeonato_fem_arg|Gimnasia": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club de Gimnasia y Esgrima La Plata (fútbol femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Gimnasia W.F.C. (0)",
+      "Gimnasia Women (0)",
+      "Gimnasia (women) (0)"
+    ]
   },
   "campeonato_fem_arg|Rosario Central": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Rosario Central (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Rosario Central W.F.C. (0)",
+      "Rosario Central Women (0)",
+      "Rosario Central (women) (0)",
+      "Club Atlético Rosario Central (fútbol femenino) (0)"
+    ]
   },
   "campeonato_fem_arg|Newell's Old Boys": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Newell's Old Boys (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Newell's Old Boys W.F.C. (0)",
+      "Newell's Old Boys Women (0)",
+      "Newell's Old Boys (women) (0)",
+      "Club Atlético Newell's Old Boys (fútbol femenino) (0)"
+    ]
   },
   "campeonato_fem_arg|Platense": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Platense W.F.C. (0)",
+      "Platense Women (0)",
+      "Platense (women) (0)",
+      "Club Atlético Platense (fútbol femenino) (0)"
+    ]
   },
   "campeonato_fem_arg|Lanús": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Atlético Lanús (fútbol femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Lanús W.F.C. (0)",
+      "Lanús Women (0)",
+      "Lanús (women) (0)",
+      "Club Atlético Lanús (fútbol femenino) (0)"
+    ]
   },
   "campeonato_fem_arg|Banfield": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Atlético Banfield (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Banfield W.F.C. (0)",
+      "Banfield Women (0)",
+      "Banfield (women) (0)",
+      "Club Atlético Banfield (women) (0)"
+    ]
   },
   "campeonato_fem_arg|Huracán": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Atlético Huracán (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Huracán W.F.C. (0)",
+      "Huracán Women (0)",
+      "Huracán (women) (0)",
+      "Club Atlético Huracán (women) (0)"
+    ]
   },
   "campeonato_fem_arg|Vélez Sarsfield": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Atlético Vélez Sarsfield (fútbol femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Vélez Sarsfield W.F.C. (0)",
+      "Vélez Sarsfield Women (0)",
+      "Vélez Sarsfield (women) (0)",
+      "Club Atlético Vélez Sarsfield (fútbol femenino) (0)"
+    ]
   },
   "campeonato_fem_chi|Colo-Colo": {
     "ok": 24,
@@ -1094,66 +1355,137 @@
     "pagina": "Club Universidad de Chile (women)"
   },
   "campeonato_fem_chi|Universidad Católica": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Deportivo Universidad Católica (fútbol femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Universidad Católica W.F.C. (0)",
+      "Universidad Católica Women (0)",
+      "Universidad Católica (women) (0)",
+      "Club Deportivo Universidad Católica (fútbol femenino) (0)"
+    ]
   },
   "campeonato_fem_chi|Santiago Morning": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Santiago Morning (women)"
+    "ok": 17,
+    "pagina": "Santiago Morning (women)",
+    "tentadas": [
+      "Santiago Morning W.F.C. (0)",
+      "Santiago Morning Women (0)",
+      "Santiago Morning (women) (17)"
+    ]
   },
   "campeonato_fem_chi|Palestino": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Deportivo Palestino (femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Palestino W.F.C. (0)",
+      "Palestino Women (0)",
+      "Palestino (women) (0)",
+      "Club Deportivo Palestino (femenino) (0)"
+    ]
   },
   "campeonato_fem_chi|Everton": {
     "ok": 26,
     "pagina": "Everton F.C. Women"
   },
   "campeonato_fem_chi|Audax Italiano": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Audax Italiano W.F.C. (0)",
+      "Audax Italiano Women (0)",
+      "Audax Italiano (women) (0)",
+      "Audax Italiano (femenino) (0)"
+    ]
   },
   "campeonato_fem_chi|Huachipato": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club Deportivo Huachipato (femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Huachipato W.F.C. (0)",
+      "Huachipato Women (0)",
+      "Huachipato (women) (0)",
+      "Club Deportivo Huachipato (femenino) (0)"
+    ]
   },
   "campeonato_fem_chi|Ñublense": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Ñublense W.F.C. (0)",
+      "Ñublense Women (0)",
+      "Ñublense (women) (0)"
+    ]
   },
   "campeonato_fem_chi|O'Higgins": {
     "ok": 23,
     "pagina": "O'Higgins F.C. Women"
   },
   "campeonato_fem_chi|Coquimbo Unido": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Coquimbo Unido (femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Coquimbo Unido W.F.C. (0)",
+      "Coquimbo Unido Women (0)",
+      "Coquimbo Unido (women) (0)",
+      "Coquimbo Unido (femenino) (0)"
+    ]
   },
   "campeonato_fem_chi|Deportes Iquique": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club de Deportes Iquique (femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Deportes Iquique W.F.C. (0)",
+      "Deportes Iquique Women (0)",
+      "Deportes Iquique (women) (0)",
+      "Club de Deportes Iquique (femenino) (0)"
+    ]
   },
   "campeonato_fem_chi|Cobresal": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club de Deportes Cobresal (femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Cobresal W.F.C. (0)",
+      "Cobresal Women (0)",
+      "Cobresal (women) (0)"
+    ]
   },
   "campeonato_fem_chi|Unión La Calera": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Unión La Calera W.F.C. (0)",
+      "Unión La Calera Women (0)",
+      "Unión La Calera (women) (0)"
+    ]
   },
   "campeonato_fem_chi|Deportes Antofagasta": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Club de Deportes Antofagasta (femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Deportes Antofagasta W.F.C. (0)",
+      "Deportes Antofagasta Women (0)",
+      "Deportes Antofagasta (women) (0)",
+      "Club de Deportes Antofagasta (femenino) (0)"
+    ]
   },
   "campeonato_fem_chi|Deportes La Serena": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Deportes La Serena W.F.C. (0)",
+      "Deportes La Serena Women (0)",
+      "Deportes La Serena (women) (0)",
+      "Club de Deportes La Serena (femenino) (0)"
+    ]
   },
   "we_league_jpn|Urawa Reds": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Urawa Reds W.F.C. (0)",
+      "Urawa Reds Women (0)",
+      "Urawa Reds (women) (0)"
+    ]
   },
   "we_league_jpn|INAC Kobe Leonessa": {
     "ok": 28,
     "pagina": "INAC Kobe Leonessa"
   },
   "we_league_jpn|Tokyo Verdy Beleza": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Tokyo Verdy Beleza W.F.C. (0)",
+      "Tokyo Verdy Beleza Women (0)",
+      "Tokyo Verdy Beleza (women) (0)"
+    ]
   },
   "we_league_jpn|Nojima Stella": {
     "ok": 25,
@@ -1164,13 +1496,29 @@
     "pagina": "Mynavi Sendai"
   },
   "we_league_jpn|Albirex Niigata": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Albirex Niigata W.F.C. (0)",
+      "Albirex Niigata Women (0)",
+      "Albirex Niigata (women) (0)",
+      "2025 Albirex Niigata (S) Women season (0)"
+    ]
   },
   "we_league_jpn|Sanfrecce Hiroshima": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Sanfrecce Hiroshima W.F.C. (0)",
+      "Sanfrecce Hiroshima Women (0)",
+      "Sanfrecce Hiroshima (women) (0)"
+    ]
   },
   "we_league_jpn|Cerezo Osaka": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Cerezo Osaka W.F.C. (0)",
+      "Cerezo Osaka Women (0)",
+      "Cerezo Osaka (women) (0)"
+    ]
   },
   "we_league_jpn|Omiya Ardija Ventus": {
     "ok": 26,
@@ -1181,13 +1529,30 @@
     "pagina": "JEF United Chiba Ladies"
   },
   "we_league_jpn|Sagan Tosu": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Sagan Tosu W.F.C. (0)",
+      "Sagan Tosu Women (0)",
+      "Sagan Tosu (women) (0)"
+    ]
   },
   "we_league_jpn|Gamba Osaka": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Gamba Osaka W.F.C. (0)",
+      "Gamba Osaka Women (0)",
+      "Gamba Osaka (women) (0)"
+    ]
   },
   "a_league_women_aus|Melbourne City": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "ok": 23,
+    "pagina": "Melbourne City FC (women)",
+    "tentadas": [
+      "Melbourne City W.F.C. (0)",
+      "Melbourne City Women (0)",
+      "Melbourne City (women) (0)",
+      "Melbourne City FC (women) (23)"
+    ]
   },
   "a_league_women_aus|Melbourne Victory": {
     "ok": 22,

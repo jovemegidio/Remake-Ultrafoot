@@ -23,8 +23,30 @@
 const ALFABETO = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 const PREFIXO = "UF26"
 
-/** Segredo injetado no build (ver scripts/gerar-codigos.mjs para emitir). */
-const SEGREDO = process.env.NEXT_PUBLIC_ULTRAFOOT_LICENSE_SECRET ?? ""
+/**
+ * ⚠️ NAO EXISTE MAIS SEGREDO NESTE MODULO — E ESSE E O PONTO (1.0.379).
+ *
+ * Ate aqui esta linha era `process.env.NEXT_PUBLIC_ULTRAFOOT_LICENSE_SECRET`.
+ * Variavel `NEXT_PUBLIC_` e inlinada no pacote do cliente POR DEFINICAO do
+ * Next: o segredo viajava em texto puro para a maquina do comprador, dentro de
+ * `out/_next/static/chunks/app/splash/*.js`.
+ *
+ * E como a conferencia e HMAC — simetrica — a mesma chave que VALIDA um codigo
+ * tambem EMITE codigos. Quem abrisse o arquivo .js gerava licenca ilimitada.
+ * O portao `scripts/verificar-bundle-sem-segredo.mjs` avisava disso ha versoes,
+ * em maiusculas, e nunca era executado: nao estava em cadeia nenhuma.
+ *
+ * O jogo agora ativa pelo esquema Ed25519 (`lib/licenca-certificado`), em que a
+ * chave PRIVADA fica no servidor e o jogo so guarda um certificado assinado.
+ * O que sobra aqui — `normalizarCodigo` e `mensagemDeErro` — nao usa segredo
+ * nenhum e continua servindo a tela.
+ *
+ * `validarCodigo` e `montarCodigo` continuam existindo para as FERRAMENTAS
+ * (emissao e conferencia de codigos de lote antigos), que rodam fora do jogo e
+ * passam o segredo explicitamente. Sem argumento, `validarCodigo` recusa com
+ * "sem-segredo" — e isso e intencional, nao um defeito.
+ */
+const SEGREDO = ""
 
 /**
  * Lote 0 e RESERVADO para uso interno (codigo master de dev). Vendas comecam no
@@ -168,7 +190,7 @@ export async function validarCodigo(
 export function mensagemDeErro(motivo: ResultadoLicenca["motivo"]): string {
   switch (motivo) {
     case "revogado": return "Este código foi cancelado. Fale com o suporte."
-    case "sem-segredo": return "Esta versão do jogo não consegue validar códigos. Reinstale pela loja oficial."
+    case "sem-segredo": return "Não foi possível confirmar o código sem conexão. Conecte-se à internet e tente de novo."
     default: return "Código inválido. Confira as letras e tente de novo."
   }
 }
