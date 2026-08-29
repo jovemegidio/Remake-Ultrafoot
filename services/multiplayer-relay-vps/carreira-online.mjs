@@ -62,6 +62,19 @@ function agora() { return Date.now() }
 export const PRAZO_DA_RODADA_MS = 48 * 60 * 60 * 1000
 
 /**
+ * Abaixo disto o mundo não tem temporada — o turno seria curto demais.
+ *
+ * ⚠️ COM DOIS CLUBES O TURNO TEM UMA RODADA, e a temporada viraria a cada
+ * partida: campeão a cada jogo e tabela zerando sem parar. Foi assim que o
+ * `qa-mundo-online` reprovou esta versão — ele confere a tabela logo depois de
+ * pontuar, e encontrou tudo zerado. O portão estava certo.
+ *
+ * Abaixo deste número o mundo roda como antes da 1.0.379, sem encerramento: é
+ * um amistoso contínuo entre conhecidos, não uma liga com título em jogo.
+ */
+export const MINIMO_DE_CLUBES_PARA_TEMPORADA = 4
+
+/**
  * O ENVELOPE DE UM PLACAR — o que a semente e as forças tornam possível.
  *
  * ⚠️ ISTO NÃO É SIMULAR A PARTIDA AQUI, e a diferença é deliberada. Portar o
@@ -93,6 +106,14 @@ export class CarreiraOnline {
     this.partidas = new Map()    // matchId -> { matchId, rodada, casa, fora, semente, forcaCasa, forcaFora, placar }
     this.mercado = new Map()     // anuncioId -> { anuncioId, clube, vendedor, atleta, preco, criadoEm }
     this.rodada = 0
+    // ⚠️ O MUNDO NAO TINHA FIM (corrigido na 1.0.379). O rodizio girava para
+    // sempre: nao havia temporada, nao havia campeao e a tabela nunca zerava,
+    // entao quem entrasse no mes seguinte pegava uma classificacao de centenas
+    // de pontos que nunca ia se fechar. "Liga de pontos corridos" sem termino
+    // nao e liga, e um placar acumulado.
+    this.temporada = 1
+    this.rodadasDaTemporada = 0
+    this.historico = []
     this.divergencias = []
     try {
       const salvo = JSON.parse(fs.readFileSync(this.arquivo, "utf8"))
@@ -101,6 +122,11 @@ export class CarreiraOnline {
       for (const p of salvo.partidas ?? []) this.partidas.set(p.matchId, p)
       for (const a of salvo.mercado ?? []) this.mercado.set(a.anuncioId, a)
       this.rodada = salvo.rodada ?? 0
+      // Mundo salvo antes desta versao comeca na temporada 1 com o que ja tem:
+      // a tabela em curso vira a temporada corrente e fecha normalmente.
+      this.temporada = salvo.temporada ?? 1
+      this.rodadasDaTemporada = salvo.rodadasDaTemporada ?? 0
+      this.historico = salvo.historico ?? []
       this.divergencias = salvo.divergencias ?? []
     } catch { /* primeira execução */ }
   }
@@ -115,6 +141,11 @@ export class CarreiraOnline {
       partidas: [...this.partidas.values()].filter(p => p.rodada > this.rodada - 3),
       mercado: [...this.mercado.values()],
       rodada: this.rodada,
+      temporada: this.temporada,
+      rodadasDaTemporada: this.rodadasDaTemporada,
+      // O historico e o unico registro de que a temporada passada existiu — as
+      // partidas dela ja sairam do arquivo (so as tres ultimas rodadas ficam).
+      historico: this.historico.slice(-10),
       divergencias: this.divergencias.slice(-200),
     }))
     fs.renameSync(temporario, this.arquivo)
@@ -190,6 +221,51 @@ export class CarreiraOnline {
     return Math.round(clube.forcaBase + Math.min(BONUS_MAXIMO, bonus))
   }
 
+  /**
+   * A classificação, na ordem oficial. Extraída de `estado()` de propósito: o
+   * campeão da temporada e a tabela que o jogador vê PRECISAM sair do mesmo
+   * critério de desempate, senão o time que aparece em primeiro não é o que
+   * levanta a taça — o tipo de divergência que ninguém percebe até acontecer.
+   */
+  classificacao() {
+    return [...this.clubes.values()]
+      .map(c => ({ ...c, saldo: c.gp - c.gc }))
+      .sort((a, b) => b.pontos - a.pontos || b.saldo - a.saldo || b.gp - a.gp)
+  }
+
+  /**
+   * Fecha a temporada: coroa o campeão, arquiva e ZERA a tabela.
+   *
+   * ⚠️ O CAIXA E OS REFORÇOS NÃO SÃO ZERADOS. O que termina é a competição, não
+   * o clube — quem construiu elenco continua com ele na temporada seguinte, que
+   * é o que faz a carreira ser carreira. Zerar tudo transformaria cada temporada
+   * num mundo novo e jogaria fora o trabalho de quem estava lá.
+   */
+  encerrarTemporada() {
+    const ordem = this.classificacao()
+    const campeao = ordem[0]
+    if (campeao) {
+      this.historico.push({
+        temporada: this.temporada,
+        campeao: campeao.fileKey,
+        nomeDoCampeao: campeao.nome,
+        pontos: campeao.pontos,
+        encerradaEm: agora(),
+        podio: ordem.slice(0, 3).map(c => ({ fileKey: c.fileKey, nome: c.nome, pontos: c.pontos })),
+      })
+    }
+    for (const c of this.clubes.values()) {
+      c.pontos = 0; c.j = 0; c.v = 0; c.e = 0; c.d = 0; c.gp = 0; c.gc = 0
+    }
+    // As partidas da temporada encerrada saem: a numeração de rodada recomeça e
+    // um confronto antigo com `rodada: 3` seria lido como da temporada nova.
+    this.partidas.clear()
+    this.temporada++
+    this.rodada = 0
+    this.rodadasDaTemporada = 0
+    return campeao ?? null
+  }
+
   /** As partidas de uma rodada que ainda não têm placar. */
   pendentes(rodada) {
     return [...this.partidas.values()].filter(p => p.rodada === rodada && !p.placar)
@@ -225,14 +301,58 @@ export class CarreiraOnline {
       return { erro: "rodada_em_andamento", faltam: this.pendentes(this.rodada).length }
     }
 
-    this.rodada++
-    const giro = (this.rodada - 1) % Math.max(1, jogaveis.length - 1)
-    const rotacionados = [jogaveis[0], ...jogaveis.slice(1 + giro), ...jogaveis.slice(1, 1 + giro)]
+    // ⚠️ A VIRADA DE TEMPORADA VEM AQUI, pela mesma razão do W.O. de prazo
+    // logo acima: sem cron, sem endpoint novo, sem o cliente precisar saber que
+    // isto existe. Quem abre a rodada seguinte é quem fecha a anterior.
+    let campeaoAgora = null
+    if (this.rodadasDaTemporada > 0 && this.rodada >= this.rodadasDaTemporada) {
+      campeaoAgora = this.encerrarTemporada()
+    }
 
+    // ⚠️ O TAMANHO DA TEMPORADA É FIXADO NO COMEÇO DELA, não lido a cada rodada.
+    // O número de técnicos muda com gente entrando e saindo; recalcular todo
+    // turno faria a linha de chegada andar, e a temporada nunca fecharia (ou
+    // fecharia no meio). Turno único: com número par de clubes são n-1 rodadas;
+    // com ímpar são n, porque um folga a cada rodada.
+    if (this.rodada === 0) {
+      this.rodadasDaTemporada = jogaveis.length >= MINIMO_DE_CLUBES_PARA_TEMPORADA
+        ? (jogaveis.length % 2 === 0 ? jogaveis.length - 1 : jogaveis.length)
+        : 0
+    }
+
+    this.rodada++
+    // ⚠️ NUMERO IMPAR PRECISA DE UM LUGAR VAZIO NA RODA. Sem ele o giro nao
+    // percorre todos os pares: medido com 5 clubes, 10 partidas jogadas e
+    // apenas 6 confrontos distintos. Quem folga na rodada e simplesmente quem
+    // cai de par com o vazio — e ninguem folga duas vezes antes de todos terem
+    // folgado uma.
+    const lista = jogaveis.length % 2 === 0 ? jogaveis : [...jogaveis, null]
+    const giro = (this.rodada - 1) % Math.max(1, lista.length - 1)
+    const rotacionados = [lista[0], ...lista.slice(1 + giro), ...lista.slice(1, 1 + giro)]
+
+    // ⚠️ O RODIZIO EMPARELHAVA VIZINHOS, E ISSO REPETIA CONFRONTO (corrigido na
+    // 1.0.379). O codigo pegava (0,1), (2,3), (4,5) da lista girada — o que NAO
+    // e o metodo do circulo e nao percorre todos os pares. Medido com 6 clubes:
+    // 15 partidas jogadas, apenas 10 confrontos DISTINTOS; cinco duplas se
+    // enfrentavam duas vezes e outras cinco nunca se cruzavam. O comentario
+    // acima ja prometia evitar exatamente isso.
+    //
+    // Passou despercebido porque o mundo nao tinha temporada: sem linha de
+    // chegada, "faltou jogar contra o Fulano" nunca vira queixa. Com a
+    // temporada fechando em turno unico, o furo viraria tabela injusta.
+    //
+    // O metodo do circulo: o primeiro fica parado, o resto gira, e o par e
+    // sempre extremo com extremo — i com (n-1-i).
     const criadas = []
-    for (let i = 0; i + 1 < rotacionados.length; i += 2) {
+    for (let i = 0; i * 2 + 1 < rotacionados.length; i++) {
+      const casaIdx = i
+      const foraIdx = rotacionados.length - 1 - i
       // A cada rodada a casa troca de lado: mandar sempre seria vantagem fixa.
-      const par = this.rodada % 2 === 0 ? [rotacionados[i + 1], rotacionados[i]] : [rotacionados[i], rotacionados[i + 1]]
+      // O par com o lugar vazio e a folga da rodada: nao vira partida.
+      if (rotacionados[casaIdx] === null || rotacionados[foraIdx] === null) continue
+      const par = this.rodada % 2 === 0
+        ? [rotacionados[foraIdx], rotacionados[casaIdx]]
+        : [rotacionados[casaIdx], rotacionados[foraIdx]]
       const casa = this.clubes.get(par[0])
       const fora = this.clubes.get(par[1])
       const partida = {
@@ -252,7 +372,13 @@ export class CarreiraOnline {
       this.partidas.set(partida.matchId, partida)
       criadas.push(partida)
     }
-    return { rodada: this.rodada, partidas: criadas }
+    return {
+      rodada: this.rodada,
+      temporada: this.temporada,
+      rodadasDaTemporada: this.rodadasDaTemporada,
+      campeaoAnterior: campeaoAgora ? { fileKey: campeaoAgora.fileKey, nome: campeaoAgora.nome } : null,
+      partidas: criadas,
+    }
   }
 
   /**
@@ -505,6 +631,9 @@ export class CarreiraOnline {
       vagas: VAGAS,
       ocupadas: this.clubes.size,
       rodada: this.rodada,
+      temporada: this.temporada,
+      rodadasDaTemporada: this.rodadasDaTemporada,
+      historico: this.historico.slice(-10).reverse(),
       pendentes: this.pendentes(this.rodada).length,
       sou: membro,
       meuClube,

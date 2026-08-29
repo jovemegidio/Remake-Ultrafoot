@@ -537,6 +537,8 @@ export const ptBR = {
     explicacao: "Um mundo só para todo mundo: cada técnico pega um clube, a tabela é a mesma e o mercado é disputado atleta por atleta.",
     vagas: "vagas",
     rodada: "rodada",
+    temporada: "temporada",
+    campeao_anterior: "Campeão da temporada passada",
     carregando: "Procurando o mundo…",
     sem_servidor: "O servidor do mundo não respondeu. Sem ele não há vaga, tabela nem mercado — a carreira offline segue normal.",
     online_desligado: "O modo online está desligado",

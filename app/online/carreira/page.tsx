@@ -216,10 +216,27 @@ export default function CarreiraOnlinePage() {
           </div>
           {mundo && (
             <span className="rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[11px] text-white/55">
-              {mundo.ocupadas}/{mundo.vagas} {t.carreiraOnline.vagas} · {t.carreiraOnline.rodada} {mundo.rodada}
+              {mundo.ocupadas}/{mundo.vagas} {t.carreiraOnline.vagas}
+              {" · "}{t.carreiraOnline.temporada} {mundo.temporada ?? 1}
+              {" · "}{t.carreiraOnline.rodada} {mundo.rodada}{mundo.rodadasDaTemporada ? `/${mundo.rodadasDaTemporada}` : ""}
             </span>
           )}
         </header>
+
+        {/* O FIM DA TEMPORADA TINHA DE SIGNIFICAR ALGUMA COISA. Ate a 1.0.379 o
+            mundo girava sem termino — sem campeao e com a tabela nunca zerando.
+            A virada acontece no servidor ao abrir a rodada seguinte; sem isto
+            aqui, ela aconteceria e ninguem ficaria sabendo. So aparece quando ja
+            existe temporada encerrada. */}
+        {mundo?.historico && mundo.historico.length > 0 && (
+          <p className="-mt-2 flex items-center gap-2 rounded-lg border border-[#ffd700]/30 bg-[#ffd700]/10 px-3 py-2 text-xs text-[#ffd700]">
+            <Trophy className="h-4 w-4 shrink-0" />
+            <span>
+              {t.carreiraOnline.campeao_anterior}: <b>{mundo.historico[0].nomeDoCampeao}</b>
+              {" ("}{mundo.historico[0].pontos}{")"}
+            </span>
+          </p>
+        )}
 
         {carregando ? (
           <p className="flex items-center gap-2 text-sm text-white/45">

@@ -148,6 +148,8 @@ const INVENTARIO = [
   ["1.0.378", "Alias de RSC criado para o prefetch do roteador", "scripts/fix-next-export-rsc.mjs", "paginaDentroDoDiretorio"],
   ["1.0.379", "Verba propria da categoria de base", "lib/youth-career-engine.ts", "verbaDaTemporada"],
   ["1.0.379", "Mercado da base debita a verba, nao o caixa do clube", "app/mercado/page.tsx", "pagaPelaVerba"],
+  ["1.0.379", "A carreira online tem temporada que fecha", "services/multiplayer-relay-vps/carreira-online.mjs", "encerrarTemporada"],
+  ["1.0.379", "Rodizio pelo metodo do circulo, sem repetir confronto", "services/multiplayer-relay-vps/carreira-online.mjs", "rotacionados.length - 1 - i"],
   ["1.0.347", "Imprensa pergunta pela modalidade", "lib/game-engine.ts", "A IMPRENSA PERGUNTAVA A MESMA COISA"],
   ["1.0.347", "Lesao com consequencia na carreira de atleta", "lib/carreira-de-jogador.ts", "sortearLesao"],
   ["1.0.347", "Capitania na carreira de atleta", "lib/carreira-de-jogador.ts", "A BRACADEIRA"],

@@ -97,10 +97,25 @@ export interface PermissoesNoClube {
   espiar: boolean
 }
 
+export interface TemporadaEncerrada {
+  temporada: number
+  campeao: string
+  nomeDoCampeao: string
+  pontos: number
+  encerradaEm: number
+  podio: { fileKey: string; nome: string; pontos: number }[]
+}
+
 export interface EstadoDoMundo {
   vagas: number
   ocupadas: number
   rodada: number
+  /** Temporada corrente. Mundo criado antes da 1.0.379 comeca na 1. */
+  temporada?: number
+  /** Quantas rodadas tem esta temporada. 0 = ainda nao comecou. */
+  rodadasDaTemporada?: number
+  /** As dez ultimas temporadas encerradas, da mais recente para a mais antiga. */
+  historico?: TemporadaEncerrada[]
   pendentes: number
   sou: MembroDoMundo | null
   meuClube: ClubeCompartilhado | null
