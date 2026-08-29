@@ -531,10 +531,64 @@ fn ler_sessao_do_launcher() -> Option<String> {
 /// se o disco nao for NTFS ou se o `cmd` nao responder, fica so o aviso em
 /// texto com o caminho. Um atalho de conveniencia jamais pode impedir o jogo de
 /// abrir.
+// ─── Modo loja (Steam, Epic, GOG…) ───────────────────────────────────────────
+//
+// ⚠️ ASSADO NO BUILD, NAO LIDO DE UM ARQUIVO.
+//
+// A alternativa obvia — um `loja.json` ao lado do executavel — seria um arquivo
+// que qualquer pessoa cria para destravar os extras do build da venda direta.
+// Aqui nao ha o que copiar: sao dois binarios diferentes, e o valor entra por
+// `option_env!` no momento da compilacao. O front recebe o MESMO valor por
+// `NEXT_PUBLIC_ULTRAFOOT_LOJA`, para os dois lados nunca discordarem sobre em
+// que build estao.
+//
+// `None` = venda direta (o canal do Ultrafoot Launcher). `Some("steam")`,
+// `Some("epic")`… = a loja e dona da instalacao e da licenca.
+pub(crate) fn modo_loja() -> Option<&'static str> {
+    match option_env!("ULTRAFOOT_LOJA") {
+        // "1" e o valor historico do front (era o unico que existia) e vale
+        // como "sim, e loja, sem dizer qual". "0" e vazio valem como venda
+        // direta — para um `ULTRAFOOT_LOJA=0` no ambiente nao ligar o modo
+        // loja por acidente. A MESMA regra esta em lib/loja.ts.
+        Some(v) if !v.trim().is_empty() && v.trim() != "0" => Some(v.trim()),
+        _ => None,
+    }
+}
+
+/// Este binario foi compilado para uma loja?
+pub(crate) fn em_loja() -> bool {
+    modo_loja().is_some()
+}
+
+/// Em que loja este binario foi publicado. Vazio na venda direta.
+///
+/// Exposto para o diagnostico do suporte: "o jogador esta na build da Steam ou
+/// na do launcher?" e a primeira pergunta de metade dos relatos, e adivinhar
+/// pela versao nao funciona — o numero e o mesmo nos dois.
+#[tauri::command]
+fn loja() -> Option<String> {
+    modo_loja().map(|s| s.to_string())
+}
+
 #[cfg(target_os = "windows")]
 fn criar_atalho_sav(app: &tauri::App) {
     use std::os::windows::process::CommandExt;
     use tauri::Manager;
+
+    // ⚠️ NA LOJA, NADA E ESCRITO DENTRO DA PASTA DE INSTALACAO.
+    //
+    // Steam e Epic sao donas desse diretorio: elas o verificam ("verificar
+    // integridade dos arquivos"), o substituem a cada patch e podem instala-lo
+    // onde este processo nao tem permissao de escrita. Uma juncao que aparece
+    // do nada ali e, na melhor das hipoteses, ruido no verificador.
+    //
+    // Nada se perde: o save nunca morou aqui. Ele fica em %APPDATA% (e por isso
+    // sobrevive ao patch da loja); esta juncao era so um atalho de conveniencia
+    // para quem abre a pasta do jogo pelo Explorer — e na loja o caminho para
+    // essa pasta e "Procurar arquivos locais", nao um atalho nosso.
+    if em_loja() {
+        return;
+    }
 
     let Ok(dados) = app.path().app_data_dir() else { return };
     let Ok(exe) = std::env::current_exe() else { return };
@@ -572,7 +626,75 @@ fn criar_atalho_sav(app: &tauri::App) {
     }
 }
 
+/// Grava um panic do lado nativo em arquivo, antes de a janela fechar.
+///
+/// ⚠️ SEM ISTO UM PANIC NAO DEIXAVA RASTRO NENHUM. O jogo roda como aplicativo de
+/// janela, sem console ligado: quando o lado Rust entra em panic, o processo
+/// morre e a janela some. Para o jogador e "o jogo fechou sozinho"; para quem vai
+/// consertar, e nada — nem mensagem, nem linha, nem versao. Em loja essa e a
+/// diferenca entre um defeito que se corrige e uma avaliacao negativa sem causa.
+///
+/// O arquivo fica ao lado do save, em LOCALAPPDATA/Ultrafoot 26, e nao no
+/// diretorio temporario: o jogador consegue anexa-lo num relato, e ele sobrevive
+/// a uma limpeza de disco.
+///
+/// ⚠️ O HOOK NAO PODE ENTRAR EM PANIC. Ele roda DENTRO de um panic; se falhar,
+/// vira panic duplo e o processo aborta sem nem o rastro anterior. Por isso cada
+/// passo aqui desiste em silencio: perder o registro e ruim, derrubar o
+/// encerramento e pior.
+fn instalar_registro_de_falha() {
+    let anterior = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        let destino = std::env::var("LOCALAPPDATA")
+            .map(std::path::PathBuf::from)
+            .map(|p| p.join("Ultrafoot 26"))
+            .unwrap_or_else(|_| std::env::temp_dir());
+        let _ = std::fs::create_dir_all(&destino);
+
+        // `location()` da arquivo e linha; a mensagem chega como &str ou String
+        // conforme o panic foi disparado, e as duas formas precisam ser lidas.
+        let onde = info
+            .location()
+            .map(|l| format!("{}:{}", l.file(), l.line()))
+            .unwrap_or_else(|| "local desconhecido".to_string());
+        let mensagem = info
+            .payload()
+            .downcast_ref::<&str>()
+            .map(|s| s.to_string())
+            .or_else(|| info.payload().downcast_ref::<String>().cloned())
+            .unwrap_or_else(|| "sem mensagem".to_string());
+
+        let quando = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        let linha = format!(
+            "[{}] v{} panic em {} — {}",
+            quando,
+            env!("CARGO_PKG_VERSION"),
+            onde,
+            mensagem
+        );
+
+        use std::io::Write;
+        if let Ok(mut f) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(destino.join("falhas-nativas.log"))
+        {
+            let _ = writeln!(f, "{}", linha);
+        }
+
+        // O hook original continua valendo: em debug ele imprime o backtrace, e
+        // substitui-lo por completo esconderia o rastro de quem desenvolve.
+        anterior(info);
+    }));
+}
+
 pub fn run() {
+    // Antes de qualquer coisa: um panic durante a montagem tambem precisa deixar
+    // rastro, e a montagem e justamente onde eles acontecem.
+    instalar_registro_de_falha();
     // DESKTOP: conecta ao Discord (falha em silencio se ele nao estiver aberto).
     #[cfg(desktop)]
     let discord_client = DiscordIpcClient::new(DISCORD_APP_ID)
@@ -613,6 +735,7 @@ pub fn run() {
             media_previous
             ,ler_ativacao_do_launcher
             ,ler_sessao_do_launcher
+            ,loja
             ,licenca::verificar_licenca
             ,native_engine::project_squad
             ,online_server::online_start_server
@@ -645,6 +768,7 @@ pub fn run() {
             media_previous
             ,ler_ativacao_do_launcher
             ,ler_sessao_do_launcher
+            ,loja
             ,licenca::verificar_licenca
             ,native_engine::project_squad
             ,online_server::online_start_server
