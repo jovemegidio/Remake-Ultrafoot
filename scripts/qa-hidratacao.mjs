@@ -12,7 +12,11 @@
 // é esperado. O que interessa é diferença no MESMO nó — número, data, moeda,
 // nome — porque é ela que quebra a hidratação.
 
-import { chromium } from "playwright"
+// ⚠️ O PACOTE E `@playwright/test`, NAO `playwright` (corrigido na 1.0.380).
+// Este gate importava `playwright`, que nunca esteve no package.json: ele
+// morria no import e NUNCA chegou a testar hidratacao nenhuma. O
+// `@playwright/test`, que e a dependencia de verdade, reexporta o `chromium`.
+import { chromium } from "@playwright/test"
 import { createServer } from "node:http"
 import { readFile, stat } from "node:fs/promises"
 import { existsSync } from "node:fs"
