@@ -404,8 +404,8 @@ export default function FinancasPage() {
 
         {saveState.debt?.enabled && <section className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><div className="text-xs font-bold uppercase tracking-wider text-amber-300">Dívida do clube</div><div className="mt-1 text-xl font-black text-white">{formatCurrency(saveState.debt.principal)}</div><p className="text-xs text-white/45">Parcela mensal {formatCurrency(saveState.debt.monthlyPayment)} · juros {(saveState.debt.annualInterestRate*100).toFixed(1)}% a.a.</p></div>
-            <div className="text-right"><div className="text-xs text-white/45">Limite atual para transferências</div><div className="font-bold text-amber-300">{formatCurrency(debtTransferLimit(saveState.debt, gameEngine.balance))}</div>
+            <div><div className="text-xs font-bold uppercase tracking-wider text-amber-300">{t.finances.divida_do_clube}</div><div className="mt-1 text-xl font-black text-white">{formatCurrency(saveState.debt.principal)}</div><p className="text-xs text-white/45">Parcela mensal {formatCurrency(saveState.debt.monthlyPayment)} · juros {(saveState.debt.annualInterestRate*100).toFixed(1)}% a.a.</p></div>
+            <div className="text-right"><div className="text-xs text-white/45">{t.finances.limite_atual_para_transferencias}</div><div className="font-bold text-amber-300">{formatCurrency(debtTransferLimit(saveState.debt, gameEngine.balance))}</div>
               <div className="mt-2 flex flex-wrap justify-end gap-2">
                 {/* AMORTIZAR: paga a dívida com o caixa AGORA (resposta ao "como pago as dívidas"). */}
                 <button
@@ -430,10 +430,10 @@ export default function FinancasPage() {
                     setSaveState({ debt: r.debt })
                   }}
                   className="rounded-lg border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/20"
-                >Amortizar com o caixa</button>
+                >{t.finances.amortizar_com_o_caixa}</button>
                 <button onClick={() => setSaveState({debt:renegotiateDebt(saveState.debt!)})} disabled={saveState.debt.renegotiations>=2} className="rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs text-amber-200 disabled:opacity-30">Renegociar empréstimo</button>
               </div>
-              <p className="mt-1 text-[10px] text-white/35">A parcela mensal já é descontada automaticamente do caixa.</p>
+              <p className="mt-1 text-[10px] text-white/35">{t.finances.a_parcela_mensal_ja_e_descontada}</p>
             </div>
           </div>
           <div className={cn(
@@ -456,10 +456,10 @@ export default function FinancasPage() {
             uma área de finanças sem banco nenhum. Aqui o técnico pega e paga
             quando quiser, que é o ciclo real de caixa de um clube. */}
         <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="text-xs font-bold uppercase tracking-wider text-white/60">Empréstimo bancário</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-white/60">{t.finances.emprestimo_bancario}</div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div>
-              <div className="text-xs text-white/45">Valor já emprestado</div>
+              <div className="text-xs text-white/45">{t.finances.valor_ja_emprestado}</div>
               <div className="text-lg font-bold text-white">{formatCurrency(saveState.debt?.principal ?? 0)}</div>
             </div>
             <div>
@@ -503,7 +503,7 @@ export default function FinancasPage() {
                 gameEngine.addClubRevenue(PASSO)
               }}
               className="rounded-lg border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-4 py-2 text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/20"
-            >Pegar 500 mil</button>
+            >{t.finances.pegar_500_mil}</button>
 
             <button
               onClick={async () => {
@@ -536,7 +536,7 @@ export default function FinancasPage() {
               }}
               disabled={!saveState.debt?.principal}
               className="rounded-lg border border-white/15 px-4 py-2 text-xs font-semibold text-white/75 hover:bg-white/5 disabled:opacity-30"
-            >Pagar 500 mil</button>
+            >{t.finances.pagar_500_mil}</button>
           </div>
 
           <p className="mt-2 text-[10px] leading-4 text-white/35">
@@ -550,7 +550,7 @@ export default function FinancasPage() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 text-red-400" />
               <div>
-                <h2 className="text-sm font-semibold text-red-200">Limite salarial excedido</h2>
+                <h2 className="text-sm font-semibold text-red-200">{t.finances.limite_salarial_excedido}</h2>
                 <p className="mt-1 text-xs leading-relaxed text-red-100/70">
                   A folha esta em {wagePercentage.toFixed(0)}% do limite. Renegocie contratos, venda atletas ou aumente receitas para liberar margem de contratacao.
                 </p>
@@ -746,7 +746,7 @@ export default function FinancasPage() {
                     <span className="text-[var(--brand)] font-medium">{formatCurrency(PRIZE_MONEY.champion)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/50">G4 (4o lugar)</span>
+                    <span className="text-white/50">{t.finances.g4_4o_lugar}</span>
                     <span className="text-white/70">{formatCurrency(PRIZE_MONEY.fourth)}</span>
                   </div>
                   <div className="flex justify-between">

@@ -13,6 +13,7 @@ import { agrupar, buscar, ROTULO_DO_TIPO, type ItemBuscavel } from "@/lib/busca-
 import { podeSalvarCarreira, useGameState } from "@/lib/save-system"
 import { useManagingNational, useUserTeam } from "@/lib/time-da-carreira"
 import { salvarTudo } from "@/lib/salvar-tudo"
+import { DialogoDeSalvar } from "@/components/modals/salvar-carreira"
 import { useGameManager } from "@/lib/use-game-manager"
 import { useGameEngine } from "@/lib/game-engine"
 import { clearJobOffers } from "@/lib/career-moves"
@@ -623,17 +624,34 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     ? `${temporadaCorrente}/${String(anoDaData).slice(-2)}`
     : String(temporadaCorrente)
 
-  const handleSave = async () => {
+  // ⚠️ O DISQUETE GRAVAVA EM SILENCIO (corrigido na 1.0.380). O jogador clicava,
+  // via um "check" verde por dois segundos e nao ficava sabendo nem o QUE tinha
+  // sido gravado nem SOB QUE NOME — e a tela de carregar mostra doze carreiras.
+  // O campo `saveName` ja existia no save desde sempre; so nao havia por onde
+  // escreve-lo fora da tela /salvar.
+  const [pedindoNome, setPedindoNome] = useState(false)
+  const [erroDoSave, setErroDoSave] = useState("")
+
+  const abrirSalvar = () => {
     // Sem carreira iniciada no pre-office nao ha o que salvar (salvarTudo checa
-    // de novo, lendo o disco — aqui e so para nao acender o "salvando").
+    // de novo, lendo o disco — aqui e so para nao abrir o dialogo a toa).
     if (!podeSalvarCarreira(state)) return
+    setErroDoSave("")
+    setPedindoNome(true)
+  }
+
+  const handleSave = async (nome: string) => {
     setSaving(true)
     // TUDO: motor (elenco/contratos/emprestimos/caixa), save da carreira e as
     // demais chaves. E o merge e feito sobre o DISCO, nao sobre o `state` deste
     // componente — ver lib/salvar-tudo.ts.
-    const resultado = await salvarTudo()
+    const resultado = await salvarTudo({ saveName: nome })
     setSaving(false)
-    if (!resultado.ok) return
+    if (!resultado.ok) {
+      setErroDoSave(resultado.motivo ?? t.header.saveGame)
+      return
+    }
+    setPedindoNome(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -841,7 +859,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         {/* Salvar — some no online: não há carreira para gravar ali. */}
         {!emModoOnline && (
         <button
-          onClick={handleSave}
+          onClick={abrirSalvar}
           disabled={saving}
           aria-label={t.header.saveGame}
           className={cn(
@@ -852,6 +870,25 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
         </button>
+        )}
+
+        {pedindoNome && (
+          <DialogoDeSalvar
+            dados={{
+              nomeAtual: state.saveName || `${userTeam.nome} — ${t.header.temporada_curta} ${currentSeason}`,
+              clube: userTeam.nome,
+              clubeCurto: userTeam.curto,
+              clubeFileKey: userTeam.file_key,
+              tecnico: state.managerName || "Tecnico",
+              temporada: currentSeason,
+              data: gameDate,
+              semana: currentWeek,
+            }}
+            salvando={saving}
+            erro={erroDoSave}
+            onSalvar={handleSave}
+            onFechar={() => setPedindoNome(false)}
+          />
         )}
 
         {/* A VEZ DA MESA (co-op local). Fica COLADO no "Avancar" de proposito: a

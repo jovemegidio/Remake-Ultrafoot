@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-28T16:54:57.468Z",
-  "scannedFiles": 536,
+  "generatedAt": "2026-08-29T17:56:16.831Z",
+  "scannedFiles": 539,
   "totals": {
     "notImplemented": 0,
     "skeleton": 22,
@@ -195,13 +195,13 @@
     {
       "type": "mock",
       "file": "lib/save-system.ts",
-      "line": 1520,
+      "line": 1537,
       "text": "// que era limpo ao atualizar e fazia o jogo \"sumir\" (calendario/partidas em mock)."
     },
     {
       "type": "mock",
       "file": "lib/save-system.ts",
-      "line": 1811,
+      "line": 1828,
       "text": "// primeiro render e as telas ficariam em mock/vazio."
     },
     {

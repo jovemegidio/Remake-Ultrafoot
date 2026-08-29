@@ -53,7 +53,7 @@ const detalhe = process.argv.includes("--detalhe")
 // O `extrair-textos.mjs` nao alcanca nenhuma das duas (ele exige o gancho na
 // forma exata `const t = useTranslation()`, e a trajetoria usa `tr`), entao foi
 // a mao, chave por chave.
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5497)
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5493)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
 //                        chumbadas. Único aumento da catraca; ver a nota acima.)

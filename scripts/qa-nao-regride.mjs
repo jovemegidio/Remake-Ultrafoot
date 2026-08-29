@@ -160,6 +160,8 @@ const INVENTARIO = [
   ["1.0.379", "Segredo de licenca fora do pacote do cliente", "scripts/preparar-env-licenca.mjs", "REMOVIDO do .env.local"],
   ["1.0.379", "Rede de seguranca por rota", "app/error.tsx", "Esta tela travou"],
   ["1.0.379", "Panic nativo deixa rastro em arquivo", "src-tauri/src/lib.rs", "instalar_registro_de_falha"],
+  ["1.0.380", "Portao contra rota casca e dado falso", "scripts/qa-sem-casca.mjs", "SEM CASCA"],
+  ["1.0.380", "Um comando responde se a versao esta pronta", "package.json", "qa:release"],
   ["1.0.347", "Imprensa pergunta pela modalidade", "lib/game-engine.ts", "A IMPRENSA PERGUNTAVA A MESMA COISA"],
   ["1.0.347", "Lesao com consequencia na carreira de atleta", "lib/carreira-de-jogador.ts", "sortearLesao"],
   ["1.0.347", "Capitania na carreira de atleta", "lib/carreira-de-jogador.ts", "A BRACADEIRA"],

@@ -426,10 +426,23 @@ export function FcHub() {
     { id: "club", label: t.fcHub.aba_meu_clube, icon: ShieldCheck, target: "hub-club" },
   ]
   const secaoDeAmigos: SecaoDoHub = hubTabs.find(tab => tab.id === hubTab)?.secao ?? "amigos"
-  const goToSection = (id: string, target: string) => {
+  // ⚠️ A ABA ROLAVA, NAO TROCAVA (corrigido na 1.0.380). Tudo ficava montado
+  // no mesmo scroll e a aba so levava a ancora — entao "Amigos" mostrava o
+  // saguao, o bloco do Discord E a Liga Online empilhados abaixo, e a aba
+  // "Liga online" mostrava exatamente a mesma coisa. Sete abas para uma pagina
+  // so: o jogador clica esperando trocar de assunto e nada muda de lugar.
+  //
+  // Agora cada aba tem o seu painel. A troca e por CLASSE e nao por remontagem:
+  // o chat do saguao mantem conexao e historico ao trocar de aba e voltar —
+  // desmontar reconectaria o socket a cada clique.
+  const goToSection = (id: string) => {
     setHubTab(id)
-    window.setTimeout(() => document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0)
+    document.getElementById("hub-painel")?.scrollTo({ top: 0 })
   }
+
+  /** Qual painel esta em cena. As abas de amigos compartilham um so. */
+  const painelAtivo = hubTabs.find(tab => tab.id === hubTab)?.target ?? "hub-friends"
+  const escondido = (alvo: string) => (painelAtivo === alvo ? "" : " hidden")
   const onlineFriends = social?.friends.filter(friend => friend.playingUltrafoot) ?? []
   const offlineFriends = social?.friends.filter(friend => !friend.playingUltrafoot) ?? []
 
@@ -440,7 +453,7 @@ export function FcHub() {
         <div className="flex items-center gap-3"><span className="hidden text-[10px] text-white/35 sm:block">{onlineFriends.length} online · sessão {formatDuration(playtime.sessionSeconds)}</span><button onClick={() => setOpen(false)} className="rounded-md border border-white/10 p-2 text-white/50 hover:bg-white/10"><X className="h-4 w-4" /></button></div>
       </header>
       <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/[0.10] bg-black/[.08] px-5 py-2 scrollbar-none">
-        {hubTabs.map(tab => { const Icon = tab.icon; const active = hubTab === tab.id; return <button key={tab.id} onClick={() => goToSection(tab.id, tab.target)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-[11px] font-semibold transition-colors ${active ? "border-[var(--brand)] text-white" : "border-transparent text-white/40 hover:text-white/70"}`}><Icon className="h-3.5 w-3.5"/>{tab.label}</button> })}
+        {hubTabs.map(tab => { const Icon = tab.icon; const active = hubTab === tab.id; return <button key={tab.id} onClick={() => goToSection(tab.id)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-[11px] font-semibold transition-colors ${active ? "border-[var(--brand)] text-white" : "border-transparent text-white/40 hover:text-white/70"}`}><Icon className="h-3.5 w-3.5"/>{tab.label}</button> })}
       </nav>
       <section className="grid min-h-0 flex-1 lg:grid-cols-[260px_1fr]">
         <aside className="hidden min-h-0 overflow-y-auto border-r border-white/[0.10] bg-black/[.10] p-4 lg:block">
@@ -453,11 +466,11 @@ export function FcHub() {
           <div className="space-y-1">{offlineFriends.slice(0,8).map(friend => <div key={friend.id} className="flex items-center gap-2 p-2 opacity-45"><img src={friend.avatarUrl} alt="" className="h-7 w-7 rounded-full grayscale"/><p className="truncate text-[11px] text-white/65">{friend.displayName}</p></div>)}</div>
           {!social?.authenticated && <button onClick={login} disabled={busy || !social?.available} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-[#5865F2] py-2.5 text-[10px] font-black text-white disabled:opacity-40"><UserPlus className="h-3.5 w-3.5"/>{t.fcHub.conectar_discord}</button>}
         </aside>
-        <div className="min-h-0 space-y-4 overflow-y-auto bg-black/[.04] p-5 lg:p-6">
+        <div id="hub-painel" className="min-h-0 space-y-4 overflow-y-auto bg-black/[.04] p-5 lg:p-6">
         {/* PRESENCA E CHAT DA CONTA. Vem antes do bloco do Discord porque e o
             que responde "tem alguem online?" — a pergunta que faz alguem abrir
             o FC Hub. O bloco do Discord segue abaixo, para quem usa. */}
-        <div id="hub-online" className="scroll-mt-5">
+        <div id="hub-online" className={"scroll-mt-5" + escondido("hub-friends")}>
           <HubOnlineChat
             clube={team.nome}
             situacao={state.nationalCareer?.nationalTeamName ? "Comandando selecao" : "Em carreira"}
@@ -480,7 +493,7 @@ export function FcHub() {
             <button onClick={() => void getDiscordSocialSnapshot().then(setSocial)} className="rounded-lg border border-white/10 px-3 text-white/60" aria-label="Atualizar"><RefreshCw className="h-4 w-4"/></button>
           </div>
         </div>
-        {ONLINE_RELAY_ENABLED && <div id="hub-groups" className="scroll-mt-5 rounded-xl border border-violet-400/30 bg-violet-400/[.06] p-4 backdrop-blur-sm" data-testid="fc-hub-internet">
+        {ONLINE_RELAY_ENABLED && <div id="hub-groups" className={"scroll-mt-5 rounded-xl border border-violet-400/30 bg-violet-400/[.06] p-4 backdrop-blur-sm" + escondido("hub-groups")} data-testid="fc-hub-internet">
           <div className="flex flex-wrap items-center gap-2 text-white"><Wifi className="h-4 w-4 text-violet-300"/><b>{t.fcHub.liga_online_beta}</b><span className="ml-auto rounded bg-violet-400/10 px-2 py-0.5 text-[10px] font-bold text-violet-200">{t.fcHub.n_2_32_tecnicos}</span></div>
           <p className="mt-1 text-[11px] text-violet-100/55">{t.fcHub.liga_assincrona_com_reconexao_e_confirmaca}</p>
           <p className="mt-2 text-xs leading-relaxed text-white/45">{t.fcHub.cada_tecnico_joga_de_sua_propria}</p>
@@ -636,10 +649,10 @@ export function FcHub() {
             para quem nao usa Discord, que e a maioria. Agora e a conta do
             Ultrafoot: adicionar, conversar em particular e ver o que os amigos
             andaram fazendo. */}
-        <div id="hub-friends" className="scroll-mt-5">
+        <div id="hub-friends" className={"scroll-mt-5" + escondido("hub-friends")}>
           <HubAmigos secao={secaoDeAmigos} />
         </div>
-        <div id="hub-club" className="scroll-mt-5 rounded-xl border border-white/10 bg-white/[.03] p-4">
+        <div id="hub-club" className={"scroll-mt-5 rounded-xl border border-white/10 bg-white/[.03] p-4" + escondido("hub-club")}>
           <div className="flex items-center gap-2 text-white"><Clock3 className="h-4 w-4 text-[var(--brand)]"/><b>{t.fcHub.tempo_de_jogo}</b></div>
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-black/25 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-white/35">{t.fcHub.sessao_atual}</p><p className="mt-1 text-lg font-black text-white">{formatDuration(playtime.sessionSeconds)}</p></div>
@@ -647,7 +660,7 @@ export function FcHub() {
           </div>
           <p className="mt-3 flex items-center gap-2 text-xs text-white/45"><CalendarDays className="h-3.5 w-3.5"/>Temporada {state.season} · Semana {state.week + 1}</p>
         </div>
-        <button id="hub-discord" onClick={() => window.open("https://discord.com/app", "_blank")} className="flex w-full scroll-mt-5 items-center justify-center gap-2 rounded-lg border border-[#5865F2]/40 py-3 text-sm font-bold text-[#aeb4ff]"><ExternalLink className="h-4 w-4"/>{t.fcHub.abrir_discord}</button>
+        <button id="hub-discord" onClick={() => window.open("https://discord.com/app", "_blank")} className={"flex w-full scroll-mt-5 items-center justify-center gap-2 rounded-lg border border-[#5865F2]/40 py-3 text-sm font-bold text-[#aeb4ff]" + escondido("hub-friends")}><ExternalLink className="h-4 w-4"/>{t.fcHub.abrir_discord}</button>
         </div>
       </section>
     </aside>
