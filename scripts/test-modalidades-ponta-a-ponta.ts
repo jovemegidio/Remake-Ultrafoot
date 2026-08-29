@@ -26,6 +26,7 @@ import { confiancaPorArea, areaMaisFragil } from "@/lib/confianca-da-diretoria"
 import { aberturaDaDiretoria } from "@/lib/conversa-diretoria"
 import { allTeams, getTeamsByDivision } from "@/lib/teams-data"
 import { LIGAS_FEMININAS } from "@/lib/futebol-feminino"
+import { createYouthCareer, verbaDaTemporada, reporVerbaDaBase } from "@/lib/youth-career-engine"
 import { playerSalaryWeekly } from "@/lib/club-economy"
 import { generateOffers } from "@/lib/sponsor-engine"
 import { vitrineDaModalidade } from "@/lib/mercado-da-modalidade"
@@ -344,6 +345,73 @@ const ok = (m: string) => console.log("ok   " + m)
       erro(`mercado feminino fora de escala: o alvo mediano custa ${Math.round(fatia * 100)}% do caixa do clube`)
     } else {
       ok(`mercado: o alvo mediano feminino custa ${Math.round(fatia * 100)}% do caixa`)
+    }
+  }
+}
+
+// ── A VERBA DA BASE (1.0.379) ──────────────────────────────────────────────
+//
+// ⚠️ O QUE ESTE BLOCO IMPEDE. Ate a 1.0.378 o tecnico do Sub-20 gastava o caixa
+// do clube PROFISSIONAL: media, 100% do mercado cabia. A verba sozinha nao
+// bastava — com o preco ainda na escala do profissional, um clube de Serie D
+// ficava com 0% do mercado acessivel e nao contratava ninguem. As duas pontas
+// tem de andar juntas, e e isso que se cobra aqui.
+{
+  const grandes = getTeamsByDivision("serie_a")
+  const pequenos = getTeamsByDivision("serie_d")
+
+  if (grandes.length === 0 || pequenos.length === 0) {
+    erro("nao consegui clubes de Serie A e Serie D para medir a verba da base")
+  } else {
+    const grande = grandes[0]
+    const pequeno = pequenos[0]
+    const carreiraGrande = createYouthCareer(grande, 2026).career
+    const carreiraPequena = createYouthCareer(pequeno, 2026).career
+
+    if (typeof carreiraGrande.verba !== "number") {
+      erro("a carreira de base nasceu sem verba")
+    } else if (!(carreiraGrande.verba < (grande.saldo ?? 0))) {
+      erro(`a verba da base (${carreiraGrande.verba}) nao ficou abaixo do caixa do clube (${grande.saldo})`)
+    } else {
+      ok(`verba: a base recebe ${Math.round(carreiraGrande.verba / (grande.saldo || 1) * 100)}% do caixa do clube-mae`)
+    }
+
+    if (!(verbaDaTemporada(0) > 0)) {
+      erro("clube sem caixa deixou a base com verba zero — a academia nao contrataria ninguem")
+    } else {
+      ok("verba: existe piso para academia de clube pobre")
+    }
+
+    // O aperto tem de ser REAL no clube pequeno e folgado no grande. Se os dois
+    // derem 100%, a escala voltou a nao ser aplicada em algum dos dois lados.
+    const mediana = (v: number[]) => { const s = [...v].sort((x, y) => x - y); return s[Math.floor(s.length / 2)] ?? 0 }
+    const alvos = vitrineDaModalidade({ modalidade: "sub20", clubeCurto: grande.curto, clubeNome: grande.nome })
+    const valores = alvos.map(a => a.value ?? 0).filter(n => n > 0)
+    const medianaDoMercado = mediana(valores)
+
+    if (!(medianaDoMercado < (carreiraGrande.verba ?? 0))) {
+      erro(`o alvo mediano do Sub-20 (${medianaDoMercado}) nao cabe na verba de um clube grande (${carreiraGrande.verba})`)
+    } else {
+      ok(`mercado: o alvo mediano do Sub-20 custa ${Math.round(medianaDoMercado / (carreiraGrande.verba || 1) * 100)}% da verba de um clube grande`)
+    }
+
+    const cabemNoPequeno = valores.filter(v => v <= (carreiraPequena.verba ?? 0)).length
+    const fatia = cabemNoPequeno / Math.max(1, valores.length)
+    if (fatia === 0) {
+      erro("clube pequeno nao alcanca UM alvo sequer do mercado da base")
+    } else if (fatia > 0.9) {
+      erro(`clube pequeno alcanca ${Math.round(fatia * 100)}% do mercado — a verba deixou de restringir`)
+    } else {
+      ok(`verba: clube pequeno alcanca ${Math.round(fatia * 100)}% do mercado da base`)
+    }
+
+    // A virada de temporada repoe — inclusive num save anterior a 1.0.379.
+    const antiga = { ...carreiraGrande, verba: undefined } as typeof carreiraGrande
+    reporVerbaDaBase(antiga, grande.saldo ?? 0)
+    if (typeof antiga.verba !== "number" || antiga.verba <= 0) {
+      erro("reporVerbaDaBase nao devolveu verba para uma carreira sem o campo")
+    } else {
+      ok("verba: save antigo ganha verba na virada de temporada")
     }
   }
 }

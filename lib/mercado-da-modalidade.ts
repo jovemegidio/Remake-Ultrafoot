@@ -180,6 +180,22 @@ export function vitrineDaModalidade(opts: {
   if (modalidade === "feminino") return vitrineFeminina(clubeCurto, temporada)
 
   const doMundo = generateDetailedMarketTargets(clubeCurto, undefined, temporada, clubeNome)
-  if (modalidade === "sub20") return doMundo.filter(alvo => alvo.age <= IDADE_MAXIMA_DA_BASE)
+  if (modalidade === "sub20") {
+    // ⚠️ O PRECO DO SUB-20 SO PODE SER ESCALADO PORQUE A VERBA PASSOU A SER
+    // LIMITADA (1.0.379). Ate a 1.0.378 a base gastava o caixa do clube
+    // profissional inteiro; baratear o preco naquele mundo daria vinte vezes
+    // mais poder de compra, e foi por isso que a escala ficou de fora la.
+    // Agora as duas pontas andam juntas — verba e preco na mesma escala —,
+    // como no feminino.
+    return doMundo
+      .filter(alvo => alvo.age <= IDADE_MAXIMA_DA_BASE)
+      .map(alvo => ({
+        ...alvo,
+        value: naEscalaDaModalidade(alvo.value ?? 0, "sub20"),
+        releaseClause: alvo.releaseClause == null
+          ? alvo.releaseClause
+          : naEscalaDaModalidade(alvo.releaseClause, "sub20"),
+      }))
+  }
   return doMundo
 }

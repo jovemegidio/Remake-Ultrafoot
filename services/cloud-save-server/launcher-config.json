@@ -308,6 +308,16 @@
   ],
   "changelog": [
     {
+      "version": "1.0.379",
+      "data": "2026-08-28",
+      "titulo": "A categoria de base passa a ter dinheiro proprio",
+      "itens": [
+        "O SUB-20 GANHA VERBA PROPRIA. Quem dirigia a base contratava gastando o caixa inteiro do clube profissional — o clube que voce nao dirige nesse modo. Na pratica nao havia restricao nenhuma: o mercado inteiro cabia no bolso. Agora a academia tem uma verba por temporada, tirada do caixa do clube-mae na escala da modalidade, com piso para que academia de clube pobre nao fique sem poder contratar ninguem. A verba nao acumula de uma temporada para a outra: o modo e sobre formar atleta, nao sobre juntar dinheiro.",
+        "E O PRECO DA BASE ENTRA NA MESMA ESCALA. Com a verba limitada, baratear o mercado do Sub-20 finalmente faz sentido — as duas pontas andam juntas. O resultado e uma economia com aperto de verdade e diferente por tamanho de clube: um grande escolhe praticamente qualquer garoto do mercado, limitado so pelas vagas da academia; um clube de Serie D alcanca cerca de um quarto da lista e precisa escolher bem. Antes os dois tinham acesso a tudo.",
+        "CARREIRA ANTIGA NAO QUEBRA. Uma base criada antes desta versao continua pelo caixa do clube ate a primeira virada de temporada, que e quando ela recebe a propria verba."
+      ]
+    },
+    {
       "version": "1.0.378",
       "data": "2026-08-28",
       "titulo": "O futebol feminino passa a ter economia propria, e o patrocinio para de vencer sozinho",

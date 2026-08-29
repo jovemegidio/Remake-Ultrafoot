@@ -1052,7 +1052,23 @@ export default function MercadoPage() {
     }
 
     const total = resposta.totalAPagar ?? (ofertaAoClube + comissaoEmReais(ofertaAoClube, agente))
-    if (gameEngine.balance < total) {
+
+    // ⚠️ NA CARREIRA DE BASE QUEM PAGA E A VERBA DA ACADEMIA, nao o caixa do
+    // clube profissional — que quem dirige o Sub-20 nao administra. Carreira
+    // criada antes da 1.0.379 nao tem `verba` e segue pelo caixa ate a virada
+    // de temporada repor (ver `reporVerbaDaBase`).
+    const ehCarreiraDeBase = modalidade === "sub20" && Boolean(careerState.youthCareer?.active)
+    const verbaDaBase = careerState.youthCareer?.verba
+    const pagaPelaVerba = ehCarreiraDeBase && typeof verbaDaBase === "number"
+
+    if (pagaPelaVerba && verbaDaBase < total) {
+      setMarketNotice(
+        `A verba da base não cobre: ${jovem.name} sai por ${formatCurrency(total)} ` +
+        `e a academia tem ${formatCurrency(verbaDaBase)} para esta temporada.`,
+      )
+      return
+    }
+    if (!pagaPelaVerba && gameEngine.balance < total) {
       setMarketNotice(
         `Saldo insuficiente: ${jovem.name} sai por ${formatCurrency(total)} ` +
         `(${formatCurrency(ofertaAoClube)} ao clube + ${formatCurrency(total - ofertaAoClube)} de comissão do empresário).`,
@@ -1070,7 +1086,13 @@ export default function MercadoPage() {
       confirmar: "Contratar",
     })
     if (!confirmado) return
-    if (!gameEngine.spendClubFunds(total)) {
+    if (pagaPelaVerba) {
+      setCareerState(current => ({
+        youthCareer: current.youthCareer
+          ? { ...current.youthCareer, verba: Math.max(0, (current.youthCareer.verba ?? 0) - total) }
+          : current.youthCareer,
+      }))
+    } else if (!gameEngine.spendClubFunds(total)) {
       setMarketNotice("Saldo insuficiente para concluir a compra.")
       return
     }

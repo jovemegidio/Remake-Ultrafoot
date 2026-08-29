@@ -7,6 +7,7 @@ import { generateSeasonFixtures, initStandings, sortStandings, updateStandings }
 import { generateCupBracket, isCupTriggerRound, simulateCupRound } from "@/lib/cup-engine"
 import { simulateFullMatch } from "@/lib/match-engine"
 import type { MatchFixture } from "@/lib/career-types"
+import { naEscalaDaModalidade } from "@/lib/tom-da-modalidade"
 
 export const YOUTH_COMPETITIONS = [
   "Copa São Paulo de Futebol Júnior",
@@ -348,6 +349,28 @@ function initializeProgress(career: YouthCareerState): void {
   career.competitionStage = format.stages[career.competitionStageIndex]?.name ?? "Encerrada"
 }
 
+/**
+ * Quanto a categoria de base tem para gastar numa temporada.
+ *
+ * Sai do caixa do clube-mae na `escalaFinanceira` do Sub-20 (0,05), a mesma
+ * constante que `lib/tom-da-modalidade` ja declarava e que ate a 1.0.378 nao
+ * tinha um consumidor sequer no jogo. O piso existe para que academia de clube
+ * pobre nao abra a temporada sem poder contratar ninguem — o mesmo cuidado que
+ * `clubesDeEstreia` tomou ao usar corte RELATIVO em vez de prestigio fixo.
+ */
+export function verbaDaTemporada(saldoDoClube: number): number {
+  return Math.max(250_000, naEscalaDaModalidade(Math.max(0, saldoDoClube), "sub20"))
+}
+
+/**
+ * Repoe a verba na virada de temporada. NAO acumula de proposito: verba que
+ * sobra virando saldo eterno transformaria a base num segundo departamento
+ * financeiro, e o modo e sobre formar atleta, nao sobre juntar dinheiro.
+ */
+export function reporVerbaDaBase(career: YouthCareerState, saldoDoClube: number): void {
+  career.verba = verbaDaTemporada(saldoDoClube)
+}
+
 export function createYouthCareer(team: Team, season=2026): { career: YouthCareerState; players: SquadPlayer[] } {
   // O país do clube manda em DUAS coisas: as competições que a base disputa e o
   // nome dos garotos que ela revela.
@@ -360,6 +383,7 @@ export function createYouthCareer(team: Team, season=2026): { career: YouthCaree
     pais:pais||undefined,feminino:feminino||undefined,
     round:0,matches:0,wins:0,draws:0,losses:0,goalsFor:0,goalsAgainst:0,points:0,coachReputation:8,coachXP:0,
     titles:[],promotedPlayerIds:[],alumni:[],professionalOffers:[],seasonFinished:false,formation:"4-3-3",
+    verba:verbaDaTemporada(team.saldo ?? 0),
     startingPlayerIds:players.slice(0,11).map(p=>p.id),currentCompetition:formatos[0].name,
     competitionIndex:0,competitionStageIndex:0,competitionMatchInStage:0,competitionPoints:0,
     competitionAggregateFor:0,competitionAggregateAgainst:0,competitionStage:formatos[0].stages[0].name,seasonPlacements:{},
@@ -532,6 +556,8 @@ export function candidatosAPromocao(state: GameState): SquadPlayer[] {
 export function finishYouthSeason(state: GameState, idsParaPromover?: string[]): GameState {
   if(!state.youthCareer?.seasonFinished)return state
   const next=structuredClone(state),c=next.youthCareer!
+  // A temporada nova comeca com verba nova (e um save antigo ganha a dele aqui).
+  reporVerbaDaBase(c, next.balance ?? 0)
   const elegiveis=candidatosAPromocao(next)
   const limite=vagasNoProfissional(c)
   const graduates=idsParaPromover

@@ -154,6 +154,23 @@ export interface YouthCareerState {
   calendario?: MatchFixture[]
   tabela?: StandingEntry[]
   copa?: CupBracket
+  /**
+   * A VERBA DA BASE (1.0.379).
+   *
+   * ⚠️ ATE A 1.0.378 O TECNICO DA BASE GASTAVA O CAIXA DO CLUBE PROFISSIONAL —
+   * o clube que ele NAO dirige. `comprarJunior` conferia `gameEngine.balance`
+   * e debitava dele, entao a carreira de Sub-20 abria com dezenas de milhoes
+   * disponiveis e nenhuma restricao economica: medido em 28/08/2026, 100% do
+   * mercado cabia no caixa. Era por isso que a escala da modalidade (0,05) nao
+   * podia ser aplicada ao PRECO — baratear sem limitar a fonte daria vinte
+   * vezes mais poder de compra, nao menos.
+   *
+   * A verba e reposta a cada temporada a partir do caixa do clube-mae, na
+   * escala da modalidade (ver `reporVerbaDaBase`). Ausente = carreira criada
+   * antes desta versao: o mercado da base cai no caixa do clube, como antes,
+   * ate a primeira virada de temporada repor.
+   */
+  verba?: number
   startedSeason: number
   currentSeason: number
   round: number
