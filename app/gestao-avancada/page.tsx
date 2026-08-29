@@ -11,7 +11,7 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { NATIONAL_TEAMS, getNationalStrength } from "@/lib/national-teams"
 import {
   DESTINO_DO_PEDIDO, PRINCIPIOS, bonusPreparacao, consultarIntermediario, normalizarGestao282,
-  pontuacaoTecnico, pontuacaoTime, verbaDoPedido282, type EntregaPauta, type EventoCarreira282,
+  pontuacaoTecnico, pontuacaoTime, verbaDisponivel282, verbaDoPedido282, type EntregaPauta, type EventoCarreira282,
   type MetaIndividual282, type PautaComissao, type PedidoDiretoria282,
   PUNICOES_CONDUTA_291, type Principio, type PunicaoConduta291, type RotinaBolaParada, type TipoConduta291,
 } from "@/lib/gestao-282"
@@ -140,7 +140,14 @@ function Diretoria({ gestao, season, confidence, jogadores, liberarVerba, salvar
     const p: PedidoDiretoria282 = { id: `${Date.now()}`, tipo, justificativa: texto.trim(), prioridade, season, status }
     // APROVADO agora significa dinheiro na mesa. Antes era só um rótulo: a tela
     // dizia "aprovado" e nem o orçamento nem o caixa mudavam.
-    const verba = status === "aprovado" ? verbaDoPedido282(p, { valorDoElenco, confianca: confidence }) : 0
+    // ⚠️ A COTA DA TEMPORADA VEM DO SAVE, não de um contador desta tela: a
+    // tela renasce a cada navegação e um contador local voltaria a zero. Sem
+    // isto, pedido aprovado em laço era dinheiro infinito (ver
+    // `verbaDisponivel282`).
+    const cota = verbaDisponivel282(gestao.pedidosDiretoria, season)
+    const verba = status === "aprovado" && cota.liberado
+      ? verbaDoPedido282(p, { valorDoElenco, confianca: confidence })
+      : 0
     if (verba > 0) liberarVerba(verba, DESTINO_DO_PEDIDO[tipo])
     salvar(
       { pedidosDiretoria: [{ ...p, verbaLiberada: verba || undefined }, ...gestao.pedidosDiretoria] },
@@ -149,7 +156,9 @@ function Diretoria({ gestao, season, confidence, jogadores, liberarVerba, salvar
         titulo: `Pedido ${status}`,
         descricao: verba > 0
           ? `${tipo}: ${texto.trim()} — ${formatCurrency(verba)} liberados em ${DESTINO_DO_PEDIDO[tipo] === "transferencias" ? "verba de transferências" : "caixa"}.`
-          : `${tipo}: ${texto.trim()}`,
+          : status === "aprovado" && !cota.liberado
+            ? `${tipo}: ${texto.trim()} — a diretoria concorda, mas já liberou verba ${cota.usados}x nesta temporada e não abre mais o cofre agora.`
+            : `${tipo}: ${texto.trim()}`,
       },
     )
     setTexto("")

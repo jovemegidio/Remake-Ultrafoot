@@ -7374,6 +7374,14 @@ export const useGameEngine = create<GameEngineState>()(
 
       createMarketingContract: (type: MarketingCampaignType) => {
         const state = get()
+        // ⚠️ UM CONTRATO ATIVO POR TIPO. Sem esta linha, cada chamada criava um
+        // contrato novo e creditava o `upfrontPayment` outra vez — de R$ 2 a
+        // R$ 12 milhões, sem limite. Hoje nenhuma tela chama esta função, então
+        // o dinheiro infinito era LATENTE: bastaria ligar um botão a ela para
+        // publicar o exploit sem que ninguém tivesse escrito uma linha errada.
+        // Defeito que só existe quando alguém usa a função continua sendo
+        // defeito, e sai mais barato fechar agora.
+        if (state.marketingContracts.some(c => c.type === type && c.active)) return
         const template = MARKETING_CAMPAIGN_TEMPLATES[type]
         const staffMarketing = state.staffMembers.find(s => s.role === "diretor_marketing")
         const bonusMultiplier = staffMarketing ? (0.8 + staffMarketing.competence / 500) : 1

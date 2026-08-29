@@ -56,43 +56,83 @@
     "pagina": "Esporte Clube Juventude (women)"
   },
   "brasileirao_fem_a1|Realidade Jovem": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Associação Esportiva Realidade Jovem"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Realidade Jovem W.F.C. (0)",
+      "Realidade Jovem Women (0)",
+      "Realidade Jovem (women) (0)",
+      "Associação Esportiva Realidade Jovem (0)"
+    ]
   },
   "brasileirao_fem_a1|3B da Amazônia": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Associação Esportiva 3B da Amazônia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "3B da Amazônia W.F.C. (0)",
+      "3B da Amazônia Women (0)",
+      "3B da Amazônia (women) (0)",
+      "Associação Esportiva 3B da Amazônia (0)"
+    ]
   },
   "brasileirao_fem_a2|Botafogo": {
     "ok": 31,
     "pagina": "Botafogo FR (women)"
   },
   "brasileirao_fem_a2|Vasco da Gama": {
-    "motivo": "elenco curto (0)",
-    "pagina": "CR Vasco da Gama (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Vasco da Gama W.F.C. (0)",
+      "Vasco da Gama Women (0)",
+      "Vasco da Gama (women) (0)",
+      "CR Vasco da Gama (women) (0)"
+    ]
   },
   "brasileirao_fem_a2|Athletico Paranaense": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Campeonato Paranaense de Futebol Feminino"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Athletico Paranaense W.F.C. (0)",
+      "Athletico Paranaense Women (0)",
+      "Athletico Paranaense (women) (0)",
+      "Club Athletico Paranaense (futebol feminino) (0)"
+    ]
   },
   "brasileirao_fem_a2|Sport Recife": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Sport Recife W.F.C. (0)",
+      "Sport Recife Women (0)",
+      "Sport Recife (women) (0)"
+    ]
   },
   "brasileirao_fem_a2|Ceará": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Ceará Sporting Club (futebol feminino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Ceará W.F.C. (0)",
+      "Ceará Women (0)",
+      "Ceará (women) (0)",
+      "Ceará Sporting Club (futebol feminino) (0)"
+    ]
   },
   "brasileirao_fem_a2|Fortaleza": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Fortaleza Esporte Clube (futebol feminino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Fortaleza W.F.C. (0)",
+      "Fortaleza Women (0)",
+      "Fortaleza (women) (0)",
+      "Fortaleza Esporte Clube (futebol feminino) (0)"
+    ]
   },
   "brasileirao_fem_a2|Vitória": {
     "ok": 29,
     "pagina": "Vitória S.C. (women)"
   },
   "brasileirao_fem_a2|Coritiba": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Coritiba Foot Ball Club (futebol feminino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Coritiba W.F.C. (0)",
+      "Coritiba Women (0)",
+      "Coritiba (women) (0)",
+      "Coritiba Foot Ball Club (futebol feminino) (0)"
+    ]
   },
   "brasileirao_fem_a2|Avaí Kindermann": {
     "ok": 24,
@@ -103,11 +143,21 @@
     "pagina": "Atlético Clube Goianiense"
   },
   "brasileirao_fem_a2|Remo": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Milan–San Remo Women"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Remo W.F.C. (0)",
+      "Remo Women (0)",
+      "Remo (women) (0)",
+      "Milan–San Remo Women (0)"
+    ]
   },
   "brasileirao_fem_a2|Paysandu": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Paysandu W.F.C. (0)",
+      "Paysandu Women (0)",
+      "Paysandu (women) (0)"
+    ]
   },
   "brasileirao_fem_a2|Náutico": {
     "ok": 42,
@@ -118,26 +168,48 @@
     "pagina": "Real Brasília FC (women)"
   },
   "brasileirao_fem_a2|Minas Brasília": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Brasília"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Minas Brasília W.F.C. (0)",
+      "Minas Brasília Women (0)",
+      "Minas Brasília (women) (0)",
+      "Miss Minas Gerais (0)"
+    ]
   },
   "brasileirao_fem_a2|Doce Mel": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Orange Caramel"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Doce Mel W.F.C. (0)",
+      "Doce Mel Women (0)",
+      "Doce Mel (women) (0)",
+      "Mel (álbum) (0)"
+    ]
   },
   "wsl_ing|Arsenal": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Arsenal Women 11–1 Bristol City Women"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Arsenal W.F.C. (0)",
+      "Arsenal Women (0)",
+      "Arsenal (women) (0)"
+    ]
   },
   "wsl_ing|Chelsea": {
     "ok": 35,
     "pagina": "Chelsea F.C. Women"
   },
   "wsl_ing|Manchester City": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "ok": 31,
+    "pagina": "Manchester City W.F.C.",
+    "tentadas": [
+      "Manchester City W.F.C. (31)"
+    ]
   },
   "wsl_ing|Manchester United": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "ok": 52,
+    "pagina": "Manchester United W.F.C.",
+    "tentadas": [
+      "Manchester United W.F.C. (52)"
+    ]
   },
   "wsl_ing|Tottenham Hotspur": {
     "ok": 26,
@@ -148,10 +220,19 @@
     "pagina": "Liverpool F.C. Women"
   },
   "wsl_ing|Aston Villa": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Aston Villa W.F.C. (0)",
+      "Aston Villa Women (0)",
+      "Aston Villa (women) (0)"
+    ]
   },
   "wsl_ing|Brighton & Hove Albion": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "ok": 34,
+    "pagina": "Brighton & Hove Albion W.F.C.",
+    "tentadas": [
+      "Brighton & Hove Albion W.F.C. (34)"
+    ]
   },
   "wsl_ing|Everton": {
     "ok": 26,
@@ -186,11 +267,22 @@
     "pagina": "Newcastle Jets FC (women)"
   },
   "wsl2_ing|Nottingham Forest": {
-    "motivo": "elenco curto (0)",
-    "pagina": "List of Nottingham Forest Women F.C. seasons"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Nottingham Forest W.F.C. (0)",
+      "Nottingham Forest Women (0)",
+      "Nottingham Forest (women) (0)"
+    ]
   },
   "wsl2_ing|Charlton Athletic": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "ok": 75,
+    "pagina": "Charlton Athletic F.C.",
+    "tentadas": [
+      "Charlton Athletic W.F.C. (0)",
+      "Charlton Athletic Women (0)",
+      "Charlton Athletic (women) (0)",
+      "Charlton Athletic F.C. (75)"
+    ]
   },
   "wsl2_ing|Sheffield United": {
     "ok": 21,
@@ -237,24 +329,44 @@
     "pagina": "Real Sociedad Femenino"
   },
   "liga_f_esp|Athletic Club": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Athletic Bilbao (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Athletic Club W.F.C. (0)",
+      "Athletic Club Women (0)",
+      "Athletic Club (women) (0)",
+      "Athletic Bilbao (women) (0)"
+    ]
   },
   "liga_f_esp|Sevilla": {
     "ok": 27,
     "pagina": "Sevilla FC (women)"
   },
   "liga_f_esp|Valencia": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Valencia Basket (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Valencia W.F.C. (0)",
+      "Valencia Women (0)",
+      "Valencia (women) (0)",
+      "Valencia CF Femenino (0)"
+    ]
   },
   "liga_f_esp|Real Betis": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Real Betis Balompié (femenino)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Real Betis W.F.C. (0)",
+      "Real Betis Women (0)",
+      "Real Betis (women) (0)",
+      "Real Betis Balompié (femenino) (0)"
+    ]
   },
   "liga_f_esp|Espanyol": {
-    "motivo": "elenco curto (0)",
-    "pagina": "List of RCD Espanyol Femenino seasons"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Espanyol W.F.C. (0)",
+      "Espanyol Women (0)",
+      "Espanyol (women) (0)",
+      "Real Club Deportivo Espanyol (femenino) (0)"
+    ]
   },
   "liga_f_esp|Granada": {
     "ok": 13,
@@ -273,15 +385,25 @@
     "pagina": "FC Badalona Women"
   },
   "liga_f_esp|Eibar": {
-    "motivo": "elenco curto (0)",
-    "pagina": "SD Eibar (women)"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Eibar W.F.C. (0)",
+      "Eibar Women (0)",
+      "Eibar (women) (0)",
+      "SD Eibar (women) (0)"
+    ]
   },
   "liga_f_esp|Tenerife": {
     "ok": 30,
     "pagina": "UD Tenerife"
   },
   "premiere_ligue_fra|Olympique Lyonnais": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Olympique Lyonnais W.F.C. (0)",
+      "Olympique Lyonnais Women (0)",
+      "Olympique Lyonnais (women) (0)"
+    ]
   },
   "premiere_ligue_fra|Paris Saint-Germain": {
     "ok": 33,
@@ -304,8 +426,13 @@
     "pagina": "Dijon FCO (women)"
   },
   "premiere_ligue_fra|Stade de Reims": {
-    "motivo": "elenco curto (0)",
-    "pagina": "Stade de Reims Féminines"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Stade de Reims W.F.C. (0)",
+      "Stade de Reims Women (0)",
+      "Stade de Reims (women) (0)",
+      "Stade de Reims Féminines (0)"
+    ]
   },
   "premiere_ligue_fra|Nantes": {
     "ok": 23,
@@ -320,18 +447,34 @@
     "pagina": "Le Havre AC (women)"
   },
   "premiere_ligue_fra|Olympique de Marseille": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Olympique de Marseille W.F.C. (0)",
+      "Olympique de Marseille Women (0)",
+      "Olympique de Marseille (women) (0)"
+    ]
   },
   "premiere_ligue_fra|Saint-Étienne": {
     "ok": 24,
     "pagina": "AS Saint-Étienne (women)"
   },
   "frauen_bundesliga|Bayern de Munique": {
-    "motivo": "sem pagina feminina na wikipedia"
+    "motivo": "elenco curto",
+    "tentadas": [
+      "Bayern de Munique W.F.C. (0)",
+      "Bayern de Munique Women (0)",
+      "Bayern de Munique (women) (0)"
+    ]
   },
   "frauen_bundesliga|Wolfsburg": {
-    "motivo": "elenco curto (0)",
-    "pagina": "VfL Wolfsburg (women)"
+    "ok": 29,
+    "pagina": "VfL Wolfsburg (women)",
+    "tentadas": [
+      "Wolfsburg W.F.C. (0)",
+      "Wolfsburg Women (0)",
+      "Wolfsburg (women) (0)",
+      "VfL Wolfsburg (women) (29)"
+    ]
   },
   "frauen_bundesliga|Eintracht Frankfurt": {
     "ok": 24,

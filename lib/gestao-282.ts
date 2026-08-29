@@ -446,6 +446,37 @@ export const DESTINO_DO_PEDIDO: Record<PedidoDiretoria282["tipo"], "transferenci
  *
  * Antes disto o "aprovado" da tela era só um rótulo — nenhum valor mudava.
  */
+/**
+ * Quantos pedidos a diretoria FINANCIA por temporada.
+ *
+ * ⚠️ ISTO FECHA UM DINHEIRO INFINITO (1.0.379). Até aqui a única trava do
+ * formulário de pedidos era "um prioritário por temporada"; pedido COMUM era
+ * ilimitado. Com a confiança da diretoria em 70 ou mais, todo pedido saía
+ * "aprovado" e cada um liberava verba na hora — medido num clube de Série A com
+ * elenco de R$ 300 milhões, R$ 18,7 MILHÕES POR ENVIO, sem espera, sem custo e
+ * sem limite. Bastava escrever qualquer justificativa e clicar em laço.
+ *
+ * Não dá para resolver só na tela: a tela é reconstruída a cada navegação e
+ * qualquer contador dela nasce zerado. A conta tem de sair do que está no SAVE
+ * — os pedidos daquela temporada —, que é o que esta função faz.
+ */
+export const PEDIDOS_FINANCIADOS_POR_TEMPORADA = 2
+
+/**
+ * A verba que a diretoria ainda topa liberar nesta temporada.
+ *
+ * Devolve 0 quando a cota acabou: a diretoria continua ouvindo e o pedido
+ * continua sendo registrado — ela só não põe dinheiro de novo. Recusar o
+ * pedido inteiro seria pior, porque esconderia do jogador que a cota existe.
+ */
+export function verbaDisponivel282(
+  pedidos: Pick<PedidoDiretoria282, "season" | "verbaLiberada">[],
+  season: number,
+): { liberado: boolean; usados: number; cota: number } {
+  const usados = pedidos.filter(p => p.season === season && (p.verbaLiberada ?? 0) > 0).length
+  return { liberado: usados < PEDIDOS_FINANCIADOS_POR_TEMPORADA, usados, cota: PEDIDOS_FINANCIADOS_POR_TEMPORADA }
+}
+
 export function verbaDoPedido282(
   pedido: Pick<PedidoDiretoria282, "tipo" | "prioridade">,
   contexto: { valorDoElenco: number; confianca: number },

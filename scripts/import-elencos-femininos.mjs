@@ -110,6 +110,41 @@ function pareceFeminina(titulo) {
 }
 
 /**
+ * Titulos que NUNCA sao a pagina de elenco de um clube.
+ *
+ * ⚠️ ISTO NASCEU DE TRES CASAMENTOS ERRADOS MEDIDOS EM 28/08/2026, todos
+ * aprovados pelas travas 1 e 2 porque tinham o nucleo do nome E a marca
+ * feminina no titulo:
+ *
+ *   Arsenal                -> "Arsenal Women 11-1 Bristol City Women"  (sumula)
+ *   Athletico Paranaense   -> "Campeonato Paranaense de Futebol Feminino"  (competicao)
+ *   Valencia               -> "Valencia Basket (women)"  (BASQUETE)
+ *
+ * As travas cuidavam de "e feminino?" e "e este clube?" — e nenhuma perguntava
+ * "isto e um clube?". O Arsenal tem pagina de elenco com 34 atletas em
+ * "Arsenal W.F.C."; ele so nunca foi tentado.
+ */
+function paginaImprestavel(titulo) {
+  const t = semAcento(titulo)
+  return (
+    /\d+\s*[-–]\s*\d+/.test(titulo) ||          // sumula: "11-1", "3–2"
+    / vs\.? /i.test(titulo) ||
+    t.startsWith("list of") || t.includes("seasons") ||
+    /\b(campeonato|championship|league|liga|copa|cup|torneio|tournament|supercopa)\b/i.test(t) ||
+    /\b(basket|basquete|handball|volleyball|voleibol|futsal|rugby|hockey)\b/i.test(t)
+  )
+}
+
+/**
+ * Os titulos que a en.wikipedia usa para clube feminino, tentados ANTES da
+ * busca. Sao exatos e baratos: se "Arsenal W.F.C." existe, nao ha por que
+ * peneirar oito resultados de busca e ficar com uma sumula de jogo.
+ */
+function titulosDiretos(nome) {
+  return [`${nome} W.F.C.`, `${nome} Women`, `${nome} (women)`]
+}
+
+/**
  * Acha a página do clube FEMININO. Devolve `{ idioma, titulo }` ou null.
  *
  * ⚠️ INGLÊS PRIMEIRO, mesmo para clube brasileiro. Medido em 15/08/2026: a
@@ -119,9 +154,17 @@ function pareceFeminina(titulo) {
  * consistente em praticamente todo clube feminino do mundo. O idioma local fica
  * como segunda tentativa, para o que o inglês não cobrir.
  */
+/** Quantas páginas tentar por clube antes de desistir. */
+const MAXIMO_DE_CANDIDATOS = 4
+
 async function acharPagina(clube) {
   const idiomas = ["en", IDIOMA_POR_PAIS[clube.pais] ?? "en"].filter((v, i, a) => a.indexOf(v) === i)
   const nucleo = nucleoDoNome(clube.nome)
+  // ⚠️ DEVOLVE UMA LISTA, NÃO UMA PÁGINA. Antes esta função entregava o PRIMEIRO
+  // resultado que passasse nas travas, e o chamador desistia do clube se aquela
+  // página não tivesse elenco — sem nunca tentar a segunda. Era assim que o
+  // Arsenal ficava de fora tendo 34 atletas publicadas em "Arsenal W.F.C.".
+  const achados = titulosDiretos(clube.nome).map(titulo => ({ idioma: "en", titulo }))
   for (const idioma of idiomas) {
     const consultas = idioma === "en"
       ? [`${clube.nome} women`, `${clube.nome} women's football club`]
@@ -146,12 +189,15 @@ async function acharPagina(clube) {
         // TRAVA 1: o núcleo do nome tem de estar no título.
         const t = semAcento(titulo)
         if (nucleo.length && !nucleo.some(p => t.includes(p))) continue
-        return { idioma, titulo }
+        // TRAVA 4 (1.0.379): não é súmula, competição, lista nem outro esporte.
+        if (paginaImprestavel(titulo)) continue
+        if (!achados.some(a => a.titulo === titulo)) achados.push({ idioma, titulo })
+        if (achados.length >= MAXIMO_DE_CANDIDATOS) return achados
       }
       await esperar(180)
     }
   }
-  return null
+  return achados
 }
 
 // ─── Parser do elenco ───────────────────────────────────────────────────────
@@ -221,26 +267,41 @@ async function main() {
     if (acervo[chave]?.v === PARSER_V) continue
     feitos++
 
-    const pagina = await acharPagina(clube)
-    if (!pagina) {
+    const candidatos = await acharPagina(clube)
+    if (!candidatos.length) {
       relatorio[chave] = { motivo: "sem pagina feminina na wikipedia" }
       semPagina++
       continue
     }
-    const dados = await api(pagina.idioma, { action: "parse", page: pagina.titulo, prop: "wikitext" })
-    const wikitext = dados?.parse?.wikitext ?? ""
-    const elenco = extrairElenco(wikitext)
 
-    // TRAVA 3: elenco pequeno demais ou sem goleira não entra — é sinal de que
-    // a página achada não é a do elenco atual do clube.
-    if (elenco.length < 11 || !elenco.some(a => a.p === "GOL")) {
-      relatorio[chave] = { motivo: `elenco curto (${elenco.length})`, pagina: pagina.titulo }
+    // Tenta uma a uma até alguma trazer elenco de verdade. A TRAVA 3 (11+
+    // atletas com goleira) deixa de ser um veredito sobre o clube e passa a ser
+    // o que sempre deveria ter sido: o teste que diz se ESTA página serve.
+    let escolhida = null
+    let elenco = []
+    const tentadas = []
+    for (const pagina of candidatos) {
+      const dados = await api(pagina.idioma, { action: "parse", page: pagina.titulo, prop: "wikitext" })
+      const wikitext = dados?.parse?.wikitext ?? ""
+      const achado = extrairElenco(wikitext)
+      tentadas.push(`${pagina.titulo} (${achado.length})`)
+      if (achado.length >= 11 && achado.some(a => a.p === "GOL")) {
+        escolhida = pagina
+        elenco = achado
+        break
+      }
+      await esperar(180)
+    }
+
+    if (!escolhida) {
+      relatorio[chave] = { motivo: `elenco curto`, tentadas }
       curtos++
       continue
     }
+    const pagina = escolhida
 
     acervo[chave] = { v: PARSER_V, fonte: `${pagina.idioma}.wikipedia:${pagina.titulo}`, atletas: elenco }
-    relatorio[chave] = { ok: elenco.length, pagina: pagina.titulo }
+    relatorio[chave] = { ok: elenco.length, pagina: pagina.titulo, tentadas }
     novos++
     if (novos % 5 === 0) {
       await mkdir(path.dirname(SAIDA), { recursive: true })
