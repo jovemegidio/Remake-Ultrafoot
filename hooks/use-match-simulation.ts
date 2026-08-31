@@ -69,6 +69,19 @@ export interface UseMatchSimulation {
   suggestedDecision: MatchDecisionId | null
   applyCoachDecision: (id: MatchDecisionId) => void
   /**
+   * PRELEÇÃO DO INTERVALO (`lib/prelecao.ts`) entrando em campo.
+   *
+   * Vai pelo MESMO canal dos gritos de beira, porque é o único do jogo que já é
+   * recalculado minuto a minuto e que o motor já comprime com teto próprio.
+   * Diferente deles, o efeito não sai de tabela: vem calculado de como o
+   * vestiário reagiu, e por isso é passado pronto.
+   *
+   * Repetir a chamada SUBSTITUI a preleção anterior em vez de somar — a tela só
+   * abre a conversa uma vez por intervalo, e empilhar seria o glitch da
+   * bilheteria em forma de discurso.
+   */
+  aplicarPrelecaoNoIntervalo: (efeito: DecisionEffect) => void
+  /**
    * Cobra o penalti pendente com o batedor escolhido pelo usuario.
    * Enquanto houver penalti pendente o relogio fica parado, entao isto e o que
    * destrava a partida.
@@ -374,6 +387,18 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     })
   }, [])
 
+  const aplicarPrelecaoNoIntervalo = useCallback((efeito: DecisionEffect) => {
+    const current = stateRef.current
+    if (current.phase === "fulltime" || current.phase === "penaltis") return
+    const active: ActiveDecision = { id: "prelecao", appliedAtMinute: current.minute, effect: efeito }
+    setActiveDecisions(prev => {
+      const updated = [...pruneExpired(prev, current.minute).filter(d => d.id !== "prelecao"), active]
+      activeDecisionsRef.current = updated
+      return updated
+    })
+    setDecisionHistory(prev => [...prev, active])
+  }, [])
+
   // Sugestão do auxiliar: recalculada a cada minuto a partir do placar/momentum.
   const suggestedDecision = state.phase === "fulltime" || state.phase === "penaltis"
     ? null
@@ -388,6 +413,7 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     decisionEffect: aggregateDecisionEffects(activeDecisions, state.minute, efeitosDoTreinador().defesaNoFinal),
     suggestedDecision,
     applyCoachDecision,
+    aplicarPrelecaoNoIntervalo,
     start,
     pause,
     resume,

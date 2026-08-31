@@ -39,8 +39,20 @@ export interface DecisionEffect {
   durationMinutes: number          // por quantos minutos vale
 }
 
+/**
+ * O que pode estar em vigor no gramado.
+ *
+ * ⚠️ É MAIOR que `MatchDecisionId` de propósito. Os oito gritos de beira têm
+ * efeito FIXO por id (a tabela de `applyDecision`); a preleção do intervalo
+ * (`lib/prelecao.ts`) tem efeito CALCULADO — ele depende do tom, do placar e de
+ * como cada atleta reagiu. Alargar a tabela com uma entrada zerada para ela
+ * seria uma linha morta fingindo ser regra; alargar só o id deixa as duas coisas
+ * conviverem no mesmo canal, que é o que `aggregateDecisionEffects` já soma.
+ */
+export type IntervencaoId = MatchDecisionId | "prelecao"
+
 export interface ActiveDecision {
-  id: MatchDecisionId
+  id: IntervencaoId
   appliedAtMinute: number
   effect: DecisionEffect
 }
