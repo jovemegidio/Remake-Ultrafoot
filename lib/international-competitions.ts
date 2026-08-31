@@ -535,7 +535,14 @@ export const competitionsByLeague: Record<string, Competition[]> = {
       format: "knockout",
       teams: 18,
       prize: 30000000,
-      prestige: 70,
+      // ⚠️ PRESTIGIO ABAIXO DA US OPEN CUP (45) DE PROPOSITO — 1.0.384.
+      // O calendario usa a copa de MAIOR prestigio como copa nacional. Com 70
+      // aqui, o mata-mata do titulo da LIGA ocupava o lugar da US Open Cup, que
+      // e a copa nacional de verdade dos Estados Unidos, e ela nunca era
+      // disputada. A `mls` ja declara `format: "league_playoff"`, entao o
+      // playoff continua existindo pela liga; aqui ele entra como a SEGUNDA
+      // competicao de mata-mata, que e o lugar dele.
+      prestige: 40,
     },
     {
       id: "concacaf_champions",

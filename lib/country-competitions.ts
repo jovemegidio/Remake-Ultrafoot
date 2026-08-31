@@ -86,7 +86,7 @@ const LEAGUE_COMPETITIONS_BASE: Record<string, CountryCompetitions> = {
   k_league_1: { country: "Coreia do Sul", domesticCup: "Korean FA Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
   chinese_super: { country: "China", domesticCup: "Chinese FA Cup", superCup: "Supercopa da China", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
   mls: { country: "Estados Unidos", domesticCup: "US Open Cup", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
-  liga_mx: { country: "Mexico", domesticCup: "Leagues Cup", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
+  liga_mx: { country: "Mexico", domesticCup: "Liga MX Liguilla", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
 
   // ── As 18 divisoes que caiam no FALLBACK ────────────────────────────────────
   //

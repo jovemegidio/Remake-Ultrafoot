@@ -38,19 +38,21 @@ const MESMO_TORNEIO_NOME_DIFERENTE = new Set([
 ])
 
 /**
- * ⚠️ DEFEITO CONHECIDO, NAO CORRIGIDO AQUI — e nao e cosmetico.
+ * ⚠️ ESTEVE POVOADO E FOI ESVAZIADO NA 1.0.384. Continha "mls" e "liga_mx":
+ * nos dois, o MATA-MATA DO TITULO DA LIGA (MLS Cup Playoffs e Liguilla) estava
+ * cadastrado como `type: "cup"` com prestigio acima da copa nacional, e por
+ * isso ocupava o lugar dela — a US Open Cup existia no catalogo e NUNCA era
+ * disputada.
  *
- * Nos Estados Unidos e no Mexico o MATA-MATA DO TITULO DA LIGA (MLS Cup
- * Playoffs e Liguilla) esta cadastrado como `type: "cup"`. Como o calendario usa
- * a copa de maior prestigio como copa nacional, o playoff da liga ocupa o lugar
- * da US Open Cup e da Leagues Cup.
+ * Corrigido baixando o prestigio do playoff da MLS para 40 (abaixo dos 45 da US
+ * Open Cup) e alinhando o `domesticCup` do Mexico ao que e de fato jogado, ja
+ * que a Copa MX acabou em 2020 e o pais nao tem copa nacional hoje.
  *
- * Corrigir exige mexer em como o playoff do titulo e tipado, e isso atravessa a
- * logica de fim de temporada dessas duas ligas — risco que nao cabe junto com a
- * troca de competicoes. Fica NOMEADO para nao ser esquecido nem redescoberto
- * como novidade daqui a tres versoes.
+ * Fica vazio de proposito, e nao apagado: se um playoff voltar a ser tipado
+ * como copa, e aqui que a excecao seria pedida — e ela tem de vir com o motivo
+ * escrito, nunca so com o nome da divisao.
  */
-const PLAYOFF_TIPADO_COMO_COPA = new Set(["mls", "liga_mx"])
+const PLAYOFF_TIPADO_COMO_COPA = new Set<string>([])
 
 const falhas: string[] = []
 const conhecidos: string[] = []
