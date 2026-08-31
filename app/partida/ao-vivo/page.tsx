@@ -46,7 +46,10 @@ import { formatCurrency } from "@/lib/currency"
 import { avancarMataMata, campeaoMataMata } from "@/lib/torneio-amistoso"
 import { loadGameState, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
-import { bonusPreparacaoAplicavel282, normalizarGestao282, planoDeBolaParada282 } from "@/lib/gestao-282"
+import { preparacaoValeParaEstaPartida282, normalizarGestao282, planoDeBolaParada282 } from "@/lib/gestao-282"
+import { aplicarMarcacao, planoContraOAdversario } from "@/lib/plano-contra-o-adversario"
+import { PrelecaoModal } from "@/components/match/prelecao-modal"
+import type { AtletaNaPrelecao, ContextoDaPrelecao, MomentoDaPrelecao, ResultadoDaPrelecao } from "@/lib/prelecao"
 import { calcularEfeitoColetiva } from "@/lib/press-effects"
 import { useNotifications } from "@/components/notifications-system"
 import { getPlayersForTeam, type Player } from "@/lib/players-data"
@@ -71,7 +74,7 @@ import { forcasDoPlantel, ladoAdversarioEmCampo, titularesAptos, type AtletaEmCa
 import { tecnicoDoClube, tecnicosDoSave } from "@/lib/tecnicos-do-save"
 import { arbitroDaPartida } from "@/lib/arbitragem"
 import type { TeamTactics } from "@/lib/game-engine"
-import { aiTacticForClub, applyTacticModifiers, type TacticalIdentity } from "@/lib/tactics-engine"
+import { aiTacticForClub, applyTacticModifiers, cargaDaTatica, type TacticalIdentity } from "@/lib/tactics-engine"
 import { aiClubSocialMatchModifier } from "@/lib/ai-club-social"
 import { climaDoVestiario } from "@/lib/hierarquia-do-elenco"
 import { forcasDoElenco } from "@/lib/forcas-individuais"
@@ -629,6 +632,11 @@ export default function PartidaAoVivoPage() {
   const engineSeason = useGameEngine(s => s.currentSeason)
   const engineSetPieceTakers = useGameEngine(s => s.setPieceTakers)
   const engineTacticalAssignments = useGameEngine(s => s.tacticalAssignments)
+  // Dossiê dos olheiros sobre o adversário. Alimenta a CONFIANÇA da leitura em
+  // `planoContraOAdversario`: preparar-se sem ter observado o rival pode dar
+  // com os burros n'água, que é o que faz mandar olheiro valer alguma coisa.
+  const opponentAnalyses = useGameEngine(s => s.opponentAnalyses)
+  const aplicarPrelecao = useGameEngine(s => s.aplicarPrelecao)
   const medicalRestrictions = useMemo(() => {
     try {
       const raw = storeGet(performanceStorageKey(userTeamId, engineSeason))
@@ -1060,12 +1068,11 @@ export default function PartidaAoVivoPage() {
       : posture === "defensivo" ? "retranca" : undefined
     const tactic = aiTacticForClub(team.curto, forcedIdentity)
     const modifiers = applyTacticModifiers(tactic)
-    const pressingLoad = tactic.press === "tudo_ou_nada" ? 1
-      : tactic.press === "alta" ? 0.72
-        : tactic.press === "moderada" ? 0.42 : 0.12
-    const transitionLoad = tactic.identity === "pressao_alta" ? 0.9
-      : tactic.identity === "contra_ataque" || tactic.identity === "ofensivo" ? 0.7
-        : tactic.identity === "retranca" ? 0.25 : 0.45
+    // A carga saiu daqui para `lib/tactics-engine.ts`: a Central de Gestão lê o
+    // MESMO número para montar a preparação contra este adversário. Duas cópias
+    // seriam duas réguas, e o plano seria feito contra um time diferente do que
+    // entra em campo.
+    const { pressingLoad, transitionLoad } = cargaDaTatica(tactic)
     const socialModifier = aiClubSocialMatchModifier(savedGame.socialDaIA?.[team.curto])
     return { tactic, modifiers, pressingLoad, transitionLoad, socialModifier }
   }, [posturaDaIA, savedGame.socialDaIA])
@@ -1221,14 +1228,47 @@ export default function PartidaAoVivoPage() {
     [gestaoAvancada, matchEnginePlayers],
   )
 
-  const bonusPrep = useMemo(() => {
-    const adversario = userSide === "home" ? awayTeam.nome : homeTeam.nome
-    return bonusPreparacaoAplicavel282(gestaoAvancada.preparacao, {
+  /**
+   * O PLANO CONTRA ESTE ADVERSÁRIO, em números.
+   *
+   * ⚠️ SUBSTITUI o antigo `bonusPreparacaoAplicavel282`, que somava o MESMO
+   * número em ataque, meio e defesa e ignorava quem estava do outro lado.
+   * Somar os dois contaria a preparação duas vezes — ver o cabeçalho de
+   * `lib/plano-contra-o-adversario.ts`.
+   *
+   * Sem plano válido para este adversário nesta semana, tudo fica zero e a
+   * partida sai idêntica à de quem nunca abriu a Central de Gestão.
+   */
+  const planoContra = useMemo(() => {
+    const rival = userSide === "home" ? awayTeam : homeTeam
+    const prep = preparacaoValeParaEstaPartida282(gestaoAvancada.preparacao, {
       season: savedGame.season,
       week: savedGame.week,
-      adversario,
-    }, tecnico.preparoDeJogo)
-  }, [gestaoAvancada.preparacao, savedGame.season, savedGame.week, userSide, homeTeam.nome, awayTeam.nome, tecnico.preparoDeJogo])
+      adversario: rival.nome,
+    })
+    if (!prep) return null
+    const perfilRival = userSide === "home" ? awayCpuProfile : homeCpuProfile
+    const elencoRival = userSide === "home" ? awaySquad : homeSquad
+    // `analysisProgress` do dossiê que os olheiros levantaram. Sem dossiê a
+    // leitura do adversário pode sair torta — e é isso que faz scoutear valer.
+    const dossie = opponentAnalyses.find(a => a.teamShort === rival.curto)?.analysisProgress ?? 0
+    return planoContraOAdversario({
+      foco: prep.focoTatico,
+      rotinasEnsaiadas: gestaoAvancada.rotinasBolaParada.length,
+      marcacaoIndividual: prep.marcacaoIndividual,
+      alvos: elencoRival.map(p => ({ nome: p.name, overall: p.rating, posicao: p.position })),
+      perfil: {
+        pressao: perfilRival.pressingLoad,
+        transicao: perfilRival.transitionLoad,
+        mentalidade: posturaDaIA(rival.curto),
+      },
+      dossie,
+      chaveDoClube: (rival as { file_key?: string }).file_key || rival.curto,
+      preparoDoTecnico: tecnico.preparoDeJogo,
+    })
+  }, [gestaoAvancada.preparacao, gestaoAvancada.rotinasBolaParada.length, savedGame.season, savedGame.week,
+      userSide, homeTeam, awayTeam, homeSquad, awaySquad, homeCpuProfile, awayCpuProfile, posturaDaIA,
+      opponentAnalyses, tecnico.preparoDeJogo])
 
   /**
    * O LADO DE LÁ, em números — máquina ou outro técnico da mesa.
@@ -1259,8 +1299,16 @@ export default function PartidaAoVivoPage() {
     // a IA segue no prestigio + pequeno ganho de preparo.
     homeRating: userSide === "home" ? userForces.overall + bonusEntrosamento : ladoAdversario.overall,
     awayRating: userSide === "away" ? userForces.overall + bonusEntrosamento : ladoAdversario.overall,
-    homeSquad: homeSquad.map(toSquadPlayer),
-    awaySquad: awaySquad.map(toSquadPlayer),
+    // MARCAÇÃO INDIVIDUAL. Aplicada aqui, sobre os pesos de lance já resolvidos,
+    // e não dentro do motor: marcar alguém sob pressão é tirá-lo dos sorteios de
+    // finalização e criação, que é exatamente o que estes pesos são. Só o lado
+    // ADVERSÁRIO é marcado — a IA não usa a Central de Gestão.
+    homeSquad: homeSquad.map(p => userSide === "away" && planoContra
+      ? aplicarMarcacao(toSquadPlayer(p), planoContra.marcacoes)
+      : toSquadPlayer(p)),
+    awaySquad: awaySquad.map(p => userSide === "home" && planoContra
+      ? aplicarMarcacao(toSquadPlayer(p), planoContra.marcacoes)
+      : toSquadPlayer(p)),
     // ÁRBITRO DA PARTIDA. Determinístico pelos clubes + temporada + semana: o
     // mesmo jogo tem sempre o mesmo juiz, senão o nome mudaria entre a tela de
     // pré-jogo e a súmula. Ele altera só a frequência de cartão.
@@ -1309,14 +1357,17 @@ export default function PartidaAoVivoPage() {
     homeSetPiecePlan: userSide === "home" ? planoBolaParada : undefined,
     awaySetPiecePlan: userSide === "away" ? planoBolaParada : undefined,
     // Forcas por setor do lado do usuario — do elenco real + tatica + forma/moral
-    // + a sessão de preparação para ESTE adversário (0 quando não há plano).
-    homeAttack: userSide === "home" ? userForces.attack + bonusPrep : ladoAdversario.attack,
-    homeDefense: userSide === "home" ? userForces.defense + bonusPrep : ladoAdversario.defense,
-    homeMidfield: userSide === "home" ? userForces.midfield + bonusPrep : ladoAdversario.midfield,
-    awayAttack: userSide === "away" ? userForces.attack + bonusPrep : ladoAdversario.attack,
-    awayDefense: userSide === "away" ? userForces.defense + bonusPrep : ladoAdversario.defense,
-    awayMidfield: userSide === "away" ? userForces.midfield + bonusPrep : ladoAdversario.midfield,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments, posturaDaIA, nivelDificuldade, homeCpuProfile, awayCpuProfile, planoBolaParada, bonusPrep, homeSpatialProfile, awaySpatialProfile, ladoAdversario])
+    // + o plano preparado para ESTE adversário (zero quando não há plano).
+    // ⚠️ O plano é ASSIMÉTRICO e pode ser NEGATIVO: preparar-se para o jogo
+    // errado agora custa, e é a diferença entre esta versão e o bônus plano que
+    // existia antes.
+    homeAttack: userSide === "home" ? userForces.attack + (planoContra?.attackDelta ?? 0) : ladoAdversario.attack,
+    homeDefense: userSide === "home" ? userForces.defense + (planoContra?.defenseDelta ?? 0) : ladoAdversario.defense,
+    homeMidfield: userSide === "home" ? userForces.midfield + (planoContra?.midfieldDelta ?? 0) : ladoAdversario.midfield,
+    awayAttack: userSide === "away" ? userForces.attack + (planoContra?.attackDelta ?? 0) : ladoAdversario.attack,
+    awayDefense: userSide === "away" ? userForces.defense + (planoContra?.defenseDelta ?? 0) : ladoAdversario.defense,
+    awayMidfield: userSide === "away" ? userForces.midfield + (planoContra?.midfieldDelta ?? 0) : ladoAdversario.midfield,
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments, posturaDaIA, nivelDificuldade, homeCpuProfile, awayCpuProfile, planoBolaParada, planoContra, homeSpatialProfile, awaySpatialProfile, ladoAdversario])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty,
@@ -1330,10 +1381,6 @@ export default function PartidaAoVivoPage() {
    * mesmo cálculo, mesmo registro de resultado. O que muda é só não haver banco
    * de reservas humano — que é o ponto.
    */
-  const comecarPartida = useCallback(() => {
-    if (tecnicoAdversario) fastForward()
-    else start()
-  }, [tecnicoAdversario, fastForward, start])
 
   /**
    * Esta partida DECIDE um confronto de mata-mata?
@@ -1373,6 +1420,112 @@ export default function PartidaAoVivoPage() {
     const ultima = [...pernas].sort((a, b) => a.week - b.week || a.id - b.id).at(-1)!
     return ultima.id === currentMatch.id
   }, [currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.torneio, seasonCalendar.fixtures, homeTeam.curto, awayTeam.curto])
+
+  const [showPressConference, setShowPressConference] = useState(false)
+
+  // ─── PRELEÇÃO (lib/prelecao.ts) ──────────────────────────────────────────
+  //
+  // Três momentos, uma vez cada. A trava é ESTRUTURAL, não um número: sem ela o
+  // técnico falaria em laço até empilhar moral, que é o irmão vestiário do
+  // glitch da bilheteria.
+  const [prelecaoAberta, setPrelecaoAberta] = useState<MomentoDaPrelecao | null>(null)
+  const prelecoesFeitas = useRef<Set<MomentoDaPrelecao>>(new Set())
+  /**
+   * Moral que a conversa do INTERVALO rendeu, esperando o apito final.
+   *
+   * ⚠️ Não é gravada na hora de propósito: `userForces` recalcularia a força do
+   * time no meio da partida por cima do efeito que já entrou pelo canal das
+   * decisões, contando a mesma preleção duas vezes. A regra inteira está no
+   * cabeçalho de `lib/prelecao.ts`.
+   */
+  const moralDoIntervalo = useRef<{ id: number; delta: number }[]>([])
+
+  /** Só quem está relacionado nesta partida ouve a preleção. */
+  const elencoDaPrelecao = useMemo<AtletaNaPrelecao[]>(
+    () => matchEnginePlayers
+      .filter(p => !p.injury && ((p.suspendedMatches ?? 0) === 0))
+      .map(p => ({
+        id: p.id,
+        nome: p.name,
+        overall: p.overall,
+        moralePoints: p.moralePoints ?? 55,
+        titular: !!p.isStarter,
+      })),
+    [matchEnginePlayers],
+  )
+
+  const contextoDaPrelecao = useCallback((momento: MomentoDaPrelecao): ContextoDaPrelecao => {
+    const meu = userSide === "home" ? homeTeam : awayTeam
+    const rival = userSide === "home" ? awayTeam : homeTeam
+    return {
+      momento,
+      golsFavor: userSide === "home" ? state.home.goals : state.away.goals,
+      golsContra: userSide === "home" ? state.away.goals : state.home.goals,
+      favoritismo: (meu.prestigio ?? 60) - (rival.prestigio ?? 60),
+      // Mata-mata decisivo já é calculado para a disputa de pênaltis: reusar em
+      // vez de reinventar o critério de "jogo grande".
+      decisivo: confrontoDecisivo,
+      mandante: userSide === "home",
+    }
+  }, [userSide, homeTeam, awayTeam, state.home.goals, state.away.goals, confrontoDecisivo])
+
+  const aoFalarComOElenco = useCallback((r: ResultadoDaPrelecao) => {
+    const deltas = r.reacoes.filter(x => x.delta !== 0).map(x => ({ id: x.id, delta: x.delta }))
+    if (prelecaoAberta === "intervalo") {
+      // Chega ao jogo pelo canal das decisões de beira; a moral fica guardada
+      // para o apito final.
+      sim.aplicarPrelecaoNoIntervalo(r.efeitoNoJogo)
+      moralDoIntervalo.current = deltas
+      return
+    }
+    aplicarPrelecao(deltas)
+  }, [prelecaoAberta, sim, aplicarPrelecao])
+
+  const fecharPrelecao = useCallback(() => {
+    const momento = prelecaoAberta
+    setPrelecaoAberta(null)
+    if (momento) prelecoesFeitas.current.add(momento)
+    if (momento === "intervalo") resume()
+    if (momento === "fim") setShowPressConference(true)
+    if (momento === "pre") {
+      if (tecnicoAdversario) fastForward()
+      else start()
+    }
+  }, [prelecaoAberta, resume, tecnicoAdversario, fastForward, start])
+
+  /**
+   * Começar a partida — pelo botão, pelo Enter ou pelo controle.
+   *
+   * Contra outro técnico da mesa isto SIMULA em vez de abrir o ao vivo. O
+   * `fastForward` do motor roda a partida inteira pelo MESMO caminho de sempre:
+   * mesmo cálculo, mesmo registro de resultado. O que muda é só não haver banco
+   * de reservas humano — que é o ponto.
+   *
+   * ⚠️ A PRELEÇÃO ENTRA AQUI, ANTES DO APITO: falar depois de a bola rolar não
+   * seria preleção. Quem fecha o modal é que chama o apito (ver `fecharPrelecao`)
+   * — sem isso o jogo começaria por baixo da conversa.
+   */
+  const comecarPartida = useCallback(() => {
+    if (!prelecoesFeitas.current.has("pre") && elencoDaPrelecao.length > 0) {
+      setPrelecaoAberta("pre")
+      return
+    }
+    if (tecnicoAdversario) fastForward()
+    else start()
+  }, [tecnicoAdversario, fastForward, start, elencoDaPrelecao.length])
+
+  /**
+   * INTERVALO: o motor retoma o segundo tempo no tick seguinte (ver
+   * `resumeSecondHalf`), então a conversa só existe se o relógio parar. Pausar
+   * aqui e retomar no fechamento é o que faz o intervalo ser um intervalo.
+   */
+  useEffect(() => {
+    if (state.phase !== "halftime") return
+    if (prelecoesFeitas.current.has("intervalo")) return
+    if (elencoDaPrelecao.length === 0) return
+    pause()
+    setPrelecaoAberta("intervalo")
+  }, [state.phase, elencoDaPrelecao.length, pause])
 
   // PLACAR AGREGADO do jogo de volta. Tem que ficar DEPOIS de `state`: enquanto
   // era calculado logo após `previousLeg`, lá em cima, lia `state` antes da
@@ -1789,7 +1942,6 @@ export default function PartidaAoVivoPage() {
   // Modal de fim
   const [showResult, setShowResult] = useState(false)
   const [showRoundResults, setShowRoundResults] = useState(false)
-  const [showPressConference, setShowPressConference] = useState(false)
   const [isLeagueChampion, setIsLeagueChampion] = useState(false)
   const postMatchAdvance = useRef<Promise<unknown> | null>(null)
   /**
@@ -2021,6 +2173,17 @@ export default function PartidaAoVivoPage() {
             const golsPro = meuLado === "home" ? state.home.goals : state.away.goals
             const golsContra = meuLado === "home" ? state.away.goals : state.home.goals
             const vereditos = processarDesempenhoPartida(golsPro, golsContra, evJogador)
+            // PRELEÇÃO DO INTERVALO: a moral que a conversa rendeu é gravada só
+            // AGORA, e só aqui. Durante o segundo tempo ela já valeu pelo canal
+            // das decisões de beira; gravá-la antes faria `userForces`
+            // recalcular por cima e contar a mesma preleção duas vezes.
+            // ⚠️ E tem de vir DEPOIS de `processarDesempenhoPartida`, que também
+            // escreve `moralePoints`: a ordem inversa perderia o que a nota da
+            // partida rendeu.
+            if (moralDoIntervalo.current.length) {
+              aplicarPrelecao(moralDoIntervalo.current)
+              moralDoIntervalo.current = []
+            }
             // TRIBUNAL: a expulsao rende uma noticia com a pena e a multa. Antes
             // o vermelho custava 1 jogo em silencio — o tecnico nunca sabia.
             for (const v of vereditos ?? []) {
@@ -2960,7 +3123,11 @@ export default function PartidaAoVivoPage() {
       userAway={(finalMatch?.away ?? awayTeam).curto}
       onContinue={() => {
         setShowRoundResults(false)
-        setShowPressConference(true)
+        // O VESTIÁRIO VEM ANTES DA IMPRENSA, como na vida: o técnico fala com o
+        // elenco e só depois com o microfone. Sem elenco relacionado (amistoso
+        // rápido, jogo de espectador) pula direto para a coletiva.
+        if (!prelecoesFeitas.current.has("fim") && elencoDaPrelecao.length > 0) setPrelecaoAberta("fim")
+        else setShowPressConference(true)
       }}
     />
   )}
@@ -3115,6 +3282,18 @@ export default function PartidaAoVivoPage() {
       takers={shootoutTakers}
       onKick={kickShootout}
       onFinish={() => endShootout()}
+    />
+  )}
+
+  {/* PRELEÇÃO — antes do apito, no intervalo e no fim. */}
+  {prelecaoAberta && (
+    <PrelecaoModal
+      aberto
+      contexto={contextoDaPrelecao(prelecaoAberta)}
+      elenco={elencoDaPrelecao}
+      adversario={(userSide === "home" ? awayTeam : homeTeam).nome}
+      onFalar={aoFalarComOElenco}
+      onFechar={fecharPrelecao}
     />
   )}
 

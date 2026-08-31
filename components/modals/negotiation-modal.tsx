@@ -38,7 +38,12 @@ import {
   type TermosNovoEmprestimo,
 } from "@/lib/emprestimos"
 import { DollarSign, Check, X, AlertCircle, Handshake, Clock, ArrowRight, Sparkles, Users, Swords, Link2, Gavel, Timer } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useTranslation } from "@/lib/i18n"
+import { cn } from "@/lib/utils"
+import {
+  JUROS_POR_PARCELA, MAX_PARCELAS, MAX_REVENDA, descontoPorRevenda, resolverNegocio,
+  type TermosDoNegocio,
+} from "@/lib/clausulas-do-negocio"
 import { siglaExibivel } from "@/lib/club-identity"
 
 interface Player {
@@ -86,7 +91,12 @@ interface NegotiationModalProps {
    * registrar o vínculo com a duração e o salário ACERTADOS. Antes o mercado
    * cravava 26 semanas e `taxa/26` de salário, ignorando qualquer negociação.
    */
-  onConfirm?: (offer: number, salaryWeekly?: number, loan?: LoanDeal) => void
+  /**
+   * `termos` traz as cláusulas do negócio (1.0.383): parcelamento, revenda
+   * pactuada e recompra. Opcional — sem ele o negócio é à vista, exatamente
+   * como toda transferência era antes desta versão.
+   */
+  onConfirm?: (offer: number, salaryWeekly?: number, loan?: LoanDeal, termos?: TermosDoNegocio) => void
   onNegotiationResult?: (result: {
     player: Player
     type: "buy" | "sell" | "loan"
@@ -107,8 +117,19 @@ export function NegotiationModal({
   onConfirm,
   onNegotiationResult,
 }: NegotiationModalProps) {
+  // ⚠️ Gancho de tradução: a mesa nova de cláusulas (1.0.383) nasce extraída,
+  // e a catraca `qa:traducao` só desce. Um componente só neste arquivo, então
+  // o lugar do gancho não tem ambiguidade.
+  const t = useTranslation()
   const salario = useSalario()
   const [offer, setOffer] = useState(player?.value || 0)
+  /**
+   * CLÁUSULAS DO NEGÓCIO. Ver `lib/clausulas-do-negocio.ts` para o que cada uma
+   * custa — a prévia aqui usa as MESMAS funções que o motor vai usar, não uma
+   * conta parecida.
+   */
+  const [parcelas, setParcelas] = useState(0)
+  const [revenda, setRevenda] = useState(0)
   // "terms"      = mesa com o AGENTE (compra).
   // "loan_terms" = mesa com o CLUBE DONO (empréstimo): duração, folha, minutagem
   //                e opção de compra. Antes o empréstimo pulava direto ao result.
@@ -501,6 +522,8 @@ export function NegotiationModal({
   const handleClose = () => {
     setStep("offer")
     setOffer(player.value)
+    setParcelas(0)
+    setRevenda(0)
     setResponseProgress(0)
     onOpenChange(false)
   }
@@ -512,7 +535,15 @@ export function NegotiationModal({
     if (loanDeal) {
       onConfirm?.(loanDeal.taxa, loanDeal.salarioSemanal, loanDeal)
     } else {
-      onConfirm?.(offer, salary > 0 ? Math.round(salary / 4.33) : undefined)
+      // ⚠️ O VALOR QUE VAI É O JÁ DESCONTADO pela revenda pactuada. Mandar o
+      // cheio e descontar depois faria a tela mostrar um preço e o caixa sofrer
+      // outro — o tipo de divergência que só aparece semanas depois.
+      onConfirm?.(
+        offer - descontoPorRevenda(offer, revenda),
+        salary > 0 ? Math.round(salary / 4.33) : undefined,
+        undefined,
+        { parcelas, revendaAoVendedor: revenda },
+      )
     }
     handleClose()
   }
@@ -619,7 +650,7 @@ export function NegotiationModal({
 
             <div className="mt-3 space-y-4 rounded-xl border border-white/[0.04] bg-white/[0.02] p-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-white/50">Valor da Proposta</span>
+                <span className="text-white/50">{t.negociacao.valor_da_proposta}</span>
                 <span className={cn("font-medium px-2 py-0.5 rounded", status.color, status.bgColor + "/20")}>
                   {offerPercentage}% do valor
                 </span>
@@ -647,6 +678,66 @@ export function NegotiationModal({
               )}
             </div>
 
+            {/* CLÁUSULAS DO NEGÓCIO (1.0.383).
+
+                ⚠️ Até a 1.0.382 toda transferência era à vista, e o campo
+                `resaleClause` do contrato — que `lib/repartir-venda.ts` já
+                descontava — era SEMPRE zero, porque nada no jogo o escrevia.
+                Aqui estão as duas portas que faltavam. */}
+            {type === "buy" && (
+              <div className="mt-3 space-y-4 rounded-xl border border-white/[0.04] bg-white/[0.02] p-4">
+                <p className="text-sm font-semibold text-white/70">{t.negociacao.clausulas_do_negocio}</p>
+
+                <div>
+                  <div className="flex items-center justify-between text-xs text-white/50">
+                    <span>{t.negociacao.parcelamento_anual}</span>
+                    <span className="text-white/80">{parcelas === 0 ? "À vista" : `${parcelas + 1}x`}</span>
+                  </div>
+                  <Slider
+                    value={[parcelas]}
+                    onValueChange={([v]) => setParcelas(v)}
+                    min={0}
+                    max={MAX_PARCELAS}
+                    step={1}
+                    className="py-3"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between text-xs text-white/50">
+                    <span>{t.negociacao.revenda_que_fica_com_o_vendedor}</span>
+                    <span className="text-white/80">{revenda}%</span>
+                  </div>
+                  <Slider
+                    value={[revenda]}
+                    onValueChange={([v]) => setRevenda(v)}
+                    min={0}
+                    max={MAX_REVENDA}
+                    step={5}
+                    className="py-3"
+                  />
+                </div>
+
+                {/* A PRÉVIA É O CÁLCULO DE VERDADE: mesmas funções que o motor
+                    executa ao fechar. */}
+                <div className="space-y-1 rounded-lg bg-black/25 p-3 text-xs text-white/60">
+                  {revenda > 0 && (
+                    <p>
+                      Preço cai para <b className="text-emerald-300">{formatCurrency(offer - descontoPorRevenda(offer, revenda))}</b>,
+                      e {revenda}% de uma futura venda dele será do {player.team?.nome ?? "clube vendedor"}.
+                    </p>
+                  )}
+                  {parcelas > 0 ? (
+                    resolverNegocio(offer - descontoPorRevenda(offer, revenda), { parcelas }, {
+                      atleta: player.name, clube: player.team?.nome ?? "", semanaAtual: 0, tipo: "pagar",
+                    }).descricao.map(linha => <p key={linha}>{linha}</p>)
+                  ) : (
+                    <p>Pagamento integral no ato. Parcelar custa {Math.round(JUROS_POR_PARCELA * 100)}% a mais por parcela, mas exige menos caixa hoje.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             </GrupoDeCampos>
 
             {/* Nem o mínimo o caixa alcança: a mesa nem abre. Antes dava para
@@ -655,7 +746,7 @@ export function NegotiationModal({
               <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
                 <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
                 <div>
-                  <p className="font-semibold">Fora do alcance do clube</p>
+                  <p className="font-semibold">{t.negociacao.fora_do_alcance_do_clube}</p>
                   <p className="mt-1 text-xs text-red-200/75">
                     O {player.team?.nome ?? "clube"} não ouviria menos de {formatCurrency(minOffer)}, e o
                     seu teto hoje é {formatCurrency(tetoDoCaixa)}. Venda alguém, quite dívida ou espere
@@ -786,7 +877,7 @@ export function NegotiationModal({
                 {!loanDif.recusaDireta && (
                   <>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/50">Salário que você assume</span>
+                      <span className="text-white/50">{t.negociacao.salario_que_voce_assume}</span>
                       <span className={cn(
                         "font-semibold tabular-nums",
                         coberturaSalarial >= loanDif.coberturaMinima ? "text-[var(--brand)]" : "text-orange-400",
@@ -915,7 +1006,7 @@ export function NegotiationModal({
             {/* Luvas */}
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-white/50">Luvas (bonus de assinatura)</span>
+                <span className="text-white/50">{t.negociacao.luvas_bonus_de_assinatura}</span>
                 <span className="font-bold text-white">{formatCurrency(signingBonus)}</span>
               </div>
               <Slider
@@ -932,7 +1023,7 @@ export function NegotiationModal({
 
             {/* Tempo de contrato */}
             <div>
-              <div className="mb-2 text-xs text-white/50">Tempo de contrato</div>
+              <div className="mb-2 text-xs text-white/50">{t.negociacao.tempo_de_contrato}</div>
               <div className="grid grid-cols-5 gap-2">
                 {[1, 2, 3, 4, 5].map((y) => (
                   <button
@@ -957,7 +1048,7 @@ export function NegotiationModal({
 
             {/* Papel */}
             <div>
-              <div className="mb-2 text-xs text-white/50">Papel no elenco</div>
+              <div className="mb-2 text-xs text-white/50">{t.negociacao.papel_no_elenco}</div>
               <div className="grid grid-cols-3 gap-2">
                 {(["primordial", "reforco", "banco"] as SquadRole[]).map((r) => (
                   <button
@@ -1060,7 +1151,7 @@ export function NegotiationModal({
             {/* Folha assumida — e o que isso custa POR SEMANA */}
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-white/50">Salário que você assume</span>
+                <span className="text-white/50">{t.negociacao.salario_que_voce_assume_2}</span>
                 <span className={cn(
                   "font-bold tabular-nums",
                   coberturaSalarial >= ownerDemands.coberturaMinima ? "text-[var(--brand)]" : "text-orange-400",
@@ -1084,7 +1175,7 @@ export function NegotiationModal({
             {/* Minutagem prometida — a exigência que dinheiro não compra */}
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-white/50">Minutagem prometida</span>
+                <span className="text-white/50">{t.negociacao.minutagem_prometida}</span>
                 <span className={cn(
                   "font-bold tabular-nums",
                   minutosPrometidos >= ownerDemands.minutosMinimos ? "text-[var(--brand)]" : "text-red-400",
@@ -1112,7 +1203,7 @@ export function NegotiationModal({
             {/* Opção de compra */}
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-white/50">Opção de compra ao fim</span>
+                <span className="text-white/50">{t.negociacao.opcao_de_compra_ao_fim}</span>
                 <span className="font-bold text-white">
                   {opcaoDeCompra > 0 ? formatCurrency(opcaoDeCompra) : "Sem opção"}
                 </span>
@@ -1170,7 +1261,7 @@ export function NegotiationModal({
             <div className="mt-6">
               <div className="text-lg font-semibold text-white">Negociando...</div>
               <div className="text-sm text-white/50 mt-1 flex items-center justify-center gap-2">
-                <span>O clube esta analisando sua proposta</span>
+                <span>{t.negociacao.o_clube_esta_analisando_sua_proposta}</span>
                 <span className="inline-flex gap-1">
                   <span className="w-1 h-1 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="w-1 h-1 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -1254,7 +1345,7 @@ export function NegotiationModal({
                   </div>
                   <ArrowRight className="h-5 w-5 text-[var(--brand)]" />
                   <div className="text-right">
-                    <div className="text-sm font-semibold text-[var(--brand)]">Seu Clube</div>
+                    <div className="text-sm font-semibold text-[var(--brand)]">{t.negociacao.seu_clube}</div>
                     <div className="text-[10px] text-white/40">{isLoan ? "Emprestimo" : "Contratado"}</div>
                   </div>
                 </div>

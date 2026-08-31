@@ -41,6 +41,12 @@ export const CAMPOS_DO_CLUBE = [
   // Dinheiro do clube — o caixa é POR CLUBE, nunca por técnico
   "balance", "weeklyIncome", "weeklyExpenses", "transferBudget", "wageBudget",
   "vendasDeJovensPagas", "marketingContracts", "ticketTier",
+  // Cláusulas do negócio (1.0.383). Do CLUBE pela mesma razão do caixa: a
+  // parcela que o Palmeiras deve pelo reforço não vira dívida do Santos
+  // quando o outro técnico assume a vez, e o direito de recomprar uma cria é
+  // de quem a vendeu. A pergunta da regra acima ("dois técnicos no mesmo save
+  // teriam valores diferentes disto?") responde sim nos dois casos.
+  "parcelasDeTransferencia", "recompras",
   // Mercado do ponto de vista deste clube (o mercado em si é do mundo)
   "transferOffers", "pendingIncomingTransfers", "pendingOutgoingTransfers",
   "marketInterests", "transferListedIds", "loanListedIds",

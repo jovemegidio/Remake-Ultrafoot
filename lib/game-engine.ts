@@ -8,6 +8,11 @@ import { createTauriZustandStorage, storeSet } from "@/lib/persistent-store"
 import { getCareerScopedKey, loadGameState } from "@/lib/save-system"
 import { bonusMentoria282, normalizarGestao282, rendimentoUnidade282 } from "@/lib/gestao-282"
 import { repartirVenda, descreverRepasses } from "@/lib/repartir-venda"
+import {
+  TERMOS_A_VISTA, descontoPorRecompra, descontoPorRevenda, parcelasRestantes, parcelasVencidas,
+  recompraValida, resolverNegocio, saldoDasParcelas,
+  type Parcela, type Recompra, type TermosDoNegocio,
+} from "@/lib/clausulas-do-negocio"
 import { allTeams, getTeamByFileKey, getTeamByShort, effectiveDivision } from "@/lib/teams-data"
 import {
   type PlayerPersona, gerarPersona, contribuicoesPorJogador, calcularNota, suspensaoPorCartoes,
@@ -2213,6 +2218,17 @@ interface GameEngineState {
    */
   tacticalPlayerMovements: Record<string, { x: number; y: number }>
   opponentAnalyses: OpponentAnalysis[]
+  /**
+   * PARCELAS DE TRANSFERÊNCIA em aberto, a receber e a pagar.
+   *
+   * ⚠️ Antes da 1.0.383 toda transferência era à vista: `buyPlayer` fazia
+   * `balance - fee` e `sellPlayer` fazia `balance + líquido`, sempre no ato.
+   * Um clube pequeno nunca alcançava um reforço caro porque o único caminho era
+   * ter o valor cheio no caixa naquela semana. Ver `lib/clausulas-do-negocio.ts`.
+   */
+  parcelasDeTransferencia: Parcela[]
+  /** Direitos de recompra que este clube guarda sobre atletas que vendeu. */
+  recompras: Recompra[]
   
   // Moral e vestiario
   squadMorale: SquadMorale
@@ -2347,7 +2363,14 @@ interface GameEngineState {
    */
   limparClubeAtual: () => void
   /** `valor` = o que a compradora ofereceu; sem ele, o valor de mercado cheio. */
-  sellPlayer: (playerId: number, valor?: number) => void
+  sellPlayer: (playerId: number, valor?: number, termos?: TermosDoNegocio) => void
+  /**
+   * Exerce um direito de recompra guardado. Devolve o motivo quando não dá.
+   *
+   * ⚠️ O atleta volta com o contrato do CLUBE, não com o que ele tinha lá fora:
+   * recompra é uma transferência nova, não um desfazer.
+   */
+  exercerRecompra: (recompraId: string) => "ok" | "sem_caixa" | "expirada" | "inexistente"
   /** Aposenta um veterano sem multa nem receita e o remove da folha. */
   retirePlayer: (playerId: number) => boolean
   /**
@@ -2362,6 +2385,17 @@ interface GameEngineState {
   /** Entrada de caixa da venda de um atleta da base. */
   receberPorJovem: (valor: number, vendaId?: string) => void
   ajustarMoralJogador: (playerId: number, degraus: number) => void
+  /**
+   * PRELEÇÃO (`lib/prelecao.ts`): aplica os pontos de moral que a conversa com o
+   * elenco rendeu, atleta por atleta.
+   *
+   * ⚠️ Separada de `ajustarMoralJogador` de propósito: aquela move DEGRAUS do
+   * rótulo (a escala grossa da conversa com o reserva), esta move a moral
+   * CONTÍNUA `moralePoints`, que é a que chega ao campo por `userForces` na
+   * partida ao vivo. Mexer no rótulo aqui perderia a resolução fina: a preleção
+   * rende de 1 a 8 pontos, e um degrau inteiro do rótulo vale ~20.
+   */
+  aplicarPrelecao: (deltas: readonly { id: number; delta: number }[]) => void
   /**
    * APRENDER A POSICAO JOGANDO NELA (1.0.293).
    *
@@ -2387,7 +2421,11 @@ interface GameEngineState {
    * Esta descricao dizia o contrario e foi a origem de quatro gravadores que
    * faziam o atleta sair de graca (corrigido na v5 do save).
    */
-  buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean, janelaAberta?: boolean) => "joined" | "pending" | "failed" | "wage_budget" | "desafio"
+  /**
+   * `termos` ausente = à vista, exatamente como antes da 1.0.383. Toda chamada
+   * antiga continua valendo sem mudar uma linha.
+   */
+  buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean, janelaAberta?: boolean, termos?: TermosDoNegocio) => "joined" | "pending" | "failed" | "wage_budget" | "desafio"
   /**
    * Desiste de um reforco que ainda espera a janela e DEVOLVE o dinheiro.
    *
@@ -3043,6 +3081,8 @@ export const useGameEngine = create<GameEngineState>()(
       tacticalPlayerPositions: {},
       tacticalPlayerMovements: {},
       opponentAnalyses: [],
+      parcelasDeTransferencia: [],
+      recompras: [],
       
       // Moral
       squadCohesion: PISO_ENTROSAMENTO,
@@ -3108,6 +3148,39 @@ export const useGameEngine = create<GameEngineState>()(
         // razão do bloco acima: o updater pode ser reexecutado. Save ainda não
         // hidratado devolve o estado vazio e o treino se comporta como antes.
         const gestaoDoSave = normalizarGestao282(loadGameState().gestao282)
+
+        /**
+         * CLÁUSULAS DO NEGÓCIO: as parcelas que vencem nesta virada.
+         *
+         * ⚠️ Calculado FORA do `set` pela mesma razão dos blocos acima — o
+         * updater do zustand pode ser reexecutado, e uma parcela liquidada duas
+         * vezes é dinheiro criado do nada. O que entra no `set` é um número já
+         * fechado e a lista do que sobrou.
+         *
+         * ⚠️ E é UM saldo, não duas operações: aplicar entrada e saída em passos
+         * separados abriria um instante em que o caixa fica negativo e a régua
+         * de inadimplência (`lib/debt-engine.ts`) dispararia sem motivo.
+         *
+         * A semana absoluta é a da virada — `newWeek` —, senão a parcela do
+         * aniversário do negócio ficaria uma semana presa.
+         */
+        const semanaDaVirada = absoluteWeek(state.currentSeason, newWeek)
+        const parcelasEmAberto = state.parcelasDeTransferencia ?? []
+        const vencidas = parcelasVencidas(parcelasEmAberto, semanaDaVirada)
+        const saldoDeParcelas = saldoDasParcelas(vencidas)
+        const parcelasQueSobram = parcelasRestantes(parcelasEmAberto, semanaDaVirada)
+        for (const p of vencidas) {
+          movimentacoesDaSemana.push({
+            playerName: p.atleta,
+            type: p.tipo === "receber" ? "sell" : "buy",
+            value: p.valor,
+            fromTeam: p.tipo === "receber" ? p.clube : "",
+            toTeam: p.tipo === "receber" ? "" : (state.myTeamShort ?? ""),
+            season: state.currentSeason,
+            week: newWeek,
+            detalhe: `Parcela de transferência ${p.tipo === "receber" ? "recebida" : "paga"}`,
+          })
+        }
 
         set((s) => {
           // Chance de o treino render +1 no atributo. Antes era 0.7 fixo; agora o Centro de
@@ -3929,7 +4002,13 @@ export const useGameEngine = create<GameEngineState>()(
             pendingOutgoingTransfers: canRegisterTransfers ? [] : (s.pendingOutgoingTransfers ?? []),
             marketingContracts: updatedMarketing,
             pendingFundOffers: fundOffers,
-            balance: s.balance + weeklyBalance + marketingBonus - penaltyTotal - saidaDeCaixaDaDiretoria,
+            // `saldoDeParcelas` entra na MESMA soma do caixa da semana: uma
+            // operação só, pelo motivo explicado onde ele é calculado.
+            balance: s.balance + weeklyBalance + marketingBonus - penaltyTotal - saidaDeCaixaDaDiretoria + saldoDeParcelas,
+            parcelasDeTransferencia: parcelasQueSobram,
+            // Direito de recompra vencido sai do save: guardar cláusula morta
+            // é inchaço com aparência de funcionalidade.
+            recompras: (s.recompras ?? []).filter(r => recompraValida(r, newSeason)),
             lastSeasonStandings: lastStandings,
           }
         })
@@ -4354,6 +4433,32 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
 
+      /**
+       * Aplica a preleção à moral contínua do elenco.
+       *
+       * ⚠️ QUEM CHAMA MANDA NO MOMENTO. No "pre" e no "fim" isto é chamado; no
+       * INTERVALO não é — lá a conversa chega ao jogo pelo canal
+       * `CoachDecisionEffect`, e gravar moral no meio da partida faria
+       * `userForces` recalcular por cima do efeito, contando a mesma preleção
+       * duas vezes. A regra inteira está no cabeçalho de `lib/prelecao.ts`.
+       *
+       * ⚠️ No fim da partida tem de vir DEPOIS de `processarDesempenhoPartida`,
+       * que também escreve `moralePoints`: aqui a conta é somada sobre o estado
+       * corrente, então a ordem inversa perderia o que a nota rendeu.
+       */
+      aplicarPrelecao: (deltas) => {
+        if (!deltas.length) return
+        const porId = new Map(deltas.map(d => [d.id, d.delta]))
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p => {
+            const delta = porId.get(p.id)
+            if (!delta) return p
+            const pontos = Math.max(0, Math.min(100, (p.moralePoints ?? pontosDoRotulo(p.morale)) + delta))
+            return { ...p, moralePoints: Math.round(pontos), morale: rotuloDaMoral(pontos) }
+          }),
+        }))
+      },
+
       registrarPosicoesJogadas: (minutos) => {
         if (!minutos.length) return
         const porId = new Map(minutos.map(m => [m.id, m]))
@@ -4409,7 +4514,7 @@ export const useGameEngine = create<GameEngineState>()(
        * cheio, e a tela nem negociava. Quem chama e que faz o sorteio de
        * interesse e a checagem de janela.
        */
-      sellPlayer: (playerId, valor) => {
+      sellPlayer: (playerId, valor, termos = TERMOS_A_VISTA) => {
         const state = get()
         const player = state.squadPlayers.find(p => p.id === playerId)
         if (!player) return
@@ -4423,14 +4528,43 @@ export const useGameEngine = create<GameEngineState>()(
         // `lib/repartir-venda.ts`.
         const venda = repartirVenda(recebido, player.contract ?? undefined)
 
+        /**
+         * CLÁUSULAS DO NEGÓCIO (1.0.383).
+         *
+         * ⚠️ A ORDEM IMPORTA E É ESTA: primeiro `repartirVenda` tira o que nunca
+         * foi nosso (fundo, coproprietário, revenda ao clube anterior), e só o
+         * LÍQUIDO é parcelado. Parcelar o bruto e repartir depois faria o clube
+         * anterior esperar as nossas parcelas para receber o que já era dele.
+         */
+        const negocio = resolverNegocio(venda.liquido, termos, {
+          atleta: player.name,
+          clube: state.myTeamShort ?? "",
+          semanaAtual: absoluteWeek(state.currentSeason, state.currentWeek),
+          tipo: "receber",
+        })
+        // Direito de recompra que ficamos guardando: vender mais barato hoje em
+        // troca de poder trazer de volta por valor fixo. Sem prazo não é
+        // cláusula, é opção eterna — daí `ateTemporada` ser obrigatório.
+        const recompraNova: Recompra[] = termos.recompra
+          ? [{
+              id: `recompra-${state.currentSeason}-${state.currentWeek}-${playerId}`,
+              atleta: player.name,
+              clube: "",
+              valor: termos.recompra.valor,
+              ateTemporada: termos.recompra.ateTemporada,
+            }]
+          : []
+
         set((s) => ({
           squadPlayers: s.squadPlayers.filter(p => p.id !== playerId),
+          parcelasDeTransferencia: [...(s.parcelasDeTransferencia ?? []), ...negocio.parcelas],
+          recompras: [...(s.recompras ?? []), ...recompraNova],
           // Sai tambem das listas: atleta vendido nao pode continuar anunciado
           // nem recebendo sondagem de quem ja nao o tem.
           transferListedIds: (s.transferListedIds ?? []).filter(id => id !== playerId),
           loanListedIds: (s.loanListedIds ?? []).filter(id => id !== playerId),
           transferOffers: s.transferOffers.filter(offer => offer.playerId !== playerId),
-          balance: s.balance + venda.liquido,
+          balance: s.balance + negocio.aVista,
           weeklyExpenses: Math.max(0, s.weeklyExpenses - (player.contract?.salary || 0)),
         }))
         // O extrato registra o valor NEGOCIADO e diz para onde foi o que não
@@ -4440,10 +4574,41 @@ export const useGameEngine = create<GameEngineState>()(
           playerName: player.name, type: "sell", value: recebido,
           fromTeam: state.myTeamShort ?? "", toTeam: "",
           season: state.currentSeason, week: state.currentWeek,
-          detalhe: venda.repasses.length
-            ? `Venda em definitivo · líquido ${Math.round(venda.liquido / 1000)}k (${descreverRepasses(venda).join(", ")})`
-            : "Venda em definitivo",
+          detalhe: [
+            venda.repasses.length
+              ? `Venda em definitivo · líquido ${Math.round(venda.liquido / 1000)}k (${descreverRepasses(venda).join(", ")})`
+              : "Venda em definitivo",
+            ...(negocio.parcelas.length ? negocio.descricao : []),
+            termos.recompra ? `Recompra garantida até ${termos.recompra.ateTemporada}` : "",
+          ].filter(Boolean).join(" · "),
         })
+      },
+
+      /**
+       * Traz de volta um atleta vendido com direito de recompra.
+       *
+       * ⚠️ NÃO É UM DESFAZER. Ele volta com contrato novo e sem histórico de
+       * cláusulas do negócio anterior: uma recompra é uma transferência como
+       * outra qualquer, só que com o preço travado desde antes.
+       */
+      exercerRecompra: (recompraId) => {
+        const state = get()
+        const recompra = (state.recompras ?? []).find(r => r.id === recompraId)
+        if (!recompra) return "inexistente"
+        if (state.currentSeason > recompra.ateTemporada) return "expirada"
+        if (state.balance < recompra.valor) return "sem_caixa"
+        set((s) => ({
+          balance: s.balance - recompra.valor,
+          transferBudget: Math.max(0, s.transferBudget - recompra.valor),
+          recompras: (s.recompras ?? []).filter(r => r.id !== recompraId),
+        }))
+        registrarMovimentacao({
+          playerName: recompra.atleta, type: "buy", value: recompra.valor,
+          fromTeam: recompra.clube, toTeam: state.myTeamShort ?? "",
+          season: state.currentSeason, week: state.currentWeek,
+          detalhe: "Recompra exercida pelo valor pactuado na venda",
+        })
+        return "ok"
       },
 
       retirePlayer: (playerId) => {
@@ -4532,14 +4697,30 @@ export const useGameEngine = create<GameEngineState>()(
         return saindo.map(p => p.name)
       },
 
-      buyPlayer: (player, fee, isFreeAgent = false, janelaAberta) => {
+      buyPlayer: (player, fee, isFreeAgent = false, janelaAberta, termos = TERMOS_A_VISTA) => {
         const state = get()
         // REGRA DO DESAFIO ANTES DE QUALQUER COISA. É a única barreira que vale
         // para TODOS os caminhos de contratação (mercado, rede mundial, leilão,
         // scripts): fiscalizar tela por tela deixaria a tela esquecida como
         // brecha. Sem desafio ativo, `podeReforcar` devolve true e não custa nada.
         if (!podeReforcar({ idade: player.age, semClube: isFreeAgent }).pode) return "desafio"
-        if (state.balance < fee) return "failed"
+        /**
+         * CLÁUSULAS DO NEGÓCIO (1.0.383). A `fee` continua sendo o valor cheio
+         * acertado; os termos decidem QUANTO sai agora e o que fica agendado.
+         *
+         * ⚠️ A CHECAGEM DE CAIXA PASSA A SER SOBRE A ENTRADA, não sobre o total.
+         * É o ponto inteiro do parcelamento: um clube que não tem 40 milhões
+         * hoje pode ter 10 hoje e três parcelas depois. O total é MAIOR que o
+         * valor à vista (`totalComParcelamento`), então parcelar não é de graça —
+         * é caixa comprado com juros.
+         */
+        const negocio = resolverNegocio(fee, termos, {
+          atleta: player.name,
+          clube: player.previousClubShort ?? "Clube vendedor",
+          semanaAtual: absoluteWeek(state.currentSeason, state.currentWeek),
+          tipo: "pagar",
+        })
+        if (state.balance < negocio.aVista) return "failed"
         // Teto salarial: a tela de Finanças já avisava "limite salarial excedido",
         // mas nada impedia a contratação — o orçamento era decorativo e o clube
         // podia se afundar em folha sem nenhuma barreira. Agora a diretoria
@@ -4573,6 +4754,24 @@ export const useGameEngine = create<GameEngineState>()(
             ),
             signedWeek: state.currentWeek,
             signedSeason: state.currentSeason,
+            /**
+             * ⚠️ AQUI SE FECHA UM CICLO QUE ESTAVA ABERTO HÁ VERSÕES.
+             *
+             * `resaleClause` e `previousClub` existem no contrato desde sempre,
+             * e `lib/repartir-venda.ts` já desconta a revenda devida ao clube
+             * anterior quando revendemos o atleta. Só que NADA no jogo jamais
+             * escrevia um valor ali: a regra estava pronta, testada, e nunca
+             * disparava porque o campo era sempre 0. Esta é a porta de entrada.
+             *
+             * Só sobrescreve quando o negócio pactuou revenda: um atleta que já
+             * chega com cláusula de um dono anterior mantém a dele.
+             */
+            resaleClause: termos.revendaAoVendedor && termos.revendaAoVendedor > 0
+              ? termos.revendaAoVendedor
+              : player.contract.resaleClause,
+            previousClub: termos.revendaAoVendedor && termos.revendaAoVendedor > 0
+              ? (player.previousClubShort ?? "Clube vendedor")
+              : player.contract.previousClub,
           } : null,
           seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
         }
@@ -4591,8 +4790,12 @@ export const useGameEngine = create<GameEngineState>()(
             agreedWeek: state.currentWeek,
             agreedSeason: state.currentSeason,
           }],
-          balance: s.balance - fee,
-          transferBudget: Math.max(0, s.transferBudget - fee),
+          balance: s.balance - negocio.aVista,
+          // ⚠️ O ORÇAMENTO COMPROMETE O TOTAL, não só a entrada. Descontar apenas
+          // o que sai hoje deixaria o técnico parcelar o elenco inteiro e a
+          // diretoria só descobrir na virada da temporada.
+          transferBudget: Math.max(0, s.transferBudget - negocio.total),
+          parcelasDeTransferencia: [...(s.parcelasDeTransferencia ?? []), ...negocio.parcelas],
           weeklyExpenses: s.weeklyExpenses + (player.contract?.salary || 50000)
         }))
         registrarMovimentacao({
@@ -7912,6 +8115,11 @@ export const useGameEngine = create<GameEngineState>()(
         state.tacticalPlayerMovements = state.tacticalPlayerMovements ?? {}
         state.playerInstructions = state.playerInstructions ?? {}
         state.setPieceTakers = state.setPieceTakers ?? {}
+        // Cláusulas do negócio (1.0.383): save anterior não tem os dois vetores, e
+        // o merge do persist é RASO — sem isto, a primeira semana avançada em
+        // carreira antiga quebraria em `.filter` de `undefined`.
+        state.parcelasDeTransferencia = state.parcelasDeTransferencia ?? []
+        state.recompras = state.recompras ?? []
         // ⚠️ MORAL DO ELENCO: CAMPO NOVO EM OBJETO ANTIGO DERRUBA A TELA.
         //
         // `recentEvents` entrou depois de muita carreira ja existir. Em quem

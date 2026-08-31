@@ -2251,7 +2251,7 @@ export default function MercadoPage() {
             ? gameEngine.balance + borrowingCapacity(careerState.debt, gameEngine.weeklyIncome ?? 0)
             : 0
         }
-        onConfirm={(fee, salarioSemanal, loan) => {
+        onConfirm={(fee, salarioSemanal, loan, termos) => {
           if (!selectedPlayer) return
           // JANELA: pela semana da TEMPORADA, nunca pelo contador absoluto do
           // motor. O motor conta semanas desde o inicio da carreira e nao zera;
@@ -2348,7 +2348,10 @@ export default function MercadoPage() {
               setMarketNotice(`Contratação FINANCIADA: o clube tomou ${formatCurrency(falta)} emprestado (parcela de ${formatCurrency(novaDivida.monthlyPayment)}/mês). Atrasar parcelas congela o mercado.`)
             }
             const isFreeAgent = !selectedPlayer.team
-            const transferResult = gameEngine.buyPlayer(enginePlayer, fee, isFreeAgent, janelaAberta)
+            // As cláusulas fechadas na mesa (parcelamento e revenda pactuada)
+            // seguem para o motor. Sem este argumento a mesa continuaria montando
+            // um negócio que o caixa nunca sentia — ver lib/clausulas-do-negocio.
+            const transferResult = gameEngine.buyPlayer(enginePlayer, fee, isFreeAgent, janelaAberta, termos)
             if (transferResult === "desafio") {
               setMarketNotice(veredicto.motivo ?? "O desafio ativo não permite esta contratação.")
               registrarDesfecho(selectedPlayer.name, "rejeitada")
