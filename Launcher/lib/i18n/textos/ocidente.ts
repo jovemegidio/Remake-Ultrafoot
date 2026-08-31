@@ -94,6 +94,12 @@ const en: PacoteDeIdioma = {
   "launcher.falhou": "I couldn't install the launcher update. You can keep playing normally.",
   "aviso.jogoCaiu": "The game closed unexpectedly. Verifying the files usually fixes it.",
   "aviso.fecheOJogo": "Close the game before continuing.",
+  "sair.titulo": "Close the launcher?",
+  "sair.texto": "Do you really want to close the Ultrafoot Launcher?",
+  "sair.confirmar": "Yes, close",
+  "sair.bandeja": "Just minimize to the tray",
+  "sair.avisoDownload": "The download in progress will stop.",
+  "sair.avisoJogo": "The game stays open, but the launcher stops following the match.",
 }
 
 const enGB: PacoteDeIdioma = {
@@ -191,6 +197,12 @@ const es: PacoteDeIdioma = {
   "launcher.falhou": "No pude instalar la actualización del launcher. Puedes seguir jugando con normalidad.",
   "aviso.jogoCaiu": "El juego se cerró de forma inesperada. Verificar los archivos suele resolverlo.",
   "aviso.fecheOJogo": "Cierra el juego antes de continuar.",
+  "sair.titulo": "¿Cerrar el launcher?",
+  "sair.texto": "¿Seguro que quieres cerrar el Ultrafoot Launcher?",
+  "sair.confirmar": "Sí, cerrar",
+  "sair.bandeja": "Solo minimizar a la bandeja",
+  "sair.avisoDownload": "La descarga en curso se detendrá.",
+  "sair.avisoJogo": "El juego sigue abierto, pero el launcher deja de seguir el partido.",
 }
 
 const esMX: PacoteDeIdioma = {
@@ -295,6 +307,12 @@ const fr: PacoteDeIdioma = {
   "launcher.falhou": "Je n'ai pas pu installer la mise à jour du launcher. Vous pouvez continuer à jouer.",
   "aviso.jogoCaiu": "Le jeu s'est fermé brutalement. Vérifier les fichiers règle souvent le problème.",
   "aviso.fecheOJogo": "Fermez le jeu avant de continuer.",
+  "sair.titulo": "Fermer le launcher ?",
+  "sair.texto": "Voulez-vous vraiment fermer l’Ultrafoot Launcher ?",
+  "sair.confirmar": "Oui, fermer",
+  "sair.bandeja": "Réduire seulement dans la zone de notification",
+  "sair.avisoDownload": "Le téléchargement en cours sera interrompu.",
+  "sair.avisoJogo": "Le jeu reste ouvert, mais le launcher cesse de suivre le match.",
 }
 
 const it: PacoteDeIdioma = {
@@ -388,6 +406,12 @@ const it: PacoteDeIdioma = {
   "launcher.falhou": "Non sono riuscito a installare l'aggiornamento del launcher. Puoi continuare a giocare.",
   "aviso.jogoCaiu": "Il gioco si è chiuso all'improvviso. Verificare i file di solito risolve.",
   "aviso.fecheOJogo": "Chiudi il gioco prima di continuare.",
+  "sair.titulo": "Chiudere il launcher?",
+  "sair.texto": "Vuoi davvero chiudere l’Ultrafoot Launcher?",
+  "sair.confirmar": "Sì, chiudi",
+  "sair.bandeja": "Riduci soltanto nell’area di notifica",
+  "sair.avisoDownload": "Il download in corso verrà interrotto.",
+  "sair.avisoJogo": "Il gioco resta aperto, ma il launcher smette di seguire la partita.",
 }
 
 const nl: PacoteDeIdioma = {
@@ -481,6 +505,12 @@ const nl: PacoteDeIdioma = {
   "launcher.falhou": "De launcher-update kon niet worden geïnstalleerd. Je kunt gewoon blijven spelen.",
   "aviso.jogoCaiu": "Het spel is onverwacht afgesloten. Bestanden controleren helpt meestal.",
   "aviso.fecheOJogo": "Sluit het spel voordat je verdergaat.",
+  "sair.titulo": "Launcher sluiten?",
+  "sair.texto": "Wil je de Ultrafoot Launcher echt sluiten?",
+  "sair.confirmar": "Ja, sluiten",
+  "sair.bandeja": "Alleen minimaliseren naar het systeemvak",
+  "sair.avisoDownload": "De lopende download wordt gestopt.",
+  "sair.avisoJogo": "Het spel blijft open, maar de launcher volgt de wedstrijd niet meer.",
 }
 
 // Português europeu: só o que difere do pt-BR (a reserva final é o pt-BR).
@@ -496,6 +526,12 @@ const pt: PacoteDeIdioma = {
   "baixar.semInternet": "Sem ligação à Internet para transferir",
   "baixar.baixando": "A transferir",
   "baixar.instalando": "A instalar",
+  "sair.titulo": "Fechar o launcher?",
+  "sair.texto": "Quer mesmo fechar o Ultrafoot Launcher?",
+  "sair.confirmar": "Sim, fechar",
+  "sair.bandeja": "Só minimizar para a área de notificação",
+  "sair.avisoDownload": "A transferência em curso vai parar.",
+  "sair.avisoJogo": "O jogo continua aberto, mas o launcher deixa de acompanhar o jogo.",
 }
 
 const gl: PacoteDeIdioma = {
@@ -566,6 +602,12 @@ const gl: PacoteDeIdioma = {
   "launcher.falhou": "Non puiden instalar a actualización do launcher. Podes seguir xogando.",
   "aviso.jogoCaiu": "O xogo pechouse de forma inesperada. Verificar os ficheiros adoita resolvelo.",
   "aviso.fecheOJogo": "Pecha o xogo antes de continuar.",
+  "sair.titulo": "Pechar o launcher?",
+  "sair.texto": "Seguro que queres pechar o Ultrafoot Launcher?",
+  "sair.confirmar": "Si, pechar",
+  "sair.bandeja": "Só minimizar á bandexa",
+  "sair.avisoDownload": "A descarga en curso deterase.",
+  "sair.avisoJogo": "O xogo segue aberto, pero o launcher deixa de seguir o partido.",
 }
 
 const ca: PacoteDeIdioma = {
@@ -636,6 +678,12 @@ const ca: PacoteDeIdioma = {
   "launcher.falhou": "No he pogut instal·lar l'actualització del launcher. Pots continuar jugant.",
   "aviso.jogoCaiu": "El joc s'ha tancat inesperadament. Verificar els fitxers sol resoldre-ho.",
   "aviso.fecheOJogo": "Tanca el joc abans de continuar.",
+  "sair.titulo": "Tancar el launcher?",
+  "sair.texto": "Segur que vols tancar l’Ultrafoot Launcher?",
+  "sair.confirmar": "Sí, tanca",
+  "sair.bandeja": "Només minimitza a la safata",
+  "sair.avisoDownload": "La baixada en curs s’aturarà.",
+  "sair.avisoJogo": "El joc continua obert, però el launcher deixa de seguir el partit.",
 }
 
 const PACOTES: Record<string, PacoteDeIdioma> = {

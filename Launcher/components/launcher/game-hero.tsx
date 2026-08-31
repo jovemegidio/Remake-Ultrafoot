@@ -60,7 +60,14 @@ export function GameHero({
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/45 to-transparent" />
       </div>
 
-      <div className="relative flex min-h-[520px] flex-col justify-end gap-4 p-6 md:p-10">
+      {/* ⚠️ ALTURA RELATIVA À TELA, NÃO 520px FIXOS.
+          Com `min-h-[520px]` o hero ocupava a janela inteira num monitor de
+          1366×768 — o mais comum entre notebooks de quem joga manager. O
+          resultado: a página nascia com barra de rolagem e NADA além do hero
+          aparecia, então nem dava para perceber que havia novidades embaixo.
+          O `clamp` mantém os 520px em tela grande e encolhe onde precisa,
+          deixando o próximo bloco espiar. */}
+      <div className="relative flex min-h-[clamp(300px,52vh,520px)] flex-col justify-end gap-4 p-6 md:p-10">
         <div className="absolute left-7 top-7 flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-white/70 backdrop-blur-md">
           <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(72,238,214,.9)]" />
           Temporada 2026

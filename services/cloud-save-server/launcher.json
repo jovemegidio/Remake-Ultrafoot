@@ -1,7 +1,8 @@
 {
-  "version": "1.0.36",
-  "notes": "Amigos de verdade no launcher. Agora voce tem um codigo de amigo (como o Riot ID) para passar a quem quiser te adicionar, sem dar seu e-mail; a lista de amigos fica sempre visivel no painel da direita, mostrando o que cada um esta fazendo no jogo (que partida, que tela) ou se esta so no launcher; e a conversa virou uma janelinha no canto, que acompanha voce por qualquer aba em vez de morrer ao trocar de tela. Pedido de amizade e mensagem nova avisam com um selo na lateral. Tem tambem um mural com o que os amigos andaram fazendo - titulos, contratacoes e viradas de temporada - que continua la quando eles desligam o PC.",
+  "version": "1.0.38",
+  "notes": "O launcher para de se atualizar em circulo. A causa estava no instalador do JOGO: toda atualizacao dele reinstalava por cima o launcher que tinha sido assado naquela build — em 28/08 o jogo 1.0.377 carregava o launcher de 29/07 — rebaixando quem ja tinha a versao nova. O launcher entao se atualizava de novo, e o ciclo recomecava na atualizacao seguinte do jogo. Agora o jogo so instala o launcher quando nao ha nenhum, e quem cuida de atualiza-lo e ele mesmo. Alem disso, quando o servidor esta fora do ar o launcher para de insistir a cada abertura: uma falha de rede compra algumas horas de silencio em vez de repetir tres downloads perdidos com a tela de 'Atualizando' cobrindo tudo. Na tela: o estado do servidor deixou de aparecer tres vezes ao mesmo tempo, o destaque do jogo cabe em monitores de 1366x768 (as novidades voltam a aparecer sem rolar) e o rodape passou a mostrar a versao do launcher, que antes nao aparecia em lugar nenhum.",
   "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe",
-  "sha256": "216FB7307E7E2CFF00C2948495320895B1CFF9CD1D80AF833CE846EEBC48C103",
-  "size": 17961550
+  "urlReserva": "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/Ultrafoot-Launcher-Setup.exe",
+  "sha256": "537dd3022d03be729e252d04619a9e257032719571aad69a8a89f13304b5f8ff",
+  "size": 10875756
 }

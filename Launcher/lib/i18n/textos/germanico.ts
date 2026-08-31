@@ -53,6 +53,12 @@ const de: PacoteDeIdioma = {
   "launcher.falhou": "Das Launcher-Update ließ sich nicht installieren. Du kannst normal weiterspielen.",
   "aviso.jogoCaiu": "Das Spiel wurde unerwartet beendet. Dateien prüfen hilft meistens.",
   "aviso.fecheOJogo": "Schließe das Spiel, bevor du fortfährst.",
+  "sair.titulo": "Launcher schließen?",
+  "sair.texto": "Möchtest du den Ultrafoot Launcher wirklich schließen?",
+  "sair.confirmar": "Ja, schließen",
+  "sair.bandeja": "Nur in den Infobereich minimieren",
+  "sair.avisoDownload": "Der laufende Download wird abgebrochen.",
+  "sair.avisoJogo": "Das Spiel bleibt offen, aber der Launcher verfolgt das Spiel nicht mehr.",
 }
 
 const sv: PacoteDeIdioma = {
@@ -108,6 +114,12 @@ const sv: PacoteDeIdioma = {
   "launcher.falhou": "Launcher-uppdateringen kunde inte installeras. Du kan fortsätta spela.",
   "aviso.jogoCaiu": "Spelet stängdes oväntat. Att verifiera filerna brukar lösa det.",
   "aviso.fecheOJogo": "Stäng spelet innan du fortsätter.",
+  "sair.titulo": "Stänga launchern?",
+  "sair.texto": "Vill du verkligen stänga Ultrafoot Launcher?",
+  "sair.confirmar": "Ja, stäng",
+  "sair.bandeja": "Minimera bara till aktivitetsfältet",
+  "sair.avisoDownload": "Den pågående nedladdningen avbryts.",
+  "sair.avisoJogo": "Spelet förblir öppet, men launchern slutar följa matchen.",
 }
 
 const da: PacoteDeIdioma = {
@@ -163,6 +175,12 @@ const da: PacoteDeIdioma = {
   "launcher.falhou": "Launcher-opdateringen kunne ikke installeres. Du kan spille videre.",
   "aviso.jogoCaiu": "Spillet lukkede uventet. Det hjælper som regel at bekræfte filerne.",
   "aviso.fecheOJogo": "Luk spillet, før du fortsætter.",
+  "sair.titulo": "Luk launcheren?",
+  "sair.texto": "Vil du virkelig lukke Ultrafoot Launcher?",
+  "sair.confirmar": "Ja, luk",
+  "sair.bandeja": "Minimer kun til proceslinjen",
+  "sair.avisoDownload": "Den igangværende download stopper.",
+  "sair.avisoJogo": "Spillet forbliver åbent, men launcheren følger ikke længere kampen.",
 }
 
 const nb: PacoteDeIdioma = {
@@ -218,6 +236,12 @@ const nb: PacoteDeIdioma = {
   "launcher.falhou": "Launcher-oppdateringen kunne ikke installeres. Du kan spille videre.",
   "aviso.jogoCaiu": "Spillet lukket seg uventet. Å bekrefte filene løser det som regel.",
   "aviso.fecheOJogo": "Lukk spillet før du fortsetter.",
+  "sair.titulo": "Lukke launcheren?",
+  "sair.texto": "Vil du virkelig lukke Ultrafoot Launcher?",
+  "sair.confirmar": "Ja, lukk",
+  "sair.bandeja": "Bare minimer til systemkurven",
+  "sair.avisoDownload": "Den pågående nedlastingen stopper.",
+  "sair.avisoJogo": "Spillet forblir åpent, men launcheren slutter å følge kampen.",
 }
 
 const nn: PacoteDeIdioma = {
@@ -273,6 +297,12 @@ const nn: PacoteDeIdioma = {
   "launcher.falhou": "Launchar-oppdateringa kunne ikkje installerast. Du kan spele vidare.",
   "aviso.jogoCaiu": "Spelet lukka seg uventa. Å stadfeste filene løyser det som regel.",
   "aviso.fecheOJogo": "Lukk spelet før du held fram.",
+  "sair.titulo": "Lukke launcheren?",
+  "sair.texto": "Vil du verkeleg lukke Ultrafoot Launcher?",
+  "sair.confirmar": "Ja, lukk",
+  "sair.bandeja": "Berre minimer til systemkurven",
+  "sair.avisoDownload": "Den pågåande nedlastinga stoppar.",
+  "sair.avisoJogo": "Spelet held fram å vere ope, men launcheren sluttar å følgje kampen.",
 }
 
 const fi: PacoteDeIdioma = {
@@ -329,6 +359,12 @@ const fi: PacoteDeIdioma = {
   "launcher.falhou": "Launcherin päivitystä ei voitu asentaa. Voit jatkaa pelaamista.",
   "aviso.jogoCaiu": "Peli sulkeutui yllättäen. Tiedostojen tarkistus auttaa yleensä.",
   "aviso.fecheOJogo": "Sulje peli ennen jatkamista.",
+  "sair.titulo": "Suljetaanko käynnistin?",
+  "sair.texto": "Haluatko varmasti sulkea Ultrafoot Launcherin?",
+  "sair.confirmar": "Kyllä, sulje",
+  "sair.bandeja": "Pienennä vain ilmaisinalueelle",
+  "sair.avisoDownload": "Käynnissä oleva lataus keskeytyy.",
+  "sair.avisoJogo": "Peli pysyy auki, mutta käynnistin lakkaa seuraamasta ottelua.",
 }
 
 const is: PacoteDeIdioma = {

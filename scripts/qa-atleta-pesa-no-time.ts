@@ -24,7 +24,20 @@ import {
 } from "@/lib/carreira-de-jogador"
 import { sortStandings } from "@/lib/career-engine"
 
-const SEMENTES = 3
+// ⚠️ NAO BAIXE ESTE NUMERO. Com SEMENTES = 3 (18 amostras por faixa) este
+// portao REPROVOU a 1.0.383 medindo ganho 4.8 contra o piso 5 — e o codigo
+// estava certo: 8 sementes deram 11.5 e 12 deram 9.8, ambos folgados. Era ruido
+// de amostra pequena raspando o limiar, e o comentario acima ja prometia "32
+// amostras por faixa" enquanto o codigo entregava 18.
+//
+// Portao que oscila em cima do limiar e pior que portao nenhum: ele custa uma
+// investigacao de release inteira para no fim dizer que nao havia defeito, e da
+// terceira vez que isso acontece alguem passa a ignorar o vermelho — que e
+// exatamente quando ele estaria certo.
+//
+// Custa ~157s. Vale: e a invariante de que o elenco mexe no placar, que ja
+// esteve quebrada de verdade (o placar ouvia so o prestigio, 1.0.375).
+const SEMENTES = 8
 const TEMPORADAS = 6
 const clube = allTeams.find(t => t.prestigio >= 78 && t.prestigio <= 85)!
 

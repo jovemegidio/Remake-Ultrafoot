@@ -70,6 +70,12 @@ const id: PacoteDeIdioma = {
   "launcher.atualizando": "Memperbarui launcher",
   "launcher.semAtualizar": "Main tanpa memperbarui",
   "aviso.jogoCaiu": "Gim tertutup tiba-tiba. Verifikasi berkas biasanya menyelesaikannya.",
+  "sair.titulo": "Tutup launcher?",
+  "sair.texto": "Yakin ingin menutup Ultrafoot Launcher?",
+  "sair.confirmar": "Ya, tutup",
+  "sair.bandeja": "Cukup kecilkan ke baki sistem",
+  "sair.avisoDownload": "Unduhan yang sedang berjalan akan berhenti.",
+  "sair.avisoJogo": "Game tetap terbuka, tetapi launcher berhenti mengikuti pertandingan.",
 }
 
 const ms: PacoteDeIdioma = {
@@ -188,6 +194,12 @@ const vi: PacoteDeIdioma = {
   "conf.fonte": "Phông chữ",
   "conf.tamanhoDoTexto": "Cỡ chữ",
   "aviso.jogoCaiu": "Trò chơi đã đóng đột ngột. Kiểm tra tệp thường khắc phục được.",
+  "sair.titulo": "Đóng launcher?",
+  "sair.texto": "Bạn có thực sự muốn đóng Ultrafoot Launcher không?",
+  "sair.confirmar": "Có, đóng",
+  "sair.bandeja": "Chỉ thu nhỏ xuống khay hệ thống",
+  "sair.avisoDownload": "Quá trình tải xuống đang chạy sẽ dừng lại.",
+  "sair.avisoJogo": "Trò chơi vẫn mở, nhưng launcher sẽ ngừng theo dõi trận đấu.",
 }
 
 const th: PacoteDeIdioma = {

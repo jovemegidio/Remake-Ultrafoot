@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import type { LauncherConfig, ServerStatus } from "@/lib/launcher-bridge"
+import type { LauncherConfig } from "@/lib/launcher-bridge"
 import { MessageCircle, ExternalLink, Megaphone, Users } from "lucide-react"
 
 function SocialButton({ label, href, onOpen, discord }: { label: string; href: string; onOpen: (u: string) => void; discord?: boolean }) {
@@ -16,14 +16,20 @@ function SocialButton({ label, href, onOpen, discord }: { label: string; href: s
   )
 }
 
+// ⚠️ O ESTADO DO SERVIDOR NÃO É DESENHADO AQUI — e por isso a barra nem o recebe.
+//
+// Ele já era dito no painel da direita, em dois lugares que têm função própria:
+// o rodapé com o ponto colorido (indicador permanente, ao lado do atalho do FC
+// Hub) e o vazio da lista de amigos, que explica POR QUE ela está vazia. Esta
+// faixa era a terceira menção da mesma coisa — e a mais barulhenta, porque
+// atravessa a tela inteira. Com a VPS fora do ar, a tela dizia "servidor
+// offline" três vezes ao mesmo tempo.
 export function CommunityBar({
   config,
-  serverStatus,
   tecnicosOnline,
   onOpen,
 }: {
   config: LauncherConfig | null
-  serverStatus: ServerStatus | null
   /** Quantos tecnicos estao no Ultrafoot agora (presenca da conta). `undefined`
    *  = deslogado ou sem rede: nesse caso a barra NAO diz "0 online", que pareceria
    *  jogo morto quando o problema e so nao termos como perguntar. */
@@ -33,7 +39,7 @@ export function CommunityBar({
   const social = config?.social
   const hasSocial = Boolean(social && (social.discord || social.youtube || social.tiktok || social.instagram))
   const announcement = config?.announcement
-  if (!announcement && !hasSocial && !serverStatus && tecnicosOnline === undefined) return null
+  if (!announcement && !hasSocial && tecnicosOnline === undefined) return null
 
   return (
     <div className="flex flex-col">
@@ -51,20 +57,8 @@ export function CommunityBar({
         </div>
       )}
 
-      {(hasSocial || serverStatus || tecnicosOnline !== undefined) && (
+      {(hasSocial || tecnicosOnline !== undefined) && (
         <div className="flex flex-wrap items-center gap-3 border-b border-border bg-background/60 px-4 py-2 md:px-6">
-          {serverStatus && (
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span
-                className={cn(
-                  "h-2 w-2 rounded-full",
-                  serverStatus.online ? "bg-primary" : "bg-destructive",
-                )}
-              />
-              Servidor {serverStatus.online ? "online" : "offline"}
-            </span>
-          )}
-
           {/* QUEM ESTA NO JOGO AGORA, na barra de sempre. Antes esse numero so
               existia dentro da aba FC Hub — ou seja, era preciso ir procurar
               para descobrir que havia gente online. */}

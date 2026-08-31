@@ -55,6 +55,12 @@ const ar: PacoteDeIdioma = {
   "launcher.falhou": "تعذّر تثبيت تحديث المشغّل. يمكنك متابعة اللعب بشكل طبيعي.",
   "aviso.jogoCaiu": "أُغلقت اللعبة بشكل غير متوقع. التحقق من الملفات يحل المشكلة عادةً.",
   "aviso.fecheOJogo": "أغلق اللعبة قبل المتابعة.",
+  "sair.titulo": "إغلاق المشغّل؟",
+  "sair.texto": "هل تريد حقًا إغلاق Ultrafoot Launcher؟",
+  "sair.confirmar": "نعم، أغلق",
+  "sair.bandeja": "التصغير إلى شريط المهام فقط",
+  "sair.avisoDownload": "سيتوقف التنزيل الجاري.",
+  "sair.avisoJogo": "تبقى اللعبة مفتوحة، لكن المشغّل يتوقف عن متابعة المباراة.",
 }
 
 const tr: PacoteDeIdioma = {
@@ -108,6 +114,12 @@ const tr: PacoteDeIdioma = {
   "launcher.falhou": "Başlatıcı güncellemesi kurulamadı. Normal şekilde oynamaya devam edebilirsin.",
   "aviso.jogoCaiu": "Oyun beklenmedik şekilde kapandı. Dosyaları doğrulamak genelde çözer.",
   "aviso.fecheOJogo": "Devam etmeden önce oyunu kapat.",
+  "sair.titulo": "Başlatıcı kapatılsın mı?",
+  "sair.texto": "Ultrafoot Launcher’ı gerçekten kapatmak istiyor musunuz?",
+  "sair.confirmar": "Evet, kapat",
+  "sair.bandeja": "Yalnızca sistem tepsisine küçült",
+  "sair.avisoDownload": "Devam eden indirme duracak.",
+  "sair.avisoJogo": "Oyun açık kalır, ancak başlatıcı maçı izlemeyi bırakır.",
 }
 
 const he: PacoteDeIdioma = {
@@ -159,6 +171,12 @@ const he: PacoteDeIdioma = {
   "launcher.falhou": "לא הצלחתי להתקין את עדכון המשגר. אפשר להמשיך לשחק כרגיל.",
   "aviso.jogoCaiu": "המשחק נסגר באופן בלתי צפוי. אימות הקבצים בדרך כלל פותר את זה.",
   "aviso.fecheOJogo": "סגור את המשחק לפני שתמשיך.",
+  "sair.titulo": "לסגור את המשגר?",
+  "sair.texto": "האם באמת לסגור את Ultrafoot Launcher?",
+  "sair.confirmar": "כן, לסגור",
+  "sair.bandeja": "רק למזער למגש המערכת",
+  "sair.avisoDownload": "ההורדה שמתבצעת תיעצר.",
+  "sair.avisoJogo": "המשחק יישאר פתוח, אבל המשגר יפסיק לעקוב אחרי המשחק.",
 }
 
 const fa: PacoteDeIdioma = {

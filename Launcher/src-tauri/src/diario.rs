@@ -191,3 +191,38 @@ pub fn gerar_diagnostico() -> Result<String, String> {
     let _ = tauri_plugin_opener::reveal_item_in_dir(&destino);
     Ok(destino.to_string_lossy().into_owned())
 }
+
+// ─── Testes ──────────────────────────────────────────────────────────────────
+//
+// `data_hora` é uma reimplementação do `civil_from_days`. Ela carimba todas as
+// linhas do diário e o nome do arquivo do dia — errar aqui embaralha a única
+// fonte de investigação que o launcher tem, e em silêncio.
+#[cfg(test)]
+mod testes {
+    use super::*;
+
+    #[test]
+    fn epoca_zero() {
+        assert_eq!(data_hora(0), (1970, 1, 1, 0, 0, 0));
+    }
+
+    #[test]
+    fn hora_minuto_segundo() {
+        assert_eq!(data_hora(86_399), (1970, 1, 1, 23, 59, 59));
+        assert_eq!(data_hora(86_400), (1970, 1, 2, 0, 0, 0));
+    }
+
+    #[test]
+    fn ano_bissexto_e_o_29_de_fevereiro() {
+        // 2024-02-29T12:33:16Z — o dia que só existe de quatro em quatro anos.
+        assert_eq!(data_hora(1_709_209_996), (2024, 2, 29, 12, 33, 16));
+    }
+
+    #[test]
+    fn virada_de_ano() {
+        // 2026-01-01T00:00:00Z
+        assert_eq!(data_hora(1_767_225_600), (2026, 1, 1, 0, 0, 0));
+        // 2025-12-31T23:59:59Z
+        assert_eq!(data_hora(1_767_225_599), (2025, 12, 31, 23, 59, 59));
+    }
+}

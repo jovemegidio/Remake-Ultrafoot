@@ -1,4 +1,4 @@
-import type { Game, Release, ChangelogEntry, News } from "@/lib/db/schema"
+import type { Game, Release, ChangelogEntry, News } from "@/lib/tipos-do-catalogo"
 
 /**
  * Fonte de dados real do Launcher — sem banco de dados.

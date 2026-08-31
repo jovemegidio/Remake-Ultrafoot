@@ -1,9 +1,27 @@
 {
-  "version": "1.0.373",
-  "notes": "Carreira de jogador com partida por posicao, mira completa, goleiro e selecao jogaveis, vida fora do campo e dependencias sem vulnerabilidades conhecidas.",
-  "sizeMb": 663,
-  "sha256": "67E70A7AD049ED555A4CBFFD5A05AA7E3E63415DF53D29EF2872E8F7746002C4",
+  "version": "1.0.377",
+  "notes": "1.0.377 — A vida fora de campo ganha cara: loja e vitrine de verdade para chuteiras, acessorios, recuperacao e bens de status; patrocinio pessoal com 11 marcas, exclusividade de categoria, negociacao com teto e clausulas que cobram; 14 dilemas fora de campo em que toda escolha custa alguma coisa. Forca e efeito viraram barras arcade e o chute ganhou replay em camera lenta. No treinador: linha do tempo, insignias, patamar na historia e conduta. Na base: ranking de academias e torneios internacionais Sub-20. No online: o placar so conta depois de os dois tecnicos baterem.",
+  "sizeMb": 667,
+  "sha256": "A486708A5F292E4F557B20D3EBEF1F1A6795F8C4A557A7C843885192A9B91D64",
   "anteriores": [
+    {
+      "version": "1.0.375",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.375/Ultrafoot.26_1.0.375_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.375",
+      "sizeMb": 667
+    },
+    {
+      "version": "1.0.374",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.374/Ultrafoot.26_1.0.374_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.374",
+      "sizeMb": 667
+    },
+    {
+      "version": "1.0.373",
+      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.373/Ultrafoot.26_1.0.373_x64-setup.exe",
+      "notes": "Ultrafoot 26 v1.0.373",
+      "sizeMb": 663
+    },
     {
       "version": "1.0.372",
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.372/Ultrafoot.26_1.0.372_x64-setup.exe",
@@ -39,30 +57,12 @@
       "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.362/Ultrafoot.26_1.0.362_x64-setup.exe",
       "notes": "Ultrafoot 26 v1.0.362",
       "sizeMb": 715
-    },
-    {
-      "version": "1.0.361",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.361/Ultrafoot.26_1.0.361_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.361",
-      "sizeMb": 714
-    },
-    {
-      "version": "1.0.360",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.360/Ultrafoot.26_1.0.360_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.360",
-      "sizeMb": 714
-    },
-    {
-      "version": "1.0.359",
-      "url": "https://github.com/jovemegidio/Ultrafoot26/releases/download/build-1.0.359/Ultrafoot.26_1.0.359_x64-setup.exe",
-      "notes": "Ultrafoot 26 v1.0.359",
-      "sizeMb": 714
     }
   ],
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUgvR1J4elUwcFFHWkRBYmR1NlREWjdpbXQzbC9UR3RBakduUWRBQURmNUM2UWF2Z3Q1VkE2VHFpWU5uVkxKTjJkbFdSN1J2VmNRZXBSRGFISHZ5MFE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3NjAxMjY5CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNzNfeDY0LXNldHVwLmV4ZQpVaEZvNzZtcTVmVUdnOFY3N1BNeVIwckNnTGVWZzNqZEMvSjZoYWtJY3BzZXZkNXd0L09TWXViRFhURUpkalFEVFFhLzE0VDRxa2padlgwM2V4NElDQT09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.373_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUkwVFJiUXowNTdnQnhMRkRsZy9mZUYxS1B2UGU3eU9Oc3ZEWWlhTDh4UEVrV2s3bmVVcFdwVkpBWkhrbzhXN3YxWHBUYzNHai9pem80NVhwN0ZsWkFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3Nzg3Njc3CWZpbGU6VWx0cmFmb290IDI2XzEuMC4zNzdfeDY0LXNldHVwLmV4ZQpKSyttNmlEaGZQUllZTEptTFBaQjdwcUh5Kzhxck02aHdJUWpLaHZEZlRSWWp3UkV6aUhBZDZWWWd3bWtadGtFZHN0MkhkVDhIWnhsVzFWSndlSHBDUT09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.377_x64-setup.exe"
     }
   }
 }

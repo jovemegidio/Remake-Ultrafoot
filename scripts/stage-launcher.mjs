@@ -85,14 +85,30 @@ async function findSetup() {
 }
 
 async function main() {
-  const usarPublicado = process.argv.includes("--publicado")
+  // ⚠️ O PUBLICADO E O PADRAO. `--local` para usar o build da sua maquina.
+  //
+  // Era o contrario, e o contrario e o que envelhece sozinho: quem builda o jogo
+  // raramente acabou de buildar o launcher, entao `findSetup()` pegava o
+  // *-setup.exe mais recente que existisse no disco — que podia ser de meses
+  // atras. Foi assim que o jogo 1.0.377, publicado em 27/08/2026, saiu com o
+  // launcher 1.0.19 de 29/07 dentro.
+  //
+  // O `hooks.nsh` deixou de reinstalar por cima de um launcher existente, entao
+  // isso nao gera mais o laco de downgrade; mas o binario embutido ainda e o que
+  // a pessoa recebe na PRIMEIRA instalacao, e comecar dois meses atras nao serve
+  // a ninguem. Pegar o que esta no ar custa um download de 17 MB e acerta
+  // sempre.
+  //
+  // `--local` continua existindo para o caso legitimo: publicar jogo e launcher
+  // novos na mesma leva, com o launcher ainda nao publicado.
+  const usarLocal = process.argv.includes("--local")
+  const usarPublicado = !usarLocal
 
   const setup = usarPublicado ? await baixarPublicado() : await findSetup()
   if (!setup) {
     console.error("ERRO: não encontrei o instalador do launcher (*-setup.exe).")
     console.error("Builde o launcher primeiro (Launcher/: pnpm tauri:build), informe o caminho,")
-    console.error("ou use o que já está no ar:")
-    console.error("  node scripts/stage-launcher.mjs --publicado")
+    console.error("ou tire o --local para usar o que já está no ar.")
     process.exit(1)
   }
   await mkdir(DEST_DIR, { recursive: true })

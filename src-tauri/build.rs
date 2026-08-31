@@ -2,6 +2,12 @@ fn main() {
     // Regera os recursos de versão do executável sempre que o manifesto Tauri
     // muda; evita instalador novo contendo FileVersion da build anterior.
     println!("cargo:rerun-if-env-changed=TAURI_CONFIG");
+    // ⚠️ SEM ISTO O BUILD DE LOJA SAI ERRADO E EM SILENCIO. `option_env!` e
+    // resolvido na compilacao; o cargo, sozinho, nao sabe que o valor mudou e
+    // reaproveita o objeto anterior. O resultado seria um binario "de loja"
+    // que se acha da venda direta — pedindo codigo de serie a quem comprou na
+    // Steam, e sem nenhum erro para denunciar.
+    println!("cargo:rerun-if-env-changed=ULTRAFOOT_LOJA");
     #[cfg(target_os = "windows")]
     {
         cc::Build::new()

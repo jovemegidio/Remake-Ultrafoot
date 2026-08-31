@@ -61,6 +61,12 @@ const hi: PacoteDeIdioma = {
   "conf.fonte": "फ़ॉन्ट",
   "conf.tamanhoDoTexto": "टेक्स्ट का आकार",
   "aviso.jogoCaiu": "गेम अचानक बंद हो गया। फ़ाइलें जाँचने से आमतौर पर ठीक हो जाता है।",
+  "sair.titulo": "लॉन्चर बंद करें?",
+  "sair.texto": "क्या आप वाकई Ultrafoot Launcher बंद करना चाहते हैं?",
+  "sair.confirmar": "हाँ, बंद करें",
+  "sair.bandeja": "केवल ट्रे में छोटा करें",
+  "sair.avisoDownload": "चल रहा डाउनलोड रुक जाएगा।",
+  "sair.avisoJogo": "गेम खुला रहेगा, लेकिन लॉन्चर मैच को ट्रैक करना बंद कर देगा।",
 }
 
 const bn: PacoteDeIdioma = {

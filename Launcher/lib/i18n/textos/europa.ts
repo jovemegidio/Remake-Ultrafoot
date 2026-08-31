@@ -15,6 +15,12 @@ const el: PacoteDeIdioma = {
   "baixar.baixando": "Γίνεται λήψη", "baixar.instalando": "Εγκατάσταση", "baixar.pausado": "Σε παύση",
   "gerenciar.desinstalar": "Απεγκατάσταση", "gerenciar.tempoDeJogo": "Χρόνος παιχνιδιού",
   "conf.titulo": "Ρυθμίσεις", "conf.idioma": "Γλώσσα", "conf.tema": "Θέμα",
+  "sair.titulo": "Κλείσιμο του launcher;",
+  "sair.texto": "Θέλετε πραγματικά να κλείσετε το Ultrafoot Launcher;",
+  "sair.confirmar": "Ναι, κλείσιμο",
+  "sair.bandeja": "Μόνο ελαχιστοποίηση στη γραμμή ειδοποιήσεων",
+  "sair.avisoDownload": "Η λήψη που εκτελείται θα σταματήσει.",
+  "sair.avisoJogo": "Το παιχνίδι παραμένει ανοιχτό, αλλά ο launcher σταματά να παρακολουθεί τον αγώνα.",
 }
 
 const ro: PacoteDeIdioma = {
@@ -31,6 +37,12 @@ const ro: PacoteDeIdioma = {
   "baixar.baixando": "Se descarcă", "baixar.instalando": "Se instalează", "baixar.pausado": "În pauză",
   "gerenciar.desinstalar": "Dezinstalează", "gerenciar.tempoDeJogo": "Timp de joc",
   "conf.titulo": "Setări", "conf.idioma": "Limbă", "conf.tema": "Temă",
+  "sair.titulo": "Închizi launcherul?",
+  "sair.texto": "Chiar vrei să închizi Ultrafoot Launcher?",
+  "sair.confirmar": "Da, închide",
+  "sair.bandeja": "Doar minimizează în bara de sistem",
+  "sair.avisoDownload": "Descărcarea în curs se va opri.",
+  "sair.avisoJogo": "Jocul rămâne deschis, dar launcherul nu mai urmăreşte meciul.",
 }
 
 const hu: PacoteDeIdioma = {
@@ -47,6 +59,12 @@ const hu: PacoteDeIdioma = {
   "baixar.baixando": "Letöltés", "baixar.instalando": "Telepítés", "baixar.pausado": "Szüneteltetve",
   "gerenciar.desinstalar": "Eltávolítás", "gerenciar.tempoDeJogo": "Játékidő",
   "conf.titulo": "Beállítások", "conf.idioma": "Nyelv", "conf.tema": "Téma",
+  "sair.titulo": "Bezárod az indítót?",
+  "sair.texto": "Biztosan bezárod az Ultrafoot Launchert?",
+  "sair.confirmar": "Igen, bezárás",
+  "sair.bandeja": "Csak kicsinyítés a tálcára",
+  "sair.avisoDownload": "A folyamatban lévő letöltés leáll.",
+  "sair.avisoJogo": "A játék nyitva marad, de az indító nem követi tovább a meccset.",
 }
 
 const sq: PacoteDeIdioma = {

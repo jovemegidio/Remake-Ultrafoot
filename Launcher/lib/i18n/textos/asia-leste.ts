@@ -92,6 +92,12 @@ const zhCN: PacoteDeIdioma = {
   "launcher.falhou": "启动器更新安装失败。你仍然可以正常游戏。",
   "aviso.jogoCaiu": "游戏意外关闭。校验文件通常能解决。",
   "aviso.fecheOJogo": "请先关闭游戏再继续。",
+  "sair.titulo": "关闭启动器？",
+  "sair.texto": "确定要关闭 Ultrafoot Launcher 吗？",
+  "sair.confirmar": "是，关闭",
+  "sair.bandeja": "仅最小化到托盘",
+  "sair.avisoDownload": "正在进行的下载将会停止。",
+  "sair.avisoJogo": "游戏会继续运行，但启动器将不再跟踪比赛。",
 }
 
 const zhTW: PacoteDeIdioma = {
@@ -179,6 +185,12 @@ const zhTW: PacoteDeIdioma = {
   "launcher.novaVersao": "新版本 {versao}。啟動器即將重新啟動。",
   "launcher.falhou": "啟動器更新安裝失敗。你仍然可以正常遊玩。",
   "aviso.fecheOJogo": "請先關閉遊戲再繼續。",
+  "sair.titulo": "關閉啟動器？",
+  "sair.texto": "確定要關閉 Ultrafoot Launcher 嗎？",
+  "sair.confirmar": "是，關閉",
+  "sair.bandeja": "僅最小化到系統匣",
+  "sair.avisoDownload": "進行中的下載將會停止。",
+  "sair.avisoJogo": "遊戲會繼續執行，但啟動器將不再追蹤比賽。",
 }
 
 const ja: PacoteDeIdioma = {
@@ -271,6 +283,12 @@ const ja: PacoteDeIdioma = {
   "launcher.falhou": "ランチャーの更新をインストールできませんでした。そのままプレイできます。",
   "aviso.jogoCaiu": "ゲームが予期せず終了しました。ファイルの検証で直ることが多いです。",
   "aviso.fecheOJogo": "続ける前にゲームを閉じてください。",
+  "sair.titulo": "ランチャーを閉じますか？",
+  "sair.texto": "Ultrafoot Launcher を本当に閉じますか？",
+  "sair.confirmar": "はい、閉じる",
+  "sair.bandeja": "通知領域に最小化するだけ",
+  "sair.avisoDownload": "進行中のダウンロードは停止します。",
+  "sair.avisoJogo": "ゲームは開いたままですが、ランチャーは試合の記録を停止します。",
 }
 
 const ko: PacoteDeIdioma = {
@@ -360,6 +378,12 @@ const ko: PacoteDeIdioma = {
   "conf.altoContraste": "고대비", "conf.reduzirAnimacoes": "애니메이션 줄이기",
   "launcher.falhou": "런처 업데이트를 설치하지 못했습니다. 계속 플레이할 수 있습니다.",
   "aviso.fecheOJogo": "계속하기 전에 게임을 닫아 주세요.",
+  "sair.titulo": "런처를 닫을까요?",
+  "sair.texto": "정말 Ultrafoot Launcher를 닫으시겠습니까?",
+  "sair.confirmar": "예, 닫기",
+  "sair.bandeja": "트레이로 최소화만 하기",
+  "sair.avisoDownload": "진행 중인 다운로드가 중지됩니다.",
+  "sair.avisoJogo": "게임은 계속 실행되지만 런처가 경기 기록을 중단합니다.",
 }
 
 const yue: PacoteDeIdioma = {

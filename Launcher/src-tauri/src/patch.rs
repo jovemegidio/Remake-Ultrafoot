@@ -606,3 +606,81 @@ pub fn tem_manifesto(url_do_manifesto: String) -> bool {
         .map(|r| r.status() == 200)
         .unwrap_or(false)
 }
+
+// ─── Testes ──────────────────────────────────────────────────────────────────
+//
+// ⚠️ `caminho_seguro` É A ÚNICA COISA ENTRE UM MANIFESTO DE REDE E O DISCO DO
+// JOGADOR. Ela é a regra que diz "nada escreve fora da pasta do jogo", e uma
+// regressão aqui não faz teste nenhum falhar em lugar nenhum — o patch continua
+// aplicando, só que no lugar errado. Por isso ela é testada caso a caso.
+#[cfg(test)]
+mod testes {
+    use super::*;
+    use std::path::Path;
+
+    fn raiz() -> &'static Path {
+        Path::new("C:/Jogos/Ultrafoot 26")
+    }
+
+    #[test]
+    fn caminho_relativo_normal_e_aceito() {
+        let d = caminho_seguro(raiz(), "resources/dados.json").unwrap();
+        assert!(d.ends_with("resources/dados.json") || d.ends_with("resources\\dados.json"));
+        assert!(d.starts_with(raiz()));
+    }
+
+    #[test]
+    fn barra_invertida_do_windows_tambem_vale() {
+        let d = caminho_seguro(raiz(), "resources\\audio\\hino.ogg").unwrap();
+        assert!(d.starts_with(raiz()));
+    }
+
+    #[test]
+    fn subir_de_pasta_e_recusado() {
+        assert!(caminho_seguro(raiz(), "../../Windows/System32/x.dll").is_err());
+        assert!(caminho_seguro(raiz(), "resources/../../../x.dll").is_err());
+        assert!(caminho_seguro(raiz(), "..\\..\\x.dll").is_err());
+    }
+
+    #[test]
+    fn caminho_absoluto_e_recusado() {
+        assert!(caminho_seguro(raiz(), "/etc/passwd").is_err());
+        assert!(caminho_seguro(raiz(), "C:/Windows/System32/x.dll").is_err());
+        // Fluxo alternativo de dados do NTFS: o `:` é recusado junto.
+        assert!(caminho_seguro(raiz(), "arquivo.txt:oculto").is_err());
+    }
+
+    #[test]
+    fn ponto_sozinho_e_barra_dupla_sao_ignorados() {
+        let d = caminho_seguro(raiz(), "./resources//dados.json").unwrap();
+        assert!(d.starts_with(raiz()));
+        assert_eq!(d.components().count(), raiz().components().count() + 2);
+    }
+
+    fn manifesto_de_teste(compressao: Option<&str>, blobs: &str) -> Manifesto {
+        Manifesto {
+            versao: "1.0.377".into(),
+            blobs: blobs.into(),
+            compressao: compressao.map(|s| s.to_string()),
+            arquivos: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn endereco_do_blob_usa_os_dois_primeiros_do_sha() {
+        let m = manifesto_de_teste(None, "https://exemplo/blobs/");
+        assert_eq!(m.url_do_blob("abcdef123"), "https://exemplo/blobs/ab/abcdef123");
+    }
+
+    #[test]
+    fn endereco_do_blob_fecha_a_barra_que_falta() {
+        let m = manifesto_de_teste(None, "https://exemplo/blobs");
+        assert_eq!(m.url_do_blob("abcdef123"), "https://exemplo/blobs/ab/abcdef123");
+    }
+
+    #[test]
+    fn endereco_do_blob_comprimido_ganha_gz() {
+        let m = manifesto_de_teste(Some("gz"), "https://exemplo/blobs/");
+        assert_eq!(m.url_do_blob("abcdef123"), "https://exemplo/blobs/ab/abcdef123.gz");
+    }
+}

@@ -41,6 +41,7 @@ import {
   fetchLauncherConfig,
   checkServerStatus,
   openExternal,
+  versaoDoLauncher,
   atualizarPorPartes,
   garantirRequisitos,
   pausarDownload,
@@ -86,9 +87,27 @@ export type InstallState = {
 
 type Tab = "home" | "loja" | "news" | "social" | "changelog" | "security" | "gerenciar"
 
+/**
+ * Normaliza "v1.0.239", "1.0.239.0" e "1.0.239 (x64)" no mesmo vetor numérico.
+ *
+ * ⚠️ É A MESMA REGRA DO `parse_versao` DO RUST, e existe pelo mesmo motivo: o
+ * `DisplayVersion` do registro do Windows já chegou com prefixo `v`, com quarto
+ * componente e com sufixo entre parênteses. Com `split(".")` cru,
+ * `parseInt("v1")` é `NaN`, o `|| 0` o transforma em zero, e "v1.0.239" vira
+ * [0, 0, 239] — daí QUALQUER versão publicada parece mais nova que a instalada.
+ *
+ * O Rust foi consertado quando isso apareceu; esta função ficou para trás, e é
+ * ela quem decide o `status` da tela e dispara a atualização obrigatória. Era o
+ * loop de "atualiza, sai, entro e atualiza dnv" esperando o registro devolver
+ * um `v`.
+ */
+function partesDaVersao(bruto: string): number[] {
+  return (bruto.match(/\d+/g) ?? []).map(parte => Number.parseInt(parte, 10))
+}
+
 function isNewerVersion(candidate: string, installed: string): boolean {
-  const a = candidate.split(".").map(part => Number.parseInt(part, 10) || 0)
-  const b = installed.split(".").map(part => Number.parseInt(part, 10) || 0)
+  const a = partesDaVersao(candidate)
+  const b = partesDaVersao(installed)
   for (let index = 0; index < Math.max(a.length, b.length); index++) {
     const delta = (a[index] ?? 0) - (b[index] ?? 0)
     if (delta !== 0) return delta > 0
@@ -212,6 +231,11 @@ export function LauncherShell({
     const querOffline = typeof window !== "undefined" && localStorage.getItem(MODE_KEY) === "offline"
     const temRede = typeof navigator === "undefined" || navigator.onLine
     if (!s && temRede && !querOffline) setShowAuth(true)
+  }, [])
+  // Versão do próprio launcher, para o rodapé da lateral.
+  const [versaoLauncher, setVersaoLauncher] = useState("")
+  useEffect(() => {
+    void versaoDoLauncher().then(setVersaoLauncher)
   }, [])
   const [autostart, setAutostart] = useState(false)
   const [closeToTray, setCloseToTray] = useState(false)
@@ -971,10 +995,14 @@ export function LauncherShell({
               </span>
             </button>
           )}
-          {/* Versao REAL publicada, nao a do dado estatico do build — o rodape
-              mostrava 1.0.191 com a 1.0.200 no ar. */}
+          {/* ⚠️ AQUI É A VERSÃO DO LAUNCHER, NÃO A DO JOGO.
+              A do jogo já aparece duas vezes nesta tela — no item da lista de
+              jogos instalados, logo acima, e na etiqueta do hero. Uma terceira
+              não informava nada. A do LAUNCHER, por outro lado, não aparecia em
+              lugar nenhum, e é justamente a que o suporte precisa perguntar
+              quando alguém relata que "não atualiza" ou "fecha sozinho". */}
           <p className="mt-2 hidden px-1 text-[10px] text-white/20 lg:block">
-            Ultrafoot 26 · v{live?.version ?? latest.version ?? game.latestRelease?.version ?? ""}
+            Ultrafoot Launcher{versaoLauncher ? ` · v${versaoLauncher}` : ""}
           </p>
         </div>
       </aside>
@@ -1039,7 +1067,7 @@ export function LauncherShell({
 
       </header>
 
-      <CommunityBar config={config} serverStatus={serverStatus} tecnicosOnline={presencaHub?.online.length} onOpen={openExternal} />
+      <CommunityBar config={config} tecnicosOnline={presencaHub?.online.length} onOpen={openExternal} />
 
       <div className="relative z-[1] flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-[1500px] flex-col gap-6 p-4 md:p-6 lg:p-8">

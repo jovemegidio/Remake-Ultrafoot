@@ -1,4 +1,4 @@
-import type { Game, Release, ChangelogEntry, News } from "@/lib/db/schema"
+import type { Game, Release, ChangelogEntry, News } from "@/lib/tipos-do-catalogo"
 import { GAMES, RELEASES, CHANGELOG, NEWS } from "@/lib/ultrafoot-data"
 
 export type ReleaseWithChangelog = Release & { changelog: ChangelogEntry[] }

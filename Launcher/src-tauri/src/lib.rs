@@ -139,7 +139,7 @@ fn caminho_cache_endpoints() -> Option<std::path::PathBuf> {
 /// chave só muda uma coisa e mantém o resto — importante para o suporte poder
 /// corrigir um endereço sem precisar reescrever todos.
 fn aplicar_endpoints(base: &mut Endpoints, valor: &serde_json::Value) {
-    let mut pegar = |chave: &str, destino: &mut String| {
+    let pegar = |chave: &str, destino: &mut String| {
         if let Some(v) = valor.get(chave).and_then(|x| x.as_str()) {
             let v = v.trim();
             if v.starts_with("https://") {
@@ -202,6 +202,17 @@ struct LatestInfo {
     version: String,
     notes: String,
     url: String,
+    /// Endereço ALTERNATIVO do mesmo instalador, quando publicado.
+    ///
+    /// ⚠️ A RESERVA ERA MEIA RESERVA. `buscar_json_com_reserva` já trocava de
+    /// servidor para achar o MANIFESTO (VPS → GitHub), mas o `url` gravado
+    /// dentro dele apontava para a VPS nos dois casos. Com a VPS fora do ar o
+    /// launcher caía na pior combinação possível: descobria que existe versão
+    /// nova pelo GitHub e não conseguia baixar o binário de lugar nenhum — e
+    /// como o auto-update é o caminho pelo qual ele se conserta, isso é o
+    /// começo do tijolo. Publicar as duas fontes custa um campo.
+    #[serde(rename = "urlReserva")]
+    url_reserva: Option<String>,
     /// Endereço do manifesto de arquivos desta versão, quando publicado.
     ///
     /// É o que habilita a atualização diferencial: com ele, o launcher baixa só
@@ -668,11 +679,38 @@ fn fetch_latest_windows() -> Result<LatestInfo, String> {
         .filter(|m| m.starts_with("https://"))
         .map(|m| m.to_string());
 
+    // ⚠️ O QUE O INSTALADOR TEM DE SER — LIDO DO latest.json.
+    //
+    // `do_install_windows` recusa o arquivo que não bate com estes campos, mas
+    // ele só recebe o que ESTA função devolver. Enquanto aqui havia só
+    // `..Default::default()`, o `sha256` publicado no latest.json (desde a
+    // 1.0.346) chegava sempre como `None`, e a conferência caía no piso:
+    // cabeçalho `MZ` mais o tamanho anunciado pelo MESMO servidor que enviou o
+    // arquivo. Publicar o hash e não lê-lo é ter a tranca e deixá-la aberta.
+    //
+    // Aceita nos dois lugares: dentro de `platforms.windows-x86_64` (formato por
+    // plataforma) e solto na raiz (publicação antiga). Um hash que não seja 64
+    // hexadecimais é descartado em vez de reprovar o instalador: manifesto
+    // malformado não pode virar "não dá para atualizar".
+    let sha256 = plataforma
+        .and_then(|w| w.get("sha256"))
+        .or_else(|| raiz.get("sha256"))
+        .and_then(|s| s.as_str())
+        .map(|s| s.trim())
+        .filter(|s| s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit()))
+        .map(|s| s.to_string());
+    let size = plataforma
+        .and_then(|w| w.get("size"))
+        .or_else(|| raiz.get("size"))
+        .and_then(|s| s.as_u64())
+        .filter(|n| *n > 0);
+
     if version.is_empty() || url.is_empty() {
         return Err("latest.json sem versão ou URL do Windows".into());
     }
-    // Campos de verificação são do auto-update do LAUNCHER; o jogo tem o dele.
-    Ok(LatestInfo { version, notes, url, manifesto, ..Default::default() })
+    // `auto` continua sendo do auto-update do LAUNCHER (é lá que mora o freio de
+    // tentativas); hash e tamanho valem para os dois.
+    Ok(LatestInfo { version, notes, url, manifesto, sha256, size, ..Default::default() })
 }
 
 /// Linux/macOS: acha o release "desktop-*" mais recente e o asset com a extensão.
@@ -780,7 +818,34 @@ fn download_attempt(app: &AppHandle, url: &str, dest: &std::path::Path) -> Resul
     if existing > 0 {
         req = req.set("Range", &format!("bytes={existing}-"));
     }
-    let resp = req.call().map_err(|e| format!("download falhou: {e}"))?;
+    // ⚠️ 416 NÃO É FALHA DE REDE — É "ESSE RANGE NÃO EXISTE".
+    //
+    // O motivo normal é o parcial JÁ ESTAR completo: baixou tudo, a conferência
+    // reprovou por outro motivo e o arquivo ficou. O ureq trata 4xx como erro,
+    // então isto queimava as três tentativas e falhava PARA SEMPRE — até alguém
+    // limpar o %TEMP% na mão, que é o beco de 02/08/2026 entrando por outra
+    // porta. Com o arquivo inteiro no disco não há o que baixar: devolvemos
+    // sucesso e quem chamou segue para a conferência, que é quem decide se ele
+    // presta (e o apaga quando não presta).
+    let resp = match req.call() {
+        Ok(r) => r,
+        Err(ureq::Error::Status(416, _)) if existing > 0 => {
+            diario!("AVISO", "o servidor recusou o Range: o arquivo parcial já está completo");
+            let _ = app.emit(
+                "launcher://progress",
+                Progress {
+                    phase: "downloading",
+                    percent: 100,
+                    downloaded: existing,
+                    total: existing,
+                    speed: 0,
+                    eta: 0,
+                },
+            );
+            return Ok(());
+        }
+        Err(e) => return Err(format!("download falhou: {e}")),
+    };
 
     let resuming = resp.status() == 206;
     let remaining: u64 = resp
@@ -1127,26 +1192,90 @@ fn arquivo_de_tentativas() -> std::path::PathBuf {
     std::env::temp_dir().join("ultrafoot-launcher-tentativas.json")
 }
 
+/// Segundos desde a época. Para carimbar a última falha de rede.
+fn agora_em_segundos() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
+
+/// O registro inteiro, ou `Null` quando não há/está corrompido.
+fn registro_de_tentativas(versao: &str) -> serde_json::Value {
+    let v: serde_json::Value = std::fs::read_to_string(arquivo_de_tentativas())
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+        .unwrap_or(serde_json::Value::Null);
+    // Versão diferente: o registro não vale — a nova merece chance limpa.
+    if v.get("versao").and_then(|x| x.as_str()) != Some(versao) {
+        return serde_json::Value::Null;
+    }
+    v
+}
+
 /// Quantas vezes já tentamos instalar ESTA versão.
 fn tentativas_de(versao: &str) -> u32 {
-    let bruto = match std::fs::read_to_string(arquivo_de_tentativas()) {
-        Ok(t) => t,
-        Err(_) => return 0,
-    };
-    let v: serde_json::Value = match serde_json::from_str(&bruto) {
-        Ok(v) => v,
-        Err(_) => return 0,
-    };
-    if v.get("versao").and_then(|x| x.as_str()) != Some(versao) {
-        return 0; // versão diferente: contador zera, a nova merece chance limpa
-    }
-    v.get("vezes").and_then(|x| x.as_u64()).unwrap_or(0) as u32
+    registro_de_tentativas(versao)
+        .get("vezes")
+        .and_then(|x| x.as_u64())
+        .unwrap_or(0) as u32
+}
+
+/// Quando (epoch) o download desta versão falhou por rede pela última vez.
+///
+/// ⚠️ ESTE CAMPO É O QUE FALTAVA PARA O FREIO FUNCIONAR DE VERDADE.
+///
+/// `registrar_tentativa` só é chamado DEPOIS que o arquivo baixou e passou na
+/// conferência — de propósito, para um download interrompido não gastar as
+/// chances de uma instalação que nem começou. Só que isso deixava o caso mais
+/// comum de todos sem nenhum freio: quando o SERVIDOR está fora do ar, nada
+/// baixa, nada é registrado, e o launcher recomeça o ciclo inteiro a cada
+/// abertura — três tentativas de download, cada uma esperando o TCP desistir,
+/// com a tela de "Atualizando" cobrindo tudo enquanto isso.
+///
+/// Foi o que aconteceu em 28/08/2026 com a VPS fora do ar: o diário mostra as
+/// três tentativas às 22:22, e as três de novo às 22:34, na abertura seguinte.
+/// Do lado de quem usa, isso é "o launcher fica atualizando toda vez".
+///
+/// Com o carimbo, uma falha de rede compra silêncio por algumas horas: o
+/// launcher segue funcionando na versão que tem, e volta a tentar depois.
+fn ultima_falha_de(versao: &str) -> u64 {
+    registro_de_tentativas(versao)
+        .get("ultimaFalha")
+        .and_then(|x| x.as_u64())
+        .unwrap_or(0)
+}
+
+/// Quanto tempo o launcher fica sem reoferecer uma versão que não baixou.
+///
+/// Seis horas: longo o bastante para não incomodar quem abre o launcher várias
+/// vezes no mesmo dia, curto o bastante para a correção chegar sozinha quando o
+/// servidor voltar — sem ninguém precisar reinstalar nada.
+const ESPERA_APOS_FALHA_DE_REDE: u64 = 6 * 60 * 60;
+
+fn gravar_registro(versao: &str, vezes: u32, ultima_falha: u64) {
+    let corpo = serde_json::json!({
+        "versao": versao,
+        "vezes": vezes,
+        "ultimaFalha": ultima_falha,
+    });
+    let _ = std::fs::write(arquivo_de_tentativas(), corpo.to_string());
 }
 
 fn registrar_tentativa(versao: &str) {
     let vezes = tentativas_de(versao) + 1;
-    let corpo = serde_json::json!({ "versao": versao, "vezes": vezes });
-    let _ = std::fs::write(arquivo_de_tentativas(), corpo.to_string());
+    // Preserva a falha anterior: instalar não apaga o histórico de rede.
+    gravar_registro(versao, vezes, ultima_falha_de(versao));
+}
+
+/// O download não chegou ao fim (servidor fora, rede caindo, DNS).
+fn registrar_falha_de_rede(versao: &str) {
+    let vezes = tentativas_de(versao);
+    gravar_registro(versao, vezes, agora_em_segundos());
+    diario!(
+        "AVISO",
+        "não consegui baixar a atualização {versao}; só vou tentar de novo daqui a algumas horas"
+    );
 }
 
 /// Some com o registro quando a atualização deu certo (o launcher já é a versão
@@ -1239,18 +1368,60 @@ fn conferir_baixado(
     Ok(())
 }
 
+/// Baixa o instalador do LAUNCHER de uma fonte e o confere.
+///
+/// Apaga o arquivo quando ele não presta, para a fonte seguinte (ou a próxima
+/// tentativa) começar de disco limpo em vez de tentar retomar lixo.
+fn baixar_instalador_do_launcher(
+    app: &AppHandle,
+    url: &str,
+    tmp: &std::path::Path,
+    sha256: &Option<String>,
+    size: Option<u64>,
+) -> Result<(), String> {
+    download_with_progress(app, url, tmp)?;
+    if let Err(e) = conferir_instalador(tmp, sha256, size) {
+        let _ = std::fs::remove_file(tmp); // não deixa lixo para a próxima tentativa
+        return Err(e);
+    }
+    Ok(())
+}
+
 fn do_self_update(
     app: &AppHandle,
     url: &str,
+    url_reserva: Option<&str>,
     versao: &str,
     sha256: &Option<String>,
     size: Option<u64>,
 ) -> Result<(), String> {
     let tmp = std::env::temp_dir().join("Ultrafoot-Launcher-setup.exe");
-    download_with_progress(app, url, &tmp)?;
 
-    if let Err(e) = conferir_instalador(&tmp, sha256, size) {
-        let _ = std::fs::remove_file(&tmp); // não deixa lixo para a próxima tentativa
+    // ⚠️ DUAS FONTES PARA O MESMO BINÁRIO — ver o campo `url_reserva`.
+    //
+    // A segunda é tentada quando a primeira falha por QUALQUER motivo: rede,
+    // HTTP, ou hash que não confere. O `sha256` é o mesmo nos dois casos, então
+    // trocar de servidor não afrouxa nada — só tira o servidor único do caminho
+    // crítico do conserto.
+    let mut ultimo = match baixar_instalador_do_launcher(app, url, &tmp, sha256, size) {
+        Ok(()) => None,
+        Err(e) => Some(e),
+    };
+    if let Some(erro) = &ultimo {
+        if let Some(reserva) = url_reserva.filter(|r| !r.is_empty() && *r != url) {
+            diario!("AVISO", "fonte principal do launcher falhou ({erro}); tentando a reserva");
+            ultimo = match baixar_instalador_do_launcher(app, reserva, &tmp, sha256, size) {
+                Ok(()) => None,
+                Err(e) => Some(e),
+            };
+        }
+    }
+    if let Some(e) = ultimo {
+        // Cancelamento é ordem do jogador, não falha de servidor: não pode
+        // comprar as horas de silêncio do freio.
+        if !controle::foi_cancelado(&e) {
+            registrar_falha_de_rede(versao);
+        }
         return Err(e);
     }
 
@@ -1524,6 +1695,15 @@ fn check_launcher_update() -> Result<Option<LatestInfo>, String> {
         let notes = body.get("notes").and_then(|v| v.as_str()).unwrap_or_default().to_string();
         let sha256 = body.get("sha256").and_then(|v| v.as_str()).map(|s| s.to_string());
         let size = body.get("size").and_then(|v| v.as_u64());
+        // Segunda fonte do MESMO binário (ver o campo em `LatestInfo`). Só
+        // aceita https: um manifesto adulterado não vai apontar o instalador
+        // para http nem para caminho local.
+        let url_reserva = body
+            .get("urlReserva")
+            .and_then(|v| v.as_str())
+            .map(|s| s.trim())
+            .filter(|s| s.starts_with("https://"))
+            .map(|s| s.to_string());
 
         if version.is_empty() || url.is_empty() {
             return Ok(None);
@@ -1537,10 +1717,18 @@ fn check_launcher_update() -> Result<Option<LatestInfo>, String> {
         // Se esta mesma versão já foi tentada até o limite e o launcher AINDA é o
         // antigo, instalar de novo daria no mesmo. Devolve a decisão ao jogador
         // em vez de repetir o ciclo.
-        let auto = tentativas_de(&version) < MAX_TENTATIVAS;
+        //
+        // A segunda condição cobre o outro caminho, que era o mais comum e não
+        // tinha freio nenhum: o download que nem chega a terminar porque o
+        // servidor está fora. Ver `ultima_falha_de`.
+        let falhou_ha_pouco = {
+            let ultima = ultima_falha_de(&version);
+            ultima > 0 && agora_em_segundos().saturating_sub(ultima) < ESPERA_APOS_FALHA_DE_REDE
+        };
+        let auto = tentativas_de(&version) < MAX_TENTATIVAS && !falhou_ha_pouco;
         // `manifesto` é do JOGO (atualização por arquivo). O launcher se
         // atualiza pelo instalador inteiro — ele tem 17 MB, não 600.
-        Ok(Some(LatestInfo { version, notes, url, sha256, size, auto, manifesto: None }))
+        Ok(Some(LatestInfo { version, notes, url, url_reserva, sha256, size, auto, manifesto: None }))
     }
 }
 
@@ -1548,15 +1736,18 @@ fn check_launcher_update() -> Result<Option<LatestInfo>, String> {
 async fn self_update(
     app: AppHandle,
     url: String,
+    url_reserva: Option<String>,
     version: Option<String>,
     sha256: Option<String>,
     size: Option<u64>,
 ) -> Result<(), String> {
     let app2 = app.clone();
     let versao = version.unwrap_or_default();
-    tauri::async_runtime::spawn_blocking(move || do_self_update(&app2, &url, &versao, &sha256, size))
-        .await
-        .map_err(|e| format!("tarefa interrompida: {e}"))??;
+    tauri::async_runtime::spawn_blocking(move || {
+        do_self_update(&app2, &url, url_reserva.as_deref(), &versao, &sha256, size)
+    })
+    .await
+    .map_err(|e| format!("tarefa interrompida: {e}"))??;
     app.exit(0);
     Ok(())
 }
@@ -1721,13 +1912,33 @@ async fn google_login(app: AppHandle, auth_url_base: String, state: String) -> R
         .map_err(|e| format!("nao consegui abrir o navegador: {e}"))?;
 
     let resultado = tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
-        listener.set_nonblocking(false).ok();
+        // ⚠️ NÃO-BLOQUEANTE DE PROPÓSITO.
+        //
+        // Com o listener bloqueante, o `limite` abaixo só era avaliado DEPOIS
+        // que alguma conexão chegasse — ou seja, nunca, justamente no caso que
+        // ele existe para cobrir. Quem fechasse o navegador sem concluir deixava
+        // esta thread e a porta local presas até o launcher morrer. Agora o
+        // prazo corre mesmo sem ninguém do outro lado.
+        listener.set_nonblocking(true).ok();
         let limite = std::time::Instant::now() + std::time::Duration::from_secs(300);
-        for fluxo in listener.incoming() {
+        loop {
             if std::time::Instant::now() > limite {
                 return Err("tempo esgotado aguardando o Google".into());
             }
-            let mut fluxo = match fluxo { Ok(f) => f, Err(_) => continue };
+            let mut fluxo = match listener.accept() {
+                Ok((f, _)) => f,
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    std::thread::sleep(std::time::Duration::from_millis(120));
+                    continue;
+                }
+                Err(_) => continue,
+            };
+            // O socket aceito herda o modo do listener. A leitura abaixo é por
+            // linha e bloqueante; sem prazo próprio, um cliente que abre a
+            // conexão e não fala nada seguraria a thread de novo.
+            fluxo.set_nonblocking(false).ok();
+            let _ = fluxo.set_read_timeout(Some(std::time::Duration::from_secs(10)));
+
             let mut linha = String::new();
             BufReader::new(&fluxo).read_line(&mut linha).ok();
 
@@ -1746,20 +1957,33 @@ async fn google_login(app: AppHandle, auth_url_base: String, state: String) -> R
                 }
             }
 
-            let ok = !code.is_empty() && state_recebido == state;
+            // ⚠️ CONEXÃO SEM `code` NÃO É FALHA — É RUÍDO, E ELE CHEGA SEMPRE.
+            //
+            // O Chrome abre conexões TCP especulativas antes de navegar, e todo
+            // navegador pede /favicon.ico depois de renderizar a página. Qualquer
+            // uma delas chegando primeiro caía no `return Err` lá embaixo e
+            // matava um login que ia dar certo — falha intermitente, do tipo que
+            // não se reproduz na máquina de quem programou. Só o retorno do
+            // Google traz `code`: o resto se responde e se ignora.
+            if code.is_empty() {
+                let _ = write!(fluxo, "HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n");
+                let _ = fluxo.flush();
+                continue;
+            }
+
+            let ok = state_recebido == state;
             let corpo = if ok {
                 "<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Ultrafoot 26</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(1200px 600px at 50% -10%,#0d2a2a 0%,#060b0e 60%),#060b0e;color:#e6edf0;font:15px/1.6 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif;padding:24px}.cartao{max-width:420px;width:100%;text-align:center;padding:40px 32px;border-radius:20px;border:1px solid rgba(255,255,255,.08);background:rgba(10,18,21,.72);backdrop-filter:blur(12px);box-shadow:0 30px 80px rgba(0,0,0,.5)}.marca{font:800 11px/1 ui-sans-serif,system-ui;letter-spacing:.32em;text-transform:uppercase;color:#48eed6;margin-bottom:26px}.selo{width:60px;height:60px;margin:0 auto 20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;background:#48eed61f;border:1px solid #48eed640;color:#48eed6}h1{margin:0 0 8px;font-size:21px;letter-spacing:-.01em}p{margin:0;color:#8b9aa1;font-size:14px}.rodape{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#5d6b72}</style></head><body><div class='cartao'><div class='marca'>Ultrafoot 26</div><div class='selo'>&#10003;</div><h1>Tudo certo</h1><p>Sua conta foi conectada. Volte para o Ultrafoot Launcher para continuar.</p><div class='rodape'>Pode fechar esta aba.</div></div></body></html>"
             } else {
                 "<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Ultrafoot 26</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(1200px 600px at 50% -10%,#0d2a2a 0%,#060b0e 60%),#060b0e;color:#e6edf0;font:15px/1.6 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif;padding:24px}.cartao{max-width:420px;width:100%;text-align:center;padding:40px 32px;border-radius:20px;border:1px solid rgba(255,255,255,.08);background:rgba(10,18,21,.72);backdrop-filter:blur(12px);box-shadow:0 30px 80px rgba(0,0,0,.5)}.marca{font:800 11px/1 ui-sans-serif,system-ui;letter-spacing:.32em;text-transform:uppercase;color:#ff8f8f;margin-bottom:26px}.selo{width:60px;height:60px;margin:0 auto 20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;background:#ff6b6b1f;border:1px solid #ff6b6b40;color:#ff6b6b}h1{margin:0 0 8px;font-size:21px;letter-spacing:-.01em}p{margin:0;color:#8b9aa1;font-size:14px}.rodape{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#5d6b72}</style></head><body><div class='cartao'><div class='marca'>Ultrafoot 26</div><div class='selo'>!</div><h1>N&atilde;o deu certo</h1><p>N&atilde;o foi poss&iacute;vel concluir a entrada. Tente de novo pelo launcher.</p><div class='rodape'>Pode fechar esta aba.</div></div></body></html>"
             };
+            // ⚠️ `\r\n` EXPLÍCITO. Antes as quebras eram literais no meio da
+            // string: funcionavam só porque ESTE arquivo está em CRLF, e uma
+            // normalização para LF (um `git config`, um editor) transformaria o
+            // cabeçalho HTTP em algo malformado sem mudar uma linha de código.
             let _ = write!(
                 fluxo,
-                "HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
-Content-Length: {}
-Connection: close
-
-{}",
+                "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
                 corpo.len(),
                 corpo
             );
@@ -1770,7 +1994,6 @@ Connection: close
             }
             return Ok(format!("{code}|{redirect}"));
         }
-        Err("nenhuma resposta recebida".into())
     })
     .await
     .map_err(|e| format!("tarefa interrompida: {e}"))?;
@@ -1960,4 +2183,76 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Ultrafoot Launcher");
+}
+
+// ─── Testes ──────────────────────────────────────────────────────────────────
+//
+// ⚠️ CADA CASO AQUI É UM DEFEITO QUE JÁ CHEGOU COMO RELATO DE JOGADOR.
+//
+// `parse_versao` e `is_newer` decidem uma coisa só — "preciso atualizar?" — e
+// quando erram o sintoma é sempre o mesmo: "atualiza, sai, entro e atualiza
+// dnv". São funções puras, sem rede, sem registro e sem disco; o custo de
+// travá-las com teste é este arquivo, e ele paga sozinho na primeira vez que
+// alguém mexer na normalização.
+#[cfg(test)]
+mod testes {
+    use super::*;
+
+    #[test]
+    fn versao_limpa() {
+        assert_eq!(parse_versao("1.0.239"), vec![1, 0, 239]);
+    }
+
+    #[test]
+    fn versao_com_prefixo_v() {
+        // O registro já devolveu "v1.0.239". Com `split('.')` cru isto virava
+        // [0, 0, 0] e TODA publicação parecia mais nova.
+        assert_eq!(parse_versao("v1.0.239"), vec![1, 0, 239]);
+        assert_eq!(parse_versao("V1.0.239"), vec![1, 0, 239]);
+    }
+
+    #[test]
+    fn versao_com_sufixo_e_quarto_componente() {
+        assert_eq!(parse_versao("1.0.239 (x64)"), vec![1, 0, 239, 64]);
+        assert_eq!(parse_versao("1.0.239.0"), vec![1, 0, 239, 0]);
+    }
+
+    #[test]
+    fn versao_vazia_ou_lixo() {
+        assert_eq!(parse_versao(""), Vec::<u32>::new());
+        assert_eq!(parse_versao("   "), Vec::<u32>::new());
+        assert_eq!(parse_versao("desconhecida"), Vec::<u32>::new());
+    }
+
+    #[test]
+    fn mais_nova_de_verdade() {
+        assert!(is_newer("1.0.240", "1.0.239"));
+        assert!(is_newer("1.1.0", "1.0.999"));
+        assert!(is_newer("2.0.0", "1.9.9"));
+    }
+
+    #[test]
+    fn mesma_versao_nao_atualiza() {
+        assert!(!is_newer("1.0.239", "1.0.239"));
+        // O ponto do teste: as três grafias abaixo são a MESMA versão. Se
+        // qualquer uma delas passar por "mais nova", volta o loop de update.
+        assert!(!is_newer("1.0.239", "v1.0.239"));
+        assert!(!is_newer("1.0.239", "1.0.239.0"));
+        assert!(!is_newer("v1.0.239", "1.0.239"));
+    }
+
+    #[test]
+    fn versao_mais_velha_nao_atualiza() {
+        assert!(!is_newer("1.0.238", "1.0.239"));
+        assert!(!is_newer("1.0.9", "1.0.10")); // comparação numérica, não textual
+    }
+
+    #[test]
+    fn instalada_ilegivel_nao_forca_atualizacao_infinita() {
+        // Versão instalada vazia vira [] e qualquer publicada ganha — é o
+        // comportamento certo (não dá para afirmar que está atualizado), mas
+        // fica registrado aqui para a mudança ser deliberada, não acidental.
+        assert!(is_newer("1.0.239", ""));
+        assert!(!is_newer("", ""));
+    }
 }

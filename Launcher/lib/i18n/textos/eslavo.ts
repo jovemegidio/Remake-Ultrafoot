@@ -51,6 +51,12 @@ const ru: PacoteDeIdioma = {
   "launcher.falhou": "Не удалось установить обновление лаунчера. Можно продолжать играть.",
   "aviso.jogoCaiu": "Игра неожиданно закрылась. Обычно помогает проверка файлов.",
   "aviso.fecheOJogo": "Закройте игру, прежде чем продолжить.",
+  "sair.titulo": "Закрыть лаунчер?",
+  "sair.texto": "Вы действительно хотите закрыть Ultrafoot Launcher?",
+  "sair.confirmar": "Да, закрыть",
+  "sair.bandeja": "Только свернуть в трей",
+  "sair.avisoDownload": "Текущая загрузка будет остановлена.",
+  "sair.avisoJogo": "Игра останется открытой, но лаунчер перестанет следить за матчем.",
 }
 
 const uk: PacoteDeIdioma = {
@@ -104,6 +110,12 @@ const uk: PacoteDeIdioma = {
   "launcher.falhou": "Не вдалося встановити оновлення лаунчера. Можна грати далі.",
   "aviso.jogoCaiu": "Гра несподівано закрилася. Зазвичай допомагає перевірка файлів.",
   "aviso.fecheOJogo": "Закрийте гру, перш ніж продовжити.",
+  "sair.titulo": "Закрити лаунчер?",
+  "sair.texto": "Ви справді хочете закрити Ultrafoot Launcher?",
+  "sair.confirmar": "Так, закрити",
+  "sair.bandeja": "Лише згорнути в трей",
+  "sair.avisoDownload": "Поточне завантаження буде зупинено.",
+  "sair.avisoJogo": "Гра залишиться відкритою, але лаунчер перестане стежити за матчем.",
 }
 
 const be: PacoteDeIdioma = {
@@ -212,6 +224,12 @@ const pl: PacoteDeIdioma = {
   "launcher.falhou": "Nie udało się zainstalować aktualizacji launchera. Możesz grać dalej.",
   "aviso.jogoCaiu": "Gra zamknęła się nieoczekiwanie. Zwykle pomaga sprawdzenie plików.",
   "aviso.fecheOJogo": "Zamknij grę, zanim przejdziesz dalej.",
+  "sair.titulo": "Zamknąć launcher?",
+  "sair.texto": "Czy na pewno chcesz zamknąć Ultrafoot Launcher?",
+  "sair.confirmar": "Tak, zamknij",
+  "sair.bandeja": "Tylko zminimalizuj do zasobnika",
+  "sair.avisoDownload": "Trwające pobieranie zostanie przerwane.",
+  "sair.avisoJogo": "Gra pozostanie otwarta, ale launcher przestanie śledzić mecz.",
 }
 
 const cs: PacoteDeIdioma = {
@@ -267,6 +285,12 @@ const cs: PacoteDeIdioma = {
   "launcher.falhou": "Aktualizaci launcheru se nepodařilo nainstalovat. Můžete dál hrát.",
   "aviso.jogoCaiu": "Hra se neočekávaně zavřela. Obvykle pomůže ověření souborů.",
   "aviso.fecheOJogo": "Před pokračováním hru zavřete.",
+  "sair.titulo": "Zavřít launcher?",
+  "sair.texto": "Opravdu chcete zavřít Ultrafoot Launcher?",
+  "sair.confirmar": "Ano, zavřít",
+  "sair.bandeja": "Jen minimalizovat do označovací oblasti",
+  "sair.avisoDownload": "Probíhající stahování se zastaví.",
+  "sair.avisoJogo": "Hra zůstane otevřená, ale launcher přestane sledovat zápas.",
 }
 
 const sk: PacoteDeIdioma = {

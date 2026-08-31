@@ -20,6 +20,15 @@ export type LatestInfo = {
   sha256?: string | null
   size?: number | null
   /**
+   * Segunda fonte do MESMO instalador (mesmo sha256).
+   *
+   * O manifesto já tinha reserva; o binário não tinha, e o `url` publicado
+   * apontava para a VPS. Servidor fora do ar deixava o launcher sabendo da
+   * versão nova e sem conseguir baixá-la — justamente pelo caminho que existe
+   * para consertá-lo.
+   */
+  urlReserva?: string | null
+  /**
    * false = não instalar sozinho. O Rust devolve false quando esta mesma versão
    * já falhou duas vezes; sem isso o launcher repetia o ciclo para sempre.
    */
@@ -145,6 +154,8 @@ export async function selfUpdate(
     // — é ele que impede o loop quando a instalação não pega.
     await invoke("self_update", {
       url: info.url,
+      // O Rust tenta esta quando a primeira falha por qualquer motivo.
+      urlReserva: info.urlReserva ?? null,
       version: info.version,
       sha256: info.sha256 ?? null,
       size: info.size ?? null,
@@ -191,6 +202,22 @@ export async function checkServerStatus(url: string): Promise<ServerStatus | nul
     return await invoke<ServerStatus>("check_server_status", { url })
   } catch {
     return null
+  }
+}
+
+/**
+ * Versão do PRÓPRIO launcher (a do Cargo.toml). Vazio fora do Tauri.
+ *
+ * Ela não aparecia em lugar nenhum da interface — e é a primeira coisa que o
+ * suporte precisa perguntar quando alguém relata um problema.
+ */
+export async function versaoDoLauncher(): Promise<string> {
+  if (!isTauri()) return ""
+  try {
+    const { getVersion } = await import("@tauri-apps/api/app")
+    return await getVersion()
+  } catch {
+    return ""
   }
 }
 

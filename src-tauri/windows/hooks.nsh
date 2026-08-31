@@ -155,19 +155,61 @@
   ; Instala/atualiza o launcher em SILENCIO junto com o jogo. Assim, quem ja tem o
   ; Ultrafoot passa a ter o launcher automaticamente ao instalar esta build — sem
   ; clicar em nada. O launcher e quem baixa/atualiza o jogo daqui pra frente.
-  StrCpy $7 ""
-  ${If} ${FileExists} "$INSTDIR\launcher\UltrafootLauncher-setup.exe"
-    StrCpy $7 "$INSTDIR\launcher\UltrafootLauncher-setup.exe"
-  ${ElseIf} ${FileExists} "$INSTDIR\resources\launcher\UltrafootLauncher-setup.exe"
-    StrCpy $7 "$INSTDIR\resources\launcher\UltrafootLauncher-setup.exe"
+  ;
+  ; ⚠️ SO INSTALA QUANDO NAO HA LAUNCHER — NUNCA POR CIMA DE UM EXISTENTE.
+  ;
+  ; ESTE BLOCO RODAVA SEMPRE, E ERA UM REBAIXAMENTO.
+  ;
+  ; O `ExecWait` abaixo executa o instalador do launcher que foi ASSADO nesta
+  ; build do jogo. Ele nao compara versao com nada. Como o jogo publica varias
+  ; vezes por semana e o launcher quase nunca, o binario embutido envelhece
+  ; sozinho: em 28/08/2026 o jogo 1.0.377 (publicado em 27/08) carregava um
+  ; launcher de 29/07 — a versao 1.0.19, enquanto a publicada era a 1.0.36.
+  ;
+  ; O ciclo que isso criava, e que o jogador relatou como "fica atualizando o
+  ; launcher toda vez":
+  ;
+  ;   1. o jogo atualiza  -> este bloco reinstala o launcher 1.0.19 POR CIMA
+  ;                          do 1.0.36 que estava la (downgrade silencioso);
+  ;   2. o launcher abre  -> ve a 1.0.36 publicada, se atualiza, reinicia;
+  ;   3. o jogo atualiza de novo -> volta para o 1.0.19.
+  ;
+  ; E nao para nunca. Pior: entre um passo e outro a pessoa usa um launcher de
+  ; meses atras, sem as correcoes que vieram depois — dai tambem os travamentos.
+  ;
+  ; A intencao original continua valida e esta preservada: quem tem o jogo e NAO
+  ; tem o launcher ganha o launcher automaticamente. O que muda e que, existindo
+  ; launcher instalado, quem cuida de atualiza-lo e ELE MESMO — que sabe qual e
+  ; a versao publicada, coisa que este instalador nao tem como saber.
+  ;
+  ; A deteccao usa a chave que o proprio NSIS do launcher escreve, com o
+  ; executavel no disco como reserva: uma instalacao cuja chave tenha sido
+  ; apagada na mao nao pode virar motivo para reinstalar por cima.
+  StrCpy $6 ""
+  ReadRegStr $6 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Ultrafoot Launcher" "DisplayVersion"
+  ${If} $6 == ""
+    ${If} ${FileExists} "$LOCALAPPDATA\Ultrafoot Launcher\ultrafoot-launcher.exe"
+      StrCpy $6 "presente"
+    ${EndIf}
   ${EndIf}
-  ${If} $7 != ""
-    DetailPrint "Instalando o Ultrafoot Launcher..."
-    ExecWait '"$7" /S' $8
-    ${If} $8 == 0
-      DetailPrint "Ultrafoot Launcher instalado."
-    ${Else}
-      DetailPrint "Aviso: o instalador do Ultrafoot Launcher retornou o codigo $8."
+
+  ${If} $6 != ""
+    DetailPrint "Ultrafoot Launcher ja instalado (versao $6) — mantido como esta."
+  ${Else}
+    StrCpy $7 ""
+    ${If} ${FileExists} "$INSTDIR\launcher\UltrafootLauncher-setup.exe"
+      StrCpy $7 "$INSTDIR\launcher\UltrafootLauncher-setup.exe"
+    ${ElseIf} ${FileExists} "$INSTDIR\resources\launcher\UltrafootLauncher-setup.exe"
+      StrCpy $7 "$INSTDIR\resources\launcher\UltrafootLauncher-setup.exe"
+    ${EndIf}
+    ${If} $7 != ""
+      DetailPrint "Instalando o Ultrafoot Launcher..."
+      ExecWait '"$7" /S' $8
+      ${If} $8 == 0
+        DetailPrint "Ultrafoot Launcher instalado."
+      ${Else}
+        DetailPrint "Aviso: o instalador do Ultrafoot Launcher retornou o codigo $8."
+      ${EndIf}
     ${EndIf}
   ${EndIf}
 

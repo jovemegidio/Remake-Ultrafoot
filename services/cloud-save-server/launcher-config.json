@@ -308,9 +308,27 @@
   ],
   "changelog": [
     {
-      "version": "1.0.382",
+      "version": "1.0.383",
       "data": "2026-08-31",
       "latest": true,
+      "titulo": "O tecnico volta a falar com o elenco, e a preparacao passa a ler o adversario",
+      "itens": [
+        "PRELECAO: ANTES, NO INTERVALO E NO FIM. O jogo tinha o grito de beira de campo e a conversa semanal de vestiario, mas faltava falar com o grupo dentro da partida — a interacao mais reconhecivel do genero. Sao cinco tons, e nenhum serve sempre: o que funciona depende do placar e de quem era o favorito. Cada atleta reage conforme a personalidade dele, e a reacao e sempre a mesma se voce recarregar a tela — nao da para ficar tentando ate sair boa.",
+        "OS QUATRO FOCOS DE PREPARACAO DEIXAM DE SER ENFEITE. Eles existiam na tela desde a 1.0.282 e nenhum mudava o jogo: preparar-se contra um time que se fecha atras rendia exatamente o mesmo que preparar-se contra um que pressiona a saida. Agora a preparacao LE o adversario, no esquema pedra-papel-tesoura — pressionar bate quem sai jogando e entrega as costas a quem contra-ataca. Nenhum foco serve contra tudo. O teto de bonus e o mesmo de antes: o que passou a existir e preparar-se ERRADO, e isso agora custa.",
+        "MARCACAO INDIVIDUAL de ate dois atletas do rival, e marcar alguem tira ele dos lances de finalizacao e criacao. Mas custa defesa — sem esse preco, marcar os dois melhores seria escolha obvia e portanto nenhuma escolha.",
+        "E O DOSSIE DOS OLHEIROS DECIDE A CONFIANCA DA LEITURA. Com pouca informacao sobre o rival, a comissao le por cima e o plano pode acabar montado contra um time imaginario.",
+        "O OLHEIRO PARA DE REPETIR FRASE PRONTA. A analise devolvia sempre as mesmas linhas — 'monitore a fadiga dos laterais' — para qualquer elenco, qualquer adversario e qualquer temporada, e o nivel do centro de dados so comprava MAIS FRASES, nao mais informacao. Agora cada linha sai de um numero do seu save: energia, lesoes com prazo, moral, pendurados nomeados, contratos acabando, curva de idade. E subir o nivel acrescenta PROFUNDIDADE — cartoes so no nivel 3, contrato so no 4, curva de idade so no 5.",
+        "E ELE PARA DE INVENTAR ATLETA. Quando a missao nao achava ninguem de verdade, o jogo criava um jogador ficticio, com nome tipo 'Atleta 123456', que aparecia em Descobertos e nao existia em lugar nenhum — nao dava para sondar, negociar nem contratar. Agora a missao termina vazia e diz isso, e nao constroi reputacao: o departamento e avaliado pelo que entrega.",
+        "TRANSFERENCIA PARCELADA, ate quatro anuais. Toda compra era a vista, entao um clube pequeno nunca alcancava um reforco caro sem ter o valor cheio no caixa naquela semana. Parcelar encarece 6% por parcela — senao ninguem pagaria a vista de novo. O caixa e conferido sobre a ENTRADA, mas o orcamento compromete o TOTAL: nao da para parcelar o elenco inteiro e a diretoria so descobrir na virada da temporada.",
+        "CLAUSULA DE REVENDA, que existia no contrato e NUNCA era preenchida. A regra de repartir a venda com o clube anterior estava pronta e testada desde sempre, e nada no jogo jamais escrevia um valor ali. Agora a mesa de negociacao e a porta de entrada: ceder revenda barateia a compra.",
+        "E CLAUSULA DE RECOMPRA, com prazo — vender uma cria com direito de traze-la de volta por valor fixo, que e o instrumento de um clube formador e simplesmente nao existia.",
+        "OITO SUPERCOPAS NACIONAIS NOVAS (vindas da 1.0.382): Argentina, Colombia, Chile, Uruguai, Equador, Arabia Saudita, Japao e China passam a abrir a temporada decidindo a supercopa. Sao dezoito paises com a sua, contra dez antes. So entra quem disputa uma de verdade — Estados Unidos, Mexico e Escocia continuam sem, porque nao existe supercopa nesses paises.",
+        "TROCAR DE SERVIDOR DEIXA DE SER UMA CACADA (vindo da 1.0.382). O endereco do servidor do Ultrafoot estava copiado em 27 pontos do codigo: se ele mudasse, era preciso achar todas as copias, e esquecer uma nao aparece em teste nenhum — aparece como uma funcao quebrada no seu computador, tipo o save na nuvem funcionar e o login nao. Agora mora em um lugar so."
+      ]
+    },
+    {
+      "version": "1.0.382",
+      "data": "2026-08-31",
       "titulo": "Mais oito supercopas nacionais, e a fila do que falta fica honesta",
       "itens": [
         "OITO PAISES GANHAM A SUPERCOPA DELES. Argentina, Colombia, Chile, Uruguai, Equador, Arabia Saudita, Japao e China passam a abrir a temporada decidindo a supercopa entre o campeao da liga e o campeao da copa. Sao dezoito paises com a sua, contra dez na atualizacao passada.",
