@@ -39,7 +39,7 @@ const PISO = {
   divisoes: 154,
   paises: 72,
   comCopaNacional: 154,
-  comSegundaCopa: 6,
+  comSegundaCopa: 10,
   comSupercopa: 18,
   clubesFemininosComElencoReal: 194,
 }

@@ -308,9 +308,18 @@
   ],
   "changelog": [
     {
-      "version": "1.0.383",
+      "version": "1.0.384",
       "data": "2026-08-31",
       "latest": true,
+      "titulo": "Copa da liga em Portugal, Escocia, Japao e Argentina",
+      "itens": [
+        "QUATRO PAISES GANHAM A COPA DA LIGA DELES. A Taca da Liga em Portugal, a Scottish League Cup na Escocia, a Levain Cup no Japao e a Copa de la Liga Profesional na Argentina passam a ser disputadas ao lado da copa nacional — como a Carabao Cup na Inglaterra. Sao dez divisoes com duas copas, contra seis antes.",
+        "E A COPA NACIONAL DESSES PAISES CONTINUA NO LUGAR DELA. Escocia, Japao e Argentina tinham a copa montada por um caminho reserva do calendario, e acrescentar a copa da liga sozinha teria feito ela TOMAR o lugar da Scottish Cup, da Copa do Imperador e da Copa Argentina. Somar uma competicao teria tirado tres. As tres entraram no catalogo junto, e agora uma verificacao automatica impede que isso volte a acontecer com qualquer pais."
+      ]
+    },
+    {
+      "version": "1.0.383",
+      "data": "2026-08-31",
       "titulo": "O tecnico volta a falar com o elenco, e a preparacao passa a ler o adversario",
       "itens": [
         "PRELECAO: ANTES, NO INTERVALO E NO FIM. O jogo tinha o grito de beira de campo e a conversa semanal de vestiario, mas faltava falar com o grupo dentro da partida — a interacao mais reconhecivel do genero. Sao cinco tons, e nenhum serve sempre: o que funciona depende do placar e de quem era o favorito. Cada atleta reage conforme a personalidade dele, e a reacao e sempre a mesma se voce recarregar a tela — nao da para ficar tentando ate sair boa.",

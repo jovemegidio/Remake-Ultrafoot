@@ -398,6 +398,7 @@ export const competitionsByLeague: Record<string, Competition[]> = {
 
   // Portugal
   primeira_liga: [
+    { id: "taca_da_liga", name: "Taça da Liga", shortName: "Taça da Liga", type: "cup", region: "portugal", format: "group_knockout", teams: 34, groups: 4, prize: 3_000_000, prestige: 55, formatDetails: "Disputada desde 2007 pelos clubes da Primeira Liga e da Liga 2: fases eliminatórias iniciais, quatro grupos e uma final four em sede única." },
     {
       id: "primeira_liga",
       name: "Primeira Liga",
@@ -669,6 +670,8 @@ export const competitionsByLeague: Record<string, Competition[]> = {
 
   // J-League
   j_league: [
+    { id: "copa_imperador", name: "Copa do Imperador", shortName: "Copa do Imperador", type: "cup", region: "japao", format: "knockout", teams: 88, prize: 3_500_000, prestige: 66, formatDetails: "Copa nacional do Japão, aberta a clubes profissionais e amadores de todas as prefeituras; o campeão vai à Champions asiática." },
+    { id: "levain_cup", name: "J.League YBC Levain Cup", shortName: "Levain Cup", type: "cup", region: "japao", format: "group_knockout", teams: 60, groups: 0, prize: 2_800_000, prestige: 54, formatDetails: "Copa da liga japonesa aberta às três divisões da J.League, com mata-mata desde as fases iniciais e final em jogo único." },
     {
       id: "j_league",
       name: "J1 League",
@@ -692,6 +695,8 @@ export const competitionsByLeague: Record<string, Competition[]> = {
 
   // Scottish Premiership - Escocia
   scottish_prem: [
+    { id: "scottish_cup", name: "Scottish Cup", shortName: "Scottish Cup", type: "cup", region: "escocia", format: "knockout", teams: 124, prize: 4_000_000, prestige: 64, formatDetails: "A copa nacional mais antiga do mundo: 124 clubes de todas as divisões em mata-mata único até a final em Hampden Park." },
+    { id: "scottish_league_cup", name: "Scottish League Cup", shortName: "League Cup", type: "cup", region: "escocia", format: "group_knockout", teams: 42, groups: 8, prize: 2_500_000, prestige: 52, formatDetails: "Abre a temporada escocesa: oito grupos com os clubes das quatro divisões, seguidos de mata-mata até a final em Hampden Park." },
     { id: "scottish_prem", name: "Scottish Premiership", shortName: "SPFL Prem", type: "league", region: "escocia", format: "league_playoff", teams: 12, rounds: 38, groups: 2, prize: 15000000, prestige: 65, relegation: 2, formatDetails: "Três turnos (33 jogos), seguidos pela divisão em grupos de título e permanência; cada clube encerra a temporada com 38 jogos." },
   ],
 
@@ -716,6 +721,8 @@ export const competitionsByLeague: Record<string, Competition[]> = {
 
   // Liga Argentina
   liga_argentina: [
+    { id: "copa_argentina", name: "Copa Argentina", shortName: "Copa Argentina", type: "cup", region: "argentina", format: "knockout", teams: 64, prize: 5_000_000, prestige: 70, formatDetails: "Mata-mata nacional com 64 clubes de todas as divisões em sedes neutras; o campeão vai à Libertadores." },
+    { id: "copa_de_la_liga_arg", name: "Copa de la Liga Profesional", shortName: "Copa de la Liga", type: "cup", region: "argentina", format: "group_knockout", teams: 30, groups: 2, prize: 4_000_000, prestige: 62, formatDetails: "Torneio da liga argentina disputado em duas zonas de quinze clubes; os oito melhores de cada zona avançam ao mata-mata." },
     // `groups: 2` estava faltando: o texto ja descrevia as duas zonas de 15, mas
     // o campo que o resto do jogo le dizia chave unica.
     { id: "liga_argentina", name: "Liga Profesional de Fútbol", shortName: "Liga Argentina", type: "league", region: "argentina", format: "group_knockout", teams: 30, groups: 2, rounds: 58, prize: 20000000, prestige: 75, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 6 }, { competition: "sulamericana", spots: 6 }], formatDetails: "Turno e returno entre todos os clubes. Na Argentina a temporada se divide em Apertura e Clausura, com duas zonas de 15 e mata-mata." },
