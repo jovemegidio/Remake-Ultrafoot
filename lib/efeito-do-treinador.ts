@@ -57,7 +57,7 @@ export interface EfeitosDoTreinador {
   coerenciaTatica: number
   /**
    * ×, sobre o bônus da preparação para o adversário da semana.
-   * LÊ: `bonusPreparacaoAplicavel282`.
+   * LÊ: `planoContraOAdversario` (lib/plano-contra-o-adversario.ts).
    *
    * A análise em si (`analyzeOpponent`) é instantânea e completa desde sempre —
    * não havia ritmo para acelerar. O que existe para o técnico analista mexer é

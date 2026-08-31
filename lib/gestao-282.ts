@@ -22,6 +22,15 @@ export interface PreparacaoAdversario {
   focoBolaParada1: "defender_escanteios" | "atacar_escanteios" | "defender_faltas"
   focoBolaParada2: "penaltis" | "segunda_bola" | "cobranca_curta"
   bonus: number
+  /**
+   * Até dois atletas do adversário marcados sob pressão, por NOME.
+   *
+   * Opcional de propósito: save anterior à 1.0.383 não tem o campo e continua
+   * valendo — `normalizarGestao282` espalha a preparação inteira, então nada
+   * precisa migrar. Quem resolve isto em números é
+   * `lib/plano-contra-o-adversario.ts`.
+   */
+  marcacaoIndividual?: string[]
 }
 
 export interface MetaIndividual282 {
@@ -676,29 +685,28 @@ export function bonusMentoria282(
 }
 
 /**
- * Bônus de preparação VÁLIDO para esta partida, em pontos de força.
+ * A preparação vale para ESTA partida?
  *
  * Só vale para o adversário e a semana que foram preparados: preparar o clássico
- * e colher o bônus um mês depois contra outro time seria bônus permanente. Devolve
- * 0 quando não há plano aplicável — o motor fica idêntico ao de antes.
+ * e colher o bônus um mês depois contra outro time seria bônus permanente.
+ *
+ * ⚠️ ANTES DA 1.0.383 ESTA FUNÇÃO DEVOLVIA O BÔNUS EM PONTOS DE FORÇA, e o
+ * chamador somava o MESMO número em ataque, meio e defesa. O `focoTatico`
+ * escolhido não mudava nada (os quatro focos rendiam quase o mesmo número) e o
+ * adversário real não entrava na conta: preparar-se contra quem se fecha atrás
+ * valia igual a preparar-se contra quem pressiona a saída. Quem resolve a
+ * preparação em números agora é `planoContraOAdversario`, que lê o adversário e
+ * distribui com sinal. Aqui ficou só a pergunta da validade, que continua sendo
+ * desta camada.
  */
-export function bonusPreparacaoAplicavel282(
+export function preparacaoValeParaEstaPartida282(
   preparacao: PreparacaoAdversario | undefined,
   contexto: { season: number; week: number; adversario: string },
-  /**
-   * `preparoDeJogo` de `lib/efeito-do-treinador.ts` — o atributo ANÁLISE do
-   * técnico. Neutro em 1. Multiplica o que a semana de estudo rendeu, e não o
-   * que ela custou: o técnico analista não estuda mais barato, ele aproveita
-   * melhor o que estudou.
-   */
-  preparoDoTecnico = 1,
-): number {
-  if (!preparacao) return 0
-  if (preparacao.season !== contexto.season || preparacao.week !== contexto.week) return 0
-  if (preparacao.adversario !== contexto.adversario) return 0
-  // O bônus é 0-8 na tela; em pontos de força vale metade, porque a calibração do
-  // motor comprime força em probabilidade (ver lib/match-engine.computeXG).
-  return (Math.max(0, Math.min(8, preparacao.bonus)) / 2) * preparoDoTecnico
+): PreparacaoAdversario | null {
+  if (!preparacao) return null
+  if (preparacao.season !== contexto.season || preparacao.week !== contexto.week) return null
+  if (preparacao.adversario !== contexto.adversario) return null
+  return preparacao
 }
 
 export function pontuacaoTecnico(t: { titulos: number; reputacao: number; vitorias: number; temporadas: number }) {

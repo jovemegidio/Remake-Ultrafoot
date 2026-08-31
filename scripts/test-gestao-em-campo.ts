@@ -8,7 +8,7 @@
 import assert from "node:assert"
 import { simulateFullMatch, type MatchConfig } from "../lib/match-engine"
 import {
-  atualizarAdesao282, avaliarMetas282, bonusMentoria282, bonusPreparacaoAplicavel282,
+  atualizarAdesao282, avaliarMetas282, bonusMentoria282, preparacaoValeParaEstaPartida282,
   criarEstadoGestao282, planoDeBolaParada282, rendimentoUnidade282,
   type Principio, type RotinaBolaParada,
 } from "../lib/gestao-282"
@@ -59,7 +59,14 @@ const curta = planoDeBolaParada282(
 )
 assert.ok(curta.attackQuality < ofensivo.attackQuality, "a zona escolhida tem de pesar")
 
-// ── bonusPreparacaoAplicavel282 ─────────────────────────────────────────────
+// ── Validade da preparação ─────────────────────────────────────────────────
+//
+// ⚠️ ANTES DA 1.0.383 esta função devolvia o BÔNUS em pontos de força, e quem
+// chamava somava o mesmo número em ataque, meio e defesa. Agora ela só responde
+// se a sessão vale para ESTA partida; quem a resolve em números é
+// `planoContraOAdversario`, com gate próprio (`scripts/qa-plano-adversario.ts`).
+// As asserções de validade continuam idênticas porque a regra não mudou: é a
+// preparação de um adversário, de uma semana, de uma temporada.
 const prep = {
   season: 2026, week: 10, adversario: "Palmeiras",
   focoTatico: "controlar" as const,
@@ -68,14 +75,14 @@ const prep = {
   bonus: 8,
 }
 const ctx = { season: 2026, week: 10, adversario: "Palmeiras" }
-assert.equal(bonusPreparacaoAplicavel282(undefined, ctx), 0, "sem preparação, bônus zero")
-assert.ok(bonusPreparacaoAplicavel282(prep, ctx) > 0, "preparação válida tem de valer")
-assert.equal(bonusPreparacaoAplicavel282(prep, { ...ctx, adversario: "Santos" }), 0,
-  "preparar um rival e enfrentar outro NÃO pode dar bônus")
-assert.equal(bonusPreparacaoAplicavel282(prep, { ...ctx, week: 11 }), 0,
-  "o bônus é da semana preparada, não permanente")
-assert.equal(bonusPreparacaoAplicavel282(prep, { ...ctx, season: 2027 }), 0,
-  "o bônus não atravessa temporada")
+assert.equal(preparacaoValeParaEstaPartida282(undefined, ctx), null, "sem preparação, nada vale")
+assert.ok(preparacaoValeParaEstaPartida282(prep, ctx), "preparação válida tem de valer")
+assert.equal(preparacaoValeParaEstaPartida282(prep, { ...ctx, adversario: "Santos" }), null,
+  "preparar um rival e enfrentar outro NÃO pode valer")
+assert.equal(preparacaoValeParaEstaPartida282(prep, { ...ctx, week: 11 }), null,
+  "a preparação é da semana preparada, não permanente")
+assert.equal(preparacaoValeParaEstaPartida282(prep, { ...ctx, season: 2027 }), null,
+  "a preparação não atravessa temporada")
 
 // ── Unidades de treino ──────────────────────────────────────────────────────
 assert.equal(rendimentoUnidade282(undefined, "shooting"), 1, "sem unidade, treino igual ao de antes")

@@ -119,6 +119,27 @@ export function aiTacticForClub(clubCurto: string, identity?: TacticalIdentity):
   return defaultTacticForIdentity(IDENTITY_LIST[h % IDENTITY_LIST.length])
 }
 
+/**
+ * Quanto uma tática CARREGA de pressão e de transição, 0-1.
+ *
+ * ⚠️ ESTES NÚMEROS MORAVAM DENTRO DE `app/partida/ao-vivo` (em `cpuMatchProfile`).
+ * Saíram de lá quando a preparação para o adversário passou a precisar da mesma
+ * leitura na Central de Gestão: duas cópias seriam duas réguas para a mesma
+ * grandeza, e este projeto já pagou três vezes por esse erro (leilão, caixa dos
+ * clubes e Championship — ver o histórico em `lib/repartir-venda.ts` e nas
+ * memórias do projeto). A tela de preparação e a partida têm de ler o mesmo
+ * adversário, senão o plano é feito contra um time e jogado contra outro.
+ */
+export function cargaDaTatica(tactic: TacticConfig): { pressingLoad: number; transitionLoad: number } {
+  const pressingLoad = tactic.press === "tudo_ou_nada" ? 1
+    : tactic.press === "alta" ? 0.72
+      : tactic.press === "moderada" ? 0.42 : 0.12
+  const transitionLoad = tactic.identity === "pressao_alta" ? 0.9
+    : tactic.identity === "contra_ataque" || tactic.identity === "ofensivo" ? 0.7
+      : tactic.identity === "retranca" ? 0.25 : 0.45
+  return { pressingLoad, transitionLoad }
+}
+
 /** Aplica tática ao motor de partida (modificadores multiplicativos, 1 = neutro). */
 export function applyTacticModifiers(tactic: TacticConfig): {
   attackBoost: number

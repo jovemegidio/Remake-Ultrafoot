@@ -15,6 +15,12 @@ import {
   type MetaIndividual282, type PautaComissao, type PedidoDiretoria282,
   PUNICOES_CONDUTA_291, type Principio, type PunicaoConduta291, type RotinaBolaParada, type TipoConduta291,
 } from "@/lib/gestao-282"
+import {
+  MAX_MARCACOES, descreverPlano, planoContraOAdversario, type FocoTatico,
+} from "@/lib/plano-contra-o-adversario"
+import { aiTacticForClub, cargaDaTatica } from "@/lib/tactics-engine"
+import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
+import { getPlayersForTeam } from "@/lib/players-data"
 import { cn } from "@/lib/utils"
 import { Award, ClipboardList, Goal, GraduationCap, Handshake, History, Landmark, Scale, Shield, Target, Users } from "lucide-react"
 import { areaMaisFragil, confiancaPorArea, NOME_DA_AREA } from "@/lib/confianca-da-diretoria"
@@ -83,12 +89,136 @@ function Bolas({ gestao, jogadores, salvar }: Props & { jogadores: Player[] }) {
   return <Secao titulo="Criador completo de bolas paradas" texto="Uma rotina ativa por cenário. Os papéis acompanham o atleta, não a posição na escalação."><div className="grid gap-3 md:grid-cols-3"><select className={campo} value={tipo} onChange={e => setTipo(e.target.value as typeof tipo)}><option value="escanteio_ofensivo">Escanteio ofensivo</option><option value="escanteio_defensivo">Escanteio defensivo</option><option value="falta_ofensiva">Falta ofensiva</option><option value="falta_defensiva">Falta defensiva</option></select><input className={campo} value={nome} onChange={e => setNome(e.target.value)} /><select className={campo} value={zona} onChange={e => setZona(e.target.value as typeof zona)}><option value="primeira_trave">Primeira trave</option><option value="segunda_trave">Segunda trave</option><option value="centro">Centro</option><option value="curta">Curta</option></select><JogadorSelect jogadores={jogadores} value={cobrador} onChange={setCobrador} label="Cobrador" /><JogadorSelect jogadores={jogadores} value={ameaca} onChange={setAmeaca} label="Ameaça aérea" /><JogadorSelect jogadores={jogadores} value={sobra} onChange={setSobra} label="Jogador da sobra" /></div><button className={`${botao} mt-4`} onClick={criar}>Salvar e ativar rotina</button><Lista itens={gestao.rotinasBolaParada.map(r => `${r.nome} · ${r.tipo.replaceAll("_", " ")} · ${r.zona.replaceAll("_", " ")}`)} /></Secao>
 }
 
+/**
+ * PREPARAÇÃO PARA O ADVERSÁRIO.
+ *
+ * ⚠️ O QUE MUDOU NA 1.0.383. Esta tela existia com o mesmo seletor de quatro
+ * focos, e o foco escolhido NÃO mudava nada: `bonusPreparacao` devolvia
+ * praticamente o mesmo número para os quatro, e a partida somava esse número
+ * igual em ataque, meio e defesa, sem nunca olhar para quem estava do outro
+ * lado. Era o padrão da casa — controle na tela, nenhuma consequência no motor.
+ *
+ * Agora o plano é resolvido por `planoContraOAdversario`, que LÊ o adversário
+ * (a mesma leitura que a partida vai usar, por `cargaDaTatica`) e devolve
+ * números assimétricos, com marcação individual e com a possibilidade de dar
+ * ERRADO. A prévia abaixo é esse mesmo cálculo — não uma estimativa parecida.
+ */
 function Preparacao({ gestao, state, salvar }: Props & { state: ReturnType<typeof useGameState>["state"] }) {
   const proxima = state.fixtures?.find(f => !f.played && f.isUserMatch)
-  const adversario = proxima ? (proxima.homeCurto === state.selectedTeamShort ? proxima.awayNome : proxima.homeNome) : "Próximo rival"
-  const [foco, setFoco] = useState<"pressionar" | "contra_atacar" | "controlar" | "fechar_espacos">("controlar")
-  const confirmar = () => { const bonus = bonusPreparacao(foco, gestao.rotinasBolaParada.length); salvar({ preparacao: { season: state.season, week: state.week, adversario, focoTatico: foco, focoBolaParada1: "defender_escanteios", focoBolaParada2: "segunda_bola", bonus } }, { tipo: "elenco", titulo: `Preparação para ${adversario}`, descricao: `Foco ${foco.replaceAll("_", " ")}; bônus de preparação ${bonus}%.` }) }
-  return <Secao titulo={`Preparação: ${adversario}`} texto="O plano vale para o próximo jogo e combina análise tática com as rotinas ensaiadas."><select className={campo} value={foco} onChange={e => setFoco(e.target.value as typeof foco)}><option value="pressionar">Pressionar saída</option><option value="contra_atacar">Contra-atacar</option><option value="controlar">Controlar posse</option><option value="fechar_espacos">Fechar espaços</option></select><button onClick={confirmar} className={`${botao} ml-3`}>Confirmar sessão</button>{gestao.preparacao && <p className="mt-4 text-emerald-300">Plano ativo: {gestao.preparacao.focoTatico} · bônus {gestao.preparacao.bonus}%</p>}</Secao>
+  const souMandante = proxima?.homeCurto === state.selectedTeamShort
+  const adversario = proxima ? (souMandante ? proxima.awayNome : proxima.homeNome) : "Próximo rival"
+  const rivalCurto = proxima ? (souMandante ? proxima.awayCurto : proxima.homeCurto) : null
+  const [foco, setFoco] = useState<FocoTatico>("controlar")
+  const [marcados, setMarcados] = useState<string[]>([])
+
+  const opponentAnalyses = useGameEngine(s => s.opponentAnalyses)
+
+  /** Elenco do rival, para escolher quem marcar e para medir quanto isso vale. */
+  const alvos = useMemo(() => {
+    const time = rivalCurto ? getTeamByShort(rivalCurto) : null
+    if (!time) return []
+    // `getPlayersForTeam` é a MESMA fonte que o dossiê de /adversarios usa —
+    // marcar um nome que não existe no elenco relatado seria marcar fantasma, e
+    // `planoContraOAdversario` avisa quando isso acontece.
+    return getPlayersForTeam(time)
+      .map(p => ({ nome: p.nome, overall: p.base, posicao: String(p.pos) }))
+      .sort((a, b) => b.overall - a.overall)
+      .slice(0, 12)
+  }, [rivalCurto])
+
+  /**
+   * A PRÉVIA É O CÁLCULO DE VERDADE.
+   *
+   * Mesmo módulo, mesmos argumentos que a partida vai passar. Escrever aqui uma
+   * fórmula "parecida" viraria mentira na primeira vez que alguém mexesse no
+   * motor e esquecesse desta tela — que é exatamente como os três medidores de
+   * enfeite da 1.0.377 nasceram.
+   */
+  const previa = useMemo(() => {
+    if (!rivalCurto) return null
+    const tatica = aiTacticForClub(rivalCurto)
+    const { pressingLoad, transitionLoad } = cargaDaTatica(tatica)
+    return planoContraOAdversario({
+      foco,
+      rotinasEnsaiadas: gestao.rotinasBolaParada.length,
+      marcacaoIndividual: marcados,
+      alvos,
+      // A postura vem do save (o mesmo `posturasDaIA` que a partida lê): um rival
+      // em crise se fecha, e a preparação tem de enxergar isso. `TacticConfig`
+      // não tem mentalidade — ela é estado do mundo, não da tática.
+      perfil: { pressao: pressingLoad, transicao: transitionLoad, mentalidade: state.posturasDaIA?.[rivalCurto] ?? "equilibrado" },
+      dossie: opponentAnalyses.find(a => a.teamShort === rivalCurto)?.analysisProgress ?? 0,
+      chaveDoClube: rivalCurto,
+      preparoDoTecnico: efeitosDoTreinador().preparoDeJogo,
+    })
+  }, [rivalCurto, foco, gestao.rotinasBolaParada.length, marcados, alvos, opponentAnalyses, state.posturasDaIA])
+
+  const alternarMarcado = (nome: string) => setMarcados(atual =>
+    atual.includes(nome)
+      ? atual.filter(n => n !== nome)
+      : atual.length >= MAX_MARCACOES ? atual : [...atual, nome],
+  )
+
+  const confirmar = () => {
+    const bonus = bonusPreparacao(foco, gestao.rotinasBolaParada.length)
+    salvar(
+      { preparacao: { season: state.season, week: state.week, adversario, focoTatico: foco, focoBolaParada1: "defender_escanteios", focoBolaParada2: "segunda_bola", bonus, marcacaoIndividual: marcados } },
+      { tipo: "elenco", titulo: `Preparação para ${adversario}`, descricao: `Foco ${foco.replaceAll("_", " ")}${marcados.length ? `; marcação em ${marcados.join(" e ")}` : ""}.` },
+    )
+  }
+
+  return (
+    <Secao titulo={`Preparação: ${adversario}`} texto="O plano vale só para o próximo jogo e contra ESTE adversário. Preparar-se para o jogo errado custa pontos de força — não é um bônus garantido.">
+      <select className={campo} value={foco} onChange={e => setFoco(e.target.value as FocoTatico)}>
+        <option value="pressionar">Pressionar saída</option>
+        <option value="contra_atacar">Contra-atacar</option>
+        <option value="controlar">Controlar posse</option>
+        <option value="fechar_espacos">Fechar espaços</option>
+      </select>
+      <button onClick={confirmar} disabled={!rivalCurto} className={`${botao} ml-3`}>Confirmar sessão</button>
+
+      {alvos.length > 0 && (
+        <div className="mt-5">
+          <p className="mb-2 text-sm font-bold text-white/70">Marcação individual <span className="font-normal text-white/40">(até {MAX_MARCACOES} — cada marcador colado num atleta deixa espaço atrás)</span></p>
+          <div className="flex flex-wrap gap-2">
+            {alvos.slice(0, 8).map(a => (
+              <button
+                key={a.nome}
+                onClick={() => alternarMarcado(a.nome)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs font-semibold",
+                  marcados.includes(a.nome)
+                    ? "border-emerald-400 bg-emerald-500/15 text-emerald-300"
+                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
+                )}
+              >
+                {a.nome} <span className="text-white/35">{a.posicao} {a.overall}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {previa && (
+        <div className="mt-5 rounded-xl border border-white/10 bg-black/25 p-4">
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--brand)]">Efeito do plano</p>
+          {descreverPlano(previa).map(linha => (
+            <p key={linha} className="text-sm text-white/70">{linha}</p>
+          ))}
+          {previa.avisos.map(aviso => (
+            <p key={aviso} className="mt-2 text-sm font-semibold text-amber-300">{aviso}</p>
+          ))}
+        </div>
+      )}
+
+      {gestao.preparacao && (
+        <p className="mt-4 text-emerald-300">
+          Plano ativo contra {gestao.preparacao.adversario}: {gestao.preparacao.focoTatico.replaceAll("_", " ")}
+          {gestao.preparacao.marcacaoIndividual?.length ? ` · marcando ${gestao.preparacao.marcacaoIndividual.join(" e ")}` : ""}
+        </p>
+      )}
+    </Secao>
+  )
 }
 
 function Mercado({ gestao, jogadores, week, salvar }: Props & { jogadores: Player[]; week: number }) {
