@@ -53,10 +53,14 @@ const detalhe = process.argv.includes("--detalhe")
 // O `extrair-textos.mjs` nao alcanca nenhuma das duas (ele exige o gancho na
 // forma exata `const t = useTranslation()`, e a trajetoria usa `tr`), entao foi
 // a mao, chave por chave.
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5310)
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5303)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
 //                        chumbadas. Único aumento da catraca; ver a nota acima.)
+//   1.0.383 .... 5.303  (a preleção e a mesa de cláusulas nasceram extraídas;
+//                        as 22 frases novas foram pagas com a extração do
+//                        modal de negociação, que já era uma das telas mais
+//                        chumbadas do mercado)
 //   1.0.349 .... 5.544  (medição inicial honesta; 79 frases já extraídas)
 //   1.0.350 .... 5.539  (tela do Online extraída; a catraca pegou +1 meu)
 //   1.0.358 .... 5.512  (as telas do atleta, a espera da criação, o Manager
