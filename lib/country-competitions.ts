@@ -74,17 +74,17 @@ const LEAGUE_COMPETITIONS_BASE: Record<string, CountryCompetitions> = {
   russian_prem: { country: "Russia", domesticCup: "Copa da Russia", superCup: "Supercopa da Russia", ...UEFA },
 
   // America do Sul
-  liga_argentina: { country: "Argentina", domesticCup: "Copa Argentina", ...CONMEBOL, hasStateChampionship: false },
-  primera_a_col: { country: "Colombia", domesticCup: "Copa Colombia", ...CONMEBOL, hasStateChampionship: false },
-  primera_div_chi: { country: "Chile", domesticCup: "Copa Chile", ...CONMEBOL, hasStateChampionship: false },
-  primera_div_ury: { country: "Uruguai", domesticCup: "Copa Uruguay", ...CONMEBOL, hasStateChampionship: false },
-  primera_a_ecu: { country: "Equador", domesticCup: "Copa Ecuador", ...CONMEBOL, hasStateChampionship: false },
+  liga_argentina: { country: "Argentina", domesticCup: "Copa Argentina", superCup: "Supercopa Argentina", ...CONMEBOL, hasStateChampionship: false },
+  primera_a_col: { country: "Colombia", domesticCup: "Copa Colombia", superCup: "Superliga da Colombia", ...CONMEBOL, hasStateChampionship: false },
+  primera_div_chi: { country: "Chile", domesticCup: "Copa Chile", superCup: "Supercopa de Chile", ...CONMEBOL, hasStateChampionship: false },
+  primera_div_ury: { country: "Uruguai", domesticCup: "Copa Uruguay", superCup: "Supercopa Uruguaia", ...CONMEBOL, hasStateChampionship: false },
+  primera_a_ecu: { country: "Equador", domesticCup: "Copa Ecuador", superCup: "Supercopa do Equador", ...CONMEBOL, hasStateChampionship: false },
 
   // Demais
-  saudi_pro: { country: "Arabia Saudita", domesticCup: "King's Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
-  j_league: { country: "Japao", domesticCup: "Copa do Imperador", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
+  saudi_pro: { country: "Arabia Saudita", domesticCup: "King's Cup", superCup: "Supercopa Saudita", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
+  j_league: { country: "Japao", domesticCup: "Copa do Imperador", superCup: "Supercopa do Japao", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
   k_league_1: { country: "Coreia do Sul", domesticCup: "Korean FA Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
-  chinese_super: { country: "China", domesticCup: "Chinese FA Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
+  chinese_super: { country: "China", domesticCup: "Chinese FA Cup", superCup: "Supercopa da China", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
   mls: { country: "Estados Unidos", domesticCup: "US Open Cup", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
   liga_mx: { country: "Mexico", domesticCup: "Leagues Cup", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
 

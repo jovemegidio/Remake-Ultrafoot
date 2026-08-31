@@ -40,10 +40,35 @@ const PISO = {
   paises: 72,
   comCopaNacional: 154,
   comSegundaCopa: 6,
-  comSupercopa: 10,
+  comSupercopa: 18,
   clubesFemininosComElencoReal: 194,
 }
 
+
+/**
+ * Divisoes de PRIMEIRA linha que, na vida real, nao disputam supercopa — ou ja
+ * disputam a delas por outro caminho.
+ *
+ * ⚠️ LISTA EXPLICITA, NAO ADIVINHACAO. A primeira versao filtrava so por padrao
+ * de nome e a fila saiu com 101 itens, varios deles impossiveis: "Estados
+ * Unidos sem supercopa" nunca vai virar trabalho, porque a MLS nao tem uma.
+ * Fila com ruido e fila que ninguem usa.
+ */
+const SEM_SUPERCOPA_NA_VIDA_REAL = new Set([
+  "scottish_prem",   // A Escocia nao disputa supercopa.
+  "mls",             // A MLS nao tem; o mais proximo e a Campeoes Cup, continental.
+  "liga_mx",         // O Campeon de Campeones existe, mas e disputado no formato de playoff.
+  "k_league_1",      // A Coreia teve a dela ate 2006 e nao a retomou.
+  "serie_a",         // Brasil: ja disputa a Supercopa do Brasil pela via continental.
+])
+
+/**
+ * Segunda divisao (e abaixo) nao disputa supercopa nem costuma ter copa da
+ * liga. O sufixo/prefixo denuncia: `_2`, `serie_b`, `championship`...
+ */
+function ehPrimeiraDivisao(divisao: string): boolean {
+  return !/(_2$|_2_|_b$|serie_b|serie_c|serie_d|championship|league_one|league_two|national_league|_federacion|liga_3|segunda|primera_b|obos|superettan|tff_1|tff_2|challenger|first_national|k_league_2|j2_|china_league|_lig$|first_div|_first$|eerste|betplay|simon_bolivar|liga_2|intermedia|_champ$)/i.test(divisao)
+}
 
 const paises = new Set()
 let divisoes = 0, comCopaNacional = 0, comSegundaCopa = 0, comSupercopa = 0
@@ -56,7 +81,10 @@ for (const [divisao, c] of Object.entries(LEAGUE_COMPETITIONS)) {
   paises.add(c.country)
   if (c.domesticCup && c.domesticCup !== "Copa Nacional") comCopaNacional++
   if (c.superCup) comSupercopa++
-  else semSupercopa.push(`${c.country} (${divisao})`)
+  // ⚠️ SEGUNDA DIVISAO NAO TEM SUPERCOPA em lugar nenhum do mundo, e listar
+  // "Serie B sem supercopa" como lacuna e ruido que faz a fila parecer maior do
+  // que e. A fila so vale se tudo nela for trabalho real.
+  else if (ehPrimeiraDivisao(divisao) && !SEM_SUPERCOPA_NA_VIDA_REAL.has(divisao)) semSupercopa.push(`${c.country} (${divisao})`)
   const copas = (competitionsByLeague[divisao] ?? []).filter(x => x.type === "cup")
   if (copas.length > 1) comSegundaCopa++
   else semSegundaCopa.push(`${c.country} (${divisao})`)

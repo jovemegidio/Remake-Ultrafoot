@@ -308,9 +308,19 @@
   ],
   "changelog": [
     {
+      "version": "1.0.382",
+      "data": "2026-08-31",
+      "latest": true,
+      "titulo": "Mais oito supercopas nacionais, e a fila do que falta fica honesta",
+      "itens": [
+        "OITO PAISES GANHAM A SUPERCOPA DELES. Argentina, Colombia, Chile, Uruguai, Equador, Arabia Saudita, Japao e China passam a abrir a temporada decidindo a supercopa entre o campeao da liga e o campeao da copa. Sao dezoito paises com a sua, contra dez na atualizacao passada.",
+        "E SO ENTRA QUEM DISPUTA UMA DE VERDADE. Estados Unidos, Mexico e Escocia continuam sem, porque nao existe supercopa nesses paises; a Coreia do Sul teve a dela ate 2006 e nao a retomou. Inventar um torneio para preencher a tabela seria pior que a ausencia — quem percebe que a competicao nao existe passa a duvidar do resto do calendario.",
+        "A LISTA DO QUE AINDA FALTA FICOU CONFIAVEL. A verificacao de profundidade acusava 144 divisoes sem supercopa, contando segundas divisoes e paises que nao tem uma. Agora sao 87, e todas sao trabalho de verdade — uma fila com ruido e uma fila que ninguem usa."
+      ]
+    },
+    {
       "version": "1.0.381",
       "data": "2026-08-30",
-      "latest": true,
       "titulo": "As supercopas nacionais e a copa da liga entram em campo",
       "itens": [
         "SUPERCOPA DO SEU PAIS. Um jogador perguntou se faltava a Supercopa da Espanha; a resposta era maior — NENHUM pais tinha supercopa jogavel. Os nomes existiam no jogo ha versoes, sem nunca gerar partida. Agora dez paises disputam a sua na abertura da temporada, campeao da liga contra campeao da copa: Espanha, Inglaterra, Italia, Alemanha, Franca, Portugal, Holanda, Turquia, Belgica e Russia. Escocia e Mexico ficam de fora porque nao tem supercopa de verdade, e inventar uma seria pior que a ausencia. O Brasil ja tinha a dele.",
