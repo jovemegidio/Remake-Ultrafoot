@@ -882,6 +882,19 @@ export function getUserCupPlan(
   const nationalCups = comps.filter(c => c.type === "cup").sort((a, b) => b.prestige - a.prestige)
   if (nationalCups.length > 0) {
     plans.push({ competition: nationalCups[0], competitionType: "cup", matchCount: 5 })
+
+    // ⚠️ A SEGUNDA COPA NACIONAL ERA DECLARADA E DESCARTADA (corrigido na
+    // 1.0.381). `nationalCups` sempre foi um ARRAY ordenado por prestigio, mas
+    // so `[0]` virava partida: a Inglaterra tem FA Cup E EFL Cup (Carabao) no
+    // dado, e o jogador so disputava a FA Cup. O mesmo valia para qualquer pais
+    // com copa da liga.
+    //
+    // Ela tem MENOS jogos de proposito: a copa da liga entra mais tarde para os
+    // clubes grandes e e eliminada mais cedo do calendario real. Cinco partidas
+    // nas duas encheria a temporada de mata-mata e roubaria espaco da liga.
+    if (nationalCups.length > 1) {
+      plans.push({ competition: nationalCups[1], competitionType: "cup", matchCount: 4 })
+    }
   } else {
     const profile = getCountryCompetitionProfile(division)
     const cupName = NATIONAL_CUP_FALLBACK[division]
@@ -2713,7 +2726,11 @@ export function useGameManager() {
     // Supercopas conquistadas na temporada anterior (Supercopa do Brasil,
     // Recopa, Supercopa da UEFA, Mundial). Vazio quando o clube não foi campeão
     // de nada — a maioria das temporadas.
-    const superCupBerths = berthsForSeason(saveState.seasonHistory, userTeamShort, saveState.season)
+    //
+    // ⚠️ A DIVISÃO ENTRA AQUI (1.0.381) e sem ela a supercopa NACIONAL nunca
+    // apareceria: é por ela que se sabe se o clube disputa o Community Shield,
+    // a Supercoppa Italiana ou nenhuma. As continentais não dependem dela.
+    const superCupBerths = berthsForSeason(saveState.seasonHistory, userTeamShort, saveState.season, division)
     // Vaga na continental principal por titulo continental do ano anterior
     // (Sul-Americana -> Libertadores, Europa League -> Champions).
     const continentalBerth = continentalTitleBerth(saveState.seasonHistory, userTeamShort, saveState.season)

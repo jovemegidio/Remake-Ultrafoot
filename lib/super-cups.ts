@@ -10,8 +10,25 @@
 // array vazio permanente).
 
 import type { SeasonRecord } from "@/lib/career-types"
+import { getCountryCompetitions } from "@/lib/country-competitions"
+import { leagueNameForDivision } from "@/lib/domestic-league-engine"
 
-export type SuperCupId = "supercopa_brasil" | "recopa_sulamericana" | "supercopa_uefa" | "mundial_clubes" | "copa_intercontinental"
+export type SuperCupId =
+  | "supercopa_brasil"
+  | "recopa_sulamericana"
+  | "supercopa_uefa"
+  | "mundial_clubes"
+  | "copa_intercontinental"
+  /**
+   * A SUPERCOPA DO PAIS DO CLUBE (1.0.381) — campeao da liga x campeao da copa.
+   *
+   * ⚠️ E UM SO ID PARA TODOS OS PAISES, de proposito. O NOME sai de
+   * `country-competitions.superCup` na hora de montar a vaga: "Community
+   * Shield" na Inglaterra, "Supercoppa Italiana" na Italia. Um id por pais
+   * significaria mexer neste tipo a cada federacao nova, e o resto do jogo
+   * (calendario, trofeu, historico) trata supercopa como supercopa.
+   */
+  | "supercopa_nacional"
 
 /** O Mundial de 32 clubes acontece de 4 em 4 anos (2025, 2029, 2033...). */
 export const ANO_BASE_MUNDIAL = 2025
@@ -39,6 +56,8 @@ const CATALOGO: Record<SuperCupId, Omit<SuperCupBerth, "reason">> = {
   mundial_clubes:     { id: "mundial_clubes",     name: "Mundial de Clubes FIFA",  matchCount: 7, priority: 3 },
   // COPA INTERCONTINENTAL: anual, entre os campeoes continentais. Nao existia.
   copa_intercontinental: { id: "copa_intercontinental", name: "Copa Intercontinental", matchCount: 2, priority: 3 },
+  // O nome real entra em `berthsForSeason`, pelo pais do clube.
+  supercopa_nacional: { id: "supercopa_nacional", name: "Supercopa nacional", matchCount: 1, priority: 1 },
 }
 
 /** Normaliza para comparar nomes de competição vindos de fontes diferentes. */
@@ -65,6 +84,12 @@ export function berthsForSeason(
   seasonHistory: readonly SeasonRecord[] | undefined,
   clubeCurto: string,
   temporadaAtual: number,
+  /**
+   * Divisao do clube — so serve para saber QUAL supercopa nacional ele disputa.
+   * Opcional para nao quebrar chamador antigo: sem ela, as continentais
+   * continuam funcionando e a nacional simplesmente nao aparece.
+   */
+  divisao?: string,
 ): SuperCupBerth[] {
   if (!seasonHistory?.length || !clubeCurto) return []
 
@@ -103,6 +128,44 @@ export function berthsForSeason(
     }
     if (comp.includes("europaleague")) {
       conquistou("supercopa_uefa", `Campeão da Europa League ${registro.season}`)
+    }
+  }
+
+  // ── SUPERCOPA NACIONAL: campeão da liga x campeão da copa ────────────────
+  //
+  // ⚠️ NENHUM PAÍS TINHA A SUA ATÉ A 1.0.381. Só existiam as cinco
+  // continentais/globais acima; "Supercopa de Espanha" e "DFL-Supercup"
+  // apareciam como texto em `international-competitions` e não geravam partida
+  // nenhuma — arte sem jogo, o mesmo estado de que a Supercopa do Brasil saiu.
+  //
+  // ⚠️ O BRASIL FICA DE FORA por já ter a dele acima; entrar aqui daria dois
+  // torneios com o mesmo nome na mesma pré-temporada.
+  //
+  // A regra é a real: quem levantou a LIGA ou a COPA no ano passado abre a
+  // temporada decidindo a supercopa. Comparar pelo NOME da competição do
+  // registro é o que o resto desta função já faz — o histórico guarda o nome,
+  // não um id.
+  const compsDoPais = divisao ? getCountryCompetitions(divisao) : null
+  if (compsDoPais?.superCup) {
+    // ⚠️ O NOME DA LIGA VEM DE `leagueNameForDivision`, NAO DO ID DA DIVISAO.
+    // A primeira versao comparava `chave(divisao)` com o nome no historico e
+    // funcionava por coincidencia: "premier_league" x "Premier League" casa,
+    // mas "serie_a_ita" x "Serie A" nao — e o campeao italiano ficava sem
+    // supercopa. Foi o portao que pegou; a leitura nao veria.
+    const nomeDaLiga = chave(leagueNameForDivision(divisao ?? ""))
+    const alvos = [chave(compsDoPais.domesticCup)]
+    for (const registro of anterior) {
+      if (!foiCampeao(registro, clubeCurto)) continue
+      const comp = chave(registro.competition)
+      const ehLiga = Boolean(nomeDaLiga) && (comp === nomeDaLiga || comp.includes(nomeDaLiga))
+      if (ehLiga || alvos.some(alvo => comp.includes(alvo))) {
+        vagas.push({
+          ...CATALOGO.supercopa_nacional,
+          name: compsDoPais.superCup,
+          reason: `Campeão: ${registro.competition} ${registro.season}`,
+        })
+        break
+      }
     }
   }
 

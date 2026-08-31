@@ -13,6 +13,25 @@ export interface CountryCompetitions {
   country: string
   /** Copa nacional (mata-mata). */
   domesticCup: string
+  /**
+   * Supercopa nacional: campeao da liga contra campeao da copa, na abertura da
+   * temporada seguinte.
+   *
+   * ⚠️ AUSENTE ATE A 1.0.381, e a lacuna era maior do que "falta a Supercopa da
+   * Espanha": NENHUM pais tinha supercopa jogavel. So existiam as cinco
+   * continentais/globais de `lib/super-cups.ts`. Nomes como "Supercopa de
+   * Espana" e "DFL-Supercup" apareciam em `international-competitions` sem
+   * gerar partida — o mesmo "arte sem jogo" que o cabecalho do super-cups
+   * descreve para a Supercopa do Brasil antes de ela existir de verdade.
+   *
+   * ⚠️ O BRASIL NAO ENTRA AQUI. A Supercopa do Brasil ja e disputada pela via
+   * continental (`supercopa_brasil`); repetir daria dois torneios com o mesmo
+   * nome na mesma pre-temporada.
+   *
+   * `undefined` = o pais nao tem supercopa. Escocia e Mexico, por exemplo, nao
+   * disputam — inventar uma para preencher a tabela seria pior que a ausencia.
+   */
+  superCup?: string
   /** Competicao continental principal. */
   continental: string
   /** Segunda competicao continental (null quando nao houver). */
@@ -42,17 +61,17 @@ const LEAGUE_COMPETITIONS_BASE: Record<string, CountryCompetitions> = {
   serie_c: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
   serie_d: { country: "Brasil", domesticCup: "Copa do Brasil", ...CONMEBOL, hasStateChampionship: true },
   // Europa
-  la_liga: { country: "Espanha", domesticCup: "Copa del Rey", ...UEFA },
-  premier_league: { country: "Inglaterra", domesticCup: "FA Cup", ...UEFA },
-  serie_a_ita: { country: "Italia", domesticCup: "Coppa Italia", ...UEFA },
-  bundesliga: { country: "Alemanha", domesticCup: "DFB-Pokal", ...UEFA },
-  ligue_1: { country: "Franca", domesticCup: "Coupe de France", ...UEFA },
-  primeira_liga: { country: "Portugal", domesticCup: "Taca de Portugal", ...UEFA },
-  eredivisie: { country: "Holanda", domesticCup: "KNVB Beker", ...UEFA },
+  la_liga: { country: "Espanha", domesticCup: "Copa del Rey", superCup: "Supercopa de Espanha", ...UEFA },
+  premier_league: { country: "Inglaterra", domesticCup: "FA Cup", superCup: "Community Shield", ...UEFA },
+  serie_a_ita: { country: "Italia", domesticCup: "Coppa Italia", superCup: "Supercoppa Italiana", ...UEFA },
+  bundesliga: { country: "Alemanha", domesticCup: "DFB-Pokal", superCup: "DFL-Supercup", ...UEFA },
+  ligue_1: { country: "Franca", domesticCup: "Coupe de France", superCup: "Trofeu dos Campeoes", ...UEFA },
+  primeira_liga: { country: "Portugal", domesticCup: "Taca de Portugal", superCup: "Supertaca Candido de Oliveira", ...UEFA },
+  eredivisie: { country: "Holanda", domesticCup: "KNVB Beker", superCup: "Johan Cruijff Schaal", ...UEFA },
   scottish_prem: { country: "Escocia", domesticCup: "Scottish Cup", ...UEFA },
-  super_lig: { country: "Turquia", domesticCup: "Turkish Cup", ...UEFA },
-  pro_league_bel: { country: "Belgica", domesticCup: "Beker van Belgie", ...UEFA },
-  russian_prem: { country: "Russia", domesticCup: "Copa da Russia", ...UEFA },
+  super_lig: { country: "Turquia", domesticCup: "Turkish Cup", superCup: "Supercopa da Turquia", ...UEFA },
+  pro_league_bel: { country: "Belgica", domesticCup: "Beker van Belgie", superCup: "Supercopa da Belgica", ...UEFA },
+  russian_prem: { country: "Russia", domesticCup: "Copa da Russia", superCup: "Supercopa da Russia", ...UEFA },
 
   // America do Sul
   liga_argentina: { country: "Argentina", domesticCup: "Copa Argentina", ...CONMEBOL, hasStateChampionship: false },

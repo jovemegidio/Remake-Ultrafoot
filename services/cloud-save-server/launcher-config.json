@@ -308,6 +308,17 @@
   ],
   "changelog": [
     {
+      "version": "1.0.381",
+      "data": "2026-08-30",
+      "latest": true,
+      "titulo": "As supercopas nacionais e a copa da liga entram em campo",
+      "itens": [
+        "SUPERCOPA DO SEU PAIS. Um jogador perguntou se faltava a Supercopa da Espanha; a resposta era maior — NENHUM pais tinha supercopa jogavel. Os nomes existiam no jogo ha versoes, sem nunca gerar partida. Agora dez paises disputam a sua na abertura da temporada, campeao da liga contra campeao da copa: Espanha, Inglaterra, Italia, Alemanha, Franca, Portugal, Holanda, Turquia, Belgica e Russia. Escocia e Mexico ficam de fora porque nao tem supercopa de verdade, e inventar uma seria pior que a ausencia. O Brasil ja tinha a dele.",
+        "A COPA DA LIGA VOLTA A EXISTIR. A Inglaterra sempre teve FA Cup E Carabao Cup no jogo, mas o calendario so montava a de maior prestigio e descartava a outra em silencio. Agora a segunda copa nacional e disputada, com menos jogos que a principal — como no futebol de verdade, em que a copa da liga entra mais tarde para os clubes grandes.",
+        "E UMA MEDIDA QUE IMPEDE O JOGO DE ENCOLHER. Toda atualizacao passa a conferir quantas divisoes tem copa, segunda copa e supercopa, e quantos clubes femininos tem elenco real. Esses numeros so podem subir: uma versao que entregue menos profundidade que a anterior nao passa da verificacao."
+      ]
+    },
+    {
       "version": "1.0.380",
       "data": "2026-08-29",
       "titulo": "Versao de corte: tudo que travava o lancamento, fechado ou declarado",
@@ -360,8 +371,7 @@
         "RANKING DE ACADEMIAS NA CARREIRA DE BASE. A pergunta que faltava era 'onde eu estou entre as outras' - formar tres jogadores para a selecao e formar nenhum davam a mesma tela. Agora ha nota de academia (infraestrutura, formados, titulos e campanha), classificacao da divisao e tres torneios internacionais Sub-20 com corte por posicao.",
         "ONLINE: O PLACAR DEIXOU DE SER DE QUEM ENVIA PRIMEIRO. Na Carreira Online o primeiro placar enviado ja somava os pontos na tabela; o adversario so conseguia registrar uma divergencia com o resultado ja valendo. Agora nada entra na tabela sem os DOIS tecnicos baterem, placar impossivel para aquele confronto e recusado na porta, e partida abandonada cai por W.O. de prazo para o mundo nao travar.",
         "O AVISO DO ONLINE ESTAVA DESATUALIZADO PARA MENOS. A tela dizia que carreira online com mercado e temporada compartilhados 'ainda NAO existe'. Existe desde a 1.0.358, e o mercado dela ja era conferido no servidor."
-      ],
-      "latest": true
+      ]
     },
     {
       "version": "1.0.375",
@@ -371,8 +381,7 @@
         "O SEU ATLETA PESA NO RESULTADO. Ate aqui a partida simulada saia de prestigio contra prestigio e o atleta apenas recebia o credito por gols que o clube ja tinha feito: um atacante de 92 marcava 30 gols por temporada contra 6 de um de 48, e o clube terminava 1,8 ponto na frente - ruido. Agora um craque rende cerca de 11 pontos por temporada a mais que um jogador fraco no mesmo clube, e um reserva ou um atleta em ma fase pesam pouco, como deve ser.",
         "PLACAR FINAL DENTRO DA REGUA. Os seis eixos da pontuacao somam exatamente 1000, mas o bonus das 16 conquistas era somado por fora, sem limite: uma carreira de 20 temporadas fechava em 1128 numa escala anunciada como 0 a 1000, e a carreira maxima chegava a 1410.",
         "CARREIRA PRESA AO CRIAR (CORRECAO). Em liga com menos de 16 clubes - a escocesa e boa parte da expansao UEFA - a tela ficava para sempre em \"Montando a sua temporada\": a copa era montada pareando 1 contra 16 e os quatro ultimos nao existiam. Atingia 426 dos 1350 clubes, na carreira de atleta e na de base."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.374",
@@ -387,8 +396,7 @@
         "CASSINO, HARAS E CONVITES. A vida fora de campo ganhou tela propria, com preco de verdade em dinheiro e energia.",
         "A CARREIRA TERMINA COM PLACAR. Pontuacao de 0 a 1000, 16 conquistas e um ranking; o controle navega todas as telas do atleta.",
         "CARREIRA PRESA AO CRIAR (CORRECAO). Em liga com menos de 16 clubes - a escocesa e boa parte da expansao UEFA - a tela ficava para sempre em \"Montando a sua temporada\": a copa era montada pareando 1 contra 16 e os quatro ultimos nao existiam. Atingia 426 dos 1350 clubes, na carreira de atleta e na de base."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.373",
@@ -402,8 +410,7 @@
         "VIDA FORA DO CAMPO. Treinador pessoal, minijogo de treino, relacao com elenco, desgaste e rupturas, contratos com marcas, bonus pessoais e patrimonio com manutencao entraram na economia.",
         "ENERGIA TEM EFEITO NO CAMPO. Cansaco abaixo de 55% reduz a execucao dos atributos; preparacao e recuperacao passaram a ter consequencia direta na partida.",
         "SEGURANCA DE DEPENDENCIAS. Next.js, Sharp, PostCSS, SheetJS e transitivos vulneraveis foram atualizados; a auditoria passou de 15 altas e 9 moderadas para zero alertas conhecidos."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.372",
@@ -416,8 +423,7 @@
         "RITMO NSS. Uma partida inteira passou de cerca de cinco momentos para 8 a 16 lances curtos, proporcionais aos minutos em campo.",
         "FALTA E PENALTI SAO LANCES PROPRIOS. Finalizacoes e bolas paradas ganharam mira por arrasto, trajetoria da bola e mergulho do goleiro.",
         "SAVES ANTIGOS CONTINUAM VALIDOS. A nova economia nasce sob demanda sem apagar a carreira existente."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.366",
@@ -429,8 +435,7 @@
         "QUEM NÃO ENTRA NÃO INVENTA PARTICIPAÇÃO. Reserva que não é acionado termina sem lance nenhum, e quem sai aos 60 não recebe lance depois disso.",
         "SEUS ATRIBUTOS DECIDEM A EXECUÇÃO. A escolha é sua; quem executa é o atleta. Finalização, passe, drible e desarme mudam a chance de o lance dar certo — e acertar a finalização ainda não é gol: existe goleiro do outro lado.",
         "PARTIDA DO ESTADUAL DEIXOU DE SUMIR. Ao reabrir o save, o jogo podia marcar como disputada uma partida que você nunca jogou — com placar que ninguém produziu. Acontecia quando o mesmo confronto aparecia em duas fases do estadual (classificatória e mata-mata): concluir uma marcava as duas, e a segunda desaparecia do calendário."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.364",
@@ -441,8 +446,7 @@
         "20 MIL FOTOS DE ATLETA DE VOLTA. Pelo mesmo motivo, o instalador vinha com 33 mil fotos em vez das 53 mil do acervo. Quem via silhueta no lugar do rosto de vários atletas deve voltar a vê-los.",
         "O MODO CONTROLE VOLTOU A SER MONTADO. Ele deixou de ser ligado na inicialização pelo mesmo erro de empacotamento; a navegação global por controle e a barra de comandos estavam inertes.",
         "SIMULAÇÃO MAIS RÁPIDA. O jogo refazia trabalho idêntico milhões de vezes ao simular: resolvia o mesmo clube, remontava o mesmo elenco e normalizava o mesmo nome repetidamente. Passando a lembrar o que já resolveu, uma campanha de 20 temporadas caiu de 5,5 s para 2,1 s de processamento — avançar semanas e simular rodadas ficou mais leve, sobretudo em computadores modestos."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.360",
@@ -450,8 +454,7 @@
       "titulo": "Versao 1.0.360",
       "itens": [
         "Correcoes e melhorias da versao 1.0.360."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.359",
@@ -463,8 +466,7 @@
         "CALENDÁRIO JUSTO EM DIVISÃO ÍMPAR: na Série D (27 clubes) faltava uma rodada inteira por turno — 26 clubes jogavam 50 partidas e um jogava 52, sem folga a temporada toda, numa tabela que decide acesso.",
         "SORTEIO DE COPA USA OS CLUBES DISPONÍVEIS: em países com poucos times, a copa nacional repetia um adversário da própria liga mesmo havendo clubes livres para sortear.",
         "FOTOS DE ESTÁDIO MAIS LEVES: 68 MB a menos, sem perda visível na tela de pré-jogo."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.358",
@@ -479,8 +481,7 @@
         "CRIAR CARREIRA FICOU RAPIDO OUTRA VEZ: a tela podia ficar meio minuto parada sem dizer nada, e em carreira de jogador o botao simplesmente nao respondia. Agora ha uma espera com aviso do que esta sendo montado, e os dados do atleta ficam num painel proprio, separado das configuracoes iniciais.",
         "O ESCRITORIO NAO ROLA MAIS: as tarefas do dia cabem todas na tela e as noticias viraram uma barra embaixo, com comentarios que abrem quando voce quer. A sigla da posicao saiu de cima da camisa no elenco.",
         "MENOS MEMORIA: 4 GB de RAM bastam para o jogo rodar liso, e as telas foram medidas uma a uma para nao passar do teto."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.356",
@@ -493,8 +494,7 @@
         "MENOS ESPACO EM DISCO: backups antigos de correcoes ja aplicadas ficavam na pasta do jogo ocupando quase 1 GB. O jogo agora sabe reconhece-los.",
         "CO-OP LOCAL CORRIGIDO: quatro ajustes do save nao eram classificados entre \"do tecnico\" e \"da mesa\", e podiam mudar sozinhos ao trocar de tecnico.",
         "Bandeiras, icones dos modos online, fundo do escritorio do atleta e narracao da partida na carreira de jogador."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.349",
@@ -504,8 +504,7 @@
         "O QUE TRAVAVA A TRADUCAO NAO ERA FALTA DE TRADUTOR: todo idioma precisava ter TODA frase para o jogo compilar. Escrever uma frase nova em portugues quebrava ingles, espanhol e italiano de uma vez. Agora cada idioma tem o que tem, e o que falta aparece em portugues — nunca em branco e nunca com codigo na tela.",
         "INGLES MAIS COMPLETO: as telas de Configuracoes, Gerenciamento do Time e a barra de busca ganharam traducao de verdade. O ingles esta em 98% das frases disponiveis.",
         "A COBERTURA DE CADA IDIOMA VIROU UM NUMERO MEDIDO, e nao um rotulo escrito a mao: um idioma nao pode mais se anunciar completo entregando metade."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.348",
@@ -519,8 +518,7 @@
         "CARREIRA DE JOGADOR: lesao agora tira rodadas de verdade, existe a bracadeira de capitao e a pre-temporada virou um periodo proprio, em que o treino rende mais.",
         "VAR COMO NA TV: o arbitro so vai ao monitor quando o VAR ve erro claro. Impedimento a cabine resolve, e checagem que confirma nem para o jogo.",
         "O modo Online aparece sempre no menu principal, e o vestiario voltou a abrir em carreiras antigas."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.346",
@@ -531,8 +529,7 @@
         "CADA GRAVACAO FICOU 7x MAIS BARATA: salvar reescrevia o arquivo inteiro do jogo, e um unico autosave fazia isso de cinco a oito vezes seguidas. Agora o mundo mora em arquivo separado e a gravacao acontece uma vez por rajada — medido na mesma maquina, 217 ms caiu para 31 ms e o arquivo tocado a cada save caiu de 50 MB para 7,5 MB.",
         "A BUSCA DE CLUBE PAROU DE TRAVAR: procurar time refazia o indice inteiro a cada tecla.",
         "A abertura tambem ficou mais rapida: a leitura do save no boot caiu de 102 ms para 23 ms."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.344",
@@ -541,8 +538,7 @@
       "itens": [
         "ABERTURA MAIS LEVE EM QUALQUER TELA: o catalogo de rostos dos atletas era carregado inteiro junto com o jogo, mesmo numa tela que nao mostra foto nenhuma. Ele repetia a mesma pasta e a mesma extensao em 26.702 entradas; agora isso e reconstruido na hora e o arquivo ficou 43% menor. Cada atleta continua com exatamente a mesma foto — um teste confere as 26.702, uma a uma.",
         "Somando a 1.0.343, o jogo carrega 16,4 MB de codigo contra os 23,4 MB de duas versoes atras."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.343",
@@ -557,8 +553,7 @@
         "TREINO DE VERDADE NA CARREIRA DE ATLETA: o foco de treino so valia uma vez por ano. Agora a semana tem intensidade (leve, normal ou puxada) com preco real — puxar rende mais e voce chega pior no jogo, e puxar cansado custa o dobro. Quem nao leva treino a serio rende menos, como a comissao sempre avisou.",
         "CONVERSAS COM FAMILIA, EMPRESARIO E DIRETORIA: elas aparecem quando a situacao pede — moral baixa, proposta na mesa, contrato acabando — e nenhuma resposta e de graca. Desabafar alivia e cansa; forcar a saida esquenta o mercado e esfria a arquibancada.",
         "FC HUB E DRAFT ABREM DE VERDADE: no menu online os dois levavam a uma pagina em branco. O Manager Rivals tambem deixou de terminar num beco apos encontrar adversario."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.336",
@@ -567,8 +562,7 @@
       "itens": [
         "AMISTOSO 1v1 ONLINE DE VERDADE: abra uma sala, passe o codigo de seis caracteres a um amigo, vejam-se na tela e confirmem — o apito so sai com os dois prontos. Ate aqui o modo Amistoso levava para outra tela (o Draft), porque o link apontava para uma rota que so redirecionava.",
         "Sem ranking, sem recompensa e sem efeito na carreira, como o modo sempre prometeu. Para partida valendo rating, o modo continua sendo o Manager Rivals."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.335",
@@ -580,8 +574,7 @@
         "TIPO DE CARREIRA FORA DO RODAPE: profissional, feminino e Sub-20 se escolhem no alto da tela de nova carreira, onde a decisao acontece — o seletor duplicado do rodape saiu.",
         "CARREIRA DE JOGADOR MAIS REALISTA: escolher a carreira de atleta abre direto a ficha do jogador (posicao, idade, arquetipo e origem), em vez de deixar o atleta nascer no padrao. E ninguem estreia num gigante: os clubes mais fortes de cada liga ficam fora da escolha inicial, como nos modos carreira de jogador do mercado.",
         "GATE NOVO: um teste de publicacao confere que nenhum clube feminino recebeu atletas do elenco masculino homonimo e que o mercado profissional continua exatamente como era."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.334",
@@ -591,8 +584,7 @@
         "SIGLAS DE VERDADE: no lugar do nome do arquivo cortado (MACHESTE), cada clube mostra a sigla que se usa de fato, com desempate por liga quando dois clubes disputam o mesmo codigo.",
         "CONTROLE EM TODA TELA: a navegacao por controle passou a valer no jogo inteiro, com anel de foco e barra de acoes, e nao so nas telas que ja a tinham.",
         "ESCUDO FEMININO: o clube feminino que tem brasao proprio passa a usa-lo; os demais continuam herdando o escudo do clube-mae, sem duplicar arquivo."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.333",
@@ -606,8 +598,7 @@
         "DADOS SINCRONIZADOS: o catalogo leve e os elencos derivados agora conferem clube por clube com a fonte atual — 3.064 clubes e 66.820 atletas, sem elenco orfao — e o manifesto das 153 ligas foi recalculado.",
         "GATE DE PUBLICACAO: o inventario confere arquivos e marcadores internos de cada funcionalidade entregue, e agora tambem executa os testes da 1.0.331. Uma arvore antiga com numero novo nao consegue mais chegar ao instalador.",
         "MARCO DO PROJETO: com os sistemas restaurados e os itens recentes unidos, o jogo chega ao patamar estimado de 80% do escopo planejado."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.332",
@@ -616,8 +607,7 @@
       "itens": [
         "CORRECAO DE REGRESSAO. Uma arvore antiga estava circulando com o numero novo, e por isso 20 funcionalidades ja entregues nao apareciam no jogo: a DIVISAO DE ACESSO (a base da piramide, com os 260 clubes), o VAR/arbitragem, os eventos do 3D, o historico de lesoes, a confianca da diretoria, o menu ONLINE inteiro, o Manager Rivals, o VIVER A PARTIDA e tudo o que a carreira de jogador ganhou da 1.0.324 a 1.0.329 (fila da posicao, arquetipos, potencial oculto, evolucao organica, empresario, entrevistas e a aposentadoria virando carreira de tecnico).",
         "Esta versao sai da arvore COMPLETA, e agora existe um gate que impede a repeticao:  lista cada funcionalidade ja entregue e reprova a build quando alguma sumir. Ele nao confere so se o arquivo existe — confere se e a VERSAO CERTA do arquivo, que foi como a carreira de jogador reapareceu vazia por dentro."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.330",
@@ -629,8 +619,7 @@
         "ANTI-CHEAT em quatro camadas, cada uma com teste automatico: terceiro nao manda resultado de partida alheia; placar impossivel e recusado; reenviar o proprio placar depois de ver o do adversario e recusado; e divergencia entre os dois nao pontua NINGUEM (punir os dois seria injusto com quem enviou certo).",
         "A sala do Rivals e criada PELO SERVIDOR e entregue pronta aos dois — ninguem abre a partida, ve quem e o adversario e sai.",
         "O ranking sobrevive a reinicio do servidor (gravado em disco), e o gate  sobe o relay de verdade num diretorio temporario e joga contra ele para provar as sete garantias."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.329",
@@ -641,8 +630,7 @@
         "Quem entra do banco vive a chamada do treinador e menos momentos — quem joga 20 minutos vive um ou dois lances, quem joga os 90 vive cinco. E o que faz valer a pena ser titular.",
         "O placar continua sendo do motor: os momentos redistribuem a PARTICIPACAO dentro do resultado, nunca criam gol do nada. O gate da casa reprova se gols + assistencias do atleta passarem dos gols do time — foi assim que uma incoerencia foi pega antes de sair.",
         "Simular e viver passam pela MESMA contabilidade (estatistica, evolucao organica, bonus, forma, confianca). Duas contabilidades seriam duas verdades sobre a mesma carreira."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.328",
@@ -652,8 +640,7 @@
         "ENTREVISTAS que mexem no jogo. A imprensa so pergunta o que o save produziu — quatro jogos no banco, sequencia de gols, proposta na mesa — e cada tom de resposta puxa para lados DIFERENTES: a resposta que agrada o treinador nao e a que constroi reputacao, e a polemica compra a torcida ao preco do banco. A tela mostra o efeito antes do clique.",
         "REPERCUSSAO: o mundo comenta o que aconteceu de verdade (dois gols numa partida, nota alta, declaracao forte). E a reputacao que sai dai faz clube grande acordar — sem isso, responder a imprensa seria enfeite.",
         "PREMIOS INDIVIDUAIS que olham a carreira e nao so a temporada: melhor jovem da liga, Chuteira de Ouro e Bola de Ouro (que exige temporada excepcional COM titulo e selecao). Eles entram no legado que a aposentadoria leva para a carreira de tecnico."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.327",
@@ -663,8 +650,7 @@
         "MENU ONLINE novo, com os modos entre tecnicos reunidos num lugar so: FC Hub, amistoso com sala, Manager Draft e o que vem pela frente (Rivals, Champions, Carreira Online, cooperativa, diretoria, rush e eventos).",
         "Ele so aparece — no menu principal E na tela de criacao de carreira — quando o MODO ONLINE esta ligado em Configuracoes. Desligado, quem joga sozinho nao ve um item sequer de online no caminho.",
         "A tela diz a VERDADE sobre cada modo: disponivel, em obras ou em breve, com a fase do plano. Os que ainda nao existem nao sao clicaveis — um menu que oferece dez modos e entrega dois ensina o jogador a nao confiar na tela."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.326",
@@ -675,8 +661,7 @@
         "EMPRESARIO como personagem: negociacao arranca salario e luvas, influencia decide quantas portas se abrem e rede internacional libera o exterior. Cada um cobra a sua comissao, e trocar de agente e uma decisao da carreira — os bons so aceitam quem ja tem o que negociar.",
         "CONTRATOS DE VERDADE: luvas na assinatura (descontada a comissao), bonus por gol que cai no bolso a cada partida, bonus por titulo e — o que mais pesa — o STATUS PROMETIDO. O clube grande paga mais e oferece rodizio; o clube medio paga menos e promete a vaga. Quem promete titularidade te poe em campo na chegada, mas a fila da posicao volta a mandar assim que a bola rola.",
         "APOSENTADORIA VIRA COMECO: ao pendurar as chuteiras, o MESMO save continua — o atleta aposentado assume como treinador do ultimo clube, com uma reputacao de estreia construida pelo que ele fez em campo (titulos, premios, jogos de selecao e o auge de overall). Da para comecar aos 17 como jogador e seguir ate os 60 como tecnico, no mesmo universo."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.325",
@@ -689,8 +674,7 @@
         "PERSONALIDADE ESCONDIDA (ambicao, profissionalismo, determinacao, lealdade e temperamento). Ela nunca aparece em numero: a comissao te descreve em frases. Dois atletas identicos aos 18 anos terminam diferentes — no teste da casa, o dedicado chegou a 75 e o relaxado a 70 em tres temporadas. E profissionalismo alto segura o declinio depois dos 31.",
         "HISTORIAS DE ORIGEM na criacao: joia da base, desconhecido, filho de craque, promessa desacreditada ou voltando de lesao. Cada uma desloca overall inicial, teto e personalidade.",
         "A DISPUTA PELA POSICAO virou tela: voce ve em que lugar da fila esta no elenco (ex.: 3o de 5), quem esta na sua frente, a confianca do treinador e quanto ela DEVERIA ser pelo seu lugar na fila."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.324",
@@ -704,8 +688,7 @@
         "CORRECAO: a tela de criar o proprio clube nao rolava. O jogo trava a rolagem da pagina inteira para se comportar como aplicativo, e essa tela e mais alta que a janela: metade do formulario ficava inalcancavel. As telas de carreira na base e de carreira de jogador tinham o mesmo defeito e foram corrigidas junto.",
         "A CARREIRA DE JOGADOR virou item do MENU PRINCIPAL, ao lado de Novo Jogo. Ela estava dentro do seletor de modalidade da criacao de carreira, que responde a pergunta 'que clube voce vai dirigir?' — e quem escolhe ser atleta nao esta dirigindo clube nenhum. As tres de tecnico (profissional, feminino e sub-20) continuam juntas la dentro.",
         "CORRECAO: o gerador do manifesto de retratos descartava em silencio 289 fotos cujo cadastro usava o nome cru do arquivo em vez do caminho completo. Quem regerasse o manifesto perdia esses atletas. Agora sao 26.702 retratos disponiveis, 75 a mais do que antes."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.323",
@@ -716,8 +699,7 @@
         "Um LEIA-ME na pasta do jogo explica o que e cada pasta (escudos, camisas, jogadores, trofeus, audio) e como guardar e restaurar uma carreira.",
         "O aviso de licenca que ficava solto na raiz foi para a pasta 'licencas'.",
         "Protecao no desinstalador: ele remove o atalho 'sav' ANTES de limpar a pasta, para que desinstalar ou atualizar o jogo nunca alcance os seus saves pelo caminho do atalho."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.322",
@@ -731,8 +713,7 @@
         "CARREIRA DE JOGADOR: um atleta so, da estreia a aposentadoria. Voce cria o atleta (posicao, idade, nacionalidade, pe, camisa), e quem decide se voce joga e o treinador, pela sua NOTA. Nota por partida, metas da temporada, evolucao por pontos com teto no potencial, convocacao para a selecao, propostas de outros clubes, premios e aposentadoria.",
         "As 70 selecoes de pais da criacao de carreira passam a aparecer em ORDEM ALFABETICA. Antes era a ordem de cadastro, e achar um pais no meio dos setenta exigia varrer o carrossel inteiro.",
         "A base do clube revela garotos com nome do PAIS do clube (e nome feminino na base feminina) — antes a base do Ajax revelava 'Matheus Nascimento'."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.321",
@@ -744,8 +725,7 @@
         "TACA GUANABARA: a primeira fase do Carioca passou a valer titulo, para quem termina em primeiro na classificacao geral. Ela entra no historico do clube e conta na reputacao do tecnico, como qualquer outra conquista.",
         "Bilheteria: jogo em casa resolvido pelo avanco da semana passa a creditar a renda no caixa. Antes so a partida disputada na tela rendia dinheiro, e quem simulava a temporada via o caixa cair sem entender o motivo. A renda e INTEIRA do mandante.",
         "Tela de novo jogo: o nome do clube nunca mais quebra em duas linhas (RB Bragantino, Sampaio Correa-RJ) e ganhou setas ao lado do escudo para trocar de time, com o mesmo comando do teclado e do controle."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.320",
@@ -756,8 +736,7 @@
         "Agora cada clube da base tem torcida e estadio proporcionais ao seu tamanho, sempre menores que os da divisao acima.",
         "A Divisao de Acesso passou a ter formato eliminatorio: quatro grupos regionais de cinco, os dois melhores de cada avancam ao mata-mata que decide o acesso.",
         "Calendario: no Brasil a Divisao de Acesso termina em DEZEMBRO, como a Serie A e a B. Nos outros 12 paises ela fecha junto com as demais divisoes daquele pais."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.319",
@@ -771,8 +750,7 @@
         "CLUBE PROPRIO: agora voce escolhe o PAIS e o estado onde ele joga, e as divisoes oferecidas saem da piramide real daquele pais.",
         "O clube criado nasce com o caixa de um time de Serie B, em qualquer divisao. Fraco em campo, estavel no cofre: sem dinheiro, comecar na base seria beco e nao desafio.",
         "Base e elenco do clube criado vem genericos, para voce montar o time do seu jeito."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.318",
@@ -785,8 +763,7 @@
         "NOVIDADE (registrado): crie o seu proprio clube — nome, cores, escudo, os tres uniformes, cidade, estado e estadio — e escolha em qual divisao ele comeca, da Divisao de Acesso a Serie A.",
         "Forca, torcida e caixa do clube criado vem da divisao escolhida: um clube novo entra pelo piso do nivel, sem atalho.",
         "108 clubes brasileiros do acervo ganharam a UF que faltava, o que arruma a regiao deles e o campeonato estadual."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.317",
@@ -796,8 +773,7 @@
         "NOVIDADE: o campo agora ocupa a tela inteira para voce acompanhar a partida. Tem botao ao lado do alternador 2D/3D, e da para usar a tecla F para entrar e Esc para sair.",
         "Em tela cheia o placar e o minuto continuam a vista — assistir sem saber como esta o jogo nao serve para nada.",
         "A cena 3D nao e remontada ao entrar ou sair: o lance em andamento continua de onde estava."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.316",
@@ -809,8 +785,7 @@
         "CORRECAO: vender um atleta pagava 100% do valor mesmo quando o clube nao possuia 100% dos direitos, ou quando havia clausula de revenda com o clube anterior. Os campos existiam no contrato havia versoes e nenhum era lido. Agora a venda reparte, e o extrato mostra para onde foi cada parte.",
         "NOVIDADE: arbitragem. Oito arbitros com perfis diferentes — de quem deixa o jogo correr a quem puxa o cartao com facilidade. Cada partida tem o seu, sempre o mesmo. Ele altera a frequencia de cartao, nunca o placar.",
         "A balanca foi conferida em 4.000 partidas por cenario e em 80 temporadas simuladas: elenco melhor vence mais, mas o pior ainda ganha as vezes, e a tatica pesa menos que o elenco."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.315",
@@ -823,8 +798,7 @@
         "Co-op local: o botao Avancar passou a ser o \"fechei minhas decisoes\", com uma tela de troca que esconde o jogo enquanto o computador muda de maos. Antes a acao ficava dentro de um menu e a rodada travava sem caminho visivel.",
         "Calendario: a data no painel seguia a proxima partida enquanto o resto do painel seguia a partida selecionada — dava para ler a data de janeiro no jogo de dezembro. E um botao novo simula a partida e mostra o placar na hora.",
         "Rankings viraram tela propria, fora da Central de Gestao. Saves de co-op aparecem marcados na tela de carregar."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.314",
@@ -833,8 +807,7 @@
       "itens": [
         "CORREÇÃO: o campo 3D não abria e a partida caía para o 2D. Ao montar a cena, as escalações ainda não tinham chegado e o jogo mandava uma lista de jogadores VAZIA ao motor — que tentava montar os onze a partir dela. Agora ele espera a escalação: começa com atletas genéricos e recebe nomes e números quando eles chegam.",
         "CORREÇÃO (relato de jogador): uma carreira nova puxava histórico da anterior — propostas, interesses de mercado, transferências pendentes e conversas com atletas apareciam num save recém-criado. O save já nascia limpo; quem não nascia era o motor do jogo, que guarda essas coisas à parte."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.312",
@@ -845,8 +818,7 @@
         "Impedimento passou a ser encenado como falta marcada, que é o que ele é em campo. E dois casos deixaram de ser encenados de propósito: lesão, que não tem equivalente visual, e cartão sem cor definida — mostrar vermelho onde houve amarelo seria pior que não mostrar.",
         "As câmeras de pênalti, falta e escanteio são assumidas pelo próprio motor no momento do lance, e ele devolve o plano de transmissão depois.",
         "Para quem quiser conferir desempenho: abrir a partida com ?debug3d=1 mostra um painel com os níveis de detalhe dos atletas, o público e se os modelos 3D carregaram."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.311",
@@ -857,8 +829,7 @@
         "O jogo continua decidindo tudo. O 3D encena o que o motor de partida já decidiu: ele não inventa gol, cartão nem resultado.",
         "Se um arquivo do 3D faltar na sua máquina, a partida cai para o modelo simples em vez de virar tela preta.",
         "Nas próximas etapas entram os eventos encenados um a um, as câmeras de pênalti, falta e escanteio, e a rede do gol que deforma com o chute."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.310",
@@ -869,8 +840,7 @@
         "Lesão passou a ter memória. Quem acabou de voltar fica mais frágil por algumas semanas, e repetir o MESMO tipo de lesão pesa mais que ter tido problemas diferentes — poupar um recém-recuperado finalmente tem efeito.",
         "Dirigir seleção ganhou calendário: próximo jogo, próxima data FIFA e a competição fase a fase.",
         "Correção interna: acesso e rebaixamento tinham duas implementações, e os testes validavam a que o jogo não usa — ela afirmava que clube inglês em 20º não cai."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.308",
@@ -879,8 +849,7 @@
       "itens": [
         "CORREÇÃO (relato de jogador): o leilão abria sozinho e tirava você da partida — ou de qualquer outra tela que estivesse aberta. A tela de leilões é aberta ao fim da coletiva pós-jogo, mas isso só acontece depois de o jogo avançar a semana e gravar o save, o que leva alguns segundos. Quem saía da partida nesse intervalo era levado ao leilão mesmo assim, porque a ida já estava a caminho e nada a cancelava. Agora, se você saiu, a ida é cancelada.",
         "CORREÇÃO (relato de jogador): simular muitas partidas pelo calendário travava na contagem de dias. A tela redesenhava o calendário inteiro a CADA dia simulado — numa simulação longa, mais de duzentas vezes —, e isso se somava ao trabalho pesado de cada semana. A contagem agora é desenhada quinze vezes por segundo, o que reduz o redesenho em cerca de quatro vezes sem mudar nada do que você vê."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.307",
@@ -891,8 +860,7 @@
         "MAIS LEVE: o aplicativo instalado caiu de 917 MB para 739 MB, e o executável que carrega o jogo inteiro de 228 MB para 145 MB. As imagens de estádio foram para WebP (115 MB → 49 MB) e os uniformes deixaram de viajar duas vezes dentro do instalador.",
         "MAIS RÁPIDO EM MÁQUINA MODESTA: o jogo carregava outras cinco telas em segundo plano enquanto você lia a atual, disputando processador com o que estava na sua frente. Agora isso segue o perfil de desempenho — no Econômico não acontece, e nos demais só em tempo ocioso. Medido: as telas lentas caíram de 11 para 8.",
         "As carreiras salvas na nuvem agora mostram hora além da data, e as novas gravam clube, temporada e semana — antes a lista era uma pilha de linhas idênticas chamadas \"Carreira salva\"."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.304",
@@ -905,8 +873,7 @@
         "Dois tecnicos no mesmo campeonato dividem a mesma tabela; em campeonatos diferentes, cada um tem a sua. Clubes de paises diferentes com a mesma sigla deixaram de ser confundidos.",
         "As cartas do elenco na prancheta horizontal ganharam o desenho novo: fundo branco, sem brilho, com o destaque no nome e nos atributos do atleta.",
         "A tela de configuracoes iniciais mostrava \"1.0.283\" havia vinte versoes; agora mostra a versao real do jogo."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.302",
@@ -918,8 +885,7 @@
         "Ao passar o computador, o jogo troca o que é do clube (elenco, caixa, tática, olheiros, negociações) e mantém o que é do mundo (rodada, temporada, tabelas, artilharia). Um técnico nunca vê o elenco do outro.",
         "Confronto entre dois técnicos da mesa não é dirigido ao vivo — seria injusto com quem assiste. É simulado com o que cada um já decidiu, e cada lado entra com a FORÇA DO SEU ELENCO, não com o prestígio do escudo.",
         "Traz também o acumulado das versões desde a 1.0.289."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.289",
@@ -929,8 +895,7 @@
         "CORREÇÃO: o jogo travava por completo ao percorrer os times na criação de carreira. O escudo 3D criava um contexto de vídeo novo a cada troca de time e nunca o devolvia; o navegador suporta cerca de 16 ao mesmo tempo e, passando disso, derruba a página.",
         "Em computador rápido acontecia antes, porque se percorre mais times por minuto.",
         "Em investigação: a demora para ABRIR as telas tem outra causa (a base de clubes viaja inteira no JavaScript)."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.288",
@@ -940,8 +905,7 @@
         "CORREÇÃO: o perfil de desempenho \"Equilibrado\" pedia ao radar 3D a qualidade MÁXIMA (64 mil tufos de grama e sombra 4096). Como ele é o padrão, quase todo jogador rodava a cena mais pesada do motor — e a partida engasgava.",
         "Agora \"Equilibrado\" usa a qualidade média (22 mil tufos, sombra 1024). Quem quiser a cena cheia escolhe \"Qualidade máxima\" nas configurações.",
         "Em investigação: a demora para ABRIR as telas tem outra causa (a base de clubes viaja inteira no JavaScript) e será tratada na próxima versão."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.287",
@@ -953,8 +917,7 @@
         "NOVO: menu reorganizado em quatro seções (Clube, Elenco, Competição, Você).",
         "NOVO: Rankings mundiais com entrada própria no menu.",
         "Uniformes da Arábia Saudita disponíveis pelo canal de atualização."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.284",
@@ -967,8 +930,7 @@
         "NOVO: clubes, atletas e torneios podem ser licenciados um a um; sem licença o jogo usa identidade genérica.",
         "NOVO: atributos, rosto, idade, posição e nacionalidade de atleta editáveis pelo canal.",
         "CORREÇÃO: a lista de clubes do painel administrativo voltou a carregar."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.283",
@@ -980,8 +942,7 @@
         "NOVO: perfis Automático, Econômico, Equilibrado e Qualidade adaptam efeitos ao computador.",
         "MELHORIA: regras escolhidas filtram o calendário real e atualizações preservam dados e preferências do save.",
         "MELHORIA: modal O que há de novo atualizado e mantido com exibição única por versão."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.282",
@@ -996,8 +957,7 @@
         "NOVO: pedidos contextuais à diretoria, com uma prioridade por temporada, e reuniões de comissão configuráveis.",
         "NOVO: carreiras podem começar em Original, Mundo Real ou Seu Mundo.",
         "NOVO: linha do tempo dinâmica e rankings de técnicos, clubes e seleções derivados da carreira."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.281",
@@ -1005,8 +965,7 @@
       "titulo": "Atualizações menores sem reenviar fotos, escudos e uniformes",
       "itens": [
         "MELHORIA: o canal diferencial agora consulta o manifesto já publicado antes de preparar uma versão. Fotos de jogadores, escudos, uniformes e outros arquivos inalterados permanecem na VPS e no computador do jogador; somente conteúdo novo ou alterado entra no próximo envio."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.280",
@@ -1017,8 +976,7 @@
         "NOVO: as 66 funções de jogador (regista, mezzala, falso nove, ponta invertido, líbero, target man...) finalmente mudam a partida. O que pesa é a ADEQUAÇÃO: se os atributos do atleta servem à função que ele recebeu. Um craque lento escalado como ponta velocista rende menos do que o overall promete; um limitado bem empregado rende mais.",
         "NOVO: as sete ordens individuais (liberdade de movimentação, infiltrações, marcação, drible, risco no passe, cruzamento e as chaves especiais) passaram a ter efeito, sempre como troca. Ordens que se anulam entre si — avançar e segurar posição ao mesmo tempo — custam rendimento e são apontadas.",
         "NOVO: a tela de Táticas mostra quantos atletas estão bem empregados, quantos estão fora de função e nomeia os piores casos."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.279",
@@ -1030,8 +988,7 @@
         "MELHORIA: o preenchimento de elenco curto passou a priorizar laterais, volante e pontas — antes sorteava posição sem critério e criava times sem lateral. Atletas provisórios caíram de 9.378 para 9.055, e os clubes que dependem de algum complemento, de 586 para 569.",
         "NOVO: os clubes comandados pela máquina passam a guardar moral, coesão, pressão da torcida e confiança no treinador entre as rodadas. Um vestiário tenso ou fraturado rende menos em campo.",
         "O aviso \"O que há de novo\" volta a aparecer nesta versão — estava parado na 1.0.271."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.277",
@@ -1044,8 +1001,7 @@
         "NOVO: as TÁTICAS finalmente mudam a partida. Doze controles que antes eram enfeite — saída de bola, ritmo, estilo de passe, criação, cruzamento, linha defensiva, pressão e marcação — agora alteram a força do time em campo. Toda escolha é uma troca: nada é ganho de graça.",
         "NOVO: a faixa Efeito do plano, no topo das Táticas, mostra quanto o esquema rende em ataque, meio e defesa — e avisa quando duas ordens se contradizem, como pressão muito alta com linha baixa.",
         "NOVO: o CAPITÃO passa a importar. A moral de quem lidera o vestiário pesa mais que a do resto do elenco, e um capitão insatisfeito derruba o grupo. Veja o painel Clima do vestiário em Elenco > Gerenciamento."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.276",
@@ -1055,8 +1011,7 @@
         "NOVO: converse com o EMPRESÁRIO do atleta. Além de aceitar ou recusar o pedido, agora dá para negociar — contrapropor um valor, prometer minutos em campo ou perguntar o que ele realmente quer. Cada empresário tem seu jeito de negociar, e a relação com ele é mostrada na tela: recusar pedido justo desgasta, e relação rompida faz ele oferecer seu jogador no mercado.",
         "Calendário: cada dia mostra o escudo do adversário, o placar e o logo da competição, agora bem maior e legível.",
         "Os avisos do jogo (\"Fulano quer conversar\") deixaram de aparecer por cima do pré-jogo — agora só surgem no escritório, onde dá para resolvê-los."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.275",
@@ -1066,8 +1021,7 @@
         "CORRIGIDO: era possível ganhar dinheiro infinito colocando o ingresso num valor muito alto — o estádio nunca esvaziava. Agora preço acima do justo afasta o público de verdade, e cobrar caro demais zera a bilheteria.",
         "Nova COMISSÃO TÉCNICA na área do treinador: auxiliar, preparador físico, departamento médico, olheiro, analista e diretoria apontam o que precisa de decisão — escalação irregular, desgaste com substituto sugerido, carência por posição, contratos vencendo, caixa e leitura do próximo adversário.",
         "Infraestrutura do Clube ganhou entrada própria no menu (W) — antes só existia dentro de Configurações."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.274",
@@ -1087,8 +1041,7 @@
         "Sons do jogo tocam junto com a narração do comentarista escolhido.",
         "Uniformes e escudos importados no editor param de sumir a cada atualização.",
         "Abertura do jogo cerca de 17% mais rápida."
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.273",
@@ -1107,8 +1060,7 @@
           "type": "fixed",
           "text": "O JOGO NAO REBAIXA MAIS O LAUNCHER. O instalador do jogo carrega uma copia do instalador do launcher e a executa; essa copia estava congelada em julho, entao instalar o jogo rebaixava o launcher de volta para uma versao antiga."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.272",
@@ -1155,8 +1107,7 @@
           "type": "added",
           "text": "AS ABAS DA CENTRAL PASSARAM A FAZER ALGO. Diretoria abre a reuniao; Atletas escolhe com quem falar; a mensagem de metas da temporada pode ser respondida."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.271",
@@ -1195,8 +1146,7 @@
           "type": "changed",
           "text": "AVISO DE SAIDA NO CONTROLE. Da para escolher entre Sim e Nao pelo direcional, a opcao selecionada aparece marcada e as dicas mostram os botoes do controle ligado — antes so dizia (Enter) e (Esc), que nao existem no joystick."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.270",
@@ -1231,8 +1181,7 @@
           "type": "added",
           "text": "PACOTE DE ARTE: 236 clubes ganharam uniformes (Premier League, La Liga, Serie A e B italianas, Bundesliga 1 e 2, Ligue 1 e 2, Primeira Liga, Hypermotion, Brasileirao, Argentina, Uruguai e Equador), 150 escudos novos entraram no jogo e 330 atletas passaram a ter rosto. Tudo empacotado no jogo, em WebP — nao depende de internet e nao se perde nas proximas atualizacoes."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.269",
@@ -1247,8 +1196,7 @@
           "type": "fixed",
           "text": "O jogo tentava a MESMA imagem quatro vezes antes de desistir. Como o endereco e que estava errado, repetir nunca resolvia — so atrasava a queda para o escudo generico."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.268",
@@ -1267,8 +1215,7 @@
           "type": "fixed",
           "text": "GOL DO ADVERSARIO ERA COMEMORADO. Quando o outro time marcava, a narracao festejava como se o gol fosse seu. Os nove narradores sempre tiveram a locucao certa gravada; ela nunca era tocada. Contusao tambem ganhou som."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.268",
@@ -1311,8 +1258,7 @@
           "type": "fixed",
           "text": "AGUARDAR MAIS UMA SEMANA NAO MEXIA O CALENDARIO. Sem clube, 'Aguardar novas propostas' avancava a semana no save mas nao no relogio do jogo — a data no cabecalho ficava parada."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.267",
@@ -1351,8 +1297,7 @@
           "type": "fixed",
           "text": "ELENCO COMPLETADO COM NOME DE OUTRO PAIS. Onde faltam atletas reais, o jogo preenche o elenco — e um clube japones ou coreano recebia nomes eslavos. Agora o nome combina com o pais do clube."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.264",
@@ -1391,8 +1336,7 @@
           "type": "changed",
           "text": "FUNDO DO MERCADO trocado, e o escurecimento por cima dele foi reduzido: eram tres camadas empilhadas que somavam mais de 70% e faziam a arte praticamente sumir."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.261",
@@ -1423,8 +1367,7 @@
           "type": "fixed",
           "text": "A REDE DE SEGURANCA DO ELENCO so agia na virada da temporada e com piso de 11 atletas — sem banco e sem cobertura para lesao ou suspensao. Passa a agir semana a semana e com folga para escalar de verdade."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.258",
@@ -1463,8 +1406,7 @@
           "type": "fixed",
           "text": "A CENTRAL DE ATUALIZACOES dizia \"nao foi possivel falar com o servidor\" mesmo com o servidor no ar — inclusive quando o motivo era simplesmente os canais estarem desligados nas suas proprias preferencias. Agora cada caso diz o que realmente aconteceu."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.257",
@@ -1503,8 +1445,7 @@
           "type": "fixed",
           "text": "TROCAR DE CLUBE APAGAVA os reforcos ainda na fila e o dinheiro ja pago sumia junto. Agora o valor e estornado antes de a fila ser descartada."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.255",
@@ -1571,8 +1512,7 @@
           "type": "fixed",
           "text": "Os garotos revelados na base passam a ter nome do pais do clube — a base do Ajax nao revela mais Matheus Nascimento."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.252",
@@ -1611,8 +1551,7 @@
           "type": "fixed",
           "text": "HOMONIMO NO ELENCO deixava de escalar o jogador certo — 33 clubes tem dois atletas de mesmo nome. A escalacao agora identifica cada um individualmente."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.251",
@@ -1627,8 +1566,7 @@
           "type": "fixed",
           "text": "FOTO DE JOGADOR PAROU DE SER GUARDADA na atualizacao anterior, porque os escudos ocupavam todo o espaco reservado. Escudo e foto passam a ter espaco proprio, um nao toma o do outro."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.250",
@@ -1651,8 +1589,7 @@
           "type": "improved",
           "text": "ESCUDO FUNCIONA SEM INTERNET. A cópia local guardava só retrato; agora guarda escudo também, e na frente dos retratos na fila de download."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.249",
@@ -1683,8 +1620,7 @@
           "type": "improved",
           "text": "MERCADO MAIS SIMPLES. A busca de atletas ganhou a barra compacta de filtros usada no Mercado de Juniores, reduzindo cartões e etapas desnecessárias."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.248",
@@ -1699,8 +1635,7 @@
           "type": "fixed",
           "text": "OS JOVENS QUE REPOEM APOSENTADOS ESTOURAVAM A FOLHA SOZINHOS. Todo fim de temporada o clube recebe garotos no lugar de quem pendurou as chuteiras, e eles entravam com salario cheio de profissional, tambem sem olhar a divisao — ate 33 vezes o valor correto na Serie D. Como e automatico, a folha subia todo ano sem o tecnico fazer nada e sem aparecer em tela nenhuma. Passa a usar a mesma conta do botao Promover."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.247",
@@ -1711,8 +1646,7 @@
           "type": "fixed",
           "text": "FILTRO DE TIME TRAVADO EM \"QUALQUER\". Ao escolher uma liga na busca de atletas, a lista de Times ficava vazia e nao dava para ver so os jogadores de um clube — valia para qualquer liga. As opcoes de liga sao mostradas com o pais junto (\"Serie A (Brasil)\") e a comparacao interna usava o nome sem o pais, entao nunca batia. Agora escolher a liga preenche a lista de times normalmente."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.246",
@@ -1739,8 +1673,7 @@
           "type": "fixed",
           "text": "ESCUDOS DESENHADOS NO MERCADO DE JUNIORES. Os clubes formadores fora da lista principal apareciam com um escudo improvisado de iniciais. Agora 2.979 clubes exibem o escudo real."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.245",
@@ -1771,8 +1704,7 @@
           "type": "improved",
           "text": "Escalacao, formacao e partida: os cards deixam de se sobrepor com a escala do Windows em 150%, goleiro e zagueiro central saem da mesma coluna, a escalacao salva para de ser descartada, e o jogo nao trava mais no gol, no penalti nem no cartao vermelho."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.244",
@@ -1799,8 +1731,7 @@
           "type": "fixed",
           "text": "NOTICIAS SEM INTERNET. Offline o jogo nao fica mais esperando por manchetes que nao vao chegar, e o campo de noticias encolhe para o tamanho do que ele tem de fato: as noticias da sua propria carreira, geradas a partir dos resultados, da tabela, da artilharia e das lesoes."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.243",
@@ -1811,8 +1742,7 @@
           "type": "fixed",
           "text": "AS FOTOS NAO APARECIAM NO APLICATIVO INSTALADO. As imagens estavam instaladas no computador e o jogo sabia o endereco de cada uma, mas pedia por um caminho que nao existe dentro do aplicativo — as fotos ficam guardadas noutro lugar, alcancavel so por um endereco interno. O pedido falhava em silencio e o atleta caia nas iniciais. Agora, quando o primeiro endereco falha, o jogo tenta o outro automaticamente. Vale para os rostos do pacote, para as fotos que voce licencia no editor e tambem no navegador, onde o problema e o inverso."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.242",
@@ -1835,8 +1765,7 @@
           "type": "fixed",
           "text": "VENDA ACERTADA FORA DA JANELA SE PERDIA. Com a janela de transferencias fechada — o que vale em 30 das 52 semanas do ano — a venda ficava acertada para quando ela abrisse, mas o acerto sumia ao trocar de tela e o garoto voltava inteiro, sem venda e sem dinheiro. Agora fica gravado na hora. O mesmo valia para peneira, emprestimo e as evolucoes da base."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.240",
@@ -1863,8 +1792,7 @@
           "type": "changed",
           "text": "EM CONFIGURACOES sairam \"Conectar a servidores\" e \"Atualizar automaticamente\". Os dois governavam a atualizacao por partes; sem ela, comandariam nada. Estar na ultima versao deixou de ser preferencia — e o que faz o online falar a mesma lingua entre todo mundo."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.239",
@@ -1883,8 +1811,7 @@
           "type": "fixed",
           "text": "PROMOVER PODIA DUPLICAR O ATLETA. A promocao nao gravava imediatamente: promover e trocar de tela em seguida podia devolver o garoto a base enquanto ele ja estava no elenco profissional — o mesmo jogador em dois lugares. Vale tambem para dispensar e para a compra no mercado de juniores, que passaram pelo mesmo conserto."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.238",
@@ -1899,8 +1826,7 @@
           "type": "improved",
           "text": "Quem JA tinha posicao de verdade nao foi tocado. O Atletico de Madrid tem tres laterais-esquerdos e dois direitos na fonte, e o Empoli tem nove meias confirmados: forcar posicao neles seria trocar dado real por um numero mais bonito. Goleiro tambem nunca e redistribuido."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.237",
@@ -1927,8 +1853,7 @@
           "type": "fixed",
           "text": "FOTO LICENCIADA SUMIA ENTRE UMA VERSAO E OUTRA. A imagem era registrada num lugar que era refeito do zero a cada geracao do jogo, entao ela desaparecia sem aviso — o atleta voltava para a silhueta e o arquivo continuava no disco, intacto. 17 fotos ja tinham sumido assim. Agora o registro e feito nas duas fontes e sobrevive."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.236",
@@ -1943,8 +1868,7 @@
           "type": "improved",
           "text": "XARA NAO ROUBA MAIS ROSTO. O registro por nome so vale para nomes UNICOS no acervo: 178 casos de dois atletas com o mesmo nome ficaram de fora de proposito, porque a silhueta e melhor do que mostrar a cara de outra pessoa."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.235",
@@ -1963,8 +1887,7 @@
           "type": "fixed",
           "text": "A LIGA DA COLOMBIA APARECIA COM O NOME ERRADO. Alem de os clubes caírem no balde 'Internacional' (corrigido antes), a liga deles ainda era exibida como 'PRIMERA A COL' — um rotulo gerado automaticamente — porque o mesmo erro de digitacao estava tambem no mapa de nomes. Agora aparece 'Primera A', como deve ser."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.234",
@@ -1979,8 +1902,7 @@
           "type": "improved",
           "text": "Linux, macOS e a versao web voltam para a mesma versao do Windows. Elas tinham ficado para tras nas ultimas publicacoes: quem jogava pelo navegador ou fora do Windows estava duas versoes atras, sem o fundo que se alterna na tela principal, sem os escudos corrigidos no Mercado de Juniores e sem o radar desacelerado."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.233",
@@ -1999,8 +1921,7 @@
           "type": "fixed",
           "text": "O RADAR CORRIA DEMAIS. O movimento era interpolado por QUADRO e nao por tempo: a 60fps o atleta cobria quase toda a distancia em menos de meio segundo. Pior, o radar ja roda a 30fps quando o sistema pede movimento reduzido — a mesma partida se movia na metade da velocidade dependendo da maquina. Agora o ritmo e por tempo, igual em qualquer PC, e cerca de 40% do que era. So o chute continua rapido."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.231",
@@ -2019,8 +1940,7 @@
           "type": "fixed",
           "text": "A LIGA DA COLOMBIA APARECIA COMO 'INTERNACIONAL'. Os 20 clubes da Liga BetPlay estavam jogados no balde de internacionais em vez de terem a propria liga no editor. A causa era uma letra: o mapa de paises escrevia a liga em portugues ('primeira_a_col') e ela se chama 'primera_a_col', em espanhol — a busca nunca casava e todo clube colombiano caia no balde."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.230",
@@ -2047,8 +1967,7 @@
           "type": "fixed",
           "text": "O RADAR ENCENAVA O LANCE ERRADO. O motor guarda os eventos com o mais novo na frente e a escolha varria a lista ao contrario: aos 66 minutos a bola ainda voava para o gol de quem tinha finalizado aos 3. Pior, a reacao re-disparava a cada lance novo, sempre com o mesmo evento velho. Agora o radar reage ao lance mais recente, e uma vez por lance."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.229",
@@ -2079,8 +1998,7 @@
           "type": "fixed",
           "text": "PROPOSTA DE SELECAO NAO ERA SALVA. Aceitar levava direto ao escritorio, e a troca de tela acontecia antes de a decisao ser gravada: o convite continuava aberto como se nada tivesse sido aceito. Pior, a trava de 'uma rodada de convites por temporada' se perdia a cada troca de tela, entao as mesmas propostas voltavam sozinhas. As duas coisas foram corrigidas: a decisao e gravada antes de sair da tela e a trava passou a viver no save."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.228",
@@ -2135,8 +2053,7 @@
           "type": "improved",
           "text": "O LAUNCHER NAO PRECISA MAIS SER ATUALIZADO. Os enderecos dos servidores eram fixos dentro do programa: se a VPS trocasse de IP, o launcher instalado virava tijolo e nem conseguia baixar a propria correcao. Agora ele descobre os enderecos ao abrir e guarda uma copia para funcionar offline — mudar de servidor no futuro nao exige que ninguem reinstale nada."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.227",
@@ -2163,8 +2080,7 @@
           "type": "fixed",
           "text": "SAIR DO CLUBE NAO LIMPAVA O CLUBE. Quem era demitido continuava com o elenco, a tabela e o mercado do time que acabou de deixar — e seguia recebendo proposta por atleta que ja nao era dele enquanto procurava emprego. O motor agora e zerado na saida."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.226",
@@ -2195,8 +2111,7 @@
           "type": "improved",
           "text": "Ultrafoot de Bolso (Android) 1.0.1: a tela gira (o jogo tem layout largo e estava travado em retrato), o botao voltar no menu principal pede confirmacao antes de fechar o app, e voltar do segundo plano recupera o jogo sozinho quando o Android encerrou a WebView."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.225",
@@ -2223,8 +2138,7 @@
           "type": "improved",
           "text": "A prancheta do elenco pode ficar horizontal sem gravar a formacao de lado."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.218",
@@ -2287,8 +2201,7 @@
           "type": "improved",
           "text": "Quem registrou o jogo ganha extras: save na nuvem, FC Hub, editor de equipes, Central de Atualizacoes e carreiras ilimitadas. Sem registro o jogo continua completo — nada trava no meio."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.211",
@@ -2319,8 +2232,7 @@
           "type": "fixed",
           "text": "Barras de rolagem, brilho do placar e o anel de foco de acessibilidade ficavam verde-agua em qualquer tema. Agora seguem a cor escolhida."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.210",
@@ -2355,8 +2267,7 @@
           "type": "fixed",
           "text": "Faixa morta no pe das telas do Mercado: a altura era calculada por subtracao chumbada e o palpite errava — sobrava espaco vazio em telas grandes e cortava conteudo nas menores."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.209",
@@ -2399,8 +2310,7 @@
           "type": "fixed",
           "text": "Championship marcava três acessos diretos quando são dois, mais o playoff do 3º ao 6º — que a tabela nunca mostrava."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.201",
@@ -2415,8 +2325,7 @@
           "type": "fixed",
           "text": "Folha salarial que só subia: um gasto avulso (quitar dívida, obra) virava despesa semanal para sempre."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.200",
@@ -2435,8 +2344,7 @@
           "type": "added",
           "text": "Central de Atualizações: elencos e times novos sem reinstalar, e só quando você autoriza."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.198",
@@ -2451,8 +2359,7 @@
           "type": "fixed",
           "text": "Avançar no calendário não simula mais a sua própria partida."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.196",
@@ -2463,8 +2370,7 @@
           "type": "added",
           "text": "Escudos, uniformes e fotos editados aparecem para todos os jogadores, inclusive na versão web."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.195",
@@ -2475,8 +2381,7 @@
           "type": "added",
           "text": "Telas de convocação, competições e amistosos da seleção."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.188",
@@ -2491,8 +2396,7 @@
           "type": "added",
           "text": "Atualização automática também no Linux e no macOS."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.175",
@@ -2519,8 +2423,7 @@
           "type": "fixed",
           "text": "Escudos importados pelo usuário passam a vencer o mapa padrão."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.150",
@@ -2539,8 +2442,7 @@
           "type": "fixed",
           "text": "Correções da auditoria e códigos de país normalizados."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.145",
@@ -2554,8 +2456,7 @@
           "type": "changed",
           "text": "Ligas europeias e estaduais ajustados às datas informadas."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.144",
@@ -2569,8 +2470,7 @@
           "type": "added",
           "text": "Treino de entrosamento na data FIFA."
         }
-      ],
-      "latest": false
+      ]
     }
   ]
 }
