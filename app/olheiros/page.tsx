@@ -36,7 +36,10 @@ import {
 } from "lucide-react"
 import type { Scout } from "@/lib/game-engine"
 import { useGameState } from "@/lib/save-system"
-import { createScoutingDepartment, createScoutMission, departmentReputationLabel, departmentScoutSeverance, fireDepartmentScout, generatePerformanceAnalysis, hireDepartmentScout, type ScoutMissionType, type ScoutTier } from "@/lib/scout-engine"
+import { getTeamByShort } from "@/lib/teams-data"
+import { aiTacticForClub, cargaDaTatica } from "@/lib/tactics-engine"
+import { estiloDoAdversario } from "@/lib/plano-contra-o-adversario"
+import { createScoutingDepartment, createScoutMission, departmentReputationLabel, departmentScoutSeverance, fireDepartmentScout, generatePerformanceAnalysis, hireDepartmentScout, type EntradaDaAnalise, type ScoutMissionType, type ScoutTier } from "@/lib/scout-engine"
 import { formatCurrency } from "@/lib/currency"
 import { calcularFama, faixaDeOverall } from "@/lib/player-fame"
 
@@ -191,7 +194,54 @@ export default function OlheirosPage() {
     const scout=department.scouts.find(item=>!item.missionId);if(!scout)return
     setSaveState({scoutingDepartment:createScoutMission(department,{id:`mission-${Date.now()}`,scoutId:scout.id,type,region:scout.tier==="regional"?"Brasil":"Mundo",ageMin:type==="young"?15:undefined,ageMax:type==="young"?20:undefined,startedWeek:gameEngine.currentWeek,durationWeeks:Math.max(2,7-department.observationCentreLevel),progressWeeks:0,status:"active"})})
   }
-  const analyzePerformance = () => setSaveState({scoutingDepartment:{...department,lastAnalysis:generatePerformanceAnalysis(gameEngine.currentWeek,department.dataCentreLevel)}})
+  /**
+   * A ANÁLISE DO CENTRO DE DADOS.
+   *
+   * ⚠️ Até a 1.0.382 este botão gravava TEXTO CHUMBADO: as mesmas frases
+   * ("Monitore a fadiga dos laterais") para qualquer elenco, qualquer
+   * adversário, qualquer temporada — e o nível do centro de dados só CORTAVA a
+   * lista fixa. Agora cada linha sai de um número do save, e o adversário é
+   * lido pela mesma régua que a preparação e a partida usam (`cargaDaTatica` →
+   * `estiloDoAdversario`): um relatório que enxergasse um time diferente do que
+   * entra em campo seria pior que relatório nenhum.
+   */
+  const analyzePerformance = () => {
+    const proxima = saveState.fixtures?.find(f => !f.played && f.isUserMatch)
+    const rivalCurto = proxima
+      ? (proxima.homeCurto === saveState.selectedTeamShort ? proxima.awayCurto : proxima.homeCurto)
+      : null
+    const rival = rivalCurto ? getTeamByShort(rivalCurto) : null
+    let adversario: EntradaDaAnalise["adversario"] = null
+    if (rival) {
+      const carga = cargaDaTatica(aiTacticForClub(rival.curto))
+      adversario = {
+        nome: rival.nome,
+        estilo: estiloDoAdversario({
+          pressao: carga.pressingLoad,
+          transicao: carga.transitionLoad,
+          mentalidade: saveState.posturasDaIA?.[rival.curto] ?? "equilibrado",
+        }),
+        dossie: gameEngine.opponentAnalyses.find(a => a.teamShort === rival.curto)?.analysisProgress ?? 0,
+      }
+    }
+    setSaveState({ scoutingDepartment: { ...department, lastAnalysis: generatePerformanceAnalysis({
+      week: gameEngine.currentWeek,
+      season: gameEngine.currentSeason,
+      dataLevel: department.dataCentreLevel,
+      elenco: gameEngine.squadPlayers.map(p => ({
+        name: p.name, position: p.position, age: p.age, overall: p.overall,
+        energy: p.energy, form: p.form, moralePoints: p.moralePoints,
+        injuryWeeks: p.injury?.weeksRemaining ?? 0,
+        seasonYellows: p.seasonYellows,
+        // `contract.endDate` é semana absoluta; a análise pensa em temporada.
+        // A conversão é a mesma que `app/performance` já usa.
+        contractEndSeason: p.contract
+          ? gameEngine.currentSeason + Math.floor(Math.max(0, p.contract.endDate - gameEngine.currentWeek) / 52)
+          : undefined,
+      })),
+      adversario,
+    }) } })
+  }
 
   const tabs = [
     { id: "meus_olheiros", label: "Meus Olheiros", icon: Users },
@@ -244,6 +294,12 @@ export default function OlheirosPage() {
                       <p className="text-[10px] text-white/40">
                         {s.tier.replace("_", " ")} · {formatCurrency(s.monthlySalary)}/mês
                         {s.missionId ? " · em missão" : " · livre"}
+                        {/* Missão encerrada sem ninguém no perfil pedido. Antes desta
+                            versão o departamento inventava um atleta em vez de dizer
+                            isto — ver `ScoutMission.semAchados`. */}
+                        {!s.missionId && department.missions.some(m => m.scoutId === s.id && m.semAchados) && (
+                          <span className="text-amber-300"> · última missão não achou ninguém no perfil</span>
+                        )}
                       </p>
                     </div>
                     <button
