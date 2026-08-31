@@ -311,10 +311,14 @@
       "version": "1.0.384",
       "data": "2026-08-31",
       "latest": true,
-      "titulo": "Copa da liga em Portugal, Escocia, Japao e Argentina",
+      "titulo": "Cinquenta supercopas nacionais, copa da liga em quatro paises e as copas de fachada",
       "itens": [
-        "QUATRO PAISES GANHAM A COPA DA LIGA DELES. A Taca da Liga em Portugal, a Scottish League Cup na Escocia, a Levain Cup no Japao e a Copa de la Liga Profesional na Argentina passam a ser disputadas ao lado da copa nacional — como a Carabao Cup na Inglaterra. Sao dez divisoes com duas copas, contra seis antes.",
-        "E A COPA NACIONAL DESSES PAISES CONTINUA NO LUGAR DELA. Escocia, Japao e Argentina tinham a copa montada por um caminho reserva do calendario, e acrescentar a copa da liga sozinha teria feito ela TOMAR o lugar da Scottish Cup, da Copa do Imperador e da Copa Argentina. Somar uma competicao teria tirado tres. As tres entraram no catalogo junto, e agora uma verificacao automatica impede que isso volte a acontecer com qualquer pais."
+        "CINQUENTA PAISES PASSAM A DISPUTAR A SUPERCOPA DELES, contra dezoito na atualizacao passada. Entram Polonia, Ucrania, Romenia, Hungria, Bulgaria, Belarus, Israel, Irlanda, Irlanda do Norte, Islandia, Estonia, Letonia, Lituania, Moldavia, Georgia, Armenia, Albania, Kosovo, Eslovenia, Malta, Ilhas Faroe, Noruega, Cazaquistao, Chipre, Paraguai e Peru — a temporada de cada um agora abre com o campeao da liga contra o campeao da copa.",
+        "E SEIS SUPERCOPAS FEMININAS: Brasil, Espanha, Italia, Franca, Portugal e Mexico. O feminino e modalidade propria desde a 1.0.322 e seguia sem nenhuma.",
+        "SO ENTRA QUEM DISPUTA UMA DE VERDADE, como na atualizacao passada. Austria, Croacia, Eslovaquia e Suecia tinham supercopa e ENCERRARAM; Suica, Luxemburgo, Pais de Gales, Bosnia e Finlandia nunca tiveram. Inventar um torneio para preencher a tabela e pior que a ausencia: quem percebe que a competicao nao existe passa a duvidar do resto do calendario.",
+        "COPA DA LIGA EM QUATRO PAISES NOVOS: a Taca da Liga em Portugal, a Scottish League Cup na Escocia, a Levain Cup no Japao e a Copa de la Liga Profesional na Argentina, ao lado da copa nacional — como a Carabao Cup na Inglaterra. Sao dez divisoes com duas copas, contra seis.",
+        "E A COPA NACIONAL DESSES PAISES CONTINUA NO LUGAR DELA. Escocia, Japao e Argentina tinham a copa montada por um caminho reserva do calendario, e acrescentar so a copa da liga teria feito ela TOMAR o lugar da Scottish Cup, da Copa do Imperador e da Copa Argentina. Somar uma competicao teria tirado tres. As tres entraram junto, e uma verificacao automatica passa a impedir que isso aconteca com qualquer pais.",
+        "TRINTA E SETE PAISES TINHAM COPA DE FACHADA. Albania, Polonia, Ucrania, Suica, Suecia, Irlanda e outras trinta e uma federacoes disputavam algo chamado literalmente 'Copa nacional — <pais>', um rotulo de preenchimento que aparecia no calendario como se fosse torneio. Todas passam a ter a copa de verdade: Puchar Polski, Magyar Kupa, FAI Cup, Irish Cup, Schweizer Cup, Svenska Cupen, Suomen Cup, Coppa Titano e as demais."
       ]
     },
     {

@@ -40,7 +40,7 @@ const PISO = {
   paises: 72,
   comCopaNacional: 154,
   comSegundaCopa: 10,
-  comSupercopa: 18,
+  comSupercopa: 50,
   clubesFemininosComElencoReal: 194,
 }
 
@@ -70,6 +70,12 @@ function ehPrimeiraDivisao(divisao: string): boolean {
   return !/(_2$|_2_|_b$|serie_b|serie_c|serie_d|championship|league_one|league_two|national_league|_federacion|liga_3|segunda|primera_b|obos|superettan|tff_1|tff_2|challenger|first_national|k_league_2|j2_|china_league|_lig$|first_div|_first$|eerste|betplay|simon_bolivar|liga_2|intermedia|_champ$)/i.test(divisao)
 }
 
+/** "Copa Nacional" e "Copa nacional — Albania" sao rotulos, nao competicoes. */
+function ehNomeDeFachada(nome: string): boolean {
+  return nome === "Copa Nacional" || /^Copa nacional\s*[—-]/i.test(nome)
+}
+
+const copasDeFachada: string[] = []
 const paises = new Set()
 let divisoes = 0, comCopaNacional = 0, comSegundaCopa = 0, comSupercopa = 0
 const semSupercopa = []
@@ -79,7 +85,14 @@ for (const [divisao, c] of Object.entries(LEAGUE_COMPETITIONS)) {
   if (!c.country || c.country === "Internacional") continue
   divisoes++
   paises.add(c.country)
-  if (c.domesticCup && c.domesticCup !== "Copa Nacional") comCopaNacional++
+  // ⚠️ NOME DE FACHADA TAMBEM E AUSENCIA (1.0.384). As 37 federacoes da
+  // expansao UEFA nasciam com `domesticCup: "Copa nacional — <pais>"`, e esta
+  // contagem so recusava a string exata "Copa Nacional": elas entravam como
+  // copa de verdade e o jogador via no calendario um torneio que nao existe com
+  // esse nome. Contar fachada como entrega faz a medida MENTIR na direcao mais
+  // perigosa — a que diz que nao ha trabalho a fazer.
+  if (c.domesticCup && !ehNomeDeFachada(c.domesticCup)) comCopaNacional++
+  else copasDeFachada.push(`${c.country} (${divisao}): "${c.domesticCup}"`)
   if (c.superCup) comSupercopa++
   // ⚠️ SEGUNDA DIVISAO NAO TEM SUPERCOPA em lugar nenhum do mundo, e listar
   // "Serie B sem supercopa" como lacuna e ruido que faz a fila parecer maior do

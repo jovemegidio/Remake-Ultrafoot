@@ -129,17 +129,17 @@ const LEAGUE_COMPETITIONS_BASE: Record<string, CountryCompetitions> = {
   // mesmas onze que tinham menos de oito clubes e agora foram completadas pelo
   // pool (ver completarLigaComPool em lib/teams-data): sem estas entradas, o
   // campeonato ficava de pe mas a copa e a continental continuavam genericas.
-  primera_div_per: { country: "Peru", domesticCup: "Copa de la Liga", ...CONMEBOL, hasStateChampionship: false },
+  primera_div_per: { country: "Peru", domesticCup: "Copa de la Liga", superCup: "Supercopa Peruana", ...CONMEBOL, hasStateChampionship: false },
   primera_div_ven: { country: "Venezuela", domesticCup: "Copa Venezuela", ...CONMEBOL, hasStateChampionship: false },
   primera_div_bol: { country: "Bolivia", domesticCup: "Copa Bolivia", ...CONMEBOL, hasStateChampionship: false },
-  primera_div_par: { country: "Paraguai", domesticCup: "Copa Paraguai", ...CONMEBOL, hasStateChampionship: false },
+  primera_div_par: { country: "Paraguai", domesticCup: "Copa Paraguai", superCup: "Supercopa Paraguai", ...CONMEBOL, hasStateChampionship: false },
   super_league_gre: { country: "Grecia", domesticCup: "Copa da Grecia", ...UEFA },
   superliga_den: { country: "Dinamarca", domesticCup: "Copa da Dinamarca", ...UEFA },
   fortuna_liga_cze: { country: "Chequia", domesticCup: "Copa da Chequia", ...UEFA },
   premyer_liqa_aze: { country: "Azerbaijao", domesticCup: "Copa do Azerbaijao", ...UEFA },
-  eliteserien_nor: { country: "Noruega", domesticCup: "Copa da Noruega", ...UEFA },
-  protathlima_cyp: { country: "Chipre", domesticCup: "Copa do Chipre", ...UEFA },
-  premier_liga_kaz: { country: "Cazaquistao", domesticCup: "Copa do Cazaquistao", ...UEFA },
+  eliteserien_nor: { country: "Noruega", domesticCup: "Copa da Noruega", superCup: "Mesterfinalen", ...UEFA },
+  protathlima_cyp: { country: "Chipre", domesticCup: "Copa do Chipre", superCup: "Supercopa do Chipre", ...UEFA },
+  premier_liga_kaz: { country: "Cazaquistao", domesticCup: "Copa do Cazaquistao", superCup: "Supercopa do Cazaquistao", ...UEFA },
   betinia_liga: { country: "Dinamarca", domesticCup: "Copa da Dinamarca", ...UEFA },
   obos_ligaen: { country: "Noruega", domesticCup: "Copa da Noruega", ...UEFA },
   second_div_cyp: { country: "Chipre", domesticCup: "Copa do Chipre", ...UEFA },
@@ -161,14 +161,74 @@ const LEAGUE_COMPETITIONS_BASE: Record<string, CountryCompetitions> = {
   super_league_2_gre: { country: "Grecia", domesticCup: "Copa da Grecia", ...UEFA },
 }
 
+/**
+ * COPA NACIONAL E SUPERCOPA DAS FEDERACOES DA EXPANSAO UEFA.
+ *
+ * ⚠️ ELAS NASCERAM COM NOME DE FACHADA. O laco abaixo dava a todas
+ * `domesticCup: "Copa nacional — <pais>"`, e o portao de paridade contava isso
+ * como copa de verdade (ele so recusa a string exata "Copa Nacional"). Trinta e
+ * sete paises apareciam no calendario disputando uma competicao que nao existe
+ * com esse nome — o mesmo defeito que a auditoria de 31/07 achou nas dezoito
+ * divisoes masculinas, sobrevivendo num canto novo.
+ *
+ * ⚠️ A SUPERCOPA SO ENTRA ONDE E DISPUTADA HOJE, a mesma regra da 1.0.383.
+ * Ficam de fora, de proposito: Austria, Croacia, Eslovaquia e Suecia (tinham e
+ * ENCERRARAM), e Suica, Luxemburgo, Pais de Gales, Bosnia, Montenegro e
+ * Finlandia (nunca disputaram). Preencher a tabela com torneio que nao existe e
+ * pior que a ausencia: quem percebe passa a duvidar do resto do calendario.
+ */
+const COMPETICOES_DA_EXPANSAO_UEFA: Record<string, { copa: string; supercopa?: string }> = {
+  "Albania": { copa: "Copa da Albania", supercopa: "Supercopa da Albania" },
+  "Andorra": { copa: "Copa Constitucio" },
+  "Armenia": { copa: "Copa da Armenia", supercopa: "Supercopa da Armenia" },
+  "Austria": { copa: "OFB-Cup" },
+  "Belarus": { copa: "Copa de Belarus", supercopa: "Supercopa de Belarus" },
+  "Bosnia e Herzegovina": { copa: "Copa da Bosnia" },
+  "Bulgaria": { copa: "Copa da Bulgaria", supercopa: "Supercopa da Bulgaria" },
+  "Croacia": { copa: "Copa da Croacia" },
+  "Eslovaquia": { copa: "Copa da Eslovaquia" },
+  "Eslovenia": { copa: "Copa da Eslovenia", supercopa: "Supercopa da Eslovenia" },
+  "Estonia": { copa: "Copa da Estonia", supercopa: "Supercopa da Estonia" },
+  "Finlandia": { copa: "Suomen Cup" },
+  "Georgia": { copa: "Copa da Georgia", supercopa: "Supercopa da Georgia" },
+  "Gibraltar": { copa: "Rock Cup" },
+  "Hungria": { copa: "Magyar Kupa", supercopa: "Supercopa da Hungria" },
+  "Ilhas Faroe": { copa: "Copa das Ilhas Faroe", supercopa: "Supercopa das Ilhas Faroe" },
+  "Irlanda": { copa: "FAI Cup", supercopa: "President's Cup" },
+  "Irlanda do Norte": { copa: "Irish Cup", supercopa: "Charity Shield" },
+  "Islandia": { copa: "Copa da Islandia", supercopa: "Supercopa da Islandia" },
+  "Israel": { copa: "Copa do Estado", supercopa: "Supercopa de Israel" },
+  "Kosovo": { copa: "Copa do Kosovo", supercopa: "Supercopa do Kosovo" },
+  "Letonia": { copa: "Copa da Letonia", supercopa: "Supercopa da Letonia" },
+  "Liechtenstein": { copa: "Copa de Liechtenstein" },
+  "Lituania": { copa: "Copa da Lituania", supercopa: "Supercopa da Lituania" },
+  "Luxemburgo": { copa: "Copa de Luxemburgo" },
+  "Macedonia do Norte": { copa: "Copa da Macedonia do Norte" },
+  "Malta": { copa: "Copa de Malta", supercopa: "Supercopa de Malta" },
+  "Moldavia": { copa: "Copa da Moldavia", supercopa: "Supercopa da Moldavia" },
+  "Montenegro": { copa: "Copa de Montenegro" },
+  "Pais de Gales": { copa: "Copa de Gales" },
+  "Polonia": { copa: "Puchar Polski", supercopa: "Supercopa da Polonia" },
+  "Romenia": { copa: "Copa da Romenia", supercopa: "Supercopa da Romenia" },
+  "San Marino": { copa: "Coppa Titano" },
+  "Servia": { copa: "Copa da Servia" },
+  "Suecia": { copa: "Svenska Cupen" },
+  "Suica": { copa: "Schweizer Cup" },
+  "Ucrania": { copa: "Copa da Ucrania", supercopa: "Supercopa da Ucrania" },
+}
+
 for (const federation of UEFA_EXPANSION_FEDERATIONS) {
   for (const division of [federation.top, federation.second]) {
     if (!division?.participants.length) continue
     // Vai para a BASE, e nao para o objeto exportado: este laço roda antes de o
     // derivado existir, e é a base que a derivação lê.
+    const reais = COMPETICOES_DA_EXPANSAO_UEFA[federation.country]
     LEAGUE_COMPETITIONS_BASE[division.id] = {
       country: federation.country,
-      domesticCup: `Copa nacional — ${federation.country}`,
+      domesticCup: reais?.copa ?? `Copa nacional — ${federation.country}`,
+      // ⚠️ SUPERCOPA SO NA PRIMEIRA DIVISAO: quem disputa e o campeao da liga
+      // contra o da copa, e a segunda divisao nao tem nem um nem outro.
+      ...(division.id === federation.top?.id && reais?.supercopa ? { superCup: reais.supercopa } : {}),
       ...UEFA,
     }
   }
@@ -190,10 +250,29 @@ for (const federation of UEFA_EXPANSION_FEDERATIONS) {
 // participantes entre os clubes das divisões MASCULINAS por estado, então
 // declarar `true` aqui colocaria o Corinthians feminino num Paulistão de clubes
 // masculinos. Estadual feminino é trabalho de dado próprio, não de flag.
+/**
+ * SUPERCOPA FEMININA, onde ela e disputada de verdade.
+ *
+ * ⚠️ MESMA REGRA DA 1.0.383, aplicada ao feminino: so entra quem tem uma. Ficam
+ * de fora a Inglaterra, a Alemanha, os Estados Unidos, a Holanda e o Japao, que
+ * nao disputam supercopa feminina — e a chave e a PRIMEIRA divisao apenas
+ * (`brasileirao_fem_a1`, nunca a A2), porque quem joga a supercopa e o campeao
+ * da liga contra o campeao da copa.
+ */
+const SUPERCOPAS_FEMININAS: Record<string, string> = {
+  brasileirao_fem_a1: "Supercopa do Brasil Feminina",
+  liga_f_esp: "Supercopa da Espanha Feminina",
+  serie_a_fem_ita: "Supercopa da Italia Feminina",
+  premiere_ligue_fra: "Trofeu das Campeas",
+  campeonato_fem_por: "Supertaca Feminina",
+  liga_mx_femenil: "Campeon de Campeonas",
+}
+
 for (const liga of LIGAS_FEMININAS) {
   LEAGUE_COMPETITIONS_BASE[liga.id] = {
     country: liga.pais,
     domesticCup: liga.copaNacional,
+    ...(SUPERCOPAS_FEMININAS[liga.id] ? { superCup: SUPERCOPAS_FEMININAS[liga.id] } : {}),
     continental: liga.continental ?? "—",
     continentalSecondary: liga.continentalSecundaria ?? null,
     hasStateChampionship: false,
