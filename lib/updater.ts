@@ -1,5 +1,6 @@
 import { isTauri } from "@/lib/game-asset"
 import { buscarJson } from "@/lib/buscar-json"
+import { EM_LOJA } from "@/lib/loja"
 
 export interface InGameUpdateOffer {
   version: string
@@ -9,7 +10,7 @@ export interface InGameUpdateOffer {
 /**
  * BUILD DE LOJA (Steam, Epic, GOG).
  *
- * Ligada por `NEXT_PUBLIC_ULTRAFOOT_LOJA=1` no build — ver scripts/build-loja.mjs.
+ * Ligada pelo build de loja — ver `lib/loja.ts` e scripts/build-loja.mjs.
  *
  * Numa loja quem distribui atualização é a própria plataforma, pelos depots
  * dela. Um jogo que busca versão nova por fora quebra a verificação de
@@ -17,8 +18,15 @@ export interface InGameUpdateOffer {
  * nada aqui vai à rede: as duas funções abaixo devolvem "sem atualização" na
  * primeira linha, então nem o aviso do boot nem a tela de Atualizações
  * consultam nada.
+ *
+ * ⚠️ NÃO VOLTE A LER `process.env` AQUI. Isto era
+ * `process.env.NEXT_PUBLIC_ULTRAFOOT_LOJA === "1"`, e a igualdade com a string
+ * literal amarrava o arquivo a UM valor: um build feito com "steam" passava
+ * por esta linha como se não fosse loja, e o jogo voltava a consultar o
+ * latest.json e a oferecer "atualize pelo launcher" para quem comprou na
+ * Steam. Uma leitura só, em `lib/loja.ts`.
  */
-export const BUILD_DE_LOJA = process.env.NEXT_PUBLIC_ULTRAFOOT_LOJA === "1"
+export const BUILD_DE_LOJA = EM_LOJA
 
 /**
  * O jogo NÃO se atualiza mais sozinho — quem baixa e instala novas versões é o
@@ -44,7 +52,8 @@ export type UpdateCheckResult = "current" | "available" | "unavailable"
 // launcher-desktop-1.0.19 e o latest.json do jogo está em build-1.0.201.
 //
 // A VPS serve sempre o manifesto do JOGO, então é ela que vem primeiro.
-const LATEST_JSON_VPS = "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json"
+import { SERVIDOR_DOWNLOADS } from "@/lib/servidor-ultrafoot"
+const LATEST_JSON_VPS = `${SERVIDOR_DOWNLOADS}/latest.json`
 const LATEST_JSON_GITHUB =
   "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json"
 

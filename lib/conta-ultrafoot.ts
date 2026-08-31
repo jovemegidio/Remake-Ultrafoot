@@ -29,7 +29,8 @@
 // perde é só o catálogo de saves, que é conveniência. Nenhuma função deste
 // arquivo pode lançar exceção para quem está jogando.
 
-const BASE = "https://ultrafoot.179-198-103-30.sslip.io/auth"
+import { SERVIDOR_AUTH } from "@/lib/servidor-ultrafoot"
+const BASE = SERVIDOR_AUTH
 
 /** O mesmo endereço, para quem precisa ler o CORPO do erro que o servidor manda
  *  (`chamarConta` devolve só `null`, e "não foi possível" no lugar de "espere um

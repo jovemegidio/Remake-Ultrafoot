@@ -23,9 +23,10 @@
 import { useEffect } from "react"
 import { useGameState } from "@/lib/save-system"
 import { alcancavelDaqui, buscarJson } from "@/lib/buscar-json"
+import { SERVIDOR_DOWNLOADS } from "@/lib/servidor-ultrafoot"
 
 /** O manifesto do jogo na VPS: pequeno, público e sempre no ar. Serve de ping. */
-const ALVO = "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json"
+const ALVO = `${SERVIDOR_DOWNLOADS}/latest.json`
 
 /**
  * ⚠️ A REGRA DE ALCANCE MORA EM `lib/buscar-json.ts`, NAO AQUI.

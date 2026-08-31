@@ -28,7 +28,8 @@ import { getDeviceId } from "@/lib/device-id"
 import { storeGet, storeSet } from "@/lib/persistent-store"
 import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
 
-const BASE = "https://ultrafoot.179-198-103-30.sslip.io/auth"
+import { SERVIDOR_AUTH } from "@/lib/servidor-ultrafoot"
+const BASE = SERVIDOR_AUTH
 
 // Guardado no MESMO armazenamento durável do registro (lib/registration.ts), e
 // não só no localStorage: o WebView2 pode limpar o localStorage numa

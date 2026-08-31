@@ -315,7 +315,8 @@
       "itens": [
         "OITO PAISES GANHAM A SUPERCOPA DELES. Argentina, Colombia, Chile, Uruguai, Equador, Arabia Saudita, Japao e China passam a abrir a temporada decidindo a supercopa entre o campeao da liga e o campeao da copa. Sao dezoito paises com a sua, contra dez na atualizacao passada.",
         "E SO ENTRA QUEM DISPUTA UMA DE VERDADE. Estados Unidos, Mexico e Escocia continuam sem, porque nao existe supercopa nesses paises; a Coreia do Sul teve a dela ate 2006 e nao a retomou. Inventar um torneio para preencher a tabela seria pior que a ausencia — quem percebe que a competicao nao existe passa a duvidar do resto do calendario.",
-        "A LISTA DO QUE AINDA FALTA FICOU CONFIAVEL. A verificacao de profundidade acusava 144 divisoes sem supercopa, contando segundas divisoes e paises que nao tem uma. Agora sao 87, e todas sao trabalho de verdade — uma fila com ruido e uma fila que ninguem usa."
+        "A LISTA DO QUE AINDA FALTA FICOU CONFIAVEL. A verificacao de profundidade acusava 144 divisoes sem supercopa, contando segundas divisoes e paises que nao tem uma. Agora sao 87, e todas sao trabalho de verdade — uma fila com ruido e uma fila que ninguem usa.",
+        "TROCAR DE SERVIDOR DEIXA DE SER UMA CACADA. O endereco do servidor do Ultrafoot estava copiado em 27 pontos do codigo: se ele mudasse, era preciso achar todas as copias, e esquecer uma nao aparece em teste nenhum — aparece como uma funcao quebrada no computador do jogador, tipo o save na nuvem funcionar e o login nao. Agora o endereco mora em um lugar so, e uma verificacao automatica recusa qualquer copia nova."
       ]
     },
     {

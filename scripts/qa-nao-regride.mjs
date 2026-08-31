@@ -166,6 +166,7 @@ const INVENTARIO = [
   ["1.0.381", "A supercopa nacional vira partida", "lib/super-cups.ts", "supercopa_nacional"],
   ["1.0.381", "A segunda copa nacional e disputada", "lib/use-game-manager.ts", "nationalCups.length > 1"],
   ["1.0.381", "Catraca de profundidade por versao", "scripts/qa-paridade.ts", "PISO"],
+  ["1.0.382", "Endereco do servidor em fonte unica", "lib/servidor-ultrafoot.ts", "SERVIDOR_ULTRAFOOT"],
   ["1.0.347", "Imprensa pergunta pela modalidade", "lib/game-engine.ts", "A IMPRENSA PERGUNTAVA A MESMA COISA"],
   ["1.0.347", "Lesao com consequencia na carreira de atleta", "lib/carreira-de-jogador.ts", "sortearLesao"],
   ["1.0.347", "Capitania na carreira de atleta", "lib/carreira-de-jogador.ts", "A BRACADEIRA"],

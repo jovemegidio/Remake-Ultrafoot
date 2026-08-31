@@ -17,7 +17,8 @@ const LAST_CODE_KEY = "ultrafoot:cloud:last-code"
 const CAREER_INDEX_KEY = "ultrafoot:career-index"
 const ACTIVE_CAREER_KEY = "ultrafoot:active-career"
 
-const VPS = "https://ultrafoot.179-198-103-30.sslip.io"
+import { SERVIDOR_ULTRAFOOT } from "@/lib/servidor-ultrafoot"
+const VPS = SERVIDOR_ULTRAFOOT
 
 /**
  * Onde mora a API de saves.

@@ -35,6 +35,7 @@ import { canalAtivo } from "@/lib/atualizacoes-preferencias"
 import { guardarImagem, resolverImagem } from "@/lib/banco-de-imagens"
 import type { TeamOverride } from "@/lib/team-overrides"
 import type { PlayerOverride } from "@/lib/player-overrides"
+import { SERVIDOR_ATUALIZACOES } from "@/lib/servidor-ultrafoot"
 
 const CHAVE = "ultrafoot:atualizacao-elencos"
 /** Versao que o jogador mandou nao oferecer de novo. */
@@ -42,7 +43,7 @@ const CHAVE_DISPENSADA = "ultrafoot:atualizacao-elencos:dispensada"
 
 // A VPS primeiro; o GitHub e reserva para quando ela estiver fora do ar.
 const FONTES = [
-  "https://ultrafoot.179-198-103-30.sslip.io/atualizacoes/elencos.json",
+  `${SERVIDOR_ATUALIZACOES}/elencos.json`,
   "https://github.com/jovemegidio/Ultrafoot26/releases/download/elencos/elencos.json",
 ]
 
