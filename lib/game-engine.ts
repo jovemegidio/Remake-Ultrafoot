@@ -62,6 +62,7 @@ import {
   type AtletaNaSemana, type ParesDeEntrosamento, type PlanoDeTreino,
 } from "@/lib/treino-e-entrosamento"
 import { analyseSquadDynamics, applyWeeklyPlayingTimeMorale } from "@/lib/squad-dynamics"
+import { ritmoDaSemana, RITMO_INICIAL } from "@/lib/ritmo-de-jogo"
 // O TÉCNICO EM NÚMEROS. Retrato publicado pelo save-system — o motor não pode
 // importar o save (ciclo), como já acontece com o Modo Desafios.
 import { efeitosDoTreinador } from "@/lib/efeito-do-treinador"
@@ -590,6 +591,16 @@ export interface Player {
   energy: number
   morale: "Feliz" | "Motivado" | "Normal" | "Insatisfeito" | "Infeliz"
   form: number // 0-100
+  /**
+   * RITMO DE JOGO (0-100), 1.0.386. Ha quanto tempo ele nao entra em campo.
+   *
+   * ⚠️ OPCIONAL DE PROPOSITO: save anterior a esta versao nao tem o campo, e a
+   * ausencia vale o neutro `RITMO_INICIAL` — o jogo se comporta como antes ate
+   * a primeira virada de semana medir de verdade. Ver `lib/ritmo-de-jogo.ts`,
+   * e [[ultrafoot-save-sem-campo-derruba-tela]] sobre por que campo novo nunca
+   * pode ser obrigatorio.
+   */
+  ritmo?: number
   
   // Contrato
   contract: PlayerContract | null
@@ -3239,6 +3250,26 @@ export const useGameEngine = create<GameEngineState>()(
             const anterior = minutosAntes[p.id] ?? acumulado
             minutosDaSemana.set(p.id, Math.max(0, acumulado - anterior))
           }
+          // ── RITMO DE JOGO (1.0.386) ────────────────────────────────────
+          //
+          // ⚠️ AQUI, E NAO EM `processarDesempenhoPartida`, porque o ritmo e a
+          // unica medida do elenco que muda para quem NAO jogou. Aquele bloco so
+          // roda por atleta que participou — e e exatamente por isso que a
+          // `form` do reserva ficava congelada.
+          //
+          // Reaproveita `minutosDaSemana`, ja calculado logo acima com a guarda
+          // de save antigo: sem retrato anterior a semana conta ZERO minutos, e
+          // um elenco inteiro nao pode cair de ritmo por o jogador ter
+          // atualizado o jogo. Por isso a queda so vale para quem JA tinha
+          // retrato — na primeira virada depois de atualizar, ninguem perde nada.
+          const primeiraViradaDoRitmo = Object.keys(minutosAntes).length === 0
+          const ritmoAtualizado: Record<number, number> = {}
+          for (const p of s.squadPlayers) {
+            ritmoAtualizado[p.id] = primeiraViradaDoRitmo
+              ? (p.ritmo ?? RITMO_INICIAL)
+              : ritmoDaSemana(p.ritmo, minutosDaSemana.get(p.id) ?? 0)
+          }
+
           const entrada: AtletaNaSemana[] = s.squadPlayers.map(p => ({
             id: p.id,
             idade: p.age,
@@ -3981,7 +4012,12 @@ export const useGameEngine = create<GameEngineState>()(
             ...s,
             currentWeek: finalWeek,
             currentSeason: newSeason,
-            squadPlayers: playersAfterNT,
+            // O ritmo entra no atleta aqui, no fim da virada: `playersAfterNT` e
+            // o elenco como ele FICA (quem saiu ja saiu, quem chegou ja chegou).
+            squadPlayers: playersAfterNT.map(p => ({
+              ...p,
+              ritmo: ritmoAtualizado[p.id] ?? p.ritmo ?? RITMO_INICIAL,
+            })),
             weeklyExpenses: Math.max(0, s.weeklyExpenses + ajusteDaFolhaSemanal),
             entrosamentoPares: paresDaSemana,
             squadCohesion: entrosamentoDaSemana,

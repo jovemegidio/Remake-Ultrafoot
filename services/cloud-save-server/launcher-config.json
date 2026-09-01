@@ -308,9 +308,24 @@
   ],
   "changelog": [
     {
+      "version": "1.0.386",
+      "data": "2026-09-01",
+      "latest": true,
+      "titulo": "Ritmo de jogo: quem fica no banco nao entra mais a 100%",
+      "itens": [
+        "O RESERVA ENCOSTADO PERDE RITMO DE JOGO. Ate esta atualizacao nada no jogo cobrava a falta de minutos: a forma so mudava para quem PARTICIPOU da partida, entao quem ficava no banco mantinha a forma congelada — e a energia ainda o premiava, porque descansar recupera energia. Um centroavante tres meses sem jogar entrava na quarta-feira com a mesma forca de quem jogou as doze partidas anteriores.",
+        "E O JOGO JA PROMETIA ISSO EM VOZ ALTA: nas conversas, o atleta dizia 'o que eu preciso e de ritmo de jogo, e isso o senhor e quem me da'. A fala existia, a queixa existia, a decisao de escalacao existia — so nao havia mecanica nenhuma atras.",
+        "POUPAR NAO E PUNIDO: uma ou duas rodadas de descanso saem de graca. Quem estava afiado perde o bonus na hora, a penalidade so comeca perto da terceira semana e so fica pesada por volta dos dois meses. Revezar passa a ser uma decisao com preco, nao um imposto.",
+        "E QUEM JOGA TODA SEMANA GANHA. O elenco que roda a base regularmente fica afiado e leva um bonus de forca — o mecanismo tem os dois sentidos, entao um time bem gerido fica mais forte que antes e nao apenas menos punido.",
+        "RITMO NAO E ENERGIA NEM FORMA, e as tres aparecem separadas: energia e quanto ele aguenta e sobe descansando; forma e como ele vem jogando; ritmo e ha quanto tempo ele nao entra em campo. O reserva tipico tem energia cheia, forma congelada e ritmo no chao — que e o estado real de quem passou dois meses no banco.",
+        "QUEM VOLTA DE LESAO VOLTA SEM RITMO, pelo caminho natural: ele nao jogou. E a ficha do atleta passa a mostrar o aviso de fragilidade pos-lesao, que existia pronto no jogo desde a 1.0.374 e nunca havia chegado a tela nenhuma.",
+        "SAVE ANTIGO NAO MUDA DE COMPORTAMENTO: quem carrega uma carreira comecada antes desta versao nao perde forca nenhuma; a medicao comeca na primeira virada de semana."
+      ]
+    },
+    {
       "version": "1.0.385",
       "data": "2026-08-31",
-      "latest": true,
+      "latest": false,
       "titulo": "O mundo passa a ter campeoes, e a supercopa vira campeao contra campeao",
       "itens": [
         "AGORA TODA COMPETICAO DO PLANETA TEM CAMPEAO. Ate esta atualizacao o jogo so sabia quem levantou a taca que VOCE disputou: eliminado nas oitavas da Copa do Brasil, ninguem era campeao daquele ano; jogando a Serie B, a Libertadores da temporada nao tinha vencedor; e nenhuma liga estrangeira registrava o titulo dela. Sao 278 competicoes — 154 ligas, 67 copas nacionais, 50 supercopas e as sete continentais de clube — com campeao conhecido em todas as temporadas.",

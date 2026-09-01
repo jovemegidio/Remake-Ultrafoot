@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-01T00:15:26.844Z",
-  "scannedFiles": 546,
+  "generatedAt": "2026-09-01T00:55:25.962Z",
+  "scannedFiles": 547,
   "totals": {
     "notImplemented": 0,
     "skeleton": 22,
@@ -21,13 +21,13 @@
     {
       "type": "mock",
       "file": "app/elenco/gerenciamento/page.tsx",
-      "line": 66,
+      "line": 68,
       "text": "// Mock players data"
     },
     {
       "type": "mock",
       "file": "app/elenco/gerenciamento/page.tsx",
-      "line": 67,
+      "line": 69,
       "text": "// Os elencos MOCK (playersData/benchData) foram REMOVIDOS: eram o elenco do RB"
     },
     {

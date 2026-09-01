@@ -230,6 +230,12 @@ export const ptBR = {
     weekLabel: "Semana",
   },
   squad: {
+    matchSharpness: "Ritmo de jogo",
+    playerInfo: "Informacoes do Atleta",
+    autoLineup: "Auto-escalar",
+    highlights: "Destaques",
+    fatigue: "Fadiga",
+    skillMoves: "Fintas",
     gestao_de_auxiliares_tec: "Gestao de Auxiliares Tec.",
     editar_tatica_ativa: "Editar tatica ativa",
     clique_em_um_jogador_para_ver: "Clique em um jogador para ver seus atributos no painel lateral.",

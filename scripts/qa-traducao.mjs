@@ -47,6 +47,15 @@ const detalhe = process.argv.includes("--detalhe")
  */
 // 1.0.374: 5618 -> 5612. A tela `vida/` nasceu extraida e os cinco rotulos do
 // menu do atleta, que estavam chumbados desde que o modo existe, viraram chave.
+// 1.0.386: 5284 -> 5281. O painel de ritmo de jogo somou uma frase — e ela foi
+// FALSO POSITIVO da heuristica: `cn("text-sm font-bold", ...)` casa com o padrao
+// de frase porque a guarda de atributo tecnico so olha `className=` colado. Nao
+// remodelei o codigo para enganar a contagem (o cabecalho acima proibe, com
+// razao): paguei extraindo quatro rotulos reais do gerenciamento de elenco.
+// ⚠️ E cuidado com o que a heuristica ENXERGA: extrair "Informacoes do Atleta"
+// nao mexeu no numero, porque `TEXTO_JSX` exige o texto na MESMA linha entre
+// `>` e `</` — e aquele estava quebrado em tres linhas. Conferir o delta depois
+// de cada extracao, nunca supor.
 // 1.0.385: 5303 -> 5284. A secao "Campeoes do mundo" somou duas frases e a
 // catraca reprovou na hora (5305 > 5303) — exatamente o que ela existe para
 // fazer. Em vez de subir o teto, a tela `/historico` INTEIRA foi extraida: 26
@@ -58,7 +67,7 @@ const detalhe = process.argv.includes("--detalhe")
 // O `extrair-textos.mjs` nao alcanca nenhuma das duas (ele exige o gancho na
 // forma exata `const t = useTranslation()`, e a trajetoria usa `tr`), entao foi
 // a mao, chave por chave.
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5284)
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5281)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
 //                        chumbadas. Único aumento da catraca; ver a nota acima.)

@@ -21,6 +21,8 @@
 //
 // Este arquivo é PURO: sem React, sem store, sem save.
 
+import { efeitoDoRitmoNoGrupo } from "@/lib/ritmo-de-jogo"
+
 /** O mínimo que um atleta precisa ter para entrar na conta. */
 export interface AtletaEmCampo {
   position: string
@@ -30,6 +32,8 @@ export interface AtletaEmCampo {
   form?: number
   morale?: string
   moralePoints?: number
+  /** Ritmo de jogo (0-100). Ausente = neutro; ver `lib/ritmo-de-jogo.ts`. */
+  ritmo?: number
 }
 
 export interface ForcasDoPlantel {
@@ -42,8 +46,16 @@ export interface ForcasDoPlantel {
   /** Média dos 4 melhores do meio. */
   midfield: number
   /**
-   * Modificador de forma e moral, de cerca de -7 a +7. Vem separado porque quem
-   * chama soma o clima do elenco por cima, e clima é do CLUBE de quem joga.
+   * Modificador de forma, moral e RITMO DE JOGO, de cerca de -13 a +8. Vem
+   * separado porque quem chama soma o clima do elenco por cima, e clima é do
+   * CLUBE de quem joga.
+   *
+   * ⚠️ O ritmo entra AQUI, e não no overall de cada setor (1.0.386). Somá-lo ao
+   * overall mudaria as médias por setor — que são o que decide a identidade de
+   * ataque e defesa do time — para medir uma coisa que não é qualidade do
+   * atleta, e sim o estado dele nesta semana. `mod` é o canal que já existe para
+   * exatamente isso, e todos os chamadores já o somam por igual aos três
+   * setores.
    */
   mod: number
 }
@@ -142,7 +154,18 @@ export function forcasDoPlantel(xi: AtletaEmCampo[], overallDeReserva: number): 
   const moralMedia = xi.length
     ? xi.reduce((s, p) => s + (p.moralePoints ?? pontosDeMoral(p.morale)), 0) / xi.length
     : 55
-  const mod = (formaMedia - 70) / 9 + (moralMedia - 55) / 13
+  // RITMO DE JOGO (1.0.386): quem nao joga ha semanas entra sem ritmo.
+  //
+  // ⚠️ ELE MEDE O QUE NENHUM DOS DOIS ACIMA MEDIA. `form` so se move para quem
+  // PARTICIPOU da partida, entao a forma do reserva fica congelada; a energia
+  // ate PREMIA quem descansa. O atleta tres meses no banco entrava com forma
+  // intacta e energia cheia. Ver `lib/ritmo-de-jogo.ts`.
+  //
+  // ⚠️ E ELE VALE PARA OS DOIS LADOS pelo simples fato de morar aqui — que e a
+  // regra que abre este arquivo. O tecnico adversario do co-op paga o mesmo
+  // preco por revezar demais.
+  const ritmoMod = efeitoDoRitmoNoGrupo(xi.map(p => p.ritmo))
+  const mod = (formaMedia - 70) / 9 + (moralMedia - 55) / 13 + ritmoMod
 
   return { overall, attack: atk, defense: def, midfield: mid, mod }
 }

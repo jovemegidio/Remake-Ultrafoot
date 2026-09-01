@@ -37,6 +37,8 @@ import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatar, PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { efeitoDoRitmo, rotuloDoRitmo, RITMO_INICIAL } from "@/lib/ritmo-de-jogo"
+import { acabouDeVoltar, rotuloDoHistorico } from "@/lib/historico-de-lesoes"
 import { climaDoVestiario, ROTULO_DO_PAPEL } from "@/lib/hierarquia-do-elenco"
 import { ContractNegotiationModal } from "@/components/squad/contract-negotiation-modal"
 import { RenovacaoEmprestimoModal } from "@/components/squad/renovacao-emprestimo-modal"
@@ -806,6 +808,18 @@ export default function ElencoPage() {
   const selectedPlayer = useMemo(() => {
     return [...players, ...bench].find(p => p.id === selectedPlayerId) || players[0]
   }, [selectedPlayerId, players, bench])
+
+  /**
+   * O REGISTRO DO MOTOR do atleta selecionado.
+   *
+   * `players` e uma visao estreita da tela: nao carrega `ritmo` nem
+   * `historicoDeLesoes`. A ponte e pelo NOME, como o resto desta pagina ja faz
+   * para emprestimo — os ids divergem para atletas importados.
+   */
+  const registroDoSelecionado = useMemo(
+    () => (selectedPlayer ? engineSquadPlayers.find(p => p.name === selectedPlayer.name) ?? null : null),
+    [selectedPlayer, engineSquadPlayers],
+  )
 
   /**
    * O atleta selecionado chegou POR EMPRÉSTIMO? Devolve o registro do motor
@@ -1882,7 +1896,7 @@ export default function ElencoPage() {
               className="ml-1 flex items-center gap-1.5 rounded-lg border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-2.5 py-1.5 text-[10px] font-bold text-[var(--brand)] transition hover:bg-[var(--brand)]/20 md:text-xs"
             >
               <Zap className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Auto-escalar</span>
+              <span className="hidden sm:inline">{t.squad.autoLineup}</span>
             </button>
 
             {/* MODO MOVIMENTAÇÃO — ligado, o arrasto desenha a seta do
@@ -2507,7 +2521,7 @@ export default function ElencoPage() {
                     <div className="grid grid-cols-[minmax(0,1fr)_84px_84px_84px] items-center gap-2 border-b border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-white/40 md:grid-cols-[minmax(0,1fr)_1fr_1fr_84px]">
                       <span>Atleta</span>
                       <span className="text-center md:text-left">Energia</span>
-                      <span className="text-center md:text-left">Fadiga</span>
+                      <span className="text-center md:text-left">{t.squad.fatigue}</span>
                       <span className="text-center">{t.gerenciamento.folego}</span>
                     </div>
                     <div className="divide-y divide-white/[0.04]">
@@ -2936,10 +2950,43 @@ export default function ElencoPage() {
                 </div>
               </div>
 
+              {/* RITMO DE JOGO (1.0.386) — ao lado da energia de proposito: as
+                  duas parecem a mesma coisa e nao sao. Energia e quanto ele
+                  AGUENTA e sobe descansando; ritmo e ha quanto tempo ele nao
+                  entra em campo, e so cai no banco. Ver `lib/ritmo-de-jogo.ts`. */}
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] text-white/50 font-medium">{t.squad.matchSharpness}</span>
+                  <span className={cn("text-sm font-bold",
+                    efeitoDoRitmo(registroDoSelecionado?.ritmo ?? RITMO_INICIAL) < 0 ? "text-amber-400" : "text-[var(--brand)]")}>
+                    {rotuloDoRitmo(registroDoSelecionado?.ritmo)}
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-[var(--brand)]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${registroDoSelecionado?.ritmo ?? RITMO_INICIAL}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+                {/* ⚠️ `rotuloDoHistorico` e `acabouDeVoltar` existiam desde a
+                    1.0.374, testadas por script, documentadas como "serve para
+                    avisar na tela" — e SEM UM CONSUMIDOR SEQUER. O aviso de
+                    fragilidade pos-lesao nunca chegou a lugar nenhum. */}
+                {rotuloDoHistorico(registroDoSelecionado?.historicoDeLesoes, engineCurrentWeek) && (
+                  <p className={cn("mt-2 text-[10px]",
+                    acabouDeVoltar(registroDoSelecionado?.historicoDeLesoes, engineCurrentWeek)
+                      ? "text-red-400" : "text-white/45")}>
+                    {rotuloDoHistorico(registroDoSelecionado?.historicoDeLesoes, engineCurrentWeek)}
+                  </p>
+                )}
+              </div>
+
               {/* Informacoes do atleta - Grid melhorado */}
               <div>
                 <h3 className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-3">
-                  Informacoes do Atleta
+                  {t.squad.playerInfo}
                 </h3>
 
                 <label className="mb-3 flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] p-2 text-[10px] text-white/55">
@@ -2999,7 +3046,7 @@ export default function ElencoPage() {
                 
                 <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-white/60">Fintas</span>
+                    <span className="text-[11px] text-white/60">{t.squad.skillMoves}</span>
                     <div className="flex items-center gap-0.5">
                       {getStarRating(selectedPlayer.fintas)}
                     </div>
@@ -3069,7 +3116,7 @@ export default function ElencoPage() {
             className="bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
           >
             <Trophy className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1 text-yellow-400" />
-            <span className="hidden sm:inline">Destaques</span>
+            <span className="hidden sm:inline">{t.squad.highlights}</span>
           </Button>
           <Button
             variant="ghost"
