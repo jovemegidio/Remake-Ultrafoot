@@ -36,11 +36,31 @@ export function temMundialNaTemporada(season: number): boolean {
   return (season - ANO_BASE_MUNDIAL) % 4 === 0
 }
 
+/**
+ * De onde sai o ADVERSÁRIO de uma decisão entre campeões.
+ *
+ * ⚠️ ANTES DA 1.0.385 NÃO SAÍA DE LUGAR NENHUM: o calendário sorteava um clube
+ * da região. O campeão da Champions decidia a Supercopa da UEFA contra um time
+ * do meio da tabela do Chipre, e quem levantou a Libertadores enfrentava na
+ * Recopa um clube que não tinha ganho nada. A definição da competição —
+ * "campeão x campeão" — era o único lugar do jogo onde ela não valia.
+ *
+ * `divisao` só é usada quando o tipo é `liga` ou `copa`: é ela que diz de qual
+ * país é o troféu.
+ */
+export interface OrigemDoAdversario {
+  tipo: "liga" | "copa" | "continental"
+  id: string
+  divisao?: string
+}
+
 export interface SuperCupBerth {
   id: SuperCupId
   name: string
   /** Como o clube se classificou — mostrado ao jogador. */
   reason: string
+  /** Campeão de QUAL competição é o adversário desta decisão. */
+  adversarioCampeaoDe?: OrigemDoAdversario
   /** Jogo único ou ida e volta. */
   matchCount: number
   /** Ordem de disputa dentro da pré-temporada. */
@@ -94,9 +114,9 @@ export function berthsForSeason(
   if (!seasonHistory?.length || !clubeCurto) return []
 
   const vagas: SuperCupBerth[] = []
-  const conquistou = (id: SuperCupId, reason: string) => {
+  const conquistou = (id: SuperCupId, reason: string, adversarioCampeaoDe?: OrigemDoAdversario) => {
     if (vagas.some(v => v.id === id)) return
-    vagas.push({ ...CATALOGO[id], reason })
+    vagas.push({ ...CATALOGO[id], reason, adversarioCampeaoDe })
   }
 
   // As supercopas dependem da temporada ANTERIOR; o Mundial, do CICLO de 4 anos
@@ -111,23 +131,33 @@ export function berthsForSeason(
 
     // Brasil: campeão do Brasileirão OU da Copa do Brasil disputa a Supercopa.
     if (comp.includes("brasileirao") || comp.includes("copadobrasil")) {
-      conquistou("supercopa_brasil", `Campeão: ${registro.competition} ${registro.season}`)
+      // O adversário é o campeão do OUTRO troféu — e a Supercopa do Brasil é
+      // sempre entre o campeão da SÉRIE A e o da Copa do Brasil, mesmo quando
+      // quem ganhou a copa veio da Série B.
+      conquistou("supercopa_brasil", `Campeão: ${registro.competition} ${registro.season}`,
+        comp.includes("copadobrasil")
+          ? { tipo: "liga", id: "serie_a", divisao: "serie_a" }
+          : { tipo: "copa", id: "copa_brasil", divisao: "serie_a" })
     }
     // Libertadores dá Recopa e Intercontinental; Sul-Americana dá só a Recopa.
     if (comp.includes("libertadores")) {
-      conquistou("recopa_sulamericana", `Campeão da Libertadores ${registro.season}`)
+      conquistou("recopa_sulamericana", `Campeão da Libertadores ${registro.season}`,
+        { tipo: "continental", id: "sulamericana" })
       conquistou("copa_intercontinental", `Campeão da Libertadores ${registro.season}`)
     }
     if (comp.includes("sulamericana") || comp.includes("sudamericana")) {
-      conquistou("recopa_sulamericana", `Campeão da Sul-Americana ${registro.season}`)
+      conquistou("recopa_sulamericana", `Campeão da Sul-Americana ${registro.season}`,
+        { tipo: "continental", id: "libertadores" })
     }
     // Europa: Champions dá Supercopa da UEFA e Intercontinental; Europa League dá a Supercopa.
     if (comp.includes("championsleague")) {
-      conquistou("supercopa_uefa", `Campeão da Champions ${registro.season}`)
+      conquistou("supercopa_uefa", `Campeão da Champions ${registro.season}`,
+        { tipo: "continental", id: "europa_league" })
       conquistou("copa_intercontinental", `Campeão da Champions ${registro.season}`)
     }
     if (comp.includes("europaleague")) {
-      conquistou("supercopa_uefa", `Campeão da Europa League ${registro.season}`)
+      conquistou("supercopa_uefa", `Campeão da Europa League ${registro.season}`,
+        { tipo: "continental", id: "champions_league" })
     }
   }
 
@@ -163,6 +193,11 @@ export function berthsForSeason(
           ...CATALOGO.supercopa_nacional,
           name: compsDoPais.superCup,
           reason: `Campeão: ${registro.competition} ${registro.season}`,
+          // Ganhou a liga? Enfrenta o campeão da copa. Ganhou a copa? Enfrenta
+          // o campeão da liga. É a definição da competição.
+          adversarioCampeaoDe: ehLiga
+            ? { tipo: "copa", id: `copa_${compsDoPais.country}`, divisao }
+            : { tipo: "liga", id: divisao ?? "", divisao },
         })
         break
       }

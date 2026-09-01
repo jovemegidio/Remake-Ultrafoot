@@ -47,13 +47,18 @@ const detalhe = process.argv.includes("--detalhe")
  */
 // 1.0.374: 5618 -> 5612. A tela `vida/` nasceu extraida e os cinco rotulos do
 // menu do atleta, que estavam chumbados desde que o modo existe, viraram chave.
+// 1.0.385: 5303 -> 5284. A secao "Campeoes do mundo" somou duas frases e a
+// catraca reprovou na hora (5305 > 5303) — exatamente o que ela existe para
+// fazer. Em vez de subir o teto, a tela `/historico` INTEIRA foi extraida: 26
+// chaves, das quais 24 estavam chumbadas desde que a tela nasceu. Somar duas e
+// pagar vinte e quatro e o unico jeito de a catraca andar para o lado certo.
 // 1.0.377: 5612 -> 5574. A tela `loja/` e a `vitrine` nasceram extraidas, e as
 // telas de CALENDARIO e TRAJETORIA do atleta foram extraidas para pagar o que a
 // loja somou — 21 rotulos que estavam chumbados desde que as telas nasceram.
 // O `extrair-textos.mjs` nao alcanca nenhuma das duas (ele exige o gancho na
 // forma exata `const t = useTranslation()`, e a trajetoria usa `tr`), entao foi
 // a mao, chave por chave.
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5303)
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5284)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
 //                        chumbadas. Único aumento da catraca; ver a nota acima.)

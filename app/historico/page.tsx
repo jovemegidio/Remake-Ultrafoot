@@ -2,23 +2,68 @@
 
 import { useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Calendar, History, MapPin, Target, Trophy, Users } from "lucide-react"
+import { Calendar, Crown, History, MapPin, Target, Trophy, Users } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { useGameState } from "@/lib/save-system"
 import { useUserTeam } from "@/lib/time-da-carreira"
+import { effectiveDivision, getTeamByShort } from "@/lib/teams-data"
 import { buildCareerStats } from "@/lib/hall-of-fame-engine"
+import { campeoesDaTemporada, type CampeaoDoMundo } from "@/lib/campeoes-do-mundo"
+import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 export default function HistoricoPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
   const { state } = useGameState()
+  const t = useTranslation().historico
   const temporadas = state.seasonHistory ?? []
   const carreira = useMemo(
     () => temporadas.length > 0 ? buildCareerStats(temporadas) : null,
     [temporadas],
   )
+
+  /**
+   * O PALMARÉS DO MUNDO, temporada a temporada (1.0.385).
+   *
+   * ⚠️ SÓ TEMPORADA CONCLUÍDA. É a única condição que `campeoesDaTemporada` pede,
+   * e é esta tela que sabe cumpri-la: `seasonHistory` só recebe uma temporada
+   * depois da virada. Pedir o quadro da temporada em andamento devolveria um
+   * palpite que a tabela da liga desmente na tela ao lado.
+   */
+  const campeoesPorTemporada = useMemo(() => {
+    const anos = [...new Set(temporadas.map(t => t.season))].sort((a, b) => b - a)
+    const atual = String(userTeam?.divisao ?? "")
+    if (!atual) return [] as Array<{ ano: number; clubeNaEpoca?: string; campeoes: CampeaoDoMundo[] }>
+    return anos.map(ano => {
+      /**
+       * ⚠️ A DIVISÃO É A DAQUELA TEMPORADA, NÃO A DE HOJE.
+       *
+       * A primeira versão desta tela passava sempre o clube atual, e o painel
+       * "Clubes treinados" logo acima é a prova de que isso não serve: quem saiu
+       * do Brasil para a Inglaterra veria a Copa do Brasil e a Libertadores
+       * listadas numa temporada em que estava na Premier League. É a divisão que
+       * decide o PAÍS da copa e a CONFEDERAÇÃO da continental.
+       *
+       * O clube da temporada vem do próprio registro; sem ele (save antigo,
+       * clube que saiu do catálogo) cai na divisão atual, que é o comportamento
+       * anterior — falhar para o que já existia, nunca para tela vazia.
+       */
+      const clubeNaEpoca = temporadas.find(t => t.season === ano)?.teamCurto
+      const time = clubeNaEpoca ? getTeamByShort(clubeNaEpoca) : undefined
+      const divisao = time ? effectiveDivision(time) : atual
+      return {
+        ano,
+        // O destaque dourado e do clube DAQUELA temporada, pelo mesmo motivo.
+        clubeNaEpoca: clubeNaEpoca ?? userTeam?.curto,
+        campeoes: campeoesDaTemporada(divisao || atual, ano, {
+          historico: temporadas,
+          clubeDoUsuario: clubeNaEpoca ?? userTeam?.curto,
+        }),
+      }
+    })
+  }, [temporadas, userTeam?.divisao, userTeam?.curto])
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -42,35 +87,35 @@ export default function HistoricoPage() {
             </p>
           </div>
           <div className="rounded-lg bg-[var(--brand)]/10 px-4 py-3 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-white/40">Prestígio atual</p>
+            <p className="text-[10px] uppercase tracking-wider text-white/40">{t.prestigio_atual}</p>
             <p className="text-2xl font-bold text-[var(--brand)]">{userTeam.prestigio}</p>
           </div>
         </header>
 
         <section className="grid gap-3 sm:grid-cols-3">
-          <InfoCard icon={Users} label="Torcida cadastrada" value={userTeam.torcida.toLocaleString("pt-BR")} />
-          <InfoCard icon={Target} label="Estádio" value={userTeam.estadio_nome || "Não cadastrado"} />
-          <InfoCard icon={Users} label="Capacidade" value={userTeam.estadio_cap.toLocaleString("pt-BR")} />
+          <InfoCard icon={Users} label="{t.torcida_cadastrada}" value={userTeam.torcida.toLocaleString("pt-BR")} />
+          <InfoCard icon={Target} label={t.estadio} value={userTeam.estadio_nome || t.nao_cadastrado} />
+          <InfoCard icon={Users} label={t.capacidade} value={userTeam.estadio_cap.toLocaleString("pt-BR")} />
         </section>
 
         <section className="rounded-xl border border-[#ffd700]/20 bg-[#ffd700]/[0.04] p-5">
           <h2 className="flex items-center gap-2 text-lg font-bold text-white">
             <Trophy className="h-5 w-5 text-[#ffd700]" />
-            Carreira registrada
+            {t.carreira_registrada}
           </h2>
           {!carreira ? (
             <p className="mt-3 text-sm text-white/45">
-              O histórico será preenchido ao concluir a primeira temporada. Nenhuma conquista anterior foi inventada.
+              {t.sera_preenchido}
             </p>
           ) : (
             <>
               <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
                 {[
-                  ["Temporadas", carreira.totalSeasons],
-                  ["Partidas", carreira.totalMatches],
-                  ["Vitórias", carreira.totalWins],
-                  ["Aproveitamento", `${carreira.winRate}%`],
-                  ["Títulos", carreira.trophies.length],
+                  [t.temporadas, carreira.totalSeasons],
+                  [t.partidas, carreira.totalMatches],
+                  [t.vitorias, carreira.totalWins],
+                  [t.aproveitamento, `${carreira.winRate}%`],
+                  [t.titulos, carreira.trophies.length],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-lg bg-black/30 p-3">
                     <p className="text-[10px] uppercase tracking-wide text-white/40">{label}</p>
@@ -80,20 +125,20 @@ export default function HistoricoPage() {
               </div>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-white/60">Clubes treinados</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/60">{t.clubes_treinados}</p>
                   <div className="mt-2 space-y-2">
                     {carreira.clubs.map(club => (
                       <div key={club.clubCurto} className="flex items-center justify-between rounded-lg bg-black/25 px-3 py-2">
                         <span className="text-sm text-white">{club.clubNome}</span>
-                        <span className="text-[11px] text-white/40">{club.fromSeason}–{club.toSeason} · {club.wins}/{club.matches} vitórias</span>
+                        <span className="text-[11px] text-white/40">{club.fromSeason}–{club.toSeason} · {club.wins}/{club.matches} {t.vitorias_minusculo}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-white/60">Títulos conquistados</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/60">{t.titulos_conquistados}</p>
                   {carreira.trophies.length === 0 ? (
-                    <p className="mt-2 text-sm text-white/35">Nenhum título registrado.</p>
+                    <p className="mt-2 text-sm text-white/35">{t.nenhum_titulo}</p>
                   ) : carreira.trophies.map(trophy => (
                     <div key={`${trophy.competition}-${trophy.season}`} className="mt-2 flex items-center justify-between rounded-lg bg-black/25 px-3 py-2">
                       <span className="text-sm text-white">{trophy.competition}</span>
@@ -109,14 +154,14 @@ export default function HistoricoPage() {
         <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
           <div className="flex items-center gap-2 border-b border-white/[0.04] px-5 py-3">
             <History className="h-4 w-4 text-blue-400" />
-            <h2 className="text-xs font-medium tracking-wider text-white">TEMPORADAS CONCLUÍDAS</h2>
+            <h2 className="text-xs font-medium tracking-wider text-white">{t.temporadas_concluidas}</h2>
           </div>
           {temporadas.length === 0 ? (
-            <div className="p-8 text-center text-sm text-white/40">Ainda não há temporadas concluídas nesta carreira.</div>
+            <div className="p-8 text-center text-sm text-white/40">{t.sem_temporadas}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead><tr className="border-b border-white/[0.04] text-[10px] text-white/40"><th className="px-5 py-3 text-left">ANO</th><th className="px-5 py-3 text-left">CLUBE</th><th className="px-5 py-3 text-left">COMPETIÇÃO</th><th className="px-5 py-3 text-center">POS.</th><th className="px-5 py-3 text-center">PONTOS</th><th className="px-5 py-3 text-center">CAMPANHA</th></tr></thead>
+                <thead><tr className="border-b border-white/[0.04] text-[10px] text-white/40"><th className="px-5 py-3 text-left">{t.ano}</th><th className="px-5 py-3 text-left">{t.clube}</th><th className="px-5 py-3 text-left">{t.competicao}</th><th className="px-5 py-3 text-center">{t.posicao}</th><th className="px-5 py-3 text-center">{t.pontos}</th><th className="px-5 py-3 text-center">{t.campanha}</th></tr></thead>
                 <tbody className="divide-y divide-white/5">
                   {[...temporadas].reverse().map((season, index) => (
                     <tr key={`${season.season}-${season.competition}-${index}`} className="text-sm hover:bg-white/[0.02]">
@@ -130,6 +175,47 @@ export default function HistoricoPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </section>
+
+        <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
+          <div className="flex items-center gap-2 border-b border-white/[0.04] px-5 py-3">
+            <Crown className="h-4 w-4 text-[#ffd700]" />
+            <h2 className="text-xs font-medium tracking-wider text-white">{t.campeoes_do_mundo}</h2>
+          </div>
+          {campeoesPorTemporada.length === 0 ? (
+            <div className="p-8 text-center text-sm text-white/40">
+              {t.quadro_apos_primeira_temporada}
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {campeoesPorTemporada.map(({ ano, campeoes, clubeNaEpoca }) => (
+                <div key={ano} className="px-5 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/60">{ano}</p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {campeoes.map(c => (
+                      <div
+                        key={`${ano}-${c.competicaoId}`}
+                        className={cn(
+                          "flex items-center justify-between gap-3 rounded-lg px-3 py-2",
+                          c.clube === clubeNaEpoca ? "bg-[#ffd700]/10" : "bg-black/25",
+                        )}
+                      >
+                        <span className="min-w-0 truncate text-sm text-white/70">{c.competicao}</span>
+                        <span
+                          className={cn(
+                            "shrink-0 text-[11px] font-semibold",
+                            c.clube === clubeNaEpoca ? "text-[#ffd700]" : "text-white",
+                          )}
+                        >
+                          {c.nome}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </section>

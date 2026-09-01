@@ -64,6 +64,7 @@ import {
   type FeitoDaTemporada,
 } from "@/lib/prestigio-do-atleta"
 import { berthsForSeason, continentalTitleBerth, type SuperCupBerth } from "@/lib/super-cups"
+import { adversarioDaSupercopa, campeoesDaTemporada, type VerdadeDoSave } from "@/lib/campeoes-do-mundo"
 import { qualificacaoReal2026 } from "@/lib/qualificacao-2026"
 import { isFifaWindowMonth, windowLabel, cyclePhase, worldCupHosts, worldCupNote } from "@/lib/national-windows"
 import { gerarScorersDaPartida } from "@/lib/competition-scorers"
@@ -807,6 +808,14 @@ export interface CupCompetitionPlan {
   matchCount: number
   /** Copas regionais: restringe os adversários a estas UFs (ver lib/regional-cups.ts). */
   opponentStates?: readonly string[]
+  /**
+   * Adversário JÁ DEFINIDO — decisão entre campeões, não sorteio.
+   *
+   * ⚠️ Só as supercopas usam isto. Numa copa comum o adversário de cada fase sai
+   * do sorteio ponderado de `getOpponentPool`, e é assim que tem de ser; aqui o
+   * regulamento nomeia os dois finalistas antes de a bola rolar.
+   */
+  adversarioFixo?: Team
 }
 
 // Define se uma divisao e de primeiro nivel (top flight) — so o top flight tem
@@ -836,6 +845,8 @@ export function getUserCupPlan(
    *  continental de forma REALISTA — o campeão SEMPRE entra na principal. 0/undefined
    *  = desconhecido, cai no fallback por prestígio. */
   lastLeaguePosition = 0,
+  /** Histórico + clube do usuário: quem é o campeão adversário das supercopas. */
+  verdade?: VerdadeDoSave,
 ): CupCompetitionPlan[] {
   const division = String(userTeam.divisao)
   const comps = competitionsByLeague[division as keyof typeof competitionsByLeague] ?? []
@@ -856,10 +867,25 @@ export function getUserCupPlan(
       : vaga.id === "recopa_sulamericana" ? "america_sul"
       : vaga.id === "supercopa_uefa" ? "europa"
       : "mundo" // mundial_clubes e copa_intercontinental -> qualquer confederacao
+    // ⚠️ O ADVERSÁRIO DE UMA DECISÃO ENTRE CAMPEÕES É O OUTRO CAMPEÃO (1.0.385).
+    // Sem isto o `regiao` acima é tudo o que restava, e ele só garante o
+    // CONTINENTE do sorteado: a Supercopa da UEFA saía contra qualquer clube
+    // europeu. Quando o campeão não puder ser resolvido (save antigo, sem
+    // histórico), `adversarioFixo` fica indefinido e o sorteio antigo volta a
+    // valer — falhar para o comportamento anterior, nunca para nenhum jogo.
+    const campeaoAdversario = vaga.adversarioCampeaoDe
+      ? adversarioDaSupercopa(vaga.adversarioCampeaoDe, temporada - 1, verdade)
+      : null
+    const adversarioFixo = campeaoAdversario
+      ? allTeams.find(t => t.curto === campeaoAdversario.clube)
+        ?? allPoolTeams.find(t => t.curto === campeaoAdversario.clube)
+      : undefined
     plans.push({
       competition: makeComp(vaga.id, vaga.name, 75, regiao, vaga.id === "supercopa_brasil" ? "cup" : "continental"),
       competitionType: "cup",
       matchCount: vaga.matchCount,
+      // O clube do usuário nunca pode ser o próprio adversário.
+      adversarioFixo: adversarioFixo?.curto === userTeam.curto ? undefined : adversarioFixo,
     })
   }
 
@@ -1146,8 +1172,17 @@ export function generateUserCupMatches(
       continue
     }
 
-    const [rival] = escolher(indice, 1, semente)
+    // ⚠️ DECISÃO ENTRE CAMPEÕES NÃO SORTEIA ADVERSÁRIO. `adversarioFixo` só é
+    // preenchido pelas supercopas (ver getUserCupPlan); ausente, o sorteio
+    // ponderado de sempre decide.
+    const [rival] = plan.adversarioFixo ? [plan.adversarioFixo] : escolher(indice, 1, semente)
     if (!rival) { for (let i = 0; i < etapa.jogos; i++) partidas.push(null); continue }
+    // Desviar do sorteio tambem desvia do registro que ele mantem: sem esta
+    // linha o campeao adversario da supercopa continuaria "livre" e poderia ser
+    // sorteado de novo na copa da mesma temporada, dando tres ou quatro
+    // confrontos contra o mesmo clube — que e exatamente o que `usedOpponents`
+    // existe para impedir.
+    if (plan.adversarioFixo) usedOpponents.add(rival.curto)
     for (let i = 0; i < etapa.jogos; i++) {
       // Ida fora, volta em casa — quem tem melhor campanha decide em casa.
       const emCasa = etapa.jogos === 1 ? (userTeam.prestigio ?? 0) >= (rival.prestigio ?? 0) : i === 1
@@ -2767,7 +2802,7 @@ export function useGameManager() {
       // Um rival da mesma liga ja aparece em ida e volta. Prioriza adversarios externos
       // nas copas para nao criar o relato confuso de tres jogos contra o mesmo clube.
       const cupOpponents = new Set(leagueTeams.filter(t => t.curto !== userTeam.curto).map(t => t.curto))
-      for (const plan of getUserCupPlan(userTeam, superCupBerths, continentalBerth, saveState.season, lastLeaguePosition)) {
+      for (const plan of getUserCupPlan(userTeam, superCupBerths, continentalBerth, saveState.season, lastLeaguePosition, { historico: saveState.seasonHistory, clubeDoUsuario: userTeamShort })) {
         cupMatches.push(...generateUserCupMatches(
           userTeam, plan, saveState.season, cupOpponents,
           gameEngine.matchResults.filter(r => r.season === saveState.season),
@@ -3715,6 +3750,40 @@ export function useGameManager() {
           stats,
         }))
       }
+
+      // O MUNDO NOTICIA OS CAMPEOES DELE (1.0.385).
+      //
+      // ⚠️ SEM ISTO O PALMARES SO EXISTIRIA PARA QUEM ABRISSE A TELA DE
+      // HISTORICO — e um mundo que tem campeoes e nunca os anuncia continua
+      // parecendo o album de figurinhas que a 1.0.265 tirou daqui. A virada de
+      // temporada e o momento em que o resto do planeta fecha a conta junto.
+      //
+      // A temporada que acabou de fechar JA esta em `seasonHistory` (o patch
+      // acima acrescentou o registro), entao o quadro sai com o titulo real do
+      // usuario no lugar da derivacao — que e a ordem certa.
+      try {
+        const historicoAtualizado = seasonRecord
+          ? [...(currentState.seasonHistory ?? []), seasonRecord]
+          : currentState.seasonHistory
+        // A divisao e a que o clube JOGOU na temporada que fecha — o mesmo
+        // caminho que `getLeagueRounds` usa mais acima, e nao a divisao para a
+        // qual ele acabou de subir ou descer.
+        const divisaoDaTemporada = divOverride
+          ?? (() => { const tm = getTeamByShort(userShort); return tm ? effectiveDivision(tm) : null })()
+          ?? "serie_a"
+        const quadro = campeoesDaTemporada(divisaoDaTemporada, currentState.season, {
+          historico: historicoAtualizado,
+          clubeDoUsuario: userShort,
+        }).filter(c => c.clube !== userShort)
+        if (quadro.length > 0) {
+          addNotificationRef.current({
+            type: "system", priority: "low",
+            title: `Os campeoes de ${currentState.season}`,
+            message: quadro.map(c => `${c.competicao}: ${c.nome}`).join(" · "),
+            href: "/historico",
+          })
+        }
+      } catch { /* o quadro de campeoes nunca pode travar a virada de temporada */ }
 
       return { newSeason: true, champion, leagueChampion, phaseTitle: null }
     }

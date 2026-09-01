@@ -28,6 +28,8 @@
 import { readFileSync } from "node:fs"
 import { LEAGUE_COMPETITIONS } from "../lib/country-competitions"
 import { competitionsByLeague } from "../lib/international-competitions"
+import { normalizeCountry } from "../lib/country-normalize"
+import { CONTINENTAIS_DE_CLUBE } from "../lib/campeoes-do-mundo"
 
 const detalhe = process.argv.includes("--detalhe")
 
@@ -37,11 +39,36 @@ const detalhe = process.argv.includes("--detalhe")
  */
 const PISO = {
   divisoes: 154,
-  paises: 72,
+  /**
+   * ⚠️ 72 -> 71, E ISTO NAO E PERDA DE PROFUNDIDADE (1.0.385).
+   *
+   * A medida contava DUAS VEZES o mesmo pais: a MLS declarava
+   * `country: "Estados Unidos"` e a NWSL declarava `country: "EUA"`. Nenhum
+   * jogador ganhou nem perdeu uma federacao — o numero e que estava inflado, e
+   * a tela de selecao de pais mostrava os dois nomes lado a lado.
+   *
+   * Baixar um piso porque o portao incomoda seria o que o cabecalho acima
+   * proibe. Baixar porque a CONTA estava errada e a mesma correcao que a 1.0.384
+   * fez com `ehNomeDeFachada`, e vem acompanhada da verificacao que impede o
+   * erro de voltar (`nomes de pais duplicados`, mais abaixo).
+   */
+  paises: 71,
   comCopaNacional: 154,
   comSegundaCopa: 10,
   comSupercopa: 50,
   clubesFemininosComElencoReal: 194,
+  /**
+   * COMPETICOES COM CAMPEAO CONHECIDO (1.0.385).
+   *
+   * Ate a 1.0.384 o jogo so sabia quem levantou a taca que o USUARIO disputou:
+   * eliminado nas oitavas, a Copa do Brasil daquele ano nao tinha campeao, e a
+   * Libertadores de quem joga a Serie B nunca teve nenhum. `lib/campeoes-do-mundo`
+   * responde por todas — liga, copa nacional, supercopa e continental.
+   *
+   * A medida sobe sozinha a cada supercopa ou copa nova, que e o que uma catraca
+   * deve fazer: premiar conteudo, nao esforco.
+   */
+  competicoesComCampeao: 278,
 }
 
 
@@ -103,6 +130,37 @@ for (const [divisao, c] of Object.entries(LEAGUE_COMPETITIONS)) {
   else semSegundaCopa.push(`${c.country} (${divisao})`)
 }
 
+// COMPETICOES COM CAMPEAO CONHECIDO: uma liga por divisao, uma copa nacional por
+// pais (o pais nao disputa duas), a supercopa de quem tem uma, e as continentais
+// de clube. Contar a copa por PAIS e nao por divisao evita inflar a medida com o
+// mesmo torneio repetido em quatro degraus da piramide.
+const paisesComCopa = new Set<string>()
+const paisesComSupercopa = new Set<string>()
+for (const [, c] of Object.entries(LEAGUE_COMPETITIONS)) {
+  if (!c.country || c.country === "Internacional") continue
+  if (c.domesticCup && !ehNomeDeFachada(c.domesticCup)) paisesComCopa.add(c.country)
+  if (c.superCup) paisesComSupercopa.add(c.country)
+}
+const competicoesComCampeao = divisoes
+  + paisesComCopa.size
+  + paisesComSupercopa.size
+  + Object.keys(CONTINENTAIS_DE_CLUBE).length
+
+// ⚠️ DOIS NOMES PARA O MESMO PAIS INFLAM A CONTAGEM EM SILENCIO — foi assim que
+// "Estados Unidos" e "EUA" viraram duas federacoes ate a 1.0.385. A verificacao
+// nao e uma medida (nao tem piso): e uma trava para o defeito nao voltar.
+const porPaisNormalizado = new Map<string, Set<string>>()
+for (const c of Object.values(LEAGUE_COMPETITIONS)) {
+  if (!c.country || c.country === "Internacional") continue
+  const canonico = normalizeCountry(c.country)
+  const nomes = porPaisNormalizado.get(canonico) ?? new Set<string>()
+  nomes.add(c.country)
+  porPaisNormalizado.set(canonico, nomes)
+}
+const paisesComDoisNomes = [...porPaisNormalizado.entries()]
+  .filter(([, nomes]) => nomes.size > 1)
+  .map(([canonico, nomes]) => `${canonico}: ${[...nomes].join(" / ")}`)
+
 type ClubeFeminino = { atletas?: unknown[] }
 const seed = JSON.parse(readFileSync("data/seeds/elencos-femininos.json", "utf8")) as Record<string, ClubeFeminino>
 const clubesFemininosComElencoReal = Object.values(seed)
@@ -110,7 +168,8 @@ const clubesFemininosComElencoReal = Object.values(seed)
 
 type Medida = keyof typeof PISO
 const medido: Record<Medida, number> = {
-  divisoes, paises: paises.size, comCopaNacional, comSegundaCopa, comSupercopa, clubesFemininosComElencoReal,
+  divisoes, paises: paises.size, comCopaNacional, comSegundaCopa, comSupercopa,
+  clubesFemininosComElencoReal, competicoesComCampeao,
 }
 
 const ROTULO: Record<Medida, string> = {
@@ -120,6 +179,7 @@ const ROTULO: Record<Medida, string> = {
   comSegundaCopa: "divisoes com SEGUNDA copa (copa da liga)",
   comSupercopa: "divisoes com supercopa nacional",
   clubesFemininosComElencoReal: "clubes femininos com elenco real",
+  competicoesComCampeao: "competicoes com campeao conhecido",
 }
 
 console.log("\n  PROFUNDIDADE DO ULTRAFOOT\n")
@@ -145,6 +205,14 @@ const subiu = (Object.entries(PISO) as [Medida, number][]).filter(([k, v]) => me
 if (subiu.length > 0) {
   console.log(`\n  ⚠️ ${subiu.length} medida(s) acima do piso — SUBA O PISO neste arquivo para travar o ganho:`)
   for (const [k] of subiu) console.log(`     ${k}: ${PISO[k]} -> ${medido[k]}`)
+}
+
+if (paisesComDoisNomes.length > 0) {
+  falhas++
+  console.log(`
+  FALHA — ${paisesComDoisNomes.length} pais(es) com dois nomes em LEAGUE_COMPETITIONS:`)
+  for (const linha of paisesComDoisNomes) console.log(`    ${linha}`)
+  console.log("    O mesmo pais contado duas vezes infla a medida de profundidade.")
 }
 
 console.log(falhas === 0

@@ -403,7 +403,12 @@ export const LIGAS_FEMININAS: LigaFeminina[] = [
   },
   {
     id: "nwsl_usa", nome: "National Women's Soccer League", short: "NWSL",
-    pais: "EUA", codigoPais: "USA", regiao: "americas", confederacao: "CONCACAF", nivel: 1,
+    // ⚠️ "Estados Unidos", nao "EUA": `lib/country-normalize` ja define este como
+    // o nome canonico (o alias EUA aponta para ele), e a MLS em
+    // `country-competitions` sempre usou a forma por extenso. Enquanto a NWSL
+    // dizia "EUA", o mesmo pais contava DUAS VEZES na catraca de profundidade e
+    // a tela de selecao mostrava dois nomes para uma federacao so.
+    pais: "Estados Unidos", codigoPais: "USA", regiao: "americas", confederacao: "CONCACAF", nivel: 1,
     copaNacional: "NWSL Challenge Cup", continental: "CONCACAF W Champions Cup",
     inicio: "2026-03-13", fim: "2026-11-21", sobe: 0, desce: 0,
     procedencia: "federation-snapshot",

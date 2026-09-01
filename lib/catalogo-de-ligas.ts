@@ -160,7 +160,7 @@ const CORE_COUNTRIES: CountryTab[] = [
     ],
   },
   {
-    name: "EUA", code: "USA", region: "americas",
+    name: "Estados Unidos", code: "USA", region: "americas",
     leagues: [
       { key: "mls", label: "MLS", short: "MLS", teams: mlsTeams },
     ],

@@ -308,9 +308,23 @@
   ],
   "changelog": [
     {
-      "version": "1.0.384",
+      "version": "1.0.385",
       "data": "2026-08-31",
       "latest": true,
+      "titulo": "O mundo passa a ter campeoes, e a supercopa vira campeao contra campeao",
+      "itens": [
+        "AGORA TODA COMPETICAO DO PLANETA TEM CAMPEAO. Ate esta atualizacao o jogo so sabia quem levantou a taca que VOCE disputou: eliminado nas oitavas da Copa do Brasil, ninguem era campeao daquele ano; jogando a Serie B, a Libertadores da temporada nao tinha vencedor; e nenhuma liga estrangeira registrava o titulo dela. Sao 278 competicoes — 154 ligas, 67 copas nacionais, 50 supercopas e as sete continentais de clube — com campeao conhecido em todas as temporadas.",
+        "A SUPERCOPA PASSA A SER CAMPEAO CONTRA CAMPEAO, como manda o regulamento. Quem ganhou a Champions decide a Supercopa da UEFA contra o campeao da Europa League; quem ganhou a Libertadores enfrenta na Recopa o campeao da Sul-Americana; quem ganhou a liga do seu pais enfrenta o campeao da copa. Antes o adversario era um clube SORTEADO da mesma regiao — dava para levantar a Supercopa da UEFA contra um time do meio da tabela do Chipre.",
+        "A TELA DE HISTORICO GANHOU O QUADRO DE CAMPEOES DO MUNDO, temporada por temporada, com os seus titulos destacados em dourado no meio dos do resto do planeta. E a virada de temporada anuncia quem levantou cada taca.",
+        "O CAMPEAO NAO E SORTEADO NO ESCURO: o favorito domina sem monopolizar (medido em quarenta temporadas: Bayern 42%, Real Madrid 41%, Flamengo 32%, Manchester City 25%), a zebra continua possivel e o campeao sai do terco de cima da competicao em mais de 80% dos anos. Nada disso pesa no save: o palmares e calculado na hora e nao ocupa um byte.",
+        "SEU TITULO SEMPRE VALE MAIS QUE A CONTA. O que a sua carreira registrou vence a estimativa em qualquer tela, e o mundo nunca atribui ao seu clube uma taca que voce nao ganhou em campo.",
+        "OS ESTADOS UNIDOS VOLTARAM A SER UM PAIS SO. A liga masculina se chamava 'Estados Unidos' e a feminina 'EUA', entao a mesma federacao aparecia duas vezes na selecao de pais e era contada duas vezes na medida de profundidade do jogo."
+      ]
+    },
+    {
+      "version": "1.0.384",
+      "data": "2026-08-31",
+      "latest": false,
       "titulo": "Cinquenta supercopas nacionais, copa da liga em quatro paises e as copas de fachada",
       "itens": [
         "CINQUENTA PAISES PASSAM A DISPUTAR A SUPERCOPA DELES, contra dezoito na atualizacao passada. Entram Polonia, Ucrania, Romenia, Hungria, Bulgaria, Belarus, Israel, Irlanda, Irlanda do Norte, Islandia, Estonia, Letonia, Lituania, Moldavia, Georgia, Armenia, Albania, Kosovo, Eslovenia, Malta, Ilhas Faroe, Noruega, Cazaquistao, Chipre, Paraguai e Peru — a temporada de cada um agora abre com o campeao da liga contra o campeao da copa.",
