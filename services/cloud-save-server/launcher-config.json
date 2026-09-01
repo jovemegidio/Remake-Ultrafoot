@@ -308,9 +308,20 @@
   ],
   "changelog": [
     {
-      "version": "1.0.386",
+      "version": "1.0.387",
       "data": "2026-09-01",
       "latest": true,
+      "titulo": "A classificacao passa a desempatar pela regra do pais",
+      "itens": [
+        "NO BRASIL, QUEM TEM MAIS VITORIAS FICA NA FRENTE. A regra da CBF desempata por numero de vitorias logo depois dos pontos, ANTES do saldo de gols — e o jogo ordenava a tabela por saldo, como se fosse liga europeia. Dois clubes com os mesmos pontos apareciam na ordem errada, e em 38 rodadas com quatro rebaixados isso decide titulo e rebaixamento.",
+        "VALE PARA TUDO QUE E BRASILEIRO: Serie A, B, C e D, os estaduais e o Brasileirao feminino. Na Premier League, na La Liga e nas demais ligas europeias o saldo continua mandando, porque la a regra e essa mesmo.",
+        "E DECIDE QUEM AVANCA DOS GRUPOS. Nos estaduais, a mini-tabela que define os classificados as quartas usava o mesmo criterio europeu: o clube com mais vitorias e saldo pior ficava de fora. Agora nao mais.",
+        "O CRITERIO CERTO JA ESTAVA ESCRITO NO JOGO, e nada o lia. Cada competicao declara os proprios criterios de desempate desde sempre; a tabela era ordenada por uma regra fixa em outro lugar, em tres pedacos de codigo diferentes que concordavam no mesmo erro."
+      ]
+    },
+    {
+      "version": "1.0.386",
+      "data": "2026-09-01",
       "titulo": "Ritmo de jogo: quem fica no banco nao entra mais a 100%",
       "itens": [
         "O RESERVA ENCOSTADO PERDE RITMO DE JOGO. Ate esta atualizacao nada no jogo cobrava a falta de minutos: a forma so mudava para quem PARTICIPOU da partida, entao quem ficava no banco mantinha a forma congelada — e a energia ainda o premiava, porque descansar recupera energia. Um centroavante tres meses sem jogar entrava na quarta-feira com a mesma forca de quem jogou as doze partidas anteriores.",
@@ -325,7 +336,6 @@
     {
       "version": "1.0.385",
       "data": "2026-08-31",
-      "latest": false,
       "titulo": "O mundo passa a ter campeoes, e a supercopa vira campeao contra campeao",
       "itens": [
         "AGORA TODA COMPETICAO DO PLANETA TEM CAMPEAO. Ate esta atualizacao o jogo so sabia quem levantou a taca que VOCE disputou: eliminado nas oitavas da Copa do Brasil, ninguem era campeao daquele ano; jogando a Serie B, a Libertadores da temporada nao tinha vencedor; e nenhuma liga estrangeira registrava o titulo dela. Sao 278 competicoes — 154 ligas, 67 copas nacionais, 50 supercopas e as sete continentais de clube — com campeao conhecido em todas as temporadas.",
@@ -339,7 +349,6 @@
     {
       "version": "1.0.384",
       "data": "2026-08-31",
-      "latest": false,
       "titulo": "Cinquenta supercopas nacionais, copa da liga em quatro paises e as copas de fachada",
       "itens": [
         "CINQUENTA PAISES PASSAM A DISPUTAR A SUPERCOPA DELES, contra dezoito na atualizacao passada. Entram Polonia, Ucrania, Romenia, Hungria, Bulgaria, Belarus, Israel, Irlanda, Irlanda do Norte, Islandia, Estonia, Letonia, Lituania, Moldavia, Georgia, Armenia, Albania, Kosovo, Eslovenia, Malta, Ilhas Faroe, Noruega, Cazaquistao, Chipre, Paraguai e Peru — a temporada de cada um agora abre com o campeao da liga contra o campeao da copa.",

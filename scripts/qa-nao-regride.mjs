@@ -167,6 +167,7 @@ const INVENTARIO = [
   ["1.0.381", "A segunda copa nacional e disputada", "lib/use-game-manager.ts", "nationalCups.length > 1"],
   ["1.0.381", "Catraca de profundidade por versao", "scripts/qa-paridade.ts", "PISO"],
   ["1.0.382", "Endereco do servidor em fonte unica", "lib/servidor-ultrafoot.ts", "SERVIDOR_ULTRAFOOT"],
+  ["1.0.387", "Desempate por competicao (CBF conta vitorias)", "lib/desempate.ts", "DESEMPATE_CBF"],
   ["1.0.383", "Prelecao com reacao por atleta", "lib/prelecao.ts", "acertoDoTom"],
   ["1.0.383", "A prelecao chega a partida", "app/partida/ao-vivo/page.tsx", "aoFalarComOElenco"],
   ["1.0.383", "Plano contra o adversario le o rival", "lib/plano-contra-o-adversario.ts", "acertoDoFoco"],

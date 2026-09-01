@@ -2,6 +2,7 @@
 // Eliminatorias e Copa do Mundo. Inclui geracao de tabela, chaveamento e
 // simulacao de partidas. Tudo puro/offline para persistir no save.
 
+import { desempateDaDivisao, ordenarPorCriterios } from "@/lib/desempate"
 import {
   type Confederation,
   type NationalTeam,
@@ -536,14 +537,20 @@ function applyResult(row: GroupRow, gf: number, ga: number) {
   else row.lost++
 }
 
-function sortTable(table: GroupRow[]): GroupRow[] {
-  return [...table].sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points
-    const sgA = a.gf - a.ga
-    const sgB = b.gf - b.ga
-    if (sgB !== sgA) return sgB - sgA
-    return b.gf - a.gf
-  })
+/**
+ * ⚠️ ESTA ERA A SEGUNDA COPIA DA MESMA REGRA ERRADA (ver `lib/desempate.ts`).
+ * `GroupRow` nomeia os campos de outro jeito (`gf`/`ga`/`teamName`), entao a
+ * linha e adaptada para o formato que o desempate le — o criterio em si mora
+ * num lugar so.
+ */
+function sortTable(table: GroupRow[], divisao?: string): GroupRow[] {
+  const adaptadas = table.map(r => ({
+    linha: r,
+    points: r.points, won: r.won,
+    goalsFor: r.gf, goalsAgainst: r.ga,
+    nome: r.teamName,
+  }))
+  return ordenarPorCriterios(adaptadas, desempateDaDivisao(divisao)).map(x => x.linha)
 }
 
 // Avanca uma rodada da competicao. Retorna novo estado (imutavel).

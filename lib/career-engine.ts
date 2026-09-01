@@ -4,6 +4,7 @@ import type { Team } from "@/lib/teams-data"
 import { serieATeams, serieBTeams, getTeamsByDivision, completarLigaComPool, tamanhoDaLiga, getTeamByFileKey } from "@/lib/teams-data"
 import { clubesDaLigaNoServidor, regulamentoDaLigaNoServidor } from "@/lib/atualizacao-elencos"
 import { simulateFullMatch } from "@/lib/match-engine"
+import { desempateDaDivisao, ordenarPorCriterios } from "@/lib/desempate"
 import type { SavedTeam } from "@/lib/save-system"
 import type {
   StandingEntry,
@@ -223,15 +224,17 @@ export function updateStandings(
   })
 }
 
-/** Ordena a tabela: pontos → SG → GP → nome. */
-export function sortStandings(standings: StandingEntry[]): StandingEntry[] {
-  return [...standings].sort(
-    (a, b) =>
-      b.points - a.points ||
-      b.goalDiff - a.goalDiff ||
-      b.goalsFor - a.goalsFor ||
-      a.nome.localeCompare(b.nome)
-  )
+/**
+ * Ordena a tabela pelo criterio de desempate DA DIVISAO.
+ *
+ * ⚠️ SEM A DIVISAO, O COMPORTAMENTO E O DE ANTES (pontos → SG → GP → nome).
+ * O parametro e opcional de proposito: ha chamadores no jogo inteiro e trocar a
+ * ordem da tabela em todos de uma vez, sem saber a competicao de cada um, seria
+ * mudar resultado onde ninguem pediu. Quem sabe a divisao passa; quem nao sabe
+ * continua como estava.
+ */
+export function sortStandings(standings: StandingEntry[], divisao?: string): StandingEntry[] {
+  return ordenarPorCriterios(standings, desempateDaDivisao(divisao))
 }
 
 // ─── Simulação CPU ─────────────────────────────────────────────────────────────

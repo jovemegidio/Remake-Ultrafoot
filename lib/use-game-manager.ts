@@ -36,6 +36,7 @@ import { pedidoDaSemana, montarPedido, agenteProcuraOutroClube, chanceDePreContr
 import { generateOffers } from "@/lib/sponsor-engine"
 import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, resultadoDoConfronto, disputaDeterministica, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
+import { DESEMPATE_CBF, ordenarPorCriterios } from "@/lib/desempate"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
 import { generateJobOffers, computeBoardConfidence, calcSeasonObjective, shouldFireManager } from "@/lib/board-engine"
 import { condutaDoTreinador } from "@/lib/legado-do-treinador"
@@ -1667,10 +1668,19 @@ export function generateStateChampionshipFixtures(
       // (provisórias até os jogos acontecerem) e se firmam a cada rebuild.
       const hydrated = reconcilePlayedFixtures(secondPhaseFixtures, knownResults, season)
       entrants = groups.flatMap(group => {
-        const mini = computeStandingsFromFixtures(hydrated, competition)
+        const mini0 = computeStandingsFromFixtures(hydrated, competition)
           .filter(row => group.includes(row.teamShort))
-          .sort((a, b) => b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst) || compareShort(a.teamShort, b.teamShort))
-        return (mini.length ? mini.map(row => row.teamShort) : group.sort(compareShort)).slice(0, 2)
+          // ⚠️ TERCEIRA COPIA DA REGRA DE DESEMPATE (ver `lib/desempate.ts`), e a
+          // que mais pesa: esta mini-tabela decide QUEM AVANCA do grupo. Num
+          // estadual brasileiro o criterio depois dos pontos e o numero de
+          // VITORIAS, e ordenar por saldo mandava o clube errado as quartas.
+        const ordenadas = ordenarPorCriterios(
+          mini0.map(row => ({ linha: row, points: row.points, won: row.won, goalsFor: row.goalsFor, goalsAgainst: row.goalsAgainst, nome: row.teamShort })),
+          // Esta funcao gera ESTADUAL BRASILEIRO e so ele, entao o criterio e o da
+          // CBF sem consulta: pontos, vitorias, saldo, gols pro.
+          DESEMPATE_CBF,
+        ).map(x => x.linha)
+        return (ordenadas.length ? ordenadas.map(row => row.teamShort) : group.sort(compareShort)).slice(0, 2)
       }).sort(compareShort)
       continue
     }

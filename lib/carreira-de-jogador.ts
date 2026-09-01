@@ -2713,7 +2713,7 @@ export function jogarProximaRodada(
   jogarMataMata(novo, "continental", rodada, clubes)
 
   novo.rodada = rodada
-  novo.tabela = sortStandings(novo.tabela)
+  novo.tabela = sortStandings(novo.tabela, novo.divisao)
   // ⚠️ A TEMPORADA SO ACABA QUANDO O MATA-MATA ACABA. Fechar no fim da liga
   // deixaria a final da copa por jogar — e o titulo, sem dono.
   const mataMataEmAberto = [novo.copa, novo.continental].some(b => b && !b.champion && b.userEliminatedAtRound === undefined)
@@ -3456,7 +3456,7 @@ export function encerrarTemporada(estado: EstadoCarreiraDeJogador): EstadoCarrei
   const novo = structuredClone(estado)
   const t = novo.temporadaAtual
   const media = t.jogos > 0 ? Math.round((t.somaDasNotas / t.jogos) * 100) / 100 : 0
-  const tabela = sortStandings(novo.tabela)
+  const tabela = sortStandings(novo.tabela, novo.divisao)
   const posicao = Math.max(1, tabela.findIndex(l => l.curto === novo.clubeCurto) + 1)
 
   const titulos: string[] = []
