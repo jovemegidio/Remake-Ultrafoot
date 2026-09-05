@@ -84,13 +84,13 @@ export default function DesafiosPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
+    <div className="flex h-screen flex-col overflow-hidden bg-transparent pb-20 md:pb-0">
       <GameHeader team={team} />
       <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
         <header className="flex items-center gap-3">
           <Trophy className="h-7 w-7 text-[#ffd700]" />
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">DESAFIOS</h1>
+            <h1 className="uf-heading text-3xl font-bold tracking-tight text-white">DESAFIOS</h1>
             <p className="mt-1 text-white/50">
               A mesma carreira, com regra, prazo e recompensa. Um por vez.
             </p>
@@ -178,7 +178,7 @@ export default function DesafiosPage() {
       {/* Abandonar é irreversível: o progresso não volta. */}
       {confirmarAbandono && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[90] flex items-center justify-center uf-veu p-4"
           onClick={() => setConfirmarAbandono(false)}
         >
           <div
@@ -242,7 +242,7 @@ function DesafioAtivo({
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
             {progresso.completed ? "Desafio concluído" : progresso.failed ? "Desafio falhado" : "Desafio em andamento"}
           </p>
-          <h2 className="mt-1 text-2xl font-black text-white">{config.nome}</h2>
+          <h2 className="uf-heading mt-1 text-2xl font-black text-white">{config.nome}</h2>
           <p className="mt-1 text-sm text-white/55">{config.descricao}</p>
         </div>
         <div className="text-right">
@@ -328,7 +328,7 @@ function CartaoDoDesafio({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-xl border bg-[#0c0c10] p-3 transition",
+        "flex flex-col rounded-xl border bg-[var(--uf-bg-surface)] p-3 transition",
         ehOAtivo ? "border-[var(--brand)]/40" : "border-white/[0.05] hover:border-white/15",
         bloqueado && !ehOAtivo && "opacity-45",
       )}

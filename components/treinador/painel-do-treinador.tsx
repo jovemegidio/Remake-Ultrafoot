@@ -182,7 +182,7 @@ function Cartao({ icone, titulo, acessorio, children }: {
   icone: React.ReactNode; titulo: string; acessorio?: React.ReactNode; children: React.ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-white/[0.07] bg-[#0c0c10] p-4">
+    <section className="rounded-xl border border-white/[0.07] bg-[var(--uf-bg-surface)] p-4">
       <header className="mb-3 flex items-center gap-2">
         <span className="text-[var(--brand)]">{icone}</span>
         <h3 className="text-sm font-bold text-white">{titulo}</h3>

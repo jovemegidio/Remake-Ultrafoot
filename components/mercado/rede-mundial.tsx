@@ -115,7 +115,7 @@ export function RedeMundial({
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="shrink-0 space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-xl font-bold leading-tight text-white">Rede Mundial de Transferências</h2>
+          <h2 className="uf-heading text-xl font-bold leading-tight text-white">Rede Mundial de Transferências</h2>
           <p className="text-sm text-white/45">Atletas sem clube e em fim de contrato — contrate ou deixe na mira.</p>
           <div className="ml-auto flex items-center gap-3">
             <TeamCrest team={userTeam} size="sm" />
@@ -176,7 +176,7 @@ export function RedeMundial({
 
       <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pr-1">
         {lista.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[#0c0c10]/70 p-10 text-center backdrop-blur-sm">
+          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/70 p-10 text-center backdrop-blur-sm">
             <Users className="h-12 w-12 text-white/10" />
             <p className="mt-4 text-white/60">
               {aba === "observados"
@@ -199,7 +199,7 @@ export function RedeMundial({
               return (
                 <div
                   key={p.id}
-                  className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-[#0c0c10]/75 px-3 py-2.5 backdrop-blur-sm transition-colors hover:border-white/[0.12] hover:bg-[#0c0c10]/95"
+                  className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-[var(--uf-bg-surface)]/75 px-3 py-2.5 backdrop-blur-sm transition-colors hover:border-white/[0.12] hover:bg-[var(--uf-bg-surface)]/95"
                 >
                   <PlayerAvatar name={p.name} teamColor={p.team?.cor1} fileKey={p.team?.file_key} position={p.position} size="sm" />
 

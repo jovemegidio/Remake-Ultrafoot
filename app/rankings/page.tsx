@@ -19,7 +19,7 @@ export default function RankingsPage() {
       <GameHeader team={team} />
       <main className="mx-auto max-w-7xl p-5 pb-24">
         <div className="mb-5">
-          <h1 className="text-2xl font-black">Rankings</h1>
+          <h1 className="uf-heading text-2xl font-black">Rankings</h1>
           <p className="text-sm text-white/50">Técnicos, clubes, seleções e academias do mundo.</p>
         </div>
         <RankingsMundiais state={state} />

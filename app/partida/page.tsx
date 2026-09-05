@@ -163,7 +163,7 @@ function TeamPanel({
       >
         {/* Nome do time */}
         <div className="px-6 pt-4 pb-1">
-          <h2 className="truncate text-center text-xl font-bold tracking-wide text-white">{team.nome}</h2>
+          <h2 className="uf-heading truncate text-center text-xl font-bold tracking-wide text-white">{team.nome}</h2>
         </div>
 
         {/* Escudo */}
@@ -759,7 +759,7 @@ export default function PartidaPage() {
   // mao, e o confronto exibido e sempre o de verdade.
   if (!hydrated || !saveHidratado) {
     return (
-      <div className="h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen bg-transparent flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )
@@ -772,7 +772,7 @@ export default function PartidaPage() {
   const semConfronto = !ctxDaSelecao && !currentMatch && !nextFixture
   if (semConfronto) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-[#050508] px-6 text-center">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-transparent px-6 text-center">
         <Trophy className="h-10 w-10 text-white/20" />
         <p className="text-sm text-white/60">Nenhuma partida marcada no momento.</p>
         <p className="max-w-sm text-xs text-white/35">
@@ -792,7 +792,7 @@ export default function PartidaPage() {
   const awayLeague = getLeagueName(awayTeam.curto)
 
   return (
-    <div className="h-screen bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen bg-transparent flex flex-col overflow-hidden">
 
       {/* Main Content */}
       <main className="relative flex-1 overflow-hidden">
@@ -807,7 +807,7 @@ export default function PartidaPage() {
         {/* Fundo FIXO da tela de pre-jogo: imagem estatica (pedido do jogador, no
             lugar da cutscene em video). Um PNG proprio nunca depende de arte por
             clube que pode faltar, e nao consome GPU como o video em loop. */}
-        <div className="absolute inset-0 bg-[#050508]">
+        <div className="absolute inset-0 bg-[var(--uf-bg-deep)]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,#132534_0%,#070a0f_72%)]" />
           <Image
             src="/images/pre-jogo/pre-jogo-fundo.webp"
@@ -949,7 +949,7 @@ export default function PartidaPage() {
 
       {/* ESCALACAO INVALIDA: titular lesionado/suspenso/expulso. Duas opcoes. */}
       {escalacaoInvalida && escalacaoInvalida.length > 0 && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center uf-veu p-4">
           <div className="w-full max-w-md rounded-2xl border border-amber-400/25 bg-[#0c0d12] p-6 shadow-2xl">
             <h2 className="text-lg font-black text-white">Escalação inválida</h2>
             <p className="mt-1 text-sm text-white/55">
@@ -996,8 +996,8 @@ export default function PartidaPage() {
             }}
           />
         ) : (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0c0c10] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center uf-veu">
+          <div className="bg-[var(--uf-bg-surface)] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold text-white text-center mb-6">Simulação Rápida</h3>
             <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -1058,7 +1058,7 @@ export default function PartidaPage() {
 
       {avisoSemVolta && (
         <div
-          className="fixed inset-0 z-[96] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[96] flex items-center justify-center uf-veu p-4"
           onClick={() => setAvisoSemVolta(false)}
         >
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0b0d12] p-6 text-center" onClick={e => e.stopPropagation()}>

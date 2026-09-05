@@ -122,7 +122,7 @@ export default function ReunioesPage() {
   }, [selectedPlayerId, playerMeetings])
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
@@ -131,7 +131,7 @@ export default function ReunioesPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+                <h1 className="uf-heading text-2xl font-bold text-white flex items-center gap-3">
                   <MessageSquare className="h-7 w-7 text-primary" />
                   Reunioes com Jogadores
                 </h1>
@@ -248,7 +248,7 @@ export default function ReunioesPage() {
                           {selectedPlayer.shirtNumber ?? selectedPlayer.id}
                         </div>
                         <div>
-                          <h2 className="text-xl font-bold text-white">{selectedPlayer.name}</h2>
+                          <h2 className="uf-heading text-xl font-bold text-white">{selectedPlayer.name}</h2>
                           <div className="flex items-center gap-3 text-sm text-white/60">
                             <span>{selectedPlayer.position}</span>
                             <span>|</span>

@@ -109,7 +109,7 @@ export default function ManagerRushPage() {
           <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">
             {t.rush.desafio_de} {hoje.split("-").reverse().join("/")}
           </p>
-          <h1 className="mt-1 flex items-center gap-2 text-3xl font-black">
+          <h1 className="uf-heading mt-1 flex items-center gap-2 text-3xl font-black">
             <Zap className="text-[var(--brand)]" />{t.rush.titulo}
           </h1>
           <p className="mt-1 text-sm text-white/50">
@@ -181,7 +181,7 @@ export default function ManagerRushPage() {
           )}>
             <div className="text-center">
               <Trophy className={cn("mx-auto h-8 w-8", resultado.venceu ? "text-emerald-400" : "text-white/25")} />
-              <h2 className="mt-2 text-2xl font-black">
+              <h2 className="uf-heading mt-2 text-2xl font-black">
                 {resultado.venceu ? t.rush.voce_resolveu : t.rush.nao_deu}
               </h2>
               <p className="mt-1 text-sm text-white/55">

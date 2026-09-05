@@ -259,7 +259,7 @@ export default function InfraestruturaPage() {
     // Mesmo tratamento visual do pre-office (pedido): fundo do escritorio com
     // crossfade, brilho radial e camadas de escurecimento, em vez do preto chapado.
     <div className="relative flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0">
-      <div className="absolute inset-0 bg-[#050508]" />
+      <div className="absolute inset-0 bg-[var(--uf-bg-deep)]" />
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <Image src="/images/office-bg-1.webp" alt="" fill priority unoptimized className="office-bg-a object-cover" />
         <Image src="/images/office-bg-2.webp" alt="" fill unoptimized className="office-bg-b object-cover" />
@@ -312,11 +312,11 @@ export default function InfraestruturaPage() {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-[#050508]/35 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--uf-bg-deep)] via-[var(--uf-bg-deep)]/35 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--brand)]">Estádio do clube</p>
-                <h2 className="text-xl font-black text-white drop-shadow">{userTeam?.estadio_nome || "Estádio"}</h2>
+                <h2 className="uf-heading text-xl font-black text-white drop-shadow">{userTeam?.estadio_nome || "Estádio"}</h2>
               </div>
               <div className="text-right">
                 <p className="text-[10px] uppercase text-white/60">Capacidade</p>
@@ -536,7 +536,7 @@ export default function InfraestruturaPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center uf-veu"
             onClick={() => setSelectedArea(null)}
           >
             <motion.div

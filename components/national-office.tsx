@@ -67,11 +67,11 @@ export function NationalOffice() {
     : null
 
   return (
-    <div className="relative h-screen pb-20 md:pb-12 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="relative h-screen pb-20 md:pb-12 bg-[var(--uf-bg-deep)] flex flex-col overflow-hidden">
       {/* Mesmo fundo do escritório do clube, para a estrutura ser a mesma. */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <Image src="/images/office-bg-1.webp" alt="" fill priority unoptimized className="object-cover" />
-        <div className="absolute inset-0 bg-[#050508]/72" />
+        <div className="absolute inset-0 bg-[var(--uf-bg-deep)]/72" />
       </div>
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
@@ -116,7 +116,7 @@ export function NationalOffice() {
               <div className="flex items-center gap-4">
                 <TeamCrest team={nation} size="xl" />
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-extrabold uppercase tracking-tight text-white">{nation.nome}</h1>
+                  <h1 className="uf-heading text-3xl md:text-4xl font-extrabold uppercase tracking-tight text-white">{nation.nome}</h1>
                   <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-[var(--brand)]">
                     {nationalTeam ? CONFEDERATION_LABEL[nationalTeam.confederation] : "Seleção nacional"}
                   </p>
@@ -129,7 +129,7 @@ export function NationalOffice() {
                   <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[var(--brand)]">
                     <Trophy className="h-3.5 w-3.5" /> {currentCompetition.competitionName}
                   </div>
-                  <h2 className="mt-2 text-xl font-black text-white">{userNextFixture.stage} · vs {oppName}</h2>
+                  <h2 className="uf-heading mt-2 text-xl font-black text-white">{userNextFixture.stage} · vs {oppName}</h2>
                   <p className="mt-1 text-sm text-white/55">Temporada {currentCompetition.season}</p>
                   <div className="mt-4 flex flex-wrap items-center gap-2">
                     {/* Fluxo completo, igual ao do clube: pré-jogo, partida ao
@@ -182,7 +182,7 @@ export function NationalOffice() {
 
             {/* Coluna direita: retrospecto, títulos, força */}
             <div className="space-y-5">
-              <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+              <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
                 <div className="mb-4 flex items-center gap-2 text-xs font-medium text-white/60">
                   <Flag className="h-4 w-4 text-[var(--brand)]" /> Retrospecto
                 </div>
@@ -202,7 +202,7 @@ export function NationalOffice() {
                 </div>
               </section>
 
-              <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+              <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
                 <div className="mb-3 flex items-center gap-2 text-xs font-medium text-white/60">
                   <Crown className="h-4 w-4 text-[#ffd700]" /> Títulos ({career.titles.length})
                 </div>
@@ -220,7 +220,7 @@ export function NationalOffice() {
               </section>
 
               {nationalFriendlies.length > 0 && (
-                <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+                <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
                   <div className="mb-3 flex items-center gap-2 text-xs font-medium text-white/60">
                     <Swords className="h-4 w-4 text-[var(--brand)]" /> Últimos amistosos
                   </div>

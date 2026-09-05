@@ -64,13 +64,13 @@ function SidebarNavItem({ icon: Icon, label, href, active, badge }: NavItemDef &
 
       {/* Badge de notificacao */}
       {badge && badge > 0 ? (
-        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand)] px-1 text-[9px] font-bold text-[#050508] shadow-[0_0_8px_rgba(0,255,200,0.6)]">
+        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand)] px-1 text-[9px] font-bold text-[var(--uf-bg-deep)] shadow-[0_0_8px_rgba(0,255,200,0.6)]">
           {badge > 9 ? "9+" : badge}
         </span>
       ) : null}
 
       {/* Tooltip */}
-      <span className="absolute left-full ml-3 hidden rounded-lg bg-[#050508] px-3 py-2 text-[11px] font-medium text-white shadow-xl group-hover:block whitespace-nowrap ring-1 ring-white/10 z-50 backdrop-blur-sm">
+      <span className="absolute left-full ml-3 hidden rounded-lg bg-[var(--uf-bg-deep)] px-3 py-2 text-[11px] font-medium text-white shadow-xl group-hover:block whitespace-nowrap ring-1 ring-white/10 z-50 backdrop-blur-sm">
         {label}
         <span className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 border-4 border-transparent border-r-[#0a0a0a]" />
       </span>

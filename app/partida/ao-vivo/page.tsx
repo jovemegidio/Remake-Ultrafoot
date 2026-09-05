@@ -2404,7 +2404,7 @@ export default function PartidaAoVivoPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen bg-transparent flex items-center justify-center text-white/40 text-sm">
         Carregando partida...
       </div>
     )
@@ -2436,7 +2436,7 @@ export default function PartidaAoVivoPage() {
 
       {/* Overlay de pré-jogo — fase "pre" */}
       {state.phase === "pre" && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center uf-veu">
           <div className="relative w-[480px] max-w-[92vw] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#0c0c14]">
             {/* Faixa de cores dos times */}
             <div

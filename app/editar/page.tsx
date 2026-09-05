@@ -1281,7 +1281,7 @@ export default function EditarPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <h2 className="text-2xl font-black tracking-tight text-white truncate">{selectedTeam.nome}</h2>
+                      <h2 className="uf-heading text-2xl font-black tracking-tight text-white truncate">{selectedTeam.nome}</h2>
                       <span
                         className="px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase tracking-wider border"
                         style={{
@@ -1921,7 +1921,7 @@ export default function EditarPage() {
       {/* Modal de TRANSFERÊNCIA — escolher o clube de destino. */}
       {transferindo && selectedTeam && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[90] flex items-center justify-center uf-veu p-4"
           onClick={() => setTransferindo(null)}
         >
           <div
@@ -1978,7 +1978,7 @@ export default function EditarPage() {
 
       {/* Modal de edicao de JOGADOR (nome / posicao / overall) — persiste e viaja no build. */}
       {editingPlayer && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setEditingPlayer(null)}>
+        <div className="fixed inset-0 z-[90] flex items-center justify-center uf-veu p-4" onClick={() => setEditingPlayer(null)}>
           <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f1e22]" onClick={(e) => e.stopPropagation()}>
             {/* Cabecalho FIXO: o nome de quem se edita nao pode sumir na rolagem. */}
             <div className="shrink-0 border-b border-white/[0.07] px-6 pb-3 pt-5">

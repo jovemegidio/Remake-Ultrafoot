@@ -133,7 +133,7 @@ export default function YouthCareerPage() {
             <TeamCrest teamShort={career.clubCurto} size="lg" />
             <div>
               <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">{tb.trajetoria_na_base}</p>
-              <h1 className="mt-1 text-3xl font-black">{career.clubNome}</h1>
+              <h1 className="uf-heading mt-1 text-3xl font-black">{career.clubNome}</h1>
               <p className="mt-1 text-white/50">
                 Temporada {career.currentSeason} · {career.ligaNome ?? career.currentCompetition}
                 {career.pais ? ` · ${career.pais}` : ""}
@@ -270,7 +270,7 @@ export default function YouthCareerPage() {
 
         {career.professionalOffers.length > 0 && (
           <section className="mb-6">
-            <h2 className="mb-3 text-xl font-black">{tb.propostas_para_o_profissional}</h2>
+            <h2 className="uf-heading mb-3 text-xl font-black">{tb.propostas_para_o_profissional}</h2>
             <div className="grid gap-3 md:grid-cols-2">
               {career.professionalOffers.map(o => (
                 <div key={o.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--brand)]/25 bg-[var(--brand)]/5 p-5">
@@ -292,7 +292,7 @@ export default function YouthCareerPage() {
           {tabela.length > 0 && (
             <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5 lg:col-span-2">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-xl font-black">{career.ligaNome}</h2>
+                <h2 className="uf-heading text-xl font-black">{career.ligaNome}</h2>
                 {career.copa && (
                   <p className="text-xs text-white/45">
                     {career.copaNome}: {career.copa.champion
@@ -327,7 +327,7 @@ export default function YouthCareerPage() {
 
           <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 text-xl font-black"><GraduationCap className="text-[var(--brand)]" />{tb.elenco_sub20}</h2>
+              <h2 className="uf-heading flex items-center gap-2 text-xl font-black"><GraduationCap className="text-[var(--brand)]" />{tb.elenco_sub20}</h2>
               <select
                 value={career.formation ?? "4-3-3"}
                 onChange={e => setState({ youthCareer: { ...career, formation: e.target.value } })}
@@ -365,7 +365,7 @@ export default function YouthCareerPage() {
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-            <h2 className="text-xl font-black">{tb.seu_legado}</h2>
+            <h2 className="uf-heading text-xl font-black">{tb.seu_legado}</h2>
             <p className="mt-1 text-sm text-white/45">Atletas treinados por você continuam sendo acompanhados após sair da base.</p>
             <div className="mt-4 max-h-[430px] space-y-2 overflow-auto">
               {career.alumni.length === 0 ? (

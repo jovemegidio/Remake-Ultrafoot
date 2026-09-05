@@ -214,7 +214,7 @@ export default function CarreiraOnlinePage() {
       <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="mx-auto max-w-xl px-5 pt-28 text-center">
-          <h1 className="text-2xl font-black">{t.carreiraOnline.online_desligado}</h1>
+          <h1 className="uf-heading text-2xl font-black">{t.carreiraOnline.online_desligado}</h1>
           <Button className="mt-5" onClick={() => hardNavigate("/configuracoes")}>
             {t.carreiraOnline.abrir_configuracoes}
           </Button>
@@ -230,7 +230,7 @@ export default function CarreiraOnlinePage() {
         <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">{t.carreiraOnline.online}</p>
-            <h1 className="mt-1 flex items-center gap-2 text-3xl font-black">
+            <h1 className="uf-heading mt-1 flex items-center gap-2 text-3xl font-black">
               <Globe2 className="text-[var(--brand)]" />{t.carreiraOnline.titulo}
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-white/50">{t.carreiraOnline.explicacao}</p>
@@ -276,7 +276,7 @@ export default function CarreiraOnlinePage() {
           </p>
         ) : !sou ? (
           <section className="rounded-2xl border border-white/10 bg-white/[.04] p-5">
-            <h2 className="text-xl font-black">{t.carreiraOnline.escolha_a_vaga}</h2>
+            <h2 className="uf-heading text-xl font-black">{t.carreiraOnline.escolha_a_vaga}</h2>
             <p className="mt-1 text-sm text-white/50">{t.carreiraOnline.vaga_explicacao}</p>
 
             {meuTime && !ocupados.has(meuTime.file_key) && (
@@ -401,7 +401,7 @@ export default function CarreiraOnlinePage() {
             </section>
 
             <section className="mb-5 rounded-2xl border border-white/10 bg-white/[.04] p-5">
-              <h2 className="flex items-center gap-2 text-xl font-black">
+              <h2 className="uf-heading flex items-center gap-2 text-xl font-black">
                 <Play className="text-[var(--brand)]" />{t.carreiraOnline.sua_rodada}
               </h2>
               {minhaPartida ? (
@@ -497,7 +497,7 @@ export default function CarreiraOnlinePage() {
             )}
 
             <section className="mb-5 rounded-2xl border border-white/10 bg-white/[.03] p-5">
-              <h2 className="flex items-center gap-2 text-xl font-black">
+              <h2 className="uf-heading flex items-center gap-2 text-xl font-black">
                 <Store className="text-[var(--brand)]" />{t.carreiraOnline.mercado}
               </h2>
               <p className="mt-1 text-sm text-white/50">
@@ -577,7 +577,7 @@ export default function CarreiraOnlinePage() {
 
         {mundo && mundo.tabela.length > 0 && (
           <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-            <h2 className="flex items-center gap-2 text-xl font-black">
+            <h2 className="uf-heading flex items-center gap-2 text-xl font-black">
               <Trophy className="text-[var(--brand)]" />{t.carreiraOnline.tabela}
             </h2>
             <table className="mt-3 w-full text-sm">

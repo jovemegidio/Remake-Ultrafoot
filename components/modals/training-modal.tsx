@@ -104,7 +104,7 @@ export function TrainingModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-[#0c0c10] border-white/10">
+      <DialogContent className="sm:max-w-lg bg-[var(--uf-bg-surface)] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white">Centro de Treinamento</DialogTitle>
           <DialogDescription className="text-white/50">

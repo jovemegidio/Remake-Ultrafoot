@@ -25,8 +25,8 @@ export default function ModosLocaisRemovidos() {
   }, [])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#050508] px-6 text-center">
-      <h1 className="text-xl font-black text-white">Os modos locais saíram do jogo</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-transparent px-6 text-center">
+      <h1 className="uf-heading text-xl font-black text-white">Os modos locais saíram do jogo</h1>
       <p className="max-w-md text-sm text-white/50">
         O Draft agora é um modo <b className="text-white/80">online, técnico contra técnico</b>, dentro
         da sala do FC Hub. Levando você para lá…

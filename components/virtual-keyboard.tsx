@@ -193,7 +193,7 @@ export function VirtualKeyboard({
           >
             {/* Header */}
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-white mb-1">{title}</h2>
+              <h2 className="uf-heading text-2xl font-bold text-white mb-1">{title}</h2>
               {subtitle && <p className="text-sm text-white/50">{subtitle}</p>}
             </div>
 

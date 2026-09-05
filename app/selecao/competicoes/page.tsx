@@ -51,7 +51,7 @@ function Conteudo() {
       />
 
       {concluidas.length > 0 && (
-        <section className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
+        <section className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5">
           <div className="mb-3 flex items-center gap-2 text-xs font-medium text-white/60">
             <Flag className="h-4 w-4 text-white/40" /> Encerradas nesta temporada
           </div>
@@ -68,7 +68,7 @@ function Conteudo() {
         </section>
       )}
 
-      <section className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
+      <section className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5">
         <div className="mb-3 flex items-center gap-2 text-xs font-medium text-white/60">
           <Crown className="h-4 w-4 text-[#ffd700]" /> Títulos pela seleção ({career.titles.length})
         </div>

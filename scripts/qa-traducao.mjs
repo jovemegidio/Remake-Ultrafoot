@@ -45,6 +45,16 @@ const detalhe = process.argv.includes("--detalhe")
  * es-ES/it-IT em 45,8%. Estas telas ficam como as outras até alguém extrair.
  * PRÓXIMA VERSÃO QUE MEXER NO MODO CONTROLE: extraia e devolva o teto a 5.491.
  */
+// SISTEMA VISUAL `uf-*`: 5281 -> 5280. A revisao da camada visual trocou o selo
+// "EA" do rodape pela marca do proprio jogo (era a marca de outra empresa
+// desenhada em todas as telas) e renomeou dois temas que carregavam nome de
+// terceiro. Isso removeu uma frase da conta.
+// ⚠️ A catraca me pegou de verdade no caminho, e vale registrar POR QUE: ela
+// subiu para 5284 por causa de COMENTARIO DENTRO DE JSX. A heuristica so pula
+// linha que comeca com // ou asterisco — um {/* ... */} com frase entre aspas
+// no meio conta como texto de tela. Quem escrever comentario em JSX, escreva
+// sem aspas duplas. O terceiro ponto foi um title="...": `title` NAO esta na
+// lista de atributos tecnicos (`aria-label` esta), entao ele conta.
 // 1.0.374: 5618 -> 5612. A tela `vida/` nasceu extraida e os cinco rotulos do
 // menu do atleta, que estavam chumbados desde que o modo existe, viraram chave.
 // 1.0.386: 5284 -> 5281. O painel de ritmo de jogo somou uma frase — e ela foi
@@ -67,7 +77,7 @@ const detalhe = process.argv.includes("--detalhe")
 // O `extrair-textos.mjs` nao alcanca nenhuma das duas (ele exige o gancho na
 // forma exata `const t = useTranslation()`, e a trajetoria usa `tr`), entao foi
 // a mao, chave por chave.
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5281)
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5280)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
 //                        chumbadas. Único aumento da catraca; ver a nota acima.)

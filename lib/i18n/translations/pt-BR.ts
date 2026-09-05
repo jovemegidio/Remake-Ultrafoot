@@ -843,6 +843,9 @@ export const ptBR = {
     surpreenda_me: "Surpreenda-me",
   },
   // ── 1.0.377: ranking de academias (carreira de base) ───────────────────
+  escalacao: {
+    fora_do_regulamento: "Escalação fora do regulamento",
+  },
   baseSub20: {
     ranking_de_academias: "Ranking de academias",
     nota: "nota",

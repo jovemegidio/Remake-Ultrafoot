@@ -1105,7 +1105,7 @@ export default function CompeticoesPage() {
   })
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
       <main className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-1.5 scrollbar-premium">
@@ -1115,7 +1115,7 @@ export default function CompeticoesPage() {
             <p className="text-sm text-white/50">{t.competitions.seasonFollowup(currentSeason)}</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0c0c10] border border-white/[0.04]">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--uf-bg-surface)] border border-white/[0.04]">
               <Calendar className="h-4 w-4 text-[var(--brand)]" />
               <span className="text-sm text-white/70">{t.competitions.roundProgress(currentWeek)}</span>
             </div>
@@ -1140,7 +1140,7 @@ export default function CompeticoesPage() {
                   key={comp.id}
                   onClick={() => setActiveTab(comp.id)}
                   className={cn(
-                    "rounded-xl bg-[#0c0c10] border p-3 text-left transition-all",
+                    "rounded-xl bg-[var(--uf-bg-surface)] border p-3 text-left transition-all",
                     isActive 
                       ? "border-[var(--brand)] ring-1 ring-[var(--brand)]" 
                       : "border-white/[0.04] hover:border-white/10"
@@ -1345,7 +1345,7 @@ function CopaBracket({
 
   if (!state.drawn) {
     return (
-      <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
+      <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--brand)]/10 mx-auto mb-6">
           <Trophy className="h-10 w-10 text-[var(--brand)]" />
         </div>
@@ -1378,7 +1378,7 @@ function CopaBracket({
   const canSimulate = !state.champion
 
   return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 overflow-x-auto scrollbar-thin">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 overflow-x-auto scrollbar-thin">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-[var(--brand)]" />
@@ -1547,7 +1547,7 @@ function EstadualView({
   const stageFixtures = fixtures.filter(fixture => fixture.stage === activeStage)
 
   return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-orange-400" />
@@ -1604,7 +1604,7 @@ function LibertadoresView({
 
   if (!state.qualified && !hasOfficialCompetition) {
     return (
-      <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
+      <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/5 mx-auto mb-6">
           <Globe className="h-10 w-10 text-white/30" />
         </div>
@@ -1621,7 +1621,7 @@ function LibertadoresView({
 
   if (!state.group && !hasOfficialCompetition) {
     return (
-      <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
+      <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-400/10 mx-auto mb-6">
           <Globe className="h-10 w-10 text-amber-400" />
         </div>
@@ -1654,7 +1654,7 @@ function LibertadoresView({
     : (state.group?.teams ?? [])
 
   return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6">
       <div className="flex items-center gap-2 mb-6">
         <Globe className="h-5 w-5 text-amber-400" />
         <h3 className="text-lg font-semibold text-white">{competitionName} {season}</h3>
@@ -1816,7 +1816,7 @@ function StandingsTable({
   )
 
   return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
       {/* Header */}
       <div className="grid grid-cols-[40px_1fr_40px_40px_40px_40px_50px_50px_50px_60px_100px] gap-2 px-4 py-3 text-[10px] font-medium tracking-widest text-white/40 uppercase border-b border-white/[0.04] bg-white/[0.02]">
         <span className="text-center">#</span>

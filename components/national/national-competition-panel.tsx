@@ -36,7 +36,7 @@ export function NationalCompetitionPanel() {
   })()
 
   return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] overflow-hidden">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.06] overflow-hidden">
       {/* Banner com tema da competicao */}
       <div
         className="relative h-32 sm:h-36 flex items-end p-5"
@@ -46,7 +46,7 @@ export function NationalCompetitionPanel() {
             : undefined
         }
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c10] via-[#0c0c10]/70 to-[#0c0c10]/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--uf-bg-surface)] via-[var(--uf-bg-surface)]/70 to-[var(--uf-bg-surface)]/20" />
         <div className="relative flex items-end justify-between w-full gap-3">
           <div className="flex items-center gap-3">
             <div
@@ -172,7 +172,7 @@ export function NationalCompetitionPanel() {
                 if (!nationalTeam || !currentCompetition) return
                 hardNavigate(prepararPartidaDaSelecao(nationalTeam, userNextFixture, currentCompetition))
               }}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--brand)] py-3 font-semibold text-[#050508] transition-colors hover:bg-[var(--brand)]/90"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--brand)] py-3 font-semibold text-[var(--uf-bg-deep)] transition-colors hover:bg-[var(--brand)]/90"
             >
               <Play className="h-4 w-4" /> Jogar partida
             </button>
@@ -209,7 +209,7 @@ export function NationalCompetitionList({
 }) {
   if (competitions.length === 0) {
     return (
-      <p className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-6 text-center text-sm text-white/40">
+      <p className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-6 text-center text-sm text-white/40">
         A confederação desta seleção ainda não tem competições cadastradas.
       </p>
     )
@@ -240,7 +240,7 @@ export function NationalCompetitionList({
               }}
               aria-hidden
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0c0c10] via-[#0c0c10]/85 to-[#0c0c10]/55 group-hover:from-[#0c0c10] group-hover:via-[#0c0c10]/75 transition-colors" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[var(--uf-bg-surface)] via-[var(--uf-bg-surface)]/85 to-[var(--uf-bg-surface)]/55 group-hover:from-[var(--uf-bg-surface)] group-hover:via-[var(--uf-bg-surface)]/75 transition-colors" />
             <div
               className="relative h-10 w-10 rounded-lg flex items-center justify-center shrink-0 shadow-lg overflow-hidden"
               style={{ backgroundColor: comp.accent }}

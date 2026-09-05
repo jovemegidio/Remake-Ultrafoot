@@ -92,7 +92,7 @@ export function EstadioSetores({
   }
 
   return (
-    <section className="mx-4 mt-4 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
+    <section className="mx-4 mt-4 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 font-bold text-white">
@@ -180,8 +180,8 @@ export function EstadioSetores({
       )}
 
       {modalAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[#0c0c10] p-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center uf-veu p-4">
+          <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[var(--uf-bg-surface)] p-5">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="flex items-center gap-2 font-bold text-white">

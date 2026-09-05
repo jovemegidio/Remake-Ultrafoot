@@ -138,7 +138,7 @@ export function LivePitch({
             </div>
             {isSelected && (
               <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap pointer-events-none">
-                <div className="bg-[#050508] border border-white/15 rounded-lg px-3 py-1.5 shadow-xl">
+                <div className="bg-[var(--uf-bg-deep)] border border-white/15 rounded-lg px-3 py-1.5 shadow-xl">
                   <div className="text-xs font-semibold text-white">{player.name}</div>
                   <div className="text-[10px] text-white/60">
                     {player.position} · OVR {player.rating} · {player.stamina}%

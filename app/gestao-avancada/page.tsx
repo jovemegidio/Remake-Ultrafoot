@@ -62,7 +62,7 @@ export default function GestaoAvancadaPage() {
 
   return <div className="min-h-screen bg-[#07090d] text-white"><GameHeader team={team} />
     <main className="mx-auto max-w-7xl p-5 pb-24">
-      <div className="mb-5"><h1 className="text-2xl font-black">Central de Gestão</h1><p className="text-sm text-white/50">Modo {gestao.modoDeMundo.replaceAll("_", " ")} · sistemas integrados à carreira</p></div>
+      <div className="mb-5"><h1 className="uf-heading text-2xl font-black">Central de Gestão</h1><p className="text-sm text-white/50">Modo {gestao.modoDeMundo.replaceAll("_", " ")} · sistemas integrados à carreira</p></div>
       <div className="mb-6 flex gap-2 overflow-x-auto pb-2">{ABAS.map(item => <button key={item.id} onClick={() => setAba(item.id)} className={cn("flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-xs", aba === item.id ? "border-emerald-400 bg-emerald-400/15 text-emerald-300" : "border-white/10 bg-white/5 text-white/60")}><item.icon className="h-4 w-4" />{item.nome}</button>)}</div>
       {aba === "bolas" && <Bolas gestao={gestao} jogadores={engine.squadPlayers} salvar={salvar} />}
       {aba === "preparacao" && <Preparacao gestao={gestao} state={state} salvar={salvar} />}
@@ -395,7 +395,7 @@ function Disciplina({ gestao, salvar }: Props) {
 
 function Linha({ eventos }: { eventos: EventoCarreira282[] }) { return <Secao titulo="Linha do tempo dinâmica" texto="Decisões da 282 entram automaticamente; os eventos mais recentes aparecem primeiro.">{eventos.length ? eventos.map(e => <div key={e.id} className="relative ml-3 border-l border-emerald-400/30 pb-6 pl-6"><span className="absolute -left-1.5 top-1 h-3 w-3 rounded-full bg-emerald-400"/><b>{e.titulo}</b><p className="text-xs text-white/40">Temporada {e.season} · semana {e.week} · {e.tipo}</p><p className="text-sm text-white/65">{e.descricao}</p></div>) : <Vazio />}</Secao> }
 
-function Secao({ titulo, texto, children }: { titulo: string; texto: string; children: ReactNode }) { return <section className="rounded-2xl border border-white/10 bg-[#10141b] p-5"><h2 className="text-xl font-bold">{titulo}</h2><p className="mb-5 text-sm text-white/50">{texto}</p>{children}</section> }
+function Secao({ titulo, texto, children }: { titulo: string; texto: string; children: ReactNode }) { return <section className="rounded-2xl border border-white/10 bg-[#10141b] p-5"><h2 className="uf-heading text-xl font-bold">{titulo}</h2><p className="mb-5 text-sm text-white/50">{texto}</p>{children}</section> }
 function JogadorSelect({ jogadores, value, onChange, label }: { jogadores: Player[]; value: number; onChange: (n:number)=>void; label:string }) { return <select className={campo} value={value} onChange={e=>onChange(Number(e.target.value))}><option value={0}>{label}</option>{jogadores.map(p=><option key={p.id} value={p.id}>{p.name} · {p.position} · {p.overall}</option>)}</select> }
 function Lista({ itens }: { itens: string[] }) { return itens.length ? <div className="mt-5 space-y-2">{itens.map((x,i)=><div key={`${x}-${i}`} className="rounded-lg bg-white/5 px-3 py-2 text-sm text-white/70">{x}</div>)}</div> : null }
 function Vazio() { return <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-white/35">Nenhum registro ainda.</p> }

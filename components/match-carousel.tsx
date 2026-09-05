@@ -89,7 +89,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
 
   if (!currentMatch) {
     return (
-      <section className={cn("rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6", className)}>
+      <section className={cn("rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6", className)}>
         <div className="text-center text-white/40">Nenhuma partida disponivel</div>
       </section>
     )
@@ -122,7 +122,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
   const dateDisplay = formatDateDisplay(currentMatch.date)
 
   return (
-    <section className={cn("rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden", className)}>
+    <section className={cn("rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden", className)}>
       {/* Header with date navigation - FIFA style - compact */}
       <div className="relative bg-gradient-to-r from-[#1a1a1a] to-[#141414] border-b border-white/[0.04]">
         {/* Navigation arrows */}

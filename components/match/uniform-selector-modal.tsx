@@ -185,7 +185,7 @@ export function UniformSelectorModal({
     <div
       role="dialog"
       data-state="open"
-      className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/85 backdrop-blur-sm p-3"
+      className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto uf-veu p-3"
       onClick={onClose}
     >
       <div
@@ -194,7 +194,7 @@ export function UniformSelectorModal({
       >
         <div className="mb-5 shrink-0 text-center">
           <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--brand)]/70">Pre-jogo</div>
-          <h2 className="mt-1 text-2xl font-black tracking-tight text-white">Uniformes</h2>
+          <h2 className="uf-heading mt-1 text-2xl font-black tracking-tight text-white">Uniformes</h2>
           <p className="mt-0.5 text-xs text-white/35">Escolha o uniforme de cada equipe</p>
         </div>
 

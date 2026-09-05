@@ -875,7 +875,7 @@ export function PostMatchPress({
                     <MicOff className="h-10 w-10 text-[var(--brand)]" />
                   </div>
                   
-                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Coletiva Encerrada</h2>
+                  <h2 className="uf-heading text-2xl md:text-3xl font-bold text-white mb-2">Coletiva Encerrada</h2>
                   <p className="text-white/60 mb-8">Confira o impacto das suas declaracoes</p>
 
                   {/* Resumo */}

@@ -201,7 +201,7 @@ export default function ClubeNovoPage() {
           >
             ← Voltar
           </button>
-          <h1 className="font-heading text-2xl font-bold sm:text-3xl">Seu próprio clube</h1>
+          <h1 className="uf-heading font-heading text-2xl font-bold sm:text-3xl">Seu próprio clube</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Nome, cores, escudo, uniformes e estádio. O clube entra na divisão escolhida
             e disputa acesso como qualquer outro.

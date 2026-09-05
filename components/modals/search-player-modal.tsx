@@ -79,7 +79,7 @@ export function SearchPlayerModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl bg-[#0c0c10] border-white/10 max-h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl bg-[var(--uf-bg-surface)] border-white/10 max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-white">Buscar Jogador</DialogTitle>
           <DialogDescription className="text-white/50">

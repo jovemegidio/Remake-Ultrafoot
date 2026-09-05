@@ -405,7 +405,7 @@ export function FcHub() {
   // de ter comprado. Abre o mesmo convite das outras telas, dentro do overlay.
   if (registroHidratado && !registrado) {
     return (
-      <div className="fixed inset-0 z-[9998] grid place-items-center bg-[#020407]/70 p-5" onClick={() => setOpen(false)}>
+      <div className="fixed inset-0 z-[9998] grid place-items-center uf-veu p-5" onClick={() => setOpen(false)}>
         <div onClick={e => e.stopPropagation()} className="w-full max-w-xl">
           <AvisoDeRegistro id="hub" />
         </div>

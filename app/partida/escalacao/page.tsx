@@ -22,8 +22,10 @@ import {
   Scale,
   Clock,
   X,
-  Gamepad2
+  Gamepad2,
+  TriangleAlert
 } from "lucide-react"
+import { mensagemDeViolacao, violacaoDeEstrangeiros } from "@/lib/limite-de-estrangeiros"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
@@ -107,6 +109,7 @@ type ViewType = "menu" | "visao_tatica" | "gerenciamento" | "escalacoes"
 export default function PartidaEscalacaoPage() {
   const router = useRouter()
   const { state } = useGameState()
+
   useNotifications()
   const engineFormation = useGameEngine(s => s.formation)
   const engineSetFormation = useGameEngine(s => s.setFormation)
@@ -123,6 +126,22 @@ export default function PartidaEscalacaoPage() {
 
   const t = useTranslation()
   useDiscordActivity("Ajustando escalacao para partida", userTeam.nome)
+
+  // ⚠️ A TELA EXPLICA, O MOTOR BARRA. `setStarters` recusa a escalacao que fura
+  // o limite de estrangeiros; sem esta leitura o jogador veria o titular voltar
+  // sozinho para o banco e chamaria de bug. As duas pontas chamam a MESMA
+  // funcao pura, entao nao ha como a tela dizer uma coisa e o motor fazer outra.
+  //
+  // ⚠️ Le o elenco DO MOTOR, e nao o do save: `isStarter` e a nacionalidade
+  // vivem la; o `SquadPlayer` do save nem tem o campo de titular.
+  const violacaoDeEstrangeirosNaTela = useMemo(
+    () => violacaoDeEstrangeiros(
+      engineSquadPlayers.filter(p => p.isStarter),
+      String(userTeam?.divisao ?? ""),
+    ),
+    [engineSquadPlayers, userTeam?.divisao],
+  )
+
 
   const [currentView, setCurrentView] = useState<ViewType>("gerenciamento")
   const [activeTab, setActiveTab] = useState<"elenco" | "taticas" | "atribuicoes">("elenco")
@@ -455,7 +474,7 @@ export default function PartidaEscalacaoPage() {
    */
   if (!teamReady || players.length === 0) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#050508] text-sm text-white/40">
+      <div className="flex h-screen items-center justify-center bg-transparent text-sm text-white/40">
         Carregando elenco...
       </div>
     )
@@ -464,7 +483,7 @@ export default function PartidaEscalacaoPage() {
   // Menu view with cards
   if (currentView === "menu") {
     return (
-      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
         <GameHeader team={userTeam} />
         
         <main className="flex-1 p-4 overflow-y-auto">
@@ -472,7 +491,7 @@ export default function PartidaEscalacaoPage() {
           <div className="flex items-center gap-4 mb-8">
             <TeamCrest team={userTeam} size="lg" />
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white">{userTeam.nome}</h1>
+              <h1 className="uf-heading text-2xl md:text-3xl font-bold text-white">{userTeam.nome}</h1>
               <p className="text-sm text-white/50">{t.squad.title}</p>
             </div>
           </div>
@@ -487,7 +506,7 @@ export default function PartidaEscalacaoPage() {
               className="relative p-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent text-left overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">{t.squad.tacticalView}</h2>
+              <h2 className="uf-heading text-xl md:text-2xl font-bold text-white mb-1">{t.squad.tacticalView}</h2>
               <p className="text-sm text-primary mb-6">{t.squad.currentTactic}</p>
               
               <div className="flex justify-center mb-6">
@@ -510,7 +529,7 @@ export default function PartidaEscalacaoPage() {
               className="relative p-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent text-left overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">{t.squad.teamManagement}</h2>
+              <h2 className="uf-heading text-xl md:text-2xl font-bold text-white mb-1">{t.squad.teamManagement}</h2>
               <p className="text-sm text-primary mb-4">{t.squad.standard} {userTeam.nome.toUpperCase()}</p>
               
               {/* Mini field preview */}
@@ -559,7 +578,7 @@ export default function PartidaEscalacaoPage() {
               className="relative p-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent text-left overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">{t.squad.lineups}</h2>
+              <h2 className="uf-heading text-xl md:text-2xl font-bold text-white mb-1">{t.squad.lineups}</h2>
               <p className="text-sm text-primary mb-6">{t.squad.lineupsCreated}</p>
               
               <div className="flex justify-center mb-6">
@@ -623,7 +642,7 @@ export default function PartidaEscalacaoPage() {
               <ChevronLeft className="h-4 w-4 mr-1" />
               {t.sidebar.squad}
             </Button>
-            <h1 className="text-lg md:text-xl font-bold text-white">{t.squad.tacticalView}</h1>
+            <h1 className="uf-heading text-lg md:text-xl font-bold text-white">{t.squad.tacticalView}</h1>
             <div className="hidden md:flex items-center gap-4 text-white/60">
               <span>{t.squad.gestao_de_auxiliares_tec}</span>
               <span>Predefinicoes Taticas</span>
@@ -854,9 +873,24 @@ export default function PartidaEscalacaoPage() {
 
   // Gerenciamento view (main view)
   return (
-    <div className="flex h-screen flex-col overflow-hidden pl-16 bg-[#050508]">
+    <div className="flex h-screen flex-col overflow-hidden pl-16 bg-transparent">
       <GameHeader team={userTeam} />
-      
+
+      {/* ⚠️ A ESCALACAO RECUSADA TEM DE DIZER POR QUE. O limite de estrangeiros
+          e barrado no motor (`setStarters`), que e o caminho unico ate o campo;
+          sem este aviso o jogador arrastaria o atleta, veria a escalacao voltar
+          sozinha e chamaria de bug — regra que o jogo aplica em silencio e
+          indistinguivel de defeito. */}
+      {violacaoDeEstrangeirosNaTela && (
+        <div className="mx-4 mt-2 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+          <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+          <div>
+            <p className="text-sm font-semibold text-amber-200">{t.escalacao.fora_do_regulamento}</p>
+            <p className="text-xs text-amber-100/70">{mensagemDeViolacao(violacaoDeEstrangeirosNaTela)}</p>
+          </div>
+        </div>
+      )}
+
       {/* Match notification toast - only shows during actual match simulations */}
       <AnimatePresence>
         {isMatchInProgress && showMatchNotification && (
@@ -1312,7 +1346,7 @@ export default function PartidaEscalacaoPage() {
           </div>
 
           {/* Right panel - Player details (hidden on mobile, shown in drawer) */}
-          <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 border-l border-white/[0.04] bg-[#050508] overflow-y-auto">
+          <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 border-l border-white/[0.04] bg-[var(--uf-bg-deep)] overflow-y-auto">
             {/* Player header - Melhorado */}
             <div className="p-4 border-b border-white/[0.04]" style={{
               background: `linear-gradient(135deg, ${userTeam.cor1}20 0%, transparent 60%)`
@@ -1500,7 +1534,7 @@ export default function PartidaEscalacaoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 uf-veu z-50 flex items-center justify-center p-4"
             onClick={() => setShowSubstitutionModal(false)}
           >
             <motion.div
@@ -1555,7 +1589,7 @@ export default function PartidaEscalacaoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 uf-veu z-50 flex items-center justify-center p-4"
             onClick={() => setShowPlayerProfile(false)}
           >
             <motion.div
@@ -1609,7 +1643,7 @@ export default function PartidaEscalacaoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 uf-veu z-50 flex items-center justify-center p-4"
             onClick={() => setShowTutorials(false)}
           >
             <motion.div
@@ -1651,7 +1685,7 @@ export default function PartidaEscalacaoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 uf-veu z-50 flex items-center justify-center p-4"
             onClick={() => setShowSuggestedSubs(false)}
           >
             <motion.div

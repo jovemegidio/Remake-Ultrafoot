@@ -158,7 +158,7 @@ export function ChampionshipCelebration({
           >
             {theme.shortName} {season}
           </div>
-          <h1 className="text-5xl md:text-7xl font-black text-white mb-4 drop-shadow-lg">
+          <h1 className="uf-heading text-5xl md:text-7xl font-black text-white mb-4 drop-shadow-lg">
             CAMPEAO!
           </h1>
           <div 

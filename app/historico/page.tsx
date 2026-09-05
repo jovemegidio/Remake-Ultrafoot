@@ -74,13 +74,13 @@ export default function HistoricoPage() {
   }, [router])
 
   return (
-    <div className="h-screen bg-[#050508] flex flex-col overflow-hidden pb-20 md:pb-0">
+    <div className="h-screen bg-transparent flex flex-col overflow-hidden pb-20 md:pb-0">
       <GameHeader team={userTeam} />
       <main className="flex-1 overflow-y-auto p-4 space-y-5">
-        <header className="flex flex-wrap items-center gap-5 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
+        <header className="flex flex-wrap items-center gap-5 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5">
           <TeamCrest team={userTeam} size="2xl" />
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-3xl font-bold text-white">{userTeam.nome}</h1>
+            <h1 className="uf-heading truncate text-3xl font-bold text-white">{userTeam.nome}</h1>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-white/50">
               <MapPin className="h-4 w-4 text-[var(--brand)]" />
               {[userTeam.cidade, userTeam.estado, userTeam.pais].filter(Boolean).join(", ")}
@@ -151,7 +151,7 @@ export default function HistoricoPage() {
           )}
         </section>
 
-        <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
+        <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[var(--uf-bg-surface)]">
           <div className="flex items-center gap-2 border-b border-white/[0.04] px-5 py-3">
             <History className="h-4 w-4 text-blue-400" />
             <h2 className="text-xs font-medium tracking-wider text-white">{t.temporadas_concluidas}</h2>
@@ -179,7 +179,7 @@ export default function HistoricoPage() {
           )}
         </section>
 
-        <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
+        <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[var(--uf-bg-surface)]">
           <div className="flex items-center gap-2 border-b border-white/[0.04] px-5 py-3">
             <Crown className="h-4 w-4 text-[#ffd700]" />
             <h2 className="text-xs font-medium tracking-wider text-white">{t.campeoes_do_mundo}</h2>
@@ -226,7 +226,7 @@ export default function HistoricoPage() {
 
 function InfoCard({ icon: Icon, label, value }: { icon: typeof Calendar; label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/[0.04] bg-[#0c0c10] p-4">
+    <div className="rounded-xl border border-white/[0.04] bg-[var(--uf-bg-surface)] p-4">
       <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-white/40"><Icon className="h-4 w-4 text-[var(--brand)]" />{label}</div>
       <p className="mt-2 truncate text-xl font-bold text-white">{value}</p>
     </div>

@@ -87,7 +87,7 @@ export function DialogoDoJogo() {
 
   return (
     <div
-      className="fixed inset-0 z-[120] grid place-items-center bg-black/75 p-6"
+      className="fixed inset-0 z-[120] grid place-items-center uf-veu p-6"
       // Clicar fora equivale a fechar: cancela a confirmação, encerra o aviso.
       onClick={() => responderDialogo(respostaNegativa)}
     >

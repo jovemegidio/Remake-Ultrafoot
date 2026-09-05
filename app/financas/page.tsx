@@ -353,7 +353,7 @@ export default function FinancasPage() {
 
   if (!hydrated || !userTeam || !dynamicFinances) {
     return (
-      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex items-center justify-center">
+      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
@@ -362,7 +362,7 @@ export default function FinancasPage() {
   const wagePercentage = dynamicFinances.wageBudget > 0 ? (dynamicFinances.wageUsed / dynamicFinances.wageBudget) * 100 : 0
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
       <main className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2 scrollbar-thin">
@@ -370,7 +370,7 @@ export default function FinancasPage() {
             em texto (ativa em branco), contexto da temporada à direita. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-6">
-            <h1 className="text-xl font-bold text-white">{t.sidebar.finances ?? "Finanças"}</h1>
+            <h1 className="uf-heading text-xl font-bold text-white">{t.sidebar.finances ?? "Finanças"}</h1>
             <div className="h-5 w-px bg-white/10" />
             <nav className="flex items-center gap-5">
               {([
@@ -631,7 +631,7 @@ export default function FinancasPage() {
         <div className="grid items-start gap-1 xl:grid-cols-2">
           <div className="grid gap-3 lg:grid-cols-2">
             {/* Income Breakdown */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
                 <TrendingUp className="h-4 w-4 text-blue-400" />
                 <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.income.toUpperCase()}</h2>
@@ -675,7 +675,7 @@ export default function FinancasPage() {
             </div>
 
             {/* Expense Breakdown */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
                 <TrendingDown className="h-4 w-4 text-red-400" />
                 <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.expenses.toUpperCase()}</h2>
@@ -728,7 +728,7 @@ export default function FinancasPage() {
           </div>
 
           {/* Prize Money Section */}
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+          <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
               <Award className="h-4 w-4 text-yellow-400" />
               <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.prizesByCompetition}</h2>
@@ -807,7 +807,7 @@ export default function FinancasPage() {
           {/* Wage Budget & Recent Transactions */}
           <div className="grid gap-3 sm:grid-cols-2">
             {/* Wage Budget */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-4">
               <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider mb-4">
                 <Users className="h-4 w-4" />
                 {t.finances.wageBill}
@@ -836,7 +836,7 @@ export default function FinancasPage() {
             </div>
 
             {/* Recent Transactions */}
-            <div className="lg:col-span-2 rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <div className="lg:col-span-2 rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-yellow-400" />
@@ -930,7 +930,7 @@ function TransactionsTab({
                 "flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-all",
                 isSelected
                   ? "border-[var(--brand)]/60 bg-[var(--brand)]/[0.07]"
-                  : "border-white/[0.05] bg-[#0c0c10] hover:border-white/15",
+                  : "border-white/[0.05] bg-[var(--uf-bg-surface)] hover:border-white/15",
               )}
             >
               <entry.icon className={cn("h-5 w-5 shrink-0", isSelected ? "text-[var(--brand)]" : "text-white/45")} />
@@ -944,8 +944,8 @@ function TransactionsTab({
       </div>
 
       {/* Detalhe */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0c0c10] p-6">
-        <h2 className="text-2xl font-black uppercase tracking-wide text-white">{selected.label}</h2>
+      <div className="rounded-2xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-6">
+        <h2 className="uf-heading text-2xl font-black uppercase tracking-wide text-white">{selected.label}</h2>
 
         <div className="mt-8 grid items-center gap-6 md:grid-cols-[1fr_auto_1fr]">
           <div className="text-center md:text-left">
@@ -1017,7 +1017,7 @@ function BudgetTab({
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
       {/* Linhas do orçamento */}
-      <div className="max-h-[calc(100vh-220px)] overflow-y-auto rounded-2xl border border-white/[0.06] bg-[#0c0c10] p-3 scrollbar-thin">
+      <div className="max-h-[calc(100vh-220px)] overflow-y-auto rounded-2xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-3 scrollbar-thin">
         <p className="px-2 py-2 text-sm font-semibold text-[#4db8ff]">Receita</p>
         {budget.income.map(entry => (
           <div key={entry.id} className="flex items-center gap-3 border-l-2 border-[#00ff87] px-3 py-2.5">
@@ -1035,9 +1035,9 @@ function BudgetTab({
       </div>
 
       {/* Curva mensal */}
-      <div className="flex flex-col rounded-2xl border border-white/[0.06] bg-[#0c0c10] p-6">
+      <div className="flex flex-col rounded-2xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-6">
         <div className="flex flex-wrap items-baseline gap-4">
-          <h2 className="text-2xl font-bold text-white">Orçamento atual</h2>
+          <h2 className="uf-heading text-2xl font-bold text-white">Orçamento atual</h2>
           <span className="text-3xl font-black text-white">{formatCurrency(balance)}</span>
         </div>
 

@@ -55,7 +55,7 @@ export default function ComissaoPage() {
   const risco = staffMembers.filter(m => m.problemChance >= 0.15).length
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
+    <div className="flex h-screen flex-col overflow-hidden bg-transparent pb-20 md:pb-0">
       <GameHeader team={userTeam ?? undefined} />
 
       <main className="flex min-h-0 flex-1 flex-col">
@@ -108,7 +108,7 @@ export default function ComissaoPage() {
               const membro = contratados.get(cargo)
               const candidatos = staffCandidatesForSeason(currentSeason, cargo)
               return (
-                <div key={cargo} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
+                <div key={cargo} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-sm font-bold text-white">{STAFF_ROLE_LABELS[cargo]}</h3>
                     {membro && (

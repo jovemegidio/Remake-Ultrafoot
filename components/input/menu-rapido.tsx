@@ -150,7 +150,7 @@ function PainelDoMenuRapido({ aoFechar, atual }: { aoFechar: () => void; atual: 
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-[70] flex items-center justify-center uf-veu animate-in fade-in duration-150"
       // A ponte de modais (gamepad-modal-bridge) trata qualquer sobreposição
       // fixa como modal genérico. Aqui ela atrapalharia: este menu já cuida do
       // próprio input, e as duas juntas moveriam o foco duas casas por aperto.

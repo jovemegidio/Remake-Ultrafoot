@@ -68,7 +68,7 @@ function OfferCard({
   const [months, setMonths] = useState(baseMonths)
   const [feedback, setFeedback] = useState("")
   return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] p-5 flex flex-col gap-4">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.06] p-5 flex flex-col gap-4">
       <div className="flex items-center gap-4">
         {nt && <NationalCrest team={nt} size={56} />}
         <div className="min-w-0">
@@ -142,7 +142,7 @@ function OfferCard({
       <div className="flex gap-2 mt-1">
         <button
           onClick={onAccept}
-          className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-[var(--brand)] text-[#050508] font-semibold text-sm py-2.5 hover:bg-[var(--brand)]/90 transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-[var(--brand)] text-[var(--uf-bg-deep)] font-semibold text-sm py-2.5 hover:bg-[var(--brand)]/90 transition-colors"
         >
           <Check className="h-4 w-4" /> Aceitar
         </button>
@@ -214,14 +214,14 @@ export default function SelecaoPage() {
 
   if (!hydrated || !teamHydrated) {
     return (
-      <div className="h-screen bg-[#050508] flex items-center justify-center">
+      <div className="h-screen bg-transparent flex items-center justify-center">
         <div className="w-12 h-12 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto scrollbar-premium space-y-4">
@@ -230,7 +230,7 @@ export default function SelecaoPage() {
             <Flag className="h-5 w-5 text-[var(--brand)]" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">Selecao Nacional</h1>
+            <h1 className="uf-heading text-2xl font-semibold text-white tracking-tight">Selecao Nacional</h1>
             <p className="text-sm text-white/50">
               {hasNationalTeam
                 ? `Voce comanda ${career.nationalTeamName} e segue no comando do ${userTeam.nome}.`
@@ -268,7 +268,7 @@ export default function SelecaoPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] p-8 text-center space-y-4">
+              <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.06] p-8 text-center space-y-4">
                 <div className="mx-auto h-14 w-14 rounded-full bg-white/[0.04] flex items-center justify-center">
                   {eligible ? <Globe className="h-7 w-7 text-white/40" /> : <Lock className="h-7 w-7 text-white/40" />}
                 </div>
@@ -333,11 +333,11 @@ export default function SelecaoPage() {
             </div>
 
             {/* Cabecalho da selecao */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] p-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.06] p-5">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <NationalCrest team={nationalTeam} size={64} />
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-semibold text-white">{nationalTeam.name}</h2>
+                  <h2 className="uf-heading text-xl font-semibold text-white">{nationalTeam.name}</h2>
                   <p className="text-xs text-white/50">{CONFEDERATION_LABEL[nationalTeam.confederation]}</p>
                 </div>
                 {/* Uniforme (UEFA/CONCACAF tem; as demais some sem quebrar). */}
@@ -464,7 +464,7 @@ export default function SelecaoPage() {
                 e elegiveis) tem tela propria. O hub mostra so o estado da lista. */}
             <Link
               href="/selecao/convocacao"
-              className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5 transition-colors hover:border-[var(--brand)]/30 hover:bg-white/[0.02]"
+              className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5 transition-colors hover:border-[var(--brand)]/30 hover:bg-white/[0.02]"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand)]/10">
                 <Users className="h-5 w-5 text-[var(--brand)]" />

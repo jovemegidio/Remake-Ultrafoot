@@ -80,7 +80,7 @@ export function PrelecaoModal({ aberto, contexto, elenco, adversario, onFalar, o
   }
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center uf-veu p-4">
       <div className="flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b0d12]">
         <div className="flex items-center justify-between border-b border-white/[0.07] px-6 py-4">
           <div className="min-w-0">

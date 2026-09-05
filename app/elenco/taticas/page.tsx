@@ -144,7 +144,7 @@ export default function TaticasPage() {
   }
 
   return (
-    <div className="flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
+    <div className="flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent overflow-hidden">
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
         
@@ -160,7 +160,7 @@ export default function TaticasPage() {
             <div className="flex items-center gap-3">
               <TeamCrest team={userTeam} size="md" />
               <div>
-                <h1 className="text-2xl font-bold text-white">Visao Tatica</h1>
+                <h1 className="uf-heading text-2xl font-bold text-white">Visao Tatica</h1>
                 <p className="text-sm text-white/50">Selecione o estilo de jogo do time</p>
               </div>
             </div>

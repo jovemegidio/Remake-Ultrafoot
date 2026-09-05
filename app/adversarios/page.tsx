@@ -197,14 +197,14 @@ export default function AdversariosPage() {
   const selectedProgress = selectedTeam ? getAnalysis(selectedTeam)?.analysisProgress ?? 0 : 0
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
       <main className="flex-1 p-4 md:p-6 overflow-y-auto scrollbar-premium">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Analise de Adversarios</h1>
+            <h1 className="uf-heading text-2xl md:text-3xl font-bold text-white">Analise de Adversarios</h1>
             <p className="text-sm text-white/50">Estude seus oponentes para criar a estrategia perfeita</p>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function AdversariosPage() {
                       <div className="flex items-center gap-4">
                         <TeamCrest team={selectedTeamInfo} size="lg" />
                         <div>
-                          <h2 className="text-2xl font-bold text-white">{selectedTeamInfo.nome}</h2>
+                          <h2 className="uf-heading text-2xl font-bold text-white">{selectedTeamInfo.nome}</h2>
                           <p className="text-sm text-white/50">{selectedTeamInfo.estadio_nome}</p>
                         </div>
                       </div>

@@ -461,7 +461,7 @@ export default function PreOfficePage() {
 
   if (!hydrated || !userTeam) {
     return (
-      <div className="h-screen bg-[#050508] flex items-center justify-center">
+      <div className="h-screen bg-transparent flex items-center justify-center">
         <div className="w-12 h-12 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
       </div>
     )
@@ -470,7 +470,7 @@ export default function PreOfficePage() {
   return (
     <div className="relative flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 overflow-hidden">
       {/* Background base escura */}
-      <div className="absolute inset-0 bg-[#050508]" />
+      <div className="absolute inset-0 bg-[var(--uf-bg-deep)]" />
       {/* Mesmos fundos do escritorio (/), com o crossfade suave — a pedido do usuario. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <Image src="/images/office-bg-1.webp" alt="" fill priority unoptimized className="office-bg-a object-cover" />
@@ -494,7 +494,7 @@ export default function PreOfficePage() {
         superficie a mais para o compositor desenhar a cada frame.
         Ficou uma so: o veu escuro que da contraste ao texto.
       */}
-      <div className="absolute inset-0 bg-[#050508]/45" />
+      <div className="absolute inset-0 bg-[var(--uf-bg-deep)]/45" />
 
 
       <main className="relative z-10 flex-1 overflow-hidden flex flex-col">
@@ -523,7 +523,7 @@ export default function PreOfficePage() {
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
+                  <h1 className="uf-heading text-3xl font-black tracking-tight text-white md:text-4xl">
                     {dayOfWeek}, {month} {day}
                   </h1>
                 </motion.div>
@@ -827,7 +827,7 @@ export default function PreOfficePage() {
                 transition={{ duration: 1, ease: "linear", repeat: Infinity }}
                 className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full mx-auto mb-6"
               />
-              <h2 className="text-3xl font-bold text-white mb-2">{t.preOffice.avancando}</h2>
+              <h2 className="uf-heading text-3xl font-bold text-white mb-2">{t.preOffice.avancando}</h2>
               <p className="text-white/60">{t.preOffice.processando_eventos}</p>
             </motion.div>
           </motion.div>

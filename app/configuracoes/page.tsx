@@ -311,7 +311,7 @@ export default function ConfiguracoesPage() {
   if (currentView === "menu") {
     return (
       <ControllerTypeContext.Provider value={controllerType === "playstation" ? "playstation" : "xbox"}>
-        <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+        <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
           <GameHeader team={userTeam} />
           
           {/* pb-24: espaco para a barra de acoes/player nao cobrir a ultima linha.
@@ -322,7 +322,7 @@ export default function ConfiguracoesPage() {
           <main className="flex-1 p-4 pb-24 overflow-y-auto overflow-x-hidden">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
-              <h1 className="text-xl md:text-2xl font-semibold text-white/70">{t.settings.customize}</h1>
+              <h1 className="uf-heading text-xl md:text-2xl font-semibold text-white/70">{t.settings.customize}</h1>
               <div className="flex items-center gap-2 text-white/50 text-sm">
                 {/* Selo de jogo registrado — some sozinho para quem nao registrou. */}
                 <SeloRegistrado />
@@ -388,7 +388,7 @@ export default function ConfiguracoesPage() {
       case "configuracoes":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
                 {t.settings.themeColors}
@@ -456,7 +456,7 @@ export default function ConfiguracoesPage() {
                 O tema escuro do jogo usa muito texto em white/40-50, que e
                 ilegivel para baixa visao. Aqui o jogador ajusta e vale no jogo
                 inteiro (o store escreve no <html>, o CSS reage). */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Eye className="h-4 w-4 text-primary" />
                 Acessibilidade
@@ -516,7 +516,7 @@ export default function ConfiguracoesPage() {
               </button>
             </div>
 
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white">{t.configuracoes.desempenho_grafico}</h3>
               <p className="text-xs text-white/40">{t.configuracoes.o_modo_economico_reduz_animacoes_transpare}</p>
               <select
@@ -535,7 +535,7 @@ export default function ConfiguracoesPage() {
               </select>
             </div>
 
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
                 {t.settings.notificationsSystem}
@@ -587,7 +587,7 @@ export default function ConfiguracoesPage() {
       case "perfil":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <User className="h-4 w-4 text-primary" />
                 {t.settings.managerInfo}
@@ -632,7 +632,7 @@ export default function ConfiguracoesPage() {
                 O motor dava ao adversario +9 fixo sempre que o usuario entrava em
                 campo, e nao havia como pedir mais nem menos. "Normal" e exatamente
                 esse valor, entao carreira em andamento nao muda de comportamento. */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Swords className="h-4 w-4 text-primary" />
                 Dificuldade
@@ -662,7 +662,7 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
                 {t.settings.language}
@@ -700,7 +700,7 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-primary" />
                 Moeda
@@ -731,7 +731,7 @@ export default function ConfiguracoesPage() {
       case "tempo":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
                 {t.settings.matchSpeed}
@@ -761,7 +761,7 @@ export default function ConfiguracoesPage() {
       case "musica":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Volume2 className="h-4 w-4 text-primary" />
                 {t.settings.musicVolume}
@@ -796,7 +796,7 @@ export default function ConfiguracoesPage() {
             {/* O jogo nao embute mais trilha propria (eram 1,6 GB no instalador, e
                 musica de terceiros). Agora ele CONTROLA o player que voce ja usa —
                 por isso o volume da musica se ajusta no proprio Spotify, nao aqui. */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6">
               <h3 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
                 <Volume2 className="h-4 w-4 text-[#1db954]" />
                 Musica
@@ -821,7 +821,7 @@ export default function ConfiguracoesPage() {
       case "online":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
                 {t.settings.onlineConfig}
@@ -863,7 +863,7 @@ export default function ConfiguracoesPage() {
       case "escalacoes":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Grid2X2 className="h-4 w-4 text-primary" />
                 {t.settings.savedLineups}
@@ -935,7 +935,7 @@ export default function ConfiguracoesPage() {
         return (
           <div className="space-y-6">
             {/* Patrocinadores Oficiais */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
                 {t.settings.officialSponsors}
@@ -962,7 +962,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Apoiadores */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
                 {t.settings.supporters}
@@ -1002,7 +1002,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Equipe de Desenvolvimento */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
                 {t.settings.devTeam}
@@ -1211,7 +1211,7 @@ export default function ConfiguracoesPage() {
           <div className="space-y-4">
             {/* Tipo de controle: escolhe quais prompts de botao (glifos) aparecem no jogo
                 inteiro. Aplica na hora (grava no store, que o gamepad-provider le). */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5 space-y-4">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5 space-y-4">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <Gamepad2 className="h-4 w-4 text-primary" />
                 Tipo de controle
@@ -1256,7 +1256,7 @@ export default function ConfiguracoesPage() {
                 apito e expulsão para quem joga sem som. Desligável porque
                 vibração incomoda parte das pessoas e gasta bateria de controle
                 sem fio. Ver lib/vibracao-do-controle. */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5 space-y-4">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5 space-y-4">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <Gamepad2 className="h-4 w-4 text-primary" />
                 Vibracao do controle
@@ -1288,7 +1288,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Guia de Primeiros Passos */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5 space-y-4">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5 space-y-4">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <HelpCircle className="h-4 w-4 text-primary" />
                 Primeiros Passos
@@ -1350,7 +1350,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Referencia completa de controles */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
               <div className="px-5 py-3.5 border-b border-white/[0.04]">
                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                   <Keyboard className="h-4 w-4 text-primary" />
@@ -1467,7 +1467,7 @@ export default function ConfiguracoesPage() {
 
   return (
     <ControllerTypeContext.Provider value={controllerType === "playstation" ? "playstation" : "xbox"}>
-      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
         <GameHeader team={userTeam} />
 
         {/* pb-24 + overflow-x-hidden: mesma correcao do menu — a rolagem lateral
@@ -1481,7 +1481,7 @@ export default function ConfiguracoesPage() {
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 {t.common.back}
               </Button>
-              <h1 className="truncate text-xl font-semibold text-white capitalize">
+              <h1 className="uf-heading truncate text-xl font-semibold text-white capitalize">
                 {(cardTitles[currentView] ?? menuCards.find(c => c.id === currentView)?.title ?? t.settings.cards.settings).replace("\n", " ")}
               </h1>
             </div>

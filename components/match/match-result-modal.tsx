@@ -101,7 +101,7 @@ export function MatchResultModal({
           className="relative w-full max-w-3xl"
         >
           {/* Main Card */}
-          <div className="relative rounded-2xl bg-[#050508]/95 border border-white/10 overflow-hidden shadow-2xl backdrop-blur-sm">
+          <div className="relative rounded-2xl bg-[var(--uf-bg-deep)]/95 border border-white/10 overflow-hidden shadow-2xl backdrop-blur-sm">
             
             {/* Top accent line */}
             <div 
@@ -125,7 +125,7 @@ export function MatchResultModal({
                 </div>
                 
                 <h1 
-                  className="text-6xl sm:text-7xl font-black tracking-tight"
+                  className="uf-heading text-6xl sm:text-7xl font-black tracking-tight"
                   style={{ 
                     color: resultConfig.color,
                     textShadow: `0 0 80px ${resultConfig.color}40`
@@ -339,7 +339,7 @@ function StatCard({
   homeWin: boolean
 }) {
   return (
-    <div className="bg-[#050508] p-4 flex flex-col">
+    <div className="bg-[var(--uf-bg-deep)] p-4 flex flex-col">
       <div className="text-[9px] font-bold tracking-wider text-white/30 mb-3 text-center uppercase">
         {label}
       </div>

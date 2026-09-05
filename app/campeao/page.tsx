@@ -159,7 +159,7 @@ export default function CampeaoPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
+      <div className="min-h-screen bg-transparent flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )

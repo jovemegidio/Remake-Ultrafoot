@@ -1130,11 +1130,11 @@ export default function MercadoPage() {
   // frame do cliente, enquanto o HTML estatico foi gerado sem save, causava hydration
   // mismatch (React #418) apenas na build de producao.
   if (!mounted) {
-    return <div className="h-screen bg-[#050508]" aria-label="Carregando mercado" />
+    return <div className="h-screen bg-transparent" aria-label="Carregando mercado" />
   }
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
+    <div className="relative flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent">
       {/* Background stadium image */}
       {/* Sem md:ml-16: reservava 64px para uma sidebar inexistente e deixava uma
           faixa sem fundo na esquerda a partir do breakpoint md. */}
@@ -1253,7 +1253,7 @@ export default function MercadoPage() {
                   </TabsTrigger>
                 </TabsList>
               </div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-[#050508] via-[#050508] to-transparent pl-8">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-[var(--uf-bg-deep)] via-[var(--uf-bg-deep)] to-transparent pl-8">
                 <ChevronRight className="h-4 w-4 text-white/35" />
               </div>
             </div>
@@ -1515,7 +1515,7 @@ export default function MercadoPage() {
                 telefônica, e ainda empurrava os filtros para fora da tela. Sem
                 busca nem filtro, o lugar mostra o convite abaixo. */}
             {!buscaAtiva ? (
-              <div className="mt-6 flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[#0c0c10]/70 p-8 text-center backdrop-blur-sm">
+              <div className="mt-6 flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/70 p-8 text-center backdrop-blur-sm">
                 <Search className="h-12 w-12 text-white/10" />
                 <h3 className="mt-4 text-lg text-white/55">{t.market.procure_um_atleta}</h3>
                 <p className="mt-2 max-w-md text-sm text-white/35">
@@ -1530,7 +1530,7 @@ export default function MercadoPage() {
                ficha nao "foge" para cima enquanto se procura na lista). */
             <div className="mt-6 grid h-[560px] grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="scrollbar-thin space-y-4 overflow-y-auto pr-1">
-                <div className="sticky top-0 z-10 flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#0c0c10]/95 px-3 py-2 backdrop-blur-sm">
+                <div className="sticky top-0 z-10 flex items-center justify-between rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/95 px-3 py-2 backdrop-blur-sm">
                   <span className="text-xs text-white/45">
                     {filteredPlayers.length.toLocaleString("pt-BR")} atletas · página {marketPage + 1} de {marketPageCount}
                   </span>
@@ -1553,7 +1553,7 @@ export default function MercadoPage() {
                 </div>
                 {Object.entries(groupedPlayers).map(([group, players]) => (
                   players.length > 0 && (
-                    <div key={group} className="rounded-xl border border-white/[0.06] bg-[#0c0c10]/75 p-4 backdrop-blur-sm">
+                    <div key={group} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/75 p-4 backdrop-blur-sm">
                       <div className="mb-3 flex items-center justify-between">
                         <h3 className="font-semibold text-white">{group}</h3>
                         <span className="text-xs text-white/40">{t.market.readyToPlay}</span>
@@ -1574,7 +1574,7 @@ export default function MercadoPage() {
                   )
                 ))}
                 {filteredPlayers.length === 0 && (
-                  <div className="rounded-xl border border-white/[0.06] bg-[#0c0c10]/75 p-8 text-center backdrop-blur-sm">
+                  <div className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/75 p-8 text-center backdrop-blur-sm">
                     <p className="text-white/50">{t.market.nenhum_atleta_com_esses_filtros}</p>
                     <button onClick={clearAllFilters} className="mt-3 text-sm text-[var(--brand)] hover:underline">
                       Limpar filtros
@@ -1595,7 +1595,7 @@ export default function MercadoPage() {
                     irPara={detailNav.irPara}
                   />
                 ) : (
-                  <div className="flex h-full min-h-[320px] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[#0c0c10]/75 p-8 text-center backdrop-blur-sm">
+                  <div className="flex h-full min-h-[320px] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/75 p-8 text-center backdrop-blur-sm">
                     <User className="mb-4 h-20 w-20 text-white/10" />
                     <h3 className="text-lg text-white/40">{t.market.selectPlayer}</h3>
                     <p className="mt-2 text-sm text-white/30">{t.market.clickForDetails}</p>
@@ -1641,22 +1641,22 @@ export default function MercadoPage() {
             <div className="grid min-h-0 flex-1 grid-cols-12 gap-4 overflow-hidden">
               <div className="col-span-12 xl:col-span-7 overflow-y-auto pr-2 space-y-4 scrollbar-thin">
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                  <div className="rounded-xl bg-[var(--uf-bg-surface)]/75 backdrop-blur-sm border border-white/[0.06] p-4">
                     <p className="text-xs text-white/40">Olheiros</p>
                     <p className="mt-1 text-2xl font-bold text-white">{hiredScouts.length}</p>
                   </div>
-                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                  <div className="rounded-xl bg-[var(--uf-bg-surface)]/75 backdrop-blur-sm border border-white/[0.06] p-4">
                     <p className="text-xs text-white/40">Em busca</p>
                     <p className="mt-1 text-2xl font-bold text-[var(--brand)]">{hiredScouts.filter((scout) => scout.isSearching).length}</p>
                   </div>
-                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                  <div className="rounded-xl bg-[var(--uf-bg-surface)]/75 backdrop-blur-sm border border-white/[0.06] p-4">
                     <p className="text-xs text-white/40">Relatorios</p>
                     <p className="mt-1 text-2xl font-bold text-[#ffd700]">{scoutedLeads.length}</p>
                   </div>
                 </div>
 
                 {hiredScouts.length === 0 ? (
-                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-8 text-center">
+                  <div className="rounded-xl bg-[var(--uf-bg-surface)]/75 backdrop-blur-sm border border-white/[0.06] p-8 text-center">
                     <Briefcase className="mx-auto mb-3 h-10 w-10 text-white/25" />
                     <p className="text-white font-semibold">{t.market.nenhum_olheiro_contratado}</p>
                     <p className="mt-1 text-sm text-white/45">{t.market.contrate_um_olheiro_para_liberar_buscas}</p>
@@ -1664,7 +1664,7 @@ export default function MercadoPage() {
                 ) : (
                   <div className="space-y-3">
                     {hiredScouts.map((scout) => (
-                      <div key={scout.id} className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                      <div key={scout.id} className="rounded-xl bg-[var(--uf-bg-surface)]/75 backdrop-blur-sm border border-white/[0.06] p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
@@ -1793,7 +1793,7 @@ export default function MercadoPage() {
               </div>
 
               <div className="col-span-12 xl:col-span-5 overflow-y-auto space-y-4 scrollbar-thin">
-                <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                <div className="rounded-xl bg-[var(--uf-bg-surface)]/75 backdrop-blur-sm border border-white/[0.06] p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-white">Contratar olheiro</h3>
                     <span className="text-xs text-white/35">{availableScouts.length} disponiveis</span>
@@ -1823,7 +1823,7 @@ export default function MercadoPage() {
                   )}
                 </div>
 
-                <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                <div className="rounded-xl bg-[var(--uf-bg-surface)]/75 backdrop-blur-sm border border-white/[0.06] p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-white">Relatorios descobertos</h3>
                     <span className="text-xs text-white/35">{scoutedLeads.length}</span>
@@ -2095,7 +2095,7 @@ export default function MercadoPage() {
             </div>
 
             {/* Bottom Actions Bar */}
-            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[var(--uf-bg-deep)] via-[var(--uf-bg-deep)]/95 to-transparent py-4 px-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -2222,7 +2222,7 @@ export default function MercadoPage() {
             </div>
 
             {/* Bottom Actions Bar */}
-            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[var(--uf-bg-deep)] via-[var(--uf-bg-deep)]/95 to-transparent py-4 px-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -2434,7 +2434,7 @@ function ReceivedOfferCard({
   const [loanWeeks,setLoanWeeks]=useState(offer.loanWeeks??26)
 
   return (
-    <div className="rounded-xl bg-[#0c0c10]/85 border border-white/[0.06] overflow-hidden">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)]/85 border border-white/[0.06] overflow-hidden">
       <div className="flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] px-4 py-3">
         <div>
           <p className="text-sm font-semibold text-white">{offer.fromTeam}</p>
@@ -2838,7 +2838,7 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
   const ate99 = (v: number) => Math.min(99, Math.round(v))
 
   return (
-    <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] overflow-hidden">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)]/75 backdrop-blur-sm border border-white/[0.06] overflow-hidden">
       {/* Header — gradiente com a cor do time, no tratamento visual aprovado. */}
       <div
         className="p-4 border-b border-white/[0.04]"
@@ -2890,7 +2890,7 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
 
             {/* Name */}
             <div className="text-xs text-white/50 uppercase">{player.name.split(" ")[0]}</div>
-            <h2 className="text-2xl font-bold text-white tracking-wide">{player.name.split(" ").slice(-1)[0].toUpperCase()}</h2>
+            <h2 className="uf-heading text-2xl font-bold text-white tracking-wide">{player.name.split(" ").slice(-1)[0].toUpperCase()}</h2>
 
             {/* Stats row */}
             <div className="flex items-center gap-4 mt-3 text-sm">

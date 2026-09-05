@@ -62,7 +62,7 @@ function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimation
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       onClick={onComplete}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md cursor-pointer"
+      className="fixed inset-0 z-50 flex items-center justify-center uf-veu cursor-pointer"
     >
       {/* Particulas de fundo */}
       <div className="absolute inset-0 overflow-hidden">
@@ -181,7 +181,7 @@ function PenaltyAnimation({ team, minute, onComplete }: Omit<EventAnimationProps
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       onClick={onComplete}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md cursor-pointer"
+      className="fixed inset-0 z-50 flex items-center justify-center uf-veu cursor-pointer"
     >
       {/* Spotlight */}
       <motion.div
@@ -251,7 +251,7 @@ function YellowCardAnimation({ team, player, minute, onComplete }: Omit<EventAni
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       onClick={onComplete}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm cursor-pointer"
+      className="fixed inset-0 z-50 flex items-center justify-center uf-veu cursor-pointer"
     >
       <div className="flex flex-col items-center">
         {/* Cartao */}
@@ -273,7 +273,7 @@ function YellowCardAnimation({ team, player, minute, onComplete }: Omit<EventAni
           transition={{ delay: 0.5 }}
           className="mt-6 text-center"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-yellow-400">CARTAO AMARELO</h2>
+          <h2 className="uf-heading text-3xl md:text-4xl font-bold text-yellow-400">CARTAO AMARELO</h2>
           <div className="mt-2 flex items-center justify-center gap-3">
             {team && <TeamCrest team={team} size="xs" />}
             <span className="text-white text-lg">{player}</span>
@@ -296,7 +296,7 @@ function RedCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimat
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       onClick={onComplete}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md cursor-pointer"
+      className="fixed inset-0 z-50 flex items-center justify-center uf-veu cursor-pointer"
     >
       {/* Flash vermelho */}
       <motion.div
@@ -331,7 +331,7 @@ function RedCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimat
           transition={{ delay: 0.6, duration: 0.4 }}
           className="mt-8"
         >
-          <h1 className="text-5xl md:text-7xl font-black text-red-500 tracking-tight"
+          <h1 className="uf-heading text-5xl md:text-7xl font-black text-red-500 tracking-tight"
             style={{ textShadow: "0 0 40px rgba(239,68,68,0.8)" }}
           >
             EXPULSO!
@@ -402,7 +402,7 @@ function VarAnimation({ onComplete }: Omit<EventAnimationProps, "event">) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       onClick={onComplete}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md cursor-pointer"
+      className="fixed inset-0 z-50 flex items-center justify-center uf-veu cursor-pointer"
     >
       <div className="flex flex-col items-center">
         {/* Linhas de scan */}
@@ -436,7 +436,7 @@ function VarAnimation({ onComplete }: Omit<EventAnimationProps, "event">) {
           transition={{ delay: 0.5 }}
           className="mt-6 text-center"
         >
-          <h2 className="text-2xl font-bold text-blue-400">CHECANDO LANCE...</h2>
+          <h2 className="uf-heading text-2xl font-bold text-blue-400">CHECANDO LANCE...</h2>
           <p className="text-white/50 text-sm mt-1">Video Assistant Referee</p>
         </motion.div>
       </div>

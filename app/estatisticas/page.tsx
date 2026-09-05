@@ -187,7 +187,7 @@ export default function EstatisticasPage() {
   const activeCat = cats.find((c) => c.id === activeTab) || cats[0]
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
       <main className="flex-1 overflow-y-auto px-6 pt-5 pb-24">
@@ -227,7 +227,7 @@ export default function EstatisticasPage() {
                 Num
                 <ChevronRight className="h-3.5 w-3.5" />
               </div>
-              <h2 className="text-xl font-extrabold uppercase tracking-tight text-white">
+              <h2 className="uf-heading text-xl font-extrabold uppercase tracking-tight text-white">
                 {getLeagueName(userTeam.curto)}
               </h2>
             </div>
@@ -398,7 +398,7 @@ function LeaderboardTable({
   primaryColor?: string;
 }) {
   return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
       <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]">
         <Award className="h-4 w-4 text-[#ffd700]" />
         <span className="font-semibold text-white">{title}</span>
@@ -480,7 +480,7 @@ function SquadStatsTable({
   data: { id: number; name: string; position: string; matches: number; goals: number; assists: number; yellows: number; reds: number; rating: number; cleanSheets?: number }[]
 }) {
   return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+    <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
       <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]">
         <Users className="h-4 w-4 text-[var(--brand)]" />
         <span className="font-semibold text-white">Estatisticas do Elenco</span>

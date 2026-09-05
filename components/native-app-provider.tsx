@@ -642,12 +642,12 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", onKey, true)
   }, [page, onClose, pages.length])
   return (
-    <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-[#020308]/82 p-5 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[9998] flex items-center justify-center uf-veu p-5">
       <section className="w-full max-w-3xl overflow-hidden border border-white/[0.08] bg-gradient-to-br from-[#171724]/98 via-[#11121c]/98 to-[#090b11]/98 shadow-[0_35px_120px_rgba(0,0,0,.75)]">
         <div className="grid min-h-[380px] md:grid-cols-[1.45fr_.75fr]">
           <div className="flex flex-col px-8 py-8 md:px-10">
             <p className="text-[10px] font-black uppercase tracking-[.22em] text-[var(--brand)]">{current.eyebrow}</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-white">{current.title}</h2>
+            <h2 className="uf-heading mt-2 text-3xl font-black tracking-tight text-white">{current.title}</h2>
             <p className="mt-5 max-w-xl text-sm leading-6 text-white/62">{current.body}</p>
             <div className="mt-6 space-y-2">{current.bullets.map(item => <div key={item} className="flex items-center gap-3 text-xs text-white/72"><span className="h-1.5 w-1.5 rounded-full bg-[var(--brand)]"/>{item}</div>)}</div>
             <div className="mt-auto flex items-center gap-3 pt-8">
@@ -672,11 +672,11 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
 
 function InGameUpdateDialog({ offer, onLater }: { offer: InGameUpdateOffer; onLater: () => void }) {
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-5 backdrop-blur-md">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center uf-veu p-5">
       <section className="w-full max-w-lg overflow-hidden rounded-2xl border border-[var(--brand)]/25 bg-[#0b1014] shadow-[0_24px_90px_rgba(0,255,200,.16)]">
         <div className="border-b border-white/10 bg-gradient-to-r from-[var(--brand)]/15 to-cyan-500/5 px-6 py-5">
           <p className="text-[11px] font-black uppercase tracking-[.22em] text-[var(--brand)]">Atualização do jogo</p>
-          <h2 className="mt-1 text-2xl font-black text-white">Ultrafoot 26 v{offer.version}</h2>
+          <h2 className="uf-heading mt-1 text-2xl font-black text-white">Ultrafoot 26 v{offer.version}</h2>
           <p className="mt-1 text-sm text-white/55">Uma nova versão está disponível.</p>
         </div>
         <div className="px-6 py-5">
@@ -779,7 +779,7 @@ function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onCo
       // Este aviso trata o proprio controle (selecao + A/B logo acima), entao
       // fica FORA da ponte generica — senao o A seria processado duas vezes.
       data-gamepad-modal="off"
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#080912]/82 backdrop-blur-xl"
+      className="fixed inset-0 z-[9999] flex items-center justify-center uf-veu"
       onClick={onCancel}
     >
       <div
@@ -788,7 +788,7 @@ function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onCo
       >
         <div className="pointer-events-none absolute bottom-[-34px] left-1/2 -translate-x-1/2 text-[150px] font-black text-white/[0.025]">⚙</div>
         <p className="text-[10px] font-black uppercase tracking-[.24em] text-[var(--brand)]">Confirmação</p>
-        <h2 className="relative mt-3 text-2xl font-black leading-tight text-white">Tem certeza de que deseja sair do Ultrafoot 26?</h2>
+        <h2 className="uf-heading relative mt-3 text-2xl font-black leading-tight text-white">Tem certeza de que deseja sair do Ultrafoot 26?</h2>
         <p className="relative mx-auto mt-3 max-w-sm text-xs leading-5 text-white/45">Seu progresso atual será gravado antes do encerramento.</p>
         <div className="relative mx-auto mt-7 flex w-44 flex-col gap-2">
           <button

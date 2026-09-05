@@ -217,8 +217,8 @@
      ThemeProvider reescreve a cada troca de tema. São HEX de propósito: o
      valor entra em gradiente, sombra e SVG, onde oklch() nem sempre serve.
 
-     O FUNDO fica de fora — as bases escuras (#050508, #0c0c10, …) continuam
-     chumbadas, que é o pedido: o tema muda o jogo, não o fundo. */
+     O FUNDO fica de fora, que é o pedido: o tema muda o jogo, não o fundo.
+     As bases escuras hoje são `--uf-bg-deep` / `--uf-bg-surface`, logo abaixo. */
   --brand: #00ffc8;
   --brand-2: #00c8ff;
   /* Tinta LEGIVEL sobre --brand. Os botoes do jogo eram "fundo da marca + texto
@@ -227,60 +227,198 @@
      luminancia do tema. */
   --brand-ink: #000000;
 
-  /* EA FC 26 Premium Dark Theme */
-  --background: oklch(0.06 0.015 260);
-  --foreground: oklch(0.98 0.005 240);
+  /* ══════════════════════════════════════════════════════════════════════════
+     CAMADA SEMANTICA `--uf-*` — a paleta do jogo com NOME, nao com numero.
 
-  --card: oklch(0.10 0.02 260);
-  --card-foreground: oklch(0.98 0.005 240);
+     Por que ela existe: as superficies do jogo eram dois hexadecimais
+     chumbados (#050508 em 81 lugares, #0c0c10 em 144). Trocar a atmosfera
+     exigia editar 225 arquivos, e foi por isso que ela nunca mudou. Agora os
+     dois viraram token e a troca acontece aqui.
 
-  --popover: oklch(0.08 0.015 260);
-  --popover-foreground: oklch(0.98 0.005 240);
+     ⚠️ `--brand` / `--brand-2` NAO entram aqui, de proposito: quem manda
+     naquelas duas e o ThemeProvider, que as reescreve a cada troca de tema
+     escolhida pelo jogador. Chumbar ciano nestas variaveis desfaria o tema.
+     O ciano abaixo (`--uf-cyan`) e o de ESTADO (foco, selecao, informacao),
+     que existe mesmo quando a marca e roxa ou vermelha.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* ── A BASE CANONICA (`--color-*`, `--radius-*`, `--ease-*`, ...) ──────────
+     Esta e a especificacao do sistema, com os nomes e valores da direcao de
+     arte. As variaveis `--uf-*` logo abaixo APONTAM para ela: nao ha dois
+     valores para a mesma cor, so dois nomes.
+
+     Por que os dois existem: `--uf-*` ja esta escrito em 249 lugares do jogo
+     (foi o codemod que tirou os dois hexadecimais chumbados). Renomear tudo de
+     novo seria churn sem ganho; manter a base canonica como fonte e o alias
+     como atalho da uma verdade so, e qualquer ajuste futuro acontece aqui. */
+  --color-bg-0: #050b0d;
+  --color-bg-1: #071316;
+  --color-bg-2: #0c1c20;
+  --color-surface-1: rgba(8, 23, 27, 0.78);
+  --color-surface-2: rgba(12, 31, 35, 0.86);
+  --color-surface-soft: rgba(124, 175, 177, 0.08);
+  --color-border: rgba(192, 255, 244, 0.12);
+  --color-border-strong: rgba(71, 255, 215, 0.50);
+  --color-text-1: #f4f8f7;
+  --color-text-2: #a8b8b8;
+  --color-text-3: #708184;
+  --color-cyan: #14e4d0;
+  --color-green: #52f486;
+  --color-violet: #7567f8;
+  --color-magenta: #f05b88;
+  --color-yellow: #e9f151;
+  --color-danger: #ff5a70;
+
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-pill: 999px;
+
+  --shadow-panel: 0 18px 60px rgba(0, 0, 0, 0.34);
+  --shadow-focus: 0 0 0 1px rgba(34, 255, 210, 0.72), 0 0 24px rgba(20, 228, 208, 0.18);
+
+  --ease-standard: cubic-bezier(.2, .72, .2, 1);
+  --ease-enter: cubic-bezier(.16, 1, .3, 1);
+  --duration-fast: 140ms;
+  --duration-base: 220ms;
+  --duration-slow: 320ms;
+  --space-unit: 8px;
+
+  /* Profundidade. Os z-index do jogo eram numeros soltos (90, 95, 96, 100, 120,
+     150, 160, 9998, 9999) e ninguem sabia qual vinha na frente de qual sem ler
+     as tres telas envolvidas. Estes nomes descrevem as CAMADAS que existem de
+     fato; os valores continuam sendo os que o jogo ja usava, para nao remexer
+     em ordem que funciona. */
+  --z-fundo: -1;
+  --z-conteudo: 0;
+  --z-cabecalho: 30;
+  --z-trilha-de-acoes: 30;
+  --z-modal: 100;
+  --z-cena: 150;
+  --z-alerta: 9999;
+
+  /* Blur e opacidade recorrentes. */
+  --blur-veu: 12px;
+  --blur-painel: 14px;
+  --opacidade-desabilitado: 0.45;
+
+  /* Largura maxima do conteudo e margem lateral segura em 1280x720. */
+  --largura-maxima: 1680px;
+  --margem-segura: 28px;
+
+  /* ── ALIASES `--uf-*` ─────────────────────────────────────────────────────
+     Fundos: grafite azul-esverdeado, no lugar do quase-preto arroxeado. */
+  --uf-bg-deep: var(--color-bg-1);
+  --uf-bg-surface: var(--color-bg-2);
+  --uf-surface-raised: var(--color-surface-1);
+  --uf-panel: rgba(7, 20, 24, 0.66);
+  /* Fallback OPACO do painel translucido. O perfil de maquina modesta remove
+     `backdrop-filter` (ver data-performance-mode la embaixo); sem um opaco por
+     tras, o painel viraria um vidro sem vidro e o texto cairia em cima do
+     cenario. Este e o mesmo tom do painel ja composto sobre o fundo. */
+  --uf-panel-solid: #0A171B;
+  --uf-surface-solid: #0C1D22;
+
+  /* Texto — os tres degraus de hierarquia. */
+  --uf-text: var(--color-text-1);
+  --uf-text-muted: var(--color-text-2);
+  --uf-text-faint: var(--color-text-3);
+
+  /* Estado. Cores de SIGNIFICADO, independentes do tema escolhido. */
+  --uf-cyan: var(--color-cyan);
+  --uf-green: var(--color-green);
+  --uf-violet: var(--color-violet);
+  --uf-magenta: var(--color-magenta);
+  --uf-yellow: var(--color-yellow);
+  --uf-error: var(--color-danger);
+
+  /* Bordas e traco. */
+  --uf-line: var(--color-border);
+  --uf-line-strong: rgba(192, 255, 244, 0.22);
+
+  /* Raio — o pedido e canto entre 4 e 8px, bem mais seco que o 12px de antes. */
+  --uf-radius-sm: var(--radius-xs);
+  --uf-radius: var(--radius-sm);
+  --uf-radius-lg: 8px;
+
+  /* Sombra: profunda e difusa, nunca dura. */
+  --uf-shadow-card: 0 18px 42px -18px rgba(0, 0, 0, 0.9), 0 2px 8px -2px rgba(0, 0, 0, 0.6);
+  --uf-shadow-raised: 0 28px 64px -24px rgba(0, 0, 0, 0.95), 0 4px 14px -4px rgba(0, 0, 0, 0.7);
+
+  /* Movimento. Curto e controlado — nada elastico, nada de aplicativo de celular. */
+  --uf-dur-fast: var(--duration-fast);
+  --uf-dur: var(--duration-base);
+  --uf-dur-enter: var(--duration-slow);
+  --uf-ease: var(--ease-standard);
+  --uf-ease-out: var(--ease-enter);
+  /* Passo do stagger entre cartoes de uma mesma lista. */
+  --uf-stagger: 34ms;
+
+  /* Grade de 8px. */
+  --uf-gap: var(--space-unit);
+
+  /* Base do tema escuro. O matiz saiu de 260 (azul-arroxeado) para ~205
+     (azul-esverdeado): e o que separa "quase preto neutro" de "grafite de
+     estadio a noite". Os valores sao os mesmos `--uf-*` de cima, para que
+     Tailwind (`bg-background`) e CSS cru desenhem a MESMA cor — antes eles
+     divergiam em meio ponto de luminancia e a emenda aparecia. */
+  --background: var(--uf-bg-deep);
+  --foreground: var(--uf-text);
+
+  --card: var(--uf-surface-solid);
+  --card-foreground: var(--uf-text);
+
+  --popover: #08161A;
+  --popover-foreground: var(--uf-text);
 
   /* EA FC Teal/Cyan - Primary brand color */
   --primary: oklch(0.85 0.20 175);
   --primary-foreground: oklch(0.06 0.015 260);
 
-  --secondary: oklch(0.14 0.025 260);
-  --secondary-foreground: oklch(0.98 0.005 240);
+  --secondary: #12252A;
+  --secondary-foreground: var(--uf-text);
 
-  --muted: oklch(0.16 0.02 260);
-  --muted-foreground: oklch(0.55 0.015 240);
+  --muted: #16292E;
+  --muted-foreground: var(--uf-text-muted);
 
   /* Lime green - EA FC accent for CTAs */
   --accent: oklch(0.88 0.24 145);
   --accent-foreground: oklch(0.06 0.015 260);
 
-  /* Red for destructive actions */
-  --destructive: oklch(0.60 0.25 25);
-  --destructive-foreground: oklch(0.98 0 0);
+  /* Erro. Rosa-vermelho em vez do vermelho puro: sobre fundo azul-esverdeado
+     o vermelho saturado vibra e cansa, e o rosa mantem o mesmo alarme com
+     contraste melhor (7,1:1 sobre --uf-bg-deep). */
+  --destructive: var(--uf-error);
+  --destructive-foreground: #FFFFFF;
 
-  /* Gold - Premium/Special highlight */
+  /* Ouro — trofeu, recorde, marco de carreira. */
   --gold: oklch(0.82 0.18 85);
 
-  /* Orange - Warning/Alert */
-  --warning: oklch(0.75 0.18 55);
+  /* Atencao. O amarelo da paleta e limao, nao laranja. */
+  --warning: var(--uf-yellow);
 
-  --border: oklch(0.18 0.02 260);
-  --input: oklch(0.12 0.02 260);
-  --ring: oklch(0.85 0.20 175);
+  --border: var(--uf-line);
+  --input: #0F2126;
+  --ring: var(--uf-cyan);
 
-  --chart-1: oklch(0.85 0.20 175);
-  --chart-2: oklch(0.88 0.24 145);
-  --chart-3: oklch(0.82 0.18 85);
-  --chart-4: oklch(0.60 0.25 25);
-  --chart-5: oklch(0.55 0.12 280);
+  --chart-1: var(--uf-cyan);
+  --chart-2: var(--uf-green);
+  --chart-3: var(--uf-yellow);
+  --chart-4: var(--uf-magenta);
+  --chart-5: var(--uf-violet);
 
-  --radius: 0.75rem;
+  /* 8px. O 12px de antes arredondava demais para um painel esportivo — o
+     pedido e canto seco, entre 4 e 8. Os degraus `-sm/-md` do @theme derivam
+     deste valor e chegam sozinhos a 4px e 6px. */
+  --radius: 0.5rem;
 
-  --sidebar: oklch(0.05 0.015 260);
-  --sidebar-foreground: oklch(0.70 0.01 240);
-  --sidebar-primary: oklch(0.85 0.20 175);
-  --sidebar-primary-foreground: oklch(0.06 0.015 260);
-  --sidebar-accent: oklch(0.12 0.02 260);
-  --sidebar-accent-foreground: oklch(0.98 0.005 240);
-  --sidebar-border: oklch(0.14 0.02 260);
-  --sidebar-ring: oklch(0.85 0.20 175);
+  --sidebar: #060F12;
+  --sidebar-foreground: var(--uf-text-muted);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-ink);
+  --sidebar-accent: #102126;
+  --sidebar-accent-foreground: var(--uf-text);
+  --sidebar-border: var(--uf-line);
+  --sidebar-ring: var(--uf-cyan);
 }
 
 @theme inline {
@@ -326,6 +464,23 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* A camada semantica exposta ao Tailwind: `text-uf-cyan`, `bg-uf-panel`,
+     `border-uf-line` passam a existir como classe. */
+  --color-uf-bg: var(--uf-bg-deep);
+  --color-uf-surface: var(--uf-bg-surface);
+  --color-uf-raised: var(--uf-surface-raised);
+  --color-uf-panel: var(--uf-panel);
+  --color-uf-text: var(--uf-text);
+  --color-uf-muted: var(--uf-text-muted);
+  --color-uf-faint: var(--uf-text-faint);
+  --color-uf-cyan: var(--uf-cyan);
+  --color-uf-green: var(--uf-green);
+  --color-uf-violet: var(--uf-violet);
+  --color-uf-magenta: var(--uf-magenta);
+  --color-uf-yellow: var(--uf-yellow);
+  --color-uf-error: var(--uf-error);
+  --color-uf-line: var(--uf-line);
 }
 
 @layer base {
@@ -341,11 +496,19 @@
     width: calc(100vw / var(--game-view-scale));
     min-height: calc(100vh / var(--game-view-scale));
     overflow: hidden;
-    background-image:
-      radial-gradient(ellipse at top left, oklch(0.12 0.08 175 / 0.20) 0%, transparent 50%),
-      radial-gradient(ellipse at bottom right, oklch(0.10 0.10 145 / 0.12) 0%, transparent 50%),
-      radial-gradient(ellipse at center, oklch(0.08 0.03 260 / 0.5) 0%, transparent 70%);
-    background-attachment: fixed;
+    /* O fundo do jogo agora e a camada `.uf-atmos` (components/atmospheric-
+       background.tsx), montada uma vez no layout. Os tres radial-gradient que
+       moravam aqui sairam por dois motivos: eles ficavam ATRAS dela e nunca
+       mais seriam vistos, e `background-attachment: fixed` obriga o compositor
+       a repintar o gradiente a cada rolagem — caro justamente na maquina fraca.
+
+       ⚠️ E O `body` TEM DE FICAR TRANSPARENTE. Um filho com `z-index: -1` pinta
+       atras do fundo do PROPRIO pai: com cor no `body`, a camada atmosferica
+       existiria e ninguem a veria. A cor da base fica no `<html>` (que ja
+       carrega `bg-background` no layout) e de la vira o fundo da tela — o que
+       tambem preserva a rede de seguranca: se a camada nao montar, o jogo
+       continua escuro em vez de branco. */
+    background-color: transparent;
   }
 }
 
@@ -406,42 +569,74 @@
   }
 
   /* Glassmorphism panel - EA FC style */
+  /* Painel de vidro. Passou a sair dos tokens `--uf-*` para nao existirem duas
+     definicoes de "vidro" no jogo — esta e a `.uf-panel` divergiam em matiz e a
+     emenda aparecia quando as duas ficavam lado a lado.
+     O desfoque caiu de 20px para 14px: acima disso a WebView deixa de compor a
+     camada na GPU em janela grande, e o custo aparece na rolagem. */
   .glass-panel {
-    background: linear-gradient(
-      135deg,
-      oklch(0.12 0.025 260 / 0.9) 0%,
-      oklch(0.08 0.02 260 / 0.85) 100%
-    );
-    backdrop-filter: blur(20px) saturate(1.3);
-    border: 1px solid oklch(0.25 0.03 260 / 0.4);
+    background: var(--uf-panel);
+    backdrop-filter: blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    border: 1px solid var(--uf-line-strong);
+  }
+
+  /* Sem `backdrop-filter` nao ha vidro nenhum: sem um opaco por tras, o painel
+     vira texto solto sobre o cenario. Mesmo fallback da `.uf-panel`. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-panel { background: var(--uf-panel-solid); }
   }
 
   /* EA FC Card hover effect */
+  /* O cartao antigo, agora sobre os mesmos tokens da `.uf-card`. Continua
+     existindo porque as telas ja o usam; o que mudou foi de onde vem a cor,
+     o canto (12px -> 8px) e a duracao (300ms -> 200ms, dentro da faixa curta
+     que o resto do sistema usa). */
   .eafc-card {
-    @apply bg-card border border-border rounded-xl transition-all duration-300;
-    background: linear-gradient(
-      145deg,
-      oklch(0.11 0.025 260) 0%,
-      oklch(0.08 0.02 260) 100%
-    );
+    @apply border border-border;
+    border-radius: var(--uf-radius-lg);
+    background: var(--uf-surface-raised);
+    box-shadow: var(--uf-shadow-card);
+    transition:
+      border-color var(--uf-dur) var(--uf-ease),
+      background-color var(--uf-dur) var(--uf-ease),
+      box-shadow var(--uf-dur) var(--uf-ease),
+      transform var(--uf-dur) var(--uf-ease);
   }
 
   .eafc-card:hover {
-    border-color: oklch(0.85 0.20 175 / 0.5);
+    border-color: color-mix(in oklab, var(--uf-cyan) 34%, transparent);
+    background: color-mix(in oklab, var(--uf-cyan) 4%, var(--uf-surface-raised));
     box-shadow:
-      0 0 0 1px oklch(0.85 0.20 175 / 0.2),
-      0 8px 32px oklch(0.85 0.20 175 / 0.15),
-      inset 0 1px 0 oklch(0.95 0.05 175 / 0.15);
+      var(--uf-shadow-card),
+      0 0 0 1px color-mix(in oklab, var(--uf-cyan) 20%, transparent);
     transform: translateY(-2px);
+  }
+
+  /* O cartao nao respondia ao TECLADO — so ao ponteiro. Num jogo que se navega
+     por setas e por controle, hover sozinho e meia interface. */
+  .eafc-card:focus-visible {
+    outline: none;
+    border-color: color-mix(in oklab, var(--uf-cyan) 55%, transparent);
+    box-shadow:
+      var(--uf-shadow-card),
+      0 0 0 2px var(--uf-bg-deep),
+      0 0 0 4px var(--uf-cyan);
   }
 
   /* ============================================
      EA FC KPI / STAT CARDS - gradiente tonal + glow
      ============================================ */
   .stat-card {
-    @apply relative overflow-hidden rounded-xl border p-4 transition-all duration-300;
-    border-color: oklch(1 0 0 / 0.08);
-    background: oklch(0.12 0.02 260);
+    @apply relative overflow-hidden border p-4;
+    border-radius: var(--uf-radius-lg);
+    border-color: var(--uf-line);
+    background: var(--uf-surface-raised);
+    box-shadow: var(--uf-shadow-card);
+    transition:
+      border-color var(--uf-dur) var(--uf-ease),
+      box-shadow var(--uf-dur) var(--uf-ease),
+      transform var(--uf-dur) var(--uf-ease);
   }
   /* Faixa de acento no topo do card */
   .stat-card::before {
@@ -476,23 +671,49 @@
       0 0 0 1px color-mix(in oklch, var(--stat-accent, #00ffc8) 22%, transparent),
       0 10px 32px color-mix(in oklch, var(--stat-accent, #00ffc8) 18%, transparent);
   }
-  .stat-card-teal   { --stat-accent: #00ffc8; --stat-glow: rgba(0,255,200,0.18); }
-  .stat-card-green  { --stat-accent: #34e07a; --stat-glow: rgba(52,224,122,0.18); }
-  .stat-card-blue   { --stat-accent: #2fb8ff; --stat-glow: rgba(47,184,255,0.18); }
-  .stat-card-amber  { --stat-accent: #ffc24d; --stat-glow: rgba(255,194,77,0.16); }
-  .stat-card-red    { --stat-accent: #ff6b6b; --stat-glow: rgba(255,107,107,0.16); }
-  .stat-card-violet { --stat-accent: #9b8cff; --stat-glow: rgba(155,140,255,0.16); }
+  /* Os seis acentos saem da paleta de ESTADO (`--uf-*`), nao de hexadecimal
+     solto: era por aqui que o amarelo do KPI e o amarelo da etiqueta de alerta
+     desandavam meio tom um do outro. */
+  .stat-card-teal   { --stat-accent: var(--uf-cyan);    --stat-glow: color-mix(in oklab, var(--uf-cyan) 18%, transparent); }
+  .stat-card-green  { --stat-accent: var(--uf-green);   --stat-glow: color-mix(in oklab, var(--uf-green) 18%, transparent); }
+  .stat-card-blue   { --stat-accent: #3E9BE8;           --stat-glow: color-mix(in oklab, #3E9BE8 18%, transparent); }
+  .stat-card-amber  { --stat-accent: var(--uf-yellow);  --stat-glow: color-mix(in oklab, var(--uf-yellow) 16%, transparent); }
+  .stat-card-red    { --stat-accent: var(--uf-magenta); --stat-glow: color-mix(in oklab, var(--uf-magenta) 16%, transparent); }
+  .stat-card-violet { --stat-accent: var(--uf-violet);  --stat-glow: color-mix(in oklab, var(--uf-violet) 16%, transparent); }
 
   /* EA FC Button Primary */
   .eafc-btn {
-    @apply relative overflow-hidden px-6 py-3 font-semibold text-sm rounded-lg transition-all duration-200;
+    @apply relative overflow-hidden px-6 py-3 font-semibold text-sm transition-all duration-200;
+    border-radius: var(--uf-radius);
     background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 55%, #6c8cff 100%);
-    color: #000;
+    /* ⚠️ `color: #000` ERA UM BUG DE TEMA: o preto so era legivel enquanto a
+       marca fosse clara. Em Azul Royal ou Roxo Neon virava preto sobre escuro.
+       `--brand-ink` e a tinta que o ThemeProvider escolhe pela luminancia do
+       tema — a mesma decisao que os botoes de marca ja tomavam. */
+    color: var(--brand-ink);
   }
 
   .eafc-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(0, 255, 200, 0.3);
+    /* A sombra tambem seguia o ciano chumbado; agora acompanha a marca. */
+    box-shadow: 0 8px 24px -6px color-mix(in oklab, var(--brand) 45%, transparent);
+  }
+
+  .eafc-btn:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--uf-bg-deep),
+      0 0 0 4px var(--uf-cyan);
+  }
+
+  .eafc-btn:active {
+    transform: scale(0.975);
+  }
+
+  .eafc-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+    transform: none;
   }
 
   .eafc-btn::before {
@@ -1022,6 +1243,34 @@
   50%, 92% { opacity: 1; }
   100%     { opacity: 0; }
 }
+/* ── O ESCRITORIO FICA FORA DE FOCO ────────────────────────────────────────
+   A arte do escritorio e nitida e ocupa a tela inteira atras do conteudo do
+   hub. Duas consequencias, e as duas sao problema:
+
+     • a referencia pede AMBIENTE DESFOCADO atras da interface — nitida, a foto
+       compete com o conteudo em vez de dar profundidade a ele;
+     • o texto discreto do hub ("4 tarefas", a manchete da imprensa) caia
+       exatamente sobre as janelas claras do predio e ficava ilegivel. Subir o
+       veu resolveria a legibilidade e apagaria a arte junto.
+
+   O desfoque resolve os dois: a foto continua toda la, so deixa de disputar.
+
+   ⚠️ ISTO NAO E O MESMO CUSTO DO BLUR ANIMADO. O elemento nao muda de tamanho
+   nem de posicao — o compositor rasteriza a camada desfocada UMA vez e reusa a
+   textura no crossfade, que so mexe em `opacity`. Diferente de animar o proprio
+   `filter`, que refaz a rasterizacao a cada quadro.
+
+   `scale(1.04)` porque `blur()` clareia as bordas do elemento (amostra pixel de
+   fora); o pequeno excesso empurra essa franja para fora da tela.
+
+   Na maquina modesta o perfil ja remove `[class*="blur-"]`, e esta regra usa
+   `filter` direto — por isso ela e desligada explicitamente mais abaixo. */
+.office-bg-a,
+.office-bg-b {
+  filter: blur(11px) saturate(1.05);
+  transform: scale(1.04);
+}
+
 .office-bg-a {
   animation: officeBgFadeA 28s ease-in-out infinite;
 }
@@ -1108,6 +1357,8 @@ html[data-performance-mode] .shadow-2xl,
 html[data-performance-mode] .shadow-xl {
   box-shadow: none !important;
 }
+html[data-performance-mode] .office-bg-a,
+html[data-performance-mode] .office-bg-b { filter: none !important; transform: none !important; }
 html[data-performance-mode] .office-bg-b { display: none !important; }
 html[data-performance-mode] .office-bg-a { animation: none !important; opacity: 1 !important; }
 html[data-performance-mode] video { display: none !important; }
@@ -1183,7 +1434,8 @@ html[data-performance="economy"] *::after {
    backdrop-blur espalhados pelo jogo, e cada painel de vidro custa uma releitura
    do fundo a cada quadro — era a principal fonte de engasgo em telas cheias
    (mercado, elenco, calendario). Os paineis ja tem cor de fundo propria
-   (bg-[#0c0c10]/75 e afins), entao sem o desfoque eles continuam legiveis: perde
+   (bg-[var(--uf-bg-surface)]/75 e afins), entao sem o desfoque eles continuam
+   legiveis: perde
    o vidro fosco, ganha fluidez. Vidro fosco de verdade so no perfil "quality". */
 html[data-performance="economy"] [class*="backdrop-blur"],
 html[data-performance="balanced"] [class*="backdrop-blur"] {
@@ -1326,4 +1578,774 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
   html[data-input-mode="gamepad"] * {
     scroll-behavior: auto !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SISTEMA VISUAL `uf-*` — superficie, tipografia, movimento
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Fica em `@layer utilities` de proposito, junto do `.eafc-card` e do
+   `.stat-card` que ja existiam: assim as classes novas e as antigas disputam a
+   cascata em pe de igualdade, e uma tela pode misturar as duas durante a
+   transicao sem que a ordem do import decida quem ganha.
+
+   ⚠️ TRES REGRAS QUE ESTE ARQUIVO NAO PODE QUEBRAR (custaram sessoes inteiras):
+
+   1. NADA de altura em `vh`. O jogo roda dentro de `body { zoom: 0.8 }` e a
+      unidade `vh` ignora o zoom — `h-[72vh]` vira 57% da tela e sobra faixa
+      morta embaixo. Altura aqui e sempre por flex.
+   2. NADA de `--brand` chumbada. O ThemeProvider reescreve a marca a cada troca
+      de tema; cor de marca so por `var(--brand)`. O ciano/verde/violeta abaixo
+      sao cor de ESTADO, que existe em qualquer tema.
+   3. Tudo que custa GPU tem de morrer sob `html[data-performance-mode]`. Ver o
+      bloco no fim desta secao.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     FUNDO ATMOSFERICO
+     Usado por components/atmospheric-background.tsx.
+
+     Nao ha `filter: blur()` em lugar nenhum aqui, e isso e a decisao central:
+     `radial-gradient` JA e difuso por natureza e custa uma passada de pintura,
+     enquanto `blur()` rasteriza a camada inteira fora da tela a cada quadro —
+     em tela cheia, dentro da WebView, e o caminho mais rapido para derrubar o
+     FPS. Foi a mesma conclusao do carrossel do menu (menu-background.tsx).
+
+     O movimento e `translate3d` puro, que o compositor resolve sem repintar.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  .uf-atmos {
+    position: fixed;
+    /* ⚠️ `inset: 0` ESTARIA ERRADO AQUI, e o erro seria silencioso.
+       O `body` roda com `zoom: var(--game-view-scale)` (0,8). Um filho `fixed`
+       herda esse zoom: `inset: 0` mede a janela inteira e DEPOIS encolhe 20%,
+       deixando uma faixa sem fundo na direita e embaixo. E a mesma armadilha
+       que as classes `.h-screen`/`.w-screen` mais acima corrigem, e a correcao
+       e a mesma: dividir pela escala antes que o zoom multiplique. */
+    top: 0;
+    left: 0;
+    width: calc(100vw / var(--game-view-scale));
+    height: calc(100vh / var(--game-view-scale));
+    /* ⚠️ `-1`, E NAO `0`. Com `z-index: 0` esta camada VIRA UM TAPUME.
+       Um elemento posicionado com z-index 0 pinta na fase dos posicionados,
+       que vem DEPOIS do conteudo de bloco comum. Telas cujo conteudo nao esta
+       posicionado (a maioria: `<main>` com cartoes em fluxo normal) ficavam
+       inteiras escondidas atras do fundo — texto presente no DOM, visivel para
+       o `getComputedStyle`, e invisivel na tela. So escapavam as telas cuja
+       raiz ja tinha `relative` + `z-10`, como o escritorio; foi por isso que o
+       defeito quase passou.
+       Com `-1` ela pinta acima do fundo da tela e abaixo de todo o conteudo.
+       Ver tambem o `body` transparente logo abaixo — os dois andam juntos. */
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    /* Base opaca. Se TODAS as camadas de cima forem desligadas (maquina
+       modesta), ainda sobra um fundo legivel — nunca um buraco preto. */
+    background:
+      linear-gradient(180deg, var(--uf-bg-surface) 0%, var(--uf-bg-deep) 55%, #050D10 100%);
+    /* Camada isolada: mudanca aqui nunca reflui o conteudo por cima.
+       `size` fica de FORA do contain de proposito — a altura vem do calc acima,
+       e conter o tamanho junto arriscaria zerar a camada. */
+    contain: layout paint style;
+  }
+
+  /* As manchas de luz. Tres cores, tres tamanhos, tres tempos que nao batem —
+     ciclos primos entre si (13s, 17s, 21s) para o conjunto nunca "repetir" de
+     forma perceptivel. */
+  .uf-atmos__luz {
+    position: absolute;
+    inset: -25%;
+    will-change: transform;
+  }
+
+  .uf-atmos__luz--ciano {
+    background: radial-gradient(
+      42% 38% at 22% 18%,
+      color-mix(in oklab, var(--uf-cyan) 26%, transparent) 0%,
+      transparent 70%
+    );
+    animation: uf-deriva-a 13s ease-in-out infinite alternate;
+  }
+
+  .uf-atmos__luz--verde {
+    background: radial-gradient(
+      46% 40% at 78% 72%,
+      color-mix(in oklab, var(--uf-green) 18%, transparent) 0%,
+      transparent 72%
+    );
+    animation: uf-deriva-b 17s ease-in-out infinite alternate;
+  }
+
+  .uf-atmos__luz--violeta {
+    background: radial-gradient(
+      52% 46% at 62% 8%,
+      color-mix(in oklab, var(--uf-violet) 22%, transparent) 0%,
+      transparent 68%
+    );
+    animation: uf-deriva-c 21s ease-in-out infinite alternate;
+  }
+
+  /* Amplitude pequena de proposito: o pedido e "movimento ambiental lento,
+     quase imperceptivel". Passar de ~3% da tela vira salva-telas. */
+  @keyframes uf-deriva-a {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(2.5%, -1.8%, 0) scale(1.06); }
+  }
+  @keyframes uf-deriva-b {
+    from { transform: translate3d(0, 0, 0) scale(1.04); }
+    to   { transform: translate3d(-2.2%, 1.6%, 0) scale(1); }
+  }
+  @keyframes uf-deriva-c {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(1.6%, 2.2%, 0) scale(1.05); }
+  }
+
+  /* Faixa luminosa deitada numa lateral. Diferente das manchas: ela e um
+     gradiente LINEAR estreito e inclinado, e e o que sugere uma fonte de luz
+     fora do quadro (um holofote de estadio alto a esquerda) em vez de uma
+     nevoa colorida. Sem ela o fundo fica simetrico demais e perde direcao. */
+  .uf-atmos__faixa {
+    position: absolute;
+    inset: -30% 40% -30% -20%;
+    background: linear-gradient(
+      104deg,
+      transparent 0%,
+      color-mix(in oklab, var(--color-cyan) 10%, transparent) 38%,
+      color-mix(in oklab, var(--color-green) 7%, transparent) 55%,
+      transparent 76%
+    );
+    animation: uf-deriva-faixa 16s ease-in-out infinite alternate;
+  }
+
+  @keyframes uf-deriva-faixa {
+    from { transform: translate3d(-1.4%, 0, 0); opacity: 0.85; }
+    to   { transform: translate3d(1.4%, 0, 0); opacity: 1; }
+  }
+
+  /* Piso em perspectiva: a unica coisa que sugere um espaco 3D atras da
+     interface. Mascarado para sumir antes de encostar no conteudo — grade
+     visivel atras de texto e ruido, nao profundidade. */
+  .uf-atmos__piso {
+    position: absolute;
+    inset: 42% -60% -30% -60%;
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--uf-cyan) 12%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--uf-cyan) 12%, transparent) 1px, transparent 1px);
+    background-size: 88px 88px;
+    transform: perspective(680px) rotateX(70deg);
+    transform-origin: center top;
+    opacity: 0.5;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, transparent 88%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, transparent 88%);
+  }
+
+  /* Vinheta: fecha as quatro quinas e empurra o olho para o centro. */
+  .uf-atmos__vinheta {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(120% 100% at 50% 42%, transparent 40%, rgba(2, 8, 10, 0.55) 82%, rgba(1, 5, 6, 0.82) 100%);
+  }
+
+  /* Ruido. SVG embutido como data URI — sem arquivo, sem rede, sem requisicao
+     a mais no pacote do Tauri. Opacidade baixissima: ele existe para tirar o
+     "banding" dos gradientes em painel de 8 bits, nao para ser visto. */
+  .uf-atmos__ruido {
+    position: absolute;
+    inset: 0;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     SUPERFICIES
+     ───────────────────────────────────────────────────────────────────────── */
+
+  /* O cartao padrao. Escuro translucido, borda fina, canto seco, sombra
+     profunda e difusa. */
+  .uf-card {
+    position: relative;
+    border-radius: var(--uf-radius-lg);
+    border: 1px solid var(--uf-line);
+    background: var(--uf-surface-raised);
+    box-shadow: var(--uf-shadow-card);
+    transition:
+      border-color var(--uf-dur) var(--uf-ease),
+      background-color var(--uf-dur) var(--uf-ease),
+      box-shadow var(--uf-dur) var(--uf-ease),
+      transform var(--uf-dur) var(--uf-ease);
+  }
+
+  /* Painel translucido — o "vidro" do jogo. Menos opaco que o cartao porque o
+     cenario tem de aparecer atras. */
+  .uf-panel {
+    border-radius: var(--uf-radius-lg);
+    border: 1px solid var(--uf-line);
+    background: var(--uf-panel);
+    backdrop-filter: blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    box-shadow: var(--uf-shadow-card);
+  }
+
+  /* ⚠️ FALLBACK OBRIGATORIO DO WEBVIEW.
+     `backdrop-filter` existe na WebView2, mas o perfil de maquina modesta o
+     remove (regra la embaixo) e ha maquina onde ele falha em silencio. Sem um
+     opaco por tras, o painel vira texto solto sobre o cenario. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .uf-panel { background: var(--uf-panel-solid); }
+  }
+
+  /* Cartao que responde ao ponteiro e ao foco. Os estados sao os seis do
+     pedido: normal, hover, focus, selected, pressed, disabled. */
+  .uf-card-interactive {
+    cursor: pointer;
+    outline: none;
+  }
+  .uf-card-interactive:hover {
+    /* 2px e o teto. Cartao que sobe mais que isso parece botao de celular. */
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--uf-cyan) 34%, transparent);
+    background: color-mix(in oklab, var(--uf-cyan) 4%, var(--uf-surface-raised));
+  }
+  .uf-card-interactive:focus-visible {
+    border-color: color-mix(in oklab, var(--uf-cyan) 55%, transparent);
+    box-shadow:
+      var(--uf-shadow-card),
+      0 0 0 2px var(--uf-bg-deep),
+      0 0 0 4px var(--uf-cyan);
+  }
+  .uf-card-interactive[aria-selected="true"],
+  .uf-card-interactive[data-selected="true"] {
+    border-color: color-mix(in oklab, var(--uf-cyan) 62%, transparent);
+    background: color-mix(in oklab, var(--uf-cyan) 8%, var(--uf-surface-raised));
+  }
+  /* A barra de selecao. Nao usa cor sozinha para dizer "selecionado" — ha
+     tambem a barra, que sobrevive ao daltonismo e ao contraste alto. */
+  .uf-card-interactive[aria-selected="true"]::before,
+  .uf-card-interactive[data-selected="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: linear-gradient(180deg, var(--uf-cyan), var(--uf-green));
+  }
+  .uf-card-interactive:active {
+    transform: translateY(0) scale(0.994);
+  }
+  .uf-card-interactive[aria-disabled="true"],
+  .uf-card-interactive:disabled {
+    cursor: not-allowed;
+    /* Contraste reduzido, mas NAO invisivel: 0.45 ainda passa em leitura de
+       rotulo. Desabilitado que some vira tela quebrada. */
+    opacity: 0.45;
+    transform: none;
+  }
+
+  /* Imagem dentro de cartao: gradiente escuro na base para o texto por cima
+     continuar legivel seja qual for a foto. */
+  .uf-card-media {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--uf-radius-lg) var(--uf-radius-lg) 0 0;
+  }
+  .uf-card-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 30%,
+      rgba(4, 12, 15, 0.72) 78%,
+      rgba(4, 12, 15, 0.94) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Fio de separacao. Um so pixel, do tom da borda. */
+  .uf-hairline {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--uf-line-strong), transparent);
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     VEU DE MODAL
+
+     ⚠️ EXISTIAM VINTE E DOIS VEUS DIFERENTES. Cada modal do jogo desenhava o
+     proprio: `bg-black/70`, `/75`, `/80`, `/85`, `#020407/70`, `#020308/82`,
+     `#080912/82`, com `backdrop-blur` ora ausente, ora `sm`, ora `md`, ora
+     `xl`. Abrir dois modais em sequencia mostrava dois escurecimentos
+     diferentes, e ninguem tinha decidido isso — foi so a ordem em que cada tela
+     nasceu.
+
+     Um token so. O que NAO entra aqui, de proposito:
+       • `z-index` — cada modal tem o seu, e a ordem entre eles e real
+         (a Data FIFA precisa vir sobre o cartao de partida, e por ai vai);
+       • o layout (`flex`/`grid`, `place-items`, `p-4`) — e do modal, nao do veu;
+       • as tomadas de tela CHEIA (`bg-black`, `/90`, `/95`): aquilo nao e veu,
+         e cena — cutscene, coletiva pos-jogo, cerimonia;
+       • os scrims LEVES (`/25`, `/30`): sao pega-clique atras de menu, feitos
+         para deixar a tela quase toda visivel.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  .uf-veu {
+    /* Quase-preto azulado, do mesmo matiz do fundo do jogo — preto puro sobre
+       uma tela azul-esverdeada deixa a borda do modal com halo frio. */
+    background: rgba(2, 8, 10, 0.78);
+    backdrop-filter: blur(10px) saturate(1.05);
+    -webkit-backdrop-filter: blur(10px) saturate(1.05);
+  }
+
+  /* ⚠️ O ESCURECIMENTO NAO PODE DEPENDER DO DESFOQUE. O perfil de maquina
+     modesta remove `backdrop-filter`; se o veu contasse com ele para separar o
+     modal do fundo, naquele perfil o modal ficaria legivel sobre uma tela ainda
+     nitida. Os 78% se sustentam sozinhos e o desfoque e so acabamento. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .uf-veu { background: rgba(2, 8, 10, 0.9); }
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     BOTOES
+     ───────────────────────────────────────────────────────────────────────── */
+
+  .uf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    /* 40px de altura minima: confortavel no mouse e alcancavel no controle,
+       onde o alvo cresce por `--uf-target-scale`. */
+    min-height: calc(40px * var(--uf-target-scale, 1));
+    padding: 0 18px;
+    border-radius: var(--uf-radius);
+    border: 1px solid transparent;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color var(--uf-dur-fast) var(--uf-ease),
+      border-color var(--uf-dur-fast) var(--uf-ease),
+      box-shadow var(--uf-dur-fast) var(--uf-ease),
+      filter var(--uf-dur-fast) var(--uf-ease),
+      transform var(--uf-dur-fast) var(--uf-ease);
+  }
+
+  .uf-btn:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--uf-bg-deep),
+      0 0 0 4px var(--uf-cyan);
+  }
+
+  .uf-btn:active:not(:disabled) {
+    transform: scale(0.975);
+  }
+
+  .uf-btn:disabled,
+  .uf-btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.45;
+    transform: none;
+    filter: grayscale(0.4);
+  }
+
+  /* Primario: violeta -> ciano, texto branco. E o unico gradiente colorido da
+     interface — se todo botao brilhasse, nenhum brilharia. */
+  .uf-btn-primary {
+    background: linear-gradient(115deg, var(--uf-violet) 0%, #3E9BE8 52%, var(--uf-cyan) 100%);
+    color: #FFFFFF;
+    /* Texto branco sobre o meio do gradiente pede um empurrao de contraste. */
+    text-shadow: 0 1px 2px rgba(0, 20, 28, 0.45);
+    box-shadow: 0 8px 24px -10px color-mix(in oklab, var(--uf-violet) 70%, transparent);
+  }
+  .uf-btn-primary:hover:not(:disabled) {
+    filter: brightness(1.12);
+    box-shadow: 0 12px 30px -10px color-mix(in oklab, var(--uf-cyan) 60%, transparent);
+  }
+
+  /* Secundario: escuro, borda discreta. O padrao — a maioria dos botoes e este. */
+  .uf-btn-ghost {
+    background: rgba(244, 247, 247, 0.05);
+    border-color: var(--uf-line-strong);
+    color: var(--uf-text);
+  }
+  .uf-btn-ghost:hover:not(:disabled) {
+    background: rgba(244, 247, 247, 0.09);
+    border-color: color-mix(in oklab, var(--uf-cyan) 40%, transparent);
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     ETIQUETAS DE ESTADO
+     ───────────────────────────────────────────────────────────────────────── */
+
+  .uf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: var(--uf-radius-sm);
+    border: 1px solid color-mix(in oklab, var(--uf-badge-cor, var(--uf-cyan)) 35%, transparent);
+    background: color-mix(in oklab, var(--uf-badge-cor, var(--uf-cyan)) 14%, transparent);
+    color: var(--uf-badge-cor, var(--uf-cyan));
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .uf-badge-info    { --uf-badge-cor: var(--uf-cyan); }
+  .uf-badge-ok      { --uf-badge-cor: var(--uf-green); }
+  .uf-badge-atencao { --uf-badge-cor: var(--uf-yellow); }
+  .uf-badge-novo    { --uf-badge-cor: var(--uf-violet); }
+  .uf-badge-alerta  { --uf-badge-cor: var(--uf-magenta); }
+  .uf-badge-erro    { --uf-badge-cor: var(--uf-error); }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     TIPOGRAFIA
+     A condensada e a Oswald, que o `next/font` ja baixa no build e serve do
+     proprio pacote — o jogo instalado nao toca a rede nem depende de fonte
+     instalada no Windows. Por isso NAO ha fonte nova aqui: `--font-display`
+     ja era exatamente a condensada que o pedido descreve.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  /* ⚠️ A COR SAI POR `:where()`, E ISSO NAO E DETALHE.
+     `:where()` tem especificidade ZERO. Sem ele, o `color` desta classe vencia
+     qualquer `text-*` do Tailwind aplicado no mesmo elemento — porque as duas
+     regras vivem na camada `utilities` e a que vem por ultimo no arquivo ganha,
+     e esta vem por ultimo. Foi medido: a linha "RODADA 1" do escritorio, escrita
+     como `uf-eyebrow text-[var(--brand)]`, perdia a cor da marca e sumia no
+     cinza sobre a foto clara. Com `:where()` a classe da o PADRAO e a tela
+     continua mandando. Vale igual para `.uf-eyebrow` e `.uf-meta`. */
+  .uf-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 1.02;
+    /* Oswald ja e estreita; um passo a mais aperta as manchetes longas sem
+       chegar a distorcer a letra. */
+    font-stretch: 95%;
+  }
+  :where(.uf-title) { color: var(--uf-text); }
+
+  /* Titulo de secao/pagina. Irmao da `.uf-title`, com UMA diferenca deliberada:
+     NAO forca caixa alta.
+
+     A `.uf-title` existe para manchete — data, placar, nome de tela —, onde a
+     caixa alta e o efeito. Mas a maioria dos titulos do jogo e NOME PROPRIO:
+     "RB Bragantino", "Campeonato Paulista 2026", "Copa do Brasil". Passar
+     `text-transform: uppercase` por cima de 128 titulos gritaria nomes que o
+     jogo escreve com capitalizacao correta em 126 idiomas, e em varios deles a
+     caixa alta nem e a mesma operacao. A condensada sozinha ja da o carater
+     esportivo; a caixa fica com o texto, que e quem sabe. */
+  .uf-heading {
+    font-family: var(--font-display);
+    letter-spacing: -0.005em;
+    font-stretch: 96%;
+  }
+  :where(.uf-heading) { color: var(--uf-text); }
+
+  /* O rotulo pequeno acima do titulo — secao, categoria, contexto. */
+  .uf-eyebrow {
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+  :where(.uf-eyebrow) { color: var(--uf-text-faint); }
+
+  /* Metadado: data, local, "ha 2 dias". */
+  .uf-meta {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+  :where(.uf-meta) { color: var(--uf-text-muted); }
+
+  /* NUMERO TABULAR — placar, dinheiro, data, estatistica.
+     `tabular-nums` e o que impede o placar de "pular" quando 1 vira 8: sem ele
+     os digitos tem larguras diferentes e o texto ao lado dança a cada gol. */
+  .uf-num {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     MEDIDOR
+     ───────────────────────────────────────────────────────────────────────── */
+
+  .uf-metric {
+    position: relative;
+    height: 4px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(244, 247, 247, 0.09);
+  }
+  .uf-metric__preenchimento {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--uf-metric-cor, var(--uf-cyan)), color-mix(in oklab, var(--uf-metric-cor, var(--uf-cyan)) 55%, var(--uf-green)));
+    transition: width var(--uf-dur-enter) var(--uf-ease-out);
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     MOVIMENTO DE ENTRADA
+     Fade + desfoque de 10px para 0 + deslocamento. Curto: 260ms.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  @keyframes uf-entrada {
+    from {
+      opacity: 0;
+      filter: blur(10px);
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+      transform: translateY(0);
+    }
+  }
+
+  .uf-enter {
+    animation: uf-entrada var(--uf-dur-enter) var(--uf-ease-out) both;
+  }
+
+  /* Stagger. `--uf-i` e o indice do item, escrito pela tela:
+       style={{ ['--uf-i' as string]: i }}
+     Sem indice o atraso e zero e o item entra junto com os demais — degrada
+     para "todos ao mesmo tempo", nunca para "invisivel". */
+  .uf-stagger > * {
+    animation: uf-entrada var(--uf-dur-enter) var(--uf-ease-out) both;
+    animation-delay: calc(var(--uf-i, 0) * var(--uf-stagger));
+  }
+
+  /* Transicao entre paineis de uma mesma tela (abas, colunas). */
+  @keyframes uf-desliza {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .uf-slide-in {
+    animation: uf-desliza var(--uf-dur-enter) var(--uf-ease-out) both;
+  }
+
+  /* Indicador de item selecionado: linha que acende, sem piscar. */
+  @keyframes uf-acende {
+    from { opacity: 0.35; }
+    to   { opacity: 1; }
+  }
+  .uf-indicador {
+    background: linear-gradient(90deg, var(--uf-cyan), var(--uf-green));
+    animation: uf-acende 1.6s var(--uf-ease) infinite alternate;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     ESTADOS DE TELA — carregando, vazio, erro, offline, bloqueado, concluido
+     ───────────────────────────────────────────────────────────────────────── */
+
+  .uf-estado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--uf-text-muted);
+  }
+  .uf-estado__titulo {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--uf-text);
+  }
+  .uf-estado__texto {
+    font-size: 0.8125rem;
+    max-width: 44ch;
+    color: var(--uf-text-muted);
+  }
+
+  /* Esqueleto de carregamento. O brilho atravessa em 1,4s. */
+  @keyframes uf-esqueleto {
+    from { background-position: -180% 0; }
+    to   { background-position: 180% 0; }
+  }
+  .uf-skeleton {
+    border-radius: var(--uf-radius);
+    background:
+      linear-gradient(
+        90deg,
+        rgba(244, 247, 247, 0.04) 0%,
+        rgba(244, 247, 247, 0.10) 50%,
+        rgba(244, 247, 247, 0.04) 100%
+      );
+    background-size: 220% 100%;
+    animation: uf-esqueleto 1.4s linear infinite;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   O QUE CAI NA MAQUINA MODESTA
+
+   Fora do `@layer` de proposito: CSS sem camada vence CSS em camada, e estas
+   regras precisam ganhar de qualquer utilitario que a tela tenha aplicado.
+   Mesma escolha que o bloco de acessibilidade mais acima ja fazia.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── JANELA FORA DE FOCO: O FUNDO PARA ─────────────────────────────────────
+   O fundo e o unico movimento continuo do jogo. Com o jogador em outra janela
+   ele continuaria compondo quadros para ninguem — em notebook isso e bateria e
+   ventoinha a troco de nada. O atributo e escrito por um script minusculo no
+   <head> (ver app/layout.tsx): nada de React, nada de re-render.
+   As manchas ficam onde estao, so param de andar. */
+html[data-janela-inativa] .uf-atmos__luz--ciano,
+html[data-janela-inativa] .uf-atmos__luz--verde,
+html[data-janela-inativa] .uf-atmos__luz--violeta,
+html[data-janela-inativa] .uf-atmos__faixa {
+  animation-play-state: paused !important;
+}
+
+/* Sem manchas animadas, sem piso, sem ruido: sobra o gradiente da base, que e
+   pintura unica e nao custa quadro nenhum. */
+html[data-performance-mode] .uf-atmos__luz--verde,
+html[data-performance-mode] .uf-atmos__luz--violeta,
+html[data-performance-mode] .uf-atmos__faixa,
+html[data-performance-mode] .uf-atmos__piso,
+html[data-performance-mode] .uf-atmos__ruido {
+  display: none !important;
+}
+html[data-performance-mode] .uf-atmos__luz--ciano {
+  animation: none !important;
+  will-change: auto !important;
+}
+/* O painel perde o vidro (o perfil ja mata `backdrop-filter` em geral) e ganha
+   o opaco equivalente — senao vira texto solto sobre o cenario. */
+html[data-performance-mode] .uf-veu {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(2, 8, 10, 0.9) !important;
+}
+html[data-performance-mode] .uf-panel {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--uf-panel-solid) !important;
+}
+/* A entrada com `blur()` rasteriza a tela inteira fora do compositor a cada
+   quadro. Na maquina fraca ela vira fade puro, que custa quase nada. */
+html[data-performance-mode] .uf-enter,
+html[data-performance-mode] .uf-stagger > * {
+  animation-name: uf-entrada-simples !important;
+}
+@keyframes uf-entrada-simples {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOVIMENTO REDUZIDO
+
+   ⚠️ O bloco `html[data-a11y-reduce-motion]` mais acima ja zera TODA animacao
+   do jogo. Esta media query cobre o outro caminho: quem tem a preferencia no
+   sistema mas nunca abriu as opcoes de acessibilidade do jogo.
+
+   O conteudo NAO pode depender da animacao para aparecer: `uf-enter` usa
+   `both`, entao sem animacao o elemento fica no estado final. Aqui so
+   desligamos o que se move; nada some.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .uf-atmos__luz--ciano,
+  .uf-atmos__luz--verde,
+  .uf-atmos__luz--violeta,
+  .uf-atmos__faixa {
+    animation: none !important;
+  }
+  .uf-indicador,
+  .uf-skeleton {
+    animation: none !important;
+  }
+  .uf-enter,
+  .uf-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+  }
+  .uf-slide-in {
+    animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANEL DE FOCO GLOBAL — teclado e mouse, nao so controle
+
+   ⚠️ ELE NAO EXISTIA. O jogo tinha anel de foco em DOIS lugares e nenhum deles
+   valia para quem joga de teclado:
+
+     • `html[data-input-mode="gamepad"] :focus-visible` — so com controle no
+       comando;
+     • o anel deslizante de `components/input/anel-de-foco.tsx` — so para os
+       elementos registrados no gerente de foco.
+
+   Fora disso o que aparecia era o contorno PADRAO do navegador (medido:
+   `outline: auto 1.16px`), um fio claro de um pixel que sobre fundo
+   quase-preto e praticamente invisivel. Navegar de Tab era navegar as cegas.
+
+   `:focus-visible` e nao `:focus`: o pseudo-seletor so acende quando o
+   navegador julga que o foco veio do TECLADO. Clicar num botao com o mouse
+   nao acende anel nenhum, que e o comportamento esperado.
+
+   Nao usa `!important`: assim uma tela que ja tenha um foco proprio mais
+   caprichado continua vencendo. Este e o piso, nao o teto.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:where(a[href], button, input, select, textarea, summary, [role="button"], [role="tab"], [role="option"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--uf-cyan);
+  /* O deslocamento e o que separa o anel da borda do proprio elemento — sem
+     ele o contorno encosta no conteudo e some no cartao de borda clara. */
+  outline-offset: 2px;
+  /* Contorno externo escuro: sobre uma foto de estadio clara (o fundo do
+     escritorio, os cartoes com arte) o ciano sozinho sumiria. */
+  box-shadow: 0 0 0 4px rgba(2, 8, 10, 0.75);
+  border-radius: var(--uf-radius-sm);
+}
+
+/* Alto contraste troca o ciano por branco puro e engrossa o anel. */
+html[data-a11y-contrast] :where(a[href], button, input, select, textarea, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid #FFFFFF;
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.9);
+}
+
+/* Alto contraste: as bordas finas do sistema sao justamente o que some para
+   baixa visao. */
+html[data-a11y-contrast] .uf-card,
+html[data-a11y-contrast] .uf-panel,
+html[data-a11y-contrast] .uf-btn-ghost {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+html[data-a11y-contrast] .uf-atmos__luz--ciano,
+html[data-a11y-contrast] .uf-atmos__luz--verde,
+html[data-a11y-contrast] .uf-atmos__luz--violeta,
+html[data-a11y-contrast] .uf-atmos__faixa,
+html[data-a11y-contrast] .uf-atmos__piso {
+  display: none !important;
+}
+html[data-a11y-contrast] .uf-meta,
+html[data-a11y-contrast] .uf-eyebrow {
+  color: rgba(255, 255, 255, 0.92) !important;
 }

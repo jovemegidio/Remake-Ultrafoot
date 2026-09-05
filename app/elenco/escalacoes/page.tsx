@@ -233,7 +233,7 @@ export default function EscalacoesPage() {
   const formationPositions = FORMATIONS[selectedLineup?.formation || "4-3-3"]?.positions || FORMATIONS["4-3-3"].positions
 
   return (
-    <div className="flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
+    <div className="flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent overflow-hidden">
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
         
@@ -368,7 +368,7 @@ export default function EscalacoesPage() {
               {/* Preview Header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-black text-white tracking-tight">
+                  <h2 className="uf-heading text-2xl font-black text-white tracking-tight">
                     {montado ? `Padrao ${userTeam.nome.toUpperCase()}` : "Escalacao padrao"}
                   </h2>
                   <p className="text-sm text-cyan-300 font-medium">

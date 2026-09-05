@@ -822,8 +822,11 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
               </span>
             </button>
 
-            {/* Pagina atual (bold/branco) */}
-            <span className="shrink-0 whitespace-nowrap pb-[2px] text-[17px] font-extrabold tracking-tight text-white">
+            {/* Pagina atual. Condensada e em caixa alta: e o rotulo que diz
+                ONDE o jogador esta, e precisa vencer o nome da secao ao lado
+                sem ocupar mais largura — varias rotas tem titulo longo, do
+                tamanho de Gerenciamento do Time. */}
+            <span className="uf-title shrink-0 whitespace-nowrap pb-[2px] text-xl">
               {routeMeta.title}
             </span>
           </nav>
@@ -1273,7 +1276,7 @@ function ResignConfirmDialog({ teamName, ehAtleta = false, onCancel, onConfirm }
   }, [onCancel, onConfirm])
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onCancel}>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center uf-veu" onClick={onCancel}>
       <div
         className="w-[400px] max-w-[90vw] rounded-2xl border border-white/10 bg-[#0c0c14] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}

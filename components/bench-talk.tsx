@@ -265,7 +265,7 @@ export function BenchTalk() {
   const fechar = () => { setAlvo(null); setChat([]); setTexto("") }
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/75 p-6" onClick={fechar}>
+    <div className="fixed inset-0 z-[60] grid place-items-center uf-veu p-6" onClick={fechar}>
       <div
         className="flex h-[560px] max-h-[92%] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c14]"
         onClick={e => e.stopPropagation()}

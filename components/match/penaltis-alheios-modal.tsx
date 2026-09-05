@@ -56,7 +56,7 @@ export function PenaltisAlheiosModal({
   const vencedorNome = vencedorCurto === clubeA.curto ? clubeA.nome : clubeB.nome
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center uf-veu p-4">
       <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0b0b10] p-5 shadow-2xl">
         <div className="mb-4 flex items-start justify-between">
           <div>

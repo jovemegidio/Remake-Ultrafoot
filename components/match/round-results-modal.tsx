@@ -72,7 +72,7 @@ export function RoundResultsModal({
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-[.24em] text-[var(--brand)]">Central da partida</p>
-              <h2 className="mt-0.5 text-xl font-black text-white">Resultados da Rodada</h2>
+              <h2 className="uf-heading mt-0.5 text-xl font-black text-white">Resultados da Rodada</h2>
               <p className="text-xs text-white/40">Resumo oficial antes da coletiva de imprensa</p>
             </div>
           </div>

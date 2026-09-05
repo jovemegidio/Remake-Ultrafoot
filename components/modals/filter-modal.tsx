@@ -86,7 +86,7 @@ export function FilterModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-[#0c0c10] border-white/10">
+      <DialogContent className="sm:max-w-md bg-[var(--uf-bg-surface)] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white">Filtros</DialogTitle>
           <DialogDescription className="text-white/50">

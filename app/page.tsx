@@ -254,7 +254,7 @@ export default function DashboardPage() {
   // WebViews descartam sessionStorage no reload e antes deixavam este spinner eterno.
   if (!hydrated || !userTeam) {
     return (
-      <div className="h-screen bg-[#050508] flex items-center justify-center">
+      <div className="h-screen bg-transparent flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
           <span className="text-white/40 text-sm">{t.common.loading}</span>
@@ -410,7 +410,7 @@ export default function DashboardPage() {
   const salaryCritical = wagePercentage >= 100
 
   return (
-    <div className="relative h-screen md:pl-0 pl-0 pb-20 md:pb-12 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="relative h-screen md:pl-0 pl-0 pb-20 md:pb-12 bg-transparent flex flex-col overflow-hidden">
       {fifaPause?.active && !fifaPause.isWorldCup && (
         <DataFifaCenter
           open={dataFifaOpen}
@@ -457,7 +457,7 @@ export default function DashboardPage() {
             branco precisa para ter contraste. Era /82, depois /68; agora /42 —
             abaixo disso os cartoes do escritorio comecam a perder legibilidade
             sobre as partes claras da arte. */}
-        <div className="absolute inset-0 bg-[#050508]/42" />
+        <div className="absolute inset-0 bg-[var(--uf-bg-deep)]/38" />
       </div>
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
@@ -591,7 +591,11 @@ export default function DashboardPage() {
         )}
 
         {/* Central hub estilo EA FC */}
-        <section className="grid gap-3 lg:grid-cols-[1.2fr_1fr] items-start">
+        {/* `uf-enter`: fade + desfoque de 10px a 0 + 14px de deslocamento, em
+            260ms. A animacao usa `both`, entao com movimento reduzido (ou na
+            maquina modesta, onde o desfoque vira fade puro) o conteudo fica no
+            estado final — nunca invisivel. */}
+        <section className="uf-enter grid gap-3 lg:grid-cols-[1.2fr_1fr] items-start">
           {/* Coluna esquerda: data, proximo jogo e tarefas */}
           <div>
             {(() => {
@@ -621,7 +625,12 @@ export default function DashboardPage() {
                       virava `saveState.week` e a conta por rodada devolvia outro
                       dia: o topo dizia "28 JAN" e a manchete "8 DE DEZ", na mesma
                       tela. Sem partida, a data corrente e a unica verdade. */}
-                  <h1 className="text-3xl md:text-4xl font-extrabold uppercase tracking-tight text-white text-balance">
+                  {/* A manchete passou para a condensada (`uf-title`, Oswald).
+                      Numa data longa (quarta-feira, 28 de fevereiro) a Geist em
+                      4xl estourava para a segunda linha e empurrava o proximo
+                      jogo para fora da dobra; a condensada cabe na linha e
+                      ainda ganha um degrau de tamanho. */}
+                  <h1 className="uf-title text-4xl md:text-5xl text-balance">
                     {next
                       ? fixtureDateHeadline(currentSeason, round, next.month)
                       : (() => {
@@ -630,7 +639,11 @@ export default function DashboardPage() {
                         })()}
                   </h1>
                   <div className="mt-3 flex items-center gap-3">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--brand)]">Rodada {round}</span>
+                    {/* `uf-num` no numero: digito tabular. Sem ele a linha
+                        "desliza" um pixel quando a rodada passa de 9 para 10. */}
+                    <span className="uf-eyebrow text-[var(--brand)]">
+                      Rodada <span className="uf-num text-[13px]">{round}</span>
+                    </span>
                     <span className="h-px flex-1 bg-gradient-to-r from-[var(--brand)]/40 to-transparent" />
                   </div>
 
@@ -643,7 +656,7 @@ export default function DashboardPage() {
                         <span className="text-base">🌍</span>
                         {fifaPause.isWorldCup ? "Copa do Mundo FIFA" : "Data FIFA"}
                       </div>
-                      <h2 className="mt-2 text-xl font-black text-white">
+                      <h2 className="uf-heading mt-2 text-xl font-black text-white">
                         {fifaPause.isWorldCup ? "Campeonato pausado para a Copa do Mundo" : "Campeonato pausado — janela de seleções"}
                       </h2>
                       {fifaPause.isWorldCup && fifaPause.hosts ? (
@@ -750,7 +763,7 @@ export default function DashboardPage() {
               href="https://instagram.com/garagemcomics"
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative block overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0c0c10]"
+              className="group relative block overflow-hidden rounded-2xl border border-white/[0.06] bg-[var(--uf-bg-surface)]"
             >
               <span className="absolute left-2 top-2 z-10 rounded bg-black/65 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white/50">
                 Publicidade
@@ -797,7 +810,7 @@ export default function DashboardPage() {
 
             {/* Resultados recentes */}
             {recentResults.length > 0 && (
-              <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                   <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                     <Trophy className="h-4 w-4 text-[#ffd700]" />
@@ -814,7 +827,7 @@ export default function DashboardPage() {
 
             {/* Proximas partidas */}
             {nextMatches.length > 0 && (
-              <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                   <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                     <Calendar className="h-4 w-4 text-[var(--brand)]" />
@@ -833,7 +846,7 @@ export default function DashboardPage() {
             )}
 
             {/* Metas */}
-            <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                   <Target className="h-4 w-4 text-[#ffd700]" />
@@ -880,7 +893,7 @@ export default function DashboardPage() {
             )}
 
             {/* Diretoria: meta da temporada + confianca (risco de demissao) */}
-            <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                   <Flag className="h-4 w-4 text-[var(--brand)]" />
@@ -941,7 +954,7 @@ export default function DashboardPage() {
             </section>
 
             {/* Classificacao */}
-            <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                 <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-white/60">
                   <Trophy className="h-4 w-4 shrink-0 text-[#ffd700]" />
@@ -988,7 +1001,7 @@ export default function DashboardPage() {
             </section>
 
             {/* Financas */}
-            <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+            <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
                 <CircleDollarSign className="h-4 w-4 text-[var(--brand)]" />
                 {t.dashboard.finances}
@@ -1025,7 +1038,7 @@ export default function DashboardPage() {
       {/* Confirmacao da demissao: e irreversivel, nao pode sair por clique acidental. */}
       {showResign && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[90] flex items-center justify-center uf-veu p-4"
           onClick={() => setShowResign(false)}
         >
           <div

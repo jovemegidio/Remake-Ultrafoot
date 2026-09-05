@@ -378,7 +378,7 @@ export default function TreinamentoPage() {
   }
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
       {/* Toast de feedback de treinamento */}
@@ -392,11 +392,11 @@ export default function TreinamentoPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">Centro de Treinamento</h1>
+            <h1 className="uf-heading text-2xl font-semibold text-white tracking-tight">Centro de Treinamento</h1>
             <p className="text-sm text-white/50 mt-1">Desenvolva os atributos dos seus jogadores</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0c0c10] border border-white/[0.04]">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--uf-bg-surface)] border border-white/[0.04]">
               <Dumbbell className="h-4 w-4 text-[var(--brand)]" />
               <span className="text-sm text-white/70">{playersInTraining} em treinamento</span>
             </div>
@@ -423,7 +423,7 @@ export default function TreinamentoPage() {
             do atleta. Com a largura inteira, em 2 colunas, cada uma cai para
             ~250px e sobra altura para a lista do elenco embaixo. */}
         <div className="grid shrink-0 items-start gap-4 xl:grid-cols-3">
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
+          <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-3">
             <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
               <Dumbbell className="h-4 w-4 text-[var(--brand)]" />
               TIPO DE TREINAMENTO
@@ -468,7 +468,7 @@ export default function TreinamentoPage() {
               })}
             </div>
           </div>
-        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
+        <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-white/60">
@@ -670,7 +670,7 @@ export default function TreinamentoPage() {
             </p>
           )}
         </section>
-        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
+        <section className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-medium text-white/60">
               <Users className="h-4 w-4 text-[var(--brand)]" />
@@ -704,7 +704,7 @@ export default function TreinamentoPage() {
         </div>
         <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-3">
           {/* Lista de Jogadores */}
-          <div className="flex min-h-0 flex-col lg:col-span-2 rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+          <div className="flex min-h-0 flex-col lg:col-span-2 rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
             {/* Filtros */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">
@@ -919,7 +919,7 @@ export default function TreinamentoPage() {
 
 
             {/* Jogador Selecionado */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
+            <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-3">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
                 <Target className="h-4 w-4 text-[var(--brand)]" />
                 JOGADOR SELECIONADO
@@ -1003,7 +1003,7 @@ export default function TreinamentoPage() {
                 gramado (70 minutos equivalentes contra 90), mas sem risco.
                 ⚠️ Ocupa o MESMO slot do treino de atributo. */}
             {selectedPlayer && (
-              <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-3">
+              <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-3">
                 <div className="mb-4 flex items-center gap-2 text-xs font-medium text-white/60">
                   <Dumbbell className="h-4 w-4 text-cyan-300" />
                   APRENDER UMA POSICAO
@@ -1116,7 +1116,7 @@ function PlayerInspectModal({ player, currentWeek, onClose }: { player: Player; 
   const st = player.seasonStats
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center uf-veu p-4" onClick={onClose}>
       <div
         className="w-[520px] max-w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0c0c14] shadow-2xl"
         onClick={(e) => e.stopPropagation()}

@@ -261,7 +261,7 @@ export function SubstitutionModal({
   pendingIdsRef.current = { usedOut, usedIn }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center uf-veu p-4">
       <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#090d0c] shadow-[0_30px_100px_rgba(0,0,0,.7)]">
         {/* Header */}
         <div

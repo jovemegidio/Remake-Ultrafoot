@@ -200,14 +200,14 @@ export default function ElencoHubPage() {
   // elenco do Bragantino para o clube de outra pessoa.
   if (!teamReady) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#050508] text-sm text-white/40">
+      <div className="flex h-screen items-center justify-center bg-transparent text-sm text-white/40">
         Carregando elenco...
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
+    <div className="flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent overflow-hidden">
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
         
@@ -248,7 +248,7 @@ export default function ElencoHubPage() {
                   <TeamCrest team={userTeam} size="lg" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-white">{userTeam.nome}</h1>
+                  <h1 className="uf-heading text-2xl font-bold text-white">{userTeam.nome}</h1>
                   <p className="text-sm text-white/50">
                     {squadStats.totalPlayers} jogadores · Media {squadStats.avgOverall} OVR · {squadStats.avgAge} anos
                   </p>
@@ -309,7 +309,7 @@ export default function ElencoHubPage() {
                       <div className="relative flex flex-col h-full p-6">
                         {/* Header */}
                         <div className="text-center mb-4">
-                          <h2 className="text-xl font-bold text-white mb-1">{card.title}</h2>
+                          <h2 className="uf-heading text-xl font-bold text-white mb-1">{card.title}</h2>
                           <p className={cn("text-sm font-medium", card.accentColor)}>{card.subtitle}</p>
                         </div>
 

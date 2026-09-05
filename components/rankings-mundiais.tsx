@@ -24,7 +24,7 @@ import { GraduationCap } from "lucide-react"
 const botao = "rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-black hover:bg-emerald-400 disabled:opacity-40"
 
 function Secao({ titulo, texto, children }: { titulo: string; texto: string; children: ReactNode }) {
-  return <section className="rounded-2xl border border-white/10 bg-[#10141b] p-5"><h2 className="text-xl font-bold">{titulo}</h2><p className="mb-5 text-sm text-white/50">{texto}</p>{children}</section>
+  return <section className="rounded-2xl border border-white/10 bg-[#10141b] p-5"><h2 className="uf-heading text-xl font-bold">{titulo}</h2><p className="mb-5 text-sm text-white/50">{texto}</p>{children}</section>
 }
 
 export function RankingsMundiais({ state }: {

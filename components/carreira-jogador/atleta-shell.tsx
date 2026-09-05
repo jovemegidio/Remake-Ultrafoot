@@ -132,7 +132,7 @@ export function AtletaShell({
               <p className="text-[11px] font-black uppercase tracking-[.25em] text-[var(--brand)]">
                 {atleta.posicao} · {atleta.idade} anos · {atleta.nacionalidade}
               </p>
-              <h1 className="mt-0.5 text-2xl font-black leading-tight">{atleta.nome}</h1>
+              <h1 className="uf-heading mt-0.5 text-2xl font-black leading-tight">{atleta.nome}</h1>
               <p className="text-[13px] text-white/50">
                 {semClube
                   ? `Sem clube · última casa: ${carreira.clubeNome} · Temporada ${carreira.temporada}`

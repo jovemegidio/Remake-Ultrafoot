@@ -250,7 +250,7 @@ export default function OlheirosPage() {
   ]
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
+    <div className="flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent">
       <GameHeader team={userTeam ?? undefined} />
 
       <main className="flex min-h-0 flex-1 flex-col">
@@ -813,7 +813,7 @@ export default function OlheirosPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center uf-veu"
             onClick={() => setScoutParaDemitir(null)}
           >
             <motion.div
@@ -894,7 +894,7 @@ export default function OlheirosPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center uf-veu"
             onClick={() => setShowHireModal(false)}
           >
             <motion.div

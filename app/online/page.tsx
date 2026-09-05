@@ -40,7 +40,7 @@ export default function OnlinePage() {
         <GameHeader />
         <div className="mx-auto max-w-xl px-5 pt-28 text-center">
           <Globe className="mx-auto h-10 w-10 text-white/25" />
-          <h1 className="mt-4 text-2xl font-black">{t.online.o_modo_online_esta_desligado}</h1>
+          <h1 className="uf-heading mt-4 text-2xl font-black">{t.online.o_modo_online_esta_desligado}</h1>
           <p className="mt-2 text-sm text-white/55">
             Ligue em <b className="text-white/80">{t.online.configuracoes_configuracoes_online}</b> para
             liberar o FC Hub, os amistosos e o resto dos modos entre técnicos.

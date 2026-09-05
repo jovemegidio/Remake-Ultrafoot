@@ -557,7 +557,7 @@ export function NegotiationModal({
           (duracao, folha, minutagem, opcao de compra) passava do rodape e o botao
           de fechar negocio ficava inalcancavel. `overflow-hidden` sozinho CORTAVA
           o conteudo em vez de deixar rolar. */}
-      <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden border-white/10 bg-[#0c0c10] sm:max-w-lg">
+      <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden border-white/10 bg-[var(--uf-bg-surface)] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             {actionIcon}

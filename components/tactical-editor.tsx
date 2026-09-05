@@ -250,7 +250,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
   const selectedPlayerData = players.find(p => p.id === selectedPlayer)
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#050508]">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[var(--uf-bg-deep)]">
       {/* Header - EA FC style */}
       <header className="flex items-center justify-between h-14 px-6 border-b border-white/10 bg-[#0d0d0d]">
         <div className="flex items-center gap-4">
@@ -452,10 +452,10 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
 
         {/* Tab: Taticas */}
         {activeTab === "tactics" && (
-          <div className="flex-1 overflow-y-auto p-6 bg-[#050508]">
+          <div className="flex-1 overflow-y-auto p-6 bg-[var(--uf-bg-deep)]">
             <div className="max-w-3xl mx-auto space-y-6">
               <div className="text-center mb-8">
-                <h2 className="text-xl font-bold text-white mb-2">Instrucoes Taticas</h2>
+                <h2 className="uf-heading text-xl font-bold text-white mb-2">Instrucoes Taticas</h2>
                 <p className="text-sm text-white/50">Configure o estilo de jogo da sua equipe</p>
               </div>
 
@@ -562,10 +562,10 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
 
         {/* Tab: Atributos */}
         {activeTab === "attributes" && (
-          <div className="flex-1 overflow-y-auto p-6 bg-[#050508]">
+          <div className="flex-1 overflow-y-auto p-6 bg-[var(--uf-bg-deep)]">
             <div className="max-w-3xl mx-auto space-y-6">
               <div className="text-center mb-8">
-                <h2 className="text-xl font-bold text-white mb-2">Funcoes dos Jogadores</h2>
+                <h2 className="uf-heading text-xl font-bold text-white mb-2">Funcoes dos Jogadores</h2>
                 <p className="text-sm text-white/50">Defina funcoes especificas para cada jogador</p>
               </div>
 
@@ -640,7 +640,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
 
         {/* Center - Pitch (only in formation tab) */}
         {activeTab === "formation" && (
-        <main className="flex-1 flex items-center justify-center p-4 bg-[#050508] overflow-auto min-w-0">
+        <main className="flex-1 flex items-center justify-center p-4 bg-[var(--uf-bg-deep)] overflow-auto min-w-0">
           <div
             ref={pitchRef}
             className="relative w-full max-w-xl rounded-2xl overflow-visible select-none shadow-2xl mx-auto"

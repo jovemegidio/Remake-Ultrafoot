@@ -139,9 +139,9 @@ export function CampoEBilheteria({
                     className={cn(
                       "flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-black tabular-nums",
                       "shadow-[0_2px_8px_rgba(0,0,0,0.55)] ring-1 ring-black/25",
-                      p.overall >= 80 ? "bg-[var(--brand)] text-[#050508]"
-                        : p.overall >= 70 ? "bg-white text-[#050508]"
-                        : "bg-white/70 text-[#050508]",
+                      p.overall >= 80 ? "bg-[var(--brand)] text-[var(--uf-bg-deep)]"
+                        : p.overall >= 70 ? "bg-white text-[var(--uf-bg-deep)]"
+                        : "bg-white/70 text-[var(--uf-bg-deep)]",
                     )}
                   >
                     {p.overall}
@@ -176,7 +176,7 @@ export function CampoEBilheteria({
             className="object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c10] via-[#0c0c10]/85 to-[#0c0c10]/45" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--uf-bg-surface)] via-[var(--uf-bg-surface)]/85 to-[var(--uf-bg-surface)]/45" />
 
         <div className="relative p-3.5">
           <p className="flex items-center gap-1.5 text-[11px] font-semibold text-white">

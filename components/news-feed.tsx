@@ -554,7 +554,7 @@ export function NewsFeed({ className, compact = false, somenteTexto = false }: N
 
   if (!isClient || news.length === 0 || !currentNews) {
     return (
-      <div className={cn("rounded-2xl bg-[#0c0c10] border border-white/[0.04] animate-pulse", className)}>
+      <div className={cn("rounded-2xl bg-[var(--uf-bg-surface)] border border-white/[0.04] animate-pulse", className)}>
         <div className="h-64 flex items-center justify-center">
           <div className="text-white/30 text-sm">Carregando noticias...</div>
         </div>
@@ -611,7 +611,7 @@ export function NewsFeed({ className, compact = false, somenteTexto = false }: N
       </button>
 
       <div
-        className="rounded-2xl overflow-hidden bg-[#0c0c10] border border-white/[0.04]"
+        className="rounded-2xl overflow-hidden bg-[var(--uf-bg-surface)] border border-white/[0.04]"
         onMouseEnter={() => setIsAutoPlaying(false)}
         onMouseLeave={() => setIsAutoPlaying(true)}
       >

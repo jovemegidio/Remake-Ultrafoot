@@ -234,14 +234,14 @@ export default function VestiarioPage() {
   }
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2 scrollbar-premium">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Dinamica do Vestiario</h1>
+            <h1 className="uf-heading text-2xl md:text-3xl font-bold text-white">Dinamica do Vestiario</h1>
             <p className="text-sm text-white/50">Gerencie a moral e o relacionamento com os jogadores</p>
           </div>
         </div>
@@ -460,7 +460,7 @@ export default function VestiarioPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+              className="fixed inset-0 z-50 flex items-center justify-center uf-veu p-4"
               onClick={() => {
                 if (!conversationResult) {
                   setShowConversation(false)
@@ -473,7 +473,7 @@ export default function VestiarioPage() {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-[#050508] border border-white/10 rounded-xl p-6 max-w-md w-full"
+                className="bg-[var(--uf-bg-deep)] border border-white/10 rounded-xl p-6 max-w-md w-full"
               >
                 {conversationResult ? (
                   <div className="text-center py-8">

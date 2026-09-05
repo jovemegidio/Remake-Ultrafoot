@@ -576,7 +576,7 @@ export function ControllerToolbar({ actions, controller, className, visible }: C
   
   return (
     <div className={cn(
-      "flex items-center gap-6 px-4 py-2 bg-[#050508]/95 backdrop-blur-sm border-t border-white/[0.04]",
+      "flex items-center gap-6 px-4 py-2 bg-[var(--uf-bg-deep)]/95 backdrop-blur-sm border-t border-white/[0.04]",
       className
     )}>
       {actions.map((action, i) => (

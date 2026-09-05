@@ -27,12 +27,12 @@ interface ThemeConfig {
 
 const themePresets: Record<Exclude<ThemeColor, "team">, ThemeConfig> = {
   cyan: {
-    name: "EA FC Cyan",
+    name: "Ciano",
     primary: "#00d4ff",
     accent: "#a3ff12"
   },
   green: {
-    name: "Spotify Green",
+    name: "Verde Neon",
     primary: "#00ffc8",
     accent: "#00c8ff"
   },

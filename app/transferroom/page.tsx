@@ -105,7 +105,7 @@ export default function TransferRoomPage() {
         <header className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-cyan-400/15 bg-gradient-to-r from-cyan-400/10 to-transparent p-5">
           <div className="flex items-center gap-4">
             <TeamCrest team={userTeam} size="lg" />
-            <div><p className="text-xs font-black uppercase tracking-[.25em] text-cyan-300">Mercado direto entre clubes</p><h1 className="text-2xl font-black">TransferRoom Ultrafoot</h1><p className="mt-1 text-sm text-white/50">Publique necessidades, receba jogadores compatíveis e ofereça excedentes diretamente.</p></div>
+            <div><p className="text-xs font-black uppercase tracking-[.25em] text-cyan-300">Mercado direto entre clubes</p><h1 className="uf-heading text-2xl font-black">TransferRoom Ultrafoot</h1><p className="mt-1 text-sm text-white/50">Publique necessidades, receba jogadores compatíveis e ofereça excedentes diretamente.</p></div>
           </div>
           <RadioTower className="h-10 w-10 text-cyan-300" />
         </header>

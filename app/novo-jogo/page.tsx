@@ -1387,7 +1387,7 @@ export default function NovoJogoPage() {
 
               {showStadiumPhoto && stadiumPhoto && (
                 <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+                  className="fixed inset-0 z-50 flex items-center justify-center uf-veu"
                   onClick={() => setShowStadiumPhoto(false)}
                   onMouseLeave={() => setShowStadiumPhoto(false)}
                 >
@@ -1679,7 +1679,7 @@ export default function NovoJogoPage() {
                   que passo está, porque "carregando" sozinho, por dez segundos,
                   volta a parecer travado. */}
               {criando && (
-                <div className="fixed inset-0 z-[120] grid place-items-center bg-black/85 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[120] grid place-items-center uf-veu">
                   <div className="flex flex-col items-center gap-4 px-6 text-center">
                     <span
                       className="h-10 w-10 animate-spin rounded-full border-2 border-white/15"
@@ -1764,7 +1764,7 @@ export default function NovoJogoPage() {
           decide QUEM É VOCÊ EM CAMPO; as regras da carreira ficam no outro
           painel, e as duas portas não se misturam mais. */}
       {showAtletaSetup && modalidade === "jogador" && (
-        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" onClick={() => setShowAtletaSetup(false)}>
+        <div className="fixed inset-0 z-[100] grid place-items-center uf-veu p-4" onClick={() => setShowAtletaSetup(false)}>
           <section
             className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/10 bg-[#091624] p-5 shadow-2xl sm:p-7"
             onClick={e => e.stopPropagation()}
@@ -1915,7 +1915,7 @@ export default function NovoJogoPage() {
       )}
 
       {showInitialSettings && (
-        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" onClick={() => setShowInitialSettings(false)}>
+        <div className="fixed inset-0 z-[100] grid place-items-center uf-veu p-4" onClick={() => setShowInitialSettings(false)}>
           <section className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#091624] p-5 sm:p-7 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="configuracoes-iniciais-titulo">
             <div className="flex items-start justify-between gap-4">
               {/* ⚠️ A versão vem de `useVersaoDoJogo`, não escrita à mão: este
@@ -1923,7 +1923,7 @@ export default function NovoJogoPage() {
                   quem criava carreira que o jogo era outro. É exatamente o que
                   o comentário de `lib/versao-do-jogo.ts` prevê que acontece com
                   número de versão repetido no código. */}
-              <div><p className="text-xs font-black uppercase tracking-[.25em] text-emerald-400">Ultrafoot {versaoDoJogo}</p><h2 id="configuracoes-iniciais-titulo" className="mt-1 text-2xl font-black text-white">{t.novoJogo.configuracoes_iniciais}</h2><p className="mt-1 text-sm text-white/55">{t.novoJogo.estas_regras_ficam_vinculadas_a_esta}</p></div>
+              <div><p className="text-xs font-black uppercase tracking-[.25em] text-emerald-400">Ultrafoot {versaoDoJogo}</p><h2 id="configuracoes-iniciais-titulo" className="uf-heading mt-1 text-2xl font-black text-white">{t.novoJogo.configuracoes_iniciais}</h2><p className="mt-1 text-sm text-white/55">{t.novoJogo.estas_regras_ficam_vinculadas_a_esta}</p></div>
               <button onClick={() => setShowInitialSettings(false)} aria-label="Fechar configurações" className="rounded-xl border border-white/10 p-2 text-white/60 hover:text-white"><X className="h-5 w-5" /></button>
             </div>
 
@@ -2111,7 +2111,7 @@ export default function NovoJogoPage() {
           uma — nunca no meio de carreira nenhuma — e sai daqui por dois caminhos:
           apagar uma antiga (Carregar jogo) ou registrar. */}
       {limiteDeSaves && (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/75 p-6" onClick={() => setLimiteDeSaves(false)}>
+        <div className="fixed inset-0 z-[90] grid place-items-center uf-veu p-6" onClick={() => setLimiteDeSaves(false)}>
           <div
             className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0c0c14] p-6 text-center"
             onClick={e => e.stopPropagation()}

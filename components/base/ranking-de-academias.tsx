@@ -62,7 +62,7 @@ export function RankingDeAcademias({
   return (
     <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-xl font-black">
+        <h2 className="uf-heading flex items-center gap-2 text-xl font-black">
           <Medal className="text-[var(--brand)]" />{t.ranking_de_academias}
         </h2>
         <div className="text-right">

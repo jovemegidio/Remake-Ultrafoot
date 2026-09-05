@@ -46,7 +46,7 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
   }
 
   return (
-    <div className="flex h-screen pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
+    <div className="flex h-screen pl-0 pb-20 md:pb-0 bg-[var(--uf-bg-deep)] overflow-hidden">
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
 
@@ -91,7 +91,7 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
                   <TeamCrest team={userTeam} size="lg" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-white">{userTeam.nome}</h1>
+                  <h1 className="uf-heading text-2xl font-bold text-white">{userTeam.nome}</h1>
                   <p className="text-sm text-white/50">{tagline}</p>
                 </div>
               </div>
@@ -138,7 +138,7 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
                       >
                         <div className="relative flex flex-col h-full p-6">
                           <div className="text-center mb-4">
-                            <h2 className="text-xl font-bold text-white mb-1">{card.title}</h2>
+                            <h2 className="uf-heading text-xl font-bold text-white mb-1">{card.title}</h2>
                             <p className="text-sm font-semibold text-[var(--brand)]">{card.subtitle}</p>
                           </div>
 

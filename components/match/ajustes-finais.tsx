@@ -79,7 +79,7 @@ export function AjustesFinais({ aberto, onFechar, meuTime, adversario, estadio }
 
   return (
     <div
-      className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[95] flex items-center justify-center uf-veu p-4"
       onClick={onFechar}
     >
       <div

@@ -109,10 +109,10 @@ export function ConversaAgente({
   }
 
   return (
-    <div className="fixed inset-0 z-[95] grid place-items-center bg-black/75 p-6" onClick={onFechar}>
+    <div className="fixed inset-0 z-[95] grid place-items-center uf-veu p-6" onClick={onFechar}>
       <div
         onClick={e => e.stopPropagation()}
-        className="flex max-h-[82vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c10] shadow-2xl"
+        className="flex max-h-[82vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[var(--uf-bg-surface)] shadow-2xl"
       >
         {/* Cabeçalho: quem é, por quem fala, e como está a relação. */}
         <header className="flex items-start gap-3 border-b border-white/[0.07] p-4">

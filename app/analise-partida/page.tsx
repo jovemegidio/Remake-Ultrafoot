@@ -112,7 +112,7 @@ export default function AnalisePartidaPage() {
   }
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
       <main className="flex-1 p-6 overflow-y-auto">
@@ -121,7 +121,7 @@ export default function AnalisePartidaPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+                <h1 className="uf-heading text-2xl font-bold text-white flex items-center gap-3">
                   <BarChart3 className="h-7 w-7 text-primary" />
                   Analise Pos-Partida
                 </h1>
@@ -231,7 +231,7 @@ export default function AnalisePartidaPage() {
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <div className="text-sm text-white/50 mb-1">Semana {selectedAnalysis.week}</div>
-                          <h2 className="text-xl font-bold text-white">
+                          <h2 className="uf-heading text-xl font-bold text-white">
                             {selectedAnalysis.isHome ? userTeam.nome : selectedAnalysis.opponent}
                             <span className="mx-3 text-primary">
                               {selectedAnalysis.result.home} - {selectedAnalysis.result.away}

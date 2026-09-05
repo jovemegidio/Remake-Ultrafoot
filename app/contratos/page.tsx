@@ -268,14 +268,14 @@ export default function ContratosPage() {
   }
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
 
       <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">Gestao de Contratos</h1>
+            <h1 className="uf-heading text-2xl font-semibold text-white tracking-tight">Gestao de Contratos</h1>
             <p className="text-sm text-white/50 mt-1">Renove e gerencie os contratos do elenco</p>
           </div>
         </div>
@@ -325,7 +325,7 @@ export default function ContratosPage() {
 
         {/* Cards de resumo */}
         <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+          <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
             <div className="flex items-center gap-2 text-xs text-white/50 mb-2">
               <Users className="h-4 w-4" />
               Elenco Total
@@ -334,7 +334,7 @@ export default function ContratosPage() {
             <div className="text-xs text-white/40 mt-1">jogadores</div>
           </div>
           
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+          <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
             <div className="flex items-center gap-2 text-xs text-[#ffd700] mb-2">
               <AlertTriangle className="h-4 w-4" />
               Expirando
@@ -343,7 +343,7 @@ export default function ContratosPage() {
             <div className="text-xs text-white/40 mt-1">nos proximos 6 meses</div>
           </div>
           
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+          <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
             <div className="flex items-center gap-2 text-xs text-red-500 mb-2">
               <XCircle className="h-4 w-4" />
               Expirados
@@ -352,7 +352,7 @@ export default function ContratosPage() {
             <div className="text-xs text-white/40 mt-1">livre no mercado</div>
           </div>
           
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+          <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
             <div className="flex items-center gap-2 text-xs text-white/50 mb-2">
               <DollarSign className="h-4 w-4" />
               Folha Salarial
@@ -363,7 +363,7 @@ export default function ContratosPage() {
         </div>
 
         {/* Lista de Contratos */}
-        <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+        <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
           {/* Filtros */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
             <div className="flex items-center gap-2 text-xs font-medium text-white/60">
@@ -502,8 +502,8 @@ export default function ContratosPage() {
 
       {/* Modal de Renovacao */}
       {showRenewalModal && selectedPlayer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg mx-4 rounded-2xl bg-[#0c0c10] border border-white/10 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center uf-veu">
+          <div className="w-full max-w-lg mx-4 rounded-2xl bg-[var(--uf-bg-surface)] border border-white/10 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">

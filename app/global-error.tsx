@@ -89,7 +89,7 @@ export default function GlobalError({
   if (recuperando) {
     return (
       <html lang="pt-BR">
-        <body style={{ margin: 0, minHeight: "100vh", background: "#050508" }} />
+        <body style={{ margin: 0, minHeight: "100vh", background: "#071114" }} />
       </html>
     )
   }
@@ -103,7 +103,7 @@ export default function GlobalError({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#050508",
+          background: "#071114",
           color: "#f4f5f7",
           fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
           padding: "24px",

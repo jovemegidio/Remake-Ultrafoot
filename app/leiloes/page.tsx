@@ -238,7 +238,7 @@ export default function LeiloesPage() {
 
   if (nadaAResolver) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050508]">
+      <div className="flex min-h-screen items-center justify-center bg-transparent">
         <p className="text-sm text-white/40">Nenhum leilão em andamento — indo para o escritório...</p>
       </div>
     )
@@ -249,7 +249,7 @@ export default function LeiloesPage() {
     // janela fixa, nao uma pagina web). Com `min-h-screen` a lista de leiloes era
     // simplesmente CORTADA no pe da tela — nao havia como ver o quarto leilao.
     // O padrao do jogo e h-screen + container interno rolavel.
-    <div className="flex h-screen flex-col overflow-hidden bg-[#050508]">
+    <div className="flex h-screen flex-col overflow-hidden bg-transparent">
       <GameHeader team={userTeam} />
       <main className="mx-auto flex w-full min-h-0 max-w-5xl flex-1 flex-col overflow-hidden p-4 md:p-6">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -258,7 +258,7 @@ export default function LeiloesPage() {
               <Gavel className="h-5 w-5 text-[var(--brand)]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold leading-tight text-white">Leilões</h1>
+              <h1 className="uf-heading text-2xl font-bold leading-tight text-white">Leilões</h1>
               <p className="text-sm text-white/50">
                 {aba === "vender"
                   ? "Anuncie um atleta seu e deixe o mercado disputar o preço."

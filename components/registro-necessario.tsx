@@ -38,14 +38,14 @@ export function AvisoDeRegistro({ id, className }: { id: BeneficioId; className?
   return (
     <div
       className={cn(
-        "flex flex-col items-center rounded-2xl border border-[var(--brand)]/20 bg-[#0c0c10]/85 p-8 text-center",
+        "flex flex-col items-center rounded-2xl border border-[var(--brand)]/20 bg-[var(--uf-bg-surface)]/85 p-8 text-center",
         className,
       )}
     >
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--brand)]/12 ring-1 ring-[var(--brand)]/25">
         <Lock className="h-6 w-6 text-[var(--brand)]" />
       </div>
-      <h2 className="mt-4 text-xl font-bold text-white">{b.titulo}</h2>
+      <h2 className="uf-heading mt-4 text-xl font-bold text-white">{b.titulo}</h2>
       <p className="mt-2 max-w-md text-sm text-white/55">{b.descricao}</p>
       <p className="mt-1 text-xs text-white/35">Faz parte dos extras de quem registrou o jogo.</p>
 

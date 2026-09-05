@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-01T02:05:07.127Z",
-  "scannedFiles": 548,
+  "generatedAt": "2026-09-05T14:36:34.096Z",
+  "scannedFiles": 550,
   "totals": {
     "notImplemented": 0,
     "skeleton": 22,
@@ -33,13 +33,13 @@
     {
       "type": "mock",
       "file": "app/partida/escalacao/page.tsx",
-      "line": 44,
+      "line": 46,
       "text": "// Mock players data"
     },
     {
       "type": "mock",
       "file": "app/partida/escalacao/page.tsx",
-      "line": 45,
+      "line": 47,
       "text": "// Os elencos MOCK (playersData/benchData) foram REMOVIDOS: eram o elenco do RB"
     },
     {

@@ -984,7 +984,7 @@ export default function BasePage() {
     // que passasse da primeira dobra ficava inalcancavel (relato: "falta scroll").
     // pb-28 livra a ultima linha de cards da barra fixa de acoes (h-11).
     <div className="relative h-screen overflow-hidden pl-[72px]">
-      <div className="fixed inset-0 bg-[#050508]" />
+      <div className="fixed inset-0 bg-[var(--uf-bg-deep)]" />
       {/* Fundo PROPRIO da categoria de base (arte pedida pelo usuario), no lugar
           do fundo do escritorio. Uma imagem so, sem crossfade: e uma tela de
           consulta, nao precisa de animacao de fundo rodando a toda hora. */}
@@ -992,7 +992,7 @@ export default function BasePage() {
         <Image src="/images/juniores-bg.webp" alt="" fill priority unoptimized className="object-cover" />
       </div>
       {/* Escurecimento so o suficiente para o texto ler — a vinheta pesada saiu. */}
-      <div className="pointer-events-none fixed inset-0 bg-[#050508]/62" />
+      <div className="pointer-events-none fixed inset-0 bg-[var(--uf-bg-deep)]/62" />
 
       <div className="relative z-10 flex h-full flex-col">
       <GameSidebar />
@@ -1001,7 +1001,7 @@ export default function BasePage() {
         <header className="flex flex-wrap items-center gap-3">
           <Sprout className="h-7 w-7 text-[#1db954]" />
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">CATEGORIA DE BASE</h1>
+            <h1 className="uf-heading text-3xl font-bold text-white tracking-tight">CATEGORIA DE BASE</h1>
             {/* Ocupação x capacidade: a base tem teto (ate 100 na academia nivel 5). */}
             <p className="text-white/50 mt-1">
               <span className={cn("font-semibold", vagas === 0 ? "text-amber-400" : "text-white/70")}>
@@ -1214,7 +1214,7 @@ export default function BasePage() {
         const jovemDemais = j.age < IDADE_MINIMA_EMPRESTIMO
         return (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center uf-veu p-4"
             onClick={() => setEmprestimoDe(null)}
           >
             <div

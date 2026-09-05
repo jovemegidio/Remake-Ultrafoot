@@ -153,7 +153,7 @@ export function ScoutReports() {
 
       {/* Discovered Players */}
       {discoveredPlayers.length > 0 && (
-        <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+        <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-yellow-400" />
@@ -173,7 +173,7 @@ export function ScoutReports() {
 
       {/* Hire Modal */}
       {showHireModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+        <div className="fixed inset-0 z-50 flex items-center justify-center uf-veu">
           <div className="w-full max-w-2xl mx-4 rounded-xl bg-[#1a1a1a] border border-white/10 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.04]">
               <h3 className="text-lg font-semibold text-white">Contratar Olheiro</h3>

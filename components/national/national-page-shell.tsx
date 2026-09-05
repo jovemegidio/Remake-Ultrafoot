@@ -41,14 +41,14 @@ export function NationalPageShell({
 
   if (!hydrated || !teamHydrated || !nationalTeam) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#050508]">
+      <div className="flex h-screen items-center justify-center bg-[var(--uf-bg-deep)]">
         <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--brand)] border-t-transparent" />
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
+    <div className="flex h-screen flex-col overflow-hidden bg-[var(--uf-bg-deep)] pb-20 md:pb-0">
       <GameHeader team={userTeam} />
 
       <main className="scrollbar-premium flex-1 space-y-4 overflow-y-auto p-4">
@@ -62,7 +62,7 @@ export function NationalPageShell({
           </Link>
           <NationalCrest team={nationalTeam} size={44} />
           <div className="min-w-0">
-            <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-white">
+            <h1 className="uf-heading flex items-center gap-2 text-2xl font-semibold tracking-tight text-white">
               <Icon className="h-5 w-5 text-[var(--brand)]" /> {title}
             </h1>
             <p className="truncate text-sm text-white/50">

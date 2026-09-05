@@ -173,7 +173,7 @@ export default function PartidaDoAtletaPage() {
   // ── FASE 1: PRÉ-JOGO ─────────────────────────────────────────────────────
   if (fase === "pre") {
     return (
-      <div className="fixed inset-0 flex flex-col overflow-hidden bg-[#050508] text-white">
+      <div className="fixed inset-0 flex flex-col overflow-hidden bg-[var(--uf-bg-deep)] text-white">
         {/* O MESMO fundo da tela de pré-jogo do técnico: imagem fixa, nunca arte
             por clube (que falta justamente nos times menores). */}
         <div aria-hidden className="absolute inset-0">
@@ -394,7 +394,7 @@ export default function PartidaDoAtletaPage() {
           ) : (
             <section className="shrink-0 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-center">
               <Trophy className="mx-auto h-7 w-7 text-amber-300" />
-              <h2 className="mt-2 text-xl font-black">{t.carreiraDeJogador.fim_de_jogo}</h2>
+              <h2 className="uf-heading mt-2 text-xl font-black">{t.carreiraDeJogador.fim_de_jogo}</h2>
               <p className="mt-1 text-sm text-white/65">
                 {partida.emCasa ? carreira.clubeNome : partida.adversario} {partida.emCasa ? partida.golsPro : partida.golsContra}
                 {" – "}

@@ -93,7 +93,7 @@ export default function AmistososPage() {
   }
 
   return (
-    <div className="h-screen bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       <main className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mb-6 flex items-center gap-3">
@@ -101,7 +101,7 @@ export default function AmistososPage() {
             <Swords className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white leading-tight">Amistosos</h1>
+            <h1 className="uf-heading text-2xl font-bold text-white leading-tight">Amistosos</h1>
             <p className="text-sm text-white/50">Jogos de treino — não contam para a temporada.</p>
           </div>
         </div>

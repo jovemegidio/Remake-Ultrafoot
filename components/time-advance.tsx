@@ -129,14 +129,14 @@ export function TimeAdvanceButton({ onWeekAdvanced }: TimeAdvanceProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center uf-veu p-4"
             onClick={closeEvents}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-md rounded-xl bg-[#0c0c10] border border-white/10 p-6 shadow-2xl"
+              className="w-full max-w-md rounded-xl bg-[var(--uf-bg-surface)] border border-white/10 p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-6">
@@ -192,13 +192,13 @@ export function TimeAdvanceButton({ onWeekAdvanced }: TimeAdvanceProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center uf-veu p-4"
           onClick={closeEvents}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-sm rounded-xl bg-[#0c0c10] border border-white/10 p-6 text-center"
+            className="w-full max-w-sm rounded-xl bg-[var(--uf-bg-surface)] border border-white/10 p-6 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="h-12 w-12 rounded-full bg-[var(--brand)]/20 flex items-center justify-center mx-auto mb-4">

@@ -112,7 +112,7 @@ export function PassagemDeVez({
         <p id="passagem-titulo" className="mt-7 text-[11px] font-black uppercase tracking-[.3em] text-white/35">
           Passe o computador para
         </p>
-        <h1 className="mt-2 text-4xl font-black leading-tight text-white">{para.nome}</h1>
+        <h1 className="uf-heading mt-2 text-4xl font-black leading-tight text-white">{para.nome}</h1>
 
         <div className="mt-7 flex flex-col items-center gap-3">
           <TeamCrest team={time ?? undefined} teamShort={para.clubeCurto ?? undefined} fileKey={para.clubeFileKey} size="2xl" />

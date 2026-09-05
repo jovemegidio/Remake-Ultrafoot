@@ -276,14 +276,14 @@ export default function TaticasPage() {
   }, [router, activeTab, squadPlayers])
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3 md:p-4 scrollbar-premium">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Centro Tatico</h1>
+            <h1 className="uf-heading text-2xl md:text-3xl font-bold text-white">Centro Tatico</h1>
             <p className="text-sm text-white/50">Configure sua estrategia de jogo</p>
           </div>
           
@@ -332,7 +332,7 @@ export default function TaticasPage() {
         {/* TÁTICAS SALVAS. O jogo já salvava ESCALAÇÃO (os 11 nomes); o conjunto
             tático — mentalidade, marcação, linha, impedimento — tinha de ser
             refeito na mão a cada troca de contexto. Aqui vira preset. */}
-        <div className="mb-4 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
+        <div className="mb-4 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-white/50">Táticas salvas</span>
             {taticasSalvas.length === 0 && (
@@ -368,7 +368,7 @@ export default function TaticasPage() {
         {/* EFEITO DO PLANO. Ate a 1.0.277 estes controles nao mudavam nada no
             placar; agora mudam, e o jogador precisa VER isso — senao a mudanca
             e invisivel e vale tanto quanto nao existir. */}
-        <div className="mb-4 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
+        <div className="mb-4 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
               Efeito do plano
@@ -919,7 +919,7 @@ export default function TaticasPage() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-4"
             >
-              <div className="rounded-xl border border-white/10 bg-[#0c0c10] p-5">
+              <div className="rounded-xl border border-white/10 bg-[var(--uf-bg-surface)] p-5">
                 <h3 className="text-lg font-bold text-white">Cobradores designados</h3>
                 <p className="mt-1 text-sm text-white/50">
                   Sem escolha definida, o motor sorteia um jogador da posição a cada lance — o
@@ -958,7 +958,7 @@ export default function TaticasPage() {
                   cobrança, o motor escolhe um substituto pela posição.
                 </p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-[#0c0c10] p-5">
+              <div className="rounded-xl border border-white/10 bg-[var(--uf-bg-surface)] p-5">
                 <h3 className="text-lg font-bold text-white">Defesa de lançamentos laterais</h3>
                 <p className="mt-1 text-sm text-white/50">
                   Define como os defensores ocupam a primeira bola, a linha de fundo e a sobra, evitando marcações automáticas amontoadas.

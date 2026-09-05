@@ -473,7 +473,7 @@ export default function CalendarioPage() {
   const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
 
   return (
-  <div className="relative flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
+  <div className="relative flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent">
 
   {/* Overlay de simulacao DIA A DIA (imersao: a data corre dia por dia ate a partida) */}
   {isSimulating && simDate && (
@@ -1077,10 +1077,10 @@ export default function CalendarioPage() {
 
       {/* Champion Screen */}
       {showChampionScreen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center uf-veu">
           <div className="relative flex flex-col items-center gap-6 rounded-2xl bg-[#1a1a1a] p-10 max-w-md w-full mx-4 text-center border border-white/10">
             <Trophy className="h-16 w-16 text-yellow-500" />
-            <h2 className="text-3xl font-black text-white tracking-tight">CAMPEAO!</h2>
+            <h2 className="uf-heading text-3xl font-black text-white tracking-tight">CAMPEAO!</h2>
             {championTeam && (
               <div className="flex flex-col items-center gap-3">
                 <TeamCrest team={getTeamByShort(championTeam) ?? undefined} size="2xl" />
@@ -1114,7 +1114,7 @@ export default function CalendarioPage() {
           que o motor gravou, não um número recalculado para a tela. */}
       {resultadoRapido && (
         <div
-          className="fixed inset-0 z-[120] grid place-items-center bg-black/85 p-4"
+          className="fixed inset-0 z-[120] grid place-items-center uf-veu p-4"
           role="dialog"
           aria-modal="true"
           onClick={() => setResultadoRapido(null)}

@@ -89,7 +89,7 @@ export function ScoutModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl bg-[#0c0c10] border-white/10">
+      <DialogContent className="sm:max-w-2xl bg-[var(--uf-bg-surface)] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Eye className="h-5 w-5 text-[var(--brand)]" />

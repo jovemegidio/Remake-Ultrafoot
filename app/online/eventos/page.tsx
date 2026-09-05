@@ -134,7 +134,7 @@ export default function EventosDaSemanaPage() {
       <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="mx-auto max-w-xl px-5 pt-28 text-center">
-          <h1 className="text-2xl font-black">{t.eventos.online_desligado}</h1>
+          <h1 className="uf-heading text-2xl font-black">{t.eventos.online_desligado}</h1>
           <Button className="mt-5" onClick={() => hardNavigate("/configuracoes")}>
             {t.eventos.abrir_configuracoes}
           </Button>
@@ -149,7 +149,7 @@ export default function EventosDaSemanaPage() {
       <div className="mx-auto max-w-[1000px] px-5 pb-16 pt-20">
         <header className="mb-6">
           <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">{t.eventos.online}</p>
-          <h1 className="mt-1 flex items-center gap-2 text-3xl font-black">
+          <h1 className="uf-heading mt-1 flex items-center gap-2 text-3xl font-black">
             <CalendarRange className="text-[var(--brand)]" />{t.eventos.titulo}
           </h1>
         </header>
@@ -159,7 +159,7 @@ export default function EventosDaSemanaPage() {
             <p className="text-[11px] font-black uppercase tracking-wide text-[var(--brand)]">
               {t.eventos.regra_da_semana}
             </p>
-            <h2 className="mt-1 text-xl font-black">{regra.nome}</h2>
+            <h2 className="uf-heading mt-1 text-xl font-black">{regra.nome}</h2>
             <p className="mt-1 max-w-2xl text-sm text-white/55">{regra.resumo}</p>
           </div>
           {tabela && tabela.terminaEm > 0 && (
@@ -172,7 +172,7 @@ export default function EventosDaSemanaPage() {
 
         {!clube ? (
           <section className="mb-6 rounded-2xl border border-white/10 bg-white/[.04] p-5">
-            <h2 className="text-xl font-black">{t.eventos.escolha_o_clube}</h2>
+            <h2 className="uf-heading text-xl font-black">{t.eventos.escolha_o_clube}</h2>
             <p className="mt-1 text-sm text-white/50">{t.eventos.escolha_explicacao}</p>
             <Input
               value={busca}
@@ -283,7 +283,7 @@ export default function EventosDaSemanaPage() {
         )}
 
         <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-          <h2 className="flex items-center gap-2 text-xl font-black">
+          <h2 className="uf-heading flex items-center gap-2 text-xl font-black">
             <Trophy className="text-[var(--brand)]" />{t.eventos.classificacao}
           </h2>
           {!tabela || tabela.linhas.length === 0 ? (

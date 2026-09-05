@@ -78,10 +78,10 @@ export default function ImprensaPage() {
   }
 
   return (
-    <div className="h-screen bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen bg-transparent flex flex-col overflow-hidden">
       <main className="flex-1 overflow-y-auto p-4 md:p-6">
         <header className="mx-auto mb-6 flex w-full max-w-3xl items-center justify-between">
-          <div><h1 className="text-2xl font-bold text-white md:text-3xl">Sala de Imprensa</h1><p className="text-sm text-white/50">As respostas alteram e ficam registradas na carreira</p></div>
+          <div><h1 className="uf-heading text-2xl font-bold text-white md:text-3xl">Sala de Imprensa</h1><p className="text-sm text-white/50">As respostas alteram e ficam registradas na carreira</p></div>
           <Button variant="ghost" size="icon" onClick={() => router.push("/pre-office")} className="text-white/60"><X className="h-5 w-5" /><span className="sr-only">Fechar</span></Button>
         </header>
 
@@ -103,7 +103,7 @@ export default function ImprensaPage() {
           ) : showResult ? (
             <motion.section key="result" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-2xl rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-8 text-center">
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20"><MicOff className="h-8 w-8 text-primary" /></div>
-              <h2 className="text-2xl font-bold text-white">Coletiva encerrada</h2><p className="mt-2 text-white/60">As respostas e o impacto foram gravados no histórico da carreira.</p>
+              <h2 className="uf-heading text-2xl font-bold text-white">Coletiva encerrada</h2><p className="mt-2 text-white/60">As respostas e o impacto foram gravados no histórico da carreira.</p>
               <div className="mt-7 grid grid-cols-2 gap-4"><div className="rounded-lg bg-white/5 p-4"><p className="text-2xl font-bold text-white">{lastResponses.length}</p><p className="text-xs text-white/50">Respostas registradas</p></div><div className="rounded-lg bg-white/5 p-4"><p className={cn("text-2xl font-bold", totalImpact > 0 ? "text-green-400" : totalImpact < 0 ? "text-red-400" : "text-yellow-400")}>{totalImpact > 0 ? "+" : ""}{totalImpact}</p><p className="text-xs text-white/50">Impacto na moral</p></div></div>
               <div className="mt-7 flex gap-3"><Button onClick={() => router.push("/pre-office")} className="flex-1">Fechar</Button><Button variant="outline" onClick={restartConference} className="flex-1 border-white/10 bg-transparent text-white">Nova coletiva</Button></div>
             </motion.section>

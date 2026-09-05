@@ -401,7 +401,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClo
             className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-[#121212] border-l border-white/10 z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#050508]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[var(--uf-bg-deep)]">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-[var(--brand)]" />
                 <h2 className="text-sm font-semibold text-white">Notificacoes</h2>

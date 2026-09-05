@@ -97,7 +97,7 @@ export function DialogoDeSalvar({ dados, salvando, erro, onSalvar, onFechar }: P
 
   return (
     <div
-      className="fixed inset-0 z-[9999] grid place-items-center bg-[#020407]/70 p-5"
+      className="fixed inset-0 z-[9999] grid place-items-center uf-veu p-5"
       onClick={onFechar}
       role="dialog"
       aria-modal="true"

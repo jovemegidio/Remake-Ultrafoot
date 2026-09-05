@@ -150,7 +150,7 @@ export default function AmistosoOnlinePage() {
           <ArrowLeft className="h-4 w-4" /> Modos online
         </button>
 
-        <h1 className="text-3xl font-black">Amistoso online</h1>
+        <h1 className="uf-heading text-3xl font-black">Amistoso online</h1>
         <p className="mt-1 text-sm text-white/50">
           Você e um amigo, uma partida. Sem ranking, sem recompensa e sem efeito na sua carreira —
           para partida valendo rating, o modo é o Manager Rivals.

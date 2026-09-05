@@ -165,7 +165,7 @@ export default function NotificacoesPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
+    <div className="flex h-screen flex-col overflow-hidden bg-transparent pb-20 md:pb-0">
       <GameHeader team={userTeam} />
 
       <main className="flex min-h-0 flex-1 flex-col">
@@ -266,7 +266,7 @@ export default function NotificacoesPage() {
                 <p className="text-sm">Nenhum recado novo — a conversa acima está sempre disponível.</p>
               </div>
             ) : mensagensDiretoria.map(msg => msg && (
-              <article key={msg.id} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
+              <article key={msg.id} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5">
                 <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-amber-400/80">
                   <Building2 className="h-3.5 w-3.5" />
                   {msg.from}
@@ -331,7 +331,7 @@ export default function NotificacoesPage() {
                 <p className="text-sm">Vestiário tranquilo — ninguém pediu conversa. Chame alguém acima.</p>
               </div>
             ) : eventosVestiario.map(ev => (
-              <article key={ev.id} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
+              <article key={ev.id} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5">
                 <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--brand)]/80">
                   <MessagesSquare className="h-3.5 w-3.5" />
                   Vestiário
@@ -380,7 +380,7 @@ export default function NotificacoesPage() {
                       selecionada?.id === item.id
                         ? "border-[var(--brand)]/50 bg-[var(--brand)]/[0.07]"
                         : item.read
-                          ? "border-white/[0.05] bg-[#0c0c10] hover:border-white/15"
+                          ? "border-white/[0.05] bg-[var(--uf-bg-surface)] hover:border-white/15"
                           : "border-white/15 bg-[#101018] hover:border-white/25",
                     )}
                   >
@@ -406,7 +406,7 @@ export default function NotificacoesPage() {
             {selecionada ? (
               <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-6">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">Central do clube</p>
-                <h2 className="mt-2 text-xl font-bold text-white">{selecionada.title}</h2>
+                <h2 className="uf-heading mt-2 text-xl font-bold text-white">{selecionada.title}</h2>
                 <p className="mt-1 text-xs text-white/40">{formatarTempo(selecionada.timestamp)}</p>
                 <p className="mt-4 whitespace-pre-line text-sm leading-6 text-white/75">{selecionada.message}</p>
 
@@ -439,7 +439,7 @@ export default function NotificacoesPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-4 rounded-2xl border border-white/[0.05] bg-[#0c0c10] p-8 text-center">
+              <div className="flex h-full flex-col items-center justify-center gap-4 rounded-2xl border border-white/[0.05] bg-[var(--uf-bg-surface)] p-8 text-center">
                 <Bell className="h-10 w-10 text-white/15" />
                 <p className="text-sm text-white/40">Selecione um aviso para ler</p>
                 {/* Os botoes daqui mandavam para /mensagens, uma lista escrita a

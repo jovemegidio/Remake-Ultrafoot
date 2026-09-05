@@ -8,6 +8,7 @@ import { createTauriZustandStorage, storeSet } from "@/lib/persistent-store"
 import { getCareerScopedKey, loadGameState } from "@/lib/save-system"
 import { bonusMentoria282, normalizarGestao282, rendimentoUnidade282 } from "@/lib/gestao-282"
 import { repartirVenda, descreverRepasses } from "@/lib/repartir-venda"
+import { violacaoDeEstrangeiros } from "@/lib/limite-de-estrangeiros"
 import {
   TERMOS_A_VISTA, descontoPorRecompra, descontoPorRevenda, parcelasRestantes, parcelasVencidas,
   recompraValida, resolverNegocio, saldoDasParcelas,
@@ -4194,6 +4195,26 @@ export const useGameEngine = create<GameEngineState>()(
 
       setStarters: (starterIds) => {
         const titulares = new Set(starterIds)
+
+        // ⚠️ O LIMITE DE ESTRANGEIROS MORDE AQUI, E NAO NA TELA. Este e o unico
+        // caminho por onde uma escalacao chega ao motor, entao barrar aqui cobre
+        // a tela de escalacao, a substituicao e qualquer chamador futuro de uma
+        // vez — em vez de espalhar a mesma checagem por telas, que foi como a
+        // regra de desempate acabou com tres copias divergentes.
+        //
+        // ⚠️ A RECUSA E ATOMICA: ou a escalacao inteira entra, ou nada muda.
+        // Promover so os permitidos deixaria o time com DEZ em campo, pior que
+        // recusar — o jogador perderia um titular sem ter tirado ninguem.
+        const timeDoUsuario = getTeamByShort(get().myTeamShort ?? "")
+        const divisao = timeDoUsuario ? String(effectiveDivision(timeDoUsuario)) : undefined
+        const pretendidos = get().squadPlayers.filter(p => titulares.has(p.id))
+        // ⚠️ A RECUSA NAO GRAVA NADA. A primeira versao guardava a mensagem no
+        // estado, e o estado do jogo E O SAVE: texto de interface iria parar
+        // dentro do arquivo do jogador, e um campo novo em save antigo ja
+        // derrubou tela neste projeto. A TELA explica, chamando a mesma funcao
+        // pura; o motor so barra.
+        if (violacaoDeEstrangeiros(pretendidos, divisao)) return
+
         set((s) => ({
           squadPlayers: s.squadPlayers.map(p => {
             const deveSerTitular = titulares.has(p.id)

@@ -155,7 +155,7 @@ export function GamepadControlsBar({
   return (
     <div className={cn(
       "fixed bottom-0 left-0 right-0 z-30 items-center justify-center gap-6 px-6 py-2.5",
-      "bg-[#050508]/95 backdrop-blur-sm border-t border-white/[0.04]",
+      "bg-[var(--uf-bg-deep)]/95 backdrop-blur-sm border-t border-white/[0.04]",
       "hidden md:flex", // Esconde em mobile pois usamos bottom nav
       className
     )}>

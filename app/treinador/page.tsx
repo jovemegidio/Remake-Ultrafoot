@@ -512,13 +512,13 @@ export default function TreinadorPage() {
   // Treinador AGENDA o amistoso; quem o disputa e o calendario, na semana dele.
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-transparent pb-20 md:pb-0">
       {/* Mesmo pano de fundo do escritório (pedido: visual profissional igual
           ao office/pre-office): crossfade das fotos + véu para leitura. */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <Image src="/images/office-bg-1.webp" alt="" fill priority unoptimized className="office-bg-a object-cover" />
         <Image src="/images/office-bg-2.webp" alt="" fill unoptimized className="office-bg-b object-cover" />
-        <div className="absolute inset-0 bg-[#050508]/72" />
+        <div className="absolute inset-0 bg-[var(--uf-bg-deep)]/72" />
       </div>
 
       {/* ⚠️ ESTE WRAPPER PRECISA SER FLEX. Ele era um `div` solto entre o
@@ -540,7 +540,7 @@ export default function TreinadorPage() {
                 <UserCircle className="h-8 w-8 text-[var(--brand)]" />
               </div>
               <div>
-                <h1 className="text-xl font-black tracking-tight text-white">
+                <h1 className="uf-heading text-xl font-black tracking-tight text-white">
                   {state.managerName || "Técnico"}
                 </h1>
                 <p className="mt-0.5 text-xs text-white/55">

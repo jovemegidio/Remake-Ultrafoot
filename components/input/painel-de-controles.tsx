@@ -27,7 +27,7 @@ import {
 import { useModoDeExibicao, usePreferenciasDeInput, useRetratoDoInput } from "@/hooks/use-input"
 import { GlifoDoBotao } from "./glifo"
 
-const CAIXA = "rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5 space-y-4"
+const CAIXA = "rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5 space-y-4"
 const TITULO = "text-sm font-semibold text-white flex items-center gap-2"
 const AJUDA = "text-xs text-white/40 -mt-2"
 

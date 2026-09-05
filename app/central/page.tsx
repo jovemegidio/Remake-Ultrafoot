@@ -211,14 +211,14 @@ export default function CentralPage() {
   // build. E o mesmo cuidado que /base, /calendario e /financas ja tomam.
   if (!hydrated) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#050508] text-sm text-white/40">
+      <div className="flex h-screen items-center justify-center bg-transparent text-sm text-white/40">
         Abrindo a central do clube…
       </div>
     )
   }
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
       <GameHeader team={userTeam} />
       
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">
@@ -226,7 +226,7 @@ export default function CentralPage() {
         <div className="flex items-center gap-4 mb-6">
           <TeamCrest team={userTeam} size="lg" />
           <div>
-            <h1 className="text-2xl font-bold text-white">Central do Clube</h1>
+            <h1 className="uf-heading text-2xl font-bold text-white">Central do Clube</h1>
             <p className="text-sm text-white/50">{userTeam.nome}</p>
           </div>
         </div>
@@ -283,7 +283,7 @@ export default function CentralPage() {
                   use-game-manager) e alimentava o quadro de sócios — mas nunca
                   aparecia em tela nenhuma. Aqui ele finalmente é visível, ao
                   lado da moral do elenco, que é o outro medidor de humor. */}
-              <div className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
+              <div className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <Users className="h-4 w-4" style={{ color: torcida.cor }} />
@@ -688,13 +688,13 @@ export default function CentralPage() {
         const atleta = (squadPlayers ?? []).find((p) => p.name === punindo)
         const salarioSemanal = Math.max(1000, Math.round(atleta?.contract?.salary ?? 40000))
         return (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-5 backdrop-blur-md"
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center uf-veu p-5"
                onClick={() => setPunindo(null)}>
             <section className="w-full max-w-md overflow-hidden rounded-2xl border border-red-500/25 bg-[#0b1014]"
                      onClick={(e) => e.stopPropagation()}>
               <div className="border-b border-white/10 bg-gradient-to-r from-red-500/15 to-transparent px-6 py-5">
                 <p className="text-[11px] font-black uppercase tracking-[.22em] text-red-300">Punição</p>
-                <h2 className="mt-1 text-xl font-black text-white">{punindo}</h2>
+                <h2 className="uf-heading mt-1 text-xl font-black text-white">{punindo}</h2>
                 <p className="mt-1 text-sm text-white/55">
                   Infração {gravidade} · salário semanal {formatCurrency(salarioSemanal)}
                 </p>

@@ -202,7 +202,7 @@ export function RandomEvents({ events = [], onResolveEvent, compact = false }: R
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center uf-veu p-4"
             onClick={() => setSelectedEvent(null)}
           >
             <motion.div

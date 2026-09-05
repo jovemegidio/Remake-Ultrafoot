@@ -1408,7 +1408,7 @@ export default function ElencoPage() {
    */
   if (!teamReady || players.length === 0) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#050508] text-sm text-white/40">
+      <div className="flex h-screen items-center justify-center bg-transparent text-sm text-white/40">
         Carregando elenco...
       </div>
     )
@@ -1417,7 +1417,7 @@ export default function ElencoPage() {
   // Menu view with cards
   if (currentView === "menu") {
     return (
-      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-transparent flex flex-col overflow-hidden">
         <GameHeader team={userTeam} />
         
         <main className="flex-1 p-4 overflow-y-auto">
@@ -1425,7 +1425,7 @@ export default function ElencoPage() {
           <div className="flex items-center gap-4 mb-8">
             <TeamCrest team={userTeam} size="lg" />
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white">{userTeam.nome}</h1>
+              <h1 className="uf-heading text-2xl md:text-3xl font-bold text-white">{userTeam.nome}</h1>
               <p className="text-sm text-white/50">{t.squad.title}</p>
             </div>
           </div>
@@ -1440,7 +1440,7 @@ export default function ElencoPage() {
               className="relative p-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent text-left overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">{t.squad.tacticalView}</h2>
+              <h2 className="uf-heading text-xl md:text-2xl font-bold text-white mb-1">{t.squad.tacticalView}</h2>
               <p className="text-sm text-primary mb-6">{t.squad.currentTactic}</p>
               
               <div className="flex justify-center mb-6">
@@ -1463,7 +1463,7 @@ export default function ElencoPage() {
               className="relative p-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent text-left overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">{t.squad.teamManagement}</h2>
+              <h2 className="uf-heading text-xl md:text-2xl font-bold text-white mb-1">{t.squad.teamManagement}</h2>
               <p className="text-sm text-primary mb-4">{t.squad.standard} {userTeam.nome.toUpperCase()}</p>
               
               {/* Mini field preview */}
@@ -1512,7 +1512,7 @@ export default function ElencoPage() {
               className="relative p-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent text-left overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">{t.squad.lineups}</h2>
+              <h2 className="uf-heading text-xl md:text-2xl font-bold text-white mb-1">{t.squad.lineups}</h2>
               <p className="text-sm text-primary mb-6">{t.squad.lineupsCreated}</p>
               
               <div className="flex justify-center mb-6">
@@ -1576,7 +1576,7 @@ export default function ElencoPage() {
               <ChevronLeft className="h-4 w-4 mr-1" />
               {t.sidebar.squad}
             </Button>
-            <h1 className="text-lg md:text-xl font-bold text-white">{t.squad.tacticalView}</h1>
+            <h1 className="uf-heading text-lg md:text-xl font-bold text-white">{t.squad.tacticalView}</h1>
             <div className="hidden md:flex items-center gap-4 text-white/60">
               <span>{t.gerenciamento.gestao_de_auxiliares_tec}</span>
               <span>{t.gerenciamento.predefinicoes_taticas}</span>
@@ -1783,7 +1783,7 @@ export default function ElencoPage() {
     // escondida ATRAS da barra — e sem scroll nenhum, porque a lista nao
     // transborda (medido: painel bottom 757 < viewport 768, scrollH == clientH).
     // Era isso, nao falta de scroll, o relato das "reservas cortadas".
-    <div className="flex h-screen flex-col overflow-hidden bg-[#050508] pb-12 md:pb-14">
+    <div className="flex h-screen flex-col overflow-hidden bg-transparent pb-12 md:pb-14">
       <GameHeader team={userTeam} />
       
       {/* Match notification toast - only shows during actual match simulations */}
@@ -2895,7 +2895,7 @@ export default function ElencoPage() {
             animate={{ width: 304, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 34 }}
-            className="hidden lg:block flex-shrink-0 overflow-hidden border-l border-white/[0.04] bg-[#050508]"
+            className="hidden lg:block flex-shrink-0 overflow-hidden border-l border-white/[0.04] bg-[var(--uf-bg-deep)]"
           >
           <div className="h-full w-[304px] overflow-y-auto">
             <div className="flex justify-end px-2 pt-2">
@@ -3161,7 +3161,7 @@ export default function ElencoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 uf-veu z-50 flex items-center justify-center p-4"
             onClick={() => setShowSubstitutionModal(false)}
           >
             <motion.div
@@ -3216,7 +3216,7 @@ export default function ElencoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 uf-veu z-50 flex items-center justify-center p-4"
             onClick={() => setShowPlayerProfile(false)}
           >
             <motion.div
@@ -3882,7 +3882,7 @@ export default function ElencoPage() {
           )
 
           return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setShowLeaderboards(false)}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center uf-veu p-4" onClick={() => setShowLeaderboards(false)}>
               <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-[#141414] p-5 scrollbar-game" onClick={e => e.stopPropagation()}>
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="flex items-center gap-2 text-lg font-bold text-white"><Trophy className="h-5 w-5 text-yellow-400" /> {t.gerenciamento.destaques_da_temporada}</h2>
@@ -3992,7 +3992,7 @@ export default function ElencoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 uf-veu z-50 flex items-center justify-center p-4"
             onClick={() => setShowTutorials(false)}
           >
             <motion.div
@@ -4034,7 +4034,7 @@ export default function ElencoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 uf-veu z-50 flex items-center justify-center p-4"
             onClick={() => setShowSuggestedSubs(false)}
           >
             <motion.div

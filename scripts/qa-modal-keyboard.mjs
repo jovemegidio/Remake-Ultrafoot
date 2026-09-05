@@ -75,6 +75,17 @@ const page = await browser.newPage()
 await page.addInitScript((save) => {
   localStorage.setItem("ultrafoot:save", JSON.stringify(save))
   sessionStorage.setItem("ultrafoot:session-active", "true")
+  // ⚠️ SEM ISTO O TESTE NAO TESTA NADA, e mente dizendo "BUG PRESENTE".
+  //
+  // O modal de novidades sobe um `fixed inset-0 z-[9998]` sobre a tela inteira
+  // e engole todo clique; o Playwright reclama de "intercepts pointer events",
+  // desiste da aba do mercado e o script conclui que o bug de bubbling voltou.
+  // Nao voltou — o teste nunca chegou a abrir o modal de negociacao.
+  //
+  // O valor tem de ser o EXATO de WHATS_NEW_VERSION (components/native-app-
+  // provider.tsx): a comparacao la e por igualdade, nao por "mais novo".
+  localStorage.setItem("ultrafoot:last-seen-whats-new", "1.0.290")
+  localStorage.setItem("ultrafoot:onboarding-seen", "1")
 }, SAVE)
 
 const fail = (msg) => { console.error(`FALHOU: ${msg}`); process.exitCode = 1 }

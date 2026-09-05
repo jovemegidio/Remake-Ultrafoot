@@ -124,7 +124,7 @@ export function ContractModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden border-white/10 bg-[#0c0c10] sm:max-w-lg">
+      <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden border-white/10 bg-[var(--uf-bg-surface)] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />

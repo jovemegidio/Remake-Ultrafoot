@@ -134,7 +134,7 @@ export function ContractNegotiationModal({
   return (
     <div
       role="dialog"
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[90] flex items-center justify-center uf-veu p-4"
       onClick={onClose}
     >
       <div
@@ -146,7 +146,7 @@ export function ContractNegotiationModal({
             <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--brand)]/70">
               {modo === "renovar" ? "Renovacao de contrato" : "Rescisao de contrato"}
             </div>
-            <h2 className="mt-1 text-xl font-black text-white">{player.name}</h2>
+            <h2 className="uf-heading mt-1 text-xl font-black text-white">{player.name}</h2>
             <p className="text-xs text-white/40">
               {player.overall} OVR · {player.age} anos · {moeda(player.salary)}/mes ·{" "}
               {player.weeksLeft} semanas de contrato

@@ -723,11 +723,11 @@ export default function SplashPage() {
         const current = LANGUAGE_COUNTRIES[languageIndex]
         const previous = LANGUAGE_COUNTRIES[(languageIndex - 1 + LANGUAGE_COUNTRIES.length) % LANGUAGE_COUNTRIES.length]
         const next = LANGUAGE_COUNTRIES[(languageIndex + 1) % LANGUAGE_COUNTRIES.length]
-        return <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[#050508] px-5">
+        return <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[var(--uf-bg-deep)] px-5">
           <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-gradient-to-br from-[#102925] to-[#0b0c10] p-7 text-center shadow-2xl">
             <Globe className="mx-auto h-11 w-11 text-[var(--brand)]" />
             <p className="mt-4 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--brand)]">{t.splash.ultrafoot_26}</p>
-            <h1 className="mt-2 text-2xl font-black text-white">{t.splash.escolha_o_idioma}</h1>
+            <h1 className="uf-heading mt-2 text-2xl font-black text-white">{t.splash.escolha_o_idioma}</h1>
             <p className="mt-2 text-sm text-white/50">{t.splash.voce_podera_altera_lo_depois_nas}</p>
             <div className="mt-6 flex items-center justify-center gap-3">
               <button onClick={() => moveLanguage(-1)} aria-label={t.splash.pais_anterior} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[var(--brand)] hover:text-[var(--brand)]">‹</button>

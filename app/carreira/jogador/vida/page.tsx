@@ -119,7 +119,7 @@ export default function VidaDoAtletaPage() {
                 {rotuloDaCategoria(dilema.categoria)}
               </span>
             </div>
-            <h2 className="mt-2 text-xl font-black leading-tight text-white">{dilema.titulo}</h2>
+            <h2 className="uf-heading mt-2 text-xl font-black leading-tight text-white">{dilema.titulo}</h2>
             <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-white/65">{dilema.contexto}</p>
 
             <div className="mt-4 grid gap-2 md:grid-cols-3">

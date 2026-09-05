@@ -154,11 +154,22 @@ function KeyCap({ label }: { label: string }) {
   )
 }
 
-/** Pequena marca "EA" estilizada. */
-function EaMark() {
+/**
+ * A marca do jogo no canto da barra.
+ *
+ * ⚠️ ELA DIZIA "EA", e isso era um problema de verdade, nao de estilo: um selo
+ * redondo com as letras EA no rodape de TODAS as telas e a marca de outra
+ * empresa aposta no nosso produto. A referencia da EA vale como direcao de
+ * arte — fundo escuro, HUD fino, trilha de atalhos — e nao como identidade.
+ * Aqui vai a nossa: UF.
+ */
+function MarcaDoJogo() {
   return (
-    <span className="flex h-4 w-4 items-center justify-center rounded-full border border-white/25 text-[7px] font-bold tracking-tighter text-white/55">
-      EA
+    <span
+      aria-label="Ultrafoot"
+      className="flex h-4 w-4 items-center justify-center rounded-full border border-white/25 text-[7px] font-bold tracking-tighter text-white/55"
+    >
+      UF
     </span>
   )
 }
@@ -217,7 +228,7 @@ export function EaActionBar() {
 
       {/* Marcas + contadores online */}
       <div className="flex items-center gap-3 text-white/40">
-        <EaMark />
+        <MarcaDoJogo />
         <BarChart3 className="h-3.5 w-3.5" />
         <div className="mx-1 h-4 w-px bg-white/10" />
         <span className="flex h-4 w-4 items-center justify-center rounded-[3px] border border-white/20 text-[8px] font-bold text-white/55">

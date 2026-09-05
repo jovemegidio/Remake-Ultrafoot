@@ -224,7 +224,7 @@ export function PenaltyTakerModal({
                   <Target className="w-10 h-10 text-amber-400" />
                 </motion.div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">PENALTI!</h2>
+                  <h2 className="uf-heading text-2xl font-bold text-white">PENALTI!</h2>
                   <p className="text-white/60 text-sm">
                     {narration ? "A bola está no ponto" : "Escolha o batedor"}
                   </p>

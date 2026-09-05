@@ -61,7 +61,7 @@ export function OnboardingOverlay({ teamName }: { teamName?: string }) {
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+        className="fixed inset-0 z-[100] flex items-center justify-center uf-veu p-4"
       >
         <motion.div
           initial={{ scale: 0.94, y: 24 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.94, y: 24 }}
@@ -74,7 +74,7 @@ export function OnboardingOverlay({ teamName }: { teamName?: string }) {
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--brand)]/15 text-[var(--brand)] ring-1 ring-[var(--brand)]/30">
             {slide.icon}
           </div>
-          <h2 className="mb-2 text-xl font-bold text-white">{slide.title}</h2>
+          <h2 className="uf-heading mb-2 text-xl font-bold text-white">{slide.title}</h2>
           <p className="mx-auto mb-6 max-w-sm text-sm leading-relaxed text-white/60">{slide.body}</p>
 
           <div className="mb-5 flex items-center justify-center gap-1.5">

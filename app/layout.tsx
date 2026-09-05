@@ -19,6 +19,7 @@ import { PerformanceProfileBootstrap } from "@/components/performance-profile"
 import { MotionProfileProvider } from "@/components/motion-profile"
 import { BotaoMinimizar } from "@/components/botao-minimizar"
 import { ModoControle } from "@/components/modo-controle"
+import { AtmosphericBackground } from "@/components/atmospheric-background"
 import { OnlinePorConectividade } from "@/components/online-por-conectividade"
 import "./globals.css"
 
@@ -48,11 +49,25 @@ const poppins = Poppins({
   variable: "--font-geometrica",
 })
 
+// O FUNDO PARA QUANDO A JANELA SAI DE FOCO.
+//
+// Script cru no <head>, ao lado do bootstrap de performance, e nao um efeito de
+// React: o fundo nao esta na arvore de estado de ninguem, e acordar o React
+// para escrever um atributo no <html> seria pagar re-render por uma classe CSS.
+//
+// Os TRES eventos existem por motivos diferentes e nenhum cobre os outros:
+//   • `blur`/`focus` pegam o alt-tab para outra janela (o caso comum no desktop);
+//   • `visibilitychange` pega a janela minimizada ou a aba escondida, que nem
+//     sempre dispara blur;
+//   • a leitura inicial de `document.hasFocus()` cobre o jogo aberto em segundo
+//     plano — sem ela o fundo comecaria animando numa janela que ninguem ve.
+const scriptDeFocoDaJanela = `try{const d=document.documentElement;const m=()=>{const a=document.hasFocus()&&!document.hidden;if(a)d.removeAttribute("data-janela-inativa");else d.setAttribute("data-janela-inativa","")};addEventListener("focus",m);addEventListener("blur",m);document.addEventListener("visibilitychange",m);m()}catch{}`
+
 export const metadata: Metadata = {
   title: "Ultrafoot 3.0 — Mundo Vivo e Dia de Jogo",
   description: "Simulador de gestão de futebol com mundo persistente, decisões reais no dia de jogo e ligas auditáveis.",
   generator: "v0.app",
-  keywords: ["football manager", "futebol", "brasileiro", "simulador", "EA FC", "ultrafoot"],
+  keywords: ["football manager", "futebol", "brasileiro", "simulador", "ultrafoot"],
 }
 
 export const viewport: Viewport = {
@@ -69,8 +84,15 @@ export default function RootLayout({
     <html lang="pt-BR" className={`bg-background ${geist.variable} ${geistMono.variable} ${oswald.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: performanceBootstrapScript }} />
+        <script dangerouslySetInnerHTML={{ __html: scriptDeFocoDaJanela }} />
       </head>
       <body className="font-sans antialiased">
+        {/* Luz ambiente do jogo inteiro: camada FIXA em z-0, atras de tudo.
+            Fica fora dos provedores de proposito — nao depende de estado, de
+            carreira aberta nem de tema, e montar dentro deles a faria
+            desmontar e remontar a cada troca de contexto. Ela tambem e quem
+            PINTA a base escura: as raizes das telas sao `bg-transparent`. */}
+        <AtmosphericBackground />
         <NativeAppProvider>
           <ThemeProvider>
             <GamepadProvider>

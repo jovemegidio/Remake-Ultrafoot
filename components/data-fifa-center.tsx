@@ -63,7 +63,7 @@ export function DataFifaCenter({
   }
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/85 p-4 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[160] flex items-center justify-center uf-veu p-4">
       <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#080d13] shadow-[0_30px_120px_rgba(0,0,0,.75)]">
         <header className="relative overflow-hidden border-b border-white/10 px-6 py-5 md:px-8">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(56,189,248,.18),transparent_48%)]" />
@@ -76,7 +76,7 @@ export function DataFifaCenter({
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.22em] text-sky-300">
                   <Globe2 className="h-3.5 w-3.5" /> Central da Data FIFA
                 </div>
-                <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-white">
+                <h2 className="uf-heading mt-1 text-2xl font-black uppercase tracking-tight text-white">
                   {tituloDaJanela(mes)}
                 </h2>
                 <p className="mt-1 text-xs text-white/45">

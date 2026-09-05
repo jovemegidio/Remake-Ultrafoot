@@ -99,7 +99,7 @@ export default function CalendarioDaSelecaoPage() {
         <GameHeader />
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <Flag className="mx-auto h-10 w-10 text-white/20" />
-          <h1 className="mt-4 text-xl font-bold text-white">Você não dirige uma seleção</h1>
+          <h1 className="uf-heading mt-4 text-xl font-bold text-white">Você não dirige uma seleção</h1>
           <p className="mt-2 text-sm text-white/50">
             Este calendário é o das datas FIFA e da competição da sua seleção. O calendário do
             clube continua em <Link href="/calendario" className="text-[var(--brand)]">Calendário</Link>.

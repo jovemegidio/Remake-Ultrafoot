@@ -108,7 +108,7 @@ export default function RivalsPage() {
       <main className="h-dvh overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="mx-auto max-w-xl px-5 pt-28 text-center">
-          <h1 className="text-2xl font-black">{t.champions.online_desligado}</h1>
+          <h1 className="uf-heading text-2xl font-black">{t.champions.online_desligado}</h1>
           <Button className="mt-5" onClick={() => hardNavigate("/configuracoes")}>{t.champions.abrir_configuracoes}</Button>
         </div>
       </main>
@@ -121,7 +121,7 @@ export default function RivalsPage() {
       <div className="mx-auto max-w-[1000px] px-5 pb-14 pt-20">
         <header className="mb-6">
           <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">Competitivo</p>
-          <h1 className="mt-1 text-3xl font-black">Manager Rivals</h1>
+          <h1 className="uf-heading mt-1 text-3xl font-black">Manager Rivals</h1>
           <p className="mt-1 max-w-2xl text-sm text-white/50">
             O servidor procura um técnico de ranking parecido <b className="text-white/70">e clube de força
             parecida</b> — sem isso o pareamento produziria Real Madrid contra Criciúma só porque os dois
@@ -132,7 +132,7 @@ export default function RivalsPage() {
         <section className="mb-6 rounded-2xl border border-white/10 bg-white/[.04] p-5">
           {fila?.estado === "pareado" ? (
             <div>
-              <h2 className="flex items-center gap-2 text-xl font-black"><Swords className="text-[var(--brand)]" />{t.champions.adversario_encontrado}</h2>
+              <h2 className="uf-heading flex items-center gap-2 text-xl font-black"><Swords className="text-[var(--brand)]" />{t.champions.adversario_encontrado}</h2>
               <p className="mt-2 text-sm text-white/70">
                 <b className="text-white">{fila.pareamento.adversario.nome}</b> · rating{" "}
                 {fila.pareamento.adversario.rating} · {fila.pareamento.adversario.divisao.nome}
@@ -185,7 +185,7 @@ export default function RivalsPage() {
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-          <h2 className="flex items-center gap-2 text-xl font-black"><Trophy className="text-[var(--brand)]" />Ranking</h2>
+          <h2 className="uf-heading flex items-center gap-2 text-xl font-black"><Trophy className="text-[var(--brand)]" />Ranking</h2>
           {tabela.length === 0 ? (
             <p className="mt-3 text-sm text-white/40">Ninguém pontuou ainda neste servidor.</p>
           ) : (

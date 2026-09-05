@@ -90,7 +90,7 @@ export default function ManagerDraftPage() {
       <main className="h-screen overflow-y-auto bg-[#06090d] text-white">
         <GameHeader />
         <div className="mx-auto max-w-xl px-5 pt-28 text-center">
-          <h1 className="text-2xl font-black">{t.draft.online_desligado}</h1>
+          <h1 className="uf-heading text-2xl font-black">{t.draft.online_desligado}</h1>
           <Button className="mt-5" onClick={() => hardNavigate("/configuracoes")}>
             {t.draft.abrir_configuracoes}
           </Button>
@@ -105,7 +105,7 @@ export default function ManagerDraftPage() {
       <div className="mx-auto max-w-[900px] px-5 pb-16 pt-20">
         <header className="mb-6">
           <p className="text-xs font-black uppercase tracking-[.25em] text-[var(--brand)]">{t.draft.online}</p>
-          <h1 className="mt-1 flex items-center gap-2 text-3xl font-black">
+          <h1 className="uf-heading mt-1 flex items-center gap-2 text-3xl font-black">
             <Users className="text-[var(--brand)]" />{t.draft.titulo}
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-white/50">{t.draft.explicacao}</p>
