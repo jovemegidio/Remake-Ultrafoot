@@ -9,6 +9,11 @@
   "serverStatusUrl": "https://ultrafoot.zyntraerp.com.br/relay",
   "news": [
     {
+      "title": "1.0.390: o painel do atleta sempre a vista",
+      "category": "Atualizacao",
+      "body": "A coluna com os dados do atleta agora nasce aberta no Gerenciamento do Time e ficou mais larga, como na referencia: escolher um atleta no campo troca o conteudo dela na hora. Os cartoes da tela de elenco ganharam o corpo escuro com fio de luz no topo, e o botao principal passou a usar o gradiente medido no material de referencia."
+    },
+    {
       "title": "1.0.389: a atmosfera refeita pela referencia",
       "category": "Atualizacao",
       "body": "O ambiente do jogo foi remedido pixel a pixel a partir do material de referencia: nevoeiro dessaturado com banco de luz lateral, piso iluminado em perspectiva, margens laterais como as da referencia e o botao principal em vidro discreto. Campos e listas suspensas sairam do visual cru do Windows. Nenhuma regra ou save foi alterado."
@@ -318,9 +323,23 @@
   ],
   "changelog": [
     {
-      "version": "1.0.389",
+      "version": "1.0.390",
       "data": "2026-09-06",
       "latest": true,
+      "titulo": "O painel do atleta sai da gaveta, e as telas de elenco alcancam a referencia",
+      "itens": [
+        "O PAINEL DO ATLETA AGORA NASCE ABERTO no Gerenciamento do Time. Ele ja existia, completo, mas comecava fechado — ver um atributo custava um clique a mais e comparar dois atletas custava quatro. Pior: muita gente nao sabia que ele existia. Na referencia essa coluna fica sempre montada e trocar de atleta no campo troca o conteudo dela na hora. O botao de recolher continua ali para quem preferir o campo inteiro.",
+        "Ele tambem ficou mais largo (de 304 para 420 pixels), que e a proporcao que a referencia da a essa coluna.",
+        "OS CARTOES DA TELA DE ELENCO DEIXARAM DE SER VIDRO CIANO. Na referencia o cartao tem corpo escuro e quase sem brilho, com a cor viva reduzida a um fio no topo — que acende no cartao sob o cursor. Com tres cartoes lado a lado, destacar pelo corpo faz os tres competirem entre si; destacar pela aresta nao.",
+        "O botao principal do jogo passou a usar o gradiente medido na referencia (indigo indo para verde-azulado) em vez do violeta-ciano que eu tinha escolhido. Quatro botoes que traziam o proprio gradiente escrito a mao entraram no mesmo padrao — e ganharam estado de foco, que nenhum deles tinha.",
+        "O piso do fundo ficou mais discreto: menos juntas e mais suaves, como no material de referencia.",
+        "NADA DE JOGO MUDOU. Nenhuma regra, calculo, economia, simulacao ou save foi tocado."
+      ]
+    },
+    {
+      "version": "1.0.389",
+      "data": "2026-09-06",
+      "latest": false,
       "titulo": "A atmosfera do jogo refeita a partir do video de referencia",
       "itens": [
         "O FUNDO ESTAVA ESCURO E COLORIDO DEMAIS. Ele foi refeito medindo pixel a pixel o material de referencia: o ambiente agora e um nevoeiro cinza-esverdeado DESSATURADO, escuro so no alto e abrindo para um banco de luz do lado direito, com o piso iluminado embaixo e as juntas escuras fugindo em perspectiva. Antes eram manchas de ciano e violeta saturadas sobre quase-preto — bonito, mas nao era a referencia.",

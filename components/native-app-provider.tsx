@@ -663,7 +663,7 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex items-center justify-between border-t border-white/[0.07] px-8 py-4">
           <span className="text-[10px] text-white/30">Enter/A avança · Esc fecha após concluir</span>
-          <button onClick={page < pages.length - 1 ? () => setPage(value => value + 1) : onClose} className="rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-[var(--brand)] px-7 py-2.5 text-xs font-black text-white shadow-[0_0_25px_rgba(0,255,200,.22)]">{page < pages.length - 1 ? "Avançar" : "Entrar no jogo"}</button>
+          <button onClick={page < pages.length - 1 ? () => setPage(value => value + 1) : onClose} className="rounded-full uf-btn-primary px-7 text-xs font-black">{page < pages.length - 1 ? "Avançar" : "Entrar no jogo"}</button>
         </div>
       </section>
     </div>
@@ -796,7 +796,7 @@ function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onCo
             onMouseEnter={() => setEscolha("sim")}
             aria-selected={escolha === "sim"}
             className={cn(
-              "rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-[var(--brand)] px-5 py-2.5 text-sm font-black text-white transition-all",
+              "rounded-full uf-btn-primary px-5 text-sm font-black",
               // O ANEL E A MARCA DA SELECAO. Sem ele o controle move o foco e
               // nada muda na tela — foi o relato de "o controle nao funciona".
               escolha === "sim"

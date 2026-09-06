@@ -462,6 +462,18 @@ function CartaDeJogador({
 
 type ViewType = "menu" | "visao_tatica" | "gerenciamento" | "escalacoes"
 
+/**
+ * Largura do painel do atleta.
+ *
+ * Medida na referencia: a coluna ocupa x=752 a x=1176 de 1280, ou seja 33% da
+ * largura. Aqui o jogo desenha num canvas de 1600 (a janela de 1280 sob
+ * `zoom: 0.8`), entao os 304px antigos davam 19% da tela — metade do peso que a
+ * referencia da a ela. 420px poem a coluna em ~26%: nao chega aos 33% porque
+ * abaixo de 1280 de janela o campo comecaria a ser espremido, e campo espremido
+ * e o que esta tela existe para evitar.
+ */
+const LARGURA_DO_PAINEL = 420
+
 export default function ElencoPage() {
   useRequireClub()
   const router = useRouter()
@@ -580,7 +592,19 @@ export default function ElencoPage() {
    * ninguem pedir, e reabri-lo e so clicar num jogador. O campo do save fica
    * onde esta (saves antigos o carregam) e simplesmente nao e mais lido.
    */
-  const [painelDoAtleta, setPainelDoAtleta] = useState(false)
+  /**
+   * ⚠️ VOLTOU A NASCER ABERTO (1.0.390), e a referencia e o motivo.
+   *
+   * A decisao anterior — nascer fechado para "o campo ficar inteiro" — era
+   * defensavel, mas o material de referencia mantem esta coluna SEMPRE montada:
+   * escolher um atleta no campo troca o conteudo dela na hora, sem modal e sem
+   * trocar de tela. Fechado, ver um atributo custava um clique a mais e comparar
+   * dois atletas custava quatro; e o painel existia sem ninguem descobrir que
+   * existia.
+   *
+   * O botao de recolher continua ali para quem quiser o campo inteiro.
+   */
+  const [painelDoAtleta, setPainelDoAtleta] = useState(true)
   /**
    * MODO MOVIMENTAÇÃO: com ele ligado, arrastar um atleta desenha a SETA do
    * deslocamento dele (para onde vai com a bola) em vez de mudar a posição
@@ -2892,12 +2916,12 @@ export default function ElencoPage() {
           <motion.aside
             key="painel-do-atleta"
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 304, opacity: 1 }}
+            animate={{ width: LARGURA_DO_PAINEL, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 34 }}
             className="hidden lg:block flex-shrink-0 overflow-hidden border-l border-white/[0.04] bg-[var(--uf-bg-deep)]"
           >
-          <div className="h-full w-[304px] overflow-y-auto">
+          <div className="h-full w-[420px] overflow-y-auto">
             <div className="flex justify-end px-2 pt-2">
               <button
                 onClick={() => setPainelDoAtleta(false)}

@@ -167,7 +167,6 @@ export default function ElencoHubPage() {
       description: tacticalStyle.label,
       bottomText: tacticalStyle.impact,
       route: "/elenco/taticas",
-      color: "from-cyan-500/20 to-teal-500/10",
       borderColor: "border-cyan-500/30",
       accentColor: "text-cyan-400",
     },
@@ -183,7 +182,6 @@ export default function ElencoHubPage() {
         { icon: Heart, label: "Moral", value: 85 },
       ],
       route: "/elenco/gerenciamento",
-      color: "from-cyan-500/20 to-teal-500/10",
       borderColor: "border-cyan-500/30",
       accentColor: "text-cyan-400",
     },
@@ -283,28 +281,18 @@ export default function ElencoHubPage() {
                     onClick={() => handleCardClick(card)}
                   >
                     {/* Card */}
-                    <div 
-                      className={cn(
-                        "relative overflow-hidden rounded-2xl border-2 transition-all duration-300",
-                        "bg-gradient-to-br",
-                        card.color,
-                        hoveredCard === card.id
-                          ? "border-cyan-400/80 shadow-[0_0_30px_rgba(0,255,200,0.22)]"
-                          : "border-cyan-500/20 shadow-[0_0_18px_rgba(0,255,200,0.06)]",
-                        "h-[320px] lg:h-[380px] flex flex-col"
-                      )}
+                    {/* ⚠️ O CARTAO ERA VIDRO TEAL COM HALO CIANO, e a referencia
+                        faz o oposto: corpo ESCURO e quase sem brilho, com a cor
+                        viva reduzida a um fio no topo. Medido no material —
+                        fill #1b1e27, fio #184e4d apagado / #75b1ad aceso. Com
+                        tres cartoes lado a lado, destaque pelo corpo faz os
+                        tres competirem; destaque pela aresta nao.
+                        `data-selected` em vez de classe condicional: o mesmo
+                        atributo que o CSS ja usa nos outros estados do sistema. */}
+                    <div
+                      data-selected={hoveredCard === card.id ? "true" : "false"}
+                      className="uf-cartao-destaque h-[320px] lg:h-[380px]"
                     >
-                      {/* Glow effect on hover */}
-                      <div 
-                        className={cn(
-                          "absolute inset-0 opacity-0 transition-opacity duration-300",
-                          hoveredCard === card.id && "opacity-100"
-                        )}
-                        style={{
-                          background: "radial-gradient(circle at 50% 0%, rgba(0,255,200,0.15) 0%, transparent 60%)",
-                        }}
-                      />
-
                       {/* Content */}
                       <div className="relative flex flex-col h-full p-6">
                         {/* Header */}
@@ -383,7 +371,7 @@ export default function ElencoHubPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => router.push("/elenco/gerenciamento")}
-                className="group flex items-center gap-3 pl-2 pr-6 py-2 rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-400 text-white font-semibold shadow-[0_0_24px_rgba(56,128,255,0.45)] hover:shadow-[0_0_32px_rgba(0,255,200,0.5)] transition-shadow"
+                className="group flex items-center gap-3 pl-2 pr-6 py-2 rounded-full uf-btn-primary"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-sm">
                   &#9166;

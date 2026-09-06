@@ -1768,8 +1768,8 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
       /* as juntas */
       repeating-linear-gradient(
         97deg,
-        transparent 0 118px,
-        color-mix(in oklab, var(--amb-juntas) 78%, transparent) 118px 121px
+        transparent 0 210px,
+        color-mix(in oklab, var(--amb-juntas) 42%, transparent) 210px 212px
       ),
       /* o proprio piso, mais claro no fundo do que na frente */
       linear-gradient(
@@ -1831,6 +1831,65 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
   }
   .uf-pilula:active {
     transform: scale(0.98);
+  }
+
+  /* CARTAO DE DESTAQUE — os tres paineis grandes da tela de Elenco.
+     Medido no quadro de referencia (212s):
+       fill selecionado ....... #1c202b   (nao selecionado #1b1e27)
+       borda superior ......... gradiente teal #4e929e -> #75b1ad -> #1d837c
+                                (no nao selecionado, apagada: #184e4d)
+       borda lateral .......... #1d6061
+       subtitulo .............. #2da89a
+     ⚠️ O QUE EU TINHA ERA VIDRO TEAL CLARO com anel ciano e halo. Sobre o
+     ambiente iluminado a referencia faz o contrario: cartao ESCURO, quase sem
+     brilho, e a unica cor viva e um FIO no topo. O destaque vem da aresta, nao
+     do corpo — e por isso tres cartoes lado a lado nao competem entre si. */
+  .uf-cartao-destaque {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--uf-radius-lg);
+    background: #1b1e27;
+    border: 1px solid rgba(29, 96, 97, 0.55);
+    box-shadow: var(--uf-shadow-card);
+    transition:
+      background-color var(--duration-base) var(--ease-standard),
+      border-color var(--duration-base) var(--ease-standard),
+      transform var(--duration-base) var(--ease-standard);
+  }
+
+  /* O fio do topo. Sempre presente, apagado; acende no foco e na selecao. */
+  .uf-cartao-destaque::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, #184e4d 0%, #1d837c 50%, #184e4d 100%);
+    opacity: 0.7;
+    transition: opacity var(--duration-base) var(--ease-standard);
+  }
+
+  .uf-cartao-destaque:hover,
+  .uf-cartao-destaque:focus-visible,
+  .uf-cartao-destaque[data-selected="true"] {
+    background: #1c202b;
+    border-color: rgba(29, 96, 97, 0.9);
+    transform: translateY(-2px);
+  }
+
+  .uf-cartao-destaque:hover::before,
+  .uf-cartao-destaque:focus-visible::before,
+  .uf-cartao-destaque[data-selected="true"]::before {
+    background: linear-gradient(90deg, #4e929e 0%, #75b1ad 50%, #1d837c 100%);
+    opacity: 1;
+  }
+
+  /* O subtitulo verde-azulado sob o titulo do cartao. */
+  .uf-cartao-destaque__nota {
+    color: #2da89a;
+    font-size: 0.75rem;
+    font-weight: 700;
   }
 
   /* MARGEM LATERAL SEGURA.
@@ -2063,8 +2122,11 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
 
   /* Primario: violeta -> ciano, texto branco. E o unico gradiente colorido da
      interface — se todo botao brilhasse, nenhum brilharia. */
+  /* ⚠️ MEDIDO, nao escolhido: #4969b9 -> #4768b3 -> #397a99. E indigo indo para
+     teal, nao violeta indo para ciano. A diferenca importa porque o violeta
+     puro que eu tinha brigava com o ambiente azul-esverdeado do fundo. */
   .uf-btn-primary {
-    background: linear-gradient(115deg, var(--uf-violet) 0%, #3E9BE8 52%, var(--uf-cyan) 100%);
+    background: linear-gradient(100deg, #4969b9 0%, #4768b3 55%, #397a99 100%);
     color: #FFFFFF;
     /* Texto branco sobre o meio do gradiente pede um empurrao de contraste. */
     text-shadow: 0 1px 2px rgba(0, 20, 28, 0.45);

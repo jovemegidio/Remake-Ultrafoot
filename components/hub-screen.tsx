@@ -164,7 +164,7 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => router.push(primaryActionRoute)}
-                className="group flex items-center gap-3 pl-2 pr-6 py-2 rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-400 text-white font-semibold shadow-[0_0_24px_rgba(56,128,255,0.45)] hover:shadow-[0_0_32px_rgba(0,255,200,0.5)] transition-shadow"
+                className="group flex items-center gap-3 pl-2 pr-6 py-2 rounded-full uf-btn-primary"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-sm">&#9166;</span>
                 {primaryActionLabel}
