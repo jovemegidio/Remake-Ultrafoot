@@ -9,6 +9,11 @@
   "serverStatusUrl": "https://ultrafoot.zyntraerp.com.br/relay",
   "news": [
     {
+      "title": "1.0.389: a atmosfera refeita pela referencia",
+      "category": "Atualizacao",
+      "body": "O ambiente do jogo foi remedido pixel a pixel a partir do material de referencia: nevoeiro dessaturado com banco de luz lateral, piso iluminado em perspectiva, margens laterais como as da referencia e o botao principal em vidro discreto. Campos e listas suspensas sairam do visual cru do Windows. Nenhuma regra ou save foi alterado."
+    },
+    {
       "title": "1.0.388: o jogo com cara de transmissao",
       "category": "Atualizacao",
       "body": "Fundo com luz ambiente e piso em perspectiva, cartoes escuros com borda fina que acende em ciano, titulos em fonte condensada e numeros de largura fixa, modais que escurecem e desfocam o resto da tela, e anel de foco visivel para quem joga no teclado. As 74 telas passaram a sair do mesmo sistema de cor, canto e sombra. Nenhuma regra, save ou configuracao foi alterada."
@@ -313,9 +318,24 @@
   ],
   "changelog": [
     {
+      "version": "1.0.389",
+      "data": "2026-09-06",
+      "latest": true,
+      "titulo": "A atmosfera do jogo refeita a partir do video de referencia",
+      "itens": [
+        "O FUNDO ESTAVA ESCURO E COLORIDO DEMAIS. Ele foi refeito medindo pixel a pixel o material de referencia: o ambiente agora e um nevoeiro cinza-esverdeado DESSATURADO, escuro so no alto e abrindo para um banco de luz do lado direito, com o piso iluminado embaixo e as juntas escuras fugindo em perspectiva. Antes eram manchas de ciano e violeta saturadas sobre quase-preto — bonito, mas nao era a referencia.",
+        "AS TELAS GANHARAM MARGEM. O conteudo do escritorio estava colado na borda da janela; agora respeita a mesma margem lateral da referencia (13% de cada lado), com o conteudo ocupando os tres quartos do meio. E a mudanca que mais aproxima a proporcao das duas telas.",
+        "O BOTAO PRINCIPAL DEIXOU DE GRITAR. A pilula de acao (Dia de jogo, Avancar) tinha anel ciano e halo brilhante; na referencia ela e um vidro claro discreto. A cor da marca continua, mas onde ela de fato aparece: no foco e ao passar o mouse.",
+        "Os cartoes escureceram para ler sobre o ambiente iluminado, e a borda de selecao passou a ser o verde-azulado apagado da referencia em vez de ciano puro.",
+        "Os campos e listas suspensas de todo o jogo deixaram de ser controles crus do Windows — eram 200 deles, e a lista aberta abria BRANCA sobre o jogo escuro.",
+        "As fotos dos atletas entram com esqueleto e transicao, e so carregam quando aparecem na tela: em lista de elenco ou de mercado isso e o que impede a rolagem de travar.",
+        "NADA DE JOGO MUDOU. Nenhuma regra, calculo, economia, simulacao ou save foi tocado."
+      ]
+    },
+    {
       "version": "1.0.388",
       "data": "2026-09-05",
-      "latest": true,
+      "latest": false,
       "titulo": "A cara nova do jogo: fundo com luz, cartoes escuros e tipografia de estadio",
       "itens": [
         "O JOGO INTEIRO GANHOU UMA ATMOSFERA. Atras das telas agora ha um ambiente escuro azul-esverdeado com luz de holofote, manchas de cor em movimento lento e um piso em perspectiva. Nao e imagem: e desenhado pela propria interface, entao nao pesa no download nem na memoria. Em maquina modesta ele simplifica sozinho, e quem usa movimento reduzido ve tudo parado.",

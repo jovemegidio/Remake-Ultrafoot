@@ -461,7 +461,7 @@ export default function DashboardPage() {
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <GameHeader team={userTeam} />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+      <main className="uf-margem-segura flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto py-3">
         {/* FIM DE TEMPORADA NO ESCRITORIO. Sem partida marcada, "Avancar" no
             cabecalho manda para /partida, que devolve para ca — o laco que o
             jogador relatou. Ver components/iniciar-temporada.tsx. */}

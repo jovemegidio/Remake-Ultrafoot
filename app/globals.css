@@ -254,11 +254,14 @@
   --color-bg-0: #050b0d;
   --color-bg-1: #071316;
   --color-bg-2: #0c1c20;
-  --color-surface-1: rgba(8, 23, 27, 0.78);
-  --color-surface-2: rgba(12, 31, 35, 0.86);
+  /* Medido: #1b1f2a na linha selecionada, #101010 no cartao editorial. */
+  --color-surface-1: rgba(9, 13, 18, 0.82);
+  --color-surface-2: rgba(6, 9, 11, 0.90);
   --color-surface-soft: rgba(124, 175, 177, 0.08);
   --color-border: rgba(192, 255, 244, 0.12);
-  --color-border-strong: rgba(71, 255, 215, 0.50);
+  /* A borda de selecao da referencia e um teal APAGADO (#1e5456), nao ciano
+     puro: ela marca sem gritar sobre um fundo que ja tem luz propria. */
+  --color-border-strong: #1e5456;
   --color-text-1: #f4f8f7;
   --color-text-2: #a8b8b8;
   --color-text-3: #708184;
@@ -268,6 +271,25 @@
   --color-magenta: #f05b88;
   --color-yellow: #e9f151;
   --color-danger: #ff5a70;
+
+  /* ── AMBIENTE, medido no video de referencia (amostragem de pixel) ────────
+     ⚠️ O FUNDO NAO E QUASE-PRETO. Foi o erro da primeira versao: montei
+     manchas de ciano/verde/violeta SATURADAS sobre #071316. A referencia e o
+     oposto — um nevoeiro CINZA-ESVERDEADO DESSATURADO, e bem mais claro:
+     escuro so no topo-central (#14181b), abrindo para teal a esquerda
+     (#346069) e para um banco de luz cinza-azulado a direita (#767b84,
+     luminancia 123). O piso no rodape e CLARO (#2d4148) com as juntas
+     ESCURAS — nao uma grade luminosa sobre o escuro.
+     A consequencia manda no resto do sistema: sobre um ambiente iluminado, os
+     cartoes da referencia sao MAIS ESCUROS que o fundo (#101010 no cartao
+     editorial), e nao superficies claras translucidas. */
+  --amb-topo: #14181b;
+  --amb-base: #253539;
+  --amb-teal: #346069;
+  --amb-banco: #767b84;
+  --amb-quente: #4c4138;
+  --amb-piso: #2d4148;
+  --amb-juntas: #0d1417;
 
   --radius-xs: 3px;
   --radius-sm: 6px;
@@ -1631,64 +1653,73 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
     /* ⚠️ `-1`, E NAO `0`. Com `z-index: 0` esta camada VIRA UM TAPUME.
        Um elemento posicionado com z-index 0 pinta na fase dos posicionados,
        que vem DEPOIS do conteudo de bloco comum. Telas cujo conteudo nao esta
-       posicionado (a maioria: `<main>` com cartoes em fluxo normal) ficavam
-       inteiras escondidas atras do fundo — texto presente no DOM, visivel para
-       o `getComputedStyle`, e invisivel na tela. So escapavam as telas cuja
-       raiz ja tinha `relative` + `z-10`, como o escritorio; foi por isso que o
-       defeito quase passou.
-       Com `-1` ela pinta acima do fundo da tela e abaixo de todo o conteudo.
+       posicionado ficavam inteiras escondidas atras do fundo — texto presente
+       no DOM, visivel para o `getComputedStyle`, e invisivel na tela.
        Ver tambem o `body` transparente logo abaixo — os dois andam juntos. */
     z-index: -1;
     overflow: hidden;
     pointer-events: none;
-    /* Base opaca. Se TODAS as camadas de cima forem desligadas (maquina
-       modesta), ainda sobra um fundo legivel — nunca um buraco preto. */
-    background:
-      linear-gradient(180deg, var(--uf-bg-surface) 0%, var(--uf-bg-deep) 55%, #050D10 100%);
+    /* A base. Escura no topo, abrindo para o piso iluminado embaixo — e a
+       leitura vertical do quadro de referencia, nao um degrade escolhido. */
+    background: linear-gradient(
+      177deg,
+      var(--amb-topo) 0%,
+      #182226 34%,
+      #203034 62%,
+      var(--amb-base) 100%
+    );
     /* Camada isolada: mudanca aqui nunca reflui o conteudo por cima.
        `size` fica de FORA do contain de proposito — a altura vem do calc acima,
        e conter o tamanho junto arriscaria zerar a camada. */
     contain: layout paint style;
   }
 
-  /* As manchas de luz. Tres cores, tres tamanhos, tres tempos que nao batem —
-     ciclos primos entre si (13s, 17s, 21s) para o conjunto nunca "repetir" de
-     forma perceptivel. */
+  /* As manchas de nevoa. Elas NAO sao coloridas no sentido de saturadas: sao
+     bancos de neblina cinza com um vies de matiz, exatamente como a referencia.
+     Ciclos primos entre si (13s, 17s, 21s) para o conjunto nunca "repetir". */
   .uf-atmos__luz {
     position: absolute;
     inset: -25%;
     will-change: transform;
   }
 
+  /* Esquerda: o vies teal (#346069 medido). */
   .uf-atmos__luz--ciano {
     background: radial-gradient(
-      42% 38% at 22% 18%,
-      color-mix(in oklab, var(--uf-cyan) 26%, transparent) 0%,
-      transparent 70%
+      46% 42% at 14% 46%,
+      color-mix(in oklab, var(--amb-teal) 80%, transparent) 0%,
+      color-mix(in oklab, var(--amb-teal) 30%, transparent) 44%,
+      transparent 74%
     );
     animation: uf-deriva-a 13s ease-in-out infinite alternate;
   }
 
+  /* Direita: O BANCO DE LUZ. E a peca que mais faltava — a referencia tem uma
+     area claramente iluminada nesse lado (luminancia 123 contra 46 no centro),
+     e sem ela o fundo fica simetrico e morto. */
   .uf-atmos__luz--verde {
     background: radial-gradient(
-      46% 40% at 78% 72%,
-      color-mix(in oklab, var(--uf-green) 18%, transparent) 0%,
-      transparent 72%
+      44% 52% at 88% 44%,
+      color-mix(in oklab, var(--amb-banco) 88%, transparent) 0%,
+      color-mix(in oklab, var(--amb-banco) 32%, transparent) 46%,
+      transparent 76%
     );
     animation: uf-deriva-b 17s ease-in-out infinite alternate;
   }
 
+  /* Topo direito: o vies quente (#4c4138). Sutil — e o que impede o quadro de
+     ficar inteiramente frio. */
   .uf-atmos__luz--violeta {
     background: radial-gradient(
-      52% 46% at 62% 8%,
-      color-mix(in oklab, var(--uf-violet) 22%, transparent) 0%,
+      40% 34% at 92% 6%,
+      color-mix(in oklab, var(--amb-quente) 55%, transparent) 0%,
       transparent 68%
     );
     animation: uf-deriva-c 21s ease-in-out infinite alternate;
   }
 
-  /* Amplitude pequena de proposito: o pedido e "movimento ambiental lento,
-     quase imperceptivel". Passar de ~3% da tela vira salva-telas. */
+  /* Amplitude pequena de proposito: o movimento e ambiental, quase
+     imperceptivel. Passar de ~3% da tela vira salva-telas. */
   @keyframes uf-deriva-a {
     from { transform: translate3d(0, 0, 0) scale(1); }
     to   { transform: translate3d(2.5%, -1.8%, 0) scale(1.06); }
@@ -1702,19 +1733,15 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
     to   { transform: translate3d(1.6%, 2.2%, 0) scale(1.05); }
   }
 
-  /* Faixa luminosa deitada numa lateral. Diferente das manchas: ela e um
-     gradiente LINEAR estreito e inclinado, e e o que sugere uma fonte de luz
-     fora do quadro (um holofote de estadio alto a esquerda) em vez de uma
-     nevoa colorida. Sem ela o fundo fica simetrico demais e perde direcao. */
+  /* Faixa de luz inclinada — o holofote fora do quadro. */
   .uf-atmos__faixa {
     position: absolute;
-    inset: -30% 40% -30% -20%;
+    inset: -30% 34% -30% -18%;
     background: linear-gradient(
       104deg,
       transparent 0%,
-      color-mix(in oklab, var(--color-cyan) 10%, transparent) 38%,
-      color-mix(in oklab, var(--color-green) 7%, transparent) 55%,
-      transparent 76%
+      color-mix(in oklab, var(--amb-banco) 16%, transparent) 40%,
+      transparent 74%
     );
     animation: uf-deriva-faixa 16s ease-in-out infinite alternate;
   }
@@ -1724,29 +1751,52 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
     to   { transform: translate3d(1.4%, 0, 0); opacity: 1; }
   }
 
-  /* Piso em perspectiva: a unica coisa que sugere um espaco 3D atras da
-     interface. Mascarado para sumir antes de encostar no conteudo — grade
-     visivel atras de texto e ruido, nao profundidade. */
+  /* O PISO.
+     ⚠️ INVERTIDO EM RELACAO A PRIMEIRA VERSAO, e e a diferenca que mais salta.
+     Eu tinha desenhado uma grade LUMINOSA sobre o escuro, como um cenario de
+     ficcao cientifica. A referencia tem o oposto: um piso CLARO (#2d4148,
+     mais claro que a nevoa acima dele) com as JUNTAS ESCURAS (#0d1417) fugindo
+     em perspectiva para um ponto no terco direito. E chao de saguao iluminado,
+     nao grade de neon.
+     As juntas sao poucas e largas — quatro ou cinco linhas visiveis, nao uma
+     malha. Por isso `repeating-linear-gradient` com passo grande em vez de
+     `background-size` pequeno. */
   .uf-atmos__piso {
     position: absolute;
-    inset: 42% -60% -30% -60%;
-    background-image:
-      linear-gradient(to right, color-mix(in oklab, var(--uf-cyan) 12%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in oklab, var(--uf-cyan) 12%, transparent) 1px, transparent 1px);
-    background-size: 88px 88px;
-    transform: perspective(680px) rotateX(70deg);
+    inset: 62% -40% -18% -40%;
+    background:
+      /* as juntas */
+      repeating-linear-gradient(
+        97deg,
+        transparent 0 118px,
+        color-mix(in oklab, var(--amb-juntas) 78%, transparent) 118px 121px
+      ),
+      /* o proprio piso, mais claro no fundo do que na frente */
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--amb-piso) 96%, transparent) 0%,
+        color-mix(in oklab, var(--amb-piso) 74%, transparent) 55%,
+        color-mix(in oklab, var(--amb-piso) 30%, transparent) 100%
+      );
+    transform: perspective(560px) rotateX(74deg);
     transform-origin: center top;
-    opacity: 0.5;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, transparent 88%);
-            mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, transparent 88%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 72%, transparent 96%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 72%, transparent 96%);
   }
 
-  /* Vinheta: fecha as quatro quinas e empurra o olho para o centro. */
+  /* Vinheta: fecha as quinas. Discreta — o quadro de referencia escurece nas
+     bordas, mas nao chega a emoldurar. */
+  /* ⚠️ A VINHETA ESTAVA APAGANDO O BANCO DE LUZ DA DIREITA.
+     Medido: naquele ponto a referencia tem luminancia 107 e a minha tinha 30.
+     A causa nao era a mancha (ela existia): era esta vinheta, que comecava a
+     escurecer em 46% do raio com alpha 0,5-0,78 e engolia justamente o lado
+     mais claro do quadro. A referencia fecha as quinas de leve; ela nao
+     emoldura. Agora comeca em 68% e chega a metade daquele alpha. */
   .uf-atmos__vinheta {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(120% 100% at 50% 42%, transparent 40%, rgba(2, 8, 10, 0.55) 82%, rgba(1, 5, 6, 0.82) 100%);
+      radial-gradient(142% 124% at 50% 42%, transparent 68%, rgba(4, 8, 10, 0.22) 90%, rgba(2, 5, 6, 0.42) 100%);
   }
 
   /* Ruido. SVG embutido como data URI — sem arquivo, sem rede, sem requisicao
@@ -1755,10 +1805,49 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
   .uf-atmos__ruido {
     position: absolute;
     inset: 0;
-    opacity: 0.035;
+    opacity: 0.03;
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 160px 160px;
+  }
+
+  /* A PILULA DE ACAO PRIMARIA, como a referencia a desenha: vidro claro sobre
+     o ambiente. Medido no quadro — fill #4d6c76 sobre fundo #35565e, ou seja
+     branco a ~14%, sem borda colorida e sem halo.
+     A marca aparece no FOCO e no HOVER, nao em repouso: e assim que a
+     referencia hierarquiza — em repouso a pilula convida, no foco ela responde. */
+  .uf-pilula {
+    background: rgba(244, 247, 247, 0.14);
+    border: 1px solid rgba(244, 247, 247, 0.10);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition:
+      background-color var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard),
+      transform var(--duration-fast) var(--ease-standard);
+  }
+  .uf-pilula:hover {
+    background: rgba(244, 247, 247, 0.20);
+    border-color: color-mix(in oklab, var(--uf-cyan) 34%, transparent);
+  }
+  .uf-pilula:active {
+    transform: scale(0.98);
+  }
+
+  /* MARGEM LATERAL SEGURA.
+     Medida no quadro de referencia: o conteudo comeca em x=172 de 1280 (13,4%)
+     e o cartao da direita termina em x=1113 (87%) — margens simetricas de ~13%,
+     com o conteudo ocupando os 74% do meio. O hub daqui estava colado na borda
+     (12px), e e o que mais denunciava proporcao diferente ao comparar as duas
+     telas lado a lado.
+
+     Em PORCENTAGEM e nao em `vw`: o jogo roda sob `zoom: 0.8` e `vw` mede a
+     janela SEM a escala — a mesma armadilha das alturas. Porcentagem e do
+     container, entao ela atravessa o zoom sem mentir.
+
+     O piso de 16px existe para janela estreita: 13% de 1024 ainda deixa espaco,
+     mas abaixo disso a margem comeria o conteudo. */
+  .uf-margem-segura {
+    padding-inline: max(16px, 13%);
   }
 
   /* ─────────────────────────────────────────────────────────────────────────
