@@ -87,6 +87,7 @@ import {
   type MatchEvent,
   type MatchState,
 } from "@/lib/match-engine"
+import { notasDoLado, corDaNota, formatarNota } from "@/lib/notas-da-partida"
 import { LivePitch } from "@/components/match/live-pitch"
 import { SubstitutionModal, type MatchPlayer, type SubstitutionChange } from "@/components/match/substitution-modal"
 import { MatchResultModal } from "@/components/match/match-result-modal"
@@ -312,7 +313,11 @@ function deriveFormation(squad: MatchPlayer[]): string {
 // referência (FIFA26/16.png): os titulares dos dois times ladeando o campo, com
 // a barra de energia que drena ao longo do jogo (mesma fonte da aba Preparo).
 // À direita a linha é espelhada (barra | nome | número), como na referência.
-function SideLineup({ team, squad, bench = [], side }: { team: Team; squad: MatchPlayer[]; bench?: MatchPlayer[]; side: "left" | "right" }) {
+function SideLineup({ team, squad, bench = [], side, notas }: {
+  team: Team; squad: MatchPlayer[]; bench?: MatchPlayer[]; side: "left" | "right"
+  /** Nota ao vivo por NOME. Ausente antes do apito — a coluna some sozinha. */
+  notas?: Map<string, { nota: number; eventos: number }>
+}) {
   /**
    * TITULARES ↔ RESERVAS (pedido).
    *
@@ -372,12 +377,25 @@ function SideLineup({ team, squad, bench = [], side }: { team: Team; squad: Matc
                 aba === "titulares" ? "text-white" : "text-white/60",
                 alinhadoADireita && "text-right",
               )}>{p.name}</span>
-              <div className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-white/10">
+              <div className="h-1 w-10 shrink-0 overflow-hidden rounded-full bg-white/10">
                 <div
                   className={cn("h-full rounded-full transition-all", cond > 70 ? "bg-emerald-500" : cond > 40 ? "bg-amber-500" : "bg-red-500")}
                   style={{ width: `${cond}%` }}
                 />
               </div>
+              {/* A NOTA AO VIVO.
+                  So aparece para quem esta EM CAMPO: reserva no banco nao tem
+                  atuacao para avaliar, e um 6,0 ao lado do nome dele sugeriria
+                  que teve. Some tambem antes do apito, quando `notas` e undefined. */}
+              {notas && aba === "titulares" ? (
+                <span
+                  className="uf-num w-7 shrink-0 text-right text-[11px] font-bold"
+                  style={{ color: corDaNota(notas.get(p.name)?.nota ?? 6) }}
+                  title="Nota nesta partida"
+                >
+                  {formatarNota(notas.get(p.name)?.nota ?? 6)}
+                </span>
+              ) : null}
             </div>
           )
         })}
@@ -1585,6 +1603,27 @@ export default function PartidaAoVivoPage() {
   // lista do lado errado — o motor guarda o MAIS NOVO NA FRENTE —, entao o radar
   // encenava o PRIMEIRO chute da partida para sempre, e o `seq` baseado no
   // indice mudava sozinho a cada evento novo, re-disparando a reacao sem parar.
+  /**
+   * AS NOTAS DOS DOIS LADOS, derivadas dos eventos que o motor ja produziu.
+   *
+   * ⚠️ `useMemo` sobre `state.events` e `state.minute` de proposito: a partida
+   * emite evento a cada poucos quadros e recalcular 22 notas em toda renderizacao
+   * faria a coluna lateral pesar mais que o campo. Enquanto nao chega evento
+   * novo, o mesmo mapa e reaproveitado.
+   *
+   * ⚠️ E `undefined` ANTES DO APITO: sem isso a lista mostraria 6,0 cravado em
+   * todo mundo na tela de escalacao, como se ja houvesse atuacao para avaliar.
+   */
+  const jogoComecou = state.phase !== "pre" && state.minute > 0
+  const notasCasa = useMemo(
+    () => (jogoComecou ? notasDoLado(homeSquad.slice(0, 11).map(p => p.name), state.events, "home", state.minute) : undefined),
+    [jogoComecou, homeSquad, state.events, state.minute],
+  )
+  const notasFora = useMemo(
+    () => (jogoComecou ? notasDoLado(awaySquad.slice(0, 11).map(p => p.name), state.events, "away", state.minute) : undefined),
+    [jogoComecou, awaySquad, state.events, state.minute],
+  )
+
   const radarEvent = useMemo(() => selecionarEventoDoRadar(state.events), [state.events])
 
   useEffect(() => {
@@ -2593,7 +2632,7 @@ export default function PartidaAoVivoPage() {
   {/* Coluna Esquerda - Escalação da Casa (ref. 16.png). As estatísticas seguem
       na aba "Estatísticas" do card central. */}
   <div className="hidden lg:flex flex-col justify-center w-52">
-  <SideLineup team={homeTeam} squad={homeSquad} bench={homeBench} side="left" />
+  <SideLineup team={homeTeam} squad={homeSquad} bench={homeBench} side="left" notas={notasCasa} />
   </div>
 
           {/* Coluna Central - Conteudo baseado na Tab ativa */}
@@ -2988,7 +3027,7 @@ export default function PartidaAoVivoPage() {
       <p className="mt-1 text-[10px] font-bold tabular-nums text-white/40">{sideFoul.minute}&apos;</p>
     </div>
   )}
-  <SideLineup team={awayTeam} squad={awaySquad} bench={awayBench} side="right" />
+  <SideLineup team={awayTeam} squad={awaySquad} bench={awayBench} side="right" notas={notasFora} />
   </div>
         </div>
 

@@ -9,6 +9,11 @@
   "serverStatusUrl": "https://ultrafoot.zyntraerp.com.br/relay",
   "news": [
     {
+      "title": "1.0.391: nota por atleta durante a partida",
+      "category": "Atualizacao",
+      "body": "Cada titular passa a mostrar a propria nota ao lado do nome durante a partida, nas duas colunas. Gol, assistencia, cartao e defesa movem o numero; o gol sofrido desconta um pouco de todo o time. A nota e leitura dos lances que o motor ja produzia — nenhum resultado muda por causa dela."
+    },
+    {
       "title": "1.0.390: o painel do atleta sempre a vista",
       "category": "Atualizacao",
       "body": "A coluna com os dados do atleta agora nasce aberta no Gerenciamento do Time e ficou mais larga, como na referencia: escolher um atleta no campo troca o conteudo dela na hora. Os cartoes da tela de elenco ganharam o corpo escuro com fio de luz no topo, e o botao principal passou a usar o gradiente medido no material de referencia."
@@ -323,9 +328,22 @@
   ],
   "changelog": [
     {
-      "version": "1.0.390",
+      "version": "1.0.391",
       "data": "2026-09-06",
       "latest": true,
+      "titulo": "Cada atleta ganha nota durante a partida",
+      "itens": [
+        "AGORA DA PARA VER QUEM ESTA INDO BEM. Durante a partida, cada titular mostra a propria nota ao lado do nome, nas duas colunas — a sua e a do adversario. Antes havia so o nome e a barrinha de condicao: o placar dizia o resultado, a narracao dizia os lances, e ninguem dizia quem estava jogando mal. Decidir uma substituicao aos 60 minutos era chute.",
+        "A nota comeca em 6,0 e se move com o que acontece: gol sobe forte, assistencia sobe, cartao desce, chance perdida desce pouco, e o time inteiro leva um desconto pequeno a cada gol sofrido. O goleiro finalmente pontua — cada defesa conta.",
+        "Ela amadurece com o jogo: nos primeiros dez minutos ainda se aproxima do valor real, em vez de cravar um numero antes de haver partida para avaliar.",
+        "NENHUM GOL MUDA POR CAUSA DISSO. A nota e LEITURA dos lances que o motor ja produzia — ela nao entra em conta nenhuma, nao altera probabilidade e nao realimenta a simulacao. Se ela sumisse, o placar de toda partida do jogo continuaria exatamente o mesmo.",
+        "E ninguem leva culpa que o jogo nao sabe atribuir: como o motor registra quem FEZ o gol e nao quem falhou, o gol sofrido desconta um pouco de todo o time em vez de punir o goleiro por um contra-ataque que nasceu de erro do meio."
+      ]
+    },
+    {
+      "version": "1.0.390",
+      "data": "2026-09-06",
+      "latest": false,
       "titulo": "O painel do atleta sai da gaveta, e as telas de elenco alcancam a referencia",
       "itens": [
         "O PAINEL DO ATLETA AGORA NASCE ABERTO no Gerenciamento do Time. Ele ja existia, completo, mas comecava fechado — ver um atributo custava um clique a mais e comparar dois atletas custava quatro. Pior: muita gente nao sabia que ele existia. Na referencia essa coluna fica sempre montada e trocar de atleta no campo troca o conteudo dela na hora. O botao de recolher continua ali para quem preferir o campo inteiro.",
