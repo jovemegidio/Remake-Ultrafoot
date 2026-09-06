@@ -9,6 +9,11 @@
   "serverStatusUrl": "https://ultrafoot.zyntraerp.com.br/relay",
   "news": [
     {
+      "title": "1.0.392: o jogo no celular volta a ser legivel",
+      "category": "Atualizacao",
+      "body": "No celular o menor texto do jogo media 5,6 pixels. Agora mede 9,4, os trechos ilegiveis cairam de 540 para 1 e os botoes ganharam area de dedo. A casca do aplicativo passou a usar as cores do jogo, e o app voltou a encontrar o servidor — ele apontava para uma maquina fora do ar desde 31 de agosto."
+    },
+    {
       "title": "1.0.391: nota por atleta durante a partida",
       "category": "Atualizacao",
       "body": "Cada titular passa a mostrar a propria nota ao lado do nome durante a partida, nas duas colunas. Gol, assistencia, cartao e defesa movem o numero; o gol sofrido desconta um pouco de todo o time. A nota e leitura dos lances que o motor ja produzia — nenhum resultado muda por causa dela."
@@ -328,9 +333,23 @@
   ],
   "changelog": [
     {
-      "version": "1.0.391",
+      "version": "1.0.392",
       "data": "2026-09-06",
       "latest": true,
+      "titulo": "O jogo no celular volta a ser legivel",
+      "itens": [
+        "NO CELULAR O JOGO ESTAVA MICROSCOPICO. O menor texto media 5,6 pixels e havia 540 trechos abaixo de 10 — praticamente ilegivel num aparelho na mao. A causa nao era o layout transbordando (rolagem lateral era zero em todas as telas): era ESCALA. O jogo roda com uma reducao de 20% que ajuda no monitor e atrapalha no telefone, somada a um estilo que ja escreve miudo.",
+        "Agora a reducao sai no aparelho de toque, cada tamanho de letra tem piso, e os botoes pequenos ganham area de dedo. Medido: menor texto de 5,6 para 9,4 pixels, trechos ilegiveis de 540 para 1, alvos pequenos demais de 212 para 21. A rolagem lateral continua zero.",
+        "O fundo animado tambem simplifica no celular — a GPU de um aparelho mediano nao compoe quatro camadas de gradiente em tela cheia com a mesma folga de um PC.",
+        "A CASCA DO APP PASSOU A USAR AS CORES DO JOGO. A tela de carregamento tinha paleta propria e o jogo surgia noutra: um piscar de identidade trocada no primeiro segundo de uso.",
+        "E o app voltou a encontrar o servidor: ele apontava para uma maquina que saiu do ar em 31 de agosto, e quem tinha o aplicativo instalado abria e nao carregava nada.",
+        "Nada disso alcanca o computador: as regras valem so para aparelho de toque. Nenhuma regra, calculo ou save foi alterado."
+      ]
+    },
+    {
+      "version": "1.0.391",
+      "data": "2026-09-06",
+      "latest": false,
       "titulo": "Cada atleta ganha nota durante a partida",
       "itens": [
         "AGORA DA PARA VER QUEM ESTA INDO BEM. Durante a partida, cada titular mostra a propria nota ao lado do nome, nas duas colunas — a sua e a do adversario. Antes havia so o nome e a barrinha de condicao: o placar dizia o resultado, a narracao dizia os lances, e ninguem dizia quem estava jogando mal. Decidir uma substituicao aos 60 minutos era chute.",

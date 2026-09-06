@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.391",
+  "version": "1.0.392",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -120,6 +120,7 @@
     "build:qa": "cross-env TAURI_BUILD=1 npm run build",
     "qa:modal": "node scripts/qa-modal-keyboard.mjs",
     "qa:visual": "node scripts/qa-visual.mjs",
+    "qa:celular": "node scripts/qa-celular.mjs",
     "qa:matriz": "node scripts/gerar-matriz-de-paridade.mjs",
     "qa:navigation": "tsx scripts/qa-navigation.ts",
     "preqa:regras": "tsx scripts/test-real-clubs-stage1-lower-europe.ts && tsx scripts/test-real-clubs-stage3-czech.ts && tsx scripts/test-official-european-participants-2026.ts && tsx scripts/test-uefa-expansion.ts && tsx scripts/test-performance-center.ts && tsx scripts/test-squad-dynamics.ts && tsx scripts/test-ai-club-social.ts && tsx scripts/test-copas-mundiais.ts && tsx scripts/test-reserve-promotion.ts",

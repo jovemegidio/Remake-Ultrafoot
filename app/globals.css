@@ -1497,6 +1497,102 @@ html[data-performance="economy"] .shadow-xl {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   O JOGO NUM CELULAR — o que o APK de fato mostra
+
+   O app mobile e um WebView desta mesma versao web. Entao tudo o que estiver
+   errado aqui esta errado no telefone de quem instalou.
+
+   ⚠️ MEDIDO ANTES DE ESCREVER, e a hipotese obvia estava ERRADA (de novo). Num
+   Pixel 7 o jogo NAO transborda em lugar nenhum — rolagem lateral zero nas dez
+   telas medidas. O defeito e ESCALA:
+
+     menor texto do jogo ....... 5,6 px
+     trechos abaixo de 10 px ... 540
+     alvos menores que o dedo .. 212
+
+   A causa e a soma de duas coisas boas no monitor e pessimas no telefone:
+   `--game-view-scale: 0.8` encolhe o jogo inteiro mais 20%, e o estilo da casa
+   escreve miudo (697 usos de `text-[10px]`, 422 de `[11px]`, 147 de `[9px]`).
+   Sob o zoom, `text-[9px]` chega ao olho como 7,2 px.
+
+   ⚠️ ISTO JA FOI CONSERTADO UMA VEZ, EM 13/08/2026, E SE PERDEU. A correcao
+   morava numa arvore que divergiu; a arvore viva de hoje nunca a recebeu, e o
+   numero voltou identico — 5,6 px. Por isso agora ela vem com portao:
+   `npm run qa:celular` mede e reprova.
+
+   `(hover: none)` e o criterio da casa (ja havia um bloco assim acima, para
+   controle escondido atras de hover) e casa exatamente com aparelho de toque.
+   O `max-width` impede que um monitor com tela sensivel entre aqui.
+   NADA disto alcanca o PC nem o Tauri de desktop.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (hover: none) and (max-width: 900px) {
+  /* 1. O ZOOM SAI. No monitor ele ganha area; no telefone so encolhe o que ja
+        e pequeno.
+        ⚠️ SOBRESCREVER A VARIAVEL NAO BASTOU, e perdi tempo procurando o motivo.
+        `:root { --game-view-scale: 1 }` aqui dentro NAO mudava o valor computado
+        (medido: continuava `.8`), embora as outras regras deste mesmo bloco
+        aplicassem — o `html { font-size }` logo abaixo pegou. Em vez de seguir
+        investigando a cascata da variavel, o `zoom` e escrito DIRETO no `body`:
+        e o valor que de fato importa, e nao depende de resolucao de variavel.
+        A variavel tambem e reescrita, para as classes `.h-screen`/`.w-screen`
+        (que dividem por ela) continuarem coerentes com o zoom real. */
+  :root {
+    --game-view-scale: 1;
+  }
+
+  body {
+    zoom: 1;
+    width: 100vw;
+    min-height: 100vh;
+  }
+
+  /* 2. PISO DE LEGIBILIDADE. Nao adianta so tirar o zoom: `text-[8px]` continua
+        ilegivel a 8px. Cada degrau sobe para 10-11px, que e o minimo confortavel
+        num aparelho na mao.
+        `!important` aqui e deliberado e e a unica forma de alcancar as 1.317
+        ocorrencias dessas classes sem editar 300 arquivos — mesma escolha que o
+        bloco de alto contraste ja fazia. */
+  .text-\[7px\], .text-\[8px\], .text-\[9px\] { font-size: 10px !important; }
+  .text-\[10px\] { font-size: 11px !important; }
+  .text-\[11px\] { font-size: 11.5px !important; }
+
+  /* A escala tipografica da raiz tambem sobe: o jogo inteiro e em `rem`, entao
+     isto levanta o corpo do texto junto sem tocar em nenhuma tela. */
+  html {
+    font-size: calc(15px * var(--a11y-font-scale, 1));
+  }
+
+  /* 3. ALVO DE DEDO. 40px e o minimo de toque confortavel; os icones de 24, 28 e
+        32px do jogo ficam abaixo disso. Cresce a AREA sem crescer o desenho:
+        `min-height`/`min-width` nao deformam o icone dentro. */
+  button, a[href], [role="button"], input, select, summary {
+    min-height: 40px;
+  }
+  .h-6.w-6, .h-7.w-7, .h-8.w-8 {
+    min-height: 40px;
+    min-width: 40px;
+  }
+
+  /* 4. O FUNDO CUSTA MAIS NO TELEFONE. A GPU de um aparelho mediano compoe
+        quatro camadas de gradiente em tela cheia com folga menor que a de um PC,
+        e o piso em perspectiva e a mais cara delas. Ficam a base, uma mancha e a
+        vinheta — o suficiente para nao virar um retangulo chapado. */
+  .uf-atmos__piso,
+  .uf-atmos__ruido,
+  .uf-atmos__faixa,
+  .uf-atmos__luz--violeta {
+    display: none;
+  }
+
+  /* 5. Margem lateral de 13% e proporcao de MONITOR. Num aparelho de 412px ela
+        come 107px dos dois lados e sobra menos da metade da tela para o jogo. */
+  .uf-margem-segura {
+    padding-inline: 12px;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    CAMPOS NUMERICOS — a setinha nativa nao combina com tema escuro.
  
