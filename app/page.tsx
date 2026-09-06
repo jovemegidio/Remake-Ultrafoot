@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { EstadoDeCarregamento } from "@/components/estados-da-tela"
 import { LinkLeve as Link } from "@/components/link-leve"
 import Image from "next/image"
 import {
@@ -255,10 +256,7 @@ export default function DashboardPage() {
   if (!hydrated || !userTeam) {
     return (
       <div className="h-screen bg-transparent flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
-          <span className="text-white/40 text-sm">{t.common.loading}</span>
-        </div>
+        <EstadoDeCarregamento mensagem={t.common.loading} />
       </div>
     )
   }

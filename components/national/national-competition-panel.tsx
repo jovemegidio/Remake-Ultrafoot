@@ -209,7 +209,7 @@ export function NationalCompetitionList({
 }) {
   if (competitions.length === 0) {
     return (
-      <p className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-6 text-center text-sm text-white/40">
+      <p className="uf-card p-6 text-center text-sm text-white/40">
         A confederação desta seleção ainda não tem competições cadastradas.
       </p>
     )

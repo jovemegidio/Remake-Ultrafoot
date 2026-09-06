@@ -71,7 +71,7 @@ export function NationalFriendlies({ nationalTeam }: { nationalTeam: NationalTea
   return (
     <div className="space-y-4">
       {/* Contexto: com que time você entra em campo */}
-      <section className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5">
+      <section className="flex flex-wrap items-center gap-x-8 gap-y-4 uf-card p-5">
         <div>
           <p className="text-[10px] uppercase tracking-wide text-white/40">Força da convocação</p>
           <p className={cn("text-2xl font-bold tabular-nums", strengthTone(forcaConvocada))}>{forcaConvocada}</p>
@@ -96,7 +96,7 @@ export function NationalFriendlies({ nationalTeam }: { nationalTeam: NationalTea
 
       {/* Histórico */}
       {nationalFriendlies.length > 0 && (
-        <section className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
+        <section className="uf-card p-4">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/60">Últimos resultados</h3>
           <div className="space-y-1.5">
             {nationalFriendlies.map((f, i) => {
@@ -122,7 +122,7 @@ export function NationalFriendlies({ nationalTeam }: { nationalTeam: NationalTea
       )}
 
       {/* Escolha do adversário */}
-      <section className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
+      <section className="uf-card p-4">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/60">Marcar amistoso</h3>
 
         <div className="mb-3 flex flex-wrap items-center gap-2">

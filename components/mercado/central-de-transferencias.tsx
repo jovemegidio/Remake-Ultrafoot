@@ -125,7 +125,7 @@ export function CentralDeTransferencias({
               detalhe: resumo.clubeAtivo ? `${resumo.clubeAtivo.negocios} contratações` : undefined,
             },
           ].map(chip => (
-            <div key={chip.label} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/80 p-3 backdrop-blur-sm">
+            <div key={chip.label} className="uf-card p-3">
               <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-white/40">
                 <span className="text-[var(--brand)]">{chip.icon}</span>
                 {chip.label}
@@ -164,7 +164,7 @@ export function CentralDeTransferencias({
       {/* O feed */}
       <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pr-1">
         {lista.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/70 p-10 text-center backdrop-blur-sm">
+          <div className="flex h-full flex-col items-center justify-center uf-card p-10 text-center">
             <Radio className="h-12 w-12 text-white/10" />
             <p className="mt-4 text-white/60">
               {diario.length === 0
@@ -185,7 +185,7 @@ export function CentralDeTransferencias({
               return (
                 <div
                   key={`${n.atleta}-${n.para}-${n.temporada ?? 0}-${n.semana ?? 0}-${i}`}
-                  className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-[var(--uf-bg-surface)]/75 px-3 py-2.5 backdrop-blur-sm transition-colors hover:border-white/[0.12] hover:bg-[var(--uf-bg-surface)]/95"
+                  className="flex items-center gap-3 uf-card uf-card-interactive px-3 py-2.5"
                 >
                   <PlayerAvatar name={n.atleta} teamColor={destino.cor1} fileKey={origem.file_key || destino.file_key} position={n.pos} size="sm" />
                   <div className="min-w-0 flex-[1.2]">

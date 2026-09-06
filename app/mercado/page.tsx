@@ -1515,7 +1515,7 @@ export default function MercadoPage() {
                 telefônica, e ainda empurrava os filtros para fora da tela. Sem
                 busca nem filtro, o lugar mostra o convite abaixo. */}
             {!buscaAtiva ? (
-              <div className="mt-6 flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/70 p-8 text-center backdrop-blur-sm">
+              <div className="mt-6 flex min-h-[280px] flex-col items-center justify-center uf-card p-8 text-center">
                 <Search className="h-12 w-12 text-white/10" />
                 <h3 className="mt-4 text-lg text-white/55">{t.market.procure_um_atleta}</h3>
                 <p className="mt-2 max-w-md text-sm text-white/35">
@@ -1530,7 +1530,7 @@ export default function MercadoPage() {
                ficha nao "foge" para cima enquanto se procura na lista). */
             <div className="mt-6 grid h-[560px] grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="scrollbar-thin space-y-4 overflow-y-auto pr-1">
-                <div className="sticky top-0 z-10 flex items-center justify-between rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/95 px-3 py-2 backdrop-blur-sm">
+                <div className="sticky top-0 z-10 flex items-center justify-between uf-card px-3 py-2">
                   <span className="text-xs text-white/45">
                     {filteredPlayers.length.toLocaleString("pt-BR")} atletas · página {marketPage + 1} de {marketPageCount}
                   </span>
@@ -1553,7 +1553,7 @@ export default function MercadoPage() {
                 </div>
                 {Object.entries(groupedPlayers).map(([group, players]) => (
                   players.length > 0 && (
-                    <div key={group} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/75 p-4 backdrop-blur-sm">
+                    <div key={group} className="uf-card p-4">
                       <div className="mb-3 flex items-center justify-between">
                         <h3 className="font-semibold text-white">{group}</h3>
                         <span className="text-xs text-white/40">{t.market.readyToPlay}</span>
@@ -1574,7 +1574,7 @@ export default function MercadoPage() {
                   )
                 ))}
                 {filteredPlayers.length === 0 && (
-                  <div className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/75 p-8 text-center backdrop-blur-sm">
+                  <div className="uf-card p-8 text-center">
                     <p className="text-white/50">{t.market.nenhum_atleta_com_esses_filtros}</p>
                     <button onClick={clearAllFilters} className="mt-3 text-sm text-[var(--brand)] hover:underline">
                       Limpar filtros
@@ -1595,7 +1595,7 @@ export default function MercadoPage() {
                     irPara={detailNav.irPara}
                   />
                 ) : (
-                  <div className="flex h-full min-h-[320px] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/75 p-8 text-center backdrop-blur-sm">
+                  <div className="flex h-full min-h-[320px] flex-col items-center justify-center uf-card p-8 text-center">
                     <User className="mb-4 h-20 w-20 text-white/10" />
                     <h3 className="text-lg text-white/40">{t.market.selectPlayer}</h3>
                     <p className="mt-2 text-sm text-white/30">{t.market.clickForDetails}</p>

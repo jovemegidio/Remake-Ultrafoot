@@ -1767,6 +1767,20 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
 
   /* O cartao padrao. Escuro translucido, borda fina, canto seco, sombra
      profunda e difusa. */
+  /* ⚠️ DIGITO TABULAR NAS SUPERFICIES DE DADO, e so nelas.
+     Um cartao de atleta e uma linha de tabela sao colunas de numeros que
+     precisam alinhar: sem `tabular-nums` o "1" e mais estreito que o "8" e a
+     coluna de overall, de valor e de idade fica serrilhada — e pior, o numero
+     DANCA quando muda (99 -> 100, R$ 9 mi -> R$ 11 mi).
+     Nao vai no `body` de proposito: em texto corrido o digito tabular abre
+     buracos entre as letras, e o jogo tem muito texto de dialogo e de imprensa. */
+  .uf-card,
+  .stat-card,
+  .uf-panel,
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
   .uf-card {
     position: relative;
     border-radius: var(--uf-radius-lg);
@@ -2180,6 +2194,41 @@ html[data-display-mode="tv"][data-input-mode="gamepad"] :is(button, a, [role="bu
     color: var(--uf-text-muted);
   }
 
+  /* Peças dos estados de tela (components/estados-da-tela.tsx) e do retrato do
+     atleta. Elas viram CLASSE, e nao lista de utilitarios dentro de `cn()`, por
+     dois motivos: a mesma sopa de classes estava a caminho de se repetir em
+     cada estado novo, e o portao de traducao conta lista de classe em `cn()`
+     como se fosse texto de tela — um falso positivo que empurra a catraca para
+     cima sem nenhuma frase nova ter aparecido. */
+  .uf-estado-cheio {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 0%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .uf-esqueleto-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* O retrato dentro da moldura do avatar. `object-contain` de proposito: as
+     fotos vem de fontes diferentes e recortar no `cover` decapitaria parte
+     delas. */
+  .uf-foto-atleta {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    object-position: center;
+    transition: opacity var(--duration-base) var(--ease-standard);
+  }
+
   /* Esqueleto de carregamento. O brilho atravessa em 1,4s. */
   @keyframes uf-esqueleto {
     from { background-position: -180% 0; }
@@ -2288,6 +2337,105 @@ html[data-performance-mode] .uf-stagger > * {
   }
   .uf-slide-in {
     animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTROLES DE FORMULARIO — tirar a cara de navegador
+
+   ⚠️ ERAM 80 `<select>` E 120 `<input>` SEM ESTILO NENHUM (dois tinham
+   `appearance-none`; o resto era controle cru do Windows). Num painel de
+   administracao isso passa; num jogo, e o unico lugar da tela que denuncia que
+   aquilo e uma pagina web — a seta cinza do combo do sistema operacional ao
+   lado de cartoes escuros e tipografia de estadio.
+
+   ⚠️ O BLOCO INTEIRO VIVE EM `@layer base`, E ISSO NAO E ARRUMACAO.
+   Na primeira versao ele ficou FORA de camada — e CSS sem camada vence CSS em
+   camada por regra da cascata, INDEPENDENTE de especificidade. Resultado: o
+   `padding: 6px 10px` daqui derrotou o `pl-12` do Tailwind no campo de busca do
+   mercado, e a lupa passou a ficar POR CIMA do texto. `:where()` sozinho nao
+   salvava, porque o problema nunca foi especificidade. Em `base`, o Tailwind
+   (que vive em `utilities`) ganha sempre — que e o que se quer de um piso.
+
+   O `:where()` continua, como segunda rede: dentro da mesma camada ele mantem a
+   especificidade em zero, entao ate um seletor de elemento simples de outra
+   folha vence. Foi a licao do `.uf-eyebrow`, que chumbou `color` e apagou a cor
+   de marca de quem a definia por fora.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :where(select, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea) {
+    background-color: var(--color-bg-1);
+    color: var(--uf-text);
+    border: 1px solid var(--uf-line-strong);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    transition:
+      border-color var(--duration-fast) var(--ease-standard),
+      background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  :where(select, input, textarea)::placeholder {
+    color: var(--uf-text-faint);
+  }
+
+  :where(select, input, textarea):hover:not(:disabled) {
+    border-color: color-mix(in oklab, var(--uf-cyan) 30%, transparent);
+  }
+
+  /* O anel de foco global ja desenha o contorno; aqui so a borda acompanha. */
+  :where(select, input, textarea):focus-visible {
+    border-color: color-mix(in oklab, var(--uf-cyan) 60%, transparent);
+  }
+
+  :where(select, input, textarea):disabled {
+    opacity: var(--opacidade-desabilitado);
+    cursor: not-allowed;
+  }
+
+  /* A SETA DO COMBO.
+     `appearance: none` apaga a seta do sistema; sem repor uma, o campo vira uma
+     caixa muda e ninguem sabe que ela abre. O chevron vai como data URI para nao
+     custar requisicao nem depender de biblioteca de icone dentro do CSS. */
+  :where(select) {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 28px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2399AAAD' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+  }
+
+  /* A LISTA ABERTA do combo e desenhada pelo sistema operacional, nao pelo CSS da
+     pagina. Isto e o unico controle que o Chromium/WebView2 da sobre ela — sem
+     estes dois, a lista abre BRANCA sobre um jogo inteiro escuro. */
+  :where(select) option {
+    background-color: var(--color-bg-2);
+    color: var(--uf-text);
+  }
+
+  /* Caixa, radio e faixa: `accent-color` e a forma suportada de tinta-los sem
+     reconstruir o controle (e reconstruir custaria a acessibilidade que eles ja
+     trazem de graca). */
+  :where(input[type="checkbox"], input[type="radio"], input[type="range"]) {
+    accent-color: var(--uf-cyan);
+    cursor: pointer;
+  }
+
+  /* O `x` do campo de busca no WebKit some sobre fundo escuro; some de vez, e o
+     jogo oferece o proprio botao de limpar onde faz sentido. */
+  :where(input[type="search"])::-webkit-search-cancel-button {
+    appearance: none;
+  }
+
+  /* Preenchimento automatico do navegador pinta o campo de amarelo claro. Dentro
+     de um jogo escuro isso e um retangulo gritante no meio da tela. */
+  :where(input):-webkit-autofill {
+    -webkit-text-fill-color: var(--uf-text);
+    -webkit-box-shadow: 0 0 0 1000px var(--color-bg-1) inset;
   }
 }
 

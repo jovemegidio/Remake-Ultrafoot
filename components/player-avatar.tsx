@@ -152,6 +152,12 @@ function PlayerAvatarBase({
   semFundo = false,
 }: PlayerAvatarProps & { rounded: "xl" | "full" }) {
   const [imgFailed, setImgFailed] = useState(false)
+  // ⚠️ A FOTO APARECIA DE ESTALO, e numa lista de 30 atletas isso vira um
+  // pipoco de retratos conforme cada arquivo chega. Nao e trocar de layout (a
+  // caixa ja tem tamanho fixo, entao nunca houve deslocamento): e o CONTRASTE
+  // que salta. Com o esqueleto por baixo e um fade curto por cima, a lista
+  // preenche em vez de piscar.
+  const [carregada, setCarregada] = useState(false)
   const [photoIndex, setPhotoIndex] = useState(0)
   // 0 = URL como veio; 1 = a outra forma (caminho simples <-> game-asset://).
   const [tentativa, setTentativa] = useState<0 | 1>(0)
@@ -195,6 +201,9 @@ function PlayerAvatarBase({
   useEffect(() => {
     setImgFailed(false)
     setTentativa(0)
+    // Sem isto, o retrato do atleta ANTERIOR ficaria marcado como carregado e o
+    // proximo entraria sem fade — pior, apareceria por cima do esqueleto errado.
+    setCarregada(false)
   }, [photoBases])
 
   // ⚠️ NAO CONFIE NA URL DA PRIMEIRA TENTATIVA.
@@ -234,11 +243,25 @@ function PlayerAvatarBase({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.24),transparent_38%)]" />
       )}
 
+      {/* Esqueleto: some no instante em que a foto pinta. Fica ATRAS dela
+          (mesma caixa, sem z-index proprio) para nao haver salto de tamanho. */}
+      {showPhoto && !carregada && (
+        <div className="uf-skeleton absolute inset-0" aria-hidden="true" />
+      )}
+
       {showPhoto ? (
         <img
           src={photoUrl}
           alt={name}
-          className="absolute inset-0 h-full w-full object-contain object-center"
+          // `lazy` + `async`: uma lista de elenco ou de mercado desenha dezenas
+          // de retratos de uma vez, e sem isto o navegador decodifica todos no
+          // fio principal — e a rolagem trava exatamente onde ha mais atleta.
+          loading="lazy"
+          decoding="async"
+          // Arrastar a foto para fora do card e gesto de navegador, nao de jogo.
+          draggable={false}
+          className={cn("uf-foto-atleta", carregada ? "opacity-100" : "opacity-0")}
+          onLoad={() => setCarregada(true)}
           onError={() => {
             // Primeira falha: tenta a outra forma da URL antes de desistir.
             if (tentativa === 0 && alternativa) setTentativa(1)

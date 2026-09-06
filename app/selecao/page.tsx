@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { EstadoDeCarregamento } from "@/components/estados-da-tela"
 import { LinkLeve as Link } from "@/components/link-leve"
 import {
   Flag,
@@ -214,8 +215,8 @@ export default function SelecaoPage() {
 
   if (!hydrated || !teamHydrated) {
     return (
-      <div className="h-screen bg-transparent flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
+      <div className="flex h-screen bg-transparent">
+        <EstadoDeCarregamento />
       </div>
     )
   }
@@ -464,7 +465,7 @@ export default function SelecaoPage() {
                 e elegiveis) tem tela propria. O hub mostra so o estado da lista. */}
             <Link
               href="/selecao/convocacao"
-              className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5 transition-colors hover:border-[var(--brand)]/30 hover:bg-white/[0.02]"
+              className="group flex items-center gap-3 uf-card uf-card-interactive p-5"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand)]/10">
                 <Users className="h-5 w-5 text-[var(--brand)]" />

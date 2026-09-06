@@ -266,7 +266,7 @@ export default function NotificacoesPage() {
                 <p className="text-sm">Nenhum recado novo — a conversa acima está sempre disponível.</p>
               </div>
             ) : mensagensDiretoria.map(msg => msg && (
-              <article key={msg.id} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5">
+              <article key={msg.id} className="uf-card p-5">
                 <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-amber-400/80">
                   <Building2 className="h-3.5 w-3.5" />
                   {msg.from}
@@ -331,7 +331,7 @@ export default function NotificacoesPage() {
                 <p className="text-sm">Vestiário tranquilo — ninguém pediu conversa. Chame alguém acima.</p>
               </div>
             ) : eventosVestiario.map(ev => (
-              <article key={ev.id} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5">
+              <article key={ev.id} className="uf-card p-5">
                 <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--brand)]/80">
                   <MessagesSquare className="h-3.5 w-3.5" />
                   Vestiário

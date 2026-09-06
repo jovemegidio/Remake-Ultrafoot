@@ -108,7 +108,7 @@ export default function ComissaoPage() {
               const membro = contratados.get(cargo)
               const candidatos = staffCandidatesForSeason(currentSeason, cargo)
               return (
-                <div key={cargo} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
+                <div key={cargo} className="uf-card p-4">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-sm font-bold text-white">{STAFF_ROLE_LABELS[cargo]}</h3>
                     {membro && (

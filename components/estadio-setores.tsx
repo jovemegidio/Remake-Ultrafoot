@@ -92,7 +92,7 @@ export function EstadioSetores({
   }
 
   return (
-    <section className="mx-4 mt-4 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
+    <section className="mx-4 mt-4 uf-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 font-bold text-white">

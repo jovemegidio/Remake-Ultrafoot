@@ -283,7 +283,7 @@ export default function CentralPage() {
                   use-game-manager) e alimentava o quadro de sócios — mas nunca
                   aparecia em tela nenhuma. Aqui ele finalmente é visível, ao
                   lado da moral do elenco, que é o outro medidor de humor. */}
-              <div className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
+              <div className="uf-card p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <Users className="h-4 w-4" style={{ color: torcida.cor }} />

@@ -144,7 +144,7 @@ export function NationalSquadManager({ nationalTeam }: { nationalTeam: NationalT
   return (
     <div className="space-y-4">
       {/* Resumo: o que a lista vale e como ela está distribuída */}
-      <section className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-5">
+      <section className="uf-card p-5">
         <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
           <div>
             <p className="text-[10px] uppercase tracking-wide text-white/40">Convocados</p>
@@ -250,7 +250,7 @@ export function NationalSquadManager({ nationalTeam }: { nationalTeam: NationalT
           const doSetor = squad.filter(p => nationalSector(p.pos) === s)
           if (doSetor.length === 0) return null
           return (
-            <div key={s} className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
+            <div key={s} className="uf-card p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Users className="h-3.5 w-3.5 text-[var(--brand)]" />
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60">
@@ -301,7 +301,7 @@ export function NationalSquadManager({ nationalTeam }: { nationalTeam: NationalT
       </section>
 
       {/* Elegíveis fora da lista */}
-      <section className="rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
+      <section className="uf-card p-4">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/60">
           Elegíveis fora da convocação
         </h3>

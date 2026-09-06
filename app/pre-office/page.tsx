@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { EstadoDeCarregamento } from "@/components/estados-da-tela"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -461,8 +462,8 @@ export default function PreOfficePage() {
 
   if (!hydrated || !userTeam) {
     return (
-      <div className="h-screen bg-transparent flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
+      <div className="flex h-screen bg-transparent">
+        <EstadoDeCarregamento />
       </div>
     )
   }

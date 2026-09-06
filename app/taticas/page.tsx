@@ -332,7 +332,7 @@ export default function TaticasPage() {
         {/* TÁTICAS SALVAS. O jogo já salvava ESCALAÇÃO (os 11 nomes); o conjunto
             tático — mentalidade, marcação, linha, impedimento — tinha de ser
             refeito na mão a cada troca de contexto. Aqui vira preset. */}
-        <div className="mb-4 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
+        <div className="mb-4 uf-card p-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-white/50">Táticas salvas</span>
             {taticasSalvas.length === 0 && (
@@ -368,7 +368,7 @@ export default function TaticasPage() {
         {/* EFEITO DO PLANO. Ate a 1.0.277 estes controles nao mudavam nada no
             placar; agora mudam, e o jogador precisa VER isso — senao a mudanca
             e invisivel e vale tanto quanto nao existir. */}
-        <div className="mb-4 rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)] p-4">
+        <div className="mb-4 uf-card p-4">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-white/50">
               Efeito do plano

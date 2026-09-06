@@ -176,7 +176,7 @@ export function RedeMundial({
 
       <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pr-1">
         {lista.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[var(--uf-bg-surface)]/70 p-10 text-center backdrop-blur-sm">
+          <div className="flex h-full flex-col items-center justify-center uf-card p-10 text-center">
             <Users className="h-12 w-12 text-white/10" />
             <p className="mt-4 text-white/60">
               {aba === "observados"
@@ -199,7 +199,7 @@ export function RedeMundial({
               return (
                 <div
                   key={p.id}
-                  className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-[var(--uf-bg-surface)]/75 px-3 py-2.5 backdrop-blur-sm transition-colors hover:border-white/[0.12] hover:bg-[var(--uf-bg-surface)]/95"
+                  className="flex items-center gap-3 uf-card uf-card-interactive px-3 py-2.5"
                 >
                   <PlayerAvatar name={p.name} teamColor={p.team?.cor1} fileKey={p.team?.file_key} position={p.position} size="sm" />
 
