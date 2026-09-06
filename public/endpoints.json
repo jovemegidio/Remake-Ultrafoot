@@ -1,9 +1,9 @@
 {
   "_leia": "Ponteiro de endereços do Ultrafoot Launcher. O launcher instalado lê ESTE arquivo (via raw.githubusercontent, branch main) a cada abertura e passa a usar os endereços daqui. Se a VPS trocar de IP ou de domínio, basta editar este arquivo e commitar: todos os launchers já instalados encontram o servidor novo sozinhos, sem ninguém precisar reinstalar nada. Campo omitido = mantém o valor compilado no launcher.",
-  "_atualizado": "2026-07-30",
-  "latest": "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json",
+  "_atualizado": "2026-09-05",
+  "latest": "https://ultrafoot.zyntraerp.com.br/downloads/latest.json",
   "latestReserva": "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json",
-  "launcher": "https://ultrafoot.179-198-103-30.sslip.io/downloads/launcher.json",
+  "launcher": "https://ultrafoot.zyntraerp.com.br/downloads/launcher.json",
   "launcherReserva": "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/launcher.json",
   "config": "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/launcher-config.json",
   "releasesApi": "https://api.github.com/repos/jovemegidio/Ultrafoot26/releases?per_page=30"
