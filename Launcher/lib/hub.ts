@@ -8,7 +8,7 @@
 
 import { sessaoSalva } from "@/lib/auth"
 
-const BASE = "https://ultrafoot.179-198-103-30.sslip.io/auth"
+const BASE = "https://ultrafoot.zyntraerp.com.br/auth"
 
 export interface JogadorOnline {
   conta_id: number

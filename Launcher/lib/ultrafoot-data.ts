@@ -14,7 +14,7 @@ import type { Game, Release, ChangelogEntry, News } from "@/lib/tipos-do-catalog
  */
 
 const GITHUB = "https://github.com/jovemegidio/Ultrafoot26/releases/download"
-const VPS_DOWNLOADS = "https://ultrafoot.179-198-103-30.sslip.io/downloads"
+const VPS_DOWNLOADS = "https://ultrafoot.zyntraerp.com.br/downloads"
 
 /** Monta a URL real do setup.exe seguindo o padrão dos releases publicados. */
 function setupUrl(version: string): string {

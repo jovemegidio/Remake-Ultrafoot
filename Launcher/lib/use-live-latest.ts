@@ -37,7 +37,7 @@ export function useLiveLatest(enabled = true): LiveLatest | null {
     // estatica embutida e ninguem veria atualizacao. Os dois publicam o mesmo
     // formato de latest.json.
     const FONTES = [
-      "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json",
+      "https://ultrafoot.zyntraerp.com.br/downloads/latest.json",
       "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json",
     ]
 

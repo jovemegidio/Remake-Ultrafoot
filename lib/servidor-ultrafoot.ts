@@ -25,11 +25,17 @@
 /**
  * Host do servidor proprio, compilado na build.
  *
- * ⚠️ TROCOU O IP? Mude AQUI e em `public/endpoints.json` — os dois, porque o
- * jogo le esta constante e o launcher le o ponteiro. O portao
+ * ⚠️ TROCOU O ENDERECO? Mude AQUI e em `public/endpoints.json` — os dois,
+ * porque o jogo le esta constante e o launcher le o ponteiro. O portao
  * `qa:endereco-unico` reprova qualquer copia nova espalhada pelo codigo.
+ *
+ * 05/09/2026: saiu de `ultrafoot.179-198-103-30.sslip.io` para
+ * `ultrafoot.zyntraerp.com.br`, e isso RESOLVE o defeito descrito no cabecalho
+ * deste arquivo. O sslip.io codifica o IP no proprio nome: servidor novo
+ * significava dominio morto, sem DNS para reapontar e sem ninguem alcancar o
+ * servico. Agora trocar de maquina e um registro A — sem build nova.
  */
-export const SERVIDOR_ULTRAFOOT = "https://ultrafoot.179-198-103-30.sslip.io"
+export const SERVIDOR_ULTRAFOOT = "https://ultrafoot.zyntraerp.com.br"
 
 /** Autenticacao, contas e licenca. */
 export const SERVIDOR_AUTH = `${SERVIDOR_ULTRAFOOT}/auth`

@@ -12,7 +12,7 @@
 
 import { invoke } from "@tauri-apps/api/core"
 
-const BASE = "https://ultrafoot.179-198-103-30.sslip.io/auth"
+const BASE = "https://ultrafoot.zyntraerp.com.br/auth"
 const SESSAO_KEY = "ultrafoot-launcher:sessao"
 
 export interface Sessao {

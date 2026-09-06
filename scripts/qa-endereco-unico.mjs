@@ -28,8 +28,17 @@ import path from "node:path"
 /** A fonte unica. Aqui o endereco PODE aparecer. */
 const FONTE = path.normalize("lib/servidor-ultrafoot.ts")
 
-/** Padrao do endereco proprio, sem depender do IP atual. */
-const ENDERECO = /ultrafoot\.[\d-]+\.sslip\.io/
+/**
+ * Padrao do endereco proprio.
+ *
+ * ⚠️ COBRE OS DOIS DOMINIOS, e isso importa mais do que parece. O padrao antigo
+ * era so `ultrafoot.<ip>.sslip.io`; quando o servidor mudou para
+ * `ultrafoot.zyntraerp.com.br` (05/09/2026) esta regex deixaria de casar com
+ * qualquer coisa e o portao passaria a aprovar TUDO — a protecao sumiria em
+ * silencio exatamente na versao em que o endereco mudou, que e quando ela mais
+ * vale. O sslip.io continua na lista para pegar copia velha esquecida.
+ */
+const ENDERECO = /ultrafoot\.(?:[\d-]+\.sslip\.io|zyntraerp\.com\.br)/
 
 function arquivos(dir, achados = []) {
   for (const e of readdirSync(dir)) {

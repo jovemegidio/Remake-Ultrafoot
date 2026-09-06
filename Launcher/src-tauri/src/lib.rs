@@ -26,11 +26,11 @@ mod patch; // atualização por arquivo (delta) e verificação de integridade
 mod requisitos; // WebView2, VC++, .NET, DirectX: audita e instala o que falta
 
 const LATEST_JSON_URL: &str =
-    "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json";
+    "https://ultrafoot.zyntraerp.com.br/downloads/latest.json";
 
 // Endpoint estável do PRÓPRIO launcher (release rolling "launcher").
 const LAUNCHER_UPDATE_URL: &str =
-    "https://ultrafoot.179-198-103-30.sslip.io/downloads/launcher.json";
+    "https://ultrafoot.zyntraerp.com.br/downloads/launcher.json";
 
 // ─── Reserva no GitHub ───────────────────────────────────────────────────────
 //
