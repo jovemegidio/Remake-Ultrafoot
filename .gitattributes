@@ -1,0 +1,31 @@
+# FIM DE LINHA DOS ARQUIVOS QUE RODAM NO LINUX.
+#
+# ⚠️ POR QUE ISTO EXISTE. Este repositorio tem `core.autocrlf = true`, entao o
+# git entrega os arquivos com CRLF no Windows. Para codigo isso e inofensivo —
+# para um script de shell, nao: a primeira linha vira
+#
+#     #!/usr/bin/env bash\r
+#
+# e o Linux procura um interpretador chamado `bash\r`, que nao existe. O erro que
+# aparece e "bad interpreter: no such file or directory" apontando para um
+# arquivo que esta claramente ali, o que manda qualquer um investigar o lugar
+# errado.
+#
+# Encontrado em 07/09/2026: quatro scripts ja estavam em CRLF no disco, entre
+# eles `build-linux.sh` — o que compila justamente para Linux.
+#
+# O mesmo vale para unit de systemd: o systemd le o `\r` como parte do valor, e
+# um `ExecStart=/usr/local/bin/algo\r` falha dizendo que o binario nao existe.
+#
+# ⚠️ ESCOPO ESTREITO DE PROPOSITO. Nao ha regra para `*.py` nem `*.ts` aqui: os
+# arquivos existentes estao em CRLF, e normalizar tudo de uma vez geraria um diff
+# do repositorio INTEIRO — que e exatamente o problema descrito na memoria do
+# projeto sobre fim de linha misto. Os `.py` do servidor sao convertidos para LF
+# na hora do deploy, que resolve sem mexer no historico.
+
+*.sh            text eol=lf
+*.service       text eol=lf
+*.timer         text eol=lf
+
+# Scripts sem extensao que vao para /usr/local/bin no servidor.
+scripts/servidor-backup/ultrafoot-backup text eol=lf

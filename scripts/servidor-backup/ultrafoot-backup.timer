@@ -1,0 +1,13 @@
+[Unit]
+Description=Backup diario do Ultrafoot
+
+[Timer]
+# 04:10 da manha, longe do horario de jogo e dos deploys.
+OnCalendar=*-*-* 04:10:00
+# Se a maquina estava desligada na hora, roda assim que puder — senao um
+# reinicio noturno pularia o backup do dia sem ninguem perceber.
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

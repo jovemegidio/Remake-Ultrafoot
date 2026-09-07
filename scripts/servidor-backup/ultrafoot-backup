@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# COPIA DE SEGURANCA DOS DADOS DO ULTRAFOOT.
+#
+# Roda pelo systemd (ultrafoot-backup.timer), uma vez por dia.
+#
+# ⚠️ POR QUE ISTO EXISTE. Em 05/09/2026 o jogo mudou de servidor e o banco de
+# contas nao veio junto: `auth.db` nasceu vazio na maquina nova e as contas,
+# saves na nuvem e amizades ficaram na maquina antiga, que depois saiu do ar. Nao
+# havia backup em lugar nenhum — nem no servidor, nem fora dele, nem no git. A
+# unica coisa que salvou os compradores foi um CSV de emissao guardado a mao.
+#
+# Depois disso, "existe uma copia?" deixou de ser pergunta.
+#
+# ⚠️ `sqlite3 .backup` E NAO `cp`. O servico escreve no banco a qualquer momento;
+# copiar o arquivo com `cp` durante uma transacao produz um backup corrompido que
+# so se descobre na hora de restaurar. O `.backup` usa a API propria do SQLite e
+# devolve um arquivo consistente com o servico rodando — sem parar nada.
+#
+# ⚠️ ESTE BACKUP MORA NA MESMA MAQUINA, entao ele cobre erro humano e corrupcao,
+# NAO cobre perder o servidor. Para isso existe `scripts/baixar-backup.sh` no
+# repositorio, que traz uma copia para fora. Backup que vive so no servidor
+# protegido e o mesmo backup que se perde junto com ele.
+
+set -euo pipefail
+
+DADOS="/var/lib/ultrafoot"
+DESTINO="/var/backups/ultrafoot"
+# 14 dias: cobre com folga o tempo entre alguem notar um problema e ir atras da
+# copia. A 194 GB de disco com 139 livres, o custo e irrelevante.
+DIAS=14
+
+mkdir -p "$DESTINO"
+chmod 700 "$DESTINO"
+
+carimbo="$(date +%Y-%m-%d)"
+
+# ── Bancos SQLite ────────────────────────────────────────────────────────────
+for banco in "$DADOS/auth.db" "$DADOS/atualizacoes/atualizacoes.db"; do
+  [ -f "$banco" ] || continue
+  nome="$(basename "$banco" .db)"
+  saida="$DESTINO/${nome}-${carimbo}.db"
+  sqlite3 "$banco" ".backup '$saida'"
+
+  # CONFERE O QUE ACABOU DE GRAVAR. Backup que ninguem testa e esperanca, nao
+  # copia: `integrity_check` le o arquivo inteiro e diz se ele restaura.
+  if [ "$(sqlite3 "$saida" 'PRAGMA integrity_check;')" != "ok" ]; then
+    echo "FALHA: $saida nao passou no integrity_check" >&2
+    rm -f "$saida"
+    exit 1
+  fi
+  gzip -f "$saida"
+  echo "  $(basename "$saida").gz  $(du -h "$saida.gz" | cut -f1)"
+done
+
+# ── Saves na nuvem dos jogadores ─────────────────────────────────────────────
+if [ -d "$DADOS/saves" ]; then
+  tar czf "$DESTINO/saves-${carimbo}.tar.gz" -C "$DADOS" saves
+  echo "  saves-${carimbo}.tar.gz  $(du -h "$DESTINO/saves-${carimbo}.tar.gz" | cut -f1)"
+fi
+
+# ── Chave da licenca e variaveis do servico ──────────────────────────────────
+#
+# Sem a privada Ed25519 nao se emite mais nenhuma licenca — foi exatamente ela
+# que se perdeu com a maquina antiga e obrigou a rotacao para v2. Vai junto, com
+# permissao fechada.
+if [ -d /etc/ultrafoot ]; then
+  tar czf "$DESTINO/config-${carimbo}.tar.gz" -C /etc ultrafoot
+  chmod 600 "$DESTINO/config-${carimbo}.tar.gz"
+  echo "  config-${carimbo}.tar.gz  (chave da licenca + auth.env)"
+fi
+
+# ── Poda ─────────────────────────────────────────────────────────────────────
+find "$DESTINO" -maxdepth 1 -type f -mtime "+$DIAS" -delete
+
+echo "backup de $carimbo concluido: $(ls -1 "$DESTINO" | wc -l) arquivo(s) guardados"

@@ -1,0 +1,10 @@
+[Unit]
+Description=Copia de seguranca dos dados do Ultrafoot
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ultrafoot-backup
+# Roda como root porque le /etc/ultrafoot (chave da licenca, modo 400) e escreve
+# em /var/backups. Nao toca em nada fora de /var/lib/ultrafoot e /etc/ultrafoot.
+User=root
