@@ -19,7 +19,7 @@
 set -euo pipefail
 
 OUT="${1:-/c/ultrafoot-painel/out}"
-VPS="root@179.198.103.30"
+VPS="root@31.97.64.102"
 CHAVE="$HOME/.ssh/id_ed25519_vps"
 DESTINO="/var/www/ultrafoot/painel"
 
@@ -64,6 +64,6 @@ REMOTO
 
 rm -f /tmp/ultrafoot-painel.tar.gz
 echo "==> conferindo de fora"
-curl -s -o /dev/null -w "    painel: %{http_code}\n" "https://ultrafoot.179-198-103-30.sslip.io/painel/"
-curl -s -o /dev/null -w "    recibo: %{http_code}\n" "https://ultrafoot.179-198-103-30.sslip.io/painel/recibo/"
-echo "pronto: https://ultrafoot.179-198-103-30.sslip.io/painel/"
+curl -s -o /dev/null -w "    painel: %{http_code}\n" "https://ultrafoot.zyntraerp.com.br/painel/"
+curl -s -o /dev/null -w "    recibo: %{http_code}\n" "https://ultrafoot.zyntraerp.com.br/painel/recibo/"
+echo "pronto: https://ultrafoot.zyntraerp.com.br/painel/"

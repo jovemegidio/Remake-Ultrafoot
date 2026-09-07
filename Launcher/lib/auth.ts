@@ -12,7 +12,9 @@
 
 import { invoke } from "@tauri-apps/api/core"
 
-const BASE = "https://ultrafoot.zyntraerp.com.br/auth"
+import { SERVIDOR_AUTH } from "@/lib/servidor"
+
+const BASE = SERVIDOR_AUTH
 const SESSAO_KEY = "ultrafoot-launcher:sessao"
 
 export interface Sessao {

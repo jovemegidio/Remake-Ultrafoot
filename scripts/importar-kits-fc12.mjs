@@ -25,7 +25,7 @@ import path from "node:path"
 
 const PASTA = process.argv[2]
 const enviar = process.argv.includes("--enviar")
-const BASE = process.env.ULTRAFOOT_ATU_URL || "https://ultrafoot.179-198-103-30.sslip.io"
+const BASE = process.env.ULTRAFOOT_ATU_URL || "https://ultrafoot.zyntraerp.com.br"
 const TOKEN = process.env.ULTRAFOOT_ADMIN_TOKEN || ""
 
 if (!PASTA) {

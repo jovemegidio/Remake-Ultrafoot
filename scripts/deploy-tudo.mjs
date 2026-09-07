@@ -25,6 +25,7 @@ import {
   readFileSync, writeFileSync, copyFileSync, existsSync, statSync,
   openSync, readSync, closeSync,
 } from "node:fs"
+import { homedir } from "node:os"
 import path from "node:path"
 
 const RAIZ = path.resolve(import.meta.dirname, "..")
@@ -34,10 +35,23 @@ const soJogo = process.argv.includes("--so-jogo")
 /** Valvula de escape dos gates de publicacao. Existe para emergencia, nao para rotina. */
 const pularGates = process.argv.includes("--pular-gates")
 
-const VPS = "root@179.198.103.30"
-const SITE = "https://ultrafoot.179-198-103-30.sslip.io"
+// ⚠️ ENDERECO ATUALIZADO EM 07/09/2026, E O ATRASO CUSTOU CARO.
+//
+// A migracao de 05/09 trocou o servidor em `lib/servidor-ultrafoot.ts` e em
+// `public/endpoints.json`, mas ESTE arquivo continuou apontando para a VPS
+// antiga — que hoje nao responde. O gate `qa-endereco-unico` nao pega isso de
+// proposito: o escopo dele e o codigo que VIAJA para o jogador, e `scripts/`
+// fica de fora. O preco e que o publicador foi o ultimo a saber.
+//
+// Se o servidor mudar de novo, e AQUI tambem.
+const VPS = "root@31.97.64.102"
+const SITE = "https://ultrafoot.zyntraerp.com.br"
 const REPO = "jovemegidio/Ultrafoot26"
+// A MESMA chave do deploy do ERP que ja vive naquele servidor — e a mesma que
+// `scripts/vps-zyntra.sh` usa. O padrao evita o `defina ULTRAFOOT_VPS_KEY` no
+// meio de uma publicacao, que ja abortou deploy depois do GitHub ja publicado.
 const CHAVE = process.env.ULTRAFOOT_VPS_KEY
+  ?? path.join(homedir(), ".ssh", "id_ed25519_vps")
 // As notas aparecem para o jogador na tela de atualizacao.
 const NOTAS_DO_JOGO = process.env.RELEASE_NOTES
   ?? `Ultrafoot 26 v${JSON.parse(readFileSync(path.join(path.resolve(import.meta.dirname, ".."), "package.json"), "utf-8")).version}`

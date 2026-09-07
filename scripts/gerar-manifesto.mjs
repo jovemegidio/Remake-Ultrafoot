@@ -126,11 +126,11 @@ async function main() {
   const comprimir = !argumento("sem-compressao", false)
   const baseDosBlobs = argumento(
     "blobs",
-    "https://ultrafoot.179-198-103-30.sslip.io/downloads/blobs/",
+    "https://ultrafoot.zyntraerp.com.br/downloads/blobs/",
   )
   const latest = argumento(
     "latest",
-    "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json",
+    "https://ultrafoot.zyntraerp.com.br/downloads/latest.json",
   )
 
   if (!pasta || !versao) {

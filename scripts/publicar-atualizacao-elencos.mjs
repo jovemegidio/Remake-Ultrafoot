@@ -23,7 +23,7 @@ import path from "node:path"
 const RAIZ = path.resolve(import.meta.dirname, "..")
 const FONTE = path.join(RAIZ, "data", "atualizacoes", "elencos.json")
 
-const URL_VPS = "https://ultrafoot.179-198-103-30.sslip.io/atualizacoes/elencos.json"
+const URL_VPS = "https://ultrafoot.zyntraerp.com.br/atualizacoes/elencos.json"
 const DESTINO_VPS = "/var/www/ultrafoot/atualizacoes/elencos.json"
 const REPO = "jovemegidio/Ultrafoot26"
 const TAG = "elencos"
@@ -133,7 +133,7 @@ if (!chave) {
   console.error("defina ULTRAFOOT_VPS_KEY com o caminho da chave SSH")
   process.exit(1)
 }
-execFileSync("ssh", ["-i", chave, "root@179.198.103.30",
+execFileSync("ssh", ["-i", chave, "root@31.97.64.102",
   `mkdir -p ${path.posix.dirname(DESTINO_VPS)} && cat > ${DESTINO_VPS}`],
   { input: corpo, stdio: ["pipe", "inherit", "inherit"] })
 

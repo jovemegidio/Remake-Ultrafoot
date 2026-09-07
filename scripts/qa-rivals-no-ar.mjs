@@ -11,7 +11,7 @@
 //
 // Uso: node scripts/qa-rivals-no-ar.mjs
 
-const SITE = process.env.RELAY_URL || "https://ultrafoot.179-198-103-30.sslip.io/relay"
+const SITE = process.env.RELAY_URL || "https://ultrafoot.zyntraerp.com.br/relay"
 let falhas = 0
 const erro = m => { console.log("FALHA: " + m); falhas++ }
 const ok = m => console.log("ok   " + m)

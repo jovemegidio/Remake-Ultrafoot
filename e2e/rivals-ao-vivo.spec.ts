@@ -13,7 +13,7 @@ import { injectTeamState } from "./helpers"
 // é que a TELA muda de "procurando" para "adversário encontrado" — que é
 // exatamente o que não acontecia antes de 19/08/2026: o primeiro da fila nunca
 // era avisado (ver `partidaAbertaDe` no relay).
-const RELAY = "https://ultrafoot.179-198-103-30.sslip.io/relay"
+const RELAY = "https://ultrafoot.zyntraerp.com.br/relay"
 const EU = "convidado"
 const OUTRO = "e2e-rivals-adversario"
 
@@ -25,7 +25,7 @@ test("a fila pareia e a tela mostra o adversario", async ({ page, request }) => 
   await injectTeamState(page, "BAH")
   await page.evaluate(() => {
     localStorage.setItem("ultrafoot:last-seen-whats-new", "1.0.290")
-    localStorage.setItem("ultrafoot:relay-url", "https://ultrafoot.179-198-103-30.sslip.io/relay")
+    localStorage.setItem("ultrafoot:relay-url", "https://ultrafoot.zyntraerp.com.br/relay")
     const s = JSON.parse(localStorage.getItem("ultrafoot:save") || "{}")
     s.multiplayerEnabled = true
     localStorage.setItem("ultrafoot:save", JSON.stringify(s))

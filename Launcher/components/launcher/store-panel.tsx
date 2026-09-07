@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { sessaoSalva } from "@/lib/auth"
 import { openExternal } from "@/lib/launcher-bridge"
+import { SERVIDOR_AUTH, PAINEL } from "@/lib/servidor"
 
 /**
  * LOJA DO LAUNCHER.
@@ -27,7 +28,7 @@ import { openExternal } from "@/lib/launcher-bridge"
  * cobrança que falharia.
  */
 
-const BASE = "https://ultrafoot.179-198-103-30.sslip.io/auth"
+const BASE = SERVIDOR_AUTH
 
 /**
  * Página do recibo. Fica sob /painel/ porque é de lá que ela é publicada
@@ -35,7 +36,7 @@ const BASE = "https://ultrafoot.179-198-103-30.sslip.io/auth"
  * junto com as rotas que a alimentam, sem depender de quando a versão web do
  * jogo for publicada. Mudou de lugar? É esta linha só.
  */
-const PAGINA_DO_RECIBO = "https://ultrafoot.179-198-103-30.sslip.io/painel/recibo/"
+const PAGINA_DO_RECIBO = `${PAINEL}/recibo/`
 
 interface ItemDaLoja {
   id: string

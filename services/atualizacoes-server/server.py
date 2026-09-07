@@ -57,7 +57,7 @@ PAINEL = Path(__file__).with_name("painel.html")
 # Onde o nginx serve os arquivos publicos. E aqui que a publicacao escreve.
 PUB_DIR = Path(os.environ.get("ULTRAFOOT_ATU_PUB", "/var/www/ultrafoot/atualizacoes"))
 IMG_DIR = PUB_DIR / "img"
-BASE_URL = os.environ.get("ULTRAFOOT_ATU_URL", "https://ultrafoot.179-198-103-30.sslip.io")
+BASE_URL = os.environ.get("ULTRAFOOT_ATU_URL", "https://ultrafoot.zyntraerp.com.br")
 
 # Um escudo PNG grande passa de 1 MB; o limite cobre com folga e ainda barra
 # alguem tentando subir um video.

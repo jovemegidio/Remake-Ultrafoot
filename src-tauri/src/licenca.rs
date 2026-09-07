@@ -40,6 +40,7 @@ use serde::{Deserialize, Serialize};
 /// assinados com ela — so faca isso depois de reemitir as licencas legitimas.
 const CHAVES_PUBLICAS: &[(&str, &str)] = &[
     ("v1", "MCowBQYDK2VwAyEAflhQ7JrCIif43rnVxdO2jImk+OFkWV0BaLgN1hvoewg="),
+    ("v2", "MCowBQYDK2VwAyEAhzOzFQOlrI0dgHZ3Q4m1xHE9fpyaq/BOa2iMao/Gu4k="),
 ];
 
 /// O que o servidor assinou. Os campos entram na assinatura EXATAMENTE como

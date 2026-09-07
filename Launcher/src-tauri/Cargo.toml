@@ -1,6 +1,6 @@
 [package]
 name = "ultrafoot-launcher"
-version = "1.0.38"
+version = "1.0.39"
 description = "Ultrafoot Launcher — baixa, instala e atualiza o Ultrafoot 26"
 authors = ["Ultrafoot Studio"]
 license = ""

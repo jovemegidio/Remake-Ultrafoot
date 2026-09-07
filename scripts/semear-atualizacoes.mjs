@@ -23,7 +23,7 @@ import path from "node:path"
 
 const RAIZ = path.resolve(import.meta.dirname, "..")
 const FONTE = path.join(RAIZ, "data", "seeds", "team-overrides.json")
-const BASE = process.env.ULTRAFOOT_ATU_URL || "https://ultrafoot.179-198-103-30.sslip.io"
+const BASE = process.env.ULTRAFOOT_ATU_URL || "https://ultrafoot.zyntraerp.com.br"
 const TOKEN = process.env.ULTRAFOOT_ADMIN_TOKEN || ""
 
 const enviar = process.argv.includes("--enviar")

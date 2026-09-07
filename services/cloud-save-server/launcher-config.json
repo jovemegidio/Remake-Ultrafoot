@@ -9,6 +9,16 @@
   "serverStatusUrl": "https://ultrafoot.zyntraerp.com.br/relay",
   "news": [
     {
+      "title": "1.0.394: canal de elencos, save na nuvem e online de volta",
+      "category": "Correcao",
+      "body": "O jogo instalado tinha uma lista interna de enderecos autorizados que ainda so liberava o servidor antigo. Tudo que fala com o servidor por esse caminho estava bloqueado dentro do proprio jogo, sem mensagem de erro: o canal de atualizacao de elencos, o save na nuvem, a busca por versao nova e o aviso de estar online. Nada disso dependia do seu computador nem da sua internet."
+    },
+    {
+      "title": "1.0.393: registrar o jogo volta a funcionar",
+      "category": "Correcao",
+      "body": "Quem tentava registrar recebia \"o servidor de licencas esta indisponivel\". A mudanca de servidor da semana passada nao levou junto a chave que assina o registro, e sem ela o servidor recusava TODA ativacao. A chave foi reposta e as 500 chaves ja vendidas voltaram para o servidor novo. Quem ja estava registrado nunca perdeu o registro e nao precisa fazer nada."
+    },
+    {
       "title": "1.0.392: o jogo no celular volta a ser legivel",
       "category": "Atualizacao",
       "body": "No celular o menor texto do jogo media 5,6 pixels. Agora mede 9,4, os trechos ilegiveis cairam de 540 para 1 e os botoes ganharam area de dedo. A casca do aplicativo passou a usar as cores do jogo, e o app voltou a encontrar o servidor — ele apontava para uma maquina fora do ar desde 31 de agosto."
@@ -333,9 +343,35 @@
   ],
   "changelog": [
     {
+      "version": "1.0.394",
+      "data": "2026-09-07",
+      "latest": true,
+      "titulo": "Canal de elencos, save na nuvem e online de volta",
+      "itens": [
+        "QUATRO COISAS ESTAVAM BLOQUEADAS DENTRO DO PROPRIO JOGO. O jogo instalado carrega uma lista de enderecos que ele tem permissao de acessar, e essa lista ficou apontando so para o servidor antigo depois da mudanca de 5 de setembro. O pedido nem chegava a sair: canal de atualizacao de elencos, save na nuvem, verificacao de versao nova e o indicador de online falhavam em silencio.",
+        "Nao era a sua internet nem o seu computador, e nao havia nada que voce pudesse fazer. Tambem nao aparecia erro — por isso demorou a ser encontrado.",
+        "O MESMO DEFEITO ESTAVA NO LAUNCHER, e era ele que quebrava entrar com o Google: a lista de destinos permitidos do launcher liberava so o servidor antigo, entao o pedido de login morria dentro do launcher antes de chegar a internet. Corrigido no launcher 1.0.39.",
+        "Agora ha um portao automatico que reprova qualquer referencia a servidor desligado em qualquer canto do projeto — inclusive nessas listas de permissao, que nenhuma verificacao anterior enxergava. Ele encontrou quatro sobras que uma busca manual tinha deixado passar.",
+        "Foram emitidos 500 codigos de registro novos (lote 2), ja publicados no servidor e conferidos um a um antes de entrar."
+      ]
+    },
+    {
+      "version": "1.0.393",
+      "data": "2026-09-07",
+      "latest": false,
+      "titulo": "Registrar o jogo volta a funcionar",
+      "itens": [
+        "REGISTRAR O JOGO DAVA \"O SERVIDOR DE LICENCAS ESTA INDISPONIVEL\". Nao era instabilidade nem a chave do comprador: a mudanca de servidor de 5 de setembro nao levou junto a chave privada que ASSINA o registro. Sem ela o servidor respondia 503 para toda ativacao, de todo mundo, o tempo todo.",
+        "A chave foi reposta e as 500 chaves vendidas voltaram para o servidor novo, conferidas uma a uma antes de entrar. Quem comprou continua com a mesma chave de sempre — nao ha nada para redigitar.",
+        "QUEM JA ESTAVA REGISTRADO NUNCA PERDEU O REGISTRO. A conferencia acontece na sua maquina, sem internet, e o jogo passou a reconhecer as duas chaves: a antiga, que valida quem ja ativou, e a nova, que valida quem ativar agora.",
+        "O publicador do jogo ainda apontava para o servidor antigo, que saiu do ar. Corrigido — era o ultimo lugar do projeto que nao sabia do endereco novo.",
+        "AINDA PENDENTE: entrar com o Google. A credencial do Google tambem ficou no servidor antigo e so o dono da conta pode emiti-la de novo; ate la, use email e senha. Entrar com Google nao afeta o registro do jogo."
+      ]
+    },
+    {
       "version": "1.0.392",
       "data": "2026-09-06",
-      "latest": true,
+      "latest": false,
       "titulo": "O jogo no celular volta a ser legivel",
       "itens": [
         "NO CELULAR O JOGO ESTAVA MICROSCOPICO. O menor texto media 5,6 pixels e havia 540 trechos abaixo de 10 — praticamente ilegivel num aparelho na mao. A causa nao era o layout transbordando (rolagem lateral era zero em todas as telas): era ESCALA. O jogo roda com uma reducao de 20% que ajuda no monitor e atrapalha no telefone, somada a um estilo que ja escreve miudo.",

@@ -15,7 +15,7 @@ set -euo pipefail
 
 VERSAO="${1:?informe a versao, ex: 1.0.199}"
 OUT="${2:-/c/ultrafoot-web/out}"
-VPS="root@179.198.103.30"
+VPS="root@31.97.64.102"
 CHAVE="$HOME/.ssh/id_ed25519_vps"
 RAIZ="/var/www/ultrafoot"
 
@@ -53,5 +53,5 @@ REMOTO
 
 rm -f /tmp/ultrafoot-web-$VERSAO.tar.gz
 echo "==> verificando de fora"
-curl -s -o /dev/null -w "    home: %{http_code}\n" "https://ultrafoot.179-198-103-30.sslip.io/"
-echo "pronto: https://ultrafoot.179-198-103-30.sslip.io/"
+curl -s -o /dev/null -w "    home: %{http_code}\n" "https://ultrafoot.zyntraerp.com.br/"
+echo "pronto: https://ultrafoot.zyntraerp.com.br/"

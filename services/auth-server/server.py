@@ -2389,6 +2389,20 @@ class Handler(BaseHTTPRequestHandler):
         })
 
     def _google(self, corpo: dict):
+        # 503, E NAO 401 — a distincao e a mesma de /licenca/ativar.
+        #
+        # Sem credencial configurada quem falhou fomos nos, nao a conta da
+        # pessoa. Respondendo 401 "nao foi possivel validar com o Google", ela
+        # tenta de novo, troca de conta, acha que o Google dela e o problema —
+        # e nada disso resolve, porque o servidor nem chega a falar com o
+        # Google. Aconteceu de verdade em 07/09/2026: a migracao de servidor
+        # nao levou o ULTRAFOOT_GOOGLE_CLIENT_SECRET e o sintoma que chegou foi
+        # "o login com Google nao funciona", sem pista nenhuma da causa.
+        if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+            return self._responder(503, {
+                "erro": "o login com Google nao esta configurado neste servidor;"
+                        " entre com email e senha",
+            })
         info = trocar_codigo_google(
             corpo.get("code", ""), corpo.get("code_verifier", ""), corpo.get("redirect_uri", ""),
         )

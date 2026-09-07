@@ -1,8 +1,8 @@
 {
-  "version": "1.0.38",
-  "notes": "O launcher para de se atualizar em circulo. A causa estava no instalador do JOGO: toda atualizacao dele reinstalava por cima o launcher que tinha sido assado naquela build — em 28/08 o jogo 1.0.377 carregava o launcher de 29/07 — rebaixando quem ja tinha a versao nova. O launcher entao se atualizava de novo, e o ciclo recomecava na atualizacao seguinte do jogo. Agora o jogo so instala o launcher quando nao ha nenhum, e quem cuida de atualiza-lo e ele mesmo. Alem disso, quando o servidor esta fora do ar o launcher para de insistir a cada abertura: uma falha de rede compra algumas horas de silencio em vez de repetir tres downloads perdidos com a tela de 'Atualizando' cobrindo tudo. Na tela: o estado do servidor deixou de aparecer tres vezes ao mesmo tempo, o destaque do jogo cabe em monitores de 1366x768 (as novidades voltam a aparecer sem rolar) e o rodape passou a mostrar a versao do launcher, que antes nao aparecia em lugar nenhum.",
+  "version": "1.0.39",
+  "notes": "O launcher volta a falar com o servidor. Na mudanca de servidor da semana passada o endereco novo entrou no codigo, mas a lista de destinos permitidos do launcher continuou liberando so o endereco ANTIGO — e o pedido morria dentro do proprio launcher, antes de chegar a internet. Era isso que quebrava entrar com o Google. A loja e a pagina de recibo tambem apontavam para a maquina antiga, que saiu do ar, e voltaram ao lugar certo. Agora o endereco do servidor mora em um arquivo so (lib/servidor.ts), para nao sobrar copia esquecida na proxima vez.",
   "url": "https://ultrafoot.zyntraerp.com.br/downloads/Ultrafoot-Launcher-Setup.exe",
   "urlReserva": "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/Ultrafoot-Launcher-Setup.exe",
-  "sha256": "537dd3022d03be729e252d04619a9e257032719571aad69a8a89f13304b5f8ff",
-  "size": 10875756
+  "sha256": "C183DDC40707DA0F6A3481DF3C42CA6D28885CBE5185B8D17640665B283E23CC",
+  "size": 10875914
 }

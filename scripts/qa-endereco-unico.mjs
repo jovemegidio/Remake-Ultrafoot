@@ -85,3 +85,107 @@ if (copias.length > 0) {
 }
 
 console.log("ENDERECO UNICO OK — trocar o servidor e mexer em um arquivo so.\n")
+
+// ── SEGUNDA REGRA: nenhum endereco MORTO em lugar nenhum ─────────────────────
+//
+// ⚠️ ESTA REGRA NASCEU DE UMA PANE REAL (07/09/2026).
+//
+// A regra de cima cobre so `lib/`, `app/` e `components/` — o codigo do jogo.
+// Foi uma decisao correta e uma fresta grande: quando a VPS mudou em 05/09, o
+// endereco velho continuou em ONZE lugares fora desse escopo e este portao ficou
+// verde o tempo todo. Entre eles:
+//
+//   · a CSP do launcher (`Launcher/src-tauri/tauri.conf.json`), que liberava
+//     `connect-src` SO para o servidor morto. O `fetch` do launcher e o da
+//     webview, entao o pedido morria dentro do proprio launcher, antes de sair —
+//     e o login com Google parou com o codigo inteiro CORRETO. Foi o defeito
+//     mais caro de achar justamente por isso;
+//   · a LOJA do launcher e a pagina de recibo, apontando para maquina fora do ar;
+//   · o proprio `deploy-tudo.mjs` — o publicador teria falhado no meio.
+//
+// Entao esta segunda passada nao pergunta "o endereco esta duplicado?", e sim
+// "alguem ainda fala com uma maquina que nao existe?". Varre o repositorio TODO,
+// inclusive JSON, shell, Rust e YAML, e nao aceita nem em comentario: comentario
+// que ensina a apontar para servidor morto tambem ja custou uma tarde.
+//
+// QUANDO O SERVIDOR MUDAR DE NOVO: mova o endereco recem-aposentado para MORTOS
+// e o portao passa a cacar as sobras dele sozinho.
+
+/** Enderecos que ja foram nossos e hoje nao respondem. */
+const MORTOS = [
+  // Saiu do ar em 05/09/2026, na migracao para ultrafoot.zyntraerp.com.br.
+  // O sslip.io codifica o IP no nome, entao IP novo = dominio morto, e nao ha
+  // DNS para reapontar.
+  {
+    padrao: /ultrafoot\.179-198-103-30\.sslip\.io|179\.198\.103\.30/,
+    nome: "179.198.103.30 (VPS antiga)",
+  },
+]
+
+/**
+ * Onde a mencao ao endereco morto e REGISTRO, e nao uso.
+ *
+ * Lista nominal e curta de proposito: liberar uma pasta inteira aqui traria de
+ * volta exatamente o ponto cego que esta regra existe para fechar.
+ */
+const HISTORICO = new Set([
+  path.normalize("lib/servidor-ultrafoot.ts"),      // conta a troca, dentro da fonte unica
+  path.normalize("scripts/qa-endereco-unico.mjs"),  // este arquivo: o padrao mora aqui
+  path.normalize("scripts/auditar-divisoes.mjs"),   // exemplo de uso, num comentario
+])
+
+const IGNORAR_PASTA = new Set([
+  "node_modules", ".git", ".next", "out", "target", "dist-loja", "dist-patch",
+  "public", "data", "test-results", "playwright-report", "coverage",
+])
+
+const EXTENSOES = /\.(ts|tsx|js|mjs|cjs|rs|json|sh|py|toml|yml|yaml)$/
+
+function todosOsArquivos(dir, achados = []) {
+  let entradas
+  try { entradas = readdirSync(dir) } catch { return achados }
+  for (const e of entradas) {
+    if (IGNORAR_PASTA.has(e)) continue
+    const p = path.join(dir, e)
+    let st
+    try { st = statSync(p) } catch { continue }
+    if (st.isDirectory()) todosOsArquivos(p, achados)
+    else if (EXTENSOES.test(e)) achados.push(p)
+  }
+  return achados
+}
+
+const varridos = todosOsArquivos(".")
+const restos = []
+for (const p of varridos) {
+  if (HISTORICO.has(path.normalize(p))) continue
+  let src
+  try { src = readFileSync(p, "utf8") } catch { continue }
+  for (const m of MORTOS) {
+    // `test` com regex sem /g nao guarda estado — seguro chamar em laco.
+    if (!m.padrao.test(src)) continue
+    src.split(/\r?\n/).forEach((linha, i) => {
+      if (m.padrao.test(linha)) {
+        restos.push({ arquivo: p, linha: i + 1, nome: m.nome, texto: linha.trim().slice(0, 90) })
+      }
+    })
+  }
+}
+
+console.log(`  varredura ampla ..: ${varridos.length} arquivos`)
+console.log(`  servidor morto ...: ${restos.length} referencia(s)\n`)
+
+for (const r of restos) {
+  console.log(`  ${r.arquivo}:${r.linha}   [${r.nome}]`)
+  console.log(`    ${r.texto}`)
+}
+
+if (restos.length > 0) {
+  console.log(`\n${restos.length} referencia(s) a servidor que nao existe mais.`)
+  console.log("Aponte para o endereco atual. Se a mencao for registro historico e nao")
+  console.log("uso, adicione o arquivo a `HISTORICO` neste portao — com o motivo.\n")
+  process.exit(1)
+}
+
+console.log("NENHUM SERVIDOR MORTO REFERENCIADO — nem no launcher, nem nos scripts.\n")
+

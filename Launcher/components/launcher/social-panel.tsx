@@ -14,6 +14,7 @@ import {
   type MensagemDoChat, type RespostaDePresenca,
 } from "@/lib/hub"
 import { AmigosPanel } from "@/components/launcher/amigos-panel"
+import { PAINEL } from "@/lib/servidor"
 
 /**
  * FC HUB — a aba social do launcher.
@@ -355,7 +356,7 @@ export function SocialPanel({
             Gerenciar contas, banir e consultar o histórico. Entre com este mesmo e-mail e senha.
           </p>
           <button
-            onClick={() => onOpen("https://ultrafoot.179-198-103-30.sslip.io/painel/")}
+            onClick={() => onOpen(`${PAINEL}/`)}
             className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
           >
             <ExternalLink className="h-4 w-4" /> Abrir o painel

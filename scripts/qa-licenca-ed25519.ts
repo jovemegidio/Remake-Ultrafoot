@@ -26,16 +26,27 @@ const checar = (ok: boolean, msg: string) => {
   if (!ok) { falhas++; console.log("  FALHOU:", msg) } else console.log("  ok:", msg)
 }
 
-/** A chave pública LIDA DO FONTE Rust — não colada aqui a mão.
+/** O `kid` com que a VPS assina HOJE.
+ *
+ * Era "v1". Passou a "v2" em 07/09/2026: a privada v1 vivia só na VPS antiga
+ * e se perdeu junto com ela, então não há como emitir certificado v1 nunca
+ * mais. A pública v1 CONTINUA no jogo — quem ativou antes segue registrado,
+ * e é esse o motivo de a verificação consultar um MAPA de chaves, não uma só.
+ *
+ * Ver a nota de ROTACAO em src-tauri/src/licenca.rs. */
+const KID = "v2"
+
+/** As chaves públicas LIDAS DO FONTE Rust — não colada aqui a mão.
  *
  * Ler do arquivo é de propósito: se alguém trocar a chave no `licenca.rs` sem
  * atualizar o servidor, este teste quebra. Uma constante duplicada aqui
  * esconderia exatamente esse erro. */
-function publicaDoRust(): string {
+function publicasDoRust(): Map<string, string> {
   const fonte = readFileSync(path.join(RAIZ, "src-tauri", "src", "licenca.rs"), "utf8")
-  const m = fonte.match(/\("v1",\s*"([^"]+)"\)/)
-  if (!m) throw new Error("chave pública v1 não encontrada em src-tauri/src/licenca.rs")
-  return m[1]
+  const mapa = new Map<string, string>()
+  for (const m of fonte.matchAll(/\("(v\d+)",\s*"([^"]+)"\)/g)) mapa.set(m[1], m[2])
+  if (!mapa.has(KID)) throw new Error(`chave pública ${KID} não encontrada em src-tauri/src/licenca.rs`)
+  return mapa
 }
 
 /** Assina um certificado chamando o MESMO módulo que o servidor usa. */
@@ -43,13 +54,13 @@ function emitirPeloServidor(codigo: string, device: string, chavePrivada: string
   const py = `
 import os, sys, json
 os.environ["ULTRAFOOT_LICENSE_PRIVATE_KEY"] = ${JSON.stringify(chavePrivada)}
-os.environ["ULTRAFOOT_LICENSE_KID"] = "v1"
+os.environ["ULTRAFOOT_LICENSE_KID"] = ${JSON.stringify(KID)}
 sys.path.insert(0, ${JSON.stringify(AUTH)})
 import licenca
 print(licenca._assinar({
     "codigo": ${JSON.stringify(codigo)},
     "device": ${JSON.stringify(device)},
-    "kid": "v1",
+    "kid": ${JSON.stringify(KID)},
     "emitido_em": 1785000000,
     "serie": 42,
 }))
@@ -58,7 +69,7 @@ print(licenca._assinar({
 }
 
 /** Reproduz a verificação do Rust (`licenca.rs`) para rodar fora do Tauri. */
-function verificarComoOJogo(bruto: string, deviceAtual: string | null, publica: string) {
+function verificarComoOJogo(bruto: string, deviceAtual: string | null, publicas: Map<string, string>) {
   const i = bruto.indexOf(".")
   if (i < 0) return { valido: false, motivo: "formato" }
 
@@ -71,7 +82,8 @@ function verificarComoOJogo(bruto: string, deviceAtual: string | null, publica: 
 
   let cert: { codigo: string; device: string; kid: string; serie: number }
   try { cert = JSON.parse(payload.toString()) } catch { return { valido: false, motivo: "formato" } }
-  if (cert.kid !== "v1") return { valido: false, motivo: "kid-desconhecido" }
+  const publica = publicas.get(cert.kid)
+  if (!publica) return { valido: false, motivo: "kid-desconhecido" }
 
   const chave = createPublicKey({ key: Buffer.from(publica, "base64"), format: "der", type: "spki" })
   if (!verificarAssinatura(null, payload, chave, assinatura)) {
@@ -86,11 +98,20 @@ function verificarComoOJogo(bruto: string, deviceAtual: string | null, publica: 
 const rodar = async () => {
   const chavePrivada = path.join(
     process.env.HOME ?? process.env.USERPROFILE ?? "",
-    ".ultrafoot-keys", "ultrafoot-licenca-v1.private.pem",
+    ".ultrafoot-keys", `ultrafoot-licenca-${KID}.private.pem`,
   )
 
-  const publica = publicaDoRust()
+  const publicas = publicasDoRust()
+  const publica = publicas.get(KID)!
   console.log("chave pública lida de src-tauri/src/licenca.rs\n")
+
+  // ── A rotação não pode desregistrar quem já pagou ────────────────────────
+  //
+  // Trocar a chave que ASSINA é legítimo; apagar a antiga do mapa não é. Quem
+  // ativou com a v1 guarda um certificado assinado por ela e o valida offline
+  // para sempre — tirar a v1 daqui invalidaria todos eles de uma vez, sem aviso
+  // e sem que nenhum outro teste percebesse.
+  checar(publicas.has("v1"), "a chave v1 continua no jogo (certificados antigos seguem válidos)")
 
   // ── A propriedade central: o par bate ──────────────────────────────────────
   const derivada = execFileSync("python", ["-c", `
@@ -106,20 +127,20 @@ print(base64.b64encode(p.public_key().public_bytes(
   const DEVICE = "MAQUINA-DO-COMPRADOR"
   const cert = emitirPeloServidor("UF26-ABCDE-FGHIJ-KLMNO", DEVICE, chavePrivada)
 
-  const bom = verificarComoOJogo(cert, DEVICE, publica)
+  const bom = verificarComoOJogo(cert, DEVICE, publicas)
   checar(bom.valido, "certificado emitido pelo servidor é aceito pelo jogo")
   checar(bom.certificado?.serie === 42, "os dados voltam íntegros (série 42)")
 
   // ── §7: forja rejeitada ────────────────────────────────────────────────────
   const [payloadB64, assinaturaB64] = cert.split(".")
   const inventada = Buffer.alloc(64, 7).toString("base64")
-  checar(verificarComoOJogo(`${payloadB64}.${inventada}`, DEVICE, publica).motivo === "assinatura",
+  checar(verificarComoOJogo(`${payloadB64}.${inventada}`, DEVICE, publicas).motivo === "assinatura",
     "assinatura inventada (sem a privada) é rejeitada")
 
   const mexido = Buffer.from(
     Buffer.from(payloadB64, "base64").toString().replace('"serie":42', '"serie":9999'),
   ).toString("base64")
-  checar(verificarComoOJogo(`${mexido}.${assinaturaB64}`, DEVICE, publica).motivo === "assinatura",
+  checar(verificarComoOJogo(`${mexido}.${assinaturaB64}`, DEVICE, publicas).motivo === "assinatura",
     "adulterar UM campo do payload invalida a assinatura")
 
   // Trocar o device no payload também tem de cair — senão bastaria editar o
@@ -127,18 +148,18 @@ print(base64.b64encode(p.public_key().public_bytes(
   const outroDevice = Buffer.from(
     Buffer.from(payloadB64, "base64").toString().replace(DEVICE, "PC-PIRATA-XXXXXXXX"),
   ).toString("base64")
-  checar(verificarComoOJogo(`${outroDevice}.${assinaturaB64}`, "PC-PIRATA-XXXXXXXX", publica).motivo === "assinatura",
+  checar(verificarComoOJogo(`${outroDevice}.${assinaturaB64}`, "PC-PIRATA-XXXXXXXX", publicas).motivo === "assinatura",
     "reescrever o device no certificado invalida a assinatura")
 
   // ── §7: replay entre máquinas ──────────────────────────────────────────────
-  checar(verificarComoOJogo(cert, "OUTRO-PC", publica).motivo === "device",
+  checar(verificarComoOJogo(cert, "OUTRO-PC", publicas).motivo === "device",
     "certificado copiado para OUTRA máquina é rejeitado")
 
   // ── §7: offline depois de ativar ───────────────────────────────────────────
   //
   // O teste que faltava. A verificação acima não fez UMA chamada de rede — é
   // exatamente essa a promessa: ativou uma vez, joga para sempre sem internet.
-  const semRede = verificarComoOJogo(cert, DEVICE, publica)
+  const semRede = verificarComoOJogo(cert, DEVICE, publicas)
   checar(semRede.valido, "depois de ativado, o jogo valida SEM rede")
 
   // ── §7: revogação vale na próxima ativação ─────────────────────────────────

@@ -33,7 +33,7 @@ const SAVE = path.join(
   "com.ultrafoot.remake",
   "ultrafoot-clubs.json",
 )
-const BASE = process.env.ULTRAFOOT_ATU_URL || "https://ultrafoot.179-198-103-30.sslip.io"
+const BASE = process.env.ULTRAFOOT_ATU_URL || "https://ultrafoot.zyntraerp.com.br"
 const TOKEN = process.env.ULTRAFOOT_ADMIN_TOKEN || ""
 
 const PREFIXO_OV = "ultrafoot:player-override:"
