@@ -15,7 +15,10 @@ import {
   ArrowRight,
   SlidersHorizontal,
   Plus,
-  Folder
+  Folder,
+  ClipboardList,
+  Gauge,
+  Sprout
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
@@ -23,6 +26,7 @@ import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useGameState } from "@/lib/save-system"
+import { useTranslation } from "@/lib/i18n"
 import { useManagingNational } from "@/lib/time-da-carreira"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
@@ -153,6 +157,8 @@ export default function ElencoHubPage() {
     return { avgOverall, avgAge, totalPlayers: teamPlayers.length }
   }, [teamPlayers])
 
+  const t = useTranslation()
+
   // Discord RPC
   useDiscordActivity("Elenco", `Gerenciando ${userTeam.nome}`)
   const tacticalStyle = TACTICAL_STYLE_DETAILS[playingStyle] ?? TACTICAL_STYLE_DETAILS.jogo_posicional
@@ -185,8 +191,48 @@ export default function ElencoHubPage() {
       borderColor: "border-cyan-500/30",
       accentColor: "text-cyan-400",
     },
-    // "Escalacoes" saiu daqui: Gerenciamento do Time ja monta e salva a escalacao,
-    // e o card duplicado so dava dois caminhos para a mesma coisa.
+    // ⚠️ ESCALACOES VOLTOU — e o comentario que estava aqui explicava por que ela
+    // tinha saido: "Gerenciamento do Time ja monta e salva a escalacao, e o card
+    // duplicado so dava dois caminhos para a mesma coisa".
+    //
+    // O relatorio (PDF Ultra26, p.16) pediu Escalacoes no Elenco, e a referencia
+    // mostra por que os dois NAO sao a mesma coisa: /elenco/gerenciamento escala
+    // o time DESTA partida; /elenco/escalacoes guarda PLANOS nomeados (o "Padrao
+    // 5-3-2 Conservador" da imagem) para reusar em outro jogo. Um e a escalacao
+    // de hoje, o outro e a biblioteca. A tela ja existia e continuava sem card.
+    {
+      id: 3,
+      title: t.elencoCards.escalacoes,
+      subtitle: t.elencoCards.planos_salvos,
+      icon: ClipboardList,
+      description: t.elencoCards.escalacoes_desc,
+      bottomText: t.elencoCards.escalacoes_rodape,
+      route: "/elenco/escalacoes",
+      borderColor: "border-cyan-500/30",
+      accentColor: "text-cyan-400",
+    },
+    {
+      id: 4,
+      title: t.elencoCards.plano_de_treino,
+      subtitle: t.elencoCards.automatico_ou_manual,
+      icon: Gauge,
+      description: t.elencoCards.plano_desc,
+      bottomText: t.elencoCards.plano_rodape,
+      route: "/elenco/plano-de-treino",
+      borderColor: "border-cyan-500/30",
+      accentColor: "text-cyan-400",
+    },
+    {
+      id: 5,
+      title: t.elencoCards.desenvolvimento,
+      subtitle: t.elencoCards.atleta_por_atleta,
+      icon: Sprout,
+      description: t.elencoCards.desenvolvimento_desc,
+      bottomText: t.elencoCards.desenvolvimento_rodape,
+      route: "/elenco/desenvolvimento",
+      borderColor: "border-cyan-500/30",
+      accentColor: "text-cyan-400",
+    },
   ]
 
   const handleCardClick = (card: typeof cards[0]) => {

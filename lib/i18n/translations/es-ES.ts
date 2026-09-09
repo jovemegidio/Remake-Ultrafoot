@@ -43,6 +43,7 @@ export const esES: TraducaoParcial = {
     clubCenter: "Centro del Club",
     finances: "Finanzas",
     market: "Mercado",
+    transfers: "Transferencias",
     settings: "Configuracion",
     friendlies: "Amistosos",
   },

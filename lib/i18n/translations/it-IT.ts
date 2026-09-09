@@ -44,6 +44,7 @@ export const itIT: TraducaoParcial = {
     clubCenter: "Centro del club",
     finances: "Finanze",
     market: "Mercato",
+    transfers: "Trasferimenti",
     settings: "Impostazioni",
     friendlies: "Amichevoli",
   },

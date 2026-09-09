@@ -1341,9 +1341,20 @@ export default function SplashPage() {
                         )}>
                           <span className="text-xl font-bold">{save.teamName.charAt(0)}</span>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-white leading-tight">{save.teamName}</span>
+                            {/* ⚠️ O NOME QUE A PESSOA DEU AO SAVE, e nao o clube.
+                                Pedido do PDF Ultra26 (p.3): "o nome do save que
+                                eu salvar aqui deve se refletir em carregar jogo,
+                                assim como no brasfoot". O dado ja vinha pronto
+                                em `career.name` (lib/save-system grava
+                                `state.saveName` ali) e ja era montado na lista
+                                acima — esta linha simplesmente nunca o desenhou,
+                                entao tres saves do mesmo clube apareciam como
+                                tres linhas identicas e nao havia como escolher.
+                                O clube desceu para a linha de baixo, onde ele
+                                identifica sem competir com o nome. */}
+                            <span className="truncate font-bold text-white leading-tight">{save.name || save.teamName}</span>
                             {/* CARREIRA DE MESA. Carregar uma dessas não é a
                                 mesma coisa que carregar a sua: o computador vai
                                 cair na vez de quem estava jogando, e a rodada só
@@ -1356,7 +1367,7 @@ export default function SplashPage() {
                               </span>
                             )}
                           </div>
-                          <div className="mt-0.5 text-xs text-white/45">{save.competition} · {save.position}</div>
+                          <div className="mt-0.5 truncate text-xs text-white/45">{save.teamName} · {save.position}</div>
                         </div>
                       </div>
                       <div className="text-right">
@@ -1373,7 +1384,10 @@ export default function SplashPage() {
                     data-acao-modal="apagar-um"
                     onClick={(e) => {
                       e.stopPropagation()
-                      setConfirmarExclusao({ tipo: "um", id: save.id, nome: save.teamName })
+                      // Apagar pede o nome que a pessoa VE na linha: confirmar a
+                      // exclusao de "Palmeiras" quando a lista mostra tres saves
+                      // do Palmeiras nao diz qual dos tres vai embora.
+                      setConfirmarExclusao({ tipo: "um", id: save.id, nome: save.name || save.teamName })
                     }}
                     title={t.splash.apagar_este_save}
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2.5 text-red-400/50 opacity-0 transition-all group-hover:opacity-100 focus-visible:opacity-100 hover:bg-red-500/15 hover:text-red-400"

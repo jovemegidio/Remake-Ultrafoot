@@ -64,6 +64,21 @@ export interface NotaDoAtleta {
   nota: number
   /** Quantos acontecimentos entraram nesta nota — para a tela saber se ha o que mostrar. */
   eventos: number
+  /**
+   * ── O QUE ESTE ATLETA FEZ, para a coluna lateral marcar ──────────────────
+   *
+   * Pedido do PDF Ultra26 (p.2): "jogadores com cartao amarelo/vermelho devem
+   * ter um destaque, quem fez os gols e deu assistencias tambem".
+   *
+   * Sai daqui, e nao de uma segunda varredura na tela, porque a varredura dos
+   * eventos ja acontece nesta funcao: contar de novo do lado de fora seria a
+   * mesma regra escrita duas vezes, com duas chances de divergir. Continua
+   * valendo o aviso do topo — isto e LEITURA, nao entra em conta nenhuma.
+   */
+  gols: number
+  assistencias: number
+  amarelo: boolean
+  vermelho: boolean
 }
 
 /**
@@ -80,7 +95,9 @@ export function notasDoLado(
   minutoAtual: number,
 ): Map<string, NotaDoAtleta> {
   const notas = new Map<string, NotaDoAtleta>()
-  for (const nome of nomes) notas.set(nome, { nota: NOTA_BASE, eventos: 0 })
+  for (const nome of nomes) {
+    notas.set(nome, { nota: NOTA_BASE, eventos: 0, gols: 0, assistencias: 0, amarelo: false, vermelho: false })
+  }
 
   // Gols sofridos: contam para o lado CONTRARIO ao do evento.
   let golsSofridos = 0
@@ -99,11 +116,25 @@ export function notasDoLado(
         atual.eventos++
       }
     }
+    // Marcadores da coluna lateral. Ficam FORA do `if (peso !== undefined)` de
+    // proposito: o peso e o que a nota vale, o marcador e o que aconteceu, e um
+    // dia um evento pode valer 0 e ainda assim merecer o icone.
+    if (ev.player) {
+      const dono = notas.get(ev.player)
+      if (dono) {
+        if (ev.type === "goal") dono.gols++
+        // Segundo amarelo E vermelho: o motor emite os dois eventos, e o atleta
+        // sai de campo. Marcar so o amarelo esconderia a expulsao.
+        else if (ev.type === "yellow_card") dono.amarelo = true
+        else if (ev.type === "red_card") dono.vermelho = true
+      }
+    }
     if (ev.assist) {
       const assistente = notas.get(ev.assist)
       if (assistente) {
         assistente.nota += PESO_ASSISTENCIA
         assistente.eventos++
+        assistente.assistencias++
       }
     }
   }

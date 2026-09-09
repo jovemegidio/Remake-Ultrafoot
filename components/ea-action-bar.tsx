@@ -1,11 +1,15 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react"
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useSyncExternalStore } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { BarChart3, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
 import { useEhAppCelular } from "@/lib/plataforma"
+import type { GameAction } from "@/lib/input/actions"
+import { useRetratoDoInput, useModoControle } from "@/hooks/use-input"
+import { pilhaDeDicas } from "@/lib/input/hints"
+import { GlifoDaAcao } from "@/components/input/glifo"
 
 /**
  * Barra de acoes inferior estilo EA FC Manager.
@@ -22,6 +26,54 @@ export interface ActionHint {
   /** Rotulo da acao (ex: "Selecionar", "Voltar"). */
   label: string
   onClick?: () => void
+  /**
+   * Acao do jogo que esta tecla dispara. So serve para desenhar o GLIFO DO
+   * CONTROLE no lugar da tecla quando ha um controle ligado. Opcional: sem ela,
+   * `acaoDaTecla` deduz pelo proprio `keyLabel`, que ja e o caso das dezenas de
+   * telas que so passam "Esc"/"Tab"/"enter".
+   */
+  acao?: GameAction
+}
+
+/**
+ * TECLA -> ACAO, para a barra trocar de glifo sozinha.
+ *
+ * Pedido do PDF Ultra26 (p.14): "no eafc ele reconhece automaticamente quando
+ * conecta o controle e ja muda os icones". A deteccao ja existia inteira
+ * (`entrada: "auto"` e `glifo: "auto"` em lib/input/preferences.ts, e
+ * `useFamiliaDeGlifo` seguindo o controle ligado) — o que faltava era ESTA
+ * barra, que desenhava a tecla do teclado em qualquer situacao.
+ *
+ * O mapa cobre o vocabulario que as telas realmente usam. Tecla sem acao
+ * conhecida continua desenhada como tecla, que e o comportamento honesto: e
+ * melhor mostrar "Num" do que inventar um botao de controle que nao existe.
+ */
+const ACAO_DA_TECLA: Record<string, GameAction> = {
+  enter: "UI_CONFIRM",
+  esc: "UI_BACK",
+  escape: "UI_BACK",
+  tab: "TAB_NEXT",
+  w: "QUICK_MENU",
+  q: "SEARCH",
+  e: "OPEN_DETAILS",
+  f: "OPEN_ACTIONS",
+  x: "PAGE_PREVIOUS",
+  c: "PAGE_NEXT",
+}
+
+function acaoDaTecla(hint: ActionHint): GameAction | null {
+  return hint.acao ?? ACAO_DA_TECLA[hint.keyLabel.trim().toLowerCase()] ?? null
+}
+
+/** A BarraDeDicas do Modo Controle esta desenhando alguma coisa agora? */
+function useDicasDoModoControle(): boolean {
+  const modoControle = useModoControle()
+  const temDicas = useSyncExternalStore(
+    cb => pilhaDeDicas.observar(cb),
+    () => pilhaDeDicas.atual().length > 0,
+    () => false,
+  )
+  return modoControle && temDicas
 }
 
 const DEFAULT_ACTIONS: ActionHint[] = [
@@ -139,6 +191,20 @@ export function useActionBar(actions: ActionHint[]) {
   }, [key])
 }
 
+/**
+ * A DICA, desenhada como o jogador tem na mao.
+ *
+ * Com controle ligado desenha o glifo do botao (e o glifo ja segue a familia
+ * Xbox/PlayStation do controle conectado); sem controle, a tecla. A troca e
+ * automatica porque `useRetratoDoInput` reassina a cada conexao/desconexao.
+ */
+function DicaDaAcao({ hint }: { hint: ActionHint }) {
+  const { primario } = useRetratoDoInput()
+  const acao = acaoDaTecla(hint)
+  if (primario && acao) return <GlifoDaAcao acao={acao} contexto="GLOBAL" tamanho="sm" />
+  return <KeyCap label={hint.keyLabel} />
+}
+
 function KeyCap({ label }: { label: string }) {
   const isEnter = label.toLowerCase() === "enter"
   return (
@@ -186,11 +252,18 @@ export function EaActionBar() {
   // Antes do `return null` de propósito: hook não pode ficar depois de saída
   // condicional, senão a ordem muda entre renderizações e o React quebra.
   const celular = useEhAppCelular()
+  // ⚠️ DUAS BARRAS EMPILHADAS. Esta e a BarraDeDicas do Modo Controle
+  // (components/input/barra-de-dicas.tsx) ocupam as MESMAS 44px do rodape. Em
+  // Modo Controle as duas eram desenhadas: a de cima, opaca (z-50, bg-black/80),
+  // tapava esta (z-30) — que continuava ali embaixo, invisivel e comendo os
+  // cliques dos seus proprios botoes. Quando a outra tem o que dizer, esta sai.
+  const dicasDoModoControle = useDicasDoModoControle()
   const actions = ctx?.actions ?? DEFAULT_ACTIONS
 
   // A barra pertence ao escritorio da carreira. Na splash, editor e fluxos antes
   // da escolha do clube ela nao deve aparecer, conforme a referencia do dossie.
   if (!state.selectedTeamShort || HIDDEN_PATHS.some((p) => pathname.startsWith(p))) return null
+  if (dicasDoModoControle) return null
 
   return (
     <div
@@ -206,7 +279,7 @@ export function EaActionBar() {
         {actions.map((action, i) => {
           const content = (
             <>
-              <KeyCap label={action.keyLabel} />
+              <DicaDaAcao hint={action} />
               <span className="text-[11px] font-medium tracking-wide text-white/55">{action.label}</span>
             </>
           )

@@ -38,6 +38,10 @@ export const CAMPOS_DO_CLUBE = [
   "tacticalPlayerPositions", "tacticalPlayerMovements", "setPieceTakers",
   // Treino
   "planoDeTreino", "posturaDaSemana", "ultimoTreino",
+  // Plano de treino automatico: e decisao DO TECNICO, entao viaja com ele na
+  // carreira de mesa. Sem estas duas, trocar de tecnico no co-op devolveria o
+  // elenco as regras padrao sem ninguem ter mexido nelas.
+  "regrasDePlanoDeTreino", "planoManualPorAtleta",
   // Dinheiro do clube — o caixa é POR CLUBE, nunca por técnico
   "balance", "weeklyIncome", "weeklyExpenses", "transferBudget", "wageBudget",
   "vendasDeJovensPagas", "marketingContracts", "ticketTier",

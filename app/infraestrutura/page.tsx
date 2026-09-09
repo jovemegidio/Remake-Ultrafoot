@@ -4,6 +4,7 @@ import { formatCurrency } from "@/lib/currency"
 import { useState, useEffect, useMemo, useRef } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "@/lib/i18n"
 import { motion, AnimatePresence } from "framer-motion"
 import { GameHeader } from "@/components/game-header"
 import { EstadioSetores } from "@/components/estadio-setores"
@@ -159,6 +160,7 @@ const INFRASTRUCTURE_AREAS = [
 
 
 export default function InfraestruturaPage() {
+  const t = useTranslation()
   const router = useRouter()
 
   // Gamepad support
@@ -285,13 +287,13 @@ export default function InfraestruturaPage() {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-[10px] text-white/40 uppercase">Manutencao Semanal</p>
+                <p className="text-[10px] text-white/40 uppercase">{t.infraestrutura.manutencao_semanal}</p>
                 <p className="text-sm font-semibold text-amber-400">
                   {formatCurrency(getMaintenanceCost())}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-white/40 uppercase">Saldo Disponivel</p>
+                <p className="text-[10px] text-white/40 uppercase">{t.infraestrutura.saldo_disponivel}</p>
                 <p className="text-sm font-semibold text-[var(--brand)]">
                   {formatCurrency(balance)}
                 </p>
@@ -315,7 +317,7 @@ export default function InfraestruturaPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--uf-bg-deep)] via-[var(--uf-bg-deep)]/35 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--brand)]">Estádio do clube</p>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--brand)]">{t.infraestrutura.estadio_do_clube}</p>
                 <h2 className="uf-heading text-xl font-black text-white drop-shadow">{userTeam?.estadio_nome || "Estádio"}</h2>
               </div>
               <div className="text-right">
@@ -381,7 +383,7 @@ export default function InfraestruturaPage() {
             <span>{pitch.surface === "natural" ? "Natural" : "Sintético"} · {pitch.quality === "good" ? "Bom" : pitch.quality === "medium" ? "Médio" : "Ruim"}</span>
             <span className="text-white/35">lesões {pitchInjuryFrequencyMultiplier(pitch).toFixed(2)}x</span>
           </>}
-        ><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="mt-1 text-xs text-white/45">Qualidade controla a frequência de lesões. O sintético custa menos, mas aumenta em 35% a recuperação quando ocorre uma contusão.</p></div><div className="flex flex-wrap items-end gap-2"><label className="text-[10px] uppercase text-white/45">Superfície<select value={pitchSurface} onChange={e=>setPitchSurface(e.target.value as PitchSurface)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="natural">Natural</option><option value="synthetic">Sintético</option></select></label><label className="text-[10px] uppercase text-white/45">Qualidade<select value={pitchQuality} onChange={e=>setPitchQuality(e.target.value as PitchQuality)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="poor">Ruim</option><option value="medium">Médio</option><option value="good">Bom</option></select></label><Button onClick={applyPitch} disabled={balance<pitchUpgradeCost(pitch,pitchSurface,pitchQuality)}>Aplicar · {formatCurrency(pitchUpgradeCost(pitch,pitchSurface,pitchQuality))}</Button></div></div><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><div className="rounded bg-black/25 p-2 text-white/55">Manutenção mensal <b className="block text-white">{formatCurrency(pitch.monthlyMaintenance)}</b></div><div className="rounded bg-black/25 p-2 text-white/55">Frequência de lesões <b className="block text-white">{pitchInjuryFrequencyMultiplier(pitch).toFixed(2)}x</b></div><div className="rounded bg-black/25 p-2 text-white/55">Duração da lesão <b className="block text-white">{pitchInjuryDurationMultiplier(pitch).toFixed(2)}x</b></div></div></Bloco>
+        ><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="mt-1 text-xs text-white/45">{t.infraestrutura.qualidade_controla_a_frequencia_de_lesoes}</p></div><div className="flex flex-wrap items-end gap-2"><label className="text-[10px] uppercase text-white/45">Superfície<select value={pitchSurface} onChange={e=>setPitchSurface(e.target.value as PitchSurface)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="natural">Natural</option><option value="synthetic">{t.infraestrutura.sintetico}</option></select></label><label className="text-[10px] uppercase text-white/45">Qualidade<select value={pitchQuality} onChange={e=>setPitchQuality(e.target.value as PitchQuality)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="poor">Ruim</option><option value="medium">{t.infraestrutura.medio}</option><option value="good">Bom</option></select></label><Button onClick={applyPitch} disabled={balance<pitchUpgradeCost(pitch,pitchSurface,pitchQuality)}>Aplicar · {formatCurrency(pitchUpgradeCost(pitch,pitchSurface,pitchQuality))}</Button></div></div><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><div className="rounded bg-black/25 p-2 text-white/55">Manutenção mensal <b className="block text-white">{formatCurrency(pitch.monthlyMaintenance)}</b></div><div className="rounded bg-black/25 p-2 text-white/55">Frequência de lesões <b className="block text-white">{pitchInjuryFrequencyMultiplier(pitch).toFixed(2)}x</b></div><div className="rounded bg-black/25 p-2 text-white/55">Duração da lesão <b className="block text-white">{pitchInjuryDurationMultiplier(pitch).toFixed(2)}x</b></div></div></Bloco>
 
         {/* SETORES DO ESTADIO — a tela que o `lib/stadium-sectors` esperava desde
             29/07. Fica logo abaixo da superficie porque as duas decisoes sao do
@@ -562,7 +564,7 @@ export default function InfraestruturaPage() {
               {/* Nivel atual */}
               <div className="p-4 rounded-xl bg-white/5 mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-white/60">Nivel Atual</span>
+                  <span className="text-sm text-white/60">{t.infraestrutura.nivel_atual}</span>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <div
@@ -592,7 +594,7 @@ export default function InfraestruturaPage() {
               {infrastructure[selectedArea] < 5 && (
                 <div className="p-4 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5 mb-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-[var(--brand)]">Proximo Nivel</span>
+                    <span className="text-sm text-[var(--brand)]">{t.infraestrutura.proximo_nivel}</span>
                     <span className="text-sm font-semibold text-[var(--brand)]">
                       {formatCurrency(selectedAreaData.levels[infrastructure[selectedArea]]?.cost)}
                     </span>

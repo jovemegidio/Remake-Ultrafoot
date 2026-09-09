@@ -62,6 +62,14 @@ import {
   semearParesDeHistorico,
   type AtletaNaSemana, type ParesDeEntrosamento, type PlanoDeTreino,
 } from "@/lib/treino-e-entrosamento"
+import { ganhoDaTemporada } from "@/lib/plano-de-desenvolvimento"
+import {
+  planoDoAtleta,
+  REGRAS_PADRAO,
+  CARGA_INDIVIDUAL_DO_PLANO,
+  type RegraDePlano,
+  type PlanoAutomatico,
+} from "@/lib/plano-de-treino-automatico"
 import { analyseSquadDynamics, applyWeeklyPlayingTimeMorale } from "@/lib/squad-dynamics"
 import { ritmoDaSemana, RITMO_INICIAL } from "@/lib/ritmo-de-jogo"
 // O TÉCNICO EM NÚMEROS. Retrato publicado pelo save-system — o motor não pode
@@ -2284,6 +2292,23 @@ interface GameEngineState {
   /** Plano de treino COLETIVO da semana (intensidade x foco). */
   planoDeTreino: PlanoDeTreino
   /**
+   * REGRAS DO PLANO AUTOMATICO (ver lib/plano-de-treino-automatico.ts).
+   *
+   * Opcional de proposito: save anterior a esta versao nao tem, e cai nas
+   * `REGRAS_PADRAO` — que reproduzem o comportamento de antes, porque nenhuma
+   * delas muda a carga de quem esta com ritmo normal.
+   */
+  regrasDePlanoDeTreino?: RegraDePlano[]
+  /**
+   * Plano escolhido A MAO para um atleta, que vence a regra automatica.
+   *
+   * So guarda quem foi decidido a mao: o elenco inteiro vive das regras, e
+   * gravar 30 entradas identicas as automaticas so engordaria o save (ver
+   * [[ultrafoot-custo-de-cada-gravacao]] — `store.save()` reescreve o arquivo
+   * inteiro).
+   */
+  planoManualPorAtleta?: Record<number, PlanoAutomatico>
+  /**
    * Como o tecnico usa os dias LIVRES da semana (ver lib/rotina-da-semana.ts).
    * Opcional: save anterior a esta versao cai no equilibrado, que e o
    * comportamento de sempre.
@@ -2516,6 +2541,9 @@ interface GameEngineState {
   /** Como usar os dias LIVRES da semana (ver lib/rotina-da-semana.ts). */
   definirPosturaDaSemana: (postura: Postura) => void
   definirPlanoDeTreino: (plano: Partial<PlanoDeTreino>) => void
+  definirRegrasDePlanoDeTreino: (regras: RegraDePlano[]) => void
+  /** `null` devolve o atleta as regras automaticas. */
+  definirPlanoManualDoAtleta: (id: number, plano: PlanoAutomatico | null) => void
   rolarLesaoSimulada: (qtdJogos: number) => void
   acumularEstatisticasSimuladas: (golsPro: number, golsContra: number) => void
   cumprirSuspensao: (playerId: number) => void
@@ -3283,6 +3311,23 @@ export const useGameEngine = create<GameEngineState>()(
             // senao adaptar o elenco inteiro sairia de graca.
             emTreinoIndividual: Boolean(p.training.currentFocus || p.training.positionFocus),
             focoIndividual: p.training.currentFocus ?? null,
+            // ── O PLANO DE TREINO CHEGA AO MOTOR AQUI ───────────────────────
+            //
+            // `cargaIndividual` existia desde sempre em treino-e-entrosamento e
+            // NENHUM lugar do jogo a definia (ver o comentario em
+            // lib/plano-de-treino-automatico.ts). Agora ela sai das regras que o
+            // tecnico ligou, com a escolha MANUAL vencendo a automatica.
+            //
+            // `ritmo` aqui e o do inicio da semana, de proposito: o plano decide
+            // o treino a partir do estado em que o atleta CHEGOU, nao do que ele
+            // vai virar depois desta mesma virada.
+            cargaIndividual: CARGA_INDIVIDUAL_DO_PLANO[
+              s.planoManualPorAtleta?.[p.id]
+                ?? planoDoAtleta(
+                  { id: p.id, ritmo: p.ritmo, energy: p.energy, injury: p.injury },
+                  s.regrasDePlanoDeTreino ?? REGRAS_PADRAO,
+                ).plano
+            ],
           }))
           // ── A SEMANA TEM DIAS (ver lib/rotina-da-semana.ts) ─────────────
           //
@@ -6046,6 +6091,19 @@ export const useGameEngine = create<GameEngineState>()(
         set((s) => ({ planoDeTreino: { ...(s.planoDeTreino ?? PLANO_PADRAO), ...plano } }))
       },
 
+      definirRegrasDePlanoDeTreino: (regras) => set({ regrasDePlanoDeTreino: regras }),
+
+      definirPlanoManualDoAtleta: (id, plano) => {
+        set((s) => {
+          const atual = { ...(s.planoManualPorAtleta ?? {}) }
+          // `null` DEVOLVE o atleta as regras automaticas. Sem este caminho, uma
+          // escolha manual seria permanente e o tecnico nao teria como desfazer.
+          if (plano === null) delete atual[id]
+          else atual[id] = plano
+          return { planoManualPorAtleta: atual }
+        })
+      },
+
       definirPosturaDaSemana: (postura) => set({ posturaDaSemana: postura }),
 
       /**
@@ -7791,34 +7849,25 @@ export const useGameEngine = create<GameEngineState>()(
             // fazem o talento "se perder". E por isso que dois jovens de mesmo
             // potencial evoluem diferente.
             const persona = p.persona ?? gerarPersona(p.id, p.overall)
-            const fatorPersona = 0.7 + ((persona.determinacao + persona.profissionalismo) / 40) * 0.9 // ~0.7-1.6
-            if (age <= 23 && margem > 0) {
-              const jogos = p.seasonStats?.matchesPlayed ?? 0
-              const ritmo = age <= 19 ? 4 : age <= 21 ? 3 : 2
-              const ganhoBase = ritmo + Math.floor(jogos / 12)
-              // A ESCALA RESISTE NO TOPO (1.0.298). Subir de 50 para 60 e uma
-              // temporada boa; de 90 para 95, uma carreira inteira. Antes o
-              // ganho so dependia da idade e do potencial, entao um garoto de 19
-              // com potencial 95 andava de 88 para 92 no mesmo passo com que
-              // andaria de 58 para 62 — e a diferenca entre um bom jogador e um
-              // fenomeno virava so uma questao de tempo.
-              //
-              // O piso de 1 ponto tambem cai a partir de 82: acima disso a
-              // temporada pode nao render NADA, que e o que faz "estagnou" ser
-              // um destino possivel em vez de um degrau garantido por ano.
-              const resistencia = p.overall >= 88 ? 0.25
-                : p.overall >= 82 ? 0.45
-                  : p.overall >= 75 ? 0.7
-                    : p.overall >= 65 ? 0.9 : 1
-              const piso = p.overall >= 82 ? 0 : 1
-              const ganho = Math.min(margem, Math.max(piso, Math.round(ganhoBase * fatorPersona * resistencia)))
-              overall = Math.min(p.potential, p.overall + ganho)
-            } else if (age >= 32) {
-              // Declinio do veterano — mais forte a cada ano apos os 32. Antes o
-              // piso era `potential-12` (um craque de potencial 90 nunca caia de
-              // 78, irreal); agora o veterano de fato desbota, ate um piso baixo.
-              const cai = (age >= 36 ? 3 : age >= 34 ? 2 : 1) - (persona.profissionalismo >= 15 ? 1 : 0)
-              overall = Math.max(42, p.overall - Math.max(0, cai))
+            // ⚠️ A CONTA MORA EM lib/plano-de-desenvolvimento.ts, E NAO AQUI.
+            //
+            // Ela foi extraida deste mesmo bloco (nenhum numero mudou: ritmo por
+            // idade, +1 a cada 12 jogos, a resistencia no topo da 1.0.298, o piso
+            // que cai acima de 82 e o declinio do veterano estao todos la, iguais).
+            //
+            // O motivo da mudanca e a tela nova de Planos de Desenvolvimento
+            // (PDF Ultra26, p.15), que precisa PROJETAR este ganho. Escrever a
+            // projecao "parecida" ao lado seria a terceira vez que este projeto
+            // cria duas escalas para a mesma grandeza — e o sintoma seria a tela
+            // prometer +4 e a virada de ano entregar +2.
+            const delta = ganhoDaTemporada(
+              { id: p.id, age: p.age, overall: p.overall, potential: p.potential, persona },
+              p.seasonStats?.matchesPlayed ?? 0,
+            )
+            if (delta !== 0) {
+              overall = delta > 0
+                ? Math.min(p.potential, p.overall + delta)
+                : Math.max(42, p.overall + delta)
             }
             // Overall mudou -> desloca os atributos para acompanhar (mantem overall
             // e atributos reconciliados; senao voltariam a divergir).

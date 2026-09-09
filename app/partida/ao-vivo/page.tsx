@@ -36,6 +36,7 @@ import {
   Circle,
   Maximize2,
   Minimize2,
+  Footprints,
 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { getCompetitionLogo } from "@/lib/competition-logo"
@@ -87,7 +88,7 @@ import {
   type MatchEvent,
   type MatchState,
 } from "@/lib/match-engine"
-import { notasDoLado, corDaNota, formatarNota } from "@/lib/notas-da-partida"
+import { notasDoLado, corDaNota, formatarNota, type NotaDoAtleta } from "@/lib/notas-da-partida"
 import { LivePitch } from "@/components/match/live-pitch"
 import { SubstitutionModal, type MatchPlayer, type SubstitutionChange } from "@/components/match/substitution-modal"
 import { MatchResultModal } from "@/components/match/match-result-modal"
@@ -313,10 +314,44 @@ function deriveFormation(squad: MatchPlayer[]): string {
 // referência (FIFA26/16.png): os titulares dos dois times ladeando o campo, com
 // a barra de energia que drena ao longo do jogo (mesma fonte da aba Preparo).
 // À direita a linha é espelhada (barra | nome | número), como na referência.
+/**
+ * O QUE O ATLETA FEZ, ao lado do nome dele.
+ *
+ * Pedido do PDF Ultra26 (p.2). Cartao e um retangulo (a forma que todo mundo
+ * reconhece de relance, e que sobrevive ao daltonismo melhor que a cor sozinha);
+ * gol e assistencia sao icones com contador so quando ha mais de um — "⚽2" no
+ * lugar de duas bolas espremidas numa coluna de 11 linhas.
+ */
+function MarcasDoAtleta({ marca }: { marca: NotaDoAtleta }) {
+  if (!marca.gols && !marca.assistencias && !marca.amarelo && !marca.vermelho) return null
+  return (
+    <span className="flex shrink-0 items-center gap-[3px]" aria-hidden="true">
+      {marca.gols > 0 && (
+        <span className="inline-flex items-center gap-[1px] text-[9px] font-bold text-white/85" title={`${marca.gols} gol(s)`}>
+          <Goal className="h-2.5 w-2.5" />
+          {marca.gols > 1 && <span className="uf-num">{marca.gols}</span>}
+        </span>
+      )}
+      {marca.assistencias > 0 && (
+        <span className="inline-flex items-center gap-[1px] text-[9px] font-bold text-white/60" title={`${marca.assistencias} assistencia(s)`}>
+          <Footprints className="h-2.5 w-2.5" />
+          {marca.assistencias > 1 && <span className="uf-num">{marca.assistencias}</span>}
+        </span>
+      )}
+      {marca.amarelo && !marca.vermelho && (
+        <span className="h-[11px] w-[7px] rounded-[1px] bg-yellow-400" title="Cartao amarelo" />
+      )}
+      {marca.vermelho && (
+        <span className="h-[11px] w-[7px] rounded-[1px] bg-red-500" title="Cartao vermelho" />
+      )}
+    </span>
+  )
+}
+
 function SideLineup({ team, squad, bench = [], side, notas }: {
   team: Team; squad: MatchPlayer[]; bench?: MatchPlayer[]; side: "left" | "right"
   /** Nota ao vivo por NOME. Ausente antes do apito — a coluna some sozinha. */
-  notas?: Map<string, { nota: number; eventos: number }>
+  notas?: Map<string, NotaDoAtleta>
 }) {
   /**
    * TITULARES ↔ RESERVAS (pedido).
@@ -367,6 +402,9 @@ function SideLineup({ team, squad, bench = [], side, notas }: {
         )}
         {lista.map((p) => {
           const cond = Math.round(p.stamina ?? 100)
+          // Marca só de quem está em campo: reserva no banco não tem lance para
+          // marcar, pela mesma razão que ele não tem nota.
+          const marca = aba === "titulares" ? notas?.get(p.name) : undefined
           return (
             <div key={p.id} className={cn("flex items-center gap-2 py-[3px]", alinhadoADireita && "flex-row-reverse")}>
               <span className="w-4 shrink-0 text-center text-[10px] tabular-nums text-white/35">{p.number}</span>
@@ -375,8 +413,12 @@ function SideLineup({ team, squad, bench = [], side, notas }: {
                 // Reserva é quem AINDA não entrou: cinza para a leitura de
                 // relance não confundir as duas listas.
                 aba === "titulares" ? "text-white" : "text-white/60",
+                // Expulso continua na lista (o jogador precisa ver quem saiu e
+                // por que o time está com dez), mas apagado.
+                marca?.vermelho && "text-white/35 line-through decoration-red-500/60",
                 alinhadoADireita && "text-right",
               )}>{p.name}</span>
+              {marca ? <MarcasDoAtleta marca={marca} /> : null}
               <div className="h-1 w-10 shrink-0 overflow-hidden rounded-full bg-white/10">
                 <div
                   className={cn("h-full rounded-full transition-all", cond > 70 ? "bg-emerald-500" : cond > 40 ? "bg-amber-500" : "bg-red-500")}
@@ -919,8 +961,20 @@ export default function PartidaAoVivoPage() {
         dribbling: jogador.base,
         defending: jogador.base,
         physical: jogador.base,
-        // A convocação vem ordenada por setor e nota; os onze primeiros começam.
-        isStarter: indice < 11,
+        // ⚠️ NAO marque titular por INDICE aqui (era `indice < 11`).
+        //
+        // A convocação vem ordenada POR SETOR, com as cotas de
+        // NATIONAL_SQUAD_QUOTAS (3 GOL, 8 DEF, 7 MEI, 5 ATA). Os onze primeiros
+        // eram, literalmente, TRES GOLEIROS E OITO DEFENSORES — sem nenhum meia
+        // nem atacante. Com o XI ja "declarado", enginePlayersToMatchSquad tomava
+        // o ramo da escalacao manual e PULAVA o pickStartingXI, que e justamente
+        // quem impede o segundo goleiro de entrar. O encaixe entao nao achava
+        // compativel para MEI/PD/PE/ATA e caia no "pega quem sobrou"
+        // (lib/formations.ts) — os goleiros reservas iam para a LINHA.
+        //
+        // Era o relato "na selecao a escalacao sai completamente errada, goleiro
+        // na linha". Quem escolhe o XI da selecao e o pickStartingXI, abaixo.
+        isStarter: false,
         shirtNumber: indice + 1,
         injury: null,
         calledUp: false,
@@ -1185,8 +1239,18 @@ export default function PartidaAoVivoPage() {
     // clube — o placar sairia do elenco errado mesmo com os nomes certos na
     // escalação. Forma e moral não existem para o convocado (são do vínculo com
     // o clube), então ficam nos neutros e o modificador zera.
+    // ⚠️ O MESMO `slice(0, 11)` da escalacao vivia AQUI TAMBEM, e este doia
+    // ainda mais: com tres goleiros e oito defensores, os setores de ataque e
+    // meio nao achavam ninguem e caiam no neutro 65. A selecao entrava em campo
+    // ENFRAQUECIDA alem de mal escalada — consertar so a escalacao deixaria o
+    // placar saindo do elenco errado. Os onze sao os mesmos que vao a campo.
     const xi = matchCtx.national && selecaoConvocada.length > 0
-      ? selecaoConvocada.slice(0, 11).map(j => ({
+      ? pickStartingXI(
+          selecaoConvocada,
+          j => j.pos,
+          j => j.base,
+          savedFormation ?? "4-3-3",
+        ).starters.map(j => ({
           position: j.pos,
           overall: j.base,
           isStarter: true,
@@ -1228,7 +1292,7 @@ export default function PartidaAoVivoPage() {
       defense: def + tacticalForces.defense + individuais.defense + mod,
       midfield: mid + tacticalForces.midfield + individuais.midfield + mod,
     }
-  }, [matchEnginePlayers, selecaoConvocada, matchCtx.national, tacticalForces, climaDoElenco.efeito, instrucoesIndividuais, userSide, homeTeam.prestigio, awayTeam.prestigio])
+  }, [matchEnginePlayers, selecaoConvocada, matchCtx.national, savedFormation, tacticalForces, climaDoElenco.efeito, instrucoesIndividuais, userSide, homeTeam.prestigio, awayTeam.prestigio])
 
   /**
    * CENTRAL DE GESTÃO EM CAMPO.

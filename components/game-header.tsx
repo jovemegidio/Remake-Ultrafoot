@@ -77,7 +77,7 @@ interface RouteMeta {
   title: string
 }
 const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
-  { prefix: "/central", meta: { parent: "Inicio", parentHref: "/", title: "Central" } },
+  { prefix: "/central", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Central do Clube" } },
   { prefix: "/notificacoes", meta: { parent: "Caixa de entrada", parentHref: "/mensagens", title: "Notificacoes" } },
   { prefix: "/mensagens", meta: { parent: "Caixa de entrada", parentHref: "/mensagens", title: "Mensagens" } },
   { prefix: "/elenco/gerenciamento", meta: { parent: "Elenco", parentHref: "/elenco", title: "Gerenciamento" } },
@@ -93,18 +93,24 @@ const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/olheiros", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Olheiros" } },
   { prefix: "/relatorios", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Relatorios" } },
   { prefix: "/contratos", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Contratos" } },
-  { prefix: "/treinamento", meta: { parent: "Academia", parentHref: "/treinamento", title: "Treinamento" } },
+  { prefix: "/treinamento", meta: { parent: "Academia", parentHref: "/academia", title: "Treinamento" } },
   { prefix: "/gestao-avancada", meta: { parent: "Treinador", parentHref: "/treinador", title: "Gestao Avancada" } },
-  { prefix: "/financas", meta: { parent: "Escritorio", parentHref: "/financas", title: "Financas" } },
-  { prefix: "/estatisticas", meta: { parent: "Escritorio", parentHref: "/financas", title: "Estatisticas: Atletas" } },
-  { prefix: "/competicoes", meta: { parent: "Escritorio", parentHref: "/financas", title: "Competicoes" } },
-  { prefix: "/calendario", meta: { parent: "Escritorio", parentHref: "/financas", title: "Calendario" } },
-  { prefix: "/historico", meta: { parent: "Escritorio", parentHref: "/financas", title: "Historico" } },
-  { prefix: "/reunioes", meta: { parent: "Escritorio", parentHref: "/financas", title: "Reunioes" } },
-  { prefix: "/imprensa", meta: { parent: "Escritorio", parentHref: "/financas", title: "Imprensa" } },
-  { prefix: "/infraestrutura", meta: { parent: "Escritorio", parentHref: "/financas", title: "Infraestrutura" } },
-  { prefix: "/analise-partida", meta: { parent: "Escritorio", parentHref: "/financas", title: "Analise da Partida" } },
-  { prefix: "/performance", meta: { parent: "Escritorio", parentHref: "/financas", title: "Performance Center" } },
+  { prefix: "/financas", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Financas" } },
+  { prefix: "/estatisticas", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Estatisticas: Atletas" } },
+  { prefix: "/competicoes", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Competicoes" } },
+  { prefix: "/calendario", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Calendario" } },
+  { prefix: "/historico", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Historico" } },
+  { prefix: "/reunioes", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Reunioes" } },
+  { prefix: "/imprensa", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Imprensa" } },
+  { prefix: "/infraestrutura", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Infraestrutura" } },
+  { prefix: "/analise-partida", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Analise da Partida" } },
+  { prefix: "/performance", meta: { parent: "Academia", parentHref: "/academia", title: "Performance Center" } },
+  { prefix: "/base/carreira", meta: { parent: "Base", parentHref: "/base/carreira", title: "Carreira na base" } },
+  { prefix: "/base", meta: { parent: "Academia", parentHref: "/academia", title: "Juniores" } },
+  { prefix: "/academia", meta: { parent: "Academia", parentHref: "/academia", title: "Visao Geral" } },
+  { prefix: "/escritorio", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Visao Geral" } },
+  { prefix: "/comissao", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Comissao Tecnica" } },
+  { prefix: "/rankings", meta: { parent: "Escritorio", parentHref: "/escritorio", title: "Rankings" } },
   { prefix: "/selecao/calendario", meta: { parent: "Selecao", parentHref: "/selecao", title: "Calendario da selecao" } },
   // O ONLINE NAO E UMA TELA DO ESCRITORIO. Sem estas linhas a trilha dizia
   // "Inicio > Escritorio" enquanto a pessoa estava nos modos entre tecnicos.
@@ -1329,68 +1335,46 @@ type NavMenuItem = {
 }
 
 const NAV_MENU_ITEMS: NavMenuItem[] = [
-  { secao: "Clube", label: "Escritorio", href: "/", icon: Trophy },
-  { secao: "Clube", label: "Central do Clube", href: "/central", icon: Heart, clubOnly: true },
-  { secao: "Clube", label: "Financas", href: "/financas", icon: TrendingUp, clubOnly: true },
-  // INFRAESTRUTURA ganhou entrada PROPRIA (pedido antigo): existia so dentro de
-  // Configuracoes, e quem quer mexer em bilheteria ou obra do estadio nao
-  // procura isso em "configuracoes do jogo".
-  { secao: "Clube", label: "Infraestrutura", href: "/infraestrutura", icon: Building2, clubOnly: true },
-  // COMISSAO TECNICA. A tela existia e NENHUM menu levava ate ela — o mesmo
-  // defeito que a criou ("o sistema ja existia inteiro no game-engine, so nunca
-  // teve tela"), so que uma camada acima. A aba "Comissao" da Central de Gestao
-  // NAO e esta: la se decide como cada pauta de reuniao chega; aqui se contrata
-  // e se demite quem trabalha no clube.
-  { secao: "Clube", label: "Comissao tecnica", href: "/comissao", icon: Users, clubOnly: true },
-
-  { secao: "Elenco", label: "Elenco", href: "/elenco", icon: User, clubOnly: true },
-  { secao: "Elenco", label: "Treinamento", href: "/treinamento", icon: User, clubOnly: true },
-  { secao: "Elenco", label: "Juniores", href: "/base", icon: Sprout, clubOnly: true },
-  // Carreira na base e carreira de jogador tem seus proprios menus e continuam
-  // acessiveis pela criacao. Este W pertence ao escritorio do treinador.
-  // MERCADO absorve o TransferRoom: os dois sao a mesma tarefa (negociar
-  // atleta), e o TransferRoom ja e alcancado de dentro do Mercado. Duas linhas
-  // no menu para a mesma decisao so faziam o tecnico escolher por qual porta
-  // entrar antes de escolher o que fazer.
-  { secao: "Elenco", label: "Mercado", href: "/mercado", icon: TrendingUp, clubOnly: true },
-  // Performance Center e a unica porta para as "Fases do jogo", o planejamento
-  // plurianual e o Data Hub. Tirar do menu deixaria as quatro abas sem entrada
-  // nenhuma — nenhuma outra tela linka para ca.
-  { secao: "Elenco", label: "Performance Center", href: "/performance", icon: Heart, clubOnly: true },
-  // ⚠️ TATICAS E LEILOES SAIRAM DO MENU (pedido).
+  // ⚠️ ESTE MENU TINHA DEZESSEIS ENTRADAS EM QUATRO SECOES.
   //
-  // Taticas: a prancheta pertence ao PRE-JOGO. Alcancavel pelo menu a qualquer
-  // momento, ela virava atalho para abrir o elenco no meio de outra tela — e
-  // no pre-jogo levava o tecnico para FORA da partida, o que dava margem a
-  // mexer no time depois de ver coisa que nao deveria. Agora ela abre dentro do
-  // proprio pre-jogo (ver components/match/ajustes-finais).
-  // Leiloes: a tela continua existindo e e alcancada pelo pos-partida e pelo
-  // Mercado; o que sai e a entrada do menu.
-  { secao: "Competicao", label: "Calendario", href: "/calendario", icon: Calendar, clubOnly: true },
-  // Competicoes e Classificacao apontavam para a MESMA rota — eram duas
-  // entradas para a mesma tela. Viraram uma so.
-  { secao: "Competicao", label: "Competicoes e Classificacao", href: "/competicoes", icon: Trophy, clubOnly: true },
+  // O relatorio (PDF Ultra26, p.1) marcou a coluna inteira: "diminua um pouco
+  // dessas paginas, junte em uma pagina so os itens que tem que juntar". A
+  // forma da referencia (p.4) e curta: Inicio, Notificacoes, Elenco,
+  // Transferencias, Academia, Escritorio, Personalizar.
+  //
+  // ⚠️ NENHUM DESTINO FOI APAGADO, e isso e deliberado. O historico deste
+  // arquivo e uma lista de telas que existiam e nao tinham porta: a Comissao
+  // Tecnica, os Desafios, o Performance Center. Encurtar o menu removendo linha
+  // recriaria o mesmo defeito. Cada tela que saiu daqui mora agora num HUB —
+  // /escritorio e /academia, criados para isto — e continua a um clique de
+  // distancia, com descricao, em vez de a zero cliques sem nenhuma.
+  //
+  // O mapa de migalhas (MAPA_DE_SECOES, no topo do arquivo) e quem mantem o
+  // caminho de volta correto para cada uma delas.
+  { secao: "Clube", label: "Inicio", href: "/", icon: Trophy },
+  { secao: "Clube", label: "Notificacoes", href: "/notificacoes", icon: Bell },
 
+  { secao: "Time", label: "Elenco", href: "/elenco", icon: User, clubOnly: true },
+  // TRANSFERENCIAS e a porta, /mercado e uma sala dentro dela (PDF p.9). O hub
+  // /transferencias ja existia com os seis cards e o breadcrumb ja o declarava
+  // como pai de /mercado; so o menu continuava entrando pela sala do meio.
+  { secao: "Time", label: "Transferencias", href: "/transferencias", icon: ArrowLeftRight, clubOnly: true },
+  // ACADEMIA absorve Treinamento, Juniores e Performance Center, mais as duas
+  // telas novas de plano (treino e desenvolvimento) pedidas na p.16.
+  { secao: "Time", label: "Academia", href: "/academia", icon: Sprout, clubOnly: true },
+
+  // ESCRITORIO absorve Central do Clube, Financas, Infraestrutura, Comissao
+  // Tecnica, Calendario, Competicoes, Gestao, Rankings, Historico, Imprensa,
+  // Reunioes e Analise da Partida — as doze telas de quem DIRIGE o clube.
+  { secao: "Voce", label: "Escritorio", href: "/escritorio", icon: Building2, clubOnly: true },
+  // AREA DO TREINADOR fica FORA do hub do clube de proposito: ela e a carreira
+  // de quem dirige (propostas, reputacao, historico pessoal) e continua valendo
+  // para quem esta SEM CLUBE — por isso nao leva `clubOnly`. Enfia-la no
+  // escritorio a tornaria inalcancavel exatamente para quem mais precisa dela.
   { secao: "Voce", label: "Area do Treinador", href: "/treinador", icon: User },
-  // DESAFIOS. A tela existia desde a fase 3 e NENHUM menu linkava para ela: o
-  // modo inteiro era inalcancavel dentro do jogo. Fica em "Voce" porque o
-  // desafio e do TECNICO — ele atravessa clube e temporada.
-  { secao: "Voce", label: "Desafios", href: "/desafios", icon: Trophy, clubOnly: true },
-  // ⚠️ GESTAO E RANKINGS SAO DUAS COISAS, e voltaram a ser duas entradas.
-  //
-  // Elas foram fundidas num item so ("Gestao e rankings") porque os rankings
-  // eram uma ABA da Central de Gestao e ninguem os achava. Mas um rotulo que
-  // precisa explicar onde a coisa esta e sintoma de ela estar no lugar errado:
-  // gestao e o que o tecnico DECIDE (bolas paradas, metas, comissao,
-  // disciplina); ranking e o que ele CONSULTA. Juntas, ver uma tabela custava
-  // atravessar onze abas de decisao.
-  { secao: "Voce", label: "Gestao", href: "/gestao-avancada", icon: Target },
-  { secao: "Voce", label: "Rankings", href: "/rankings", icon: BarChart3 },
-  // CAIXA DE ENTRADA sai do menu porque ela ja tem porta PROPRIA e melhor: o
-  // sino do cabecalho, que ainda mostra quantas mensagens ha por ler. Ninguem
-  // abre o menu para ver recado quando o contador esta piscando ao lado.
-  // (As telas /mensagens e /notificacoes continuam existindo e ligadas entre si.)
-  { secao: "Voce", label: "Configuracoes", href: "/configuracoes", icon: Settings },
+  { secao: "Voce", label: "Desafios", href: "/desafios", icon: Target, clubOnly: true },
+  // CONFIGURACOES virou PERSONALIZAR (PDF p.14), seguindo a referencia.
+  { secao: "Voce", label: "Personalizar", href: "/configuracoes", icon: Settings },
 ]
 
 // Itens que substituem os de clube no modo selecao (entram antes de Configuracoes).

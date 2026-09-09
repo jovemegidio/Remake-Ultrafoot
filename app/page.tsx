@@ -239,7 +239,7 @@ export default function DashboardPage() {
           hardNavigate("/elenco")
           break
         case "LB":
-          hardNavigate("/mercado")
+          hardNavigate("/transferencias")
           break
         case "RB":
           hardNavigate("/competicoes")
@@ -451,11 +451,33 @@ export default function DashboardPage() {
           unoptimized
           className="office-bg-b object-cover"
         />
-        {/* VINHETA NO MINIMO (pedido): sobra apenas o veu escuro que o texto
-            branco precisa para ter contraste. Era /82, depois /68; agora /42 —
-            abaixo disso os cartoes do escritorio comecam a perder legibilidade
-            sobre as partes claras da arte. */}
-        <div className="absolute inset-0 bg-[var(--uf-bg-deep)]/38" />
+        {/* ⚠️ A VINHETA DEIXOU DE SER UM VEU CHAPADO.
+            Ela ja tinha caido de /82 para /68 e para /38, e o pedido voltou uma
+            quarta vez (PDF Ultra26, p.3: "remova a vinheta atras das opcoes").
+            Baixar o numero de novo era a resposta errada: o problema nunca foi a
+            INTENSIDADE, foi a UNIFORMIDADE. Um veu de opacidade unica escurece
+            igual onde ha texto e onde nao ha nada — e a area marcada em vermelho
+            no relatorio e justamente a parte VAZIA da foto, embaixo da lista de
+            tarefas, onde o escurecimento nao protegia legibilidade nenhuma e so
+            apagava a arte.
+            Agora o veu segue o conteudo: firme no topo (cabecalho e manchete de
+            data), suave a esquerda (a coluna das tarefas) e TRANSPARENTE no
+            centro-baixo, que e onde o escritorio aparece. Nenhum texto perdeu
+            fundo, porque cada cartao ja carrega o proprio. */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `
+              linear-gradient(to bottom,
+                color-mix(in oklab, var(--uf-bg-deep) 58%, transparent) 0%,
+                color-mix(in oklab, var(--uf-bg-deep) 30%, transparent) 26%,
+                transparent 62%),
+              linear-gradient(to right,
+                color-mix(in oklab, var(--uf-bg-deep) 34%, transparent) 0%,
+                transparent 46%)
+            `,
+          }}
+        />
       </div>
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
@@ -610,7 +632,7 @@ export default function DashboardPage() {
                 { href: "/partida", icon: Play, label: t.common.nextMatch, highlight: true },
                 { href: "/elenco", icon: Users, label: t.sidebar.squad, highlight: false },
                 { href: "/elenco/gerenciamento", icon: ClipboardList, label: "Gerenciamento do Time", highlight: false },
-                { href: "/mercado", icon: ArrowLeftRight, label: t.sidebar.market, highlight: false },
+                { href: "/transferencias", icon: ArrowLeftRight, label: t.sidebar.transfers, highlight: false },
               ]
               return (
                 <>

@@ -77,7 +77,20 @@ const detalhe = process.argv.includes("--detalhe")
 // O `extrair-textos.mjs` nao alcanca nenhuma das duas (ele exige o gancho na
 // forma exata `const t = useTranslation()`, e a trajetoria usa `tr`), entao foi
 // a mao, chave por chave.
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5280)
+// 1.0.395: 5280 -> 5265. A versao acrescentou QUATRO telas (os hubs /escritorio
+// e /academia, o Plano de Treino e os Planos de Desenvolvimento) e a catraca
+// reprovou na hora, em 5392 — exatamente o que ela existe para fazer.
+// O que aprendi pagando: o `extrair-textos.mjs` rendeu POUCO nas telas antigas
+// (infraestrutura, 113 frases, devolveu 8) porque `TEXTO_JSX` exige o texto na
+// MESMA linha entre `>` e `</`, e tela antiga quebra frase em tres linhas. O que
+// pagou de verdade foi extrair O QUE EU TINHA ACABADO DE ESCREVER: os dois hubs
+// caíram de 40 e 19 para 2 cada, so movendo o array de cards para DENTRO do
+// componente, onde o gancho `t` alcanca. Card em `const` no topo do arquivo e
+// intraduzivel por construcao — vale como regra para o proximo hub.
+// Sobram 9 falsos positivos nas telas novas ("use client", "GLOBAL" e uma
+// className longa), que a heuristica nao tem como distinguir. O saldo veio de
+// olheiros/, extraida inteira.
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5265)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
 //                        chumbadas. Único aumento da catraca; ver a nota acima.)
