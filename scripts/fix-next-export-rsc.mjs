@@ -65,8 +65,14 @@ function walk(dir) {
       return !ignoredRouteParts.has(part)
     })
 
-    // A forma antiga (arquivo plano) primeiro; a nova (diretorio) como reserva.
-    const sourcePath = sourceName ? path.join(dir, sourceName) : paginaDentroDoDiretorio(dir)
+    // A forma antiga (arquivo plano) primeiro; depois o __PAGE__ que o export
+    // POSIX ja entrega; por fim, a forma em diretorio emitida no Windows.
+    const pageAlias = path.join(dir, `__next.${routePart}.__PAGE__.txt`)
+    const sourcePath = sourceName
+      ? path.join(dir, sourceName)
+      : existsSync(pageAlias)
+        ? pageAlias
+        : paginaDentroDoDiretorio(dir)
     if (sourcePath) {
       for (const aliasName of [`__next.${routePart}.txt`, `__next.${routePart}.__PAGE__.txt`]) {
         const aliasPath = path.join(dir, aliasName)
