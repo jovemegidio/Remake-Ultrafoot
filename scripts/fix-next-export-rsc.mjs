@@ -150,9 +150,18 @@ if (rotasSemAliases.length > 0) {
     .slice(0, 3)
     .map(dir => path.relative(outDir, dir).split(path.sep).join("/"))
     .join(", ")
+  const primeira = rotasSemAliases[0]
+  const arvore = []
+  ;(function listar(dir, profundidade = 0) {
+    for (const item of readdirSync(dir, { withFileTypes: true })) {
+      const alvo = path.join(dir, item.name)
+      arvore.push(`${"  ".repeat(profundidade)}${item.isDirectory() ? "[d]" : "[f]"} ${item.name}`)
+      if (item.isDirectory() && profundidade < 3) listar(alvo, profundidade + 1)
+    }
+  })(primeira)
   throw new Error(
     `fix-next-export-rsc deixou ${rotasSemAliases.length} de ${rotasComIndex.length} rota(s) sem aliases ` +
-      `(ex.: ${exemplos}). ` +
+      `(ex.: ${exemplos}). Arvore de ${path.relative(outDir, primeira)}:\n${arvore.join("\n")}\n` +
       "O formato do export mudou de novo: veja se o payload virou " +
       "'__next.<rota>/__PAGE__.txt' ou outra forma. Sem alias, todo prefetch do " +
       "roteador da 404 no app empacotado. Build abortado.",
