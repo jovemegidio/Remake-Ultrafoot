@@ -1,0 +1,211 @@
+name: Publicar Web e Windows
+
+# `main` e a unica linha de producao. Todo push publica o mesmo commit primeiro
+# na Web e, somente se ela responder corretamente, como atualizacao do Windows.
+# O numero e automatico: ninguem precisa editar package.json para publicar.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: publicar-producao
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PNPM_VERSION: 11
+  NODE_VERSION: 24
+  # A primeira execucao deste workflow publica 1.0.398.
+  VERSION_PATCH_BASE: 397
+
+jobs:
+  versao:
+    runs-on: ubuntu-latest
+    outputs:
+      numero: ${{ steps.v.outputs.numero }}
+    steps:
+      - id: v
+        shell: bash
+        run: echo "numero=1.0.$((VERSION_PATCH_BASE + GITHUB_RUN_NUMBER))" >> "$GITHUB_OUTPUT"
+
+  web:
+    needs: versao
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Aplicar a versao automatica ao mesmo commit
+        env:
+          VERSION: ${{ needs.versao.outputs.numero }}
+        run: |
+          node - <<'NODE'
+          const fs = require('fs')
+          const version = process.env.VERSION
+          for (const file of ['package.json', 'src-tauri/tauri.conf.json']) {
+            const data = JSON.parse(fs.readFileSync(file, 'utf8'))
+            data.version = version
+            fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n')
+          }
+          NODE
+
+      - run: pnpm install --no-frozen-lockfile
+      - name: Baixar os assets distribuiveis
+        run: |
+          curl -fsSL -o game-assets.zip "https://github.com/${GITHUB_REPOSITORY}/releases/download/game-assets/game-assets.zip"
+          unzip -q -o game-assets.zip || true
+          rm -f game-assets.zip
+          test -d public/escudos && test -d public/jogadores
+          node scripts/qa-release-assets.mjs
+
+      - name: Validar e gerar o site estatico
+        env:
+          ULTRAFOOT_HEAP_MB: 8192
+        run: npm run build:tauri
+
+      - name: Configurar acesso protegido a VPS
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          test -n "$VPS_SSH_PRIVATE_KEY" && test -n "$VPS_KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/id_ultrafoot
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ultrafoot ~/.ssh/known_hosts
+
+      - name: Publicar Web com troca atomica
+        env:
+          VERSION: ${{ needs.versao.outputs.numero }}
+        run: |
+          tar czf web.tar.gz -C out .
+          scp -i ~/.ssh/id_ultrafoot -o BatchMode=yes web.tar.gz root@31.97.64.102:/var/www/ultrafoot/entrada.tar.gz
+          ssh -i ~/.ssh/id_ultrafoot -o BatchMode=yes root@31.97.64.102 "VERSION='$VERSION' bash -s" <<'REMOTE'
+          set -euo pipefail
+          root=/var/www/ultrafoot
+          rm -rf "$root/releases/$VERSION.novo"
+          mkdir -p "$root/releases/$VERSION.novo"
+          tar xzf "$root/entrada.tar.gz" -C "$root/releases/$VERSION.novo"
+          rm -f "$root/entrada.tar.gz"
+          test -f "$root/releases/$VERSION.novo/index.html"
+          rm -rf "$root/releases/$VERSION"
+          mv "$root/releases/$VERSION.novo" "$root/releases/$VERSION"
+          chown -R www-data:www-data "$root/releases/$VERSION"
+          ln -sfn "$root/releases/$VERSION" "$root/current.novo"
+          mv -T "$root/current.novo" "$root/current"
+          nginx -t
+          systemctl reload nginx
+          ls -1dt "$root"/releases/*/ | tail -n +4 | xargs -r rm -rf
+          REMOTE
+          test "$(curl -sS -o /dev/null -w '%{http_code}' https://ultrafoot.zyntraerp.com.br/)" = 200
+
+  windows:
+    needs: [versao, web]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Aplicar a mesma versao publicada na Web
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.versao.outputs.numero }}
+        run: |
+          foreach ($file in @('package.json', 'src-tauri/tauri.conf.json')) {
+            $data = Get-Content $file -Raw | ConvertFrom-Json
+            $data.version = $env:VERSION
+            $data | ConvertTo-Json -Depth 100 | Set-Content $file -Encoding utf8
+          }
+
+      - run: pnpm install --no-frozen-lockfile
+      - name: Baixar e validar assets distribuiveis
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://github.com/$env:GITHUB_REPOSITORY/releases/download/game-assets/game-assets.zip" -OutFile game-assets.zip
+          Expand-Archive game-assets.zip -DestinationPath . -Force
+          Remove-Item game-assets.zip
+          node scripts/qa-release-assets.mjs
+
+      - name: Configurar bundle NSIS
+        shell: pwsh
+        run: '{"bundle":{"targets":["nsis"]}}' | Set-Content src-tauri/tauri.ci.conf.json -Encoding utf8
+
+      - name: Compilar, assinar e publicar Windows
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.ULTRAFOOT_RELEASE_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          args: --config src-tauri/tauri.ci.conf.json
+          tagName: build-${{ needs.versao.outputs.numero }}
+          releaseName: Ultrafoot 26 ${{ needs.versao.outputs.numero }}
+          releaseBody: Publicacao automatica do commit ${{ github.sha }}. A Web foi validada antes deste instalador.
+          releaseDraft: false
+          prerelease: false
+
+      - name: Manter o canal do updater no release do jogo
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.ULTRAFOOT_RELEASE_TOKEN }}
+          VERSION: ${{ needs.versao.outputs.numero }}
+        run: gh release edit "build-$VERSION" --latest --repo "$GITHUB_REPOSITORY"
+
+  canal-windows:
+    needs: [versao, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar acesso protegido a VPS
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/id_ultrafoot
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ultrafoot ~/.ssh/known_hosts
+      - name: Espelhar instalador e manifesto somente depois do binario
+        env:
+          GH_TOKEN: ${{ secrets.ULTRAFOOT_RELEASE_TOKEN }}
+          VERSION: ${{ needs.versao.outputs.numero }}
+        run: |
+          mkdir pacote
+          gh release download "build-$VERSION" --repo "$GITHUB_REPOSITORY" --dir pacote
+          setup=$(find pacote -maxdepth 1 -name '*_x64-setup.exe' -print -quit)
+          test -n "$setup" && test -f pacote/latest.json
+          sha=$(sha256sum "$setup" | cut -d' ' -f1)
+          bytes=$(stat -c%s "$setup")
+          nome="Ultrafoot.26_${VERSION}_x64-setup.exe"
+          scp -i ~/.ssh/id_ultrafoot -o BatchMode=yes "$setup" root@31.97.64.102:/var/www/ultrafoot/downloads/$nome.novo
+          scp -i ~/.ssh/id_ultrafoot -o BatchMode=yes pacote/latest.json root@31.97.64.102:/var/www/ultrafoot/downloads/latest-updater.json.novo
+          ssh -i ~/.ssh/id_ultrafoot -o BatchMode=yes root@31.97.64.102 "nome='$nome' bytes='$bytes' sha='$sha' version='$VERSION' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd /var/www/ultrafoot/downloads
+          test "$(stat -c%s "$nome.novo")" = "$bytes"
+          test "$(sha256sum "$nome.novo" | cut -d' ' -f1)" = "$sha"
+          mv "$nome.novo" "$nome"
+          mv latest-updater.json.novo latest-updater.json
+          chown www-data:www-data "$nome" latest-updater.json
+          REMOTE
+          test "$(curl -sIL "https://ultrafoot.zyntraerp.com.br/downloads/$nome" | awk 'tolower($1)=="content-length:"{gsub("\r",""); print $2}' | tail -1)" = "$bytes"
+

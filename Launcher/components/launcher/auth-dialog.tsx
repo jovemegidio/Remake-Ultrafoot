@@ -1,12 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { invoke } from "@tauri-apps/api/core"
 import { X, LogIn, UserPlus, Loader2, KeyRound, WifiOff } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  cadastrar, entrar, ativar, gerarPkce, urlDoGoogle, entrarComGoogle, type Sessao,
-} from "@/lib/auth"
+import { cadastrar, entrar, ativar, type Sessao } from "@/lib/auth"
 
 /**
  * Login e cadastro do launcher.
@@ -37,13 +34,13 @@ export function AuthDialog({ onClose, onEntrou, inicial = "entrar", online = tru
   const [nome, setNome] = useState("")
   const [telefone, setTelefone] = useState("")
   const [codigo, setCodigo] = useState("")
-  const [ocupado, setOcupado] = useState<"" | "senha" | "google">("")
+  const [ocupado, setOcupado] = useState(false)
   const [erro, setErro] = useState("")
 
   const submeter = async () => {
     if (ocupado) return
     setErro("")
-    setOcupado("senha")
+    setOcupado(true)
     try {
       const s = modo === "ativar"
         ? await ativar(codigo)
@@ -55,30 +52,7 @@ export function AuthDialog({ onClose, onEntrou, inicial = "entrar", online = tru
     } catch (e) {
       setErro(e instanceof Error ? e.message : "nao foi possivel concluir")
     } finally {
-      setOcupado("")
-    }
-  }
-
-  const comGoogle = async () => {
-    if (ocupado) return
-    setErro("")
-    setOcupado("google")
-    try {
-      // O `state` protege contra CSRF: o Rust compara o que volta do Google com
-      // este valor antes de aceitar o code.
-      const state = crypto.randomUUID()
-      const { verifier, challenge } = await gerarPkce()
-      // A porta local so e conhecida pelo Rust, entao ele completa o redirect_uri.
-      const base = urlDoGoogle(challenge, "__REDIRECT__").replace(/&redirect_uri=__REDIRECT__/, "")
-      const retorno = await invoke<string>("google_login", { authUrlBase: base, state })
-      const [code, redirectUri] = retorno.split("|")
-      const s = await entrarComGoogle(code, verifier, redirectUri)
-      onEntrou(s)
-      onClose()
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : "nao foi possivel entrar com o Google")
-    } finally {
-      setOcupado("")
+      setOcupado(false)
     }
   }
 
@@ -115,22 +89,9 @@ export function AuthDialog({ onClose, onEntrou, inicial = "entrar", online = tru
           </div>
         )}
 
-        {modo !== "ativar" && <button
-          onClick={comGoogle}
-          disabled={!!ocupado || !online}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {ocupado === "google"
-            ? <Loader2 className="h-4 w-4 animate-spin" />
-            : <span className="text-base font-bold text-[#4285F4]">G</span>}
-          Continuar com o Google
-        </button>}
-
-        {modo !== "ativar" && <div className="my-4 flex items-center gap-3">
-          <span className="h-px flex-1 bg-white/10" />
-          <span className="text-[10px] uppercase tracking-wider text-white/30">ou</span>
-          <span className="h-px flex-1 bg-white/10" />
-        </div>}
+        {modo !== "ativar" && <p className="mt-5 text-xs font-semibold text-white/60">
+          Entre com seu e-mail e senha
+        </p>}
 
         <div className="space-y-2">
           {modo === "cadastrar" && (
@@ -185,14 +146,14 @@ export function AuthDialog({ onClose, onEntrou, inicial = "entrar", online = tru
 
         <button
           onClick={submeter}
-          disabled={!!ocupado || !online || (modo === "ativar" ? codigo.length < 10 : !email || !senha)}
+          disabled={ocupado || !online || (modo === "ativar" ? codigo.length < 10 : !email || !senha)}
           className={cn(
             "mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all",
             "bg-gradient-to-r from-primary to-[#00c8ff] text-black hover:brightness-110",
             "disabled:cursor-not-allowed disabled:opacity-40",
           )}
         >
-          {ocupado === "senha"
+          {ocupado
             ? <Loader2 className="h-4 w-4 animate-spin" />
             : modo === "ativar" ? <KeyRound className="h-4 w-4" />
               : modo === "entrar" ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}

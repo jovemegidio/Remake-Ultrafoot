@@ -4201,7 +4201,7 @@ dependencies = [
 
 [[package]]
 name = "ultrafoot-launcher"
-version = "1.0.38"
+version = "1.0.40"
 dependencies = [
  "flate2",
  "serde",
