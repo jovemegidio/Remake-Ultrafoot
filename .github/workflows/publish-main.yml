@@ -197,8 +197,28 @@ jobs:
           sha=$(sha256sum "$setup" | cut -d' ' -f1)
           bytes=$(stat -c%s "$setup")
           nome="Ultrafoot.26_${VERSION}_x64-setup.exe"
+          curl -fsSL https://ultrafoot.zyntraerp.com.br/downloads/latest.json -o pacote/latest-anterior.json
+          assinatura=$(jq -r '.platforms["windows-x86_64"].signature' pacote/latest.json)
+          test -n "$assinatura" && test "$assinatura" != null
+          jq -n \
+            --arg version "$VERSION" \
+            --arg notes "Ultrafoot 26 v$VERSION" \
+            --arg sha "${sha^^}" \
+            --arg signature "$assinatura" \
+            --arg url "https://ultrafoot.zyntraerp.com.br/downloads/$nome" \
+            --argjson sizeMb "$(( (bytes + 1048575) / 1048576 ))" \
+            --slurpfile old pacote/latest-anterior.json \
+            '{version: $version, notes: $notes, sizeMb: $sizeMb, sha256: $sha,
+              anteriores: ([{version: $old[0].version,
+                              url: $old[0].platforms["windows-x86_64"].url,
+                              notes: $old[0].notes,
+                              sizeMb: $old[0].sizeMb}]
+                            + [$old[0].anteriores[] | select(.version != $version)])[:10],
+              platforms: {"windows-x86_64": {signature: $signature, url: $url}}}' \
+            > pacote/latest-publico.json
           scp -i ~/.ssh/id_ultrafoot -o BatchMode=yes "$setup" root@31.97.64.102:/var/www/ultrafoot/downloads/$nome.novo
           scp -i ~/.ssh/id_ultrafoot -o BatchMode=yes pacote/latest.json root@31.97.64.102:/var/www/ultrafoot/downloads/latest-updater.json.novo
+          scp -i ~/.ssh/id_ultrafoot -o BatchMode=yes pacote/latest-publico.json root@31.97.64.102:/var/www/ultrafoot/downloads/latest.json.novo
           ssh -i ~/.ssh/id_ultrafoot -o BatchMode=yes root@31.97.64.102 "nome='$nome' bytes='$bytes' sha='$sha' version='$VERSION' bash -s" <<'REMOTE'
           set -euo pipefail
           cd /var/www/ultrafoot/downloads
@@ -206,6 +226,8 @@ jobs:
           test "$(sha256sum "$nome.novo" | cut -d' ' -f1)" = "$sha"
           mv "$nome.novo" "$nome"
           mv latest-updater.json.novo latest-updater.json
-          chown www-data:www-data "$nome" latest-updater.json
+          mv latest.json.novo latest.json
+          chown www-data:www-data "$nome" latest-updater.json latest.json
           REMOTE
           test "$(curl -sIL "https://ultrafoot.zyntraerp.com.br/downloads/$nome" | awk 'tolower($1)=="content-length:"{gsub("\r",""); print $2}' | tail -1)" = "$bytes"
+          test "$(curl -fsSL https://ultrafoot.zyntraerp.com.br/downloads/latest.json | jq -r .version)" = "$VERSION"

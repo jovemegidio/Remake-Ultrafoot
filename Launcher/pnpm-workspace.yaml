@@ -4,9 +4,8 @@ packages:
   - .
 overrides:
   hono: 4.12.25
-onlyBuiltDependencies:
-  - sharp
-  - msw
 allowBuilds:
-  msw: set this to true or false
-  sharp: set this to true or false
+  # O Next usa sharp na geracao. MSW e apenas uma dependencia transitiva de
+  # desenvolvimento e nao precisa executar codigo durante a instalacao.
+  sharp: true
+  msw: false
