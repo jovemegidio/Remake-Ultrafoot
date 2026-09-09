@@ -125,9 +125,27 @@ console.log(`Next export RSC aliases: ${aliasesCriados} criados para ${rotasComI
 
 // ⚠️ A GUARDA QUE FALTAVA. Sem ela este script ficou versoes "passando" sem
 // criar um alias sequer, porque o formato do Next mudou por baixo dele.
-if (rotasComIndex.length > 0 && aliasesCriados === 0) {
+//
+// Nao use `aliasesCriados === 0` como prova de falha: em Linux o Next 16.3 ja
+// pode emitir os dois nomes finais. Nesse caso nao ha nada para copiar e zero
+// significa que o export ja veio correto. Confira o resultado, nao a quantidade
+// de trabalho que foi necessaria para chegar nele.
+const rotasSemAliases = rotasComIndex.filter(dir => {
+  const routePart = path.relative(outDir, dir).split(path.sep).join(".")
+  return [
+    `__next.${routePart}.txt`,
+    `__next.${routePart}.__PAGE__.txt`,
+  ].some(aliasName => !existsSync(path.join(dir, aliasName)))
+})
+
+if (rotasSemAliases.length > 0) {
+  const exemplos = rotasSemAliases
+    .slice(0, 3)
+    .map(dir => path.relative(outDir, dir).split(path.sep).join("/"))
+    .join(", ")
   throw new Error(
-    `fix-next-export-rsc nao criou nenhum alias para ${rotasComIndex.length} rota(s). ` +
+    `fix-next-export-rsc deixou ${rotasSemAliases.length} de ${rotasComIndex.length} rota(s) sem aliases ` +
+      `(ex.: ${exemplos}). ` +
       "O formato do export mudou de novo: veja se o payload virou " +
       "'__next.<rota>/__PAGE__.txt' ou outra forma. Sem alias, todo prefetch do " +
       "roteador da 404 no app empacotado. Build abortado.",

@@ -23,7 +23,8 @@ jobs:
             name: macos-universal
             args: --target universal-apple-darwin --config src-tauri/tauri.macos.conf.json
             node: 22
-            heap: 5120
+            # O type-check da 1.0.397 ultrapassou 5 GiB no runner arm64.
+            heap: 6144
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
