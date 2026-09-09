@@ -206,6 +206,63 @@ export default function NotificacoesPage() {
           </div>
         </div>
 
+        {/* ── O RESUMO DE ENTRADA (PDF Ultra26, p.5) ──────────────────────
+            A referencia abre a central com DOIS cartoes grandes — "Caixa de
+            Entrada" e "Conversas com Atletas" — cada um dizendo quantos itens
+            estao por ler. As tres abas abaixo ja existiam e ja tinham conteudo;
+            o que faltava era isto: saber, sem clicar em nada, ONDE ha coisa
+            esperando por voce. Clicar no cartao leva a aba correspondente. */}
+        <div className="grid gap-3 px-4 py-3 sm:grid-cols-2">
+          {([
+            {
+              id: "notificacoes" as const,
+              titulo: "Caixa de Entrada",
+              detalhe: "Avisos nao lidos",
+              quantos: unreadCount,
+              icone: Bell,
+            },
+            {
+              id: "atletas" as const,
+              titulo: "Conversas com Atletas",
+              detalhe: "Assuntos abertos no vestiario",
+              quantos: eventosVestiario.length,
+              icone: MessagesSquare,
+            },
+          ]).map(({ id, titulo, detalhe, quantos, icone: Icone }) => (
+            <button
+              key={id}
+              onClick={() => { setAba(id); setSelecionada(null) }}
+              className={cn(
+                "group flex items-center gap-4 rounded-2xl border p-4 text-left transition-all",
+                quantos > 0
+                  ? "border-[var(--brand)]/35 bg-gradient-to-br from-[var(--brand)]/[0.10] to-transparent hover:border-[var(--brand)]/60"
+                  : "border-white/[0.07] bg-white/[0.02] hover:border-white/15",
+              )}
+            >
+              <div className={cn(
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1",
+                quantos > 0
+                  ? "bg-[var(--brand)]/15 text-[var(--brand)] ring-[var(--brand)]/30"
+                  : "bg-white/[0.06] text-white/45 ring-white/10",
+              )}>
+                <Icone className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold text-white">{titulo}</div>
+                <div className="mt-0.5 text-[11px] text-white/45">{detalhe}</div>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className={cn(
+                  "uf-num text-2xl font-black leading-none",
+                  quantos > 0 ? "text-[var(--brand)]" : "text-white/25",
+                )}>
+                  {quantos}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
         {/* Abas: a Central so mostrava avisos do sistema (autosave, partida
             simulada). Diretoria e atletas ja tinham conteudo gerado pelos motores
             e nenhuma tela os exibia. */}

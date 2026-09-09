@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import { useTranslation } from "@/lib/i18n"
 import { useRouter } from "next/navigation"
 import { usePaginacao, Paginador } from "@/components/lista-paginada"
 import { motion, AnimatePresence } from "framer-motion"
@@ -49,6 +50,7 @@ const MEETING_ICONS: Record<string, typeof ThumbsUp> = {
 }
 
 export default function ReunioesPage() {
+  const t = useTranslation()
   const router = useRouter()
 
   // Gamepad support
@@ -141,7 +143,7 @@ export default function ReunioesPage() {
               </div>
               
               <div className="text-right">
-                <div className="text-sm text-white/50">Reunioes esta semana</div>
+                <div className="text-sm text-white/50">{t.reunioes.reunioes_esta_semana}</div>
                 <div className="text-2xl font-bold text-primary">
                   {playerMeetings.filter(m => m.week === currentWeek).length}
                 </div>
@@ -153,7 +155,7 @@ export default function ReunioesPage() {
               {/* Lista de Jogadores */}
               <div className="col-span-4 bg-[#12121a] rounded-xl border border-white/[0.04] overflow-hidden">
                 <div className="p-4 border-b border-white/[0.04]">
-                  <h3 className="text-sm font-semibold text-white/80 mb-3">Selecionar Jogador</h3>
+                  <h3 className="text-sm font-semibold text-white/80 mb-3">{t.reunioes.selecionar_jogador}</h3>
                   
                   {/* Busca */}
                   <div className="relative mb-3">
@@ -162,7 +164,7 @@ export default function ReunioesPage() {
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Buscar jogador..."
+                      placeholder={t.reunioes.buscar_jogador}
                       className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-white/40 focus:outline-none focus:border-primary/50"
                     />
                   </div>
@@ -299,7 +301,7 @@ export default function ReunioesPage() {
 
                     {/* Opcoes de Reuniao */}
                     <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
-                      <h3 className="text-sm font-semibold text-white/80 mb-4">Escolha o Tipo de Conversa</h3>
+                      <h3 className="text-sm font-semibold text-white/80 mb-4">{t.reunioes.escolha_o_tipo_de_conversa}</h3>
                       
                       <div className="grid grid-cols-3 gap-3">
                         {availableMeetings.map(meeting => {
@@ -399,7 +401,7 @@ export default function ReunioesPage() {
                     {/* Histórico de reuniões com este jogador */}
                     {playerRecentMeetings.length > 0 && (
                       <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
-                        <h3 className="text-sm font-semibold text-white/80 mb-4">Historico de Reunioes</h3>
+                        <h3 className="text-sm font-semibold text-white/80 mb-4">{t.reunioes.historico_de_reunioes}</h3>
                         <div className="space-y-2">
                           {playerRecentMeetings.map(meeting => (
                             <div
@@ -437,7 +439,7 @@ export default function ReunioesPage() {
                 ) : (
                   <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-12 text-center">
                     <Users className="h-12 w-12 text-white/20 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-white/60">Selecione um jogador</h3>
+                    <h3 className="text-lg font-medium text-white/60">{t.reunioes.selecione_um_jogador}</h3>
                     <p className="text-sm text-white/40 mt-1">
                       Escolha um jogador da lista para iniciar uma conversa
                     </p>
@@ -448,7 +450,7 @@ export default function ReunioesPage() {
 
             {/* Reunioes Recentes (Geral) */}
             <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
-              <h3 className="text-sm font-semibold text-white/80 mb-4">Todas as Reunioes Recentes</h3>
+              <h3 className="text-sm font-semibold text-white/80 mb-4">{t.reunioes.todas_as_reunioes_recentes}</h3>
               
               {playerMeetings.length > 0 ? (
                 <div className="grid grid-cols-3 gap-3">

@@ -1485,6 +1485,31 @@ export const ptBR = {
     salario_semanal_3: "Salario Semanal",
     custo_anual_estimado: "Custo Anual Estimado",
   },
+  contratos: {
+    gestao_de_contratos: "Gestao de Contratos",
+    renove_e_gerencie_os_contratos_do: "Renove e gerencie os contratos do elenco",
+    nos_proximos_6_meses: "nos proximos 6 meses",
+    livre_no_mercado: "livre no mercado",
+    semana: "/ semana",
+    posicao: "Posição",
+    expira_em: "Expira em",
+    renovacao_de_contrato: "Renovacao de Contrato",
+    proposta_salarial_por_semana: "Proposta Salarial (por semana)",
+    duracao_do_contrato: "Duracao do Contrato",
+    chance_de_aceitar: "Chance de aceitar",
+    negociando_com_o_jogador: "Negociando com o jogador...",
+    contrato_renovado: "Contrato Renovado!",
+    proposta_recusada: "Proposta Recusada",
+  },
+  reunioes: {
+    reunioes_esta_semana: "Reunioes esta semana",
+    selecionar_jogador: "Selecionar Jogador",
+    escolha_o_tipo_de_conversa: "Escolha o Tipo de Conversa",
+    historico_de_reunioes: "Historico de Reunioes",
+    selecione_um_jogador: "Selecione um jogador",
+    todas_as_reunioes_recentes: "Todas as Reunioes Recentes",
+    buscar_jogador: "Buscar jogador...",
+  },
 }
 
 export type Translations = typeof ptBR

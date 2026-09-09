@@ -201,24 +201,42 @@ export function HubAmigos({ secao = "amigos" }: { secao?: SecaoDoHub }) {
                 encontrar alguém pelo nome ou pelo e-mail da conta.
               </p>
             )}
-            <div className="max-h-72 space-y-1 overflow-y-auto">
-              {[...painel.amigos].sort((a, b) => Number(b.online) - Number(a.online)).map(a => (
-                <button
-                  key={a.conta_id}
-                  onClick={() => abrirConversa(a.conta_id)}
-                  className={`flex w-full items-center gap-2.5 rounded-lg p-2 text-left transition-colors ${a.conta_id === conversaCom ? "bg-[var(--brand)]/10" : "hover:bg-white/[0.05]"}`}
-                >
-                  <Avatar nome={a.nome} online={a.online} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[11px] font-bold text-white/85">{a.nome}</span>
-                    <span className={`block truncate text-[9px] ${a.online ? "text-emerald-300/85" : "text-white/30"}`}>
-                      {estadoDoAmigo(a)}
-                    </span>
-                  </span>
-                  {a.nao_lidas > 0 && (
-                    <span className="rounded-full bg-red-500/85 px-1.5 text-[9px] font-black text-white">{a.nao_lidas}</span>
-                  )}
-                </button>
+            {/* ⚠️ AGRUPADO POR PRESENCA (PDF Ultra26, p.6).
+                A lista era UMA so, ordenada com os online no topo. Funciona, mas
+                nao responde de relance a pergunta que se faz ao abrir o hub:
+                "quantos dos meus estao online AGORA". A referencia separa em dois
+                blocos com o numero no cabecalho — "Online : 2", "Offline : 4" — e
+                e so isso que muda aqui. Os dados sao os mesmos; a leitura, nao. */}
+            <div className="max-h-72 space-y-2 overflow-y-auto">
+              {([
+                { chave: "online" as const, rotulo: "Online", lista: painel.amigos.filter(a => a.online) },
+                { chave: "offline" as const, rotulo: "Offline", lista: painel.amigos.filter(a => !a.online) },
+              ]).map(({ chave, rotulo, lista }) => lista.length === 0 ? null : (
+                <div key={chave}>
+                  <p className="px-1 pb-1 text-[9px] font-black uppercase tracking-[.18em] text-white/25">
+                    {rotulo} : {lista.length}
+                  </p>
+                  <div className="space-y-1">
+                    {lista.map(a => (
+                      <button
+                        key={a.conta_id}
+                        onClick={() => abrirConversa(a.conta_id)}
+                        className={`flex w-full items-center gap-2.5 rounded-lg p-2 text-left transition-colors ${a.conta_id === conversaCom ? "bg-[var(--brand)]/10" : "hover:bg-white/[0.05]"}`}
+                      >
+                        <Avatar nome={a.nome} online={a.online} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[11px] font-bold text-white/85">{a.nome}</span>
+                          <span className={`block truncate text-[9px] ${a.online ? "text-emerald-300/85" : "text-white/30"}`}>
+                            {estadoDoAmigo(a)}
+                          </span>
+                        </span>
+                        {a.nao_lidas > 0 && (
+                          <span className="rounded-full bg-red-500/85 px-1.5 text-[9px] font-black text-white">{a.nao_lidas}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>

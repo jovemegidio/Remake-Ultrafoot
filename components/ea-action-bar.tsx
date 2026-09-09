@@ -2,7 +2,9 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useSyncExternalStore } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart3, Users } from "lucide-react"
+import { BarChart3, Users, Volume2, VolumeX } from "lucide-react"
+import { getNowPlaying, togglePlayPause, type NowPlaying } from "@/lib/system-media"
+import { useAmigosOnline } from "@/hooks/use-amigos-online"
 import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
 import { useEhAppCelular } from "@/lib/plataforma"
@@ -240,6 +242,73 @@ function MarcaDoJogo() {
   )
 }
 
+/**
+ * O PLAYER DE MUSICA no rodape.
+ *
+ * ⚠️ Ele nao toca nada: pilota a sessao de midia do SISTEMA (Spotify e afins),
+ * o mesmo caminho que components/system-media-player.tsx ja usa. O jogo deixou
+ * de embarcar trilha propria (eram 1,6 GB no instalador, de musica de
+ * terceiros), entao "o player" aqui significa o controle do que o jogador ja
+ * tem tocando.
+ *
+ * Sem nada tocando ele NAO aparece — um botao de pausa que nao pausa coisa
+ * nenhuma e pior do que nenhum botao.
+ */
+function ControleDeMusica() {
+  const [np, setNp] = useState<NowPlaying | null>(null)
+
+  useEffect(() => {
+    let vivo = true
+    let timer: ReturnType<typeof setInterval> | undefined
+    const consultar = async () => {
+      const atual = await getNowPlaying()
+      if (vivo) setNp(atual)
+    }
+    void consultar()
+    const iniciar = () => { if (!timer) timer = setInterval(() => void consultar(), 4000) }
+    const parar = () => { if (timer) clearInterval(timer); timer = undefined }
+    const aoTrocar = () => (document.hidden ? parar() : (void consultar(), iniciar()))
+    iniciar()
+    document.addEventListener("visibilitychange", aoTrocar)
+    return () => { vivo = false; parar(); document.removeEventListener("visibilitychange", aoTrocar) }
+  }, [])
+
+  if (!np?.available) return null
+
+  const tocando = np.isPlaying
+  return (
+    <button
+      onClick={() => { void togglePlayPause().then(async () => setNp(await getNowPlaying())) }}
+      title={[np.title, np.artist].filter(Boolean).join(" — ") || "Player de musica"}
+      className="flex items-center gap-1.5 transition-colors hover:text-white"
+    >
+      {tocando ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+      <span className="max-w-[120px] truncate text-[11px] font-semibold text-white/55">
+        {np.title || "—"}
+      </span>
+    </button>
+  )
+}
+
+/**
+ * AMIGOS ONLINE. Sai de `listarAmigos()` (ver hooks/use-amigos-online.ts).
+ *
+ * Some quando nao ha dado — sem conta, sem rede, VPS fora. Ausencia nao e zero.
+ */
+function AmigosOnline() {
+  const presenca = useAmigosOnline()
+  if (!presenca) return null
+  return (
+    <div
+      className="flex items-center gap-1"
+      title={`${presenca.online} de ${presenca.total} amigo(s) online`}
+    >
+      <Users className={cn("h-3.5 w-3.5", presenca.online > 0 && "text-[var(--uf-green)]")} />
+      <span className="text-[11px] font-semibold text-white/55">{presenca.online}</span>
+    </div>
+  )
+}
+
 // Telas que controlam seus proprios rodapes fixos (nenhuma usa useActionBar) e
 // por isso nao devem receber a barra global, que ficaria sobreposta e bloquearia
 // cliques nos botoes dessas telas (ex: "Iniciar Partida" em /partida).
@@ -315,14 +384,13 @@ export function EaActionBar() {
             <div className="mx-1 h-4 w-px bg-white/10" />
           </>
         )}
-        <div className="flex items-center gap-1">
-          <Users className="h-3.5 w-3.5" />
-          <span className="text-[11px] font-semibold text-white/55">1</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Users className="h-3.5 w-3.5" />
-          <span className="text-[11px] font-semibold text-white/55">0</span>
-        </div>
+        {/* ⚠️ ESTES DOIS CONTADORES ERAM `1` E `0` ESCRITOS A MAO, com o mesmo
+            icone de pessoas nos dois. O relatorio marcou esta area (PDF Ultra26,
+            p.18): o primeiro e o PLAYER DE MUSICA, o segundo sao os amigos
+            online. Os dois agora saem de dado real — e somem quando nao ha dado,
+            em vez de mostrar um numero inventado. */}
+        <ControleDeMusica />
+        <AmigosOnline />
       </div>
     </div>
   )

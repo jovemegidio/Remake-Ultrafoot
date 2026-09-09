@@ -1873,6 +1873,8 @@ export default function PartidaAoVivoPage() {
     team?: typeof homeTeam
     player?: string
     minute?: number
+    /** O rito do VAR que o motor publicou junto do evento (ver `varReview`). */
+    varReview?: { incident: "goal" | "penalty" | "red_card"; reason: string; noMonitor?: boolean }
   } | null>(null)
   const [sideFoul, setSideFoul] = useState<MatchEvent | null>(null)
 
@@ -1917,7 +1919,17 @@ export default function PartidaAoVivoPage() {
           type: lastEvent.type as AnimatableEvent,
           team: eventTeam,
           player: lastEvent.player,
-          minute: lastEvent.minute
+          minute: lastEvent.minute,
+          // O motor ja carimbava `varReview` no evento (motivo do lance,
+          // incidente e se o arbitro vai ao monitor) e a animacao nunca recebia
+          // nada disso — desenhava a mesma roda para todo lance do jogo.
+          varReview: lastEvent.varReview
+            ? {
+                incident: lastEvent.varReview.incident,
+                reason: lastEvent.varReview.reason,
+                noMonitor: lastEvent.varReview.noMonitor,
+              }
+            : undefined,
         })
       }
     }
@@ -3372,6 +3384,7 @@ export default function PartidaAoVivoPage() {
     team={currentAnimation?.team}
     player={currentAnimation?.player}
     minute={currentAnimation?.minute}
+    varReview={currentAnimation?.varReview}
     onComplete={handleAnimationComplete}
   />
 

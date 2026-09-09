@@ -64,7 +64,7 @@ import { CONTROL_MAPPINGS, ACTION_LABELS, type GameContext, type GameAction } fr
 import { useTranslation } from "@/lib/i18n"
 import { applyPerformanceProfile, PERFORMANCE_STORAGE_KEY, type PerformanceProfile } from "@/components/performance-profile"
 
-type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "atualizacoes" | "tempo" | "escalacoes" | "musica" | "creditos" | "tutorial" | "infraestrutura"
+type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "atualizacoes" | "tempo" | "escalacoes" | "musica" | "creditos" | "tutorial" | "infraestrutura" | "editar" | "salvar"
 
 const menuCards = [
   { id: "configuracoes" as ViewType, title: "Configuracoes", icon: Settings, row: 0 },
@@ -80,6 +80,21 @@ const menuCards = [
   // INFRAESTRUTURA vive aqui (pedido: "configuracoes e infraestrutura num so").
   // Nao e uma view interna — leva para a tela propria, que ja existe e e grande.
   { id: "infraestrutura" as ViewType, title: "Infraestrutura", icon: Building2, row: 2 },
+  // ⚠️ DUAS TELAS QUE EXISTIAM E ESTE HUB NAO ALCANCAVA.
+  //
+  // A referencia (PDF Ultra26, p.10 e p.13) mostra "Personalizar" com um cartao
+  // de personalizacao do clube e um de SALVAR. As duas telas ja existem aqui:
+  // /editar e o Editor de Clubes (escudo, uniforme, elenco) e /salvar e a tela
+  // de salvar com nome, cujo modal a p.3 do mesmo relatorio ilustra. Nenhuma das
+  // duas tinha entrada neste hub — o mesmo defeito que ja tirou a Comissao
+  // Tecnica e os Desafios do menu por versoes a fio.
+  //
+  // ⚠️ E SO ESTAS DUAS. A referencia tambem tem "Editar Manager" e "Editar
+  // Equipe", com modelo 3D de atleta. Isso NAO existe no jogo, e um cartao que
+  // abre "em desenvolvimento" e exatamente o que o portao `qa:sem-casca` foi
+  // escrito para reprovar. Cartao so para porta que abre.
+  { id: "editar" as ViewType, title: "Editor de Clubes", icon: Grid2X2, row: 2 },
+  { id: "salvar" as ViewType, title: "Salvar jogo", icon: Save, row: 2 },
 ]
 
 // A lista de idiomas vem do REGISTRO (lib/i18n): era mantida aqui à mão, em
@@ -127,6 +142,8 @@ export default function ConfiguracoesPage() {
   // desvio centralizado, os tres caminhos abrem a mesma coisa.
   const abrirCard = (id: ViewType) => {
     if (id === "infraestrutura") hardNavigate("/infraestrutura")
+    else if (id === "editar") hardNavigate("/editar")
+    else if (id === "salvar") hardNavigate("/salvar")
     else setCurrentView(id)
   }
 

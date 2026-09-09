@@ -45,6 +45,21 @@ interface EventAnimationProps {
   minute?: number
   onComplete?: () => void
   isUserTeam?: boolean
+  /**
+   * O RITO DO VAR, vindo do motor (ver lib/match-engine, `varReview`).
+   *
+   * ⚠️ Sem isto a checagem era uma roda girando com "CHECANDO LANCE..." — e o
+   * motor ja sabia MUITO mais: o que esta sendo olhado (`reason`), se e gol ou
+   * penalti (`incident`) e, sobretudo, se o arbitro vai ao MONITOR ou se a
+   * cabine resolve sozinha (`noMonitor`). Os tres ritos existem no motor com
+   * comentario explicando por que sao tres; a tela mostrava um so.
+   */
+  varReview?: {
+    incident: "goal" | "penalty" | "red_card"
+    reason: string
+    /** Ausente em evento antigo: sem ele a tela assume o rito da cabine. */
+    noMonitor?: boolean
+  }
 }
 
 // Animacao de GOL - Estilo EA FC
@@ -391,10 +406,51 @@ function FoulAnimation({ team, minute, onComplete }: Omit<EventAnimationProps, "
   )
 }
 
-// Animacao de VAR
-function VarAnimation({ onComplete }: Omit<EventAnimationProps, "event">) {
-  useAutoDismiss(onComplete, 3000)
-  
+// ─── VAR ────────────────────────────────────────────────────────────────────
+//
+// ⚠️ ISTO ERA UMA RODA GIRANDO. O modal do VAR mostrava um circulo azul e a
+// frase "CHECANDO LANCE...", igual para todo lance do jogo — e o pedido do
+// relatorio (PDF Ultra26, p.2) foi direto: "esse modal do var deve ser imersivo
+// como o modal de penalty".
+//
+// A imersao ja estava PRONTA, do lado errado da fronteira. O motor
+// (lib/match-engine) produz, para cada checagem: o que esta sendo olhado
+// (`reason` — impedimento, toque de mao, falta na origem), se e gol ou penalti
+// (`incident`) e, o mais importante, se o arbitro VAI AO MONITOR ou se a cabine
+// resolve sozinha (`noMonitor`). Aquele arquivo tem um comentario inteiro
+// explicando por que os ritos sao TRES e por que isso importa — "a primeira
+// versao mandava todo penalti ao monitor e 84% das checagens viravam revisao em
+// campo; o rito raro virou rotina, que e como se mata a tensao".
+//
+// A tela desenhava um rito so. Este componente passa a desenhar os tres.
+//
+// ⚠️ E ELE CONTINUA SEM ENTREGAR A DECISAO. O motor e explicito: "o texto da
+// checagem diz o que esta sendo olhado, nunca o que vai dar". A decisao chega
+// num SEGUNDO overlay, depois de `resolveVar()` — a espera e a graca do lance,
+// e adiantar o resultado aqui destruiria a unica coisa que ele tem a oferecer.
+
+/** As fases do rito, encenadas em sequencia como a narracao do penalti. */
+const PASSOS_DA_CHECAGEM = [
+  "Lance parado. O arbitro leva a mao ao ouvido.",
+  "A cabine do VAR revisa as imagens.",
+] as const
+
+function VarAnimation({ team, varReview, onComplete }: Omit<EventAnimationProps, "event">) {
+  // Um pouco mais longa que os 3s de antes: a apreensao precisa de tempo para
+  // existir, e agora ha o que ler na tela enquanto ela dura.
+  useAutoDismiss(onComplete, 4200)
+
+  const [passo, setPasso] = useState(0)
+  useEffect(() => {
+    const timer = window.setInterval(() => setPasso(p => Math.min(p + 1, PASSOS_DA_CHECAGEM.length)), 1300)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  const incidente = varReview?.incident === "penalty" ? "MARCACAO DE PENALTI"
+    : varReview?.incident === "red_card" ? "CARTAO VERMELHO"
+      : "LANCE DO GOL"
+  const aoMonitor = varReview ? !varReview.noMonitor : false
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -402,50 +458,93 @@ function VarAnimation({ onComplete }: Omit<EventAnimationProps, "event">) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       onClick={onComplete}
-      className="fixed inset-0 z-50 flex items-center justify-center uf-veu cursor-pointer"
+      className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center uf-veu"
     >
-      <div className="flex flex-col items-center">
-        {/* Linhas de scan */}
-        <motion.div
-          animate={{ y: [0, 100, 0] }}
-          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-          className="absolute w-full h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-50"
-        />
+      {/* Varredura: uma linha atravessando a tela, como o monitor do arbitro. */}
+      <motion.div
+        animate={{ top: ["8%", "92%", "8%"] }}
+        transition={{ repeat: Infinity, duration: 3.4, ease: "linear" }}
+        className="pointer-events-none absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-400/70 to-transparent"
+      />
 
-        {/* Logo VAR */}
+      <div className="relative flex w-[min(560px,90vw)] flex-col items-center px-6">
+        {/* Quem esta sob revisao. O escudo era o dado mais obvio que faltava:
+            a tela nao dizia de QUEM era o lance sendo checado. */}
+        {team && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 flex items-center gap-2.5"
+          >
+            <TeamCrest team={team} size="sm" />
+            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/45">
+              {incidente}
+            </span>
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ scale: 0 }}
-          animate={{ scale: [0, 1.1, 1] }}
+          animate={{ scale: [0, 1.08, 1] }}
           transition={{ duration: 0.5 }}
           className="relative"
         >
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
-            className="w-32 h-32 rounded-full border-4 border-blue-400/30 border-t-blue-400"
+            className="h-28 w-28 rounded-full border-4 border-blue-400/25 border-t-blue-400"
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl font-black text-blue-400">VAR</span>
+            <span className="text-2xl font-black tracking-wider text-blue-400">VAR</span>
           </div>
         </motion.div>
 
-        {/* Texto */}
+        {/* O MOTIVO — o dado que o motor sorteia e que ninguem lia. */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.45 }}
           className="mt-6 text-center"
         >
-          <h2 className="uf-heading text-2xl font-bold text-blue-400">CHECANDO LANCE...</h2>
-          <p className="text-white/50 text-sm mt-1">Video Assistant Referee</p>
+          <h2 className="uf-heading text-xl font-bold text-blue-400">CHECANDO...</h2>
+          {varReview?.reason && (
+            <p className="mt-1.5 text-sm font-semibold capitalize text-white/80">{varReview.reason}</p>
+          )}
         </motion.div>
+
+        {/* A encenacao, falas entrando uma a uma — o mesmo recurso que o modal
+            de penalti usa para transformar espera em tensao. */}
+        <div className="mt-5 flex min-h-[46px] flex-col items-center gap-1">
+          {PASSOS_DA_CHECAGEM.slice(0, passo).map((fala, i) => (
+            <motion.p
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-[12px] text-white/45"
+            >
+              {fala}
+            </motion.p>
+          ))}
+          {/* ⚠️ O TERCEIRO RITO. So aparece quando o motor diz que o arbitro foi
+              chamado ao monitor — e e o unico caso em que o estadio para. Ele nao
+              revela a decisao: ir ao monitor nao diz o que vai sair de la. */}
+          {aoMonitor && passo >= PASSOS_DA_CHECAGEM.length && (
+            <motion.p
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-1 rounded-full border border-blue-400/40 bg-blue-400/10 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-blue-300"
+            >
+              O arbitro vai ao monitor
+            </motion.p>
+          )}
+        </div>
       </div>
     </motion.div>
   )
 }
 
 // Componente principal que renderiza a animacao correta
-export function EventAnimation({ event, team, player, minute, onComplete }: EventAnimationProps) {
+export function EventAnimation({ event, team, player, minute, onComplete, varReview }: EventAnimationProps) {
   if (!event) return null
 
   return (
@@ -494,9 +593,11 @@ export function EventAnimation({ event, team, player, minute, onComplete }: Even
         />
       )}
       {event === "var" && (
-        <VarAnimation 
+        <VarAnimation
           key="var"
-          onComplete={onComplete} 
+          team={team}
+          varReview={varReview}
+          onComplete={onComplete}
         />
       )}
     </AnimatePresence>

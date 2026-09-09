@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import { useTranslation } from "@/lib/i18n"
 import { usePaginacao, Paginador } from "@/components/lista-paginada"
 import {
   FileText,
@@ -30,6 +31,7 @@ import { formatCurrency } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 
 export default function ContratosPage() {
+  const t = useTranslation()
   const { team: userTeam } = useUserTeam()
   const router = useRouter()
   const { squadPlayers, renewContract, currentWeek, currentSeason, balance, wageBudget } = useGameEngine()
@@ -275,8 +277,8 @@ export default function ContratosPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="uf-heading text-2xl font-semibold text-white tracking-tight">Gestao de Contratos</h1>
-            <p className="text-sm text-white/50 mt-1">Renove e gerencie os contratos do elenco</p>
+            <h1 className="uf-heading text-2xl font-semibold text-white tracking-tight">{t.contratos.gestao_de_contratos}</h1>
+            <p className="text-sm text-white/50 mt-1">{t.contratos.renove_e_gerencie_os_contratos_do}</p>
           </div>
         </div>
 
@@ -340,7 +342,7 @@ export default function ContratosPage() {
               Expirando
             </div>
             <div className="text-2xl font-bold text-[#ffd700]">{statusCounts.expiring}</div>
-            <div className="text-xs text-white/40 mt-1">nos proximos 6 meses</div>
+            <div className="text-xs text-white/40 mt-1">{t.contratos.nos_proximos_6_meses}</div>
           </div>
           
           <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
@@ -349,7 +351,7 @@ export default function ContratosPage() {
               Expirados
             </div>
             <div className="text-2xl font-bold text-red-500">{statusCounts.expired}</div>
-            <div className="text-xs text-white/40 mt-1">livre no mercado</div>
+            <div className="text-xs text-white/40 mt-1">{t.contratos.livre_no_mercado}</div>
           </div>
           
           <div className="rounded-xl bg-[var(--uf-bg-surface)] border border-white/[0.04] p-5">
@@ -358,7 +360,7 @@ export default function ContratosPage() {
               Folha Salarial
             </div>
             <div className="text-2xl font-bold text-white">{formatCurrency(currentWages)}</div>
-            <div className="text-xs text-white/40 mt-1">/ semana</div>
+            <div className="text-xs text-white/40 mt-1">{t.contratos.semana}</div>
           </div>
         </div>
 
@@ -404,9 +406,9 @@ export default function ContratosPage() {
           {/* Header da tabela */}
           <div className="grid grid-cols-[1fr_100px_120px_120px_100px_100px] gap-4 px-5 py-3 text-[10px] font-medium tracking-widest text-white/40 uppercase border-b border-white/[0.04] bg-white/[0.02]">
             <span>Jogador</span>
-            <span>Posição</span>
+            <span>{t.contratos.posicao}</span>
             <span>Salario</span>
-            <span>Expira em</span>
+            <span>{t.contratos.expira_em}</span>
             <span>Status</span>
             <span>Acao</span>
           </div>
@@ -508,7 +510,7 @@ export default function ContratosPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">
                 <Handshake className="h-5 w-5 text-[var(--brand)]" />
-                <span className="font-semibold text-white">Renovacao de Contrato</span>
+                <span className="font-semibold text-white">{t.contratos.renovacao_de_contrato}</span>
               </div>
               <button
                 onClick={() => setShowRenewalModal(false)}
@@ -538,7 +540,7 @@ export default function ContratosPage() {
                 <>
                   {/* Proposta salarial */}
                   <div className="space-y-3">
-                    <label className="text-sm font-medium text-white/70">Proposta Salarial (por semana)</label>
+                    <label className="text-sm font-medium text-white/70">{t.contratos.proposta_salarial_por_semana}</label>
                     <div className="flex items-center gap-4">
                       <input
                         type="range"
@@ -571,7 +573,7 @@ export default function ContratosPage() {
 
                   {/* Duracao */}
                   <div className="space-y-3">
-                    <label className="text-sm font-medium text-white/70">Duracao do Contrato</label>
+                    <label className="text-sm font-medium text-white/70">{t.contratos.duracao_do_contrato}</label>
                     <div className="grid grid-cols-4 gap-2">
                       {[1, 2, 3, 4].map(years => (
                         <button
@@ -593,7 +595,7 @@ export default function ContratosPage() {
                   {/* Chance de aceitar */}
                   <div className="p-4 rounded-xl bg-white/5 space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/60">Chance de aceitar</span>
+                      <span className="text-white/60">{t.contratos.chance_de_aceitar}</span>
                       <span className={cn(
                         "font-bold",
                         calculateAcceptChance() >= 70 ? "text-[var(--brand)]" :
@@ -612,7 +614,7 @@ export default function ContratosPage() {
                   <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-white/5 animate-pulse flex items-center justify-center">
                     <Handshake className="h-6 w-6 text-white/40" />
                   </div>
-                  <div className="text-white/70">Negociando com o jogador...</div>
+                  <div className="text-white/70">{t.contratos.negociando_com_o_jogador}</div>
                 </div>
               )}
 
@@ -621,7 +623,7 @@ export default function ContratosPage() {
                   <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-[var(--brand)]/20 flex items-center justify-center">
                     <CheckCircle2 className="h-6 w-6 text-[var(--brand)]" />
                   </div>
-                  <div className="text-[var(--brand)] font-semibold text-lg">Contrato Renovado!</div>
+                  <div className="text-[var(--brand)] font-semibold text-lg">{t.contratos.contrato_renovado}</div>
                   <div className="text-white/50 text-sm mt-2">
                     {selectedPlayer.name} assinou por mais {proposedYears} {proposedYears === 1 ? "ano" : "anos"}
                   </div>
@@ -633,7 +635,7 @@ export default function ContratosPage() {
                   <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
                     <XCircle className="h-6 w-6 text-red-500" />
                   </div>
-                  <div className="text-red-500 font-semibold text-lg">Proposta Recusada</div>
+                  <div className="text-red-500 font-semibold text-lg">{t.contratos.proposta_recusada}</div>
                   <div className="text-white/50 text-sm mt-2">
                     O jogador nao ficou satisfeito com a proposta. Tente novamente com valores melhores.
                   </div>

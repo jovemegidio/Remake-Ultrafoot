@@ -90,7 +90,10 @@ const detalhe = process.argv.includes("--detalhe")
 // Sobram 9 falsos positivos nas telas novas ("use client", "GLOBAL" e uma
 // className longa), que a heuristica nao tem como distinguir. O saldo veio de
 // olheiros/, extraida inteira.
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5265)
+// 1.0.396: 5265 -> 5264. O modal imersivo do VAR, o resumo de entrada da
+// Central de Notificacoes, o player de musica no rodape e os dois cartoes novos
+// de Personalizar somaram 20 frases; contratos/ e reunioes/ pagaram.
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5264)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
 //                        chumbadas. Único aumento da catraca; ver a nota acima.)
