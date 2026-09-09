@@ -1,0 +1,94 @@
+name: Publicar Launcher Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: Launcher/src-tauri
+      - name: Instalar dependencias
+        working-directory: Launcher
+        run: pnpm install --no-frozen-lockfile
+      - name: Validar TypeScript
+        working-directory: Launcher
+        run: pnpm typecheck
+      - name: Compilar o launcher Windows
+        working-directory: Launcher
+        run: pnpm tauri build
+      - name: Publicar binario e manifesto no GitHub
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.ULTRAFOOT_RELEASE_TOKEN }}
+        run: |
+          $version = (Get-Content Launcher/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          $setup = Get-ChildItem Launcher/src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          if (!$setup -or $setup.Length -lt 5000000) { throw 'instalador ausente ou pequeno demais' }
+          Copy-Item $setup.FullName Ultrafoot-Launcher-Setup.exe
+          $sha = (Get-FileHash Ultrafoot-Launcher-Setup.exe -Algorithm SHA256).Hash
+          $manifest = [ordered]@{
+            version = $version
+            notes = 'O acesso agora usa e-mail e senha. A opcao Google foi removida porque nao esta configurada neste servidor.'
+            url = 'https://ultrafoot.zyntraerp.com.br/downloads/Ultrafoot-Launcher-Setup.exe'
+            urlReserva = 'https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/Ultrafoot-Launcher-Setup.exe'
+            sha256 = $sha
+            size = $setup.Length
+          }
+          $manifest | ConvertTo-Json | Set-Content launcher.json -Encoding utf8
+          gh release upload launcher Ultrafoot-Launcher-Setup.exe launcher.json --repo $env:GITHUB_REPOSITORY --clobber
+      - name: Guardar pacote para o espelhamento
+        uses: actions/upload-artifact@v4
+        with:
+          name: launcher-windows
+          path: |
+            Ultrafoot-Launcher-Setup.exe
+            launcher.json
+          if-no-files-found: error
+
+  espelhar:
+    needs: publicar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: launcher-windows
+      - name: Configurar acesso protegido a VPS
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/id_ultrafoot
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ultrafoot ~/.ssh/known_hosts
+      - name: Espelhar e conferir pelo conteudo
+        run: |
+          sha=$(sha256sum Ultrafoot-Launcher-Setup.exe | cut -d' ' -f1)
+          bytes=$(stat -c%s Ultrafoot-Launcher-Setup.exe)
+          scp -i ~/.ssh/id_ultrafoot -o BatchMode=yes Ultrafoot-Launcher-Setup.exe root@31.97.64.102:/var/www/ultrafoot/downloads/Ultrafoot-Launcher-Setup.exe.novo
+          scp -i ~/.ssh/id_ultrafoot -o BatchMode=yes launcher.json root@31.97.64.102:/var/www/ultrafoot/downloads/launcher.json.novo
+          ssh -i ~/.ssh/id_ultrafoot -o BatchMode=yes root@31.97.64.102 "sha='$sha' bytes='$bytes' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd /var/www/ultrafoot/downloads
+          test "$(stat -c%s Ultrafoot-Launcher-Setup.exe.novo)" = "$bytes"
+          test "$(sha256sum Ultrafoot-Launcher-Setup.exe.novo | cut -d' ' -f1)" = "$sha"
+          mv Ultrafoot-Launcher-Setup.exe.novo Ultrafoot-Launcher-Setup.exe
+          mv launcher.json.novo launcher.json
+          chown www-data:www-data Ultrafoot-Launcher-Setup.exe launcher.json
+          REMOTE
+          test "$(curl -sL https://ultrafoot.zyntraerp.com.br/downloads/launcher.json | jq -r .version)" = 1.0.40
+          test "$(curl -sIL https://ultrafoot.zyntraerp.com.br/downloads/Ultrafoot-Launcher-Setup.exe | awk 'tolower($1)=="content-length:"{gsub("\r",""); print $2}' | tail -1)" = "$bytes"
