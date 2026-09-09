@@ -355,6 +355,13 @@ const PAISES_PASTA = {
   ARA: { pais: ["arabia saudita", "ara", "sau"], sufixos: ["ara", "sau"] },
   SUE: { pais: ["suecia", "sue"], sufixos: ["sue"] },
   URU: { pais: ["uruguai", "uru"], sufixos: ["uru"] },
+  // Entraram no lote de 07/09/2026, quando as pastas Greece_-_Stoiximan e
+  // Turkey_-_Superlig apareceram na entrega. Sem a entrada aqui o `--pais`
+  // seria ignorado e o casamento cairia no desempate "na duvida, o
+  // brasileiro" — pais faltando nao da erro, da camisa no clube errado.
+  // O seed grafa "Grecia"/"Turquia" e os fileKeys terminam em _gre/_tur.
+  GRE: { pais: ["grecia", "gre"], sufixos: ["gre"] },
+  TUR: { pais: ["turquia", "tur"], sufixos: ["tur"] },
 }
 if (paisPedido && !PAISES_PASTA[paisPedido]) {
   console.error(`--pais ${paisPedido} desconhecido. Use um de: ${Object.keys(PAISES_PASTA).join(", ")}`)

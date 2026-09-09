@@ -287,7 +287,15 @@ export const CAMPOS_DE_SAVE_DO_TECNICO = [
  */
 export const CAMPOS_DE_SAVE_DO_MUNDO = [
   // O save em si
-  "version", "careerId", "createdAt", "updatedAt", "season", "week",
+  // ⚠️ `diaDaRodada` fica AQUI, colado em `week`, e nao na lista do tecnico — e
+  // o portao me obrigou a decidir isso, com razao. O cursor diz que dia e
+  // dentro do intervalo entre duas rodadas (1.0.397); numa carreira de mesa os
+  // tecnicos compartilham UM calendario, e um cursor por tecnico faria a data
+  // do cabecalho mudar a cada troca de vez — dois tecnicos na mesma mesa em
+  // dias diferentes da mesma semana. Na pratica ele nem se move em co-op (o
+  // avanco dia a dia so vale para mesa de um tecnico so, ver game-header), mas
+  // classifica-lo certo importa para quando alguem ligar as duas coisas.
+  "version", "careerId", "createdAt", "updatedAt", "season", "week", "diaDaRodada",
   // A mesa
   "tecnicos", "tecnicoAtivoId", "rodadaCompartilhada", "estadoPorTecnico",
   "saveDoTecnico", "estadoPorLiga", "managers", "activeManagerId", "multiplayerEnabled",

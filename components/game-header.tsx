@@ -19,7 +19,7 @@ import { useGameEngine } from "@/lib/game-engine"
 import { clearJobOffers } from "@/lib/career-moves"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { getGameDate } from "@/lib/game-date"
+import { getGameDate, diasPorRodada } from "@/lib/game-date"
 import { useTranslation } from "@/lib/i18n"
 import { performanceStore } from "@/components/performance-profile"
 import { FM26CommandCenter } from "@/components/fm26-command-center"
@@ -608,7 +608,11 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     : currentSeason
   const gameDate = advanceDate ?? (ehCarreiraDeAtleta && carreiraDeAtleta
     ? getGameDate(carreiraDeAtleta.temporada, carreiraDeAtleta.rodada + 1)
-    : getGameDate(currentSeason, currentWeek))
+    // ⚠️ O CURSOR DE DIA ENTRA AQUI, e sem isto o "Avancar" de um dia nao teria
+    // efeito visivel nenhum: a animacao mostrava o dia seguinte e o cabecalho
+    // voltava para o dia da rodada no render seguinte. `diaDaRodada` anda dentro
+    // do intervalo entre duas rodadas; `currentWeek` continua sendo o relogio.
+    : new Date(getGameDate(currentSeason, currentWeek).getTime() + (state.diaDaRodada ?? 0) * 86_400_000))
   const gameDateLabel = `${gameDate.getDate().toString().padStart(2, "0")} ${MONTHS_SHORT[gameDate.getMonth()]}`
 
   /**
@@ -720,17 +724,50 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       // Todos fecharam: segue direto para o avanco, sem passo intermediario.
     }
 
+    // ── UM DIA DE CADA VEZ ATE O DIA DO JOGO (PDF Ultra26, p.1) ────────────
+    //
+    // "os dias que nao tiverem jogos devem ser de descanso e treinamento (...) e
+    // ao avancar ele pula um dia ate o dia do jogo".
+    //
+    // ⚠️ ISTO NAO FAZ O MOTOR ANDAR POR DIA, e a distincao e o que torna a
+    // mudanca segura. As rodadas continuam sendo simuladas UMA VEZ por semana,
+    // no mesmo `advanceGameWeek()` de sempre; o que passa a existir e um cursor
+    // (`state.diaDaRodada`) que anda DENTRO do intervalo entre duas rodadas.
+    // Fazer o relogio do motor andar por dia obrigaria a mexer na virada de
+    // temporada e no gerador de calendario — a area que ja travou temporada
+    // neste projeto. Se este bloco sumisse, o jogo voltaria a se comportar
+    // exatamente como antes.
+    //
+    // ⚠️ E SO PARA UM TECNICO SO. Na carreira de mesa "Avancar" significa
+    // "passar a vez", e passar a vez por causa de um dia de treino faria o
+    // computador circular pela mesa sete vezes entre duas partidas.
+    const passoDaRodada = Math.max(1, Math.round(diasPorRodada()))
+    const diaAtual = state.diaDaRodada ?? 0
+    if (!ehMultitecnico(tecnicosDaMesa) && diaAtual + 1 < passoDaRodada) {
+      setAdvancing(true)
+      const hoje = getGameDate(currentSeason, currentWeek)
+      setAdvanceDate(new Date(hoje.getTime() + (diaAtual + 1) * 86_400_000))
+      await new Promise(resolve => setTimeout(resolve, 120))
+      setState(anterior => ({ ...anterior, diaDaRodada: diaAtual + 1 }))
+      setAdvanceDate(null)
+      setAdvancing(false)
+      return
+    }
+
     setAdvancing(true)
 
-    // A data corre os 7 dias antes de a rodada ser simulada. Eram 95ms por dia =
-    // 665ms de espera PURA em cada avanco de semana — a acao mais repetida do
-    // jogo. Em 32ms a data ainda corre visivelmente (dois quadros por dia) e o
-    // avanco responde na hora.
+    // A data corre os dias que FALTAM ate a proxima rodada. Eram 7 fixos, a 95ms
+    // cada = 665ms de espera PURA no avanco, a acao mais repetida do jogo. Em
+    // 32ms a data ainda corre visivelmente (dois quadros por dia) e o avanco
+    // responde na hora. Com o cursor de dia, so os dias restantes correm — quem
+    // ja passou seis deles nao assiste a semana inteira de novo.
     const start = getGameDate(currentSeason, currentWeek)
-    for (let d = 1; d <= 7; d++) {
+    for (let d = diaAtual + 1; d <= passoDaRodada; d++) {
       setAdvanceDate(new Date(start.getTime() + d * 86_400_000))
       await new Promise(resolve => setTimeout(resolve, 32))
     }
+    // A rodada vai virar: o cursor volta ao inicio do intervalo novo.
+    setState(anterior => ({ ...anterior, diaDaRodada: 0 }))
 
     // O retorno do avanco e a fonte fresca: o `seasonCalendar` deste closure (e o
     // ref por tras dele) ainda e o de ANTES, porque so se recalculam no proximo
@@ -1096,7 +1133,20 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       {/* Menu de navegacao (tecla W ou clique na secao pai). */}
       {showNavMenu && (
         <div
-          className="fixed inset-0 z-[70] bg-black/25"
+          // ⚠️ A VINHETA DO MENU (PDF Ultra26, p.4): "ajuste o meu menu (w) para
+          // ficar nesse mesmo padrao visual com vinheta".
+          //
+          // O veu era um `bg-black/25` CHAPADO — a mesma opacidade no canto e no
+          // centro. A referencia nao escurece por igual: ela fecha as bordas e
+          // deixa o centro respirar, de modo que o jogo continua legivel atras do
+          // menu enquanto a lista, encostada na esquerda, ganha fundo. E o mesmo
+          // raciocinio da vinheta do escritorio nesta leva de versoes: o problema
+          // nunca foi a intensidade, foi a UNIFORMIDADE.
+          className="fixed inset-0 z-[70]"
+          style={{
+            background:
+              "radial-gradient(120% 90% at 22% 45%, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.42) 38%, rgba(0,0,0,0.14) 72%, rgba(0,0,0,0.06) 100%)",
+          }}
           onClick={() => setShowNavMenu(false)}
         >
           <div

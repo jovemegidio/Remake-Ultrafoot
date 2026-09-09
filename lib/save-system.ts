@@ -539,6 +539,23 @@ export interface GameState {
   bookmarks26?: string[]
   season: number
   week: number
+  /**
+   * DIA DENTRO DA RODADA ATUAL (0 = o dia em que a rodada comecou).
+   *
+   * ⚠️ ELE NAO ANDA COM O MOTOR, E ISSO E O PONTO. O relogio do jogo continua
+   * sendo `week`: rodadas sao simuladas exatamente uma vez por semana, como
+   * sempre. Este cursor so avanca DENTRO do intervalo entre duas rodadas, para
+   * o "Avancar" poder passar um dia de cada vez ate o dia do jogo — pedido do
+   * PDF Ultra26 (p.1): "ao avancar ele pula um dia ate o dia do jogo".
+   *
+   * A separacao e deliberada. Fazer o motor andar por dia significaria mexer na
+   * virada de temporada e no gerador de calendario, area que ja travou temporada
+   * neste projeto ([[ultrafoot-liga-congelada-e-virada]]). Aqui, se este campo
+   * sumisse, o jogo voltaria a se comportar exatamente como na 1.0.396.
+   *
+   * Opcional: save anterior a esta versao nao tem, e ausencia vale 0.
+   */
+  diaDaRodada?: number
   language: string
   selectedUniform: "home" | "away" | "third"
   /**
@@ -1015,6 +1032,7 @@ export const DEFAULT_STATE: GameState = {
   managerAvatar: "",
   season: 2026,
   week: 0,
+  diaDaRodada: 0,
   language: "pt-BR",
   selectedUniform: "home",
   createdAt: 0,

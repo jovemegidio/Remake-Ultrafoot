@@ -620,6 +620,22 @@ export default function DashboardPage() {
           <div>
             {(() => {
               const next = nextMatches[0]
+              /**
+               * QUANTOS DIAS ATE O PROXIMO JOGO.
+               *
+               * `null` quando nao ha jogo marcado (temporada encerrada, pausa
+               * FIFA sem partida sua) — e aí a linha some, em vez de mostrar um
+               * numero que nao significa nada.
+               */
+              const diasAteAProximaPartida: number | null = (() => {
+                if (!next) return null
+                const hoje = getGameDate(currentSeason, saveState?.week ?? 1)
+                const jogo = getGameDate(currentSeason, next.week ?? (saveState?.week ?? 1))
+                hoje.setHours(0, 0, 0, 0)
+                jogo.setHours(0, 0, 0, 0)
+                const dias = Math.round((jogo.getTime() - hoje.getTime()) / 86_400_000)
+                return dias < 0 ? 0 : dias
+              })()
               const round = next?.round ?? saveState?.week ?? 1
               const positionOf = (curto?: string) => {
                 if (!curto) return null
@@ -664,6 +680,22 @@ export default function DashboardPage() {
                     <span className="uf-eyebrow text-[var(--brand)]">
                       Rodada <span className="uf-num text-[13px]">{round}</span>
                     </span>
+                    {/* ⚠️ "PROXIMO JOGO EM N DIAS" (PDF Ultra26, p.1 e a
+                        referencia da p.4, que traz "Proximo jogo em 45 dias").
+                        O escritorio dizia a data de hoje e a rodada, e nada
+                        respondia a pergunta que todo tecnico faz ao abrir a
+                        tela: quanto falta. O dado ja existia — e a diferenca
+                        entre `getGameDate` de hoje e a da semana da proxima
+                        partida — e nenhuma tela a calculava. */}
+                    {diasAteAProximaPartida !== null && (
+                      <span className="uf-eyebrow shrink-0 text-white/45">
+                        {diasAteAProximaPartida === 0
+                          ? "Jogo hoje"
+                          : diasAteAProximaPartida === 1
+                            ? "Proximo jogo amanha"
+                            : <>Proximo jogo em <span className="uf-num text-[13px] text-white/70">{diasAteAProximaPartida}</span> dias</>}
+                      </span>
+                    )}
                     <span className="h-px flex-1 bg-gradient-to-r from-[var(--brand)]/40 to-transparent" />
                   </div>
 

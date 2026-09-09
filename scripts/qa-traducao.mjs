@@ -93,7 +93,11 @@ const detalhe = process.argv.includes("--detalhe")
 // 1.0.396: 5265 -> 5264. O modal imersivo do VAR, o resumo de entrada da
 // Central de Notificacoes, o player de musica no rodape e os dois cartoes novos
 // de Personalizar somaram 20 frases; contratos/ e reunioes/ pagaram.
-const TETO = Number(process.env.TETO_CHUMBADO ?? 5264)
+// 1.0.397: 5264 -> 5261. Os dias de treino no calendario, o "proximo jogo em N
+// dias" e a vinheta do menu somaram 8 frases; comissao/, rankings/ e vestiario/
+// pagaram. ⚠️ Cuidado com telas que JA tem o gancho: historico/ ganhou um
+// segundo `useTranslation` e um segundo `const t` e so o type-check pegou.
+const TETO = Number(process.env.TETO_CHUMBADO ?? 5261)
 // Histórico do teto — cada linha é uma versão que apertou a catraca:
 //   1.0.359 .... 5.618  (⚠️ SUBIU +127: as 11 telas do Modo Controle nasceram
 //                        chumbadas. Único aumento da catraca; ver a nota acima.)

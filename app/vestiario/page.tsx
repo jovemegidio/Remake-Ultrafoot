@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useTranslation } from "@/lib/i18n"
 import { useRouter } from "next/navigation"
 import { usePaginacao, Paginador } from "@/components/lista-paginada"
 import { motion, AnimatePresence } from "framer-motion"
@@ -109,6 +110,7 @@ const getEventIcon = (type: string) => {
 }
 
 export default function VestiarioPage() {
+  const t = useTranslation()
   const router = useRouter()
 
   // Gamepad support
@@ -241,8 +243,8 @@ export default function VestiarioPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="uf-heading text-2xl md:text-3xl font-bold text-white">Dinamica do Vestiario</h1>
-            <p className="text-sm text-white/50">Gerencie a moral e o relacionamento com os jogadores</p>
+            <h1 className="uf-heading text-2xl md:text-3xl font-bold text-white">{t.vestiario.dinamica_do_vestiario}</h1>
+            <p className="text-sm text-white/50">{t.vestiario.gerencie_a_moral_e_o_relacionamento}</p>
           </div>
         </div>
 
@@ -250,7 +252,7 @@ export default function VestiarioPage() {
         <div className="grid md:grid-cols-4 gap-4 mb-6">
           <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-white/70">Moral Geral</span>
+              <span className="text-sm text-white/70">{t.vestiario.moral_geral}</span>
               <Heart className="h-5 w-5 text-red-500" />
             </div>
             <div className="text-3xl font-bold text-white mb-2">{squadMorale.overall}%</div>
@@ -259,7 +261,7 @@ export default function VestiarioPage() {
           
           <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-white/70">Uniao do Grupo</span>
+              <span className="text-sm text-white/70">{t.vestiario.uniao_do_grupo}</span>
               <Users className="h-5 w-5 text-blue-500" />
             </div>
             <div className="text-3xl font-bold text-white mb-2">{squadMorale.unity}%</div>
@@ -277,7 +279,7 @@ export default function VestiarioPage() {
           
           <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-white/70">Jogadores Felizes</span>
+              <span className="text-sm text-white/70">{t.vestiario.jogadores_felizes}</span>
               <Smile className="h-5 w-5 text-[#ffd700]" />
             </div>
             <div className="text-3xl font-bold text-white mb-2">

@@ -97,6 +97,15 @@ const LIGAS = {
   "Sweden_-_Allsvenskan": { pais: "SUE", recursivo: true },
   "Sweden_-_Superettan": { pais: "SUE", recursivo: true },
   "Uruguay_-_Liga_AUF_Uruguaya": { pais: "URU", recursivo: true },
+  // Pastas que chegaram na entrega de 07/09/2026. Faltando aqui, a liga
+  // inteira nao aparece na auditoria — e o relatorio ainda diz "0 faltando",
+  // que e o pior tipo de silencio.
+  "England_-_Championship": { pais: "ING", recursivo: true },
+  "Greece_-_Stoiximan_Super_League": { pais: "GRE", recursivo: true },
+  "Turkey_-_Superlig": { pais: "TUR", recursivo: true },
+  // Copia mais nova da pasta da Finlandia; o publicador e idempotente por
+  // variante, entao as duas conviverem so reforca o mesmo clube.
+  "Finland_-_Veikkausliiga (1)": { pais: "FIN", recursivo: true },
 }
 
 const contar = (dir) => {

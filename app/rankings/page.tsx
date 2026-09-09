@@ -6,11 +6,13 @@
 // comentário de `components/rankings-mundiais.tsx`.
 
 import { GameHeader } from "@/components/game-header"
+import { useTranslation } from "@/lib/i18n"
 import { RankingsMundiais } from "@/components/rankings-mundiais"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 
 export default function RankingsPage() {
+  const t = useTranslation()
   const { state } = useGameState()
   const team = getTeamByShort(state.selectedTeamShort ?? "") ?? serieATeams[0]
 
@@ -20,7 +22,7 @@ export default function RankingsPage() {
       <main className="mx-auto max-w-7xl p-5 pb-24">
         <div className="mb-5">
           <h1 className="uf-heading text-2xl font-black">Rankings</h1>
-          <p className="text-sm text-white/50">Técnicos, clubes, seleções e academias do mundo.</p>
+          <p className="text-sm text-white/50">{t.rankings.tecnicos_clubes_selecoes_e_academias_do}</p>
         </div>
         <RankingsMundiais state={state} />
       </main>

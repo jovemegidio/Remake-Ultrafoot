@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useTranslation } from "@/lib/i18n"
 import { useRouter } from "next/navigation"
 import { GameHeader } from "@/components/game-header"
 import { useGameManager } from "@/lib/use-game-manager"
@@ -28,6 +29,7 @@ const ORDEM_CARGOS: StaffRole[] = [
 ]
 
 export default function ComissaoPage() {
+  const t = useTranslation()
   const router = useRouter()
   const { userTeam } = useGameManager()
   const { addNotification } = useNotifications()
@@ -72,7 +74,7 @@ export default function ComissaoPage() {
             </div>
             <div className="flex items-center gap-4 text-right">
               <div>
-                <p className="text-[10px] uppercase text-white/40">Folha semanal</p>
+                <p className="text-[10px] uppercase text-white/40">{t.comissao.folha_semanal}</p>
                 <p className="text-sm font-semibold text-amber-400">{formatCurrency(folhaSemanal)}</p>
               </div>
               <div>
@@ -86,19 +88,19 @@ export default function ComissaoPage() {
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
           <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
             <div className="rounded-xl border border-white/[0.04] bg-[#111] p-4">
-              <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><Users className="h-3.5 w-3.5" />Cargos ocupados</div>
+              <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><Users className="h-3.5 w-3.5" />{t.comissao.cargos_ocupados}</div>
               <div className="text-2xl font-bold text-white">{staffMembers.length}/{ORDEM_CARGOS.length}</div>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-[#111] p-4">
-              <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><TrendingUp className="h-3.5 w-3.5" />Competência média</div>
+              <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><TrendingUp className="h-3.5 w-3.5" />{t.comissao.competencia_media}</div>
               <div className="text-2xl font-bold text-[var(--brand)]">{competenciaMedia || "—"}</div>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-[#111] p-4">
-              <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><ShieldAlert className="h-3.5 w-3.5" />Risco de problema</div>
+              <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><ShieldAlert className="h-3.5 w-3.5" />{t.comissao.risco_de_problema}</div>
               <div className={cn("text-2xl font-bold", risco > 0 ? "text-amber-400" : "text-white/40")}>{risco}</div>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-[#111] p-4">
-              <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><Users className="h-3.5 w-3.5" />Vagas abertas</div>
+              <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><Users className="h-3.5 w-3.5" />{t.comissao.vagas_abertas}</div>
               <div className="text-2xl font-bold text-amber-400">{ORDEM_CARGOS.length - staffMembers.length}</div>
             </div>
           </div>

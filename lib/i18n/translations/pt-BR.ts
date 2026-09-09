@@ -1309,6 +1309,7 @@ export const ptBR = {
     campanha: "CAMPANHA",
     campeoes_do_mundo: "CAMPEÕES DO MUNDO",
     quadro_apos_primeira_temporada: "O quadro de campeões aparece ao concluir a primeira temporada.",
+
   },
   prelecao: {
     antes_de_entrar_em_campo: "Antes de entrar em campo",
@@ -1509,6 +1510,26 @@ export const ptBR = {
     selecione_um_jogador: "Selecione um jogador",
     todas_as_reunioes_recentes: "Todas as Reunioes Recentes",
     buscar_jogador: "Buscar jogador...",
+  },
+  desafios: {
+
+  },
+  comissao: {
+    folha_semanal: "Folha semanal",
+    cargos_ocupados: "Cargos ocupados",
+    competencia_media: "Competência média",
+    risco_de_problema: "Risco de problema",
+    vagas_abertas: "Vagas abertas",
+  },
+  rankings: {
+    tecnicos_clubes_selecoes_e_academias_do: "Técnicos, clubes, seleções e academias do mundo.",
+  },
+  vestiario: {
+    dinamica_do_vestiario: "Dinamica do Vestiario",
+    gerencie_a_moral_e_o_relacionamento: "Gerencie a moral e o relacionamento com os jogadores",
+    moral_geral: "Moral Geral",
+    uniao_do_grupo: "Uniao do Grupo",
+    jogadores_felizes: "Jogadores Felizes",
   },
 }
 

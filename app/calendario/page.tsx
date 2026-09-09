@@ -26,6 +26,7 @@ import { useGameEngine, type MatchResult } from "@/lib/game-engine"
 import { diaDaPartida, ehAmistoso } from "@/lib/amistosos-calendario"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { getGameDate } from "@/lib/game-date"
+import { PLANO_PADRAO, SEMANA_PADRAO, ROTULO_DA_SESSAO, type SessaoDoDia } from "@/lib/treino-e-entrosamento"
 import { cn } from "@/lib/utils"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { useNotifications } from "@/components/notifications-system"
@@ -339,6 +340,34 @@ export default function CalendarioPage() {
     window.addEventListener("keydown", aoTeclar)
     return () => window.removeEventListener("keydown", aoTeclar)
   }, [isSimulating])
+
+  /**
+   * QUE SESSAO DE TREINO CAI NESTE DIA — ou `null` quando nao ha o que dizer.
+   *
+   * ⚠️ SAI DO PLANO DO TECNICO, nao de uma tabela decorativa. `plano.semana` sao
+   * as sete sessoes de domingo a sabado que ele montou em /treinamento; sem
+   * plano diario salvo, vale a SEMANA_PADRAO (puxa no inicio, afina antes do
+   * fim de semana, folga no dia seguinte ao jogo).
+   *
+   * Devolve `null` para dia que JA PASSOU: o plano de hoje nao diz o que se
+   * treinou em marco, e carimbar "Fisico" la seria inventar historia.
+   */
+  const planoDeTreino = useGameEngine(s => s.planoDeTreino) ?? PLANO_PADRAO
+  const sessaoDoDia = useCallback(
+    (item: { day: number; isCurrentMonth: boolean; fixture: Fixture | null }): SessaoDoDia | null => {
+      if (!item.isCurrentMonth) return null
+      const data = new Date(currentSeason, currentMonth, item.day)
+      const hoje = getGameDate(currentSeason, currentWeek)
+      // Zera a hora dos dois lados: comparar Date com hora embutida faz o
+      // proprio dia de hoje cair como "passado" em metade dos casos.
+      data.setHours(0, 0, 0, 0)
+      hoje.setHours(0, 0, 0, 0)
+      if (data < hoje) return null
+      const semana = planoDeTreino.semana ?? SEMANA_PADRAO
+      return semana[data.getDay()] ?? null
+    },
+    [currentSeason, currentMonth, currentWeek, planoDeTreino],
+  )
 
   // Dias do calendario
   const calendarDays = useMemo(() => {
@@ -959,6 +988,31 @@ export default function CalendarioPage() {
                     >
                       {item.day}
                     </span>
+
+                    {/* ── DIA SEM JOGO = DESCANSO OU TREINO ───────────────────
+                        Pedido do PDF Ultra26 (p.1/2): "os dias que nao tiverem
+                        jogos como o exemplo da imagem devem ser de descanso e
+                        treinamento". A grade mostrava celula VAZIA — e o jogo
+                        ja sabia o que acontece naquele dia: a semana de treino
+                        do tecnico (lib/treino-e-entrosamento, `plano.semana`,
+                        sete sessoes de domingo a sabado) decide se e fisico,
+                        tatico, bola parada ou folga.
+                        ⚠️ So para dias que AINDA NAO PASSARAM: carimbar "Fisico"
+                        num dia de tres meses atras seria inventar historia — o
+                        plano de hoje nao diz o que se treinou naquela semana. */}
+                    {item.isCurrentMonth && !hasMatch && sessaoDoDia(item) && (
+                      <span
+                        title={`Dia de ${ROTULO_DA_SESSAO[sessaoDoDia(item)!].toLowerCase()}`}
+                        className={cn(
+                          "absolute inset-x-1.5 bottom-1.5 rounded-md px-1 py-0.5 text-center text-[9px] font-bold uppercase tracking-wider",
+                          sessaoDoDia(item) === "descanso"
+                            ? "bg-white/[0.04] text-white/25"
+                            : "bg-[var(--brand)]/10 text-[var(--brand)]/70",
+                        )}
+                      >
+                        {ROTULO_DA_SESSAO[sessaoDoDia(item)!]}
+                      </span>
+                    )}
 
                     {/* CARTAO DO DIA — ESCUDO E PLACAR, so isso.
                         A versao anterior ainda carimbava "vs SIGLA" por cima do

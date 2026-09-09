@@ -12,6 +12,7 @@
 // metas, com o valor atingido) e ATÉ QUANDO. Ver lib/challenge-engine.
 
 import { useMemo, useState } from "react"
+import { useTranslation } from "@/lib/i18n"
 import { Award, CalendarClock, CheckCircle2, Clock, Lock, Medal, Target, Trophy, XCircle } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { useGameState } from "@/lib/save-system"
@@ -42,6 +43,7 @@ const CORES_DA_DIFICULDADE: Record<string, string> = {
 }
 
 export default function DesafiosPage() {
+  const t = useTranslation()
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
 
