@@ -147,7 +147,8 @@ jobs:
 
       - name: Configurar bundle NSIS
         shell: pwsh
-        run: '{"bundle":{"targets":["nsis"]}}' | Set-Content src-tauri/tauri.ci.conf.json -Encoding utf8
+        run: |
+          '{"bundle":{"targets":["nsis"]}}' | Set-Content src-tauri/tauri.ci.conf.json -Encoding utf8
 
       - name: Compilar, assinar e publicar Windows
         uses: tauri-apps/tauri-action@v0
@@ -208,4 +209,3 @@ jobs:
           chown www-data:www-data "$nome" latest-updater.json
           REMOTE
           test "$(curl -sIL "https://ultrafoot.zyntraerp.com.br/downloads/$nome" | awk 'tolower($1)=="content-length:"{gsub("\r",""); print $2}' | tail -1)" = "$bytes"
-
