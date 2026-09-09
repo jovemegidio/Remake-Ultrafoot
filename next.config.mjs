@@ -45,9 +45,11 @@ const nextConfig = {
     : {}),
   // Type-check volta a bloquear o build: um erro de tipo (ex.: icone nao importado,
   // que crashava a tela em runtime com "This page couldn't load") agora falha o build
-  // ANTES de gerar o instalador, em vez de vazar para o jogador.
+  // ANTES de gerar o instalador, em vez de vazar para o jogador. O job universal
+  // do macOS reaproveita a validacao ja feita pelo Linux e pelo gate do deploy:
+  // repetir o compilador no runner de 7 GiB esgota a heap antes do build nativo.
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: process.env.ULTRAFOOT_SKIP_NEXT_TYPECHECK === '1',
   },
   images: {
     unoptimized: true,

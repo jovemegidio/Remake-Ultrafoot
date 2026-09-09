@@ -32,15 +32,22 @@ let aliasesCriados = 0
 function paginaDentroDoDiretorio(dir) {
   const entrada = readdirSync(dir).find(e => e.startsWith("__next.") && !e.endsWith(".txt"))
   if (!entrada) return null
-  let atual = path.join(dir, entrada)
-  if (!existsSync(atual) || !statSync(atual).isDirectory()) return null
-  // Rota aninhada guarda os segmentos restantes como subpastas.
-  for (let profundidade = 0; profundidade < 8; profundidade++) {
-    const alvo = path.join(atual, "__PAGE__.txt")
-    if (existsSync(alvo)) return alvo
-    const sub = readdirSync(atual).find(e => statSync(path.join(atual, e)).isDirectory())
-    if (!sub) return null
-    atual = path.join(atual, sub)
+  const raiz = path.join(dir, entrada)
+  if (!existsSync(raiz) || !statSync(raiz).isDirectory()) return null
+
+  // Rota aninhada guarda os segmentos restantes como subpastas. Percorra a
+  // arvore toda: no export POSIX podem existir diretorios auxiliares irmaos e
+  // escolher apenas o primeiro ramo deixa o __PAGE__.txt real invisivel.
+  const fila = [{ dir: raiz, profundidade: 0 }]
+  while (fila.length > 0) {
+    const atual = fila.shift()
+    for (const item of readdirSync(atual.dir, { withFileTypes: true })) {
+      const alvo = path.join(atual.dir, item.name)
+      if (item.isFile() && item.name === "__PAGE__.txt") return alvo
+      if (item.isDirectory() && atual.profundidade < 8) {
+        fila.push({ dir: alvo, profundidade: atual.profundidade + 1 })
+      }
+    }
   }
   return null
 }

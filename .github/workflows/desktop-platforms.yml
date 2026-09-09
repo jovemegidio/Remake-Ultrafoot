@@ -23,8 +23,8 @@ jobs:
             name: macos-universal
             args: --target universal-apple-darwin --config src-tauri/tauri.macos.conf.json
             node: 22
-            # O type-check da 1.0.397 ultrapassou 5 GiB no runner arm64.
-            heap: 6144
+            heap: 5120
+            skip_typecheck: 1
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -89,6 +89,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ULTRAFOOT_HEAP_MB: ${{ matrix.heap }}
+          ULTRAFOOT_SKIP_NEXT_TYPECHECK: ${{ matrix.skip_typecheck }}
           # Sem variáveis APPLE_*: o macOS builda SEM assinatura (grátis). Com elas
           # vazias, o tauri-action tentava importar um certificado inexistente e
           # falhava ("failed to import keychain certificate"). O usuário abre o app
